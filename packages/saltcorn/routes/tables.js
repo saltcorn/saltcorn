@@ -13,8 +13,27 @@ module.exports = router;
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  const { rows } = await db.query("SELECT * FROM tables WHERE id = $1", [id]);
-  res.send(rows[0]);
+  const tq = await db.query("SELECT * FROM tables WHERE id = $1", [id]);
+  const table = tq.rows[0];
+
+  const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
+  const fields = fq.rows;
+
+  res.send(
+    wrap(
+      `${table.name} table`,
+      `<h1>${table.name}</h1>` +
+        mkTable(
+          [
+            { label: "Name", key: "fname" },
+            { label: "Label", key: "flabel" },
+            { label: "Type", key: "ftype" },
+            { label: "Edit", key: r => `<a href="/field/${r.id}">Edit</a>` }
+          ],
+          fields
+        )
+    )
+  );
 });
 
 router.get("/", async (req, res) => {
