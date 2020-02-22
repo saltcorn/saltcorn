@@ -25,7 +25,7 @@ router.get("/:tname", async (req, res) => {
         tfields,
         rows
       ),
-      link(`/create/${table.id}`, "Add row")
+      link(`/edit/${table.name}`, "Add row")
     )
   );
 });
