@@ -53,13 +53,27 @@ router.get("/new/:table_id", async (req, res) => {
     )
   );
 });
+const get_table_by_id=async (id) => {
+    const tq = await db.query("SELECT * FROM tables WHERE id = $1", [id]);
+    return tq.rows[0];
+}
 
+const get_field_by_id=async (id) => {
+    const tq = await db.query("SELECT * FROM fields WHERE id = $1", [id]);
+    return tq.rows[0];
+}
 router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
   
   const {
     rows
   } = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
+
+  const table=await get_table_by_id(rows[0].table_id)
+  await db.query(
+    `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(rows[0].fname)}`      
+  );
+
   res.redirect(`/table/${rows[0].table_id}`);
 });
 
@@ -67,10 +81,9 @@ router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    const tq = await db.query("SELECT * FROM tables WHERE id = $1", [v.table_id]);
-    const tname = tq.rows[0].name;
+    const table=await get_table_by_id(v.table_id)
     await db.query(
-        `alter table ${sqlsanitize(tname)} add column ${sqlsanitize(v.fname)} ${sqlsanitize(v.ftype)}`      
+        `alter table ${sqlsanitize(table.name)} add column ${sqlsanitize(v.fname)} ${sqlsanitize(v.ftype)}`      
       );
     await db.query(
       "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",

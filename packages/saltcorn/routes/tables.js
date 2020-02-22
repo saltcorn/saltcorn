@@ -99,8 +99,7 @@ router.get("/", async (req, res) => {
       "Tables",
       h(1, "Tables"),
       mkTable(
-        [
-          { label: "ID", key: "id" },
+        [          
           { label: "Name", key: "name" },
           { label: "View", key: r => link(`/table/${r.id}`, "Edit") },
           { label: "Delete", key: r => post_btn(`/table/delete/${r.id}`, "Delete") }
