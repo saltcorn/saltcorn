@@ -1,24 +1,17 @@
 class Attribute {
-    constructor(o) {
-
-    }
+  constructor(o) {}
 }
 
 class Type {
-    name = ""
-    attributes = {}
-    
+  name = "";
+  attributes = {};
 }
 
 class String extends Type {
-    name="String"
+  name = "String";
 }
 
 class Integer extends Type {
-    name="Integer"
-    attributes = [
-        { name: "max",
-          type: "Integer",
-          required: false }
-    ]
+  name = "Integer";
+  attributes = [{ name: "max", type: "Integer", required: false }];
 }

@@ -1,5 +1,5 @@
-const table = require('./tables')
+const table = require("./tables");
 
 module.exports = app => {
-  app.use('/table', table)
-}
+  app.use("/table", table);
+};
