@@ -19,7 +19,7 @@ router.get("/:id", async (req, res) => {
   res.send(
     wrap(
       `Edit field`,
-      mkForm([
+      mkForm("/field", [
         { name: "id", input_type: "hidden" },
         { name: "table_id", input_type: "hidden" },
         { label: "Name", name: "fname", input_type: "text" },
@@ -28,6 +28,20 @@ router.get("/:id", async (req, res) => {
       ], field)
     )
   );
+});
+
+router.post("/", async (req, res) => {
+    console.log("body",req.body)
+    
+    if(typeof(req.body.id)==="undefined") {
+
+
+    } else {
+
+
+    }
+
+    res.send("thanks!")
 });
 
 router.get("/", async (req, res) => {

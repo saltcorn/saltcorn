@@ -4,6 +4,8 @@ const mountRoutes = require("./routes");
 const port = 3000;
 
 const app = express();
+app.use(express.urlencoded({extended: true}))
+
 mountRoutes(app);
 
 app.get("/", (req, res) => res.send("Hello World!"));

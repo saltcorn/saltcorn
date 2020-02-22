@@ -20,22 +20,22 @@ const mkTable = (hdrs, vs) => {
 const mkFormRow = (v)=> (hdr) => {
   switch (hdr.input_type) {
     case 'hidden':
-        return `<input type="hidden" class="form-control" id="input${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>`
+        return `<input type="hidden" class="form-control" name="${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>`
       break;
   
     default:
       return `<div class="form-group row">
     <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
     <div class="col-sm-10">
-      <input type="${hdr.input_type}" class="form-control" id="input${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>
+      <input type="${hdr.input_type}" class="form-control" name="${hdr.name}" id="input${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>
     </div>
   </div>`
   }
 }
 
 
-const mkForm = (hdrs, v) => {
-  const top = `<form>`;
+const mkForm = (action, hdrs, v) => {
+  const top = `<form action="${action}" method="post">`;
 
   const flds = hdrs.map(mkFormRow(v)).join('')
   const bot = `<div class="form-group row">
