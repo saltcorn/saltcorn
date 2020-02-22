@@ -55,17 +55,25 @@ router.get("/:id", async (req, res) => {
   );
 });
 
+//https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
+const table_name=(nm)=>nm.replace(/\b@[a-zA-Z][a-zA-Z0-9]*\b/g, ''); 
+
 router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
     await db.query(
+      `create table ${table_name(v.name)} (id serial primary key)`      
+    );
+    await db.query(
       "insert into tables(name) values($1)",
       [v.name]
     );
   } else {
+
+    //TODO RENAME TABLE
     await db.query(
-      "update fields set tables=$1 where id=$2",
+      "update tables set name=$1 where id=$2",
       [v.name, v.id]
     );
   }
@@ -75,9 +83,13 @@ router.post("/", async (req, res) => {
 router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
   await db.query("delete FROM fields WHERE table_id = $1", [id]);
+  
   const {
     rows
   } = await db.query("delete FROM tables WHERE id = $1 returning *", [id]);
+  await db.query(
+    `drop table ${table_name(rows[0].name)}`      
+  );
   res.redirect(`/table`);
 });
 
