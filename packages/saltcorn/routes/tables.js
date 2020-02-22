@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const { mkTable } = require("./markup.js");
+const { mkTable, wrap } = require("./markup.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -20,13 +20,16 @@ router.get("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
   const { rows } = await db.query("SELECT * FROM tables");
   res.send(
-    mkTable(
-      [
-        { label: "ID", key: "id" },
-        { label: "Name", key: "name" },
-        { label: "View", key: r => `<a href="/table/${r.id}">Edit</a>` }
-      ],
-      rows
+    wrap(
+      "Tables",
+      mkTable(
+        [
+          { label: "ID", key: "id" },
+          { label: "Name", key: "name" },
+          { label: "View", key: r => `<a href="/table/${r.id}">Edit</a>` }
+        ],
+        rows
+      )
     )
   );
 });
