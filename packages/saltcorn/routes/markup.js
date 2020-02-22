@@ -17,37 +17,47 @@ const mkTable = (hdrs, vs) => {
   return s;
 };
 
-const mkFormRow = (v)=> (hdr) => {
+const mkFormRow = v => hdr => {
   switch (hdr.input_type) {
-    case 'hidden':
-        return `<input type="hidden" class="form-control" name="${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>`
+    case "hidden":
+      return `<input type="hidden" class="form-control" name="${hdr.name}" ${
+        v ? `value="${v[hdr.name]}"` : ""
+      }>`;
       break;
-  
+
     default:
       return `<div class="form-group row">
-    <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
+    <label for="input${hdr.name}" class="col-sm-2 col-form-label">${
+        hdr.label
+      }</label>
     <div class="col-sm-10">
-      <input type="${hdr.input_type}" class="form-control" name="${hdr.name}" id="input${hdr.name}" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ''}>
+      <input type="${hdr.input_type}" class="form-control" name="${
+        hdr.name
+      }" id="input${hdr.name}" ${
+        v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+      }>
     </div>
-  </div>`
+  </div>`;
   }
-}
-
+};
 
 const mkForm = (action, hdrs, v) => {
   const top = `<form action="${action}" method="post">`;
 
-  const flds = hdrs.map(mkFormRow(v)).join('')
+  const flds = hdrs.map(mkFormRow(v)).join("");
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
     <button type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
 </form>`;
-  return top + flds+bot;
+  return top + flds + bot;
 };
 
-const wrap = (title, s) => `<!doctype html>
+const h = (sz, s) => `<h${sz}>${s}</h${sz}>`;
+const link = (href, s) => `<a href="${href}">${s}</a>`;
+
+const wrap = (title, ...s) => `<!doctype html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -60,7 +70,7 @@ const wrap = (title, s) => `<!doctype html>
     <title>${title}</title>
   </head>
   <body>
-    <div class="container">${s}</div>
+    <div class="container">${s.join("")}</div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -73,5 +83,7 @@ const wrap = (title, s) => `<!doctype html>
 module.exports = {
   mkTable,
   mkForm,
-  wrap
+  wrap,
+  h,
+  link
 };

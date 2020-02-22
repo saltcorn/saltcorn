@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const { mkTable, wrap } = require("./markup.js");
+const { mkTable, wrap, h, link } = require("./markup.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -22,16 +22,17 @@ router.get("/:id", async (req, res) => {
   res.send(
     wrap(
       `${table.name} table`,
-      `<h1>${table.name}</h1>` +
-        mkTable(
-          [
-            { label: "Name", key: "fname" },
-            { label: "Label", key: "flabel" },
-            { label: "Type", key: "ftype" },
-            { label: "Edit", key: r => `<a href="/field/${r.id}">Edit</a>` }
-          ],
-          fields
-        )+`<a href="/field/new/${table.id}">Add field</a>`
+      h(1, table.name),
+      mkTable(
+        [
+          { label: "Name", key: "fname" },
+          { label: "Label", key: "flabel" },
+          { label: "Type", key: "ftype" },
+          { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") }
+        ],
+        fields
+      ),
+      link(`/field/new/${table.id}`, "Add field")
     )
   );
 });
@@ -41,11 +42,12 @@ router.get("/", async (req, res) => {
   res.send(
     wrap(
       "Tables",
+      h(1, "Tables"),
       mkTable(
         [
           { label: "ID", key: "id" },
           { label: "Name", key: "name" },
-          { label: "View", key: r => `<a href="/table/${r.id}">Edit</a>` }
+          { label: "View", key: r => link(`/table/${r.id}`, "Edit") }
         ],
         rows
       )
