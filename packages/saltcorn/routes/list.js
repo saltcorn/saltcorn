@@ -15,7 +15,8 @@ router.get("/:tname", async (req, res) => {
   const table = await db.get_table_by_name(tname);
 
   const fields = await db.get_fields_by_table_id(table.id);
-  const tfields=fields.map((f)=>({label: f.flabel, key: f.fname}))
+  var tfields=fields.map((f)=>({label: f.flabel, key: f.fname}))
+  tfields.push({label:"Edit", key: r=>link(`/edit/${table.name}/${r.id}`, "Edit")})
   const { rows } = await db.query(`select * from ${sqlsanitize(table.name)}`)
   res.send(
     wrap(
