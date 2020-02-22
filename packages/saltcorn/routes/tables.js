@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const { mkTable, wrap, h, link,post_btn } = require("./markup.js");
+const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -11,6 +11,20 @@ const router = new Router();
 // export our router to be mounted by the parent application
 module.exports = router;
 
+router.get("/new/", async (req, res) => {
+  res.send(
+    wrap(
+      `New table`,
+      mkForm(
+        "/table",
+        [
+          { label: "Name", name: "name", input_type: "text" },
+        ]
+      )
+    )
+  );
+
+})
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const tq = await db.query("SELECT * FROM tables WHERE id = $1", [id]);
@@ -29,13 +43,42 @@ router.get("/:id", async (req, res) => {
           { label: "Label", key: "flabel" },
           { label: "Type", key: "ftype" },
           { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
-          { label: "Delete", key: r => post_btn(`/field/delete/${r.id}`, "Delete") }
+          {
+            label: "Delete",
+            key: r => post_btn(`/field/delete/${r.id}`, "Delete")
+          }
         ],
         fields
       ),
       link(`/field/new/${table.id}`, "Add field")
     )
   );
+});
+
+router.post("/", async (req, res) => {
+  const v = req.body;
+  if (typeof v.id === "undefined") {
+    // insert
+    await db.query(
+      "insert into tables(name) values($1)",
+      [v.name]
+    );
+  } else {
+    await db.query(
+      "update fields set tables=$1 where id=$2",
+      [v.name, v.id]
+    );
+  }
+  res.redirect(`/table/`);
+});
+
+router.post("/delete/:id", async (req, res) => {
+  const { id } = req.params;
+  await db.query("delete FROM fields WHERE table_id = $1", [id]);
+  const {
+    rows
+  } = await db.query("delete FROM tables WHERE id = $1 returning *", [id]);
+  res.redirect(`/table`);
 });
 
 router.get("/", async (req, res) => {
@@ -48,10 +91,12 @@ router.get("/", async (req, res) => {
         [
           { label: "ID", key: "id" },
           { label: "Name", key: "name" },
-          { label: "View", key: r => link(`/table/${r.id}`, "Edit") }
+          { label: "View", key: r => link(`/table/${r.id}`, "Edit") },
+          { label: "Delete", key: r => post_btn(`/table/delete/${r.id}`, "Delete") }
         ],
         rows
-      )
+      ),
+      link(`/table/new`, "Add table")
     )
   );
 });
