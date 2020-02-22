@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const { mkTable, wrap, h, link } = require("./markup.js");
+const { mkTable, wrap, h, link,post_btn } = require("./markup.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -28,7 +28,8 @@ router.get("/:id", async (req, res) => {
           { label: "Name", key: "fname" },
           { label: "Label", key: "flabel" },
           { label: "Type", key: "ftype" },
-          { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") }
+          { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+          { label: "Delete", key: r => post_btn(`/field/delete/${r.id}`, "Delete") }
         ],
         fields
       ),

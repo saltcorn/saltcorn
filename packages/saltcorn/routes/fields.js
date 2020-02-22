@@ -52,6 +52,14 @@ router.get("/new/:table_id", async (req, res) => {
     )
   );
 });
+
+router.post("/delete/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const {rows} = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
+    res.redirect(`/table/${rows[0].table_id}`);
+  });
+
 router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {

@@ -56,6 +56,8 @@ const mkForm = (action, hdrs, v) => {
 
 const h = (sz, s) => `<h${sz}>${s}</h${sz}>`;
 const link = (href, s) => `<a href="${href}">${s}</a>`;
+const post_btn = (href, s) => `<form action="${href}" method="post">
+<button type="submit" class="btn btn-primary">${s}</button></form>`
 
 const wrap = (title, ...s) => `<!doctype html>
 <html lang="en">
@@ -85,5 +87,6 @@ module.exports = {
   mkForm,
   wrap,
   h,
-  link
+  link,
+  post_btn
 };
