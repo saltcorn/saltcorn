@@ -2,6 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const { mkTable, mkForm, wrap } = require("./markup.js");
+const { sqlsanitize } = require("./utils.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -55,7 +56,7 @@ router.get("/new/:table_id", async (req, res) => {
 
 router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
-
+  
   const {
     rows
   } = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
@@ -66,11 +67,18 @@ router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
+    const tq = await db.query("SELECT * FROM tables WHERE id = $1", [v.table_id]);
+    const tname = tq.rows[0].name;
+    await db.query(
+        `alter table ${sqlsanitize(tname)} add column ${sqlsanitize(v.fname)} ${sqlsanitize(v.ftype)}`      
+      );
     await db.query(
       "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",
       [v.table_id, v.fname, v.flabel, v.ftype]
     );
   } else {
+      // update
+      //TODO edit field
     await db.query(
       "update fields set table_id=$1, fname=$2, flabel=$3, ftype=$4 where id=$5",
       [v.table_id, v.fname, v.flabel, v.ftype, v.id]
