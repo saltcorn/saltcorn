@@ -31,17 +31,13 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-    console.log("body",req.body)
-    
-    if(typeof(req.body.id)==="undefined") {
-
-
+    const v=req.body
+    if(typeof(v.id)==="undefined") { // insert
+        await db.query("insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",[v.table_id, v.fname, v.flabel, v.ftype]);
     } else {
-
-
+        await db.query("update fields set table_id=$1, fname=$2, flabel=$3, ftype=$4 where id=$5",[v.table_id, v.fname, v.flabel, v.ftype, v.id]);
     }
-
-    res.send("thanks!")
+    res.redirect(`/table/${v.table_id}`)
 });
 
 router.get("/", async (req, res) => {
