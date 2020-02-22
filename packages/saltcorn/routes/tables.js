@@ -16,20 +16,13 @@ router.get("/new/", async (req, res) => {
   res.send(
     wrap(
       `New table`,
-      mkForm(
-        "/table",
-        [
-          { label: "Name", name: "name", input_type: "text" },
-        ]
-      )
+      mkForm("/table", [{ label: "Name", name: "name", input_type: "text" }])
     )
   );
-
-})
+});
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  const tq = await db.query("SELECT * FROM tables WHERE id = $1", [id]);
-  const table = tq.rows[0];
+  const table = await db.get_table_by_id(id);
 
   const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
   const fields = fq.rows;
@@ -56,25 +49,17 @@ router.get("/:id", async (req, res) => {
   );
 });
 
-
 router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
     await db.query(
-      `create table ${sqlsanitize(v.name)} (id serial primary key)`      
+      `create table ${sqlsanitize(v.name)} (id serial primary key)`
     );
-    await db.query(
-      "insert into tables(name) values($1)",
-      [v.name]
-    );
+    await db.query("insert into tables(name) values($1)", [v.name]);
   } else {
-
     //TODO RENAME TABLE
-    await db.query(
-      "update tables set name=$1 where id=$2",
-      [v.name, v.id]
-    );
+    await db.query("update tables set name=$1 where id=$2", [v.name, v.id]);
   }
   res.redirect(`/table/`);
 });
@@ -82,13 +67,11 @@ router.post("/", async (req, res) => {
 router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
   await db.query("delete FROM fields WHERE table_id = $1", [id]);
-  
+
   const {
     rows
   } = await db.query("delete FROM tables WHERE id = $1 returning *", [id]);
-  await db.query(
-    `drop table ${sqlsanitize(rows[0].name)}`      
-  );
+  await db.query(`drop table ${sqlsanitize(rows[0].name)}`);
   res.redirect(`/table`);
 });
 
@@ -99,10 +82,13 @@ router.get("/", async (req, res) => {
       "Tables",
       h(1, "Tables"),
       mkTable(
-        [          
+        [
           { label: "Name", key: "name" },
           { label: "View", key: r => link(`/table/${r.id}`, "Edit") },
-          { label: "Delete", key: r => post_btn(`/table/delete/${r.id}`, "Delete") }
+          {
+            label: "Delete",
+            key: r => post_btn(`/table/delete/${r.id}`, "Delete")
+          }
         ],
         rows
       ),
