@@ -23,7 +23,8 @@ router.get("/", async (req, res) => {
     mkTable(
       [
         { label: "ID", key: "id" },
-        { label: "Name", key: "name" }
+        { label: "Name", key: "name" },
+        { label: "View", key: r => `<a href="/table/${r.id}">Edit</a>` }
       ],
       rows
     )
