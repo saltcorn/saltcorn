@@ -31,6 +31,7 @@ router.get("/:id", async (req, res) => {
     wrap(
       `${table.name} table`,
       h(1, table.name),
+      link(`/list/${table.name}`, 'List'),
       mkTable(
         [
           { label: "Name", key: "fname" },
