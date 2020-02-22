@@ -1,10 +1,12 @@
 const express = require('express')
-const app = express()
+const mountRoutes = require('./routes')
+
 const port = 3000
 
-app.get('/', (request, response) => {
-    response.json({ info: 'Node.js, Express, and Postgres API' })
-  })
+const app = express()
+mountRoutes(app)
+
+app.get('/', (req, res) => res.send('Hello World!'))
 
 app.listen(port, () => {
     console.log(`App running on port ${port}.`)
