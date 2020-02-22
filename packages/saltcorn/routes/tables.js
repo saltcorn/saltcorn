@@ -31,7 +31,7 @@ router.get("/:id", async (req, res) => {
             { label: "Edit", key: r => `<a href="/field/${r.id}">Edit</a>` }
           ],
           fields
-        )
+        )+`<a href="/field/new/${table.id}">Add field</a>`
     )
   );
 });

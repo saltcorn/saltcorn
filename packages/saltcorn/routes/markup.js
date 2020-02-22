@@ -27,7 +27,7 @@ const mkFormRow = (v)=> (hdr) => {
       return `<div class="form-group row">
     <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
     <div class="col-sm-10">
-      <input type="${hdr.input_type}" class="form-control" name="${hdr.name}" id="input${hdr.name}" ${v ? `value="${v[hdr.name]}"` : ''}>
+      <input type="${hdr.input_type}" class="form-control" name="${hdr.name}" id="input${hdr.name}" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ''}>
     </div>
   </div>`
   }

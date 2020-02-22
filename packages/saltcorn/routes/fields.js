@@ -29,7 +29,21 @@ router.get("/:id", async (req, res) => {
     )
   );
 });
-
+router.get("/new/:table_id", async (req, res) => {
+    const { table_id } = req.params;
+ 
+    res.send(
+      wrap(
+        `New field`,
+        mkForm("/field", [
+          { name: "table_id", input_type: "hidden" },
+          { label: "Name", name: "fname", input_type: "text" },
+          { label: "Label", name: "flabel", input_type: "text" },
+          { label: "Type", name: "ftype", input_type: "text" },
+        ], { table_id })
+      )
+    );
+  });
 router.post("/", async (req, res) => {
     const v=req.body
     if(typeof(v.id)==="undefined") { // insert
@@ -40,19 +54,4 @@ router.post("/", async (req, res) => {
     res.redirect(`/table/${v.table_id}`)
 });
 
-router.get("/", async (req, res) => {
-  const { rows } = await db.query("SELECT * FROM tables");
-  res.send(
-    wrap(
-      "Tables",
-      mkTable(
-        [
-          { label: "ID", key: "id" },
-          { label: "Name", key: "name" },
-          { label: "View", key: r => `<a href="/table/${r.id}">Edit</a>` }
-        ],
-        rows
-      )
-    )
-  );
-});
+
