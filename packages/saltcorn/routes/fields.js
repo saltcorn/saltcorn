@@ -3,7 +3,7 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const types = require("../types");
 const { mkTable, mkForm, wrap } = require("./markup.js");
-const { sqlsanitize,fkeyPrefix,calc_sql_type } = require("./utils.js");
+const { sqlsanitize, fkeyPrefix, calc_sql_type } = require("./utils.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -82,8 +82,6 @@ router.post("/delete/:id", async (req, res) => {
 
   res.redirect(`/table/${rows[0].table_id}`);
 });
-
-
 
 router.post("/", async (req, res) => {
   const v = req.body;
