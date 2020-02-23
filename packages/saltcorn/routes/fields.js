@@ -87,10 +87,12 @@ router.post("/delete/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
-  const attributes = v.ftype.startsWith(fkeyPrefix)
-    ? {}
-    : types.as_dict[v.ftype].attributes;
-  if (false) {
+  const fld = new Field(v);
+  const attributes = fld.is_fkey ? {} : types.as_dict[v.ftype].attributes;
+  if (attributes && !v.has_attributes) {
+    res.send(
+      wrap(`New field`, mkForm("/field", attributesToFormFields(fld.type), v))
+    );
   } else {
     if (typeof v.id === "undefined") {
       // insert

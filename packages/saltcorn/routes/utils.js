@@ -13,7 +13,15 @@ const calc_sql_type = ftype => {
   }
 };
 
-const attributesToFormFields = attributes => {};
+const attributesToFormFields = type => {
+  const a2ff = attr => ({
+    label: attr.name,
+    name: attr.name,
+    input_type: "fromtype",
+    type: types.as_dict[attr.type]
+  });
+  return type.attributes ? type.attributes.map(a2ff) : [];
+};
 
 module.exports = {
   sqlsanitize,
