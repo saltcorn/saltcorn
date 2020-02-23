@@ -1,6 +1,8 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
+const types = require("../types");
+
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 const { sqlsanitize, type_to_input } = require("./utils.js");
 
@@ -18,7 +20,8 @@ router.get("/:tname", async (req, res) => {
   const tfields = fields.map(f => ({
     label: f.flabel,
     name: f.fname,
-    input_type: type_to_input(f.ftype)
+    type: types.as_dict[f.ftype],
+    input_type: "fromtype"
   }));
   res.send(
     wrap(
@@ -37,7 +40,8 @@ router.get("/:tname/:id", async (req, res) => {
   var tfields = fields.map(f => ({
     label: f.flabel,
     name: f.fname,
-    input_type: type_to_input(f.ftype)
+    type: types.as_dict[f.ftype],
+    input_type: "fromtype"
   }));
   tfields.push({
     name: "id",

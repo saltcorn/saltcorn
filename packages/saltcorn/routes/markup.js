@@ -26,6 +26,11 @@ const formRowWrap = (hdr, inner) => `<div class="form-group row">
 
 const mkFormRow = v => hdr => {
   switch (hdr.input_type) {
+    case "fromtype":
+      return formRowWrap(
+        hdr,
+        hdr.type.editAs(hdr.name, v && v[hdr.name] ? v[hdr.name] : undefined)
+      );
     case "hidden":
       return `<input type="hidden" class="form-control" name="${hdr.name}" ${
         v ? `value="${v[hdr.name]}"` : ""
