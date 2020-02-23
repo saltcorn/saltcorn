@@ -1,7 +1,10 @@
 const string = {
   name: "String",
   sql_name: "text",
-  attributes: [{ name: "options", type: "String[]", required: false }],
+  attributes: [
+    { name: "match", type: "String", required: false },
+    //{ name: "options", type: "String[]", required: false }
+  ],
   editAs: (nm, v) =>
     `<input type="text" class="form-control" name="${nm}" id="input${nm}" ${
       v ? `value="${v}"` : ""

@@ -27,13 +27,18 @@ const calc_sql_type = ftype => {
   if (ftype.startsWith(fkeyPrefix)) {
     return `int references ${sqlsanitize(ftype.replace(fkeyPrefix, ""))} (id)`;
   } else {
-    return types.as_dict[v.ftype].sql_name;
+    return types.as_dict[ftype].sql_name;
   }
 };
+
+const attributesToFormFields = attributes => {
+    
+}
 
 module.exports = {
   sqlsanitize,
   fkeyPrefix,
   dbFieldsToFormFields,
-  calc_sql_type
+  calc_sql_type,
+  attributesToFormFields
 };
