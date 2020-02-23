@@ -2,7 +2,6 @@ const types = require("../types");
 const db = require("../db");
 const { sqlsanitize } = require("./utils.js");
 
-
 const fkeyPrefix = "Key to ";
 
 class Field {
@@ -29,7 +28,7 @@ class Field {
         };
   }
 
-  sql_type() {
+  get sql_type() {
     if (this.is_fkey) {
       return `int references ${this.reftable} (id)`;
     } else {

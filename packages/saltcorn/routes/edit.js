@@ -4,7 +4,7 @@ const db = require("../db");
 const Field = require("./field");
 
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
-const { sqlsanitize, dbFieldsToFormFields } = require("./utils.js");
+const { sqlsanitize } = require("./utils.js");
 
 const router = new Router();
 
@@ -15,8 +15,8 @@ module.exports = router;
 router.get("/:tname", async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
-  const fields = await Field.get_by_table_id(table.id)
-  const tfields =fields.map(f=>f.to_formfield)
+  const fields = await Field.get_by_table_id(table.id);
+  const tfields = fields.map(f => f.to_formfield);
 
   res.send(
     wrap(
@@ -31,8 +31,8 @@ router.get("/:tname/:id", async (req, res) => {
   const { tname, id } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await Field.get_by_table_id(table.id)
-  const tfields =fields.map(f=>f.to_formfield)
+  const fields = await Field.get_by_table_id(table.id);
+  const tfields = fields.map(f => f.to_formfield);
   tfields.push({
     name: "id",
     input_type: "hidden"
@@ -54,9 +54,8 @@ router.post("/:tname", async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await Field.get_by_table_id(table.id)
+  const fields = await Field.get_by_table_id(table.id);
   const v = req.body;
-  console.log("v", v);
   const fnameList = fields.map(f => sqlsanitize(f.name)).join();
   var valList = fields.map(f => v[f.name]);
   const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();
