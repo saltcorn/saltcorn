@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
+const { types, type_options } = require("../types");
 const { mkTable, mkForm, wrap } = require("./markup.js");
 const { sqlsanitize } = require("./utils.js");
 
@@ -26,7 +27,12 @@ router.get("/:id", async (req, res) => {
           { name: "table_id", input_type: "hidden" },
           { label: "Name", name: "fname", input_type: "text" },
           { label: "Label", name: "flabel", input_type: "text" },
-          { label: "Type", name: "ftype", input_type: "text" }
+          {
+            label: "Type",
+            name: "ftype",
+            input_type: "select",
+            options: type_options
+          }
         ],
         field
       )
@@ -45,7 +51,12 @@ router.get("/new/:table_id", async (req, res) => {
           { name: "table_id", input_type: "hidden" },
           { label: "Name", name: "fname", input_type: "text" },
           { label: "Label", name: "flabel", input_type: "text" },
-          { label: "Type", name: "ftype", input_type: "text" }
+          {
+            label: "Type",
+            name: "ftype",
+            input_type: "select",
+            options: type_options
+          }
         ],
         { table_id }
       )

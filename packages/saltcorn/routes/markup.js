@@ -17,27 +17,38 @@ const mkTable = (hdrs, vs) => {
   return s;
 };
 
+const formRowWrap = (hdr, inner) => `<div class="form-group row">
+    <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
+    <div class="col-sm-10">
+      ${inner}
+    </div>
+  </div>`;
+
 const mkFormRow = v => hdr => {
   switch (hdr.input_type) {
     case "hidden":
       return `<input type="hidden" class="form-control" name="${hdr.name}" ${
         v ? `value="${v[hdr.name]}"` : ""
       }>`;
-      break;
-
+    case "select":
+      const opts = hdr.options
+        .map(o => `<option value="${o}">${o}</option>`)
+        .join("");
+      return formRowWrap(
+        hdr,
+        `<select class="form-control" name="${hdr.name}" id="input${
+          hdr.name
+        }" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""}>${opts}</select>`
+      );
     default:
-      return `<div class="form-group row">
-    <label for="input${hdr.name}" class="col-sm-2 col-form-label">${
-        hdr.label
-      }</label>
-    <div class="col-sm-10">
-      <input type="${hdr.input_type}" class="form-control" name="${
-        hdr.name
-      }" id="input${hdr.name}" ${
-        v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
-      }>
-    </div>
-  </div>`;
+      return formRowWrap(
+        hdr,
+        `<input type="${hdr.input_type}" class="form-control" name="${
+          hdr.name
+        }" id="input${hdr.name}" ${
+          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+        }>`
+      );
   }
 };
 
