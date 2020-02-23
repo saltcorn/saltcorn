@@ -4,12 +4,13 @@ const db = require("../db");
 const types = require("../types");
 
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
-const { sqlsanitize, type_to_input } = require("./utils.js");
+const { sqlsanitize , dbFieldsToFormFields} = require("./utils.js");
 
 const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
+
 
 //create -- new
 router.get("/:tname", async (req, res) => {
@@ -17,12 +18,7 @@ router.get("/:tname", async (req, res) => {
   const table = await db.get_table_by_name(tname);
 
   const fields = await db.get_fields_by_table_id(table.id);
-  const tfields = fields.map(f => ({
-    label: f.flabel,
-    name: f.fname,
-    type: types.as_dict[f.ftype],
-    input_type: "fromtype"
-  }));
+  const tfields =dbFieldsToFormFields(fields)
   res.send(
     wrap(
       `${table.name} create new`,
@@ -37,12 +33,7 @@ router.get("/:tname/:id", async (req, res) => {
   const table = await db.get_table_by_name(tname);
 
   const fields = await db.get_fields_by_table_id(table.id);
-  var tfields = fields.map(f => ({
-    label: f.flabel,
-    name: f.fname,
-    type: types.as_dict[f.ftype],
-    input_type: "fromtype"
-  }));
+  var tfields = dbFieldsToFormFields(fields)
   tfields.push({
     name: "id",
     input_type: "hidden"
@@ -66,6 +57,7 @@ router.post("/:tname", async (req, res) => {
 
   const fields = await db.get_fields_by_table_id(table.id);
   const v = req.body;
+  console.log("v",v)
   const fnameList = fields.map(f => sqlsanitize(f.fname)).join();
   var valList = fields.map(f => v[f.fname]);
   const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();

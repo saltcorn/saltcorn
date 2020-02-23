@@ -3,7 +3,7 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const types = require("../types");
 const { mkTable, mkForm, wrap } = require("./markup.js");
-const { sqlsanitize } = require("./utils.js");
+const { sqlsanitize,fkeyPrefix,calc_sql_type } = require("./utils.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -83,15 +83,8 @@ router.post("/delete/:id", async (req, res) => {
   res.redirect(`/table/${rows[0].table_id}`);
 });
 
-const fkeyPrefix = "Key to ";
 
-const calc_sql_type = ftype => {
-  if (ftype.startsWith(fkeyPrefix)) {
-    return `int references ${sqlsanitize(ftype.replace(fkeyPrefix, ""))} (id)`;
-  } else {
-    return types.as_dict[v.ftype].sql_name;
-  }
-};
+
 router.post("/", async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
