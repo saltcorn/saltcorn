@@ -16,7 +16,8 @@ module.exports = router;
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const field = await db.get_field_by_id(id);
-
+  const tables = await db.get_tables();
+  const fkey_opts = tables.map(t => fkeyPrefix + t.name);
   res.send(
     wrap(
       `Edit field`,
@@ -31,7 +32,7 @@ router.get("/:id", async (req, res) => {
             label: "Type",
             name: "ftype",
             input_type: "select",
-            options: types.names
+            options: types.names.concat(fkey_opts)
           }
         ],
         field
@@ -41,7 +42,8 @@ router.get("/:id", async (req, res) => {
 });
 router.get("/new/:table_id", async (req, res) => {
   const { table_id } = req.params;
-
+  const tables = await db.get_tables();
+  const fkey_opts = tables.map(t => fkeyPrefix + t.name);
   res.send(
     wrap(
       `New field`,
@@ -55,7 +57,7 @@ router.get("/new/:table_id", async (req, res) => {
             label: "Type",
             name: "ftype",
             input_type: "select",
-            options: types.names
+            options: types.names.concat(fkey_opts)
           }
         ],
         { table_id }
@@ -81,15 +83,25 @@ router.post("/delete/:id", async (req, res) => {
   res.redirect(`/table/${rows[0].table_id}`);
 });
 
+const fkeyPrefix = "Key to ";
+
+const calc_sql_type = ftype => {
+  if (ftype.startsWith(fkeyPrefix)) {
+    return `int references ${sqlsanitize(ftype.replace(fkeyPrefix, ""))} (id)`;
+  } else {
+    return types.as_dict[v.ftype].sql_name;
+  }
+};
 router.post("/", async (req, res) => {
   const v = req.body;
+  const sql_type = calc_sql_type(v.ftype);
   if (typeof v.id === "undefined") {
     // insert
     const table = await db.get_table_by_id(v.table_id);
     await db.query(
       `alter table ${sqlsanitize(table.name)} add column ${sqlsanitize(
         v.fname
-      )} ${sqlsanitize(v.ftype)}`
+      )} ${sql_type}`
     );
     await db.query(
       "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",

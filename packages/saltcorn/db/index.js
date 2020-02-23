@@ -12,6 +12,11 @@ const get_table_by_name = async id => {
   return tq.rows[0];
 };
 
+const get_tables = async () => {
+  const tq = await pool.query("SELECT * FROM tables");
+  return tq.rows;
+};
+
 const get_field_by_id = async id => {
   const tq = await pool.query("SELECT * FROM fields WHERE id = $1", [id]);
   return tq.rows[0];
@@ -26,5 +31,6 @@ module.exports = {
   get_table_by_id,
   get_field_by_id,
   get_table_by_name,
-  get_fields_by_table_id
+  get_fields_by_table_id,
+  get_tables
 };
