@@ -31,9 +31,7 @@ const calc_sql_type = ftype => {
   }
 };
 
-const attributesToFormFields = attributes => {
-    
-}
+const attributesToFormFields = attributes => {};
 
 module.exports = {
   sqlsanitize,

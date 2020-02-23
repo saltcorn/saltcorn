@@ -87,31 +87,31 @@ router.post("/delete/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
-  const attributes = v.ftype.startsWith(fkeyPrefix) ? {}
-  : (types.as_dict[v.ftype].attributes)
-  if(false){
-  } else{
+  const attributes = v.ftype.startsWith(fkeyPrefix)
+    ? {}
+    : types.as_dict[v.ftype].attributes;
+  if (false) {
+  } else {
     if (typeof v.id === "undefined") {
-        // insert
-        const table = await db.get_table_by_id(v.table_id);
-        await db.query(
+      // insert
+      const table = await db.get_table_by_id(v.table_id);
+      await db.query(
         `alter table ${sqlsanitize(table.name)} add column ${sqlsanitize(
-            v.fname
+          v.fname
         )} ${sql_type}`
-        );
-        await db.query(
+      );
+      await db.query(
         "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",
         [v.table_id, v.fname, v.flabel, v.ftype]
-        );
+      );
     } else {
-        // update
-        //TODO edit field
-        await db.query(
+      // update
+      //TODO edit field
+      await db.query(
         "update fields set table_id=$1, fname=$2, flabel=$3, ftype=$4 where id=$5",
         [v.table_id, v.fname, v.flabel, v.ftype, v.id]
-        );
+      );
     }
     res.redirect(`/table/${v.table_id}`);
   }
-  
 });

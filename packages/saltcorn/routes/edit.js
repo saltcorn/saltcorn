@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const types = require("../types");
+const Field = require("./field");
 
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 const { sqlsanitize, dbFieldsToFormFields } = require("./utils.js");
@@ -15,9 +15,9 @@ module.exports = router;
 router.get("/:tname", async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
+  const fields = await Field.get_by_table_id(table.id)
+  const tfields =fields.map(f=>f.to_formfield)
 
-  const fields = await db.get_fields_by_table_id(table.id);
-  const tfields = dbFieldsToFormFields(fields);
   res.send(
     wrap(
       `${table.name} create new`,
@@ -31,8 +31,8 @@ router.get("/:tname/:id", async (req, res) => {
   const { tname, id } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await db.get_fields_by_table_id(table.id);
-  var tfields = dbFieldsToFormFields(fields);
+  const fields = await Field.get_by_table_id(table.id)
+  const tfields =fields.map(f=>f.to_formfield)
   tfields.push({
     name: "id",
     input_type: "hidden"
@@ -54,11 +54,11 @@ router.post("/:tname", async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await db.get_fields_by_table_id(table.id);
+  const fields = await Field.get_by_table_id(table.id)
   const v = req.body;
   console.log("v", v);
-  const fnameList = fields.map(f => sqlsanitize(f.fname)).join();
-  var valList = fields.map(f => v[f.fname]);
+  const fnameList = fields.map(f => sqlsanitize(f.name)).join();
+  var valList = fields.map(f => v[f.name]);
   const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();
   if (typeof v.id === "undefined") {
     await db.query(
@@ -69,7 +69,7 @@ router.post("/:tname", async (req, res) => {
     );
   } else {
     const assigns = fields
-      .map((f, ix) => sqlsanitize(f.fname) + "=$" + (ix + 1))
+      .map((f, ix) => sqlsanitize(f.name) + "=$" + (ix + 1))
       .join();
     valList.push(v.id);
     const q = `update ${sqlsanitize(
