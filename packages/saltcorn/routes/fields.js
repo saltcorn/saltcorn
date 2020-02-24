@@ -4,7 +4,12 @@ const db = require("../db");
 const types = require("../types");
 const { mkTable, mkForm, wrap } = require("./markup.js");
 const Field = require("./field.js");
-const { sqlsanitize, fkeyPrefix, calc_sql_type } = require("./utils.js");
+const {
+  sqlsanitize,
+  fkeyPrefix,
+  calc_sql_type,
+  attributesToFormFields
+} = require("./utils.js");
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -88,11 +93,16 @@ router.post("/", async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);
-  const attributes = fld.is_fkey ? {} : types.as_dict[v.ftype].attributes;
-  if (attributes && !v.has_attributes) {
-    res.send(
-      wrap(`New field`, mkForm("/field", attributesToFormFields(fld.type), v))
-    );
+  const attributes = fld.is_fkey ? [] : types.as_dict[v.ftype].attributes;
+  if (attributes && typeof v.has_attributes === "undefined") {
+    var attrFormFields = attributesToFormFields(fld.type);
+    attrFormFields.push({ name: "has_attributes", input_type: "hidden" });
+    attrFormFields.push({ name: "fname", input_type: "hidden" });
+    attrFormFields.push({ name: "flabel", input_type: "hidden" });
+    attrFormFields.push({ name: "ftype", input_type: "hidden" });
+    attrFormFields.push({ name: "table_id", input_type: "hidden" });
+    const formvals = { has_attributes: "true", ...v };
+    res.send(wrap(`New field`, mkForm("/field", attrFormFields, formvals)));
   } else {
     if (typeof v.id === "undefined") {
       // insert
@@ -102,13 +112,24 @@ router.post("/", async (req, res) => {
           v.fname
         )} ${sql_type}`
       );
-      await db.query(
-        "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",
-        [v.table_id, v.fname, v.flabel, v.ftype]
-      );
+      if (attributes) {
+        var attrs = {};
+        attributes.forEach(a => {
+          attrs[a.name] = v[a.name];
+        });
+        await db.query(
+          "insert into fields(table_id, fname, flabel, ftype, attributes) values($1,$2,$3,$4,$5)",
+          [v.table_id, v.fname, v.flabel, v.ftype, attrs]
+        );
+      } else {
+        await db.query(
+          "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",
+          [v.table_id, v.fname, v.flabel, v.ftype]
+        );
+      }
     } else {
       // update
-      //TODO edit field
+      //TODO edit db field
       await db.query(
         "update fields set table_id=$1, fname=$2, flabel=$3, ftype=$4 where id=$5",
         [v.table_id, v.fname, v.flabel, v.ftype, v.id]
