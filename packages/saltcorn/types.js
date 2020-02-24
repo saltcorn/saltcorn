@@ -8,7 +8,15 @@ const string = {
   editAs: (nm, v) =>
     `<input type="text" class="form-control" name="${nm}" id="input${nm}" ${
       v ? `value="${v}"` : ""
-    }>`
+    }>`,
+  read: v => {
+    switch (typeof v) {
+      case "string":
+        return v;
+      default:
+        return undefined;
+    }
+  }
 };
 
 const int = {
@@ -21,7 +29,18 @@ const int = {
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false }
-  ]
+  ],
+  read: v => {
+    switch (typeof v) {
+      case "number":
+        return v;
+      case "string":
+        const parsed =  parseInt(v)
+        return isNaN(parsed) ? undefined : parsed;
+      default:
+        return undefined;
+    }
+  }
 };
 
 const types = [string, int];

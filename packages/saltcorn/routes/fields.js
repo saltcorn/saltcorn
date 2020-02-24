@@ -115,7 +115,9 @@ router.post("/", async (req, res) => {
       if (attributes) {
         var attrs = {};
         attributes.forEach(a => {
-          attrs[a.name] = v[a.name];
+          const t = types.as_dict[a.type];
+          const aval = t.read(v[a.name]);
+          if (typeof aval !== "undefined") attrs[a.name] = aval;
         });
         await db.query(
           "insert into fields(table_id, fname, flabel, ftype, attributes) values($1,$2,$3,$4,$5)",

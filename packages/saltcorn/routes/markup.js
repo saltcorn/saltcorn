@@ -59,7 +59,7 @@ const mkFormRow = v => hdr => {
 
 const mkForm = (action, hdrs, v) => {
   const top = `<form action="${action}" method="post">`;
-  console.log(hdrs);
+  //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v)).join("");
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
