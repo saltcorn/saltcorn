@@ -16,9 +16,12 @@ const string = {
       default:
         return undefined;
     }
-  }
-};
+  },
+  validate: ({match}) => x => true
 
+};
+const isdef = x=>
+  typeof x ==="undefined" ? false : true
 const int = {
   name: "Integer",
   sql_name: "text",
@@ -40,6 +43,13 @@ const int = {
       default:
         return undefined;
     }
+  },
+  validate: ({min, max}) => x => {
+    if(isdef(min) && x < min)
+      return {error: `Must be ${min} or higher`}
+    if(isdef(max) && x > max)
+      return {error: `Must be ${max} or less`}
+    return true
   }
 };
 

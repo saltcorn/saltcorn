@@ -11,6 +11,7 @@ class Field {
     this.is_fkey = o.ftype.startsWith(fkeyPrefix);
     if (!this.is_fkey) this.type = types.as_dict[o.ftype];
     else this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
+    this.attributes = o.attributes;
   }
 
   get to_formfield() {
@@ -34,6 +35,18 @@ class Field {
     } else {
       return this.type.sql_name;
     }
+  }
+
+  validate(s) {
+    const type=this.is_fkey? types.as_dict.Integer : this.type
+    const readval = type.read(s)
+    if(typeof readval==="undefined")
+      return {error: "Unable to read "+type.name}
+    const valres=type.validate(this.attributes||{})(readval)
+    if(valres.error)
+      return valres
+    else
+      return {success: readval}
   }
 
   static async get_by_table_id(tid) {

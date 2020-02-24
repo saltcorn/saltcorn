@@ -57,8 +57,25 @@ router.post("/:tname", async (req, res) => {
   const fields = await Field.get_by_table_id(table.id);
   const v = req.body;
   const fnameList = fields.map(f => sqlsanitize(f.name)).join();
-  var valList = fields.map(f => v[f.name]);
   const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();
+  var valList = []
+  var errors = []
+  fields.forEach(f => {
+    const valres = f.validate(v[f.name])
+    if(valres.error){
+      errors.push(`${f.name}: ${valres.error}`)
+      valList.push(null)
+    }
+    else
+      valList.push(valres.success)
+  });
+  if(errors.length>0) {
+    res.send(
+      wrap(
+        `${table.name} create new`,
+        errors.join('\n')
+      ))
+  } else {
   if (typeof v.id === "undefined") {
     await db.query(
       `insert into ${sqlsanitize(
@@ -77,4 +94,5 @@ router.post("/:tname", async (req, res) => {
     await db.query(q, valList);
   }
   res.redirect(`/list/${table.name}`);
+}
 });
