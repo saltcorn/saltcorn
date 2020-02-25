@@ -37,15 +37,12 @@ router.get("/:tname/:id", async (req, res) => {
     name: "id",
     input_type: "hidden"
   });
-  const { rows } = await db.query(
-    `select * from ${sqlsanitize(table.name)} where id = $1`,
-    [id]
-  );
+  const row = await db.selectOne(table.name, { id: id });
   res.send(
     wrap(
       `${table.name} create new`,
       h(1, "Edit " + table.name),
-      mkForm(`/edit/${tname}`, tfields, rows[0])
+      mkForm(`/edit/${tname}`, tfields, row)
     )
   );
 });
@@ -56,36 +53,23 @@ router.post("/:tname", async (req, res) => {
 
   const fields = await Field.get_by_table_id(table.id);
   const v = req.body;
-  const fnameList = fields.map(f => sqlsanitize(f.name)).join();
-  const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();
-  var valList = [];
+
   var errors = [];
   fields.forEach(f => {
     const valres = f.validate(v[f.name]);
     if (valres.error) {
       errors.push(`${f.name}: ${valres.error}`);
-      valList.push(null);
-    } else valList.push(valres.success);
+    } 
   });
   if (errors.length > 0) {
     res.send(wrap(`${table.name} create new`, errors.join("\n")));
   } else {
     if (typeof v.id === "undefined") {
-      await db.query(
-        `insert into ${sqlsanitize(
-          table.name
-        )}(${fnameList}) values(${valPosList})`,
-        valList
-      );
+      await db.insert(table.name, v)
     } else {
-      const assigns = fields
-        .map((f, ix) => sqlsanitize(f.name) + "=$" + (ix + 1))
-        .join();
-      valList.push(v.id);
-      const q = `update ${sqlsanitize(
-        table.name
-      )} set ${assigns} where id=$${fields.length + 1}`;
-      await db.query(q, valList);
+      const id=v.id
+      delete v.id
+      await db.update(table.name, v, id)
     }
     res.redirect(`/list/${table.name}`);
   }

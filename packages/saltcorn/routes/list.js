@@ -24,7 +24,7 @@ router.get("/:tname", async (req, res) => {
     label: "Delete",
     key: r => post_btn(`/delete/${table.name}/${r.id}`, "Delete")
   });
-  const rows  = await db.select(table.name);
+  const rows = await db.select(table.name);
   res.send(
     wrap(
       `${table.name} data table`,

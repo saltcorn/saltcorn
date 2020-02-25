@@ -48,7 +48,7 @@ class Field {
   }
 
   static async get_by_table_id(tid) {
-    const db_flds = await db.get_fields_by_table_id(tid);
+    const db_flds = await db.select("fields", { table_id: tid });
     return db_flds.map(dbf => new Field(dbf));
   }
 }

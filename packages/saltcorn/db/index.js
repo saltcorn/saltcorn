@@ -2,22 +2,67 @@ const { Pool } = require("pg");
 
 const pool = new Pool();
 
-const sqlsanitize = nm => nm.replace(/\b@[a-zA-Z][a-zA-Z0-9]*\b/g, "");
+const sqlsanitize = nm => nm.replace(/\b@[a-zA-Z][a-z_A-Z0-9]*\b/g, "");
 
-const select = async (tbl, where) => {
-  const wheres = where ? Object.entries(where) : [];
-  const where_clause = where
-    ? "where " + wheres.map((kv, i) => `${kv[0]}=${i + 1}`).join(" and ")
+const mkWhere = whereObj => {
+  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const where = whereObj
+    ? "where " +
+      wheres.map((kv, i) => `${sqlsanitize(kv[0])}=$${i + 1}`).join(" and ")
     : "";
-  
+  const values = wheres.map(kv => kv[1]);
+  return { where, values };
+};
+
+const select = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj);
   const tq = await pool.query(
-    `SELECT * FROM ${sqlsanitize(tbl)} ${where_clause}`,
-    wheres.map(kv => kv[1])
+    `SELECT * FROM ${sqlsanitize(tbl)} ${where}`,
+    values
   );
 
   return tq.rows;
 };
 
+const deleteWhere = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj);
+  const tq = await pool.query(
+    `delete FROM ${sqlsanitize(tbl)} ${where}`,
+    values
+  );
+
+  return tq.rows;
+};
+
+const insert = async (tbl, obj) => {
+  const kvs = Object.entries(obj)
+  const fnameList = kvs.map(kv=> sqlsanitize(kv[0])).join();
+  const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
+  const valList = kvs.map(kv => kv[1]);
+  await pool.query(
+    `insert into ${sqlsanitize(
+      tbl
+    )}(${fnameList}) values(${valPosList})`,
+    valList
+  );
+}
+
+const update = async (tbl, obj, id) => {
+  const kvs = Object.entries(obj)
+  const assigns = kvs
+    .map((kv, ix) => sqlsanitize(kv[0]) + "=$" + (ix + 1))
+    .join();
+  var valList = kvs.map(kv => kv[1]);
+  valList.push(id)
+  const q = `update ${sqlsanitize(
+      tbl
+    )} set ${assigns} where id=$${kvs.length + 1}`;
+  await pool.query(q, valList);
+}
+const selectOne = async (tbl, where) => {
+  const rows = await select(tbl, where);
+  return rows[0];
+};
 const get_table_by_id = async id => {
   const tq = await pool.query("SELECT * FROM tables WHERE id = $1", [id]);
   return tq.rows[0];
@@ -38,16 +83,15 @@ const get_field_by_id = async id => {
   return tq.rows[0];
 };
 
-const get_fields_by_table_id = async id => {
-  const tq = await pool.query("SELECT * FROM fields WHERE table_id = $1", [id]);
-  return tq.rows;
-};
 module.exports = {
   query: (text, params) => pool.query(text, params),
   get_table_by_id,
   get_field_by_id,
   get_table_by_name,
-  get_fields_by_table_id,
   get_tables,
-  select
+  select,
+  selectOne,
+  insert,
+  update,
+  deleteWhere
 };
