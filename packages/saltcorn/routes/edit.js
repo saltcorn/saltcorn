@@ -59,17 +59,17 @@ router.post("/:tname", async (req, res) => {
     const valres = f.validate(v[f.name]);
     if (valres.error) {
       errors.push(`${f.name}: ${valres.error}`);
-    } 
+    }
   });
   if (errors.length > 0) {
     res.send(wrap(`${table.name} create new`, errors.join("\n")));
   } else {
     if (typeof v.id === "undefined") {
-      await db.insert(table.name, v)
+      await db.insert(table.name, v);
     } else {
-      const id=v.id
-      delete v.id
-      await db.update(table.name, v, id)
+      const id = v.id;
+      delete v.id;
+      await db.update(table.name, v, id);
     }
     res.redirect(`/list/${table.name}`);
   }

@@ -35,30 +35,27 @@ const deleteWhere = async (tbl, whereObj) => {
 };
 
 const insert = async (tbl, obj) => {
-  const kvs = Object.entries(obj)
-  const fnameList = kvs.map(kv=> sqlsanitize(kv[0])).join();
+  const kvs = Object.entries(obj);
+  const fnameList = kvs.map(kv => sqlsanitize(kv[0])).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(kv => kv[1]);
   await pool.query(
-    `insert into ${sqlsanitize(
-      tbl
-    )}(${fnameList}) values(${valPosList})`,
+    `insert into ${sqlsanitize(tbl)}(${fnameList}) values(${valPosList})`,
     valList
   );
-}
+};
 
 const update = async (tbl, obj, id) => {
-  const kvs = Object.entries(obj)
+  const kvs = Object.entries(obj);
   const assigns = kvs
     .map((kv, ix) => sqlsanitize(kv[0]) + "=$" + (ix + 1))
     .join();
   var valList = kvs.map(kv => kv[1]);
-  valList.push(id)
-  const q = `update ${sqlsanitize(
-      tbl
-    )} set ${assigns} where id=$${kvs.length + 1}`;
+  valList.push(id);
+  const q = `update ${sqlsanitize(tbl)} set ${assigns} where id=$${kvs.length +
+    1}`;
   await pool.query(q, valList);
-}
+};
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
   return rows[0];
