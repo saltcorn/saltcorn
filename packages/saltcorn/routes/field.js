@@ -38,15 +38,13 @@ class Field {
   }
 
   validate(s) {
-    const type=this.is_fkey? types.as_dict.Integer : this.type
-    const readval = type.read(s)
-    if(typeof readval==="undefined")
-      return {error: "Unable to read "+type.name}
-    const valres=type.validate(this.attributes||{})(readval)
-    if(valres.error)
-      return valres
-    else
-      return {success: readval}
+    const type = this.is_fkey ? types.as_dict.Integer : this.type;
+    const readval = type.read(s);
+    if (typeof readval === "undefined")
+      return { error: "Unable to read " + type.name };
+    const valres = type.validate(this.attributes || {})(readval);
+    if (valres.error) return valres;
+    else return { success: readval };
   }
 
   static async get_by_table_id(tid) {

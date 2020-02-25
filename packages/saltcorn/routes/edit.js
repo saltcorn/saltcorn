@@ -58,41 +58,35 @@ router.post("/:tname", async (req, res) => {
   const v = req.body;
   const fnameList = fields.map(f => sqlsanitize(f.name)).join();
   const valPosList = fields.map((f, ix) => "$" + (ix + 1)).join();
-  var valList = []
-  var errors = []
+  var valList = [];
+  var errors = [];
   fields.forEach(f => {
-    const valres = f.validate(v[f.name])
-    if(valres.error){
-      errors.push(`${f.name}: ${valres.error}`)
-      valList.push(null)
-    }
-    else
-      valList.push(valres.success)
+    const valres = f.validate(v[f.name]);
+    if (valres.error) {
+      errors.push(`${f.name}: ${valres.error}`);
+      valList.push(null);
+    } else valList.push(valres.success);
   });
-  if(errors.length>0) {
-    res.send(
-      wrap(
-        `${table.name} create new`,
-        errors.join('\n')
-      ))
+  if (errors.length > 0) {
+    res.send(wrap(`${table.name} create new`, errors.join("\n")));
   } else {
-  if (typeof v.id === "undefined") {
-    await db.query(
-      `insert into ${sqlsanitize(
+    if (typeof v.id === "undefined") {
+      await db.query(
+        `insert into ${sqlsanitize(
+          table.name
+        )}(${fnameList}) values(${valPosList})`,
+        valList
+      );
+    } else {
+      const assigns = fields
+        .map((f, ix) => sqlsanitize(f.name) + "=$" + (ix + 1))
+        .join();
+      valList.push(v.id);
+      const q = `update ${sqlsanitize(
         table.name
-      )}(${fnameList}) values(${valPosList})`,
-      valList
-    );
-  } else {
-    const assigns = fields
-      .map((f, ix) => sqlsanitize(f.name) + "=$" + (ix + 1))
-      .join();
-    valList.push(v.id);
-    const q = `update ${sqlsanitize(
-      table.name
-    )} set ${assigns} where id=$${fields.length + 1}`;
-    await db.query(q, valList);
+      )} set ${assigns} where id=$${fields.length + 1}`;
+      await db.query(q, valList);
+    }
+    res.redirect(`/list/${table.name}`);
   }
-  res.redirect(`/list/${table.name}`);
-}
 });

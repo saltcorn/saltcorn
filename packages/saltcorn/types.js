@@ -17,11 +17,9 @@ const string = {
         return undefined;
     }
   },
-  validate: ({match}) => x => true
-
+  validate: ({ match }) => x => true
 };
-const isdef = x=>
-  typeof x ==="undefined" ? false : true
+const isdef = x => (typeof x === "undefined" ? false : true);
 const int = {
   name: "Integer",
   sql_name: "text",
@@ -38,18 +36,16 @@ const int = {
       case "number":
         return v;
       case "string":
-        const parsed =  parseInt(v)
+        const parsed = parseInt(v);
         return isNaN(parsed) ? undefined : parsed;
       default:
         return undefined;
     }
   },
-  validate: ({min, max}) => x => {
-    if(isdef(min) && x < min)
-      return {error: `Must be ${min} or higher`}
-    if(isdef(max) && x > max)
-      return {error: `Must be ${max} or less`}
-    return true
+  validate: ({ min, max }) => x => {
+    if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+    if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+    return true;
   }
 };
 

@@ -4,7 +4,7 @@ const mkTable = (hdrs, vs) => {
     s += `<th>${hdr.label}</th>`;
   });
   s += "</tr></thead><tbody>";
-  vs.forEach(v => {
+  (vs||[]).forEach(v => {
     const tds = hdrs
       .map(
         hdr =>
