@@ -51,9 +51,11 @@ const mkFormRow = v => hdr => {
         .join("");
       return formRowWrap(
         hdr,
-        `<select class="form-control" class="chosen-select" multiple name="${hdr.name}" id="input${
+        `<select class="form-control" class="chosen-select" multiple name="${
           hdr.name
-        }" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""}>${mopts}</select><script>$(function(){$("#input${
+        }" id="input${hdr.name}" ${
+          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+        }>${mopts}</select><script>$(function(){$("#input${
           hdr.name
         }").chosen()})</script>`
       );

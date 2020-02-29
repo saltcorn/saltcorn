@@ -1,8 +1,6 @@
 const { Pool } = require("pg");
-
+const { sqlsanitize } = require("./internal");
 const pool = new Pool();
-
-const sqlsanitize = nm => nm.replace(/\b@[a-zA-Z][a-z_A-Z0-9]*\b/g, "");
 
 const mkWhere = whereObj => {
   const wheres = whereObj ? Object.entries(whereObj) : [];

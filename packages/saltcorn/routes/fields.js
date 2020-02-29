@@ -3,7 +3,7 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const types = require("../types");
 const { mkTable, mkForm, wrap } = require("./markup.js");
-const Field = require("./field.js");
+const Field = require("../db/field");
 const {
   sqlsanitize,
   fkeyPrefix,

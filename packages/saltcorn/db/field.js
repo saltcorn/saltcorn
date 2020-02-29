@@ -1,6 +1,6 @@
 const types = require("../types");
-const db = require("../db");
-const { sqlsanitize } = require("./utils.js");
+const db = require(".");
+const { sqlsanitize } = require("./internal.js");
 
 const fkeyPrefix = "Key to ";
 

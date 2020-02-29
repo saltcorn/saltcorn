@@ -1,6 +1,6 @@
 const db = require("../db");
-const Field = require("./field");
-const { mkTable, h } = require("./markup.js");
+const Field = require("../db/field");
+const { mkTable, h } = require("../routes/markup.js");
 
 const list = {
   name: "List",
@@ -35,5 +35,5 @@ const list = {
 };
 
 module.exports = {
-  list
+  ...list
 };

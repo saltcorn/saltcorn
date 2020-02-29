@@ -1,10 +1,9 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const Field = require("./field");
+const Field = require("../db/field");
 
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
-const { sqlsanitize } = require("./utils.js");
 
 const router = new Router();
 

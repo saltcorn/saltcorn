@@ -1,7 +1,5 @@
 const types = require("../types");
-
-//https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
-const sqlsanitize = nm => nm.replace(/\b@[a-zA-Z][a-zA-Z0-9]*\b/g, "");
+const { sqlsanitize } = require("../db/internal.js");
 
 const fkeyPrefix = "Key to ";
 

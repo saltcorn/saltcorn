@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const viewtemplates = require("./viewtemplates");
+const viewtemplates = require("../viewtemplates");
 const { wrap } = require("./markup.js");
 
 const router = new Router();
