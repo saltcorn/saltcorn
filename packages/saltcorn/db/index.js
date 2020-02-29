@@ -27,10 +27,13 @@ const insert = async (tbl, obj) => {
   const fnameList = kvs.map(kv => sqlsanitize(kv[0])).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(kv => kv[1]);
-  await pool.query(
-    `insert into ${sqlsanitize(tbl)}(${fnameList}) values(${valPosList})`,
+  const { rows } = await pool.query(
+    `insert into ${sqlsanitize(
+      tbl
+    )}(${fnameList}) values(${valPosList}) returning id`,
     valList
   );
+  return rows[0].id;
 };
 
 const update = async (tbl, obj, id) => {

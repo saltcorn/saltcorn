@@ -88,8 +88,17 @@ const mkForm = (action, hdrs, v) => {
 };
 
 const h = (sz, s) => `<h${sz}>${s}</h${sz}>`;
+const ul = lis => `<ul>${lis.map(li => `<li>${li}</li>`).join("")}</ul>`;
+const ul_nav = lis =>
+  `<ul class="nav">${lis
+    .map(
+      li =>
+        `<li class="nav-item"><a class="nav-link" href="${li[0]}">${li[1]}</a></li>`
+    )
+    .join("")}</ul>`;
 const link = (href, s) => `<a href="${href}">${s}</a>`;
 const post_btn = (href, s) => `<form action="${href}" method="post">
+
 <button type="submit" class="btn btn-primary">${s}</button></form>`;
 
 const wrap = (title, ...s) => `<!doctype html>
@@ -123,6 +132,8 @@ module.exports = {
   mkForm,
   wrap,
   h,
+  ul,
+  ul_nav,
   link,
   post_btn,
   mkHiddenFormFields

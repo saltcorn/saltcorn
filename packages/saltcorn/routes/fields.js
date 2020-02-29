@@ -24,50 +24,47 @@ router.get("/:id", async (req, res) => {
   const field = await db.get_field_by_id(id);
   const tables = await db.get_tables();
   const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  res.send(
-    wrap(
-      `Edit field`,
-      mkForm(
-        "/field",
-        [
-          { name: "id", input_type: "hidden" },
-          { name: "table_id", input_type: "hidden" },
-          { label: "Name", name: "fname", input_type: "text" },
-          { label: "Label", name: "flabel", input_type: "text" },
-          {
-            label: "Type",
-            name: "ftype",
-            input_type: "select",
-            options: types.names.concat(fkey_opts)
-          }
-        ],
-        field
-      )
+  res.sendWrap(
+    `Edit field`,
+    mkForm(
+      "/field",
+      [
+        { name: "id", input_type: "hidden" },
+        { name: "table_id", input_type: "hidden" },
+        { label: "Name", name: "fname", input_type: "text" },
+        { label: "Label", name: "flabel", input_type: "text" },
+        {
+          label: "Type",
+          name: "ftype",
+          input_type: "select",
+          options: types.names.concat(fkey_opts)
+        }
+      ],
+      field
     )
   );
 });
+
 router.get("/new/:table_id", async (req, res) => {
   const { table_id } = req.params;
   const tables = await db.get_tables();
   const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  res.send(
-    wrap(
-      `New field`,
-      mkForm(
-        "/field",
-        [
-          { name: "table_id", input_type: "hidden" },
-          { label: "Name", name: "fname", input_type: "text" },
-          { label: "Label", name: "flabel", input_type: "text" },
-          {
-            label: "Type",
-            name: "ftype",
-            input_type: "select",
-            options: types.names.concat(fkey_opts)
-          }
-        ],
-        { table_id }
-      )
+  res.sendWrap(
+    `New field`,
+    mkForm(
+      "/field",
+      [
+        { name: "table_id", input_type: "hidden" },
+        { label: "Name", name: "fname", input_type: "text" },
+        { label: "Label", name: "flabel", input_type: "text" },
+        {
+          label: "Type",
+          name: "ftype",
+          input_type: "select",
+          options: types.names.concat(fkey_opts)
+        }
+      ],
+      { table_id }
     )
   );
 });
@@ -102,7 +99,7 @@ router.post("/", async (req, res) => {
     attrFormFields.push({ name: "ftype", input_type: "hidden" });
     attrFormFields.push({ name: "table_id", input_type: "hidden" });
     const formvals = { has_attributes: "true", ...v };
-    res.send(wrap(`New field`, mkForm("/field", attrFormFields, formvals)));
+    res.sendWrap(`New field`, mkForm("/field", attrFormFields, formvals));
   } else {
     if (typeof v.id === "undefined") {
       // insert

@@ -17,12 +17,10 @@ router.get("/:tname", async (req, res) => {
   const fields = await Field.get_by_table_id(table.id);
   const tfields = fields.map(f => f.to_formfield);
 
-  res.send(
-    wrap(
-      `${table.name} create new`,
-      h(1, "New " + table.name),
-      mkForm(`/edit/${tname}`, tfields)
-    )
+  res.sendWrap(
+    `${table.name} create new`,
+    h(1, "New " + table.name),
+    mkForm(`/edit/${tname}`, tfields)
   );
 });
 
@@ -37,12 +35,10 @@ router.get("/:tname/:id", async (req, res) => {
     input_type: "hidden"
   });
   const row = await db.selectOne(table.name, { id: id });
-  res.send(
-    wrap(
-      `${table.name} create new`,
-      h(1, "Edit " + table.name),
-      mkForm(`/edit/${tname}`, tfields, row)
-    )
+  res.sendWrap(
+    `${table.name} create new`,
+    h(1, "Edit " + table.name),
+    mkForm(`/edit/${tname}`, tfields, row)
   );
 });
 
@@ -61,7 +57,7 @@ router.post("/:tname", async (req, res) => {
     }
   });
   if (errors.length > 0) {
-    res.send(wrap(`${table.name} create new`, errors.join("\n")));
+    res.sendWrap(`${table.name} create new`, errors.join("\n"));
   } else {
     if (typeof v.id === "undefined") {
       await db.insert(table.name, v);

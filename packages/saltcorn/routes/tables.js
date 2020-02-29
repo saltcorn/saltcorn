@@ -14,11 +14,9 @@ const router = new Router();
 module.exports = router;
 
 router.get("/new/", async (req, res) => {
-  res.send(
-    wrap(
-      `New table`,
-      mkForm("/table", [{ label: "Name", name: "name", input_type: "text" }])
-    )
+  res.sendWrap(
+    `New table`,
+    mkForm("/table", [{ label: "Name", name: "name", input_type: "text" }])
   );
 });
 router.get("/:id", async (req, res) => {
@@ -28,26 +26,24 @@ router.get("/:id", async (req, res) => {
   const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
   const fields = fq.rows;
 
-  res.send(
-    wrap(
-      `${table.name} table`,
-      h(1, table.name),
-      link(`/list/${table.name}`, "List"),
-      mkTable(
-        [
-          { label: "Name", key: "fname" },
-          { label: "Label", key: "flabel" },
-          { label: "Type", key: "ftype" },
-          { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
-          {
-            label: "Delete",
-            key: r => post_btn(`/field/delete/${r.id}`, "Delete")
-          }
-        ],
-        fields
-      ),
-      link(`/field/new/${table.id}`, "Add field")
-    )
+  res.sendWrap(
+    `${table.name} table`,
+    h(1, table.name),
+    link(`/list/${table.name}`, "List"),
+    mkTable(
+      [
+        { label: "Name", key: "fname" },
+        { label: "Label", key: "flabel" },
+        { label: "Type", key: "ftype" },
+        { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+        {
+          label: "Delete",
+          key: r => post_btn(`/field/delete/${r.id}`, "Delete")
+        }
+      ],
+      fields
+    ),
+    link(`/field/new/${table.id}`, "Add field")
   );
 });
 
@@ -73,22 +69,20 @@ router.post("/delete/:id", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const { rows } = await db.query("SELECT * FROM tables");
-  res.send(
-    wrap(
-      "Tables",
-      h(1, "Tables"),
-      mkTable(
-        [
-          { label: "Name", key: "name" },
-          { label: "View", key: r => link(`/table/${r.id}`, "Edit") },
-          {
-            label: "Delete",
-            key: r => post_btn(`/table/delete/${r.id}`, "Delete")
-          }
-        ],
-        rows
-      ),
-      link(`/table/new`, "Add table")
-    )
+  res.sendWrap(
+    "Tables",
+    h(1, "Tables"),
+    mkTable(
+      [
+        { label: "Name", key: "name" },
+        { label: "View", key: r => link(`/table/${r.id}`, "Edit") },
+        {
+          label: "Delete",
+          key: r => post_btn(`/table/delete/${r.id}`, "Delete")
+        }
+      ],
+      rows
+    ),
+    link(`/table/new`, "Add table")
   );
 });

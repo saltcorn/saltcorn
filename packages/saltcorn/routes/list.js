@@ -24,12 +24,10 @@ router.get("/:tname", async (req, res) => {
     key: r => post_btn(`/delete/${table.name}/${r.id}`, "Delete")
   });
   const rows = await db.select(table.name);
-  res.send(
-    wrap(
-      `${table.name} data table`,
-      h(1, table.name),
-      mkTable(tfields, rows),
-      link(`/edit/${table.name}`, "Add row")
-    )
+  res.sendWrap(
+    `${table.name} data table`,
+    h(1, table.name),
+    mkTable(tfields, rows),
+    link(`/edit/${table.name}`, "Add row")
   );
 });

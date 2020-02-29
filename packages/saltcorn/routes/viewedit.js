@@ -10,6 +10,8 @@ const {
   link,
   post_btn
 } = require("./markup.js");
+const View = require("../db/view");
+const { refresh } = require("../db/state");
 
 const router = new Router();
 
@@ -19,26 +21,24 @@ router.get("/list", async (req, res) => {
   var viewrows = await db.select("views");
   const tables = await db.get_tables();
   const getTable = tid => tables.find(t => t.id === tid).name;
-  res.send(
-    wrap(
-      `Views`,
+  res.sendWrap(
+    `Views`,
 
-      mkTable(
-        [
-          { label: "Name", key: "name" },
-          { label: "Template", key: "viewtemplate" },
-          { label: "Table", key: r => getTable(r.table_id) },
-          { label: "Run", key: r => link(`/view/${r.name}`, "Run") },
-          { label: "Edit", key: r => link(`/viewedit/edit/${r.name}`, "Edit") },
-          {
-            label: "Delete",
-            key: r => post_btn(`/viewedit/delete/${r.name}`, "Delete")
-          }
-        ],
-        viewrows
-      ),
-      link(`/viewedit/new`, "New view")
-    )
+    mkTable(
+      [
+        { label: "Name", key: "name" },
+        { label: "Template", key: "viewtemplate" },
+        { label: "Table", key: r => getTable(r.table_id) },
+        { label: "Run", key: r => link(`/view/${r.name}`, "Run") },
+        { label: "Edit", key: r => link(`/viewedit/edit/${r.name}`, "Edit") },
+        {
+          label: "Delete",
+          key: r => post_btn(`/viewedit/delete/${r.name}`, "Delete")
+        }
+      ],
+      viewrows
+    ),
+    link(`/viewedit/new`, "New view")
   );
 });
 router.get("/edit/:viewname", async (req, res) => {
@@ -51,40 +51,12 @@ router.get("/edit/:viewname", async (req, res) => {
   const currentTable = tables.find(t => t.id === viewrow.table_id);
   viewrow.table_name = currentTable.name;
   const tableOptions = tables.map(t => t.name);
-  res.send(
-    wrap(
-      `Edit view`,
-      mkForm(
-        "/viewedit/config",
-        [
-          { name: "id", input_type: "hidden" },
-          { label: "Name", name: "name", input_type: "text" },
-          {
-            label: "Template",
-            name: "viewtemplate",
-            input_type: "select",
-            options: Object.keys(viewtemplates)
-          },
-          {
-            label: "Table",
-            name: "table_name",
-            input_type: "select",
-            options: tableOptions
-          }
-        ],
-        viewrow
-      )
-    )
-  );
-});
-
-router.get("/new", async (req, res) => {
-  const tables = await db.get_tables();
-  const tableOptions = tables.map(t => t.name);
-  res.send(
-    wrap(
-      `Edit view`,
-      mkForm("/viewedit/config", [
+  res.sendWrap(
+    `Edit view`,
+    mkForm(
+      "/viewedit/config",
+      [
+        { name: "id", input_type: "hidden" },
         { label: "Name", name: "name", input_type: "text" },
         {
           label: "Template",
@@ -98,8 +70,32 @@ router.get("/new", async (req, res) => {
           input_type: "select",
           options: tableOptions
         }
-      ])
+      ],
+      viewrow
     )
+  );
+});
+
+router.get("/new", async (req, res) => {
+  const tables = await db.get_tables();
+  const tableOptions = tables.map(t => t.name);
+  res.sendWrap(
+    `Edit view`,
+    mkForm("/viewedit/config", [
+      { label: "Name", name: "name", input_type: "text" },
+      {
+        label: "Template",
+        name: "viewtemplate",
+        input_type: "select",
+        options: Object.keys(viewtemplates)
+      },
+      {
+        label: "Table",
+        name: "table_name",
+        input_type: "select",
+        options: tableOptions
+      }
+    ])
   );
 });
 
@@ -107,6 +103,8 @@ router.post("/delete/:name", async (req, res) => {
   const { name } = req.params;
 
   await db.deleteWhere("views", { name });
+  await refresh();
+
   res.redirect(`/viewedit/list`);
 });
 
@@ -123,14 +121,12 @@ router.post("/config", async (req, res) => {
     "viewtemplate",
     "table_name"
   ]);
-  res.send(
-    wrap(
-      `View configuration`,
-      mkForm("/viewedit/save", [...config_fields, ...viewFields], {
-        ...vbody,
-        ...viewrow.configuration
-      })
-    )
+  res.sendWrap(
+    `View configuration`,
+    mkForm("/viewedit/save", [...config_fields, ...viewFields], {
+      ...vbody,
+      ...viewrow.configuration
+    })
   );
 });
 
@@ -144,27 +140,19 @@ router.post("/save", async (req, res) => {
     configuration[cf.name] = req.body[cf.name];
   });
   if (id) {
-    db.update(
+    await db.update(
       "views",
       { viewtemplate, name, configuration, table_id: table.id },
       id
     );
   } else {
-    db.insert("views", {
+    await db.insert("views", {
       viewtemplate,
       name,
       configuration,
       table_id: table.id
     });
   }
+  await refresh();
   res.redirect(`/viewedit/list`);
 });
-
-/*
-CREATE TABLE public.views
-(
-  id integer NOT NULL DEFAULT nextval('views_id_seq'::regclass),
-  viewtemplate text NOT NULL,
-  name text NOT NULL,
-  table_id integer,
-  configuration jsonb NOT NULL)*/

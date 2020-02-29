@@ -23,7 +23,7 @@ class Table {
   async delete() {
     await db.query("delete FROM fields WHERE table_id = $1", [this.id]);
 
-    await db.query("delete FROM tables WHERE id = $1 returning *", [this.id]);
+    await db.query("delete FROM tables WHERE id = $1", [this.id]);
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
 }
