@@ -45,6 +45,19 @@ const mkFormRow = v => hdr => {
           hdr.name
         }" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""}>${opts}</select>`
       );
+    case "ordered_multi_select":
+      const mopts = hdr.options
+        .map(o => `<option value="${o}">${o}</option>`)
+        .join("");
+      return formRowWrap(
+        hdr,
+        `<select class="form-control" class="chosen-select" multiple name="${hdr.name}" id="input${
+          hdr.name
+        }" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""}>${mopts}</select><script>$(function(){$("#input${
+          hdr.name
+        }").chosen()})</script>`
+      );
+
     default:
       return formRowWrap(
         hdr,
@@ -56,6 +69,8 @@ const mkFormRow = v => hdr => {
       );
   }
 };
+const mkHiddenFormFields = fldNms =>
+  fldNms.map(fnm => ({ name: fnm, input_type: "hidden" }));
 
 const mkForm = (action, hdrs, v) => {
   const top = `<form action="${action}" method="post">`;
@@ -84,10 +99,12 @@ const wrap = (title, ...s) => `<!doctype html>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" crossorigin="anonymous">
     <title>${title}</title>
   </head>
   <body>
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+
     <div class="container">${s.join("")}</div>
 
     <!-- Optional JavaScript -->
@@ -95,6 +112,7 @@ const wrap = (title, ...s) => `<!doctype html>
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js" crossorigin="anonymous"></script>
   </body>
 </html>`;
 
@@ -104,5 +122,6 @@ module.exports = {
   wrap,
   h,
   link,
-  post_btn
+  post_btn,
+  mkHiddenFormFields
 };

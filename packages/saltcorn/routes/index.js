@@ -1,7 +1,9 @@
 const table = require("./tables");
 const field = require("./fields");
 const list = require("./list");
+const view = require("./view");
 const edit = require("./edit");
+const viewedit = require("./viewedit");
 const del = require("./delete");
 
 module.exports = app => {
@@ -9,5 +11,7 @@ module.exports = app => {
   app.use("/field", field);
   app.use("/list", list);
   app.use("/edit", edit);
+  app.use("/view", view);
+  app.use("/viewedit", viewedit);
   app.use("/delete", del);
 };
