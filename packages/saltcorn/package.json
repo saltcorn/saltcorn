@@ -8,5 +8,19 @@
     "express": "^4.17.1",
     "express-promise-router": "^3.0.3",
     "pg": "^7.18.2"
+  },
+  "devDependencies": {
+    "jest": "^25.1.0",
+    "supertest": "^4.0.2"
+  },
+  "scripts": {
+    "start-dev": "nodemon index.js",
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }

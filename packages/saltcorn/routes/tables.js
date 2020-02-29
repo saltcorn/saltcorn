@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
+const Table = require("../db/table");
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 const { sqlsanitize } = require("./utils.js");
 
@@ -54,10 +55,7 @@ router.post("/", async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    await db.query(
-      `create table ${sqlsanitize(v.name)} (id serial primary key)`
-    );
-    await db.query("insert into tables(name) values($1)", [v.name]);
+    await Table.create(v.name);
   } else {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [v.name, v.id]);
@@ -67,12 +65,9 @@ router.post("/", async (req, res) => {
 
 router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
-  await db.query("delete FROM fields WHERE table_id = $1", [id]);
+  const t = await Table.find({ id });
+  await t.delete();
 
-  const {
-    rows
-  } = await db.query("delete FROM tables WHERE id = $1 returning *", [id]);
-  await db.query(`drop table ${sqlsanitize(rows[0].name)}`);
   res.redirect(`/table`);
 });
 

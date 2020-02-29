@@ -1,16 +1,6 @@
 const { Pool } = require("pg");
-const { sqlsanitize } = require("./internal");
+const { sqlsanitize, mkWhere } = require("./internal");
 const pool = new Pool();
-
-const mkWhere = whereObj => {
-  const wheres = whereObj ? Object.entries(whereObj) : [];
-  const where = whereObj
-    ? "where " +
-      wheres.map((kv, i) => `${sqlsanitize(kv[0])}=$${i + 1}`).join(" and ")
-    : "";
-  const values = wheres.map(kv => kv[1]);
-  return { where, values };
-};
 
 const select = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
