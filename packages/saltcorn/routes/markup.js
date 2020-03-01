@@ -126,6 +126,17 @@ const wrap = (title, ...s) => `<!doctype html>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js" crossorigin="anonymous"></script>
   </body>
 </html>`;
+const alert = (type, s) => {
+  //console.log("alert", type, s,s.length)
+  return s && s.length > 0
+    ? `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+  ${s}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>`
+    : "";
+};
 
 module.exports = {
   mkTable,
@@ -136,5 +147,6 @@ module.exports = {
   ul_nav,
   link,
   post_btn,
-  mkHiddenFormFields
+  mkHiddenFormFields,
+  alert
 };

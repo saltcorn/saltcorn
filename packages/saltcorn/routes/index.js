@@ -5,6 +5,7 @@ const view = require("./view");
 const edit = require("./edit");
 const viewedit = require("./viewedit");
 const del = require("./delete");
+const auth = require("../auth/routes");
 
 module.exports = app => {
   app.use("/table", table);
@@ -14,4 +15,5 @@ module.exports = app => {
   app.use("/view", view);
   app.use("/viewedit", viewedit);
   app.use("/delete", del);
+  app.use("/auth", auth);
 };

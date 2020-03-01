@@ -5,8 +5,15 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^3.0.8",
+    "connect-flash": "^0.1.1",
+    "connect-pg-simple": "^6.1.0",
+    "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
     "express-promise-router": "^3.0.3",
+    "express-session": "^1.17.0",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
     "pg": "^7.18.2"
   },
   "devDependencies": {

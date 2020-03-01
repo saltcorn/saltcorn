@@ -40,6 +40,38 @@ const reset = async () => {
       configuration jsonb NOT NULL
     )
   `);
+
+  await db.query(`
+    CREATE TABLE roles (
+      id serial primary key,      
+      role VARCHAR(50)
+    )
+  `);
+  await db.insert("roles", { role: "admin", id: 1 });
+  await db.insert("roles", { role: "staff", id: 2 });
+  await db.insert("roles", { role: "user", id: 3 });
+
+  await db.query(`
+    CREATE TABLE users (
+      id serial primary key,      
+      email VARCHAR(128),
+      password VARCHAR(60),
+      role_id integer not null references roles(id)
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE "session" (
+      "sid" varchar NOT NULL COLLATE "default",
+      "sess" json NOT NULL,
+      "expire" timestamp(6) NOT NULL
+    )
+    WITH (OIDS=FALSE);
+    
+    ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+    
+    CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+  `);
 };
 
 reset().then(

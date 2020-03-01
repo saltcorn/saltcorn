@@ -81,5 +81,6 @@ module.exports = {
   selectOne,
   insert,
   update,
-  deleteWhere
+  deleteWhere,
+  pool
 };

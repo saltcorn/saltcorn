@@ -5,12 +5,7 @@ const Table = require("../db/table");
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 const { sqlsanitize } = require("./utils.js");
 
-// create a new express-promise-router
-// this has the same API as the normal express router except
-// it allows you to use async functions as route handlers
 const router = new Router();
-
-// export our router to be mounted by the parent application
 module.exports = router;
 
 router.get("/new/", async (req, res) => {
@@ -52,6 +47,7 @@ router.post("/", async (req, res) => {
   if (typeof v.id === "undefined") {
     // insert
     await Table.create(v.name);
+    req.flash("success", "Table created");
   } else {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [v.name, v.id]);
@@ -63,6 +59,7 @@ router.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
   const t = await Table.find({ id });
   await t.delete();
+  req.flash("success", "Table deleted");
 
   res.redirect(`/table`);
 });
