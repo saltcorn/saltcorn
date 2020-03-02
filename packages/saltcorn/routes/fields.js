@@ -8,7 +8,8 @@ const {
   sqlsanitize,
   fkeyPrefix,
   calc_sql_type,
-  attributesToFormFields
+  attributesToFormFields,
+  isAdmin
 } = require("./utils.js");
 
 // create a new express-promise-router
@@ -19,7 +20,7 @@ const router = new Router();
 // export our router to be mounted by the parent application
 module.exports = router;
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const field = await db.get_field_by_id(id);
   const tables = await db.get_tables();
@@ -45,7 +46,7 @@ router.get("/:id", async (req, res) => {
   );
 });
 
-router.get("/new/:table_id", async (req, res) => {
+router.get("/new/:table_id", isAdmin, async (req, res) => {
   const { table_id } = req.params;
   const tables = await db.get_tables();
   const fkey_opts = tables.map(t => fkeyPrefix + t.name);
@@ -69,7 +70,7 @@ router.get("/new/:table_id", async (req, res) => {
   );
 });
 
-router.post("/delete/:id", async (req, res) => {
+router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
 
   const {
@@ -86,7 +87,7 @@ router.post("/delete/:id", async (req, res) => {
   res.redirect(`/table/${rows[0].table_id}`);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);

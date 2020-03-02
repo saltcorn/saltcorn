@@ -33,15 +33,13 @@ app.use(flash());
 passport.use(
   "local",
   new LocalStrategy(
-    { passReqToCallback: true },
-    (req, username, password, done) => {
+    { passReqToCallback: true, usernameField: "email" },
+    (req, email, password, done) => {
       loginAttempt();
       async function loginAttempt() {
-        const mu = await User.authenticate({ email: username, password });
-        if (mu) return done(null, [{ username: mu.email }]);
+        const mu = await User.authenticate({ email, password });
+        if (mu) return done(null, { email: mu.email, role_id: mu.role_id });
         else {
-          req.flash("danger", "Incorrect user or password");
-
           return done(
             null,
             false,
@@ -66,10 +64,17 @@ app.use(function(req, res, next) {
     const authItem = req.isAuthenticated()
       ? ["/auth/logout", "Logout"]
       : ["/auth/login", "Login"];
+    const adminItems =
+      (req.user || {}).role_id === 1
+        ? [
+            ["/table", "Edit Tables"],
+            ["/viewedit/list", "Edit Views"]
+          ]
+        : [];
+
     const menuItems = [
       ...views.map(v => [`/view/${v.name}`, v.name]),
-      ["/table", "Edit Tables"],
-      ["/viewedit/list", "Edit Views"],
+      ...adminItems,
       authItem
     ];
     res.send(

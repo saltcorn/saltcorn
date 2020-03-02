@@ -6,7 +6,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.id = o.id;
-    this.role_id = o.role_id;
+    this.role_id = o.role_id || 3;
   }
   static async create(uo) {
     const u = new User(uo);
@@ -14,7 +14,7 @@ class User {
     const id = await db.insert("users", {
       email: u.email,
       password: hashpw,
-      role_id: this.role_id || 3
+      role_id: u.role_id
     });
     u.id = id;
     return u;

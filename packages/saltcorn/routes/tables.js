@@ -3,18 +3,18 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const Table = require("../db/table");
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
-const { sqlsanitize } = require("./utils.js");
+const { sqlsanitize, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
 
-router.get("/new/", async (req, res) => {
+router.get("/new/", isAdmin, async (req, res) => {
   res.sendWrap(
     `New table`,
     mkForm("/table", [{ label: "Name", name: "name", input_type: "text" }])
   );
 });
-router.get("/:id", async (req, res) => {
+router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await db.get_table_by_id(id);
 
@@ -42,7 +42,7 @@ router.get("/:id", async (req, res) => {
   );
 });
 
-router.post("/", async (req, res) => {
+router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
   res.redirect(`/table/`);
 });
 
-router.post("/delete/:id", async (req, res) => {
+router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const t = await Table.find({ id });
   await t.delete();
@@ -64,7 +64,7 @@ router.post("/delete/:id", async (req, res) => {
   res.redirect(`/table`);
 });
 
-router.get("/", async (req, res) => {
+router.get("/", isAdmin, async (req, res) => {
   const { rows } = await db.query("SELECT * FROM tables");
   res.sendWrap(
     "Tables",

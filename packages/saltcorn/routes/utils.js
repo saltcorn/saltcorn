@@ -3,6 +3,23 @@ const { sqlsanitize } = require("../db/internal.js");
 
 const fkeyPrefix = "Key to ";
 
+function loggedIn(req, res, next) {
+  if (req.user) {
+    next();
+  } else {
+    req.flash("danger", "Must be logged in first");
+    res.redirect("/auth/login");
+  }
+}
+
+function isAdmin(req, res, next) {
+  if (req.user && req.user.role_id === 1) {
+    next();
+  } else {
+    req.flash("danger", "Must be logged in first");
+    res.redirect("/auth/login");
+  }
+}
 const calc_sql_type = ftype => {
   if (ftype.startsWith(fkeyPrefix)) {
     return `int references ${sqlsanitize(ftype.replace(fkeyPrefix, ""))} (id)`;
@@ -25,5 +42,7 @@ module.exports = {
   sqlsanitize,
   fkeyPrefix,
   calc_sql_type,
-  attributesToFormFields
+  attributesToFormFields,
+  loggedIn,
+  isAdmin
 };

@@ -20,7 +20,7 @@ router.get("/login", async (req, res) => {
     `Login`,
     h(3, "Login"),
     mkForm("/auth/login", [
-      { label: "E-mail", name: "username", input_type: "text" },
+      { label: "E-mail", name: "email", input_type: "text" },
       { label: "Password", name: "password", input_type: "password" }
     ]),
     "Don't have an account? ",
@@ -28,12 +28,21 @@ router.get("/login", async (req, res) => {
   );
 });
 
+router.get("/logout", (req, res) => {
+  req.logout();
+  req.session.destroy(err => {
+    if (err) return next(err);
+    req.logout();
+    res.redirect("/auth/login");
+  });
+});
+
 router.get("/signup", async (req, res) => {
   res.sendWrap(
     `Sign up`,
     h(3, "Sign up"),
     mkForm("/auth/signup", [
-      { label: "E-mail", name: "username", input_type: "text" },
+      { label: "E-mail", name: "email", input_type: "text" },
       { label: "Password", name: "password", input_type: "password" }
     ]),
     "Already have an account? ",
@@ -44,13 +53,21 @@ router.get("/signup", async (req, res) => {
 router.post("/signup", async (req, res) => {
   const { email, password } = req.body;
   const u = await User.create({ email, password });
-  res.redirect(`/table/`);
+
+  req.login({ email: u.email, role_id: u.role_id }, function(err) {
+    if (!err) {
+      res.redirect("/");
+    } else {
+      req.flash("danger", err);
+      res.redirect("/auth/signup");
+    }
+  });
 });
 
 router.post(
   "/login",
   passport.authenticate("local", {
-    successRedirect: "/table/",
+    successRedirect: "/",
     failureRedirect: "/auth/login",
     failureFlash: true
   }),

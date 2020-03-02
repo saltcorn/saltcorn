@@ -3,13 +3,13 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
 const Field = require("../db/field");
-
+const { loggedIn } = require("./utils");
 const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
 
-router.get("/:tname", async (req, res) => {
+router.get("/:tname", loggedIn, async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
 
