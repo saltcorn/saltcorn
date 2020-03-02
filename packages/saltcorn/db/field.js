@@ -46,9 +46,11 @@ class Field {
     }
   }
 
-  validate(s) {
+  validate(whole_rec) {
     const type = this.is_fkey ? types.as_dict.Integer : this.type;
-    const readval = type.read(s);
+    const readval = type.readFromFormRecord
+      ? type.readFromFormRecord(whole_rec, this.name)
+      : type.read(whole_rec[this.name]);
     if (typeof readval === "undefined")
       return { error: "Unable to read " + type.name };
     const valres = type.validate(this.attributes || {})(readval);

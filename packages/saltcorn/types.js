@@ -1,3 +1,5 @@
+const isdef = x => (typeof x === "undefined" ? false : true);
+
 const string = {
   name: "String",
   sql_name: "text",
@@ -19,7 +21,7 @@ const string = {
   },
   validate: ({ match }) => x => true
 };
-const isdef = x => (typeof x === "undefined" ? false : true);
+
 const int = {
   name: "Integer",
   sql_name: "text",
@@ -49,7 +51,30 @@ const int = {
   }
 };
 
-const types = [string, int];
+const bool = {
+  name: "Bool",
+  sql_name: "boolean",
+  editAs: (nm, v) =>
+    `<input class="form-check-input" type="checkbox" name="${nm}" id="input${nm}" ${
+      v ? `checked` : ""
+    }>`,
+  attributes: [],
+  readFromFormRecord: (rec, name) => {
+    return rec[name] ? true : false;
+  },
+  read: v => {
+    switch (typeof v) {
+      case "string":
+        if (v.toUpperCase === "TRUE" || v.toUpperCase === "T") return true;
+        else return false;
+      default:
+        return v ? true : false;
+    }
+  },
+  validate: () => x => true
+};
+
+const types = [string, int, bool];
 
 const mkTyDict = tys => {
   var d = {};

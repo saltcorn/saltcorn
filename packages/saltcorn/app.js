@@ -61,7 +61,6 @@ passport.deserializeUser(function(user, done) {
 
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
-    console.log("athenticated", req.isAuthenticated());
     const views = get_available_views();
     const mkAlert = ty => alert(ty, req.flash(ty));
     const authItem = req.isAuthenticated()
