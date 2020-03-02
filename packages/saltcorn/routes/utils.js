@@ -16,8 +16,8 @@ function isAdmin(req, res, next) {
   if (req.user && req.user.role_id === 1) {
     next();
   } else {
-    req.flash("danger", "Must be logged in first");
-    res.redirect("/auth/login");
+    req.flash("danger", "Must be admin");
+    res.redirect("/");
   }
 }
 const calc_sql_type = ftype => {
