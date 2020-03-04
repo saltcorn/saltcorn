@@ -17,7 +17,7 @@ function isAdmin(req, res, next) {
     next();
   } else {
     req.flash("danger", "Must be admin");
-    res.redirect("/");
+    res.redirect(req.user ? "/" : "/auth/login");
   }
 }
 const calc_sql_type = ftype => {

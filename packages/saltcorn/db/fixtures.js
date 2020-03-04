@@ -2,6 +2,7 @@ const db = require(".");
 const Table = require("./table");
 const Field = require("./field");
 const View = require("./view");
+const User = require("../auth/user");
 
 const fixtures = async () => {
   const table = await Table.create("books");
@@ -26,12 +27,8 @@ const fixtures = async () => {
   });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
-  await db.insert("users", {
-    email: "admin@foo.com",
-    password: "secret",
-    role_id: 1
-  });
-  await db.insert("users", {
+  await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
+  await User.create({
     email: "staff@foo.com",
     password: "secret",
     role_id: 2
