@@ -31,3 +31,17 @@ describe("viewedit list endpoint", () => {
     done();
   });
 });
+
+describe("viewedit edit endpoint", () => {
+  itShouldRedirectUnauthToLogin("/viewedit/edit/authorlist");
+
+  it("show list of views", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .get("/viewedit/edit/authorlist")
+      .set("Cookie", loginCookie);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text.includes("author")).toBe(true);
+    done();
+  });
+});

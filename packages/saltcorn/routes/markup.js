@@ -74,6 +74,13 @@ const mkFormRow = v => hdr => {
 const mkHiddenFormFields = fldNms =>
   fldNms.map(fnm => ({ name: fnm, input_type: "hidden" }));
 
+const renderForm = form =>
+  mkForm(
+    form.action,
+    form.fields.map(f => f.to_formfield),
+    form.values
+  );
+
 const mkForm = (action, hdrs, v) => {
   const top = `<form action="${action}" method="post">`;
   //console.log(hdrs);
@@ -141,6 +148,7 @@ const alert = (type, s) => {
 module.exports = {
   mkTable,
   mkForm,
+  renderForm,
   wrap,
   h,
   ul,

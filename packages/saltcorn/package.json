@@ -22,7 +22,7 @@
   },
   "scripts": {
     "start-dev": "nodemon index.js",
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "jest": {
     "testEnvironment": "node",

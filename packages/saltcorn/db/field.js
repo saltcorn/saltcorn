@@ -30,6 +30,11 @@ class Field {
           name: this.name,
           input_type: "number"
         }
+      : this.ftype === "hidden"
+      ? {
+          name: this.name,
+          input_type: "hidden"
+        }
       : {
           label: this.label,
           name: this.name,
