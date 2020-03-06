@@ -78,16 +78,17 @@ const renderForm = form =>
   mkForm(
     form.action,
     form.fields.map(f => f.to_formfield),
-    form.values
+    form.values,
+    form.submitLabel
   );
 
-const mkForm = (action, hdrs, v) => {
+const mkForm = (action, hdrs, v, submitLabel = "Save") => {
   const top = `<form action="${action}" method="post">`;
   //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v)).join("");
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
-    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="submit" class="btn btn-primary">${submitLabel}</button>
   </div>
 </div>
 </form>`;
@@ -135,8 +136,9 @@ const wrap = (title, ...s) => `<!doctype html>
 </html>`;
 const alert = (type, s) => {
   //console.log("alert", type, s,s.length)
+  const realtype = type === "error" ? "danger" : type;
   return s && s.length > 0
-    ? `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+    ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
   ${s}
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>

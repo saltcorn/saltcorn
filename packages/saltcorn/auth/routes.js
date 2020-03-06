@@ -2,9 +2,11 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const User = require("./user");
+const Field = require("../db/field");
+const Form = require("../models/form");
 const {
   mkTable,
-  mkForm,
+  renderForm,
   wrap,
   h,
   link,
@@ -15,14 +17,21 @@ const passport = require("passport");
 const router = new Router();
 module.exports = router;
 
+const loginForm = () =>
+  new Form({
+    fields: [
+      new Field({ label: "E-mail", name: "email", input_type: "text" }),
+      new Field({ label: "Password", name: "password", input_type: "password" })
+    ],
+    action: "/auth/login",
+    submitLabel: "Login"
+  });
+
 router.get("/login", async (req, res) => {
   res.sendWrap(
     `Login`,
     h(3, "Login"),
-    mkForm("/auth/login", [
-      { label: "E-mail", name: "email", input_type: "text" },
-      { label: "Password", name: "password", input_type: "password" }
-    ]),
+    renderForm(loginForm()),
     "Don't have an account? ",
     link("/auth/signup", "Signup »")
   );
@@ -38,13 +47,13 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/signup", async (req, res) => {
+  const form = loginForm();
+  form.action = "/auth/signup";
+  form.submitLabel = "Sign up";
   res.sendWrap(
     `Sign up`,
     h(3, "Sign up"),
-    mkForm("/auth/signup", [
-      { label: "E-mail", name: "email", input_type: "text" },
-      { label: "Password", name: "password", input_type: "password" }
-    ]),
+    renderForm(form),
     "Already have an account? ",
     link("/auth/login", "Login »")
   );

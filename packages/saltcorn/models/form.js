@@ -8,12 +8,14 @@ class Form {
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
+    this.action = o.action;
+    this.submitLabel = o.submitLabel;
   }
   hidden(k) {
     this.fields.push(
       new Field({
-        fname: k,
-        ftype: "hidden"
+        name: k,
+        input_type: "hidden"
       })
     );
   }

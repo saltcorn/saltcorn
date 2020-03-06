@@ -7,11 +7,12 @@ const fkeyPrefix = "Key to ";
 
 class Field {
   constructor(o) {
-    this.label = o.flabel;
-    this.name = o.fname;
+    this.label = o.flabel || o.label;
+    this.name = o.fname || o.name;
     this.id = o.id;
     this.ftype = o.ftype;
-    this.is_fkey = o.ftype.startsWith(fkeyPrefix);
+    this.input_type = o.input_type;
+    this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
     if (!this.is_fkey) this.type = types.as_dict[o.ftype];
     else this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
     this.attributes = o.attributes;
@@ -30,10 +31,11 @@ class Field {
           name: this.name,
           input_type: "number"
         }
-      : this.ftype === "hidden"
+      : this.input_type
       ? {
           name: this.name,
-          input_type: "hidden"
+          input_type: this.input_type,
+          label: this.label
         }
       : {
           label: this.label,
