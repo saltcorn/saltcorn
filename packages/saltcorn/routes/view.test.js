@@ -45,3 +45,29 @@ describe("viewedit edit endpoint", () => {
     done();
   });
 });
+
+describe("viewedit new endpoint", () => {
+  itShouldRedirectUnauthToLogin("/viewedit/new");
+
+  it("show new view", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .get("/viewedit/new")
+      .set("Cookie", loginCookie);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text.includes("Template")).toBe(true);
+    done();
+  });
+  it("submit new view", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .post("/viewedit/config")
+      .send("viewtemplate=list")
+      .send("table_name=books")
+
+      .set("Cookie", loginCookie);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text.includes("View configuration")).toBe(true);
+    done();
+  });
+});

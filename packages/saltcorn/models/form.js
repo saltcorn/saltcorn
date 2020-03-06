@@ -10,6 +10,7 @@ class Form {
     this.action = o.action;
     this.action = o.action;
     this.submitLabel = o.submitLabel;
+    if (o.validate) this.validate(o.validate);
   }
   hidden(k) {
     this.fields.push(
@@ -24,6 +25,8 @@ class Form {
       const valres = f.validate(v);
       if (valres.error) {
         this.errors[f.name] = valres.error;
+        this.values[f.name] = v[f.name];
+        this.hasErrors = true;
       } else {
         this.values[f.name] = valres.success;
       }

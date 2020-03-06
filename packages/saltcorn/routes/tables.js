@@ -2,17 +2,22 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const Table = require("../db/table");
-const { mkTable, mkForm, wrap, h, link, post_btn } = require("./markup.js");
-const { sqlsanitize, isAdmin } = require("./utils.js");
+const Field = require("../db/field");
+const { mkTable, renderForm, h, link, post_btn } = require("./markup.js");
+const { isAdmin } = require("./utils.js");
+const Form = require("../models/form");
 
 const router = new Router();
 module.exports = router;
 
+const tableForm = () =>
+  new Form({
+    action: "/table",
+    fields: [new Field({ label: "Name", name: "name", input_type: "text" })]
+  });
+
 router.get("/new/", isAdmin, async (req, res) => {
-  res.sendWrap(
-    `New table`,
-    mkForm("/table", [{ label: "Name", name: "name", input_type: "text" }])
-  );
+  res.sendWrap(`New table`, renderForm(tableForm()));
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;

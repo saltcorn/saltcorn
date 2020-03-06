@@ -3,7 +3,6 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const viewtemplates = require("../viewtemplates");
 const {
-  wrap,
   mkForm,
   mkHiddenFormFields,
   mkTable,
@@ -14,9 +13,8 @@ const { refresh } = require("../db/state");
 const { isAdmin } = require("./utils.js");
 
 const router = new Router();
-
-// export our router to be mounted by the parent application
 module.exports = router;
+
 router.get("/list", isAdmin, async (req, res) => {
   var viewrows = await db.select("views");
   const tables = await db.get_tables();

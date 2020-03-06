@@ -6,7 +6,7 @@ const getStaffLoginCookie = async () => {
     .post("/auth/login/")
     .send("email=staff@foo.com")
     .send("password=secret");
-
+  if (res.statusCode !== 302) console.log(res.text);
   return res.headers["set-cookie"][0];
 };
 
@@ -15,6 +15,7 @@ const getAdminLoginCookie = async () => {
     .post("/auth/login/")
     .send("email=admin@foo.com")
     .send("password=secret");
+  if (res.statusCode !== 302) console.log(res.text);
 
   return res.headers["set-cookie"][0];
 };

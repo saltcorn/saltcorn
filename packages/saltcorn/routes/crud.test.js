@@ -30,16 +30,20 @@ describe("standard edit form", () => {
     done();
   });
 
-  it("show form for existing entry", async done => {
+  it("post form for new entry", async done => {
     const loginCookie = await getStaffLoginCookie();
     const res = await request(app)
       .post("/edit/books")
       .send("author=Cervantes")
       .send("pages=852")
+      .send("Publisher=Penguin") //sometimes needed in async tests
+      .send("AgeRating=12") //ditto
 
       .set("Cookie", loginCookie)
-      .expect(302);
-    //.expect("Location", "/list/books");;
+      .expect(302)
+      .expect("Location", "/list/books");
+    //if(res.statusCode===200) console.log(res.text)
+    //expect(res.statusCode).toEqual(302);
 
     done();
   });
@@ -55,6 +59,25 @@ describe("standard list", () => {
     expect(res.statusCode).toEqual(200);
     expect(res.text.includes("Author")).toBe(true);
     expect(res.text.includes("Cervantes")).toBe(true);
+
+    done();
+  });
+});
+
+describe("delete", () => {
+  it("should delete", async done => {
+    const loginCookie = await getStaffLoginCookie();
+    const res = await request(app)
+      .post("/delete/books/3")
+      .set("Cookie", loginCookie);
+    expect(res.statusCode).toEqual(302);
+
+    const res1 = await request(app)
+      .get("/list/books")
+      .set("Cookie", loginCookie);
+    expect(res1.statusCode).toEqual(200);
+    expect(res1.text.includes("Author")).toBe(true);
+    expect(res1.text.includes("Cervantes")).toBe(false);
 
     done();
   });

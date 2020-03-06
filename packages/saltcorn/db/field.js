@@ -11,6 +11,7 @@ class Field {
     this.name = o.fname || o.name;
     this.id = o.id;
     this.ftype = o.ftype;
+    this.options = o.options;
     this.input_type = o.input_type;
     this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
     if (!this.is_fkey) this.type = types.as_dict[o.ftype];

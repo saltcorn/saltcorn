@@ -43,3 +43,15 @@ describe("login process", () => {
     done();
   });
 });
+
+describe("signup process", () => {
+  it("should sign up", async done => {
+    const res = await request(app)
+      .post("/auth/signup/")
+      .send("email=staff1@foo.com")
+      .send("password=secret")
+      .expect("Location", "/")
+      .expect(302);
+    done();
+  });
+});

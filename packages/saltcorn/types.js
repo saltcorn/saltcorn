@@ -7,10 +7,9 @@ const string = {
     { name: "match", type: "String", required: false }
     //{ name: "options", type: "String[]", required: false }
   ],
-  editAs: (nm, v) =>
-    `<input type="text" class="form-control" name="${nm}" id="input${nm}" ${
-      v ? `value="${v}"` : ""
-    }>`,
+  editAs: (nm, v, cls) =>
+    `<input type="text" class="form-control ${cls ||
+      ""}" name="${nm}" id="input${nm}" ${v ? `value="${v}"` : ""}>`,
   read: v => {
     switch (typeof v) {
       case "string":
@@ -25,10 +24,9 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "text",
-  editAs: (nm, v) =>
-    `<input type="number" class="form-control" name="${nm}" id="input${nm}" ${
-      v ? `value="${v}"` : ""
-    }>`,
+  editAs: (nm, v, cls) =>
+    `<input type="number" class="form-control ${cls ||
+      ""}" name="${nm}" id="input${nm}" ${v ? `value="${v}"` : ""}>`,
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false }
@@ -54,10 +52,9 @@ const int = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  editAs: (nm, v) =>
-    `<input class="form-check-input" type="checkbox" name="${nm}" id="input${nm}" ${
-      v ? `checked` : ""
-    }>`,
+  editAs: (nm, v, cls) =>
+    `<input class="form-check-input ${cls ||
+      ""}" type="checkbox" name="${nm}" id="input${nm}" ${v ? `checked` : ""}>`,
   attributes: [],
   readFromFormRecord: (rec, name) => {
     return rec[name] ? true : false;

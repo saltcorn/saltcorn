@@ -50,16 +50,15 @@ router.post("/:tname", loggedIn, async (req, res) => {
   const fields = await Field.get_by_table_id(table.id);
   const v = req.body;
 
-  const form = new Form({ fields });
-  const vres = form.validate(v);
-  if (vres.errors) {
-    res.sendWrap(`${table.name} create new`, vres.errors.join("\n"));
+  const form = new Form({ action: `/edit/${tname}`, fields, validate: v });
+  if (form.hasErrors) {
+    res.sendWrap(`${table.name} create new`, renderForm(form)); // vres.errors.join("\n"));
   } else {
     if (typeof v.id === "undefined") {
-      await db.insert(table.name, vres.success);
+      await db.insert(table.name, form.values);
     } else {
       const id = v.id;
-      await db.update(table.name, vres.success, id);
+      await db.update(table.name, form.values, id);
     }
     res.redirect(`/list/${table.name}`);
   }

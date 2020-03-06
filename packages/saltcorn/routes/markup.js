@@ -17,33 +17,46 @@ const mkTable = (hdrs, vs) => {
   return s;
 };
 
-const formRowWrap = (hdr, inner) => `<div class="form-group row">
+const formRowWrap = (hdr, inner, error = "") => `<div class="form-group row">
     <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
     <div class="col-sm-10">
       ${inner}
+      ${error}
     </div>
   </div>`;
 
-const mkFormRow = v => hdr => {
+const mkFormRow = (v, errors) => hdr => {
+  const validClass = errors[hdr.name] ? "is-invalid" : "";
+  const errorFeedback = errors[hdr.name]
+    ? `<div class="invalid-feedback">${errors[hdr.name]}</div>`
+    : "";
   switch (hdr.input_type) {
     case "fromtype":
       return formRowWrap(
         hdr,
-        hdr.type.editAs(hdr.name, v && v[hdr.name] ? v[hdr.name] : undefined)
+        hdr.type.editAs(
+          hdr.name,
+          v && v[hdr.name] ? v[hdr.name] : undefined,
+          validClass
+        ),
+        errorFeedback
       );
     case "hidden":
-      return `<input type="hidden" class="form-control" name="${hdr.name}" ${
-        v ? `value="${v[hdr.name]}"` : ""
-      }>`;
+      return `<input type="hidden" class="form-control ${validClass}" name="${
+        hdr.name
+      }" ${v ? `value="${v[hdr.name]}"` : ""}>`;
     case "select":
       const opts = hdr.options
         .map(o => `<option value="${o}">${o}</option>`)
         .join("");
       return formRowWrap(
         hdr,
-        `<select class="form-control" name="${hdr.name}" id="input${
+        `<select class="form-control ${validClass}" name="${
           hdr.name
-        }" ${v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""}>${opts}</select>`
+        }" id="input${hdr.name}" ${
+          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+        }>${opts}</select>`,
+        errorFeedback
       );
     case "ordered_multi_select":
       const mopts = hdr.options
@@ -51,13 +64,14 @@ const mkFormRow = v => hdr => {
         .join("");
       return formRowWrap(
         hdr,
-        `<select class="form-control" class="chosen-select" multiple name="${
+        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${
           hdr.name
         }" id="input${hdr.name}" ${
           v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
         }>${mopts}</select><script>$(function(){$("#input${
           hdr.name
-        }").chosen()})</script>`
+        }").chosen()})</script>`,
+        errorFeedback
       );
 
     default:
@@ -67,7 +81,8 @@ const mkFormRow = v => hdr => {
           hdr.name
         }" id="input${hdr.name}" ${
           v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
-        }>`
+        }>`,
+        errorFeedback
       );
   }
 };
@@ -79,13 +94,14 @@ const renderForm = form =>
     form.action,
     form.fields.map(f => f.to_formfield),
     form.values,
-    form.submitLabel
+    form.submitLabel,
+    form.errors
   );
 
-const mkForm = (action, hdrs, v, submitLabel = "Save") => {
+const mkForm = (action, hdrs, v, submitLabel = "Save", errors = {}) => {
   const top = `<form action="${action}" method="post">`;
   //console.log(hdrs);
-  const flds = hdrs.map(mkFormRow(v)).join("");
+  const flds = hdrs.map(mkFormRow(v, errors)).join("");
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
     <button type="submit" class="btn btn-primary">${submitLabel}</button>
