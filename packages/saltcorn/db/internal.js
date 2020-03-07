@@ -12,7 +12,10 @@ const mkWhere = whereObj => {
   return { where, values };
 };
 
+const fkeyPrefix = "Key to ";
+
 module.exports = {
   sqlsanitize,
-  mkWhere
+  mkWhere,
+  fkeyPrefix
 };

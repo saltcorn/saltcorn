@@ -1,9 +1,7 @@
 const types = require("../types");
 const db = require(".");
-const { sqlsanitize } = require("./internal.js");
+const { sqlsanitize, fkeyPrefix } = require("./internal.js");
 const { calc_sql_type } = require("../routes/utils.js");
-
-const fkeyPrefix = "Key to ";
 
 class Field {
   constructor(o) {
@@ -14,6 +12,7 @@ class Field {
     this.options = o.options;
     this.input_type = o.input_type;
     this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
+
     if (!this.is_fkey) this.type = types.as_dict[o.ftype];
     else this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
     this.attributes = o.attributes;
@@ -25,12 +24,25 @@ class Field {
     }
   }
 
+  async fill_fkey_options() {
+    if (this.is_fkey) {
+      const table = await db.get_table_by_name(this.reftable);
+      //const fields = await Field.get_by_table_id(table.id);
+      const rows = await db.select(this.reftable);
+      const summary_field = table.summary_field || "id";
+      this.options = [
+        ...new Set(rows.map(r => ({ label: r[summary_field], value: r.id })))
+      ];
+    }
+  }
+
   get to_formfield() {
     return this.is_fkey
       ? {
           label: this.label,
           name: this.name,
-          input_type: "number"
+          input_type: "select",
+          options: this.options
         }
       : this.input_type
       ? {

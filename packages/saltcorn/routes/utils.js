@@ -1,7 +1,5 @@
 const types = require("../types");
-const { sqlsanitize } = require("../db/internal.js");
-
-const fkeyPrefix = "Key to ";
+const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
 
 function loggedIn(req, res, next) {
   if (req.user) {

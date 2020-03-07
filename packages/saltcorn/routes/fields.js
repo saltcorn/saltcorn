@@ -91,7 +91,7 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);
-  const attributes = fld.is_fkey ? [] : types.as_dict[v.ftype].attributes;
+  const attributes = fld.is_fkey ? false : types.as_dict[v.ftype].attributes;
   if (attributes && typeof v.has_attributes === "undefined") {
     var attrFormFields = attributesToFormFields(fld.type);
     attrFormFields.push({ name: "has_attributes", input_type: "hidden" });

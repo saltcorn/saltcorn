@@ -47,7 +47,11 @@ const mkFormRow = (v, errors) => hdr => {
       }" ${v ? `value="${v[hdr.name]}"` : ""}>`;
     case "select":
       const opts = hdr.options
-        .map(o => `<option value="${o}">${o}</option>`)
+        .map(o => {
+          const label = typeof o === "string" ? o : o.label;
+          const value = typeof o === "string" ? o : o.value;
+          return `<option value="${value}">${label}</option>`;
+        })
         .join("");
       return formRowWrap(
         hdr,

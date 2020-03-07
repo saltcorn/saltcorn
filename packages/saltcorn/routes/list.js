@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const { mkTable, h, link, post_btn } = require("./markup.js");
-const Field = require("../db/field");
+const Table = require("../db/table");
 const { loggedIn } = require("./utils");
 const router = new Router();
 
@@ -11,9 +11,9 @@ module.exports = router;
 
 router.get("/:tname", loggedIn, async (req, res) => {
   const { tname } = req.params;
-  const table = await db.get_table_by_name(tname);
+  const table = await Table.find({ name: tname });
 
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await table.getFields();
   var tfields = fields.map(f => ({ label: f.label, key: f.name }));
   tfields.push({
     label: "Edit",
@@ -23,7 +23,7 @@ router.get("/:tname", loggedIn, async (req, res) => {
     label: "Delete",
     key: r => post_btn(`/delete/${table.name}/${r.id}`, "Delete")
   });
-  const rows = await db.select(table.name);
+  const rows = await table.getJoinedRows();
   res.sendWrap(
     `${table.name} data table`,
     h(1, table.name),

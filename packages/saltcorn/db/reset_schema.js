@@ -14,7 +14,8 @@ const reset = async () => {
     CREATE TABLE tables
     (
       id serial primary key,
-      name text NOT NULL
+      name text NOT NULL,
+      summary_field text
     )
   `);
 
