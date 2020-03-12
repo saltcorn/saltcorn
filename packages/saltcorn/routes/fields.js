@@ -24,7 +24,7 @@ const fieldForm = fkey_opts =>
       new Field({
         name: "table_id",
         input_type: "hidden",
-        type: types.as_dict.Integer
+        type: types.Integer
       }),
       new Field({ label: "Name", name: "fname", input_type: "text" }),
       new Field({ label: "Label", name: "flabel", input_type: "text" }),
@@ -32,12 +32,12 @@ const fieldForm = fkey_opts =>
         label: "Type",
         name: "ftype",
         input_type: "select",
-        options: types.names.concat(fkey_opts || [])
+        options: types._type_names.concat(fkey_opts || [])
       }),
       new Field({
         label: "Required",
         name: "required",
-        type: types.as_dict["Bool"]
+        type: types["Bool"]
       })
     ]
   });
@@ -49,7 +49,7 @@ const attributesForm = (v, type) => {
       label: attr.name,
       name: attr.name,
       input_type: "fromtype",
-      type: types.as_dict[attr.type]
+      type: types[attr.type]
     });
   const attr_fields = type.attributes ? type.attributes.map(a2ff) : [];
   const hidden_fields = ff.fields.map(f => {
@@ -108,7 +108,7 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);
-  const type = types.as_dict[v.ftype];
+  const type = types[v.ftype];
   const attributes = fld.is_fkey ? false : type.attributes;
   if (attributes && typeof v.has_attributes === "undefined") {
     const attrForm = attributesForm(v, type);
@@ -120,7 +120,7 @@ router.post("/", isAdmin, async (req, res) => {
     var attrs = {};
     if (attributes) {
       attributes.forEach(a => {
-        const t = types.as_dict[a.type];
+        const t = types[a.type];
         const aval = t.read(v[a.name]);
         if (typeof aval !== "undefined") attrs[a.name] = aval;
       });

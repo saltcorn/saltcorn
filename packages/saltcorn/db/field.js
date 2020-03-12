@@ -16,7 +16,7 @@ class Field {
     this.input_type = o.input_type;
     this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
 
-    if (!this.is_fkey) this.type = this.type || types.as_dict[o.ftype];
+    if (!this.is_fkey) this.type = this.type || types[o.ftype];
     else this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
     this.attributes = o.attributes;
     if (o.table_id) this.table_id = o.table_id;
@@ -75,7 +75,7 @@ class Field {
   }
 
   validate(whole_rec) {
-    const type = this.is_fkey ? types.as_dict.Integer : this.type;
+    const type = this.is_fkey ? types.Integer : this.type;
     const readval = !type
       ? whole_rec[this.name]
       : type.readFromFormRecord

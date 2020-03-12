@@ -73,7 +73,7 @@ const bool = {
   validate: () => x => true
 };
 
-const types = [string, int, bool];
+const types_list = [string, int, bool];
 
 const mkTyDict = tys => {
   var d = {};
@@ -83,8 +83,8 @@ const mkTyDict = tys => {
   return d;
 };
 
-types.as_dict = mkTyDict(types);
+types = mkTyDict(types_list);
 
-types.names = types.map(t => t.name);
+types._type_names = types_list.map(t => t.name);
 
 module.exports = types;
