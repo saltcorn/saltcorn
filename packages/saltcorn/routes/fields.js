@@ -2,8 +2,10 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const types = require("../types");
-const { mkTable, mkForm, wrap } = require("./markup.js");
+const { renderForm } = require("./markup.js");
 const Field = require("../db/field");
+const Form = require("../models/form");
+
 const {
   sqlsanitize,
   fkeyPrefix,
@@ -12,62 +14,77 @@ const {
   isAdmin
 } = require("./utils.js");
 
-// create a new express-promise-router
-// this has the same API as the normal express router except
-// it allows you to use async functions as route handlers
 const router = new Router();
-
-// export our router to be mounted by the parent application
 module.exports = router;
+
+const fieldForm = fkey_opts =>
+  new Form({
+    action: "/field",
+    fields: [
+      new Field({
+        name: "table_id",
+        input_type: "hidden",
+        type: types.as_dict.Integer
+      }),
+      new Field({ label: "Name", name: "fname", input_type: "text" }),
+      new Field({ label: "Label", name: "flabel", input_type: "text" }),
+      new Field({
+        label: "Type",
+        name: "ftype",
+        input_type: "select",
+        options: types.names.concat(fkey_opts || [])
+      }),
+      new Field({
+        label: "Required",
+        name: "required",
+        type: types.as_dict["Bool"]
+      })
+    ]
+  });
+
+const attributesForm = (v, type) => {
+  const ff = fieldForm();
+  const a2ff = attr =>
+    new Field({
+      label: attr.name,
+      name: attr.name,
+      input_type: "fromtype",
+      type: types.as_dict[attr.type]
+    });
+  const attr_fields = type.attributes ? type.attributes.map(a2ff) : [];
+  const hidden_fields = ff.fields.map(f => {
+    f.hidden = true;
+    return f;
+  });
+  var hasattr = [new Field({ name: "has_attributes", input_type: "hidden" })];
+  if (v.id) hasattr.push(new Field({ name: "id", input_type: "hidden" }));
+  return new Form({
+    action: "/field",
+    fields: attr_fields.concat(hidden_fields, hasattr),
+    values: { has_attributes: "true", ...v }
+  });
+};
 
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const field = await db.get_field_by_id(id);
   const tables = await db.get_tables();
   const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  res.sendWrap(
-    `Edit field`,
-    mkForm(
-      "/field",
-      [
-        { name: "id", input_type: "hidden" },
-        { name: "table_id", input_type: "hidden" },
-        { label: "Name", name: "fname", input_type: "text" },
-        { label: "Label", name: "flabel", input_type: "text" },
-        {
-          label: "Type",
-          name: "ftype",
-          input_type: "select",
-          options: types.names.concat(fkey_opts)
-        }
-      ],
-      field
-    )
-  );
+  const form = fieldForm(fkey_opts);
+  form.values = field;
+  form.hidden("id");
+
+  res.sendWrap(`Edit field`, renderForm(form));
 });
 
 router.get("/new/:table_id", isAdmin, async (req, res) => {
   const { table_id } = req.params;
   const tables = await db.get_tables();
   const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  res.sendWrap(
-    `New field`,
-    mkForm(
-      "/field",
-      [
-        { name: "table_id", input_type: "hidden" },
-        { label: "Name", name: "fname", input_type: "text" },
-        { label: "Label", name: "flabel", input_type: "text" },
-        {
-          label: "Type",
-          name: "ftype",
-          input_type: "select",
-          options: types.names.concat(fkey_opts)
-        }
-      ],
-      { table_id }
-    )
-  );
+  const form = fieldForm(fkey_opts);
+  form.values = { table_id };
+
+  res.sendWrap(`New field`, renderForm(form));
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
@@ -91,48 +108,36 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);
-  const attributes = fld.is_fkey ? false : types.as_dict[v.ftype].attributes;
+  const type = types.as_dict[v.ftype];
+  const attributes = fld.is_fkey ? false : type.attributes;
   if (attributes && typeof v.has_attributes === "undefined") {
-    var attrFormFields = attributesToFormFields(fld.type);
-    attrFormFields.push({ name: "has_attributes", input_type: "hidden" });
-    attrFormFields.push({ name: "fname", input_type: "hidden" });
-    attrFormFields.push({ name: "flabel", input_type: "hidden" });
-    attrFormFields.push({ name: "ftype", input_type: "hidden" });
-    attrFormFields.push({ name: "table_id", input_type: "hidden" });
-    const formvals = { has_attributes: "true", ...v };
-    res.sendWrap(`New field`, mkForm("/field", attrFormFields, formvals));
+    const attrForm = attributesForm(v, type);
+    res.sendWrap(`New field`, renderForm(attrForm));
   } else {
+    //console.log("v", v);
+    const form = fieldForm();
+    form.values = v;
+    var attrs = {};
+    if (attributes) {
+      attributes.forEach(a => {
+        const t = types.as_dict[a.type];
+        const aval = t.read(v[a.name]);
+        if (typeof aval !== "undefined") attrs[a.name] = aval;
+      });
+    }
+    if (v.id) form.hidden("id");
+    const vres = form.validate(v).success; // TODO what if it fails
     if (typeof v.id === "undefined") {
-      // insert
-      const table = await db.get_table_by_id(v.table_id);
-      await db.query(
-        `alter table ${sqlsanitize(table.name)} add column ${sqlsanitize(
-          v.fname
-        )} ${sql_type}`
-      );
-      if (attributes) {
-        var attrs = {};
-        attributes.forEach(a => {
-          const t = types.as_dict[a.type];
-          const aval = t.read(v[a.name]);
-          if (typeof aval !== "undefined") attrs[a.name] = aval;
-        });
-        await db.query(
-          "insert into fields(table_id, fname, flabel, ftype, attributes) values($1,$2,$3,$4,$5)",
-          [v.table_id, v.fname, v.flabel, v.ftype, attrs]
-        );
-      } else {
-        await db.query(
-          "insert into fields(table_id, fname, flabel, ftype) values($1,$2,$3,$4)",
-          [v.table_id, v.fname, v.flabel, v.ftype]
-        );
-      }
+      await Field.create({ attributes: attrs, ...vres });
     } else {
       // update
       //TODO edit db field
-      await db.query(
-        "update fields set table_id=$1, fname=$2, flabel=$3, ftype=$4 where id=$5",
-        [v.table_id, v.fname, v.flabel, v.ftype, v.id]
+      const { table_id, fname, flabel, ftype, required } = vres;
+      //console.log("update v", vres);
+      await db.update(
+        "fields",
+        { table_id, fname, flabel, ftype, required, attributes: attrs },
+        v.id
       );
     }
     res.redirect(`/table/${v.table_id}`);

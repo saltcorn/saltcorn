@@ -27,7 +27,8 @@ const reset = async () => {
       fname text NOT NULL,
       flabel text,
       ftype text,
-      attributes jsonb
+      attributes jsonb,
+      required boolean NOT NULL DEFAULT false
     )
   `);
 

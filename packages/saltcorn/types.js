@@ -57,6 +57,8 @@ const bool = {
       ""}" type="checkbox" name="${nm}" id="input${nm}" ${v ? `checked` : ""}>`,
   attributes: [],
   readFromFormRecord: (rec, name) => {
+    if (!rec[name]) return false;
+    if (rec[name] === "undefined" || rec[name] === "false") return false;
     return rec[name] ? true : false;
   },
   read: v => {

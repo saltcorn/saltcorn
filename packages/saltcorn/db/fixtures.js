@@ -10,13 +10,15 @@ const fixtures = async () => {
     table,
     fname: "author",
     flabel: "Author",
-    ftype: "String"
+    ftype: "String",
+    required: true
   });
   await Field.create({
     table,
     fname: "pages",
     flabel: "Pages",
     ftype: "String",
+    required: true,
     attributes: { min: 0 }
   });
   await View.create({
