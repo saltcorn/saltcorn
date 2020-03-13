@@ -5,6 +5,9 @@ const { calc_sql_type } = require("../routes/utils.js");
 
 class Field {
   constructor(o) {
+    if (!o.type && !o.ftype && !o.input_type)
+      throw "Field initialised with no type";
+
     this.label = o.flabel || o.label;
     this.name = o.fname || o.name;
     this.id = o.id;
@@ -13,11 +16,18 @@ class Field {
     this.options = o.options;
     this.required = o.required;
     this.hidden = o.hidden || false;
-    this.input_type = o.input_type;
+
     this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
 
-    if (!this.is_fkey) this.type = this.type || types[o.ftype];
-    else this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
+    if (!this.is_fkey) {
+      this.type = this.type || types[o.ftype];
+      this.input_type = o.input_type || "fromtype";
+    } else {
+      this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
+      this.type = types.Integer;
+      this.input_type = "select";
+    }
+
     this.attributes = o.attributes;
     if (o.table_id) this.table_id = o.table_id;
 
@@ -37,33 +47,6 @@ class Field {
         ...new Set(rows.map(r => ({ label: r[summary_field], value: r.id })))
       ];
     }
-  }
-
-  get to_formfield() {
-    return this.hidden
-      ? { name: this.name, input_type: "hidden" }
-      : this.is_fkey
-      ? {
-          label: this.label,
-          name: this.name,
-          input_type: "select",
-          options: this.options
-        }
-      : this.input_type
-      ? {
-          name: this.name,
-          input_type: this.input_type,
-          label: this.label,
-          type: this.type,
-          options: this.options
-        }
-      : {
-          label: this.label,
-          name: this.name,
-          type: this.type,
-          options: this.options,
-          input_type: "fromtype"
-        };
   }
 
   get sql_type() {

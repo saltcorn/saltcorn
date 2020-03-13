@@ -92,13 +92,7 @@ const mkFormRow = (v, errors) => hdr => {
 };
 
 const renderForm = form =>
-  mkForm(
-    form.action,
-    form.fields.map(f => f.to_formfield),
-    form.values,
-    form.submitLabel,
-    form.errors
-  );
+  mkForm(form.action, form.fields, form.values, form.submitLabel, form.errors);
 
 const mkForm = (action, hdrs, v, submitLabel = "Save", errors = {}) => {
   const top = `<form action="${action}" method="post">`;
