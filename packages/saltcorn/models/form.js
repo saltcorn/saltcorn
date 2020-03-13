@@ -1,6 +1,6 @@
 const types = require("../types");
 const db = require("../db");
-const Field = require("../db/field");
+const Field = require("./field");
 
 class Form {
   constructor(o) {

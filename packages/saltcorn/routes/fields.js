@@ -2,17 +2,11 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const types = require("../types");
-const { renderForm } = require("./markup.js");
-const Field = require("../db/field");
+const { renderForm } = require("../markup");
+const Field = require("../models/field");
 const Form = require("../models/form");
 
-const {
-  sqlsanitize,
-  fkeyPrefix,
-  calc_sql_type,
-  attributesToFormFields,
-  isAdmin
-} = require("./utils.js");
+const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -106,7 +100,6 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 
 router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
-  const sql_type = calc_sql_type(v.ftype);
   const fld = new Field(v);
   const type = types[v.ftype];
   const attributes = fld.is_fkey ? false : type.attributes;

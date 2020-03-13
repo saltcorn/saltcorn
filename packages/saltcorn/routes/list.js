@@ -1,8 +1,8 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const { mkTable, h, link, post_btn } = require("./markup.js");
-const Table = require("../db/table");
+const { mkTable, h, link, post_btn } = require("../markup");
+const Table = require("../models/table");
 const { loggedIn } = require("./utils");
 const router = new Router();
 

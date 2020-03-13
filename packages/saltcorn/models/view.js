@@ -1,5 +1,4 @@
-const db = require(".");
-const { sqlsanitize } = require("./internal.js");
+const db = require("../db");
 
 class View {
   constructor(o) {

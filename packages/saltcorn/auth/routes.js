@@ -2,16 +2,9 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const User = require("./user");
-const Field = require("../db/field");
+const Field = require("../models/field");
 const Form = require("../models/form");
-const {
-  mkTable,
-  renderForm,
-  wrap,
-  h,
-  link,
-  post_btn
-} = require("../routes/markup.js");
+const { mkTable, renderForm, wrap, h, link, post_btn } = require("../markup");
 const passport = require("passport");
 
 const router = new Router();

@@ -1,7 +1,6 @@
 const types = require("../types");
-const db = require(".");
-const { sqlsanitize, fkeyPrefix } = require("./internal.js");
-const { calc_sql_type } = require("../routes/utils.js");
+const db = require("../db");
+const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
 
 class Field {
   constructor(o) {
@@ -86,7 +85,7 @@ class Field {
     await db.query(
       `alter table ${sqlsanitize(f.table.name)} add column ${sqlsanitize(
         f.name
-      )} ${calc_sql_type(f.ftype)} ${f.required ? "not null" : ""}`
+      )} ${f.sql_type} ${f.required ? "not null" : ""}`
     );
     await db.insert("fields", {
       table_id: f.table_id,

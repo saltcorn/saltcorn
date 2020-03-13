@@ -1,5 +1,5 @@
 const { sqlsanitize, mkWhere } = require("./internal");
-const Table = require("./table");
+const Table = require("../models/table");
 
 describe("sqlsanitize", () => {
   it("should not alter valid name", () => {

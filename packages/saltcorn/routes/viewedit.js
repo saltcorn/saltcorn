@@ -2,11 +2,11 @@ const Router = require("express-promise-router");
 
 const db = require("../db");
 const viewtemplates = require("../viewtemplates");
-const { renderForm, mkTable, link, post_btn } = require("./markup.js");
+const { renderForm, mkTable, link, post_btn } = require("../markup");
 const { refresh } = require("../db/state");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
-const Field = require("../db/field");
+const Field = require("../models/field");
 
 const router = new Router();
 module.exports = router;

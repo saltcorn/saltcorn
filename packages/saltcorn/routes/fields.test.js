@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
-const Table = require("../db/table");
+const Table = require("../models/table");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,

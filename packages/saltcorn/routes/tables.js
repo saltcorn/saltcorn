@@ -1,9 +1,9 @@
 const Router = require("express-promise-router");
 
 const db = require("../db");
-const Table = require("../db/table");
-const Field = require("../db/field");
-const { mkTable, renderForm, h, link, post_btn } = require("./markup.js");
+const Table = require("../models/table");
+const Field = require("../models/field");
+const { mkTable, renderForm, h, link, post_btn } = require("../markup");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
 

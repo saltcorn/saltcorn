@@ -1,7 +1,7 @@
 const db = require(".");
-const Table = require("./table");
-const Field = require("./field");
-const View = require("./view");
+const Table = require("../models/table");
+const Field = require("../models/field");
+const View = require("../models/view");
 const User = require("../auth/user");
 
 const fixtures = async () => {

@@ -1,6 +1,6 @@
 const db = require("../db");
-const Field = require("../db/field");
-const { mkTable, h } = require("../routes/markup.js");
+const Field = require("../models/field");
+const { mkTable, h } = require("../markup");
 
 const list = {
   name: "List",

@@ -1,6 +1,6 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { wrap, ul, link, ul_nav, alert } = require("./routes/markup.js");
+const { wrap, ul, link, ul_nav, alert } = require("./markup");
 const { get_available_views } = require("./db/state");
 const db = require("./db");
 const passport = require("passport");

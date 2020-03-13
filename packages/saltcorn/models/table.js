@@ -1,5 +1,5 @@
-const db = require(".");
-const { sqlsanitize, mkWhere } = require("./internal.js");
+const db = require("../db");
+const { sqlsanitize, mkWhere } = require("../db/internal.js");
 const Field = require("./field");
 
 class Table {
