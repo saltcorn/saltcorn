@@ -90,8 +90,6 @@ const mkFormRow = (v, errors) => hdr => {
       );
   }
 };
-const mkHiddenFormFields = fldNms =>
-  fldNms.map(fnm => ({ name: fnm, input_type: "hidden" }));
 
 const renderForm = form =>
   mkForm(
@@ -169,7 +167,6 @@ const alert = (type, s) => {
 
 module.exports = {
   mkTable,
-  mkForm,
   renderForm,
   wrap,
   h,
@@ -177,6 +174,5 @@ module.exports = {
   ul_nav,
   link,
   post_btn,
-  mkHiddenFormFields,
   alert
 };

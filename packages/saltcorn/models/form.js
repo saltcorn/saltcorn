@@ -12,13 +12,15 @@ class Form {
     this.submitLabel = o.submitLabel;
     if (o.validate) this.validate(o.validate);
   }
-  hidden(k) {
-    this.fields.push(
-      new Field({
-        name: k,
-        input_type: "hidden"
-      })
-    );
+  hidden(...ks) {
+    ks.forEach(k => {
+      this.fields.push(
+        new Field({
+          name: k,
+          input_type: "hidden"
+        })
+      );
+    });
   }
   validate(v) {
     this.fields.forEach(f => {
