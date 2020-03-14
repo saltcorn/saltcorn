@@ -36,18 +36,20 @@ const fieldForm = fkey_opts =>
     ]
   });
 
-const attributesForm = (v, type) => {
+const attributesForm = (v, attributes) => {
   const ff = fieldForm();
   const a2ff = attr =>
     new Field({
-      label: attr.name,
+      label: attr.label || attr.name,
       name: attr.name,
-      input_type: "fromtype",
-      type: types[attr.type]
+      options: attr.options,
+      input_type: attr.input_type || "fromtype",
+      type: typeof attr.type === "string" ? types[attr.type] : attr.type
     });
-  const attr_fields = type.attributes ? type.attributes.map(a2ff) : [];
+  const attr_fields = attributes.map(a2ff);
   const hidden_fields = ff.fields.map(f => {
     f.hidden = true;
+    f.input_type = "hidden";
     return f;
   });
   var hasattr = [new Field({ name: "has_attributes", input_type: "hidden" })];
@@ -102,9 +104,36 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const fld = new Field(v);
   const type = types[v.ftype];
-  const attributes = fld.is_fkey ? false : type.attributes;
+  var attributes = [];
+  var need_default = false;
+  if (v.required) {
+    const table = await db.get_table_by_id(v.table_id);
+    const rows = await db.select(table.name);
+    if (rows.length > 0) need_default = true;
+  }
+  if (fld.is_fkey) {
+    const fields = await Field.get_by_table_id(v.table_id);
+    const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
+    attributes = [
+      {
+        name: "summary_field",
+        label: "Summary field",
+        input_type: "select",
+        options: keyfields
+      }
+    ];
+    // todo: default
+  } else {
+    attributes = type.attributes;
+    if (need_default)
+      attributes.push({
+        name: "default",
+        label: "Default",
+        type: type
+      });
+  }
   if (attributes && typeof v.has_attributes === "undefined") {
-    const attrForm = attributesForm(v, type);
+    const attrForm = attributesForm(v, attributes);
     res.sendWrap(`New field`, renderForm(attrForm));
   } else {
     //console.log("v", v);
@@ -113,8 +142,9 @@ router.post("/", isAdmin, async (req, res) => {
     var attrs = {};
     if (attributes) {
       attributes.forEach(a => {
-        const t = types[a.type];
-        const aval = t.read(v[a.name]);
+        //console.log("attrib", a);
+        const t = typeof a.type === "string" ? types[a.type] : a.type;
+        const aval = t ? t.read(v[a.name]) : v[a.name];
         if (typeof aval !== "undefined") attrs[a.name] = aval;
       });
     }

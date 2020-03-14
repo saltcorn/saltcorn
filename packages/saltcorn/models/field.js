@@ -27,7 +27,7 @@ class Field {
       this.input_type = "select";
     }
 
-    this.attributes = o.attributes;
+    this.attributes = o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
     if (o.table) {
@@ -41,7 +41,7 @@ class Field {
       const table = await db.get_table_by_name(this.reftable);
       //const fields = await Field.get_by_table_id(table.id);
       const rows = await db.select(this.reftable);
-      const summary_field = table.summary_field || "id";
+      const summary_field = this.attributes.summary_field || "id";
       this.options = [
         ...new Set(rows.map(r => ({ label: r[summary_field], value: r.id })))
       ];
@@ -85,7 +85,9 @@ class Field {
     await db.query(
       `alter table ${sqlsanitize(f.table.name)} add column ${sqlsanitize(
         f.name
-      )} ${f.sql_type} ${f.required ? "not null" : ""}`
+      )} ${f.sql_type} ${f.required ? "not null" : ""} ${
+        f.attributes.default ? "default " + f.attributes.default : ""
+      }`
     );
     await db.insert("fields", {
       table_id: f.table_id,
