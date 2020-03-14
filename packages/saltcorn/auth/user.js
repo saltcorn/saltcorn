@@ -26,6 +26,21 @@ class User {
     if (cmp) return new User(urow);
     else return false;
   }
+  static async find(where) {
+    const us = await db.select("users", where);
+    return us.map(u => new User(u));
+  }
+  static async findOne(where) {
+    const u = await db.selectOne("users", where);
+    return new User(u);
+  }
+  async delete() {
+    await db.query("delete FROM users WHERE id = $1", [this.id]);
+  }
+  static async get_roles() {
+    const rs = await db.select("roles");
+    return rs;
+  }
 }
 
 module.exports = User;

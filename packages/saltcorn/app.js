@@ -68,7 +68,8 @@ app.use(function(req, res, next) {
       (req.user || {}).role_id === 1
         ? [
             ["/table", "Edit Tables"],
-            ["/viewedit/list", "Edit Views"]
+            ["/viewedit/list", "Edit Views"],
+            ["/useradmin", "Users"]
           ]
         : [];
 
