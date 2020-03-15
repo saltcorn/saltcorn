@@ -4,6 +4,7 @@ const db = require("../db");
 const types = require("../types");
 const { renderForm } = require("../markup");
 const Field = require("../models/field");
+const Table = require("../models/table");
 const Form = require("../models/form");
 
 const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
@@ -20,11 +21,11 @@ const fieldForm = fkey_opts =>
         input_type: "hidden",
         type: types.Integer
       }),
-      new Field({ label: "Name", name: "fname", input_type: "text" }),
-      new Field({ label: "Label", name: "flabel", input_type: "text" }),
+      new Field({ label: "Name", name: "name", input_type: "text" }),
+      new Field({ label: "Label", name: "label", input_type: "text" }),
       new Field({
         label: "Type",
-        name: "ftype",
+        name: "type",
         input_type: "select",
         options: types._type_names.concat(fkey_opts || [])
       }),
@@ -38,15 +39,7 @@ const fieldForm = fkey_opts =>
 
 const attributesForm = (v, attributes) => {
   const ff = fieldForm();
-  const a2ff = attr =>
-    new Field({
-      label: attr.label || attr.name,
-      name: attr.name,
-      options: attr.options,
-      input_type: attr.input_type || "fromtype",
-      type: typeof attr.type === "string" ? types[attr.type] : attr.type
-    });
-  const attr_fields = attributes.map(a2ff);
+  const attr_fields = attributes.map(a => new Field(a));
   const hidden_fields = ff.fields.map(f => {
     f.hidden = true;
     f.input_type = "hidden";
@@ -93,7 +86,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
   const table = await db.get_table_by_id(rows[0].table_id);
   await db.query(
     `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
-      rows[0].fname
+      rows[0].name
     )}`
   );
 
@@ -103,7 +96,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   const fld = new Field(v);
-  const type = types[v.ftype];
+  const type = types[v.type];
   var attributes = [];
   var need_default = false;
   if (v.required) {
@@ -112,7 +105,8 @@ router.post("/", isAdmin, async (req, res) => {
     if (rows.length > 0) need_default = true;
   }
   if (fld.is_fkey) {
-    const fields = await Field.get_by_table_id(v.table_id);
+    const table = await Table.find({ name: fld.reftable });
+    const fields = await Field.get_by_table_id(table.id);
     const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
     attributes = [
       {
@@ -133,7 +127,12 @@ router.post("/", isAdmin, async (req, res) => {
       });
   }
   if (attributes && typeof v.has_attributes === "undefined") {
-    const attrForm = attributesForm(v, attributes);
+    var sendValues = v;
+    if (v.id) {
+      const existing = await db.selectOne("fields", { id: v.id });
+      sendValues = { ...v, ...existing.attributes };
+    }
+    const attrForm = attributesForm(sendValues, attributes);
     res.sendWrap(`New field`, renderForm(attrForm));
   } else {
     //console.log("v", v);
@@ -155,11 +154,11 @@ router.post("/", isAdmin, async (req, res) => {
     } else {
       // update
       //TODO edit db field
-      const { table_id, fname, flabel, ftype, required } = vres;
+      const { table_id, name, label, type, required } = vres;
       //console.log("update v", vres);
       await db.update(
         "fields",
-        { table_id, fname, flabel, ftype, required, attributes: attrs },
+        { table_id, name, label, type, required, attributes: attrs },
         v.id
       );
     }

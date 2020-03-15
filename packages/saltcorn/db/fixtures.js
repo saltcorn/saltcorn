@@ -8,16 +8,16 @@ const fixtures = async () => {
   const table = await Table.create("books");
   await Field.create({
     table,
-    fname: "author",
-    flabel: "Author",
-    ftype: "String",
+    name: "author",
+    label: "Author",
+    type: "String",
     required: true
   });
   await Field.create({
     table,
-    fname: "pages",
-    flabel: "Pages",
-    ftype: "String",
+    name: "pages",
+    label: "Pages",
+    type: "String",
     required: true,
     attributes: { min: 0 }
   });

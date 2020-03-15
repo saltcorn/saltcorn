@@ -37,9 +37,9 @@ describe("Field Endpoints", () => {
     const res = await request(app)
       .post("/field/")
       .send("table_id=1")
-      .send("fname=AgeRating")
-      .send("flabel=AgeRating")
-      .send("ftype=Integer")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Integer")
       .set("Cookie", loginCookie);
     expect(res.statusCode).toEqual(200);
 
@@ -51,9 +51,9 @@ describe("Field Endpoints", () => {
     const res = await request(app)
       .post("/field/")
       .send("table_id=1")
-      .send("fname=AgeRating")
-      .send("flabel=AgeRating")
-      .send("ftype=Integer")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Integer")
       .send("min=0")
       .send("max=410")
       .send("has_attributes=true")
@@ -67,9 +67,9 @@ describe("Field Endpoints", () => {
     const res = await request(app)
       .post("/field/")
       .send("table_id=1")
-      .send("fname=Publisher")
-      .send("flabel=Publisher")
-      .send("ftype=String")
+      .send("name=Publisher")
+      .send("label=Publisher")
+      .send("type=String")
       .set("Cookie", loginCookie);
     expect(res.statusCode).toEqual(200);
 
@@ -81,9 +81,9 @@ describe("Field Endpoints", () => {
     const res = await request(app)
       .post("/field/")
       .send("table_id=1")
-      .send("fname=Publisher")
-      .send("flabel=Publisher")
-      .send("ftype=String")
+      .send("name=Publisher")
+      .send("label=Publisher")
+      .send("type=String")
       .send("has_attributes=true")
       .set("Cookie", loginCookie);
     expect(res.statusCode).toEqual(302);

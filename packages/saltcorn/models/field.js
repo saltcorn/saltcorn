@@ -4,26 +4,22 @@ const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
 
 class Field {
   constructor(o) {
-    if (!o.type && !o.ftype && !o.input_type)
-      throw "Field initialised with no type";
-
-    this.label = o.flabel || o.label;
-    this.name = o.fname || o.name;
+    if (!o.type && !o.input_type) throw "Field initialised with no type";
+    this.label = o.label || o.name;
+    this.name = o.name;
     this.id = o.id;
-    this.ftype = o.ftype;
-    this.type = o.type;
+    this.type = typeof o.type === "string" ? types[o.type] : o.type;
     this.options = o.options;
     this.required = o.required;
     this.hidden = o.hidden || false;
 
-    this.is_fkey = o.ftype && o.ftype.startsWith(fkeyPrefix);
+    this.is_fkey = typeof o.type === "string" && o.type.startsWith(fkeyPrefix);
 
     if (!this.is_fkey) {
-      this.type = this.type || types[o.ftype];
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable = sqlsanitize(o.ftype.replace(fkeyPrefix, ""));
-      this.type = types.Integer;
+      this.reftable = sqlsanitize(o.type.replace(fkeyPrefix, ""));
+      this.type = o.type;
       this.input_type = "select";
     }
 
@@ -91,9 +87,9 @@ class Field {
     );
     await db.insert("fields", {
       table_id: f.table_id,
-      fname: f.name,
-      flabel: f.label,
-      ftype: f.ftype,
+      name: f.name,
+      label: f.label,
+      type: f.is_fkey ? f.type : f.type.name,
       required: f.required,
       attributes: f.attributes
     });

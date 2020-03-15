@@ -32,9 +32,9 @@ router.get("/:id", isAdmin, async (req, res) => {
     link(`/list/${table.name}`, "List"),
     mkTable(
       [
-        { label: "Name", key: "fname" },
-        { label: "Label", key: "flabel" },
-        { label: "Type", key: "ftype" },
+        { label: "Name", key: "name" },
+        { label: "Label", key: "label" },
+        { label: "Type", key: "type" },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
           label: "Delete",

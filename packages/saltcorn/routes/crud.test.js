@@ -13,6 +13,7 @@ describe("standard edit form", () => {
     const res = await request(app)
       .get("/edit/books")
       .set("Cookie", loginCookie);
+    if (res.statusCode !== 200) console.log(res.text);
     expect(res.statusCode).toEqual(200);
     expect(res.text.includes("Author")).toBe(true);
     done();

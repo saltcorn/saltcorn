@@ -23,9 +23,9 @@ const reset = async () => {
     (
       id serial primary key,
       table_id integer references tables(id),
-      fname text NOT NULL,
-      flabel text,
-      ftype text,
+      name text NOT NULL,
+      label text,
+      type text,
       attributes jsonb,
       required boolean NOT NULL DEFAULT false
     )
