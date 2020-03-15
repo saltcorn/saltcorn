@@ -1,5 +1,5 @@
-const renderForm= require("./form");
-
+const renderForm = require("./form");
+const { ul, li, a } = require("./tags");
 const mkTable = (hdrs, vs) => {
   var s = '<table class="table"><thead><tr>';
   hdrs.forEach(hdr => {
@@ -20,16 +20,18 @@ const mkTable = (hdrs, vs) => {
 };
 
 const h = (sz, s) => `<h${sz}>${s}</h${sz}>`;
-const ul = lis => `<ul>${lis.map(li => `<li>${li}</li>`).join("")}</ul>`;
 const ul_nav = lis =>
-  `<ul class="nav">${lis
-    .map(
-      li =>
-        `<li class="nav-item"><a class="nav-link" href="${li[0]}">${li[1]}</a></li>`
+  ul(
+    { class: "nav" },
+    lis.map(item =>
+      li(
+        { class: "nav-item" },
+        a({ class: "nav-link", href: item[0] }, item[1])
+      )
     )
-    .join("")}</ul>`;
+  );
 
-const link = (href, s) => `<a href="${href}">${s}</a>`;
+const link = (href, s) => a({ href }, s);
 
 const post_btn = (href, s) => `<form action="${href}" method="post">
 <button type="submit" class="btn btn-primary">${s}</button></form>`;
