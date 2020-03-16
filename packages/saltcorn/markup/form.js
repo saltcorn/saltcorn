@@ -5,7 +5,7 @@ const formRowWrap = (hdr, inner, error = "") => `<div class="form-group row">
       ${error}
     </div>
   </div>`;
-
+const isdef = x => typeof x !== "undefined";
 const mkFormRow = (v, errors) => hdr => {
   const validClass = errors[hdr.name] ? "is-invalid" : "";
   const errorFeedback = errors[hdr.name]
@@ -17,7 +17,7 @@ const mkFormRow = (v, errors) => hdr => {
         hdr,
         hdr.type.editAs(
           hdr.name,
-          v && v[hdr.name] ? v[hdr.name] : undefined,
+          v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
           validClass
         ),
         errorFeedback
@@ -42,7 +42,7 @@ const mkFormRow = (v, errors) => hdr => {
         `<select class="form-control ${validClass}" name="${
           hdr.name
         }" id="input${hdr.name}" ${
-          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
         }>${opts}</select>`,
         errorFeedback
       );
@@ -55,7 +55,7 @@ const mkFormRow = (v, errors) => hdr => {
         `<select class="form-control ${validClass}" class="chosen-select" multiple name="${
           hdr.name
         }" id="input${hdr.name}" ${
-          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
         }>${mopts}</select><script>$(function(){$("#input${
           hdr.name
         }").chosen()})</script>`,
@@ -68,7 +68,7 @@ const mkFormRow = (v, errors) => hdr => {
         `<input type="${hdr.input_type}" class="form-control" name="${
           hdr.name
         }" id="input${hdr.name}" ${
-          v && v[hdr.name] ? `value="${v[hdr.name]}"` : ""
+          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
         }>`,
         errorFeedback
       );

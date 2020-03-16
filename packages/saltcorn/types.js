@@ -9,7 +9,7 @@ const string = {
   ],
   editAs: (nm, v, cls) =>
     `<input type="text" class="form-control ${cls ||
-      ""}" name="${nm}" id="input${nm}" ${v ? `value="${v}"` : ""}>`,
+      ""}" name="${nm}" id="input${nm}" ${isdef(v) ? `value="${v}"` : ""}>`,
   read: v => {
     switch (typeof v) {
       case "string":
@@ -26,7 +26,7 @@ const int = {
   sql_name: "text",
   editAs: (nm, v, cls) =>
     `<input type="number" class="form-control ${cls ||
-      ""}" name="${nm}" id="input${nm}" ${v ? `value="${v}"` : ""}>`,
+      ""}" name="${nm}" id="input${nm}" ${isdef(v) ? `value="${v}"` : ""}>`,
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false }

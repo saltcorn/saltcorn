@@ -34,8 +34,6 @@ class Field {
 
   async fill_fkey_options() {
     if (this.is_fkey) {
-      const table = await db.get_table_by_name(this.reftable);
-      //const fields = await Field.get_by_table_id(table.id);
       const rows = await db.select(this.reftable);
       const summary_field = this.attributes.summary_field || "id";
       this.options = [
@@ -78,13 +76,15 @@ class Field {
   static async create(fld) {
     const f = new Field(fld);
     if (!f.table && f.table_id) f.table = await db.get_table_by_id(f.table_id);
-    await db.query(
-      `alter table ${sqlsanitize(f.table.name)} add column ${sqlsanitize(
-        f.name
-      )} ${f.sql_type} ${f.required ? "not null" : ""} ${
-        f.attributes.default ? "default " + f.attributes.default : ""
-      }`
-    );
+    const q = `alter table ${sqlsanitize(
+      f.table.name
+    )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+      f.required ? "not null" : ""
+    } ${
+      f.attributes.default ? `default '${f.attributes.default}'` : "" //todo escape
+    }`;
+    //console.log(q)
+    await db.query(q);
     await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,

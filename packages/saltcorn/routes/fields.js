@@ -6,6 +6,7 @@ const { renderForm } = require("../markup");
 const Field = require("../models/field");
 const Table = require("../models/table");
 const Form = require("../models/form");
+const Workflow = require("../models/workflow");
 
 const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
 
@@ -37,43 +38,104 @@ const fieldForm = fkey_opts =>
     ]
   });
 
-const attributesForm = (v, attributes) => {
-  const ff = fieldForm();
-  const attr_fields = attributes.map(a => new Field(a));
-  const hidden_fields = ff.fields.map(f => {
-    f.hidden = true;
-    f.input_type = "hidden";
-    return f;
-  });
-  var hasattr = [new Field({ name: "has_attributes", input_type: "hidden" })];
-  if (v.id) hasattr.push(new Field({ name: "id", input_type: "hidden" }));
-  return new Form({
-    action: "/field",
-    fields: attr_fields.concat(hidden_fields, hasattr),
-    values: { has_attributes: "true", ...v }
-  });
-};
+const fieldFlow = new Workflow({
+  action: "/field",
+  onDone: async context => {
+    const type = types[context.type];
+    var attributes = {};
+    if (!new Field(context).is_fkey)
+      type.attributes.forEach(a => {
+        attributes[a.name] = context[a.name];
+      });
 
+    attributes.default = context.default;
+    attributes.summary_field = context.summary_field;
+    if (context.id) {
+      const { table_id, name, label, type, required } = context;
+      await db.update(
+        "fields",
+        { table_id, name, label, type, required, attributes },
+        context.id
+      );
+    } else await Field.create({ attributes, ...context });
+    return { redirect: `/table/${context.table_id}` };
+  },
+  steps: [
+    {
+      name: "field",
+      form: async () => {
+        const tables = await db.get_tables();
+        const fkey_opts = tables.map(t => fkeyPrefix + t.name);
+        return fieldForm(fkey_opts);
+      }
+    },
+    {
+      name: "attributes",
+      onlyWhen: context => {
+        if (new Field(context).is_fkey) return false;
+        const type = types[context.type];
+        return type.attributes && type.attributes.length > 0;
+      },
+      form: async context => {
+        const type = types[context.type];
+        return new Form({
+          fields: type.attributes.map(a => new Field(a))
+        });
+      }
+    },
+    {
+      name: "summary",
+      onlyWhen: context => new Field(context).is_fkey,
+      form: async context => {
+        const fld = new Field(context);
+        const table = await Table.find({ name: fld.reftable });
+        const fields = await Field.get_by_table_id(table.id);
+        const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
+        return new Form({
+          fields: [
+            new Field({
+              name: "summary_field",
+              label: "Summary field",
+              input_type: "select",
+              options: keyfields
+            })
+          ]
+        });
+      }
+    },
+    {
+      name: "default",
+      onlyWhen: async context => {
+        if (!context.required || context.id) return false;
+        const table = await db.get_table_by_id(context.table_id);
+        const rows = await db.select(table.name); //todo count
+        return rows.length > 0;
+      },
+      form: async context => {
+        const formfield = new Field({
+          name: "default",
+          label: "Default",
+          type: context.type,
+          attributes: { summary_field: context.summary_field }
+        });
+        await formfield.fill_fkey_options();
+        return new Form({
+          fields: [formfield]
+        });
+      }
+    }
+  ]
+});
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const field = await db.get_field_by_id(id);
-  const tables = await db.get_tables();
-  const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  const form = fieldForm(fkey_opts);
-  form.values = field;
-  form.hidden("id");
-
-  res.sendWrap(`Edit field`, renderForm(form));
+  const wfres = await fieldFlow.run({ ...field, ...field.attributes });
+  res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
 });
 
 router.get("/new/:table_id", isAdmin, async (req, res) => {
-  const { table_id } = req.params;
-  const tables = await db.get_tables();
-  const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-  const form = fieldForm(fkey_opts);
-  form.values = { table_id };
-
-  res.sendWrap(`New field`, renderForm(form));
+  const wfres = await fieldFlow.run(req.params);
+  res.sendWrap(`New field`, renderForm(wfres.renderForm));
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
@@ -94,74 +156,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.post("/", isAdmin, async (req, res) => {
-  const v = req.body;
-  const fld = new Field(v);
-  const type = types[v.type];
-  var attributes = [];
-  var need_default = false;
-  if (v.required) {
-    const table = await db.get_table_by_id(v.table_id);
-    const rows = await db.select(table.name);
-    if (rows.length > 0) need_default = true;
-  }
-  if (fld.is_fkey) {
-    const table = await Table.find({ name: fld.reftable });
-    const fields = await Field.get_by_table_id(table.id);
-    const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
-    attributes = [
-      {
-        name: "summary_field",
-        label: "Summary field",
-        input_type: "select",
-        options: keyfields
-      }
-    ];
-    // todo: default
-  } else {
-    attributes = type.attributes;
-    if (need_default)
-      attributes.push({
-        name: "default",
-        label: "Default",
-        type: type
-      });
-  }
-  if (attributes && typeof v.has_attributes === "undefined") {
-    var sendValues = v;
-    if (v.id) {
-      const existing = await db.selectOne("fields", { id: v.id });
-      sendValues = { ...v, ...existing.attributes };
-    }
-    const attrForm = attributesForm(sendValues, attributes);
-    res.sendWrap(`New field`, renderForm(attrForm));
-  } else {
-    //console.log("v", v);
-    const form = fieldForm();
-    form.values = v;
-    var attrs = {};
-    if (attributes) {
-      attributes.forEach(a => {
-        //console.log("attrib", a);
-        const t = typeof a.type === "string" ? types[a.type] : a.type;
-        const aval = t ? t.read(v[a.name]) : v[a.name];
-        if (typeof aval !== "undefined") attrs[a.name] = aval;
-      });
-    }
-    if (v.id) form.hidden("id");
-    const vres = form.validate(v).success; // TODO what if it fails
-    if (typeof v.id === "undefined") {
-      await Field.create({ attributes: attrs, ...vres });
-    } else {
-      // update
-      //TODO edit db field
-      const { table_id, name, label, type, required } = vres;
-      //console.log("update v", vres);
-      await db.update(
-        "fields",
-        { table_id, name, label, type, required, attributes: attrs },
-        v.id
-      );
-    }
-    res.redirect(`/table/${v.table_id}`);
-  }
+  const wfres = await fieldFlow.run(req.body);
+  if (wfres.renderForm) res.sendWrap(`New field`, renderForm(wfres.renderForm));
+  else res.redirect(wfres.redirect);
 });
