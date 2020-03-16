@@ -17,11 +17,6 @@ const fieldForm = fkey_opts =>
   new Form({
     action: "/field",
     fields: [
-      new Field({
-        name: "table_id",
-        input_type: "hidden",
-        type: types.Integer
-      }),
       new Field({ label: "Name", name: "name", input_type: "text" }),
       new Field({ label: "Label", name: "label", input_type: "text" }),
       new Field({
