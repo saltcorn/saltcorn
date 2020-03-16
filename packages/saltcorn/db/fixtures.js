@@ -21,6 +21,21 @@ const fixtures = async () => {
     required: true,
     attributes: { min: 0 }
   });
+  const patients = await Table.create("patients");
+  await Field.create({
+    table: patients,
+    name: "name",
+    label: "Name",
+    type: "String",
+    required: true
+  });
+  await Field.create({
+    table: patients,
+    name: "favbook",
+    label: "Favourite book",
+    type: "Key to books",
+    required: false
+  });
   await View.create({
     table_id: table.id,
     name: "authorlist",

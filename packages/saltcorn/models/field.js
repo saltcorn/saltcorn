@@ -72,7 +72,10 @@ class Field {
     const db_flds = await db.select("fields", { table_id: tid });
     return db_flds.map(dbf => new Field(dbf));
   }
-
+  static async findOne(where) {
+    const db_fld = await db.selectOne("fields", where);
+    return new Field(db_fld);
+  }
   static async create(fld) {
     const f = new Field(fld);
     if (!f.table && f.table_id) f.table = await db.get_table_by_id(f.table_id);
