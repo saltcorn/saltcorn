@@ -10,8 +10,9 @@ module.exports = router;
 
 router.post("/:tname/:id", loggedIn, async (req, res) => {
   const { tname, id } = req.params;
+  const { redirect } = req.query;
   const table = await db.get_table_by_name(tname);
   await db.deleteWhere(table.name, { id: id });
 
-  res.redirect(`/list/${table.name}`);
+  res.redirect(redirect || `/list/${table.name}`);
 });

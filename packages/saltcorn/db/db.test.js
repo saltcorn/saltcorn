@@ -1,4 +1,5 @@
 const { sqlsanitize, mkWhere } = require("./internal");
+const db = require("./index.js");
 const Table = require("../models/table");
 
 describe("sqlsanitize", () => {
@@ -32,6 +33,19 @@ describe("Table", () => {
     const tf = await Table.find({ id: tc.id });
 
     expect(tf.name).toStrictEqual("mytable");
+    done();
+  });
+});
+
+describe("where", () => {
+  it("should support in", async done => {
+    expect.assertions(1);
+    const tc = await Table.create("myothertable");
+    const tf = await db.selectOne("tables", {
+      name: { in: ["myothertable", "nosuchtable"] }
+    });
+
+    expect(tf.name).toStrictEqual("myothertable");
     done();
   });
 });

@@ -28,7 +28,7 @@ const get_state_fields = () => [
   }
 ];
 
-const run = async (table_id, rels, { id }) => {
+const run = async (table_id, viewname, rels, { id }) => {
   const tbl = await db.get_table_by_id(table_id);
 
   const fields = await Field.get_by_table_id(tbl.id);

@@ -7,6 +7,8 @@ const { refresh } = require("../db/state");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
 const Field = require("../models/field");
+const Table = require("../models/table");
+const Workflow = require("../models/workflow");
 
 const router = new Router();
 module.exports = router;
@@ -57,23 +59,80 @@ const viewForm = (tableOptions, values) =>
     values
   });
 
+const viewFlow = new Workflow({
+  action: "/viewedit/",
+  onDone: async context => {
+    const { id, name, viewtemplate, table_name } = context;
+    const table = await db.get_table_by_name(table_name);
+    const view = viewtemplates[viewtemplate];
+    const config_fields = await view.configuration_form(table_name);
+    var configuration = {};
+    config_fields.forEach(cf => {
+      configuration[cf.name] = context[cf.name];
+    });
+    if (id) {
+      await db.update(
+        "views",
+        { viewtemplate, name, configuration, table_id: table.id },
+        id
+      );
+    } else {
+      await db.insert("views", {
+        viewtemplate,
+        name,
+        configuration,
+        table_id: table.id
+      });
+    }
+    await refresh();
+    return { redirect: `/viewedit/list` };
+  },
+  steps: [
+    {
+      name: "view",
+      form: async () => {
+        const tables = await db.get_tables();
+        const tableOptions = tables.map(t => t.name);
+        return viewForm(tableOptions);
+      }
+    },
+    {
+      name: "config",
+      form: async context => {
+        const view = viewtemplates[context.viewtemplate];
+        const config_fields = await view.configuration_form(context.table_name);
+        return new Form({
+          fields: config_fields.map(f => new Field(f))
+        });
+      }
+    }
+  ]
+});
+
 router.get("/edit/:viewname", isAdmin, async (req, res) => {
   const { viewname } = req.params;
 
-  var viewrow = await db.selectOne("views", { name: viewname });
-
-  const tables = await db.get_tables();
-  const currentTable = tables.find(t => t.id === viewrow.table_id);
-  viewrow.table_name = currentTable.name;
-  const tableOptions = tables.map(t => t.name);
-  const form = viewForm(tableOptions, viewrow);
-  res.sendWrap(`Edit view`, renderForm(form));
+  const { configuration, ...viewrow } = await db.selectOne("views", {
+    name: viewname
+  });
+  const table = await Table.find({ id: viewrow.table_id });
+  const wfres = await viewFlow.run({
+    table_name: table.name,
+    ...viewrow,
+    ...configuration
+  });
+  res.sendWrap(`New field`, renderForm(wfres.renderForm));
 });
 
 router.get("/new", isAdmin, async (req, res) => {
-  const tables = await db.get_tables();
-  const tableOptions = tables.map(t => t.name);
-  res.sendWrap(`Edit view`, renderForm(viewForm(tableOptions)));
+  const wfres = await viewFlow.run();
+  res.sendWrap(`New field`, renderForm(wfres.renderForm));
+});
+
+router.post("/", isAdmin, async (req, res) => {
+  const wfres = await viewFlow.run(req.body);
+  if (wfres.renderForm) res.sendWrap(`New view`, renderForm(wfres.renderForm));
+  else res.redirect(wfres.redirect);
 });
 
 router.post("/delete/:name", isAdmin, async (req, res) => {
@@ -82,52 +141,5 @@ router.post("/delete/:name", isAdmin, async (req, res) => {
   await db.deleteWhere("views", { name });
   await refresh();
 
-  res.redirect(`/viewedit/list`);
-});
-
-router.post("/config", isAdmin, async (req, res) => {
-  const vbody = req.body;
-  var viewrow = { configuration: {} };
-  if (vbody.id) viewrow = await db.selectOne("views", { name: vbody.name });
-
-  const view = viewtemplates[vbody.viewtemplate];
-  const config_fields = await view.configuration_form(vbody.table_name);
-  const form = new Form({
-    action: "/viewedit/save",
-    fields: config_fields.map(f => new Field(f)),
-    values: {
-      ...vbody,
-      ...viewrow.configuration
-    }
-  });
-  form.hidden("name", "viewtemplate", "table_name");
-  if (vbody.id) form.hidden("id");
-  res.sendWrap(`View configuration`, renderForm(form));
-});
-
-router.post("/save", isAdmin, async (req, res) => {
-  const { id, name, viewtemplate, table_name } = req.body;
-  const table = await db.get_table_by_name(table_name);
-  const view = viewtemplates[viewtemplate];
-  const config_fields = await view.configuration_form(table_name);
-  var configuration = {};
-  config_fields.forEach(cf => {
-    configuration[cf.name] = req.body[cf.name];
-  });
-  if (id) {
-    await db.update(
-      "views",
-      { viewtemplate, name, configuration, table_id: table.id },
-      id
-    );
-  } else {
-    await db.insert("views", {
-      viewtemplate,
-      name,
-      configuration,
-      table_id: table.id
-    });
-  }
-  await refresh();
   res.redirect(`/viewedit/list`);
 });
