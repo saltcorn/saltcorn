@@ -6,6 +6,25 @@ const formRowWrap = (hdr, inner, error = "") => `<div class="form-group row">
     </div>
   </div>`;
 const isdef = x => typeof x !== "undefined";
+
+const select_options = (v, hdr) => {
+  const selected = v ? v[hdr.name] : undefined;
+  const isSelected = value =>
+    !selected
+      ? false
+      : selected.length
+      ? selected.includes(value)
+      : value === selected;
+  return (opts = hdr.options
+    .map(o => {
+      const label = typeof o === "string" ? o : o.label;
+      const value = typeof o === "string" ? o : o.value;
+      return `<option value="${value}" ${
+        isSelected(value) ? "selected" : ""
+      }>${label}</option>`;
+    })
+    .join(""));
+};
 const mkFormRow = (v, errors) => hdr => {
   const validClass = errors[hdr.name] ? "is-invalid" : "";
   const errorFeedback = errors[hdr.name]
@@ -27,38 +46,17 @@ const mkFormRow = (v, errors) => hdr => {
         hdr.name
       }" ${v ? `value="${v[hdr.name]}"` : ""}>`;
     case "select":
-      const selected = v ? v[hdr.name] : undefined;
-      const opts = hdr.options
-        .map(o => {
-          const label = typeof o === "string" ? o : o.label;
-          const value = typeof o === "string" ? o : o.value;
-          return `<option value="${value}" ${
-            value === selected ? "selected" : ""
-          }>${label}</option>`;
-        })
-        .join("");
+      const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" name="${
-          hdr.name
-        }" id="input${hdr.name}" ${
-          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
-        }>${opts}</select>`,
+        `<select class="form-control ${validClass}" name="${hdr.name}" id="input${hdr.name}">${opts}</select>`,
         errorFeedback
       );
     case "ordered_multi_select":
-      const mopts = hdr.options
-        .map(o => `<option value="${o}">${o}</option>`)
-        .join("");
+      const mopts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${
-          hdr.name
-        }" id="input${hdr.name}" ${
-          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
-        }>${mopts}</select><script>$(function(){$("#input${
-          hdr.name
-        }").chosen()})</script>`,
+        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${hdr.name}" id="input${hdr.name}">${mopts}</select><script>$(function(){$("#input${hdr.name}").chosen()})</script>`,
         errorFeedback
       );
 
