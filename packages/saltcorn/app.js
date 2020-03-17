@@ -1,6 +1,8 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { wrap, ul, link, ul_nav, alert } = require("./markup");
+const { wrap, link, ul_nav, alert } = require("./markup");
+const { ul, li } = require("./markup/tags");
+
 const { get_available_views } = require("./db/state");
 const db = require("./db");
 const passport = require("passport");
@@ -59,16 +61,19 @@ passport.deserializeUser(function(user, done) {
 
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
-    const views = get_available_views();
+    const isAuth = req.isAuthenticated();
+    const views = get_available_views().filter(
+      v => v.on_menu && (isAuth || v.is_public)
+    );
     const mkAlert = ty => alert(ty, req.flash(ty));
-    const authItem = req.isAuthenticated()
+    const authItem = isAuth
       ? ["/auth/logout", "Logout"]
       : ["/auth/login", "Login"];
     const adminItems =
       (req.user || {}).role_id === 1
         ? [
-            ["/table", "Edit Tables"],
-            ["/viewedit/list", "Edit Views"],
+            ["/table", "Tables"],
+            ["/viewedit/list", "Views"],
             ["/useradmin", "Users"]
           ]
         : [];
@@ -95,6 +100,12 @@ app.use(function(req, res, next) {
 });
 mountRoutes(app);
 
-app.get("/", (req, res) => res.sendWrap("Hello", "Hello World!"));
+app.get("/", (req, res) => {
+  const isAuth = req.isAuthenticated();
+  const views = get_available_views()
+    .filter(v => v.on_root_page && (isAuth || v.is_public))
+    .map(v => li(link(`/view/${v.name}`, v.name)));
+  res.sendWrap("Hello", ul(views));
+});
 
 module.exports = app;

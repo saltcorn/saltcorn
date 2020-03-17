@@ -12,6 +12,9 @@ class View {
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
     this.configuration = o.configuration;
+    this.is_public = o.is_public;
+    this.on_root_page = o.on_root_page;
+    this.on_menu = o.on_menu;
   }
   static async findOne(where) {
     const v = await db.selectOne("views", where);

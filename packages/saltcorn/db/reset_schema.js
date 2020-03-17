@@ -38,7 +38,10 @@ const reset = async () => {
       viewtemplate text NOT NULL,
       name text NOT NULL,
       table_id integer references tables(id),
-      configuration jsonb NOT NULL
+      configuration jsonb NOT NULL,
+      is_public boolean NOT NULL DEFAULT false,
+      on_root_page boolean NOT NULL DEFAULT false,
+      on_menu boolean NOT NULL DEFAULT false
     )
   `);
 

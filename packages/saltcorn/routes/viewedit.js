@@ -54,6 +54,21 @@ const viewForm = (tableOptions, values) =>
         name: "table_name",
         input_type: "select",
         options: tableOptions
+      }),
+      new Field({
+        label: "Publicly viewable",
+        name: "is_public",
+        type: "Bool"
+      }),
+      new Field({
+        label: "On root page",
+        name: "on_root_page",
+        type: "Bool"
+      }),
+      new Field({
+        label: "On menu",
+        name: "on_menu",
+        type: "Bool"
       })
     ],
     values
@@ -62,7 +77,15 @@ const viewForm = (tableOptions, values) =>
 const viewFlow = new Workflow({
   action: "/viewedit/",
   onDone: async context => {
-    const { id, name, viewtemplate, table_name } = context;
+    const {
+      id,
+      name,
+      viewtemplate,
+      table_name,
+      is_public,
+      on_root_page,
+      on_menu
+    } = context;
     const table = await db.get_table_by_name(table_name);
     const view = viewtemplates[viewtemplate];
     const config_fields = await view.configuration_form(table_name);
@@ -73,7 +96,15 @@ const viewFlow = new Workflow({
     if (id) {
       await db.update(
         "views",
-        { viewtemplate, name, configuration, table_id: table.id },
+        {
+          viewtemplate,
+          name,
+          configuration,
+          table_id: table.id,
+          is_public,
+          on_root_page,
+          on_menu
+        },
         id
       );
     } else {
@@ -81,6 +112,9 @@ const viewFlow = new Workflow({
         viewtemplate,
         name,
         configuration,
+        is_public,
+        on_root_page,
+        on_menu,
         table_id: table.id
       });
     }

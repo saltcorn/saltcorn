@@ -40,7 +40,10 @@ const fixtures = async () => {
     table_id: table.id,
     name: "authorlist",
     viewtemplate: "list",
-    configuration: { field_list: ["author"] }
+    configuration: { field_list: ["author"] },
+    is_public: true,
+    on_root_page: true,
+    on_menu: true
   });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
