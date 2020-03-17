@@ -50,5 +50,6 @@ module.exports = {
   name: "Show",
   get_state_fields,
   configuration_form,
-  run
+  run,
+  display_state_form: true
 };

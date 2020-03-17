@@ -8,19 +8,26 @@ const configuration_form = async table_name => {
 
   const fields = await Field.get_by_table_id(table.id);
   const fldOptions = fields.map(f => f.name);
-  const viewtemplates = Object.entries(require("./index.js"))
-    .filter(
-      vt =>
-        vt[1].get_state_fields &&
-        vt[1].get_state_fields().some(sf => sf.name === "id")
-    )
-    .map(vt => vt[0]);
+
+  var link_view_opts = [];
 
   const link_views = await View.find({
-    table_id: table.id,
-    viewtemplate: { in: viewtemplates }
+    table_id: table.id
   });
-  const link_view_opts = link_views.map(v => `Link to ${v.name}`);
+  const viewtemplates = require("./index.js");
+  for (const viewrow of link_views) {
+    const vt = viewtemplates[viewrow.viewtemplate];
+    if (vt.get_state_fields) {
+      const sfs = await vt.get_state_fields(
+        viewrow.table_id,
+        viewrow.name,
+        viewrow.configuration
+      );
+      if (sfs.some(sf => sf.name === "id"))
+        link_view_opts.push(`Link to ${viewrow.name}`);
+    }
+  }
+
   return [
     {
       name: "field_list",
@@ -31,7 +38,19 @@ const configuration_form = async table_name => {
   ];
 };
 
-const run = async (table_id, viewname, { field_list }) => {
+const get_state_fields = async (table_id, viewname, { field_list }) => {
+  const table_fields = await Field.get_by_table_id(table_id);
+  var state_fields = [];
+
+  field_list.forEach(fldnm => {
+    if (fldnm === "Delete" || fldnm.startsWith("Link to ")) return;
+    state_fields.push(table_fields.find(f => f.name == fldnm));
+  });
+
+  return state_fields;
+};
+
+const run = async (table_id, viewname, { field_list }, state) => {
   const table = await db.get_table_by_id(table_id);
 
   const fields = await Field.get_by_table_id(table.id);
@@ -57,12 +76,14 @@ const run = async (table_id, viewname, { field_list }) => {
     }
   });
 
-  const rows = await db.select(table.name);
+  const rows = await db.select(table.name, state);
   return h(1, table.name) + mkTable(tfields, rows);
 };
 
 module.exports = {
   name: "List",
   configuration_form,
-  run
+  run,
+  get_state_fields,
+  display_state_form: true
 };

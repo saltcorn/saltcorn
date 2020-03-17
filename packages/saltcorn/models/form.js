@@ -8,6 +8,7 @@ class Form {
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
+    this.methodGET = o.methodGET;
     this.submitLabel = o.submitLabel;
     if (o.validate) this.validate(o.validate);
   }

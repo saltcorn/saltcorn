@@ -74,10 +74,17 @@ const mkFormRow = (v, errors) => hdr => {
 };
 
 const renderForm = form =>
-  mkForm(form.action, form.fields, form.values, form.submitLabel, form.errors);
+  mkForm(
+    form.action,
+    form.fields,
+    form.values,
+    form.submitLabel,
+    form.errors,
+    form.methodGET
+  );
 
-const mkForm = (action, hdrs, v, submitLabel = "Save", errors = {}) => {
-  const top = `<form action="${action}" method="post">`;
+const mkForm = (action, hdrs, v, submitLabel = "Save", errors = {}, isget) => {
+  const top = `<form action="${action}" method="${isget ? "get" : "post"}">`;
   //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v, errors)).join("");
   const bot = `<div class="form-group row">

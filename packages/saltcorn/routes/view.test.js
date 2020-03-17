@@ -80,7 +80,10 @@ describe("viewedit new endpoint", () => {
       JSON.stringify({
         table_name: "books",
         name: "mybooklist",
-        viewtemplate: "list"
+        viewtemplate: "list",
+        is_public: false,
+        on_menu: false,
+        on_root_page: false
       })
     );
 
@@ -95,7 +98,7 @@ describe("viewedit new endpoint", () => {
       .expect("Location", "/viewedit/list");
     done();
   });
-  it("save new view", async done => {
+  it("delete new view", async done => {
     const loginCookie = await getAdminLoginCookie();
     const res = await request(app)
       .post("/viewedit/delete/mybooklist")
