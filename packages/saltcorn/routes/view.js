@@ -14,6 +14,10 @@ router.get("/:viewname", async (req, res) => {
 
   const viewrow = await db.selectOne("views", { name: viewname });
   const view = viewtemplates[viewrow.viewtemplate];
-  const resp = await view.run(viewrow.table_id, viewrow.configuration);
+  const resp = await view.run(
+    viewrow.table_id,
+    viewrow.configuration,
+    req.query
+  );
   res.sendWrap(`${viewrow.name} view`, resp);
 });

@@ -49,6 +49,9 @@ module.exports = {
   td: mkTag("td"),
   ul: mkTag("ul"),
   li: mkTag("li"),
+  h1: mkTag("h1"),
+  h2: mkTag("h2"),
+  h3: mkTag("h3"),
   domReady,
   input
 };
