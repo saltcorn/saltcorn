@@ -41,7 +41,7 @@ router.get("/list", isAdmin, async (req, res) => {
 
 const viewForm = (tableOptions, values) =>
   new Form({
-    action: "/viewedit/config",
+    action: "/viewedit/save",
     fields: [
       new Field({ label: "Name", name: "name", input_type: "text" }),
       new Field({
@@ -75,99 +75,70 @@ const viewForm = (tableOptions, values) =>
     values
   });
 
-const viewFlow = new Workflow({
-  action: "/viewedit/",
-  onDone: async context => {
-    const {
-      id,
-      name,
-      viewtemplate,
-      table_name,
-      is_public,
-      on_root_page,
-      on_menu
-    } = context;
-    const table = await Table.findOne({ name: table_name });
-    const view = viewtemplates[viewtemplate];
-    const config_fields = await view.configuration_form(table_name);
-    var configuration = {};
-    config_fields.forEach(cf => {
-      configuration[cf.name] = context[cf.name];
-    });
-    if (id) {
-      await db.update(
-        "views",
-        {
-          viewtemplate,
-          name,
-          configuration,
-          table_id: table.id,
-          is_public,
-          on_root_page,
-          on_menu
-        },
-        id
-      );
-    } else {
-      await db.insert("views", {
-        viewtemplate,
-        name,
-        configuration,
-        is_public,
-        on_root_page,
-        on_menu,
-        table_id: table.id
-      });
-    }
-    await State.refresh();
-    return { redirect: `/viewedit/list` };
-  },
-  steps: [
-    {
-      name: "view",
-      form: async () => {
-        const tables = await Table.find();
-        const tableOptions = tables.map(t => t.name);
-        return viewForm(tableOptions);
-      }
-    },
-    {
-      name: "config",
-      form: async context => {
-        const view = viewtemplates[context.viewtemplate];
-        const config_fields = await view.configuration_form(context.table_name);
-        return new Form({
-          fields: config_fields.map(f => new Field(f))
-        });
-      }
-    }
-  ]
-});
-
 router.get("/edit/:viewname", isAdmin, async (req, res) => {
   const { viewname } = req.params;
 
-  const { configuration, ...viewrow } = await db.selectOne("views", {
-    name: viewname
-  });
-  const table = await Table.findOne({ id: viewrow.table_id });
-  const wfres = await viewFlow.run({
-    table_name: table.name,
-    ...viewrow,
-    ...configuration
-  });
-  res.sendWrap(`New field`, renderForm(wfres.renderForm));
+  var viewrow = await db.selectOne("views", { name: viewname });
+
+  const tables = await Table.find();
+  const currentTable = tables.find(t => t.id === viewrow.table_id);
+  viewrow.table_name = currentTable.name;
+  const tableOptions = tables.map(t => t.name);
+  const form = viewForm(tableOptions, viewrow);
+  form.hidden("id");
+  res.sendWrap(`Edit view`, renderForm(form));
 });
 
 router.get("/new", isAdmin, async (req, res) => {
-  const wfres = await viewFlow.run();
-  res.sendWrap(`New field`, renderForm(wfres.renderForm));
+  const tables = await Table.find();
+  const tableOptions = tables.map(t => t.name);
+  res.sendWrap(`Edit view`, renderForm(viewForm(tableOptions)));
 });
 
-router.post("/", isAdmin, async (req, res) => {
-  const wfres = await viewFlow.run(req.body);
+router.post("/save", isAdmin, async (req, res) => {
+  var v = { ...req.body };
+
+  const table = await Table.findOne({ name: v.table_name });
+
+  v.table_id = table.id;
+
+  delete v.table_name;
+
+  if (typeof v.id !== "undefined") {
+    await db.update("views", v, v.id);
+  } else {
+    v.configuration = {};
+    await db.insert("views", v);
+  }
+  await State.refresh();
+  res.redirect(`/viewedit/config/${v.name}`);
+});
+
+router.get("/config/:name", isAdmin, async (req, res) => {
+  const { name } = req.params;
+
+  const view = await View.findOne({ name });
+  const configFlow = await view.get_config_flow();
+  const wfres = await configFlow.run({
+    table_id: view.table_id,
+    ...view.configuration
+  });
   if (wfres.renderForm) res.sendWrap(`New view`, renderForm(wfres.renderForm));
   else res.redirect(wfres.redirect);
+});
+
+router.post("/config/:name", isAdmin, async (req, res) => {
+  const { name } = req.params;
+
+  const view = await View.findOne({ name });
+  const configFlow = await view.get_config_flow();
+  const wfres = await configFlow.run(req.body);
+
+  if (wfres.renderForm) res.sendWrap(`New view`, renderForm(wfres.renderForm));
+  else {
+    await State.refresh();
+    res.redirect(wfres.redirect);
+  }
 });
 
 router.post("/delete/:name", isAdmin, async (req, res) => {

@@ -49,7 +49,11 @@ const update = async (tbl, obj, id) => {
 };
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
-  return rows[0];
+  if (rows.length === 0) {
+    const w = mkWhere(where);
+    console.log({ where });
+    throw new Error(`no ${tbl} where ${w.where} are ${w.values}`);
+  } else return rows[0];
 };
 const get_table_by_id = async id => {
   const tq = await pool.query("SELECT * FROM tables WHERE id = $1", [id]);

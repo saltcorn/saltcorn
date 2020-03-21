@@ -1,5 +1,6 @@
 const db = require("../db");
 const Form = require("../models/form");
+const Table = require("../models/table");
 
 const removeEmptyStrings = obj => {
   var o = {};
@@ -15,7 +16,6 @@ class View {
     this.id = o.id;
     this.viewtemplate = o.viewtemplate;
     if (o.table_id) this.table_id = o.table_id;
-
     if (o.table) {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
@@ -29,7 +29,6 @@ class View {
   }
   static async findOne(where) {
     const v = await db.selectOne("views", where);
-
     return new View(v);
   }
   static async find(where) {
@@ -71,6 +70,20 @@ class View {
       });
       return form;
     } else return null;
+  }
+
+  async get_config_flow() {
+    const configFlow = this.viewtemplateObj.configuration_workflow();
+    configFlow.action = `/viewedit/config/${this.name}`;
+    const oldOnDone = configFlow.onDone || (c => c);
+    configFlow.onDone = async ctx => {
+      const { table_id, ...configuration } = oldOnDone(ctx);
+
+      await db.update("views", { configuration }, this.id);
+
+      return { redirect: `/viewedit/list` };
+    };
+    return configFlow;
   }
 }
 module.exports = View;

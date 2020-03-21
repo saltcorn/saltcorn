@@ -74,7 +74,7 @@ const fieldFlow = new Workflow({
       form: context => {
         const type = types[context.type];
         return new Form({
-          fields: type.attributes.map(a => new Field(a))
+          fields: type.attributes
         });
       }
     },

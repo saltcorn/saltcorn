@@ -1,25 +1,37 @@
 const db = require("../db");
+const Form = require("../models/form");
 const Field = require("../models/field");
 const Table = require("../models/table");
 const { mkTable } = require("../markup");
+const Workflow = require("../models/workflow");
 
 const { div, h1, h2, h3, table, tbody, tr, td } = require("../markup/tags");
 
-const configuration_form = async table_name => {
-  const tbl = await Table.findOne({ name: table_name });
-  const rels = await Field.find({ type: `Key to ${tbl.name}` });
-  var flds = [];
-  for (const rel of rels) {
-    const reltbl = await Table.findOne({ id: rel.table_id });
-    flds.push({
-      name: `${reltbl.name}.${rel.name}`,
-      label: `${rel.label} on ${reltbl.name}`,
-      type: "Bool"
-    });
-  }
-  return flds;
-};
-
+const configuration_workflow = () =>
+  new Workflow({
+    onDone: context => context,
+    steps: [
+      {
+        name: "subtables",
+        form: async context => {
+          const tbl = await Table.findOne({ id: context.table_id });
+          const rels = await Field.find({ type: `Key to ${tbl.name}` });
+          var fields = [];
+          for (const rel of rels) {
+            const reltbl = await Table.findOne({ id: rel.table_id });
+            fields.push({
+              name: `${reltbl.name}.${rel.name}`,
+              label: `${rel.label} on ${reltbl.name}`,
+              type: "Bool"
+            });
+          }
+          return new Form({
+            fields
+          });
+        }
+      }
+    ]
+  });
 const get_state_fields = () => [
   {
     name: "id",
@@ -49,7 +61,7 @@ const run = async (table_id, viewname, rels, { id }) => {
 module.exports = {
   name: "Show",
   get_state_fields,
-  configuration_form,
+  configuration_workflow,
   run,
   display_state_form: true
 };

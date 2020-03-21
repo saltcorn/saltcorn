@@ -85,17 +85,14 @@ describe("viewedit new endpoint", () => {
   });
   it("submit new view", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({}));
 
     await request(app)
-      .post("/viewedit/")
+      .post("/viewedit/save")
       .send("viewtemplate=list")
-      .send("contextEnc=" + ctx)
       .send("table_name=books")
       .send("name=mybooklist")
-      .send("stepName=view")
       .set("Cookie", loginCookie)
-      .expect(200);
+      .expect(toRedirect("/viewedit/config/mybooklist"));
     //expect(res.text.includes("View configuration")).toBe(true);
     done();
   });
@@ -103,19 +100,14 @@ describe("viewedit new endpoint", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_name: "books",
-        name: "mybooklist",
-        viewtemplate: "list",
-        is_public: false,
-        on_menu: false,
-        on_root_page: false
+        table_id: 1
       })
     );
 
     await request(app)
-      .post("/viewedit/")
+      .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
-      .send("stepName=config")
+      .send("stepName=listfields")
       .send("field_list=author")
       .send("field_list=pages")
       .set("Cookie", loginCookie)
