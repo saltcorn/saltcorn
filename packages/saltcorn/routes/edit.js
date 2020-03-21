@@ -16,9 +16,7 @@ router.get("/:tname", loggedIn, async (req, res) => {
   const table = await db.get_table_by_name(tname);
   const fields = await Field.find({ table_id: table.id });
   const form = new Form({ action: `/edit/${tname}`, fields });
-  for (const f of fields) {
-    await f.fill_fkey_options();
-  }
+  await form.fill_fkey_options();
   res.sendWrap(
     `${table.name} create new`,
     h(1, "New " + table.name),
@@ -31,12 +29,10 @@ router.get("/:tname/:id", loggedIn, async (req, res) => {
   const table = await db.get_table_by_name(tname);
 
   const fields = await Field.find({ table_id: table.id });
-  for (const f of fields) {
-    await f.fill_fkey_options();
-  }
   const row = await db.selectOne(table.name, { id: id });
   const form = new Form({ action: `/edit/${tname}`, values: row, fields });
   form.hidden("id");
+  await form.fill_fkey_options();
 
   res.sendWrap(
     `${table.name} create new`,

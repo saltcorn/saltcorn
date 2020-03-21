@@ -24,6 +24,11 @@ class Form {
       );
     });
   }
+  async fill_fkey_options() {
+    for (const f of this.fields) {
+      await f.fill_fkey_options();
+    }
+  }
   validate(v) {
     this.fields.forEach(f => {
       const valres = f.validate(v);

@@ -12,7 +12,7 @@ const applyAsync = async (f, x) => {
 class Workflow {
   constructor(o) {
     this.steps = o.steps || [];
-    this.onDone = o.onDone || (() => {});
+    this.onDone = o.onDone || (c => c);
     this.action = o.action;
   }
   async run(body) {

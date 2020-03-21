@@ -8,7 +8,6 @@ const { mkTable, h, post_btn, link } = require("../markup");
 
 const configuration_workflow = () =>
   new Workflow({
-    onDone: context => context,
     steps: [
       {
         name: "listfields",
@@ -17,25 +16,8 @@ const configuration_workflow = () =>
 
           const fields = await Field.find({ table_id });
           const fldOptions = fields.map(f => f.name);
-          var link_view_opts = [];
-
-          const link_views = await View.find({
-            table_id
-          });
-          const viewtemplates = require("./index.js");
-          for (const viewrow of link_views) {
-            const vt = viewtemplates[viewrow.viewtemplate];
-            if (vt.get_state_fields) {
-              const sfs = await vt.get_state_fields(
-                viewrow.table_id,
-                viewrow.name,
-                viewrow.configuration
-              );
-              if (sfs.some(sf => sf.name === "id"))
-                link_view_opts.push(`Link to ${viewrow.name}`);
-            }
-          }
-
+          const link_views = await View.find_possible_links_to_table(table_id);
+          const link_view_opts = link_views.map(v => `Link to ${v.name}`);
           return new Form({
             fields: [
               {
@@ -43,7 +25,8 @@ const configuration_workflow = () =>
                 label: "Field list",
                 input_type: "ordered_multi_select",
                 options: [...fldOptions, "Delete", ...link_view_opts]
-              }
+              },
+              { name: "link_to_create", label: "Link to create", type: "Bool" }
             ]
           });
         }
@@ -62,7 +45,12 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
   return state_fields;
 };
 
-const run = async (table_id, viewname, { field_list }, state) => {
+const run = async (
+  table_id,
+  viewname,
+  { field_list, link_to_create },
+  state
+) => {
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
@@ -94,7 +82,10 @@ const run = async (table_id, viewname, { field_list }, state) => {
     }
   });
   const rows = await db.select(table.name, state);
-  return h(1, table.name) + mkTable(tfields, rows);
+  const create_link = link_to_create
+    ? link(`/edit/${table.name}`, "Add row")
+    : "";
+  return h(1, table.name) + mkTable(tfields, rows) + create_link;
 };
 
 module.exports = {

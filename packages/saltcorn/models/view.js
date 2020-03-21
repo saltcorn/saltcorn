@@ -37,6 +37,27 @@ class View {
     return views.map(v => new View(v));
   }
 
+  static async find_possible_links_to_table(table_id) {
+    var link_view_opts = [];
+
+    const link_views = await View.find({
+      table_id
+    });
+    const viewtemplates = require("../viewtemplates");
+    for (const viewrow of link_views) {
+      const vt = viewtemplates[viewrow.viewtemplate];
+      if (vt.get_state_fields) {
+        const sfs = await vt.get_state_fields(
+          viewrow.table_id,
+          viewrow.name,
+          viewrow.configuration
+        );
+        if (sfs.some(sf => sf.name === "id")) link_view_opts.push(viewrow);
+      }
+    }
+    return link_view_opts;
+  }
+
   static async create(v) {
     const id = await db.insert("views", v);
 
@@ -68,6 +89,7 @@ class View {
         submitLabel: "Apply",
         values: query
       });
+      await form.fill_fkey_options();
       return form;
     } else return null;
   }
