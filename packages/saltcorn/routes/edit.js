@@ -14,7 +14,7 @@ module.exports = router;
 router.get("/:tname", loggedIn, async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await Field.find({ table_id: table.id });
   const form = new Form({ action: `/edit/${tname}`, fields });
   for (const f of fields) {
     await f.fill_fkey_options();
@@ -30,7 +30,7 @@ router.get("/:tname/:id", loggedIn, async (req, res) => {
   const { tname, id } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await Field.find({ table_id: table.id });
   for (const f of fields) {
     await f.fill_fkey_options();
   }
@@ -49,7 +49,7 @@ router.post("/:tname", loggedIn, async (req, res) => {
   const { tname } = req.params;
   const table = await db.get_table_by_name(tname);
 
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await Field.find({ table_id: table.id });
   const v = req.body;
 
   const form = new Form({ action: `/edit/${tname}`, fields, validate: v });

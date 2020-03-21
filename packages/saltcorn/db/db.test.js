@@ -26,21 +26,10 @@ describe("mkWhere", () => {
   });
 });
 
-describe("Table", () => {
-  it("should create", async done => {
-    expect.assertions(1);
-    const tc = await Table.create("mytable");
-    const tf = await Table.find({ id: tc.id });
-
-    expect(tf.name).toStrictEqual("mytable");
-    done();
-  });
-});
-
 describe("where", () => {
   it("should support in", async done => {
     expect.assertions(1);
-    const tc = await Table.create("myothertable");
+    await Table.create("myothertable");
     const tf = await db.selectOne("tables", {
       name: { in: ["myothertable", "nosuchtable"] }
     });

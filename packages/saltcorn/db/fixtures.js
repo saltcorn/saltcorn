@@ -40,7 +40,16 @@ const fixtures = async () => {
     table_id: table.id,
     name: "authorlist",
     viewtemplate: "list",
-    configuration: { field_list: ["author"] },
+    configuration: { field_list: ["author", "Link to authorshow", "Delete"] },
+    is_public: true,
+    on_root_page: true,
+    on_menu: true
+  });
+  await View.create({
+    table_id: table.id,
+    name: "authorshow",
+    viewtemplate: "show",
+    configuration: { "patients.favbook": true },
     is_public: true,
     on_root_page: true,
     on_menu: true

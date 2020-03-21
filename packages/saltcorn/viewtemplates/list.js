@@ -1,12 +1,13 @@
 const db = require("../db");
 const Field = require("../models/field");
+const Table = require("../models/table");
 const View = require("../models/view");
 const { mkTable, h, post_btn, link } = require("../markup");
 
 const configuration_form = async table_name => {
-  const table = await db.get_table_by_name(table_name);
+  const table = await Table.findOne({ name: table_name });
 
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await Field.find({ table_id: table.id });
   const fldOptions = fields.map(f => f.name);
 
   var link_view_opts = [];
@@ -39,7 +40,7 @@ const configuration_form = async table_name => {
 };
 
 const get_state_fields = async (table_id, viewname, { field_list }) => {
-  const table_fields = await Field.get_by_table_id(table_id);
+  const table_fields = await Field.find({ table_id });
   var state_fields = [];
 
   field_list.forEach(fldnm => {
@@ -51,9 +52,9 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
 };
 
 const run = async (table_id, viewname, { field_list }, state) => {
-  const table = await db.get_table_by_id(table_id);
+  const table = await Table.findOne({ id: table_id });
 
-  const fields = await Field.get_by_table_id(table.id);
+  const fields = await Field.find({ table_id: table.id });
   const tfields = field_list.map(fldnm => {
     if (fldnm === "Delete")
       return {

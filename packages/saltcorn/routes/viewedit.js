@@ -3,19 +3,20 @@ const Router = require("express-promise-router");
 const db = require("../db");
 const viewtemplates = require("../viewtemplates");
 const { renderForm, mkTable, link, post_btn } = require("../markup");
-const { refresh } = require("../db/state");
+const State = require("../db/state");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
 const Field = require("../models/field");
 const Table = require("../models/table");
+const View = require("../models/view");
 const Workflow = require("../models/workflow");
 
 const router = new Router();
 module.exports = router;
 
 router.get("/list", isAdmin, async (req, res) => {
-  var viewrows = await db.select("views");
-  const tables = await db.get_tables();
+  var views = await View.find();
+  const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
   res.sendWrap(
     `Views`,
@@ -32,7 +33,7 @@ router.get("/list", isAdmin, async (req, res) => {
           key: r => post_btn(`/viewedit/delete/${r.name}`, "Delete")
         }
       ],
-      viewrows
+      views
     ),
     link(`/viewedit/new`, "New view")
   );
@@ -86,7 +87,7 @@ const viewFlow = new Workflow({
       on_root_page,
       on_menu
     } = context;
-    const table = await db.get_table_by_name(table_name);
+    const table = await Table.findOne({ name: table_name });
     const view = viewtemplates[viewtemplate];
     const config_fields = await view.configuration_form(table_name);
     var configuration = {};
@@ -118,14 +119,14 @@ const viewFlow = new Workflow({
         table_id: table.id
       });
     }
-    await refresh();
+    await State.refresh();
     return { redirect: `/viewedit/list` };
   },
   steps: [
     {
       name: "view",
       form: async () => {
-        const tables = await db.get_tables();
+        const tables = await Table.find();
         const tableOptions = tables.map(t => t.name);
         return viewForm(tableOptions);
       }
@@ -149,7 +150,7 @@ router.get("/edit/:viewname", isAdmin, async (req, res) => {
   const { configuration, ...viewrow } = await db.selectOne("views", {
     name: viewname
   });
-  const table = await Table.find({ id: viewrow.table_id });
+  const table = await Table.findOne({ id: viewrow.table_id });
   const wfres = await viewFlow.run({
     table_name: table.name,
     ...viewrow,
@@ -173,7 +174,7 @@ router.post("/delete/:name", isAdmin, async (req, res) => {
   const { name } = req.params;
 
   await db.deleteWhere("views", { name });
-  await refresh();
+  await State.refresh();
 
   res.redirect(`/viewedit/list`);
 });

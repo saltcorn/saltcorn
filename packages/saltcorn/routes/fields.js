@@ -83,8 +83,8 @@ const fieldFlow = new Workflow({
       onlyWhen: context => new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
-        const table = await Table.find({ name: fld.reftable });
-        const fields = await Field.get_by_table_id(table.id);
+        const table = await Table.findOne({ name: fld.reftable });
+        const fields = await Field.find({ table_id: table.id });
         const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
         return new Form({
           fields: [

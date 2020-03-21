@@ -4,7 +4,9 @@ const Table = require("../models/table");
 const User = require("./user");
 const {
   getStaffLoginCookie,
-  getAdminLoginCookie
+  getAdminLoginCookie,
+  toRedirect,
+  toInclude
 } = require("../auth/testhelp");
 
 describe("Public auth Endpoints", () => {
@@ -30,29 +32,28 @@ describe("Public auth Endpoints", () => {
 describe("login process", () => {
   it("should say Login when not logged in", async done => {
     const res = await request(app).get("/");
-    expect(res.text.includes("Login")).toBe(true);
+    expect(toInclude("Login"));
     done();
   });
 
   it("should say Logout when logged in", async done => {
     const loginCookie = await getStaffLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/")
       .set("Cookie", loginCookie);
 
-    expect(res.text.includes("Logout")).toBe(true);
+    expect(toInclude("Logout"));
     done();
   });
 });
 
 describe("signup process", () => {
   it("should sign up", async done => {
-    const res = await request(app)
+    await request(app)
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
       .send("password=secret")
-      .expect("Location", "/")
-      .expect(302);
+      .expect(toRedirect("/"));
     done();
   });
 });
@@ -65,7 +66,7 @@ describe("user admin", () => {
       .set("Cookie", loginCookie);
     expect(res.statusCode).toEqual(200);
 
-    expect(res.text.includes("staff@foo.com")).toBe(true);
+    expect(toInclude("staff@foo.com"));
     done();
   });
   it("shows new user form", async done => {
@@ -84,8 +85,7 @@ describe("user admin", () => {
       .send("password=fidelio")
       .send("role_id=3")
       .set("Cookie", loginCookie)
-      .expect("Location", "/useradmin")
-      .expect(302);
+      .expect(toRedirect("/useradmin"));
     done();
   });
 
@@ -94,8 +94,7 @@ describe("user admin", () => {
       .post("/auth/login/")
       .send("email=staff2@foo.com")
       .send("password=fidelio")
-      .expect("Location", "/")
-      .expect(302);
+      .expect(toRedirect("/"));
     done();
   });
 
@@ -119,8 +118,7 @@ describe("user admin", () => {
       .send(`id=${user.id}`)
       .send("role_id=2")
       .set("Cookie", loginCookie)
-      .expect("Location", "/useradmin")
-      .expect(302);
+      .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
     expect(edituser.role_id).toBe(2);
 
@@ -132,8 +130,7 @@ describe("user admin", () => {
     const res = await request(app)
       .post(`/useradmin/delete/${user.id}`)
       .set("Cookie", loginCookie)
-      .expect("Location", "/useradmin")
-      .expect(302);
+      .expect(toRedirect("/useradmin"));
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
 

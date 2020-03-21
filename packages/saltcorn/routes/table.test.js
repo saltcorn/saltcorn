@@ -4,7 +4,9 @@ const Table = require("../models/table");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
-  itShouldRedirectUnauthToLogin
+  itShouldRedirectUnauthToLogin,
+  toInclude,
+  toNotInclude
 } = require("../auth/testhelp");
 
 describe("Table Endpoints", () => {
@@ -24,34 +26,31 @@ describe("Table Endpoints", () => {
 
   it("should list tables", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/table/")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-
-    expect(res.text.includes("mypostedtable")).toBe(true);
-    expect(res.text.includes("books")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("mypostedtable"))
+      .expect(toInclude("books"));
     done();
   });
 
   it("should edit tables", async done => {
     const loginCookie = await getAdminLoginCookie();
 
-    const tbl = await Table.find({ name: "mypostedtable" });
+    const tbl = await Table.findOne({ name: "mypostedtable" });
 
     const res = await request(app)
       .get(`/table/${tbl.id}`)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-    expect(res.text.includes("<table")).toBe(true);
-    expect(res.text.includes("Add field")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<table"))
+      .expect(toInclude("Add field"));
     done();
   });
 
   it("should delete tables", async done => {
     const loginCookie = await getAdminLoginCookie();
 
-    const tbl = await Table.find({ name: "mypostedtable" });
+    const tbl = await Table.findOne({ name: "mypostedtable" });
     const delres = await request(app)
       .post(`/table/delete/${tbl.id}`)
       .set("Cookie", loginCookie);
@@ -59,10 +58,9 @@ describe("Table Endpoints", () => {
 
     const res = await request(app)
       .get("/table/")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-    expect(res.text.includes("mypostedtable")).toBe(false);
-    expect(res.text.includes("books")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude("mypostedtable"))
+      .expect(toInclude("books"));
 
     done();
   });

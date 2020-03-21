@@ -4,7 +4,8 @@ const Field = require("../models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
-  itShouldRedirectUnauthToLogin
+  itShouldRedirectUnauthToLogin,
+  toInclude
 } = require("../auth/testhelp");
 
 describe("Field Endpoints", () => {
@@ -14,10 +15,8 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const res = await request(app)
       .get("/field/1")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-
-    expect(res.text.includes("Label")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Label"));
     done();
   });
 
@@ -25,10 +24,8 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const res = await request(app)
       .get("/field/new/1")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-
-    expect(res.text.includes("Label")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Label"));
     done();
   });
 
@@ -84,9 +81,8 @@ describe("Field Endpoints", () => {
       .send("label=Publisher")
       .send("type=String")
       .send("contextEnc=" + ctx)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-    expect(res.text.includes("match")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("match"));
 
     done();
   });
@@ -101,9 +97,8 @@ describe("Field Endpoints", () => {
       .send("label=wrote")
       .send("type=Key+to+books")
       .send("contextEnc=" + ctx)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-    expect(res.text.includes("pages")).toBe(true);
+      .set("Cookie", loginCookie)
+      .expect(toInclude("pages"));
 
     done();
   });

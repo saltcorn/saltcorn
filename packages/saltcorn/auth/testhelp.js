@@ -1,6 +1,40 @@
 const request = require("supertest");
 const app = require("../app");
 
+const toRedirect = loc => res => {
+  if (res.statusCode !== 302) {
+    console.log(res.text);
+    throw new Error("Expected redirect, received " + res.statusCode);
+  }
+  const gotLoc = res.headers["location"];
+  if (gotLoc !== loc) {
+    throw new Error(`Expected location ${loc} received ${gotLoc}`);
+  }
+};
+
+const toInclude = (txt, expCode = 200) => res => {
+  if (res.statusCode !== expCode) {
+    console.log(res.text);
+    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+  }
+
+  if (!res.text.includes(txt)) {
+    console.log(res.text);
+    throw new Error(`Expected text ${txt} not found`);
+  }
+};
+
+const toNotInclude = (txt, expCode = 200) => res => {
+  if (res.statusCode !== expCode) {
+    console.log(res.text);
+    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+  }
+
+  if (res.text.includes(txt)) {
+    console.log(res.text);
+    throw new Error(`Expected text ${txt} to be absent, but was present`);
+  }
+};
 const getStaffLoginCookie = async () => {
   const res = await request(app)
     .post("/auth/login/")
@@ -34,5 +68,8 @@ const itShouldRedirectUnauthToLogin = path => {
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
-  itShouldRedirectUnauthToLogin
+  itShouldRedirectUnauthToLogin,
+  toRedirect,
+  toInclude,
+  toNotInclude
 };

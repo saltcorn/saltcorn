@@ -1,9 +1,10 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { wrap, link, ul_nav, alert } = require("./markup");
-const { ul, li } = require("./markup/tags");
+const { wrap, link, ul_nav, alert, renderForm } = require("./markup");
+const { ul, li, div } = require("./markup/tags");
+const View = require("./models/view");
 
-const { get_available_views } = require("./db/state");
+const State = require("./db/state");
 const db = require("./db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
@@ -62,7 +63,7 @@ passport.deserializeUser(function(user, done) {
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
     const isAuth = req.isAuthenticated();
-    const views = get_available_views().filter(
+    const views = State.available_views.filter(
       v => v.on_menu && (isAuth || v.is_public)
     );
     const mkAlert = ty => alert(ty, req.flash(ty));
@@ -100,12 +101,31 @@ app.use(function(req, res, next) {
 });
 mountRoutes(app);
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   const isAuth = req.isAuthenticated();
-  const views = get_available_views()
-    .filter(v => v.on_root_page && (isAuth || v.is_public))
-    .map(v => li(link(`/view/${v.name}`, v.name)));
-  res.sendWrap("Hello", ul(views));
+  const views = State.available_views.filter(
+    v => v.on_root_page && (isAuth || v.is_public)
+  );
+
+  if (views.length === 0)
+    res.sendWrap("Hello", "Welcome! you have no defined views");
+  else if (views.length === 1) {
+    const view = await View.findOne({ name: views[0].name });
+    if (!req.isAuthenticated() && !view.is_public) {
+      res.sendWrap("Hello", "Welcome! you have no defined views");
+    } else {
+      const resp = await view.run(req.query);
+      const state_form = await view.get_state_form(req.query);
+
+      res.sendWrap(
+        `${view.name} view`,
+        div(state_form ? renderForm(state_form) : "", resp)
+      );
+    }
+  } else {
+    const viewlis = views.map(v => li(link(`/view/${v.name}`, v.name)));
+    res.sendWrap("Hello", ul(viewlis));
+  }
 });
 
 module.exports = app;

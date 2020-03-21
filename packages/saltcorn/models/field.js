@@ -68,10 +68,6 @@ class Field {
     else return { success: readval };
   }
 
-  static async get_by_table_id(tid) {
-    const db_flds = await db.select("fields", { table_id: tid });
-    return db_flds.map(dbf => new Field(dbf));
-  }
   static async find(where) {
     const db_flds = await db.select("fields", where);
     return db_flds.map(dbf => new Field(dbf));

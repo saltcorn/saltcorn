@@ -7,10 +7,15 @@ class Table {
     this.name = o.name;
     this.id = o.id;
   }
-  static async find(where) {
+  static async findOne(where) {
     const tbl = await db.selectOne("tables", where);
 
     return new Table(tbl);
+  }
+  static async find(where) {
+    const tbls = await db.select("tables", where);
+
+    return tbls.map(t => new Table(t));
   }
   static async create(name) {
     await db.query(`create table ${sqlsanitize(name)} (id serial primary key)`);
@@ -24,7 +29,7 @@ class Table {
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
   async getFields() {
-    if (!this.fields) this.fields = await Field.get_by_table_id(this.id);
+    if (!this.fields) this.fields = await Field.find({ table_id: this.id });
     return this.fields;
   }
   async getJoinedRows(whereObj) {

@@ -62,7 +62,7 @@ router.post("/", isAdmin, async (req, res) => {
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const t = await Table.find({ id });
+  const t = await Table.findOne({ id });
   await t.delete();
   req.flash("success", "Table deleted");
 

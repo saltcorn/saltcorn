@@ -11,7 +11,7 @@ module.exports = router;
 
 router.get("/:tname", loggedIn, async (req, res) => {
   const { tname } = req.params;
-  const table = await Table.find({ name: tname });
+  const table = await Table.findOne({ name: tname });
 
   const fields = await table.getFields();
   var tfields = fields.map(f => ({ label: f.label, key: f.name }));

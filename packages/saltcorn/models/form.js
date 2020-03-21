@@ -4,7 +4,9 @@ const Field = require("./field");
 
 class Form {
   constructor(o) {
-    this.fields = o.fields;
+    this.fields = o.fields.map(f =>
+      f.constructor.name === Field.name ? f : new Field(f)
+    );
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
