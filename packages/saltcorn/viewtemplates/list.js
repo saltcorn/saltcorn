@@ -87,7 +87,12 @@ const run = async (table_id, viewname, { field_list }, state) => {
       return { label: f.label, key: f.name };
     }
   });
-
+  Object.entries(state).forEach(kv => {
+    const field = fields.find(fld => fld.name == kv[0]);
+    if (field && field.type.name === "String") {
+      state[kv[0]] = { ilike: kv[1] };
+    }
+  });
   const rows = await db.select(table.name, state);
   return h(1, table.name) + mkTable(tfields, rows);
 };

@@ -4,10 +4,16 @@ const sqlsanitize = nm => nm.replace(/\W/g, "");
 const whereClause = (kv, i) =>
   typeof (kv[1] || {}).in !== "undefined"
     ? `${sqlsanitize(kv[0])} = ANY ($${i + 1})`
+    : typeof (kv[1] || {}).ilike !== "undefined"
+    ? `${sqlsanitize(kv[0])} ILIKE '%' || $${i + 1} || '%'`
     : `${sqlsanitize(kv[0])}=$${i + 1}`;
 
 const getVal = kv =>
-  typeof (kv[1] || {}).in !== "undefined" ? kv[1].in : kv[1];
+  typeof (kv[1] || {}).in !== "undefined"
+    ? kv[1].in
+    : typeof (kv[1] || {}).ilike !== "undefined"
+    ? kv[1].ilike
+    : kv[1];
 
 const mkWhere = whereObj => {
   const wheres = whereObj ? Object.entries(whereObj) : [];

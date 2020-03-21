@@ -37,6 +37,16 @@ describe("view list endpoint", () => {
     done();
   });
 });
+describe("view list endpoint", () => {
+  it("should show view to unauth TODO public vs private views", async done => {
+    await request(app)
+      .get("/view/authorlist?author=Tol")
+      .expect(toNotInclude("Melville"))
+      .expect(toInclude("Tolstoy"));
+
+    done();
+  });
+});
 describe("view show endpoint", () => {
   it("should show view to unauth TODO public vs private views", async done => {
     await request(app)

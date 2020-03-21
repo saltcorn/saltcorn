@@ -28,10 +28,18 @@ describe("mkWhere", () => {
 
 describe("where", () => {
   it("should support in", async done => {
-    expect.assertions(1);
     await Table.create("myothertable");
     const tf = await db.selectOne("tables", {
       name: { in: ["myothertable", "nosuchtable"] }
+    });
+
+    expect(tf.name).toStrictEqual("myothertable");
+    done();
+  });
+
+  it("should support ilike", async done => {
+    const tf = await db.selectOne("tables", {
+      name: { ilike: "yothertabl" }
     });
 
     expect(tf.name).toStrictEqual("myothertable");
