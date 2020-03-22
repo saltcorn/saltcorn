@@ -60,13 +60,19 @@ passport.deserializeUser(function(user, done) {
   done(null, user);
 });
 
+const getFlashes = req =>
+  ["error", "success", "danger", "warning"]
+    .map(type => {
+      return { type, msg: req.flash(type) };
+    })
+    .filter(a => a.msg && a.msg.length && a.msg.length > 0);
+
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
     const isAuth = req.isAuthenticated();
     const views = State.available_views.filter(
       v => v.on_menu && (isAuth || v.is_public)
     );
-    const mkAlert = ty => alert(ty, req.flash(ty));
     const authItem = isAuth
       ? ["/auth/logout", "Logout"]
       : ["/auth/login", "Login"];
@@ -79,22 +85,18 @@ app.use(function(req, res, next) {
           ]
         : [];
 
-    const menuItems = [
+    const menu = [
       ...views.map(v => [`/view/${v.name}`, v.name]),
       ...adminItems,
       authItem
     ];
     res.send(
-      wrap(
+      wrap({
         title,
-        ul_nav(menuItems),
-        mkAlert("error"),
-        mkAlert("success"),
-        mkAlert("danger"),
-        mkAlert("warning"),
-
-        ...html
-      )
+        menu,
+        alerts: getFlashes(req),
+        body: html.join("")
+      })
     );
   };
   next();
