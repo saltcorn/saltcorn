@@ -61,6 +61,15 @@ const fixtures = async () => {
     on_root_page: true,
     on_menu: true
   });
+  await View.create({
+    table_id: patients.id,
+    name: "patientlist",
+    viewtemplate: "list",
+    configuration: { field_list: ["name", "favbook", "parent"] },
+    is_public: false,
+    on_root_page: true,
+    on_menu: true
+  });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
