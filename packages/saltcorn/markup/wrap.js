@@ -1,12 +1,15 @@
-const { ul, li, a } = require("./tags");
+const { ul, li, a, span } = require("./tags");
 
-const ul_nav = lis =>
+const sidebar = lis =>
   ul(
-    { class: "nav" },
+    {
+      class: "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion",
+      id: "accordionSidebar"
+    },
     lis.map(item =>
       li(
         { class: "nav-item" },
-        a({ class: "nav-link", href: item[0] }, item[1])
+        a({ class: "nav-link", href: item[0] }, span(item[1]))
       )
     )
   );
@@ -16,27 +19,49 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+  
+    <!-- Custom styles for this template-->
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" crossorigin="anonymous">
     <title>${title}</title>
   </head>
-  <body>
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <body id="page-top">
+    <div id="wrapper">
+      ${sidebar(menu)}
 
-    <div class="container">
-      ${ul_nav(menu)}
-      ${alerts.map(a => alert(a.type, a.msg)).join("")}
-      ${body}
+      <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+          <div class="container-fluid">
+            ${alerts.map(a => alert(a.type, a.msg)).join("")}
+            <div class="card shadow mb-4 mt-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">${title}</h6>
+              </div>
+              <div class="card-body">
+                ${body}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/jquery-easing/jquery.easing.min.js"></script>
+  
+    <!-- Custom scripts for all pages-->
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js" crossorigin="anonymous"></script>
   </body>
 </html>`;
