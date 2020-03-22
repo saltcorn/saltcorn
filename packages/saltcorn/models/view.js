@@ -89,7 +89,7 @@ class View {
         submitLabel: "Apply",
         values: query
       });
-      await form.fill_fkey_options();
+      await form.fill_fkey_options(true);
       return form;
     } else return null;
   }

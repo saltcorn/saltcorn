@@ -32,13 +32,16 @@ class Field {
     }
   }
 
-  async fill_fkey_options() {
+  async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
       const rows = await db.select(this.reftable);
       const summary_field = this.attributes.summary_field || "id";
-      this.options = [
-        ...new Set(rows.map(r => ({ label: r[summary_field], value: r.id })))
-      ];
+      const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
+      const allOpts =
+        !this.required || force_allow_none
+          ? [{ label: "", value: "" }, ...dbOpts]
+          : dbOpts;
+      this.options = [...new Set(allOpts)];
     }
   }
 

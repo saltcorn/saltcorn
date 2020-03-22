@@ -24,9 +24,9 @@ class Form {
       );
     });
   }
-  async fill_fkey_options() {
+  async fill_fkey_options(force_allow_none = false) {
     for (const f of this.fields) {
-      await f.fill_fkey_options();
+      await f.fill_fkey_options(force_allow_none);
     }
   }
   validate(v) {
