@@ -48,12 +48,16 @@ const run = async (table_id, viewname, rels, { id }) => {
   const trows = fields.map(f => tr([td(f.label), td("" + row[f.name])]));
   var reltbls = [];
   for (const rel of Object.keys(rels)) {
-    const [reltblnm, relfld] = rel.split(".");
-    const reltbl = await Table.findOne({ name: reltblnm });
-    const rows = await reltbl.getJoinedRows({ [relfld]: id });
-    const relfields = await reltbl.getFields();
-    var tfields = relfields.map(f => ({ label: f.label, key: f.name }));
-    reltbls.push(div(h3(reltbl.name), mkTable(tfields, rows)));
+    if (rels[rel]) {
+      const [reltblnm, relfld] = rel.split(".");
+      const reltbl = await Table.findOne({ name: reltblnm });
+      const rows = await reltbl.getJoinedRows({
+        [relfld]: id
+      });
+      const relfields = await reltbl.getFields();
+      var tfields = relfields.map(f => ({ label: f.label, key: f.name }));
+      reltbls.push(div(h3(reltbl.name), mkTable(tfields, rows)));
+    }
   }
   return div([h1("Show ", tbl.name), table(tbody(trows)), ...reltbls]);
 };

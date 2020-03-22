@@ -32,7 +32,7 @@ class Table {
     if (!this.fields) this.fields = await Field.find({ table_id: this.id });
     return this.fields;
   }
-  async getJoinedRows(whereObj) {
+  async getJoinedRows(whereObj1) {
     const fields = await this.getFields();
     var joinTables = [];
     var fldNms = ["a.id"];
@@ -50,6 +50,13 @@ class Table {
       } else {
         fldNms.push(`a.${f.name}`);
       }
+    }
+
+    var whereObj = {};
+    if (whereObj1) {
+      Object.keys(whereObj1).forEach(k => {
+        whereObj["a." + k] = whereObj1[k];
+      });
     }
     const { where, values } = mkWhere(whereObj);
 

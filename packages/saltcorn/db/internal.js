@@ -1,5 +1,5 @@
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
-const sqlsanitize = nm => nm.replace(/\W/g, "");
+const sqlsanitize = nm => nm.replace(/[^A-Za-z_0-9.]*/g, "");
 
 const whereClause = (kv, i) =>
   typeof (kv[1] || {}).in !== "undefined"

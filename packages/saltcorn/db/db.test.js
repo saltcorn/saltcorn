@@ -7,7 +7,10 @@ describe("sqlsanitize", () => {
     expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
   });
   it("should remove chars from invalid name", () => {
-    expect(sqlsanitize("ffoo--oo")).toBe("ffoooo");
+    expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+  });
+  it("should allow dots", () => {
+    expect(sqlsanitize("ffoo.oo")).toBe("ffoo.oo");
   });
 });
 

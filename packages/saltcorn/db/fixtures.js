@@ -36,6 +36,13 @@ const fixtures = async () => {
     type: "Key to books",
     required: false
   });
+  await Field.create({
+    table: patients,
+    name: "parent",
+    label: "Parent",
+    type: "Key to patients",
+    required: false
+  });
   await View.create({
     table_id: table.id,
     name: "authorlist",
@@ -56,6 +63,15 @@ const fixtures = async () => {
   });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
+  const kirk_id = await db.insert("patients", {
+    name: "Kirk Douglas",
+    favbook: 1
+  });
+  await db.insert("patients", {
+    name: "Michael Douglas",
+    favbook: 2,
+    parent: kirk_id
+  });
   await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
   await User.create({
     email: "staff@foo.com",
