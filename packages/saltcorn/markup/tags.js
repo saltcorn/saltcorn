@@ -3,7 +3,7 @@ const rmFalse = vs =>
 
 const mkTag = tnm => (...args) => {
   var body = "";
-  var attribs = "";
+  var attribs = " ";
   const ppAttrib = kv =>
     typeof kv[1] === "boolean" ? (kv[1] ? kv[0] : "") : `${kv[0]}="${kv[1]}"`;
   args.forEach(arg => {
@@ -12,19 +12,19 @@ const mkTag = tnm => (...args) => {
     } else if (typeof arg === "string") {
       body += arg;
     } else if (typeof arg === "object") {
-      if (typeof arg.length === "undefined") {
+      if (!Array.isArray(arg)) {
         attribs += Object.entries(arg)
           .map(ppAttrib)
           .join(" ");
       } else {
-        //array
         body += rmFalse(arg).join("");
       }
-    }
+    } else body += arg;
   });
+  if (attribs === " ") attribs = "";
   return body.length > 0
-    ? `<${tnm} ${attribs}>${body}</${tnm}>`
-    : `<${tnm} ${attribs} />`;
+    ? `<${tnm}${attribs}>${body}</${tnm}>`
+    : `<${tnm}${attribs} />`;
 };
 const input = kvs => {
   const attribs = Object.entries(kvs)
