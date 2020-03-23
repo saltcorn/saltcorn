@@ -1,7 +1,7 @@
 const express = require("express");
 const mountRoutes = require("./routes");
 const { wrap, link, ul_nav, alert, renderForm } = require("./markup");
-const { ul, li, div } = require("./markup/tags");
+const { ul, li, div, small } = require("./markup/tags");
 const View = require("./models/view");
 
 const State = require("./db/state");
@@ -70,26 +70,36 @@ const getFlashes = req =>
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
     const isAuth = req.isAuthenticated();
-    const views = State.available_views.filter(
-      v => v.on_menu && (isAuth || v.is_public)
-    );
-    const authItem = isAuth
-      ? ["/auth/logout", "Logout"]
-      : ["/auth/login", "Login"];
-    const adminItems =
-      (req.user || {}).role_id === 1
-        ? [
-            ["/table", "Tables"],
-            ["/viewedit/list", "Views"],
-            ["/useradmin", "Users"]
-          ]
-        : [];
+    const views = State.available_views
+      .filter(v => v.on_menu && (isAuth || v.is_public))
+      .map(v => ({ link: `/view/${v.name}`, label: v.name }));
+    const authItems = isAuth
+      ? [
+          { label: small(req.user.email.split("@")[0]) },
+          { link: "/auth/logout", label: "Logout" }
+        ]
+      : [{ link: "/auth/login", label: "Login" }];
+    const isAdmin = (req.user || {}).role_id === 1;
+    const adminItems = [
+      { link: "/table", label: "Tables" },
+      { link: "/viewedit/list", label: "Views" },
+      { link: "/useradmin", label: "Users" }
+    ];
 
     const menu = [
-      ...views.map(v => [`/view/${v.name}`, v.name]),
-      ...adminItems,
-      authItem
-    ];
+      {
+        section: "Views",
+        items: views
+      },
+      isAdmin && {
+        section: "Admin",
+        items: adminItems
+      },
+      {
+        section: "User",
+        items: authItems
+      }
+    ].filter(s => s);
     res.send(
       wrap({
         title,

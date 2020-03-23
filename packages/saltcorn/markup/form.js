@@ -5,11 +5,26 @@ const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 const formRowWrap = (hdr, inner, error = "") =>
   div(
     { class: "form-group row" },
-    label(
-      { for: `input${hdr.name}`, class: "col-sm-2 col-form-label" },
-      hdr.label
-    ),
-    div({ class: "col-sm-10" }, inner, error),
+    isCheck(hdr)
+      ? div(
+          { class: "col-sm-10 offset-md-2" },
+          div(
+            { class: "form-check" },
+            inner,
+            label(
+              { for: `input${hdr.name}`, class: "form-check-label" },
+              hdr.label
+            ),
+            error
+          )
+        )
+      : [
+          label(
+            { for: `input${hdr.name}`, class: "col-sm-2 col-form-label" },
+            hdr.label
+          ),
+          div({ class: "col-sm-10" }, inner, error)
+        ],
     hdr.sublabel && div({ class: "col-sm-10 offset-md-2" }, i(hdr.sublabel))
   );
 

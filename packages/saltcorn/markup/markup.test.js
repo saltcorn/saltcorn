@@ -1,4 +1,4 @@
-const { a, input, div } = require("./tags");
+const { a, input, div, ul } = require("./tags");
 
 describe("tags", () => {
   it("renders", () => {
@@ -13,6 +13,12 @@ describe("tags", () => {
     expect(div(5)).toBe("<div>5</div>");
     expect(div()).toBe("<div />");
     expect(div(["hello ", "world"])).toBe("<div>hello world</div>");
+    expect(ul({ class: "foo" }, [false, "hello ", "world"])).toBe(
+      `<ul class="foo">hello world</ul>`
+    );
+    expect(ul({ class: "foo" }, [["hello ", "world"]])).toBe(
+      `<ul class="foo">hello world</ul>`
+    );
     expect(Array.isArray(["hello ", "world"])).toBe(true);
     expect(Array.isArray({})).toBe(false);
   });

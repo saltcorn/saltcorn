@@ -5,7 +5,7 @@ const Table = require("../models/table");
 const { mkTable } = require("../markup");
 const Workflow = require("../models/workflow");
 
-const { div, h1, h2, h3, table, tbody, tr, td } = require("../markup/tags");
+const { div, h4, table, tbody, tr, td } = require("../markup/tags");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -58,10 +58,10 @@ const run = async (table_id, viewname, rels, { id }) => {
       });
       const relfields = await reltbl.getFields();
       var tfields = relfields.map(f => ({ label: f.label, key: f.name }));
-      reltbls.push(div(h3(reltbl.name), mkTable(tfields, rows)));
+      reltbls.push(div(h4(reltbl.name), mkTable(tfields, rows)));
     }
   }
-  return div([h1("Show ", tbl.name), table(tbody(trows)), ...reltbls]);
+  return div([table(tbody(trows)), ...reltbls]);
 };
 
 module.exports = {

@@ -3,7 +3,8 @@ const wrap = require("./wrap");
 const { a, td, tr, th } = require("./tags");
 
 const mkTable = (hdrs, vs) => {
-  var s = '<table class="table"><thead><tr>';
+  var s =
+    '<div class="table-responsive"><table class="table table-sm"><thead><tr>';
   hdrs.forEach(hdr => {
     s += th(hdr.label);
   });
@@ -15,7 +16,7 @@ const mkTable = (hdrs, vs) => {
 
     s += tr(tds);
   });
-  s += "</tbody></table>";
+  s += "</tbody></table></div>";
   return s;
 };
 

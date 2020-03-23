@@ -1,17 +1,27 @@
-const { ul, li, a, span } = require("./tags");
+const { ul, li, a, span, hr, div } = require("./tags");
 
-const sidebar = lis =>
+const sideBarItem = item =>
+  li(
+    { class: "nav-item" },
+    item.link
+      ? a({ class: "nav-link", href: item.link }, span(item.label))
+      : span({ class: "nav-link" }, item.label)
+  );
+
+const sideBarSection = section => [
+  section.section &&
+    hr({ class: "sidebar-divider" }) +
+      div({ class: "sidebar-heading" }, section.section),
+  section.items.map(sideBarItem).join("")
+];
+
+const sidebar = sections =>
   ul(
     {
       class: "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion",
       id: "accordionSidebar"
     },
-    lis.map(item =>
-      li(
-        { class: "nav-item" },
-        a({ class: "nav-link", href: item[0] }, span(item[1]))
-      )
-    )
+    sections.map(sideBarSection)
   );
 
 const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
