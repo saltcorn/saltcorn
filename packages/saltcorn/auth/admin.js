@@ -4,8 +4,7 @@ const db = require("../db");
 const User = require("./user");
 const Field = require("../models/field");
 const Form = require("../models/form");
-const { mkTable, renderForm, wrap, h, link, post_btn } = require("../markup");
-const passport = require("passport");
+const { mkTable, renderForm, link, post_btn } = require("../markup");
 const { isAdmin } = require("../routes/utils");
 
 const router = new Router();
@@ -23,7 +22,7 @@ const userForm = async user => {
   const form = new Form({
     fields: [new Field({ label: "E-mail", name: "email", input_type: "text" })],
     action: "/useradmin/save",
-    submitLabel: "Create"
+    submitLabel: user ? "Save" : "Create"
   });
   if (!user)
     form.fields.push(
@@ -51,7 +50,6 @@ router.get("/", isAdmin, async (req, res) => {
   });
   res.sendWrap(
     "Users",
-    h(1, "Users"),
     mkTable(
       [
         { label: "ID", key: "id" },
@@ -71,7 +69,7 @@ router.get("/", isAdmin, async (req, res) => {
 
 router.get("/new", isAdmin, async (req, res) => {
   const form = await userForm();
-  res.sendWrap("New user", h(1, "New user"), renderForm(form));
+  res.sendWrap("New user", renderForm(form));
 });
 
 router.get("/:id", isAdmin, async (req, res) => {
@@ -79,7 +77,7 @@ router.get("/:id", isAdmin, async (req, res) => {
   const user = await User.findOne({ id });
   const form = await userForm(user);
 
-  res.sendWrap("Edit user", h(1, "Edit user"), renderForm(form));
+  res.sendWrap("Edit user", renderForm(form));
 });
 
 router.post("/save", isAdmin, async (req, res) => {

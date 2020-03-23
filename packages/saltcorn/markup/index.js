@@ -21,8 +21,6 @@ const mkTable = (hdrs, vs) => {
   return s;
 };
 
-const h = (sz, s) => `<h${sz}>${s}</h${sz}>`;
-
 const link = (href, s) => a({ href }, s);
 
 const post_btn = (href, s) => `<form action="${href}" method="post">
@@ -32,7 +30,6 @@ module.exports = {
   mkTable,
   renderForm,
   wrap,
-  h,
   link,
   post_btn
 };

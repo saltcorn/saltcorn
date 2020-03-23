@@ -1,10 +1,15 @@
+const rmFalse = vs =>
+  vs.filter(v => v !== false && v !== null && typeof v !== "undefined");
+
 const mkTag = tnm => (...args) => {
   var body = "";
   var attribs = "";
   const ppAttrib = kv =>
     typeof kv[1] === "boolean" ? (kv[1] ? kv[0] : "") : `${kv[0]}="${kv[1]}"`;
   args.forEach(arg => {
-    if (typeof arg === "string") {
+    if (typeof arg === "undefined" || arg === null || arg === false) {
+      //do nothing
+    } else if (typeof arg === "string") {
       body += arg;
     } else if (typeof arg === "object") {
       if (typeof arg.length === "undefined") {
@@ -13,7 +18,7 @@ const mkTag = tnm => (...args) => {
           .join(" ");
       } else {
         //array
-        body += arg.join("");
+        body += rmFalse(arg).join("");
       }
     }
   });
@@ -52,6 +57,7 @@ module.exports = {
   h1: mkTag("h1"),
   h2: mkTag("h2"),
   h3: mkTag("h3"),
+  i: mkTag("i"),
   domReady,
   input
 };

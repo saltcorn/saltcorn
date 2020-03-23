@@ -11,6 +11,7 @@ class Form {
     this.values = o.values || {};
     this.action = o.action;
     this.methodGET = o.methodGET;
+    this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
     if (o.validate) this.validate(o.validate);
   }

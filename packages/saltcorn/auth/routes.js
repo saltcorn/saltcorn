@@ -23,7 +23,6 @@ const loginForm = () =>
 router.get("/login", async (req, res) => {
   res.sendWrap(
     `Login`,
-    h(3, "Login"),
     renderForm(loginForm()),
     "Don't have an account? ",
     link("/auth/signup", "Signup »")
@@ -45,7 +44,6 @@ router.get("/signup", async (req, res) => {
   form.submitLabel = "Sign up";
   res.sendWrap(
     `Sign up`,
-    h(3, "Sign up"),
     renderForm(form),
     "Already have an account? ",
     link("/auth/login", "Login »")

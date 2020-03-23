@@ -1,10 +1,18 @@
-const formRowWrap = (hdr, inner, error = "") => `<div class="form-group row">
-    <label for="input${hdr.name}" class="col-sm-2 col-form-label">${hdr.label}</label>
-    <div class="col-sm-10">
-      ${inner}
-      ${error}
-    </div>
-  </div>`;
+const { p, div, i, label } = require("./tags");
+
+const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
+
+const formRowWrap = (hdr, inner, error = "") =>
+  div(
+    { class: "form-group row" },
+    label(
+      { for: `input${hdr.name}`, class: "col-sm-2 col-form-label" },
+      hdr.label
+    ),
+    div({ class: "col-sm-10" }, inner, error),
+    hdr.sublabel && div({ class: "col-sm-10 offset-md-2" }, i(hdr.sublabel))
+  );
+
 const isdef = x => typeof x !== "undefined";
 
 const select_options = (v, hdr) => {
@@ -80,20 +88,30 @@ const renderForm = form =>
     form.values,
     form.submitLabel,
     form.errors,
-    form.methodGET
+    form.methodGET,
+    form.blurb
   );
 
-const mkForm = (action, hdrs, v, submitLabel = "Save", errors = {}, isget) => {
+const mkForm = (
+  action,
+  hdrs,
+  v,
+  submitLabel = "Save",
+  errors = {},
+  isget,
+  blurb
+) => {
   const top = `<form action="${action}" method="${isget ? "get" : "post"}">`;
   //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v, errors)).join("");
+  const blurbp = blurb ? p(blurb) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
     <button type="submit" class="btn btn-primary">${submitLabel}</button>
   </div>
 </div>
 </form>`;
-  return top + flds + bot;
+  return blurbp + top + flds + bot;
 };
 
 module.exports = renderForm;

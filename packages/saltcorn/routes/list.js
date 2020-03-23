@@ -26,7 +26,6 @@ router.get("/:tname", loggedIn, async (req, res) => {
   const rows = await table.getJoinedRows();
   res.sendWrap(
     `${table.name} data table`,
-    h(1, table.name),
     mkTable(tfields, rows),
     link(`/edit/${table.name}`, "Add row")
   );

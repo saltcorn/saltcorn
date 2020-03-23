@@ -6,6 +6,7 @@ const Field = require("../models/field");
 const { mkTable, renderForm, h, link, post_btn } = require("../markup");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
+const { span } = require("../markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -28,8 +29,7 @@ router.get("/:id", isAdmin, async (req, res) => {
 
   res.sendWrap(
     `${table.name} table`,
-    h(1, table.name),
-    link(`/list/${table.name}`, "List"),
+
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -43,6 +43,7 @@ router.get("/:id", isAdmin, async (req, res) => {
       ],
       fields
     ),
+    span({ class: "mr-3" }, link(`/list/${table.name}`, "List")),
     link(`/field/new/${table.id}`, "Add field")
   );
 });
@@ -73,7 +74,6 @@ router.get("/", isAdmin, async (req, res) => {
   const { rows } = await db.query("SELECT * FROM tables");
   res.sendWrap(
     "Tables",
-    h(1, "Tables"),
     mkTable(
       [
         { label: "Name", key: "name" },

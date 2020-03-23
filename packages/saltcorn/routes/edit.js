@@ -17,11 +17,7 @@ router.get("/:tname", loggedIn, async (req, res) => {
   const fields = await Field.find({ table_id: table.id });
   const form = new Form({ action: `/edit/${tname}`, fields });
   await form.fill_fkey_options();
-  res.sendWrap(
-    `${table.name} create new`,
-    h(1, "New " + table.name),
-    renderForm(form)
-  );
+  res.sendWrap(`New ${table.name}`, renderForm(form));
 });
 
 router.get("/:tname/:id", loggedIn, async (req, res) => {
@@ -34,11 +30,7 @@ router.get("/:tname/:id", loggedIn, async (req, res) => {
   form.hidden("id");
   await form.fill_fkey_options();
 
-  res.sendWrap(
-    `${table.name} create new`,
-    h(1, "Edit " + table.name),
-    renderForm(form)
-  );
+  res.sendWrap(`Edit ${table.name}`, renderForm(form));
 });
 
 router.post("/:tname", loggedIn, async (req, res) => {

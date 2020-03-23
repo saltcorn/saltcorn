@@ -19,6 +19,8 @@ const configuration_workflow = () =>
           const link_views = await View.find_possible_links_to_table(table_id);
           const link_view_opts = link_views.map(v => `Link to ${v.name}`);
           return new Form({
+            blurb:
+              "Finalise your list view by specifying the fields in the table",
             fields: [
               {
                 name: "field_list",
@@ -26,7 +28,13 @@ const configuration_workflow = () =>
                 input_type: "ordered_multi_select",
                 options: [...fldOptions, "Delete", ...link_view_opts]
               },
-              { name: "link_to_create", label: "Link to create", type: "Bool" }
+              {
+                name: "link_to_create",
+                label: "Link to create",
+                type: "Bool",
+                sublabel:
+                  "Would you like to add a link at the bottom of the list to create a new item?"
+              }
             ]
           });
         }
@@ -85,7 +93,7 @@ const run = async (
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
-  return h(1, table.name) + mkTable(tfields, rows) + create_link;
+  return mkTable(tfields, rows) + create_link;
 };
 
 module.exports = {

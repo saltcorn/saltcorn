@@ -8,6 +8,7 @@ class Field {
     this.label = o.label || o.name;
     this.name = o.name;
     this.id = o.id;
+    this.sublabel = o.sublabel;
     this.type = typeof o.type === "string" ? types[o.type] : o.type;
     this.options = o.options;
     this.required = o.required;

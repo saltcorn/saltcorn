@@ -42,6 +42,7 @@ router.get("/list", isAdmin, async (req, res) => {
 const viewForm = (tableOptions, values) =>
   new Form({
     action: "/viewedit/save",
+    blurb: "First, please give some basic information about your new view.",
     fields: [
       new Field({ label: "Name", name: "name", input_type: "text" }),
       new Field({
@@ -123,7 +124,8 @@ router.get("/config/:name", isAdmin, async (req, res) => {
     table_id: view.table_id,
     ...view.configuration
   });
-  if (wfres.renderForm) res.sendWrap(`New view`, renderForm(wfres.renderForm));
+  if (wfres.renderForm)
+    res.sendWrap(`View configuration`, renderForm(wfres.renderForm));
   else res.redirect(wfres.redirect);
 });
 
@@ -134,7 +136,8 @@ router.post("/config/:name", isAdmin, async (req, res) => {
   const configFlow = await view.get_config_flow();
   const wfres = await configFlow.run(req.body);
 
-  if (wfres.renderForm) res.sendWrap(`New view`, renderForm(wfres.renderForm));
+  if (wfres.renderForm)
+    res.sendWrap(`View configuration`, renderForm(wfres.renderForm));
   else {
     await State.refresh();
     res.redirect(wfres.redirect);

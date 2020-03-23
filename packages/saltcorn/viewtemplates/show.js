@@ -26,7 +26,9 @@ const configuration_workflow = () =>
             });
           }
           return new Form({
-            fields
+            fields,
+            blurb:
+              "Which related tables would you like to show in sub-lists below the selected item?"
           });
         }
       }
