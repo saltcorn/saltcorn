@@ -1,7 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
-const Table = require("../models/table");
-const User = require("./user");
+const Table = require("saltcorn-data/models/table");
+const User = require("saltcorn-data/models/user");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,

@@ -1,5 +1,5 @@
-const types = require("../types");
 const db = require("../db");
+
 const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
 
 class Field {
@@ -9,7 +9,9 @@ class Field {
     this.name = o.name;
     this.id = o.id;
     this.sublabel = o.sublabel;
-    this.type = typeof o.type === "string" ? types[o.type] : o.type;
+    const State = require("../db/state");
+
+    this.type = typeof o.type === "string" ? State.types[o.type] : o.type;
     this.options = o.options;
     this.required = o.required;
     this.hidden = o.hidden || false;
@@ -55,7 +57,7 @@ class Field {
   }
 
   validate(whole_rec) {
-    const type = this.is_fkey ? types.Integer : this.type;
+    const type = this.is_fkey ? {name: "Key"} : this.type;
     const readval = !type
       ? whole_rec[this.name]
       : type.readFromFormRecord

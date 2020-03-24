@@ -1,6 +1,6 @@
 const renderForm = require("./form");
 const wrap = require("./wrap");
-const { a, td, tr, th } = require("./tags");
+const { a, td, tr, th } = require("saltcorn-markup/tags");
 
 const mkTable = (hdrs, vs) => {
   var s =

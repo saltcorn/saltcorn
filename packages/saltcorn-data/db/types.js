@@ -73,18 +73,4 @@ const bool = {
   validate: () => x => true
 };
 
-const types_list = [string, int, bool];
-
-const mkTyDict = tys => {
-  var d = {};
-  tys.forEach(t => {
-    d[t.name] = t;
-  });
-  return d;
-};
-
-types = mkTyDict(types_list);
-
-types._type_names = types_list.map(t => t.name);
-
-module.exports = types;
+module.exports = {string, int, bool};

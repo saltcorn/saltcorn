@@ -1,4 +1,3 @@
-const types = require("../types");
 const db = require("../db");
 const Field = require("./field");
 

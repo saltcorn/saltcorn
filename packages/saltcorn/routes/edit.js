@@ -1,8 +1,8 @@
 const Router = require("express-promise-router");
 
-const db = require("../db");
-const Field = require("../models/field");
-const Form = require("../models/form");
+const db = require("saltcorn-data/db");
+const Field = require("saltcorn-data/models/field");
+const Form = require("saltcorn-data/models/form");
 const { loggedIn } = require("./utils.js");
 
 const { mkTable, renderForm, wrap, h, link, post_btn } = require("../markup");

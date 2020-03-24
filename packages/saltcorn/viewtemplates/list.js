@@ -1,9 +1,9 @@
-const db = require("../db");
-const Field = require("../models/field");
-const Table = require("../models/table");
-const Form = require("../models/form");
-const View = require("../models/view");
-const Workflow = require("../models/workflow");
+const db = require("saltcorn-data/db");
+const Field = require("saltcorn-data/models/field");
+const Table = require("saltcorn-data/models/table");
+const Form = require("saltcorn-data/models/form");
+const View = require("saltcorn-data/models/view");
+const Workflow = require("saltcorn-data/models/workflow");
 const { mkTable, h, post_btn, link } = require("../markup");
 
 const configuration_workflow = () =>

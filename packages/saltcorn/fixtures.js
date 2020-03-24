@@ -1,8 +1,10 @@
-const db = require(".");
-const Table = require("../models/table");
-const Field = require("../models/field");
-const View = require("../models/view");
-const User = require("../auth/user");
+const db = require("saltcorn-data/db");
+const State = require("saltcorn-data/db/state");
+const Table = require("saltcorn-data/models/table");
+const Field = require("saltcorn-data/models/field");
+const View = require("saltcorn-data/models/view");
+const User = require("saltcorn-data/models/user");
+const vts = require("./viewtemplates")
 
 const fixtures = async () => {
   const table = await Table.create("books");

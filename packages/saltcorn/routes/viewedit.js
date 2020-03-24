@@ -1,15 +1,15 @@
 const Router = require("express-promise-router");
 
-const db = require("../db");
+const db = require("saltcorn-data/db");
 const viewtemplates = require("../viewtemplates");
 const { renderForm, mkTable, link, post_btn } = require("../markup");
-const State = require("../db/state");
+const State = require("saltcorn-data/db/state");
 const { isAdmin } = require("./utils.js");
-const Form = require("../models/form");
-const Field = require("../models/field");
-const Table = require("../models/table");
-const View = require("../models/view");
-const Workflow = require("../models/workflow");
+const Form = require("saltcorn-data/models/form");
+const Field = require("saltcorn-data/models/field");
+const Table = require("saltcorn-data/models/table");
+const View = require("saltcorn-data/models/view");
+const Workflow = require("saltcorn-data/models/workflow");
 
 const router = new Router();
 module.exports = router;
