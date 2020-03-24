@@ -2,7 +2,7 @@ const express = require("express");
 const mountRoutes = require("./routes");
 const { wrap, link, ul_nav, alert, renderForm } = require("./markup");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
-const View = require("./models/view");
+const View = require("saltcorn-data/models/view");
 
 const State = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
@@ -10,7 +10,7 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
-const User = require("../saltcorn-data/models/user");
+const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
 
 const app = express();
