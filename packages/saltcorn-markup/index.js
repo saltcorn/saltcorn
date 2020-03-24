@@ -1,0 +1,1 @@
+module.exports = "Some text goes here"
