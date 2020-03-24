@@ -6,7 +6,7 @@ const Field = require("../models/field");
 const { mkTable, renderForm, h, link, post_btn } = require("../markup");
 const { isAdmin } = require("./utils.js");
 const Form = require("../models/form");
-const { span } = require("../markup/tags");
+const { span } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require("express");
 const mountRoutes = require("./routes");
 const { wrap, link, ul_nav, alert, renderForm } = require("./markup");
-const { ul, li, div, small } = require("./markup/tags");
+const { ul, li, div, small } = require("saltcorn-markup/tags");
 const View = require("./models/view");
 
 const State = require("./db/state");
