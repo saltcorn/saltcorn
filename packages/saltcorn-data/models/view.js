@@ -24,8 +24,8 @@ class View {
     this.is_public = o.is_public;
     this.on_root_page = o.on_root_page;
     this.on_menu = o.on_menu;
-    const viewtemplates = require("../viewtemplates");
-    this.viewtemplateObj = viewtemplates[this.viewtemplate];
+    const State = require("../db/state");
+    this.viewtemplateObj = State.viewtemplates[this.viewtemplate];
   }
   static async findOne(where) {
     const v = await db.selectOne("views", where);
@@ -39,13 +39,14 @@ class View {
 
   static async find_possible_links_to_table(table_id) {
     var link_view_opts = [];
-
+    const State = require("../db/state");
     const link_views = await View.find({
       table_id
     });
-    const viewtemplates = require("../viewtemplates");
+    
     for (const viewrow of link_views) {
-      const vt = viewtemplates[viewrow.viewtemplate];
+
+      const vt =  State.viewtemplates[viewrow.viewtemplate];
       if (vt.get_state_fields) {
         const sfs = await vt.get_state_fields(
           viewrow.table_id,

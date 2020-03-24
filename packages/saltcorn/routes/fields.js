@@ -1,12 +1,12 @@
 const Router = require("express-promise-router");
 
-const db = require("../db");
-const types = require("../types");
+const db = require("saltcorn-data/db");
+const State = require("saltcorn-data/db/state");
 const { renderForm } = require("../markup");
-const Field = require("../models/field");
-const Table = require("../models/table");
-const Form = require("../models/form");
-const Workflow = require("../models/workflow");
+const Field = require("saltcorn-data/models/field");
+const Table = require("saltcorn-data/models/table");
+const Form = require("saltcorn-data/models/form");
+const Workflow = require("saltcorn-data/models/workflow");
 
 const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
 
@@ -23,12 +23,12 @@ const fieldForm = fkey_opts =>
         label: "Type",
         name: "type",
         input_type: "select",
-        options: types._type_names.concat(fkey_opts || [])
+        options: State.type_names.concat(fkey_opts || [])
       }),
       new Field({
         label: "Required",
         name: "required",
-        type: types["Bool"]
+        type: State.types["Bool"]
       })
     ]
   });
@@ -36,7 +36,7 @@ const fieldForm = fkey_opts =>
 const fieldFlow = new Workflow({
   action: "/field",
   onDone: async context => {
-    const type = types[context.type];
+    const type = State.types[context.type];
     var attributes = {};
     if (!new Field(context).is_fkey)
       type.attributes.forEach(a => {
@@ -68,11 +68,11 @@ const fieldFlow = new Workflow({
       name: "attributes",
       onlyWhen: context => {
         if (new Field(context).is_fkey) return false;
-        const type = types[context.type];
+        const type = State.types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
       form: context => {
-        const type = types[context.type];
+        const type = State.types[context.type];
         return new Form({
           fields: type.attributes
         });

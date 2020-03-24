@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 
-const View = require("../models/view");
+const View = require("saltcorn-data/models/view");
 const { div } = require("saltcorn-markup/tags");
 const { renderForm } = require("../markup");
 

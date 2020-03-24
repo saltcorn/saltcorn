@@ -1,5 +1,4 @@
-const types = require("../types");
-const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
+const { sqlsanitize, fkeyPrefix } = require("saltcorn-data/db/internal.js");
 
 function loggedIn(req, res, next) {
   if (req.user) {

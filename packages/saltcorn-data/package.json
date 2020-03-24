@@ -1,0 +1,23 @@
+{
+  "name": "saltcorn-data",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "dependencies": {
+    "connect-pg-simple": "^6.1.0",
+    "bcrypt": "^3.0.8",
+    "pg": "^7.18.2"
+  },
+
+  "devDependencies": {
+    "jest": "^25.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node"    
+  }
+}

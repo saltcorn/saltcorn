@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
-const Field = require("../models/field");
+const Field = require("saltcorn-data/models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
