@@ -4,7 +4,9 @@ const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const View = require("saltcorn-data/models/view");
 const User = require("saltcorn-data/models/user");
-const vts = require("./viewtemplates")
+const basePlugin = require("saltcorn-base");
+
+basePlugin.register();
 
 const fixtures = async () => {
   const table = await Table.create("books");

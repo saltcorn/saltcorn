@@ -1,8 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("saltcorn-data/db");
-const viewtemplates = require("../viewtemplates");
-const { renderForm, mkTable, link, post_btn } = require("../markup");
+const { renderForm, mkTable, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const { isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
@@ -49,7 +48,7 @@ const viewForm = (tableOptions, values) =>
         label: "Template",
         name: "viewtemplate",
         input_type: "select",
-        options: Object.keys(viewtemplates)
+        options: Object.keys(State.viewtemplates)
       }),
       new Field({
         label: "Table",

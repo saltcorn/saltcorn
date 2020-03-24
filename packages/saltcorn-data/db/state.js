@@ -1,5 +1,4 @@
 const db = require(".");
-const {string, int, bool} = require("./types");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
@@ -10,9 +9,7 @@ class State {
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
-    this.types_list = [string, int, bool];
-    this.type_names = []
-    this.update_types()
+    this.type_names = [];
     this.fields = [];
     this.refresh().then(
       () => {},
@@ -21,23 +18,14 @@ class State {
         throw err;
       }
     );
-    
   }
   async refresh() {
     this.available_views = await View.find();
   }
 
-  update_types() {
-    var d = {};
-    this.types_list.forEach(t => {
-      d[t.name] = t;
-    });
-    this.type_names = this.types_list.map(t => t.name)
-    this.types=d
-  };
   addType(t) {
-    this.types_list.push(t)
-    this.update_types()
+    this.types[t.name] = t;
+    if (!this.type_names.includes(t.name)) this.type_names.push(t.name);
   }
 }
 

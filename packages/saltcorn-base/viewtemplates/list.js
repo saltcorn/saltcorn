@@ -4,7 +4,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
-const { mkTable, h, post_btn, link } = require("../markup");
+const { mkTable, h, post_btn, link } = require("saltcorn-markup");
 
 const configuration_workflow = () =>
   new Workflow({

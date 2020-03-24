@@ -43,10 +43,9 @@ class View {
     const link_views = await View.find({
       table_id
     });
-    
-    for (const viewrow of link_views) {
 
-      const vt =  State.viewtemplates[viewrow.viewtemplate];
+    for (const viewrow of link_views) {
+      const vt = State.viewtemplates[viewrow.viewtemplate];
       if (vt.get_state_fields) {
         const sfs = await vt.get_state_fields(
           viewrow.table_id,

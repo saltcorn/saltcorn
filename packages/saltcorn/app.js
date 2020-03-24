@@ -1,6 +1,6 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { wrap, link, ul_nav, alert, renderForm } = require("./markup");
+const { wrap, link, renderForm } = require("saltcorn-markup");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
 const View = require("saltcorn-data/models/view");
 
@@ -14,6 +14,11 @@ const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
 
 const app = express();
+
+const basePlugin = require("saltcorn-base");
+
+basePlugin.register();
+
 app.use(express.urlencoded({ extended: true }));
 app.use(require("cookie-parser")());
 

@@ -1,10 +1,14 @@
 {
-  "name": "saltcorn-markup",
+  "name": "saltcorn-base",
   "version": "0.0.1",
-  "description": "",
+  "description": "Base plugin for saltcorn",
   "main": "index.js",
   "scripts": {
     "test": "jest"
+  },
+  "dependencies": {
+    "saltcorn-markup": "^0.0.1",
+    "saltcorn-data": "^0.0.1"
   },
   "author": "Tom Nielsen",
   "license": "MIT",

@@ -57,7 +57,7 @@ class Field {
   }
 
   validate(whole_rec) {
-    const type = this.is_fkey ? {name: "Key"} : this.type;
+    const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval = !type
       ? whole_rec[this.name]
       : type.readFromFormRecord

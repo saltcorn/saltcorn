@@ -73,4 +73,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = {string, int, bool};
+module.exports = { string, int, bool };

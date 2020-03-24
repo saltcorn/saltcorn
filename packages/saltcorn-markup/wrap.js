@@ -1,4 +1,4 @@
-const { ul, li, a, span, hr, div } = require("saltcorn-markup/tags");
+const { ul, li, a, span, hr, div } = require("./tags");
 
 const sideBarItem = item =>
   li(

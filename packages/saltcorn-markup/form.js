@@ -1,4 +1,4 @@
-const { p, div, i, label } = require("saltcorn-markup/tags");
+const { p, div, i, label } = require("./tags");
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 
