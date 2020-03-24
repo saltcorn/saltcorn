@@ -8,8 +8,8 @@ class State {
     this.available_views = [];
     this.viewtemplates = {};
     this.tables = [];
-    this.types = {};    
-    this.type_names = []
+    this.types = {};
+    this.type_names = [];
     this.fields = [];
     this.refresh().then(
       () => {},
@@ -18,7 +18,6 @@ class State {
         throw err;
       }
     );
-    
   }
   async refresh() {
     this.available_views = await View.find();
@@ -26,8 +25,7 @@ class State {
 
   addType(t) {
     this.types[t.name] = t;
-    if(!this.type_names.includes(t.name))
-    this.type_names.push(t.name)
+    if (!this.type_names.includes(t.name)) this.type_names.push(t.name);
   }
 }
 

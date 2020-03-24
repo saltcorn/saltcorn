@@ -15,9 +15,9 @@ const flash = require("connect-flash");
 
 const app = express();
 
-const basePlugin = require("saltcorn-base")
+const basePlugin = require("saltcorn-base");
 
-basePlugin.register()
+basePlugin.register();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(require("cookie-parser")());
