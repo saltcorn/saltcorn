@@ -2,7 +2,7 @@ const db = require("saltcorn-data/db");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
-const { mkTable } = require("../markup");
+const { mkTable } = require("saltcorn-markup");
 const Workflow = require("saltcorn-data/models/workflow");
 
 const { div, h4, table, tbody, tr, td } = require("saltcorn-markup/tags");

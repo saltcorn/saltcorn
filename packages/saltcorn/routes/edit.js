@@ -5,7 +5,7 @@ const Field = require("saltcorn-data/models/field");
 const Form = require("saltcorn-data/models/form");
 const { loggedIn } = require("./utils.js");
 
-const { mkTable, renderForm, wrap, h, link, post_btn } = require("../markup");
+const { mkTable, renderForm, wrap, h, link, post_btn } = require("saltcorn-markup");
 
 const router = new Router();
 module.exports = router;

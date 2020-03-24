@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("saltcorn-data/db");
 const State = require("saltcorn-data/db/state");
-const { renderForm } = require("../markup");
+const { renderForm } = require("saltcorn-markup");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");

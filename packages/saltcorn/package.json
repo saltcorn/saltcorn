@@ -8,6 +8,7 @@
     "bcrypt": "^3.0.8",
     "saltcorn-markup": "^0.0.1",
     "saltcorn-data": "^0.0.1",
+    "saltcorn-base": "^0.0.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
     "cookie-parser": "^1.4.4",
