@@ -12,6 +12,16 @@ const select = async (tbl, whereObj) => {
   return tq.rows;
 };
 
+const count = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj);
+  const tq = await pool.query(
+    `SELECT COUNT(*) FROM ${sqlsanitize(tbl)} ${where}`,
+    values
+  );
+
+  return parseInt(tq.rows[0].count);
+};
+
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const tq = await pool.query(
@@ -61,6 +71,7 @@ module.exports = {
   query: (text, params) => pool.query(text, params),
   select,
   selectOne,
+  count,
   insert,
   update,
   deleteWhere,

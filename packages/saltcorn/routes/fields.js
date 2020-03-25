@@ -103,8 +103,8 @@ const fieldFlow = new Workflow({
       onlyWhen: async context => {
         if (!context.required || context.id) return false;
         const table = await Table.findOne({id:context.table_id});
-        const rows = await db.select(table.name); //todo count
-        return rows.length > 0;
+        const nrows = await db.count(table.name); //todo count
+        return nrows > 0;
       },
       form: async context => {
         const formfield = new Field({
