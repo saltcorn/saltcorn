@@ -78,7 +78,7 @@ const viewForm = (tableOptions, values) =>
 router.get("/edit/:viewname", isAdmin, async (req, res) => {
   const { viewname } = req.params;
 
-  var viewrow = await db.selectOne("views", { name: viewname });
+  var viewrow = await View.findOne({ name: viewname });
 
   const tables = await Table.find();
   const currentTable = tables.find(t => t.id === viewrow.table_id);

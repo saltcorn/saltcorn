@@ -24,8 +24,7 @@ router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({id});
 
-  const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
-  const fields = fq.rows;
+  const fields = await Field.find({table_id:id})
 
   res.sendWrap(
     `${table.name} table`,
@@ -71,7 +70,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.get("/", isAdmin, async (req, res) => {
-  const { rows } = await db.query("SELECT * FROM tables");
+  const rows = await Table.find()
   res.sendWrap(
     "Tables",
     mkTable(
