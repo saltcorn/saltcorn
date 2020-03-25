@@ -36,14 +36,14 @@ class Field {
   }
   get toJson() {
     return {
-      id:this.id,
-      table_id:this.table_id,
-      name:this.name,
-      label:this.label,
-      type:this.type.name,
-      attributes:this.attributes,
-      required:this.required,
-    }
+      id: this.id,
+      table_id: this.table_id,
+      name: this.name,
+      label: this.label,
+      type: this.type.name,
+      attributes: this.attributes,
+      required: this.required
+    };
   }
   async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
@@ -94,20 +94,21 @@ class Field {
   }
 
   async delete() {
-    await db.deleteWhere("fields", {id:this.id})
-    const Table = require("./table")
-    const table = await Table.findOne({id:this.table_id});
+    await db.deleteWhere("fields", { id: this.id });
+    const Table = require("./table");
+    const table = await Table.findOne({ id: this.table_id });
     await db.query(
       `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
         this.name
       )}`
     );
   }
-  
+
   static async create(fld) {
     const f = new Field(fld);
-    const Table = require("./table")
-    if (!f.table && f.table_id) f.table = await Table.findOne({id:f.table_id});
+    const Table = require("./table");
+    if (!f.table && f.table_id)
+      f.table = await Table.findOne({ id: f.table_id });
     const q = `alter table ${sqlsanitize(
       f.table.name
     )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${

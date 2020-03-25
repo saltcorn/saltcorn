@@ -22,9 +22,9 @@ router.get("/new/", isAdmin, async (req, res) => {
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const table = await Table.findOne({id});
+  const table = await Table.findOne({ id });
 
-  const fields = await Field.find({table_id:id})
+  const fields = await Field.find({ table_id: id });
 
   res.sendWrap(
     `${table.name} table`,
@@ -33,7 +33,7 @@ router.get("/:id", isAdmin, async (req, res) => {
       [
         { label: "Name", key: "name" },
         { label: "Label", key: "label" },
-        { label: "Type", key: r=> r.type.name },
+        { label: "Type", key: r => r.type.name },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
           label: "Delete",
@@ -54,7 +54,7 @@ router.post("/", isAdmin, async (req, res) => {
     await Table.create(v.name);
     req.flash("success", "Table created");
   } else {
-    Table.rename(v.id, v.name)
+    Table.rename(v.id, v.name);
   }
   res.redirect(`/table/`);
 });
@@ -69,7 +69,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.get("/", isAdmin, async (req, res) => {
-  const rows = await Table.find()
+  const rows = await Table.find();
   res.sendWrap(
     "Tables",
     mkTable(

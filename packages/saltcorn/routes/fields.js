@@ -102,7 +102,7 @@ const fieldFlow = new Workflow({
       name: "default",
       onlyWhen: async context => {
         if (!context.required || context.id) return false;
-        const table = await Table.findOne({id:context.table_id});
+        const table = await Table.findOne({ id: context.table_id });
         const nrows = await db.count(table.name); //todo count
         return nrows > 0;
       },
@@ -123,8 +123,8 @@ const fieldFlow = new Workflow({
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const field = await Field.findOne({id});
-  const wfres = await fieldFlow.run({ ...(field.toJson), ...field.attributes });
+  const field = await Field.findOne({ id });
+  const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
   res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
 });
 
@@ -135,10 +135,10 @@ router.get("/new/:table_id", isAdmin, async (req, res) => {
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const f = await Field.findOne({id})
-  const table_id=f.table_id
+  const f = await Field.findOne({ id });
+  const table_id = f.table_id;
 
-  await f.delete()
+  await f.delete();
 
   res.redirect(`/table/${table_id}`);
 });

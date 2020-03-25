@@ -36,7 +36,6 @@ class Table {
   static async rename(id, new_name) {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [new_name, id]);
-
   }
   async getJoinedRows(whereObj1) {
     const fields = await this.getFields();
