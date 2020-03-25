@@ -123,8 +123,8 @@ const fieldFlow = new Workflow({
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const field = await db.get_field_by_id(id);
-  const wfres = await fieldFlow.run({ ...field, ...field.attributes });
+  const field = await Field.findOne({id});
+  const wfres = await fieldFlow.run({ ...(field.toJson), ...field.attributes });
   res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
 });
 

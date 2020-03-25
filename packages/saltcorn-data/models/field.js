@@ -34,7 +34,17 @@ class Field {
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
   }
-
+  get toJson() {
+    return {
+      id:this.id,
+      table_id:this.table_id,
+      name:this.name,
+      label:this.label,
+      type:this.type.name,
+      attributes:this.attributes,
+      required:this.required,
+    }
+  }
   async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
       const rows = await db.select(this.reftable);

@@ -47,6 +47,7 @@ const update = async (tbl, obj, id) => {
     1}`;
   await pool.query(q, valList);
 };
+
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
   if (rows.length === 0) {
@@ -56,14 +57,8 @@ const selectOne = async (tbl, where) => {
   } else return rows[0];
 };
 
-
-const get_field_by_id = async id => {
-  return await selectOne("fields", {id})
-};
-
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  get_field_by_id,
   select,
   selectOne,
   insert,
