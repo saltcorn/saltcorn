@@ -91,9 +91,16 @@ const fixtures = async () => {
     password: "secret",
     role_id: 2
   });
-  await db.insert("plugins", { name: "base", source: "npm","location":"saltcorn-base-plugin" });
-  await db.insert("plugins", { name: "sbadmin2", source: "npm","location":"saltcorn-sbadmin2" });
-
+  await db.insert("plugins", {
+    name: "base",
+    source: "npm",
+    location: "saltcorn-base-plugin"
+  });
+  await db.insert("plugins", {
+    name: "sbadmin2",
+    source: "npm",
+    location: "saltcorn-sbadmin2"
+  });
 };
 
 fixtures().then(
