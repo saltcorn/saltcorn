@@ -92,7 +92,13 @@ class Field {
     const db_fld = await db.selectOne("fields", where);
     return new Field(db_fld);
   }
-
+  get listKey() {
+    return this.type.listAs
+      ? r => this.type.listAs(r[this.name])
+      : this.type.showAs
+      ? r => this.type.showAs(r[this.name])
+      : this.name;
+  }
   async delete() {
     await db.deleteWhere("fields", { id: this.id });
     const Table = require("./table");

@@ -70,6 +70,7 @@ const bool = {
         return v ? true : false;
     }
   },
+  showAs: v => (v === true ? "True" : v === false ? "False" : ""),
   validate: () => x => true
 };
 
