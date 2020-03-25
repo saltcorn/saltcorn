@@ -2,9 +2,23 @@ const Router = require("express-promise-router");
 const db = require("saltcorn-data/db");
 const { isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
+const State = require("saltcorn-data/db/state");
+const Form = require("saltcorn-data/models/form");
+const Field = require("saltcorn-data/models/field");
 
 const router = new Router();
 module.exports = router;
+
+
+const pluginForm = () =>
+  new Form({
+    action: "/plugins",
+    fields: [
+        new Field({ label: "Name", name: "name", input_type: "text" }),
+        new Field({ label: "Source", name: "source", type: State.types.String, attributes: {options:"npm,local,git"} }),
+        new Field({ label: "Location", name: "location", input_type: "text" }),
+    ]
+  });
 
 router.get("/", isAdmin, async (req, res) => {
     const rows = await db.select("plugins");
@@ -26,3 +40,8 @@ router.get("/", isAdmin, async (req, res) => {
       link(`/plugins/new`, "Add plugin")
     );
   });
+
+  router.get("/new/", isAdmin, async (req, res) => {
+    res.sendWrap(`New Plugin`, renderForm(pluginForm()));
+  });
+  
