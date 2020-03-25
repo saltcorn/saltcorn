@@ -86,6 +86,7 @@ app.use(function(req, res, next) {
     const adminItems = [
       { link: "/table", label: "Tables" },
       { link: "/viewedit/list", label: "Views" },
+      { link: "/plugins", label: "Plugins" },
       { link: "/useradmin", label: "Users" }
     ];
 
