@@ -62,6 +62,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
+
   const tfields = field_list.map(fldnm => {
     if (fldnm === "Delete")
       return {
@@ -80,7 +81,7 @@ const run = async (
       };
     } else {
       const f = fields.find(fld => fld.name === fldnm);
-      return { label: f.label, key: f.name };
+      return { label: f.label, key: f.listKey };
     }
   });
   Object.entries(state).forEach(kv => {

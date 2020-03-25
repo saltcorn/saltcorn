@@ -14,7 +14,7 @@ router.get("/:tname", loggedIn, async (req, res) => {
   const table = await Table.findOne({ name: tname });
 
   const fields = await table.getFields();
-  var tfields = fields.map(f => ({ label: f.label, key: f.name }));
+  var tfields = fields.map(f => ({ label: f.label, key: f.listKey }));
   tfields.push({
     label: "Edit",
     key: r => link(`/edit/${table.name}/${r.id}`, "Edit")

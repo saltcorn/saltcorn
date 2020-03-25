@@ -47,7 +47,12 @@ const run = async (table_id, viewname, rels, { id }) => {
   const fields = await Field.find({ table_id: tbl.id });
 
   const row = await db.selectOne(tbl.name, { id });
-  const trows = fields.map(f => tr([td(f.label), td("" + row[f.name])]));
+  const trows = fields.map(f =>
+    tr(
+      td(f.label),
+      td("" + (f.type.showAs ? f.type.showAs(row[f.name]) : row[f.name]))
+    )
+  );
   var reltbls = [];
   for (const rel of Object.keys(rels)) {
     if (rels[rel]) {
@@ -57,7 +62,7 @@ const run = async (table_id, viewname, rels, { id }) => {
         [relfld]: id
       });
       const relfields = await reltbl.getFields();
-      var tfields = relfields.map(f => ({ label: f.label, key: f.name }));
+      var tfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
       reltbls.push(div(h4(reltbl.name), mkTable(tfields, rows)));
     }
   }

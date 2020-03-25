@@ -68,7 +68,7 @@ class Field {
 
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
-    const readval = !type
+    const readval = !type || !(type.read)
       ? whole_rec[this.name]
       : type.readFromFormRecord
       ? type.readFromFormRecord(whole_rec, this.name)
@@ -92,7 +92,13 @@ class Field {
     const db_fld = await db.selectOne("fields", where);
     return new Field(db_fld);
   }
-
+  get listKey() {
+    return this.type.listAs
+      ? r => this.type.listAs(r[this.name])
+      : this.type.showAs
+      ? r => this.type.showAs(r[this.name])
+      : this.name;
+  }
   async delete() {
     await db.deleteWhere("fields", { id: this.id });
     const Table = require("./table");
