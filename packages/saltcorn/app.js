@@ -12,10 +12,10 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
-
+const load_plugins = require("./load_plugins");
 const app = express();
 
-require("./load_plugins")();
+load_plugins.loadAllPluginsSync();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(require("cookie-parser")());

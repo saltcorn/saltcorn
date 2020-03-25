@@ -5,6 +5,7 @@ const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
+const load_plugins = require("../load_plugins");
 
 const router = new Router();
 module.exports = router;
@@ -71,6 +72,7 @@ router.post("/", isAdmin, async (req, res) => {
   } else {
     await db.update("plugins", v, id);
   }
+  await load_plugins.loadPlugin(v);
   res.redirect(`/plugins`);
 });
 
