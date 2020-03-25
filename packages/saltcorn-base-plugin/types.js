@@ -1,6 +1,12 @@
-const { input } = require("saltcorn-markup/tags");
+const { input, select, option } = require("saltcorn-markup/tags");
 
 const isdef = x => (typeof x === "undefined" ? false : true);
+
+const getStrOptions = (v, optsStr) =>
+  optsStr
+    .split(",")
+    .map(s => s.trim())
+    .map(o => option({ value: o, ...(v === o && { selected: true }) }, o));
 
 const string = {
   name: "String",
@@ -10,13 +16,18 @@ const string = {
     { name: "options", type: "String", required: false }
   ],
   editAs: (nm, v, attrs, cls) =>
-    input({
-      type: "text",
-      class: `form-control ${cls || ""}`,
-      name: nm,
-      id: `input${nm}`,
-      ...(isdef(v) && { value: v })
-    }),
+    attrs.options
+      ? select(
+          { class: `form-control ${cls || ""}`, name: nm, id: `input${nm}` },
+          getStrOptions(v, attrs.options)
+        )
+      : input({
+          type: "text",
+          class: `form-control ${cls || ""}`,
+          name: nm,
+          id: `input${nm}`,
+          ...(isdef(v) && { value: v })
+        }),
   read: v => {
     switch (typeof v) {
       case "string":
