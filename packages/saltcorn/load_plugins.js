@@ -1,8 +1,5 @@
 const db = require("saltcorn-data/db");
 
-const basePlugin = require("saltcorn-base-plugin");
-const layoutPlugin = require("saltcorn-sbadmin2");
-
 const loadAsync = async () => {
   const plugins = await db.select("plugins");
   plugins.forEach(plugin => {
@@ -10,8 +7,6 @@ const loadAsync = async () => {
       require(plugin.location).register();
     }
   });
-  basePlugin.register();
-  layoutPlugin.register();
 };
 
 const load = () => {
