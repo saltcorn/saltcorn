@@ -11,6 +11,7 @@ const loadPlugin = async plugin => {
     manager.require(plugin.location).register();
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location);
+    await manager.installFromPath(plugin.location, { force: true });
     manager.require(plugin.name).register();
   }
 };
