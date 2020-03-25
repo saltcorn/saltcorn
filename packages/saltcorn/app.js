@@ -1,6 +1,6 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { wrap, link, renderForm } = require("saltcorn-markup");
+const { link, renderForm } = require("saltcorn-markup");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
 const View = require("saltcorn-data/models/view");
 
@@ -16,8 +16,10 @@ const flash = require("connect-flash");
 const app = express();
 
 const basePlugin = require("saltcorn-base-plugin");
+const layoutPlugin = require("saltcorn-sbadmin2");
 
 basePlugin.register();
+layoutPlugin.register();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(require("cookie-parser")());
@@ -106,7 +108,7 @@ app.use(function(req, res, next) {
       }
     ].filter(s => s);
     res.send(
-      wrap({
+      State.layout.wrap({
         title,
         menu,
         alerts: getFlashes(req),
