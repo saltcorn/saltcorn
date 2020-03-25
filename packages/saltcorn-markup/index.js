@@ -1,5 +1,4 @@
 const renderForm = require("./form");
-const wrap = require("./wrap");
 const { a, td, tr, th } = require("./tags");
 
 const mkTable = (hdrs, vs) => {
@@ -28,7 +27,6 @@ const post_btn = (href, s) => `<form action="${href}" method="post">
 module.exports = {
   mkTable,
   renderForm,
-  wrap,
   link,
   post_btn
 };
