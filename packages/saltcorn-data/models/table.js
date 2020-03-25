@@ -39,7 +39,6 @@ class Table {
     var joinq = "";
     for (const f of fields) {
       if (f.is_fkey) {
-        const table = await db.get_table_by_name(f.reftable);
         joinTables.push({ table: f.reftable, field: f.name });
         joinq += ` left join ${f.reftable} ${f.reftable}_${f.name} on ${f.reftable}_${f.name}.id=a.${f.name}`;
         fldNms.push(

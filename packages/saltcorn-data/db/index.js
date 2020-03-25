@@ -56,10 +56,6 @@ const selectOne = async (tbl, where) => {
   } else return rows[0];
 };
 
-const get_table_by_name = async name => {
-  return await selectOne("tables", {name})
-};
-
 
 const get_field_by_id = async id => {
   return await selectOne("fields", {id})
@@ -68,7 +64,6 @@ const get_field_by_id = async id => {
 module.exports = {
   query: (text, params) => pool.query(text, params),
   get_field_by_id,
-  get_table_by_name,
   select,
   selectOne,
   insert,
