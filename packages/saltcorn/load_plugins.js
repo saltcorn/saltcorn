@@ -12,7 +12,10 @@ const loadAsync = async () => {
       require(plugin.location).register();
     } else if (plugin.source === "npm") {
       await manager.install(plugin.location);
-      require(plugin.location).register();
+      manager.require(plugin.location).register();
+    } else if (plugin.source === "local") {
+      await manager.installFromPath(plugin.location);
+      manager.require(plugin.name).register();
     }
   }
 };
