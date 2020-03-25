@@ -8,7 +8,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
+const { fkeyPrefix, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -135,19 +135,12 @@ router.get("/new/:table_id", isAdmin, async (req, res) => {
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
+  const f = await Field.findOne({id})
+  const table_id=f.table_id
 
-  const {
-    rows
-  } = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
+  await f.delete()
 
-  const table = await Table.findOne({id:rows[0].table_id});
-  await db.query(
-    `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
-      rows[0].name
-    )}`
-  );
-
-  res.redirect(`/table/${rows[0].table_id}`);
+  res.redirect(`/table/${table_id}`);
 });
 
 router.post("/", isAdmin, async (req, res) => {

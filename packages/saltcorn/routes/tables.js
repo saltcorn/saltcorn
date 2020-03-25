@@ -54,8 +54,7 @@ router.post("/", isAdmin, async (req, res) => {
     await Table.create(v.name);
     req.flash("success", "Table created");
   } else {
-    //TODO RENAME TABLE
-    await db.query("update tables set name=$1 where id=$2", [v.name, v.id]);
+    Table.rename(v.id, v.name)
   }
   res.redirect(`/table/`);
 });

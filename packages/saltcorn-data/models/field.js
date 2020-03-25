@@ -92,6 +92,18 @@ class Field {
     const db_fld = await db.selectOne("fields", where);
     return new Field(db_fld);
   }
+
+  async delete() {
+    await db.deleteWhere("fields", {id:this.id})
+    const Table = require("./table")
+    const table = await Table.findOne({id:this.table_id});
+    await db.query(
+      `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
+        this.name
+      )}`
+    );
+  }
+  
   static async create(fld) {
     const f = new Field(fld);
     const Table = require("./table")
