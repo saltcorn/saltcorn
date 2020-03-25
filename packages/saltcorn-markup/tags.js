@@ -42,6 +42,7 @@ module.exports = {
   option: mkTag("option"),
   select: mkTag("select"),
   button: mkTag("button"),
+  textarea: mkTag("textarea"),
   form: mkTag("form"),
   script: mkTag("script"),
   p: mkTag("p"),
