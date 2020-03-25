@@ -6,6 +6,7 @@ const {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
+  toNotInclude,
   toRedirect
 } = require("../auth/testhelp");
 
@@ -123,6 +124,17 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
 
+    done();
+  });
+
+  it("should show field in table", async done => {
+    const loginCookie = await getAdminLoginCookie();
+
+    await request(app)
+      .get(`/table/2`)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("wrote"))
+      .expect(toNotInclude("[object"));
     done();
   });
 

@@ -39,11 +39,12 @@ describe("Table Endpoints", () => {
 
     const tbl = await Table.findOne({ name: "mypostedtable" });
 
-    const res = await request(app)
+    await request(app)
       .get(`/table/${tbl.id}`)
       .set("Cookie", loginCookie)
       .expect(toInclude("<table"))
-      .expect(toInclude("Add field"));
+      .expect(toInclude("Add field"))
+      .expect(toNotInclude("[object"));
     done();
   });
 
