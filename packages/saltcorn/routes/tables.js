@@ -22,7 +22,7 @@ router.get("/new/", isAdmin, async (req, res) => {
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const table = await db.get_table_by_id(id);
+  const table = await Table.findOne({id});
 
   const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
   const fields = fq.rows;

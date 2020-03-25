@@ -102,7 +102,7 @@ const fieldFlow = new Workflow({
       name: "default",
       onlyWhen: async context => {
         if (!context.required || context.id) return false;
-        const table = await db.get_table_by_id(context.table_id);
+        const table = await Table.findOne({id:context.table_id});
         const rows = await db.select(table.name); //todo count
         return rows.length > 0;
       },
@@ -140,7 +140,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
     rows
   } = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
 
-  const table = await db.get_table_by_id(rows[0].table_id);
+  const table = await Table.findOne({id:rows[0].table_id});
   await db.query(
     `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
       rows[0].name
