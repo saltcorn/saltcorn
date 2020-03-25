@@ -5,6 +5,7 @@ const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
+const load_plugins = require("../load_plugins");
 
 const router = new Router();
 module.exports = router;
@@ -41,6 +42,10 @@ router.get("/", isAdmin, async (req, res) => {
         { label: "Location", key: "location" },
         { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
         {
+          label: "Reload",
+          key: r => post_btn(`/plugins/reload/${r.id}`, "Reload")
+        },
+        {
           label: "Delete",
           key: r => post_btn(`/plugins/delete/${r.id}`, "Remove")
         }
@@ -71,6 +76,7 @@ router.post("/", isAdmin, async (req, res) => {
   } else {
     await db.update("plugins", v, id);
   }
+  await load_plugins.loadPlugin(v);
   res.redirect(`/plugins`);
 });
 
@@ -78,6 +84,15 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const u = await db.deleteWhere("plugins", { id });
   req.flash("success", "Plugin removed");
+
+  res.redirect(`/plugins`);
+});
+
+router.post("/reload/:id", isAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  const plugin = await db.selectOne("plugins", { id });
+  await load_plugins.loadPlugin(plugin);
 
   res.redirect(`/plugins`);
 });

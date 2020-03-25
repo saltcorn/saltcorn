@@ -1,4 +1,4 @@
-const mkTag = tnm => (...args) => {
+const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
   const ppAttrib = kv =>
@@ -21,7 +21,7 @@ const mkTag = tnm => (...args) => {
   };
   args.forEach(argIter);
   if (attribs === " ") attribs = "";
-  return body.length > 0
+  return body.length > 0 || forceStandAloneClosingTag
     ? `<${tnm}${attribs}>${body}</${tnm}>`
     : `<${tnm}${attribs} />`;
 };
@@ -42,6 +42,7 @@ module.exports = {
   option: mkTag("option"),
   select: mkTag("select"),
   button: mkTag("button"),
+  textarea: mkTag("textarea", true),
   form: mkTag("form"),
   script: mkTag("script"),
   p: mkTag("p"),

@@ -39,7 +39,7 @@ const fieldFlow = new Workflow({
     const type = State.types[context.type];
     var attributes = {};
     if (!new Field(context).is_fkey)
-      type.attributes.forEach(a => {
+      (type.attributes || []).forEach(a => {
         attributes[a.name] = context[a.name];
       });
 
