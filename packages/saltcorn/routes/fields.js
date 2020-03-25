@@ -59,7 +59,7 @@ const fieldFlow = new Workflow({
     {
       name: "field",
       form: async () => {
-        const tables = await db.get_tables();
+        const tables = await Table.find({});
         const fkey_opts = tables.map(t => fkeyPrefix + t.name);
         return fieldForm(fkey_opts);
       }

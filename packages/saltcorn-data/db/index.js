@@ -55,32 +55,20 @@ const selectOne = async (tbl, where) => {
     throw new Error(`no ${tbl} where ${w.where} are ${w.values}`);
   } else return rows[0];
 };
-const get_table_by_id = async id => {
-  const tq = await pool.query("SELECT * FROM tables WHERE id = $1", [id]);
-  return tq.rows[0];
+
+const get_table_by_name = async name => {
+  return await selectOne("tables", {name})
 };
 
-const get_table_by_name = async id => {
-  const tq = await pool.query("SELECT * FROM tables WHERE name = $1", [id]);
-  return tq.rows[0];
-};
-
-const get_tables = async () => {
-  const tq = await pool.query("SELECT * FROM tables");
-  return tq.rows;
-};
 
 const get_field_by_id = async id => {
-  const tq = await pool.query("SELECT * FROM fields WHERE id = $1", [id]);
-  return tq.rows[0];
+  return await selectOne("fields", {id})
 };
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  get_table_by_id,
   get_field_by_id,
   get_table_by_name,
-  get_tables,
   select,
   selectOne,
   insert,

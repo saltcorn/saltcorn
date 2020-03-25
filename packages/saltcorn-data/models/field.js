@@ -84,7 +84,8 @@ class Field {
   }
   static async create(fld) {
     const f = new Field(fld);
-    if (!f.table && f.table_id) f.table = await db.get_table_by_id(f.table_id);
+    const Table = require("./table")
+    if (!f.table && f.table_id) f.table = await Table.findOne({id:f.table_id});
     const q = `alter table ${sqlsanitize(
       f.table.name
     )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
