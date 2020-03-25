@@ -11,7 +11,7 @@ class State {
     this.types = {};
     this.type_names = [];
     this.fields = [];
-    this.layout = {wrap: s=>s}
+    this.layout = { wrap: s => s };
     this.refresh().then(
       () => {},
       err => {
