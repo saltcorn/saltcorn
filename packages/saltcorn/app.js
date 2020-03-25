@@ -15,7 +15,7 @@ const flash = require("connect-flash");
 
 const app = express();
 
-const basePlugin = require("saltcorn-base");
+const basePlugin = require("saltcorn-base-plugin");
 
 basePlugin.register();
 
@@ -75,7 +75,7 @@ const getFlashes = req =>
 app.use(function(req, res, next) {
   res.sendWrap = function(title, ...html) {
     const isAuth = req.isAuthenticated();
-    const views = State.available_views
+    const views = State.views
       .filter(v => v.on_menu && (isAuth || v.is_public))
       .map(v => ({ link: `/view/${v.name}`, label: v.name }));
     const authItems = isAuth
@@ -120,7 +120,7 @@ mountRoutes(app);
 
 app.get("/", async (req, res) => {
   const isAuth = req.isAuthenticated();
-  const views = State.available_views.filter(
+  const views = State.views.filter(
     v => v.on_root_page && (isAuth || v.is_public)
   );
 

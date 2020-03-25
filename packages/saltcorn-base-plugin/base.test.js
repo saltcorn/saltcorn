@@ -1,5 +1,5 @@
 const State = require("saltcorn-data/db/state");
-const basePlugin = require("saltcorn-base");
+const basePlugin = require("saltcorn-base-plugin");
 
 describe("base plugin", () => {
   it("registers", () => {

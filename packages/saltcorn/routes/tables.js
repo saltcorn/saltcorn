@@ -22,10 +22,9 @@ router.get("/new/", isAdmin, async (req, res) => {
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const table = await db.get_table_by_id(id);
+  const table = await Table.findOne({ id });
 
-  const fq = await db.query("SELECT * FROM fields WHERE table_id = $1", [id]);
-  const fields = fq.rows;
+  const fields = await Field.find({ table_id: id });
 
   res.sendWrap(
     `${table.name} table`,
@@ -34,7 +33,7 @@ router.get("/:id", isAdmin, async (req, res) => {
       [
         { label: "Name", key: "name" },
         { label: "Label", key: "label" },
-        { label: "Type", key: "type" },
+        { label: "Type", key: r => r.type.name },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
           label: "Delete",
@@ -55,8 +54,7 @@ router.post("/", isAdmin, async (req, res) => {
     await Table.create(v.name);
     req.flash("success", "Table created");
   } else {
-    //TODO RENAME TABLE
-    await db.query("update tables set name=$1 where id=$2", [v.name, v.id]);
+    Table.rename(v.id, v.name);
   }
   res.redirect(`/table/`);
 });
@@ -71,7 +69,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.get("/", isAdmin, async (req, res) => {
-  const { rows } = await db.query("SELECT * FROM tables");
+  const rows = await Table.find();
   res.sendWrap(
     "Tables",
     mkTable(

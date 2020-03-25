@@ -8,7 +8,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { sqlsanitize, fkeyPrefix, isAdmin } = require("./utils.js");
+const { fkeyPrefix, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -59,7 +59,7 @@ const fieldFlow = new Workflow({
     {
       name: "field",
       form: async () => {
-        const tables = await db.get_tables();
+        const tables = await Table.find({});
         const fkey_opts = tables.map(t => fkeyPrefix + t.name);
         return fieldForm(fkey_opts);
       }
@@ -102,9 +102,9 @@ const fieldFlow = new Workflow({
       name: "default",
       onlyWhen: async context => {
         if (!context.required || context.id) return false;
-        const table = await db.get_table_by_id(context.table_id);
-        const rows = await db.select(table.name); //todo count
-        return rows.length > 0;
+        const table = await Table.findOne({ id: context.table_id });
+        const nrows = await db.count(table.name); //todo count
+        return nrows > 0;
       },
       form: async context => {
         const formfield = new Field({
@@ -123,8 +123,8 @@ const fieldFlow = new Workflow({
 });
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const field = await db.get_field_by_id(id);
-  const wfres = await fieldFlow.run({ ...field, ...field.attributes });
+  const field = await Field.findOne({ id });
+  const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
   res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
 });
 
@@ -135,19 +135,12 @@ router.get("/new/:table_id", isAdmin, async (req, res) => {
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
+  const f = await Field.findOne({ id });
+  const table_id = f.table_id;
 
-  const {
-    rows
-  } = await db.query("delete FROM fields WHERE id = $1 returning *", [id]);
+  await f.delete();
 
-  const table = await db.get_table_by_id(rows[0].table_id);
-  await db.query(
-    `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
-      rows[0].name
-    )}`
-  );
-
-  res.redirect(`/table/${rows[0].table_id}`);
+  res.redirect(`/table/${table_id}`);
 });
 
 router.post("/", isAdmin, async (req, res) => {

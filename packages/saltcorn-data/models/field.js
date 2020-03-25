@@ -34,7 +34,17 @@ class Field {
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
   }
-
+  get toJson() {
+    return {
+      id: this.id,
+      table_id: this.table_id,
+      name: this.name,
+      label: this.label,
+      type: this.type.name,
+      attributes: this.attributes,
+      required: this.required
+    };
+  }
   async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
       const rows = await db.select(this.reftable);
@@ -82,9 +92,23 @@ class Field {
     const db_fld = await db.selectOne("fields", where);
     return new Field(db_fld);
   }
+
+  async delete() {
+    await db.deleteWhere("fields", { id: this.id });
+    const Table = require("./table");
+    const table = await Table.findOne({ id: this.table_id });
+    await db.query(
+      `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
+        this.name
+      )}`
+    );
+  }
+
   static async create(fld) {
     const f = new Field(fld);
-    if (!f.table && f.table_id) f.table = await db.get_table_by_id(f.table_id);
+    const Table = require("./table");
+    if (!f.table && f.table_id)
+      f.table = await Table.findOne({ id: f.table_id });
     const q = `alter table ${sqlsanitize(
       f.table.name
     )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${

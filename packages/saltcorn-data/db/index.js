@@ -12,6 +12,16 @@ const select = async (tbl, whereObj) => {
   return tq.rows;
 };
 
+const count = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj);
+  const tq = await pool.query(
+    `SELECT COUNT(*) FROM ${sqlsanitize(tbl)} ${where}`,
+    values
+  );
+
+  return parseInt(tq.rows[0].count);
+};
+
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const tq = await pool.query(
@@ -47,6 +57,7 @@ const update = async (tbl, obj, id) => {
     1}`;
   await pool.query(q, valList);
 };
+
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
   if (rows.length === 0) {
@@ -55,34 +66,12 @@ const selectOne = async (tbl, where) => {
     throw new Error(`no ${tbl} where ${w.where} are ${w.values}`);
   } else return rows[0];
 };
-const get_table_by_id = async id => {
-  const tq = await pool.query("SELECT * FROM tables WHERE id = $1", [id]);
-  return tq.rows[0];
-};
-
-const get_table_by_name = async id => {
-  const tq = await pool.query("SELECT * FROM tables WHERE name = $1", [id]);
-  return tq.rows[0];
-};
-
-const get_tables = async () => {
-  const tq = await pool.query("SELECT * FROM tables");
-  return tq.rows;
-};
-
-const get_field_by_id = async id => {
-  const tq = await pool.query("SELECT * FROM fields WHERE id = $1", [id]);
-  return tq.rows[0];
-};
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  get_table_by_id,
-  get_field_by_id,
-  get_table_by_name,
-  get_tables,
   select,
   selectOne,
+  count,
   insert,
   update,
   deleteWhere,

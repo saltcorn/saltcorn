@@ -5,7 +5,9 @@ const {
   getStaffLoginCookie,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
-  toInclude
+  toInclude,
+  toNotInclude,
+  toRedirect
 } = require("../auth/testhelp");
 
 describe("Field Endpoints", () => {
@@ -13,7 +15,7 @@ describe("Field Endpoints", () => {
 
   it("should show existing", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/field/1")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
@@ -22,7 +24,7 @@ describe("Field Endpoints", () => {
 
   it("should new form", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/field/new/1")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
@@ -32,15 +34,15 @@ describe("Field Endpoints", () => {
   it("should post new int field", async done => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
-    const res = await request(app)
+    await request(app)
       .post("/field/")
       .send("stepName=field")
       .send("name=AgeRating")
       .send("label=AgeRating")
       .send("type=Integer")
       .send("contextEnc=" + ctx)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
+      .set("Cookie", loginCookie)
+      .expect(200);
 
     done();
   });
@@ -57,15 +59,14 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const res = await request(app)
+    await request(app)
       .post("/field/")
       .send("stepName=attributes")
       .send("contextEnc=" + ctx)
       .send("min=0")
       .send("max=410")
-      .set("Cookie", loginCookie);
-    if (res.statusCode === 500) console.log(res.text);
-    expect(res.statusCode).toEqual(302);
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/1"));
 
     done();
   });
@@ -74,7 +75,7 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
 
-    const res = await request(app)
+    await request(app)
       .post("/field/")
       .send("stepName=field")
       .send("name=Publisher")
@@ -90,7 +91,7 @@ describe("Field Endpoints", () => {
   it("should post new fkey field", async done => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
-    const res = await request(app)
+    await request(app)
       .post("/field/")
       .send("stepName=field")
       .send("name=wrote")
@@ -115,25 +116,35 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const res = await request(app)
+    await request(app)
       .post("/field/")
       .send("stepName=summary")
       .send("contextEnc=" + ctx)
       .send("summary_field=pages")
-      .set("Cookie", loginCookie);
-    if (res.statusCode === 500) console.log(res.text);
-    expect(res.statusCode).toEqual(302);
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
 
+    done();
+  });
+
+  it("should show field in table", async done => {
+    const loginCookie = await getAdminLoginCookie();
+
+    await request(app)
+      .get(`/table/2`)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("wrote"))
+      .expect(toNotInclude("[object"));
     done();
   });
 
   it("should delete field", async done => {
     const loginCookie = await getAdminLoginCookie();
     const fld = await Field.findOne({ name: "AgeRating" });
-    const res = await request(app)
+    await request(app)
       .post(`/field/delete/${fld.id}`)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(302);
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/1"));
 
     done();
   });

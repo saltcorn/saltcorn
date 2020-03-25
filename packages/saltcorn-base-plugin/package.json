@@ -1,5 +1,5 @@
 {
-  "name": "saltcorn-base",
+  "name": "saltcorn-base-plugin",
   "version": "0.0.1",
   "description": "Base plugin for saltcorn",
   "main": "index.js",

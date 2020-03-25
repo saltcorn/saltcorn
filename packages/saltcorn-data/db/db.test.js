@@ -48,4 +48,13 @@ describe("where", () => {
     expect(tf.name).toStrictEqual("myothertable");
     done();
   });
+
+  it("should  count", async done => {
+    const tbls = await db.count("tables", {
+      name: { ilike: "yothertabl" }
+    });
+
+    expect(tbls).toStrictEqual(1);
+    done();
+  });
 });

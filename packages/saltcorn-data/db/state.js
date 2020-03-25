@@ -5,7 +5,7 @@ const View = require("../models/view");
 
 class State {
   constructor() {
-    this.available_views = [];
+    this.views = [];
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
@@ -20,7 +20,7 @@ class State {
     );
   }
   async refresh() {
-    this.available_views = await View.find();
+    this.views = await View.find();
   }
 
   addType(t) {
