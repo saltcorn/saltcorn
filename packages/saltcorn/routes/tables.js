@@ -1,9 +1,8 @@
 const Router = require("express-promise-router");
 
-const db = require("saltcorn-data/db");
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
-const { mkTable, renderForm, h, link, post_btn } = require("saltcorn-markup");
+const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const { isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
 const { span } = require("saltcorn-markup/tags");
@@ -20,6 +19,7 @@ const tableForm = () =>
 router.get("/new/", isAdmin, async (req, res) => {
   res.sendWrap(`New table`, renderForm(tableForm()));
 });
+
 router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({ id });

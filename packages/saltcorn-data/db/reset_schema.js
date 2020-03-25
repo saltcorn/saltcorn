@@ -65,6 +65,24 @@ const reset = async () => {
   `);
 
   await db.query(`
+  CREATE TABLE plugins (
+    id serial primary key,      
+    name VARCHAR(128),
+    source VARCHAR(128),
+    location VARCHAR(128)
+  )
+  `);
+  await db.insert("plugins", {
+    name: "base",
+    source: "npm",
+    location: "saltcorn-base-plugin"
+  });
+  await db.insert("plugins", {
+    name: "sbadmin2",
+    source: "npm",
+    location: "saltcorn-sbadmin2"
+  });
+  await db.query(`
     CREATE TABLE "session" (
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,

@@ -68,11 +68,12 @@ class Field {
 
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
-    const readval = !type || !(type.read)
-      ? whole_rec[this.name]
-      : type.readFromFormRecord
-      ? type.readFromFormRecord(whole_rec, this.name)
-      : type.read(whole_rec[this.name]);
+    const readval =
+      !type || !type.read
+        ? whole_rec[this.name]
+        : type.readFromFormRecord
+        ? type.readFromFormRecord(whole_rec, this.name)
+        : type.read(whole_rec[this.name]);
     if (typeof readval === "undefined")
       if (this.required) return { error: "Unable to read " + type.name };
       else return { success: null };
