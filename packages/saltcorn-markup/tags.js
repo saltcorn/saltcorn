@@ -1,6 +1,3 @@
-const rmFalse = vs =>
-  vs.filter(v => v !== false && v !== null && typeof v !== "undefined");
-
 const mkTag = tnm => (...args) => {
   var body = "";
   var attribs = " ";
