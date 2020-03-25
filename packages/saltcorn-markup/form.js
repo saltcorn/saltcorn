@@ -60,6 +60,7 @@ const mkFormRow = (v, errors) => hdr => {
         hdr.type.editAs(
           hdr.name,
           v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
+          hdr.attributes,
           validClass
         ),
         errorFeedback

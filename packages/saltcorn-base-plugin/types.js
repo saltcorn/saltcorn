@@ -1,15 +1,22 @@
+const { input } = require("saltcorn-markup/tags");
+
 const isdef = x => (typeof x === "undefined" ? false : true);
 
 const string = {
   name: "String",
   sql_name: "text",
   attributes: [
-    { name: "match", type: "String", required: false }
-    //{ name: "options", type: "String[]", required: false }
+    { name: "match", type: "String", required: false },
+    { name: "options", type: "String", required: false }
   ],
-  editAs: (nm, v, cls) =>
-    `<input type="text" class="form-control ${cls ||
-      ""}" name="${nm}" id="input${nm}" ${isdef(v) ? `value="${v}"` : ""}>`,
+  editAs: (nm, v, attrs, cls) =>
+    input({
+      type: "text",
+      class: `form-control ${cls || ""}`,
+      name: nm,
+      id: `input${nm}`,
+      ...(isdef(v) && { value: v })
+    }),
   read: v => {
     switch (typeof v) {
       case "string":
@@ -24,9 +31,16 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "text",
-  editAs: (nm, v, cls) =>
-    `<input type="number" class="form-control ${cls ||
-      ""}" name="${nm}" id="input${nm}" ${isdef(v) ? `value="${v}"` : ""}>`,
+  editAs: (nm, v, attrs, cls) =>
+    input({
+      type: "number",
+      class: `form-control ${cls || ""}`,
+      name: nm,
+      id: `input${nm}`,
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(v) && { value: v })
+    }),
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false }
@@ -52,7 +66,7 @@ const int = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  editAs: (nm, v, cls) =>
+  editAs: (nm, v, attrs, cls) =>
     `<input class="form-check-input ${cls ||
       ""}" type="checkbox" name="${nm}" id="input${nm}" ${v ? `checked` : ""}>`,
   attributes: [],
