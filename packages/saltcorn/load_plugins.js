@@ -1,12 +1,20 @@
 const db = require("saltcorn-data/db");
+const { PluginManager } = require("live-plugin-manager");
+
+const manager = new PluginManager();
 
 const loadAsync = async () => {
   const plugins = await db.select("plugins");
-  plugins.forEach(plugin => {
-    if (plugin.source === "npm") {
+  for (const plugin of plugins) {
+    if (
+      ["saltcorn-base-plugin", "saltcorn-sbadmin2"].includes(plugin.location)
+    ) {
+      require(plugin.location).register();
+    } else if (plugin.source === "npm") {
+      await manager.install(plugin.location);
       require(plugin.location).register();
     }
-  });
+  }
 };
 
 const load = () => {

@@ -10,6 +10,7 @@
     "saltcorn-data": "^0.0.1",
     "saltcorn-base-plugin": "^0.0.1",
     "saltcorn-sbadmin2": "^0.0.1",
+    "live-plugin-manager": "^0.14.0",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
     "cookie-parser": "^1.4.4",
