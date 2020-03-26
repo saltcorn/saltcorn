@@ -98,6 +98,58 @@ describe("viewedit new List", () => {
   });
 });
 
+describe("viewedit new List with one field", () => {
+  it("submit new view", async done => {
+    const loginCookie = await getAdminLoginCookie();
+
+    await request(app)
+      .post("/viewedit/save")
+      .send("viewtemplate=List")
+      .send("table_name=books")
+      .send("name=mybooklist1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/config/mybooklist1"));
+    //expect(res.text.includes("View configuration")).toBe(true);
+    done();
+  });
+  it("save new view", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 1
+      })
+    );
+    await request(app)
+      .post("/viewedit/config/mybooklist1")
+      .send("contextEnc=" + ctx)
+      .send("stepName=listfields")
+      .send("field_list=author")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/list"));
+    done();
+  });
+  it("should show new view", async done => {
+    const loginCookie = await getStaffLoginCookie();
+
+    await request(app)
+      .get("/view/mybooklist1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Tolstoy"))
+      .expect(toNotInclude("Kirk"));
+
+    done();
+  });
+
+  it("delete new view", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/viewedit/delete/mybooklist1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/list"));
+    done();
+  });
+});
+
 describe("viewedit new Show", () => {
   it("submit new view", async done => {
     const loginCookie = await getAdminLoginCookie();
