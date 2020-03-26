@@ -104,13 +104,13 @@ describe("Field Endpoints", () => {
     done();
   });
 
-  it("should post new fkey field with summary", async done => {
+  it("should post new nonrequired fkey field with summary", async done => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 2,
-        name: "wrote",
-        label: "Wrote",
+        name: "cowrote",
+        label: "cowrote",
         type: "Key to books",
         required: false
       })
@@ -121,6 +121,31 @@ describe("Field Endpoints", () => {
       .send("stepName=summary")
       .send("contextEnc=" + ctx)
       .send("summary_field=pages")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+
+    done();
+  });
+
+  it("should post new required fkey field with summary", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 2,
+        name: "wrote",
+        label: "Wrote",
+        type: "Key to books",
+        summary_field: "pages",
+        required: true
+      })
+    );
+
+    await request(app)
+      .post("/field/")
+      .send("stepName=default")
+      .send("contextEnc=" + ctx)
+      .send("summary_field=pages")
+      .send("default=1")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
 
