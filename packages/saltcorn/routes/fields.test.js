@@ -152,6 +152,51 @@ describe("Field Endpoints", () => {
     done();
   });
 
+  it("should post new required string field", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 2,
+        name: "zowrote",
+        label: "ZoWrote",
+        type: "String",
+        required: true
+      })
+    );
+
+    await request(app)
+      .post("/field/")
+      .send("stepName=default")
+      .send("contextEnc=" + ctx)
+      .send("default=foo")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+
+    done();
+  });
+  it("should post new required int field", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 2,
+        name: "weight",
+        label: "weight",
+        type: "Integer",
+        required: true
+      })
+    );
+
+    await request(app)
+      .post("/field/")
+      .send("stepName=default")
+      .send("contextEnc=" + ctx)
+      .send("default=56")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+
+    done();
+  });
+
   it("should show field in table", async done => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -159,6 +204,8 @@ describe("Field Endpoints", () => {
       .get(`/table/2`)
       .set("Cookie", loginCookie)
       .expect(toInclude("wrote"))
+      .expect(toInclude("zowrote"))
+      .expect(toInclude("weight"))
       .expect(toNotInclude("[object"));
     done();
   });
