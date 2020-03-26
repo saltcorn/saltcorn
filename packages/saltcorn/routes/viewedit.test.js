@@ -3,6 +3,7 @@ const app = require("../app");
 const {
   toRedirect,
   getAdminLoginCookie,
+  getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude
@@ -34,7 +35,7 @@ describe("viewedit edit endpoint", () => {
   });
 });
 
-describe("viewedit new endpoint", () => {
+describe("viewedit new List endpoint", () => {
   itShouldRedirectUnauthToLogin("/viewedit/new");
 
   it("show new view", async done => {
@@ -65,7 +66,6 @@ describe("viewedit new endpoint", () => {
         table_id: 1
       })
     );
-
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
@@ -76,6 +76,18 @@ describe("viewedit new endpoint", () => {
       .expect(toRedirect("/viewedit/list"));
     done();
   });
+  it("should show new view", async done => {
+    const loginCookie = await getStaffLoginCookie();
+
+    await request(app)
+      .get("/view/mybooklist")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Tolstoy"))
+      .expect(toNotInclude("Kirk"));
+
+    done();
+  });
+
   it("delete new view", async done => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
