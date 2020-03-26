@@ -66,7 +66,12 @@ class View {
   async delete() {
     await db.query("delete FROM views WHERE id = $1", [this.id]);
   }
-
+  static async update(v, id) {
+    await db.update("views", v, id);
+  }
+  static async delete(where) {
+    await db.deleteWhere("views", where);
+  }
   async run(query) {
     return await this.viewtemplateObj.run(
       this.table_id,
