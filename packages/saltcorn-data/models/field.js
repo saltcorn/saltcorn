@@ -144,7 +144,6 @@ class Field {
       } default %L', thedef);
       END;
       $$ LANGUAGE plpgsql;`;
-      console.log(q);
       await db.query(q);
       await db.query("SELECT add_field($1)", [f.attributes.default]);
     }
