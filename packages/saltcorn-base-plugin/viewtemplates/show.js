@@ -4,7 +4,7 @@ const Table = require("saltcorn-data/models/table");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { div, h4, table, tbody, tr, td } = require("saltcorn-markup/tags");
+const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -48,8 +48,8 @@ const run = async (table_id, viewname, rels, { id }) => {
   const row = await tbl.getRow({ id });
   const trows = fields.map(f =>
     tr(
-      td(f.label),
-      td("" + (f.type.showAs ? f.type.showAs(row[f.name]) : row[f.name]))
+      td(text(f.label)),
+      td("" + (f.type.showAs ? f.type.showAs(row[f.name]) : text(row[f.name])))
     )
   );
   var reltbls = [];

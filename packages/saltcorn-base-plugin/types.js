@@ -1,11 +1,11 @@
-const { input, select, option } = require("saltcorn-markup/tags");
+const { input, select, option, text } = require("saltcorn-markup/tags");
 
 const isdef = x => (typeof x === "undefined" ? false : true);
 
 const getStrOptions = (v, optsStr) =>
   optsStr
     .split(",")
-    .map(s => s.trim())
+    .map(o => text(o.trim()))
     .map(o => option({ value: o, ...(v === o && { selected: true }) }, o));
 
 const string = {
@@ -18,15 +18,19 @@ const string = {
   editAs: (nm, v, attrs, cls) =>
     attrs.options
       ? select(
-          { class: `form-control ${cls || ""}`, name: nm, id: `input${nm}` },
+          {
+            class: `form-control ${cls || ""}`,
+            name: text(nm),
+            id: `input${text(nm)}`
+          },
           getStrOptions(v, attrs.options)
         )
       : input({
           type: "text",
           class: `form-control ${cls || ""}`,
-          name: nm,
-          id: `input${nm}`,
-          ...(isdef(v) && { value: v })
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(isdef(v) && { value: text(v) })
         }),
   read: v => {
     switch (typeof v) {
@@ -46,11 +50,11 @@ const int = {
     input({
       type: "number",
       class: `form-control ${cls || ""}`,
-      name: nm,
-      id: `input${nm}`,
+      name: text(nm),
+      id: `input${text(nm)}`,
       ...(attrs.max && { max: attrs.max }),
       ...(attrs.min && { min: attrs.min }),
-      ...(isdef(v) && { value: v })
+      ...(isdef(v) && { value: text(v) })
     }),
   attributes: [
     { name: "max", type: "Integer", required: false },
@@ -78,8 +82,9 @@ const bool = {
   name: "Bool",
   sql_name: "boolean",
   editAs: (nm, v, attrs, cls) =>
-    `<input class="form-check-input ${cls ||
-      ""}" type="checkbox" name="${nm}" id="input${nm}" ${v ? `checked` : ""}>`,
+    `<input class="form-check-input ${cls || ""}" type="checkbox" name="${text(
+      nm
+    )}" id="input${text(nm)}" ${v ? `checked` : ""}>`,
   attributes: [],
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;
