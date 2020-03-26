@@ -1,4 +1,4 @@
-const { p, div, i, label } = require("./tags");
+const { p, div, i, label, text } = require("./tags");
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 
@@ -12,20 +12,21 @@ const formRowWrap = (hdr, inner, error = "") =>
             { class: "form-check" },
             inner,
             label(
-              { for: `input${hdr.name}`, class: "form-check-label" },
-              hdr.label
+              { for: `input${text(hdr.name)}`, class: "form-check-label" },
+              text(hdr.label)
             ),
-            error
+            text(error)
           )
         )
       : [
           label(
-            { for: `input${hdr.name}`, class: "col-sm-2 col-form-label" },
-            hdr.label
+            { for: `input${text(hdr.name)}`, class: "col-sm-2 col-form-label" },
+            text(hdr.label)
           ),
-          div({ class: "col-sm-10" }, inner, error)
+          div({ class: "col-sm-10" }, inner, text(error))
         ],
-    hdr.sublabel && div({ class: "col-sm-10 offset-md-2" }, i(hdr.sublabel))
+    hdr.sublabel &&
+      div({ class: "col-sm-10 offset-md-2" }, i(text(hdr.sublabel)))
   );
 
 const isdef = x => typeof x !== "undefined";
@@ -42,16 +43,16 @@ const select_options = (v, hdr) => {
     .map(o => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
-      return `<option value="${value}" ${
+      return `<option value="${text(value)}" ${
         isSelected(value) ? "selected" : ""
-      }>${label}</option>`;
+      }>${text(label)}</option>`;
     })
     .join(""));
 };
 const mkFormRow = (v, errors) => hdr => {
   const validClass = errors[hdr.name] ? "is-invalid" : "";
   const errorFeedback = errors[hdr.name]
-    ? `<div class="invalid-feedback">${errors[hdr.name]}</div>`
+    ? `<div class="invalid-feedback">${text(errors[hdr.name])}</div>`
     : "";
   switch (hdr.input_type) {
     case "fromtype":
@@ -66,21 +67,29 @@ const mkFormRow = (v, errors) => hdr => {
         errorFeedback
       );
     case "hidden":
-      return `<input type="hidden" class="form-control ${validClass}" name="${
+      return `<input type="hidden" class="form-control ${validClass}" name="${text(
         hdr.name
-      }" ${v ? `value="${v[hdr.name]}"` : ""}>`;
+      )}" ${v ? `value="${text(v[hdr.name])}"` : ""}>`;
     case "select":
       const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" name="${hdr.name}" id="input${hdr.name}">${opts}</select>`,
+        `<select class="form-control ${validClass}" name="${text(
+          hdr.name
+        )}" id="input${text(hdr.name)}">${opts}</select>`,
         errorFeedback
       );
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${hdr.name}" id="input${hdr.name}">${mopts}</select><script>$(function(){$("#input${hdr.name}").chosen()})</script>`,
+        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${text(
+          hdr.name
+        )}" id="input${text(
+          hdr.name
+        )}">${mopts}</select><script>$(function(){$("#input${
+          hdr.name
+        }").chosen()})</script>`,
         errorFeedback
       );
 
@@ -89,8 +98,8 @@ const mkFormRow = (v, errors) => hdr => {
         hdr,
         `<input type="${hdr.input_type}" class="form-control" name="${
           hdr.name
-        }" id="input${hdr.name}" ${
-          v && isdef(v[hdr.name]) ? `value="${v[hdr.name]}"` : ""
+        }" id="input${text(hdr.name)}" ${
+          v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
         }>`,
         errorFeedback
       );
@@ -120,10 +129,10 @@ const mkForm = (
   const top = `<form action="${action}" method="${isget ? "get" : "post"}">`;
   //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v, errors)).join("");
-  const blurbp = blurb ? p(blurb) : "";
+  const blurbp = blurb ? p(text(blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
-    <button type="submit" class="btn btn-primary">${submitLabel}</button>
+    <button type="submit" class="btn btn-primary">${text(submitLabel)}</button>
   </div>
 </div>
 </form>`;
