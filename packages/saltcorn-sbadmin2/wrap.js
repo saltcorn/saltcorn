@@ -1,11 +1,11 @@
-const { ul, li, a, span, hr, div } = require("saltcorn-markup/tags");
+const { ul, li, a, span, hr, div, text } = require("saltcorn-markup/tags");
 
 const sideBarItem = item =>
   li(
     { class: "nav-item" },
     item.link
-      ? a({ class: "nav-link", href: item.link }, span(item.label))
-      : span({ class: "nav-link" }, item.label)
+      ? a({ class: "nav-link", href: text(item.link) }, span(text(item.label)))
+      : span({ class: "nav-link" }, text(item.label))
   );
 
 const sideBarSection = section => [
@@ -38,7 +38,7 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
     <!-- Custom styles for this template-->
     <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" crossorigin="anonymous">
-    <title>${title}</title>
+    <title>${text(title)}</title>
   </head>
   <body id="page-top">
     <div id="wrapper">
@@ -50,7 +50,9 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
             ${alerts.map(a => alert(a.type, a.msg)).join("")}
             <div class="card shadow mb-4 mt-4">
               <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">${title}</h6>
+                <h6 class="m-0 font-weight-bold text-primary">${text(
+                  title
+                )}</h6>
               </div>
               <div class="card-body">
                 ${body}
@@ -81,7 +83,7 @@ const alert = (type, s) => {
   const realtype = type === "error" ? "danger" : type;
   return s && s.length > 0
     ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-  ${s}
+  ${text(s)}
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
