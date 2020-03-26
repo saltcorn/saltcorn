@@ -4,6 +4,7 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
 const { mkTable, h, post_btn, link } = require("saltcorn-markup");
+const { text } = require("saltcorn-markup/tags");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -14,9 +15,9 @@ const configuration_workflow = () =>
           const table_id = context.table_id;
 
           const fields = await Field.find({ table_id });
-          const fldOptions = fields.map(f => f.name);
+          const fldOptions = fields.map(f => text(f.name));
           const link_views = await View.find_possible_links_to_table(table_id);
-          const link_view_opts = link_views.map(v => `Link to ${v.name}`);
+          const link_view_opts = link_views.map(v => `Link to ${text(v.name)}`);
           return new Form({
             blurb:
               "Finalise your list view by specifying the fields in the table",
