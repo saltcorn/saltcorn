@@ -66,6 +66,14 @@ class Field {
     }
   }
 
+  get sql_bare_type() {
+    if (this.is_fkey) {
+      return `int`;
+    } else {
+      return this.type.sql_name;
+    }
+  }
+
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval =
@@ -116,15 +124,30 @@ class Field {
     const Table = require("./table");
     if (!f.table && f.table_id)
       f.table = await Table.findOne({ id: f.table_id });
-    const q = `alter table ${sqlsanitize(
-      f.table.name
-    )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
-      f.required ? "not null" : ""
-    } ${
-      f.attributes.default ? `default '${f.attributes.default}'` : "" //todo escape
-    }`;
-    //console.log(q)
-    await db.query(q);
+    if (!f.attributes.default) {
+      const q = `alter table ${sqlsanitize(
+        f.table.name
+      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+        f.required ? "not null" : ""
+      }`;
+      await db.query(q);
+    } else {
+      const q = `
+      CREATE OR REPLACE FUNCTION add_field(thedef ${
+        f.sql_bare_type
+      }) RETURNS void AS $$
+      BEGIN
+      EXECUTE format('alter table ${sqlsanitize(
+        f.table.name
+      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+        f.required ? "not null" : ""
+      } default %L', thedef);
+      END;
+      $$ LANGUAGE plpgsql;`;
+      console.log(q);
+      await db.query(q);
+      await db.query("SELECT add_field($1)", [f.attributes.default]);
+    }
     await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
