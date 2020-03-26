@@ -1,3 +1,5 @@
+const xss = require("xss");
+
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
@@ -34,6 +36,8 @@ const input = kvs => {
 
 const domReady = js => `$(function(){${js}})`;
 
+const text = t => xss(t);
+
 module.exports = {
   a: mkTag("a"),
   div: mkTag("div"),
@@ -63,5 +67,6 @@ module.exports = {
   i: mkTag("i"),
   hr: mkTag("hr"),
   domReady,
-  input
+  input,
+  text
 };

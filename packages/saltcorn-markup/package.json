@@ -8,6 +8,9 @@
   },
   "author": "Tom Nielsen",
   "license": "MIT",
+  "dependencies": {
+    "xss": "^1.0.6"
+  },
   "devDependencies": {
     "jest": "^25.1.0"
   },
