@@ -40,7 +40,9 @@ class Table {
   async getRows(where) {
     return await db.select(this.name, where);
   }
-
+  async countRows(where) {
+    return await db.count(this.name, where);
+  }
   async updateRow(v, id) {
     return await db.update(this.name, v, id);
   }

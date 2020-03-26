@@ -101,6 +101,10 @@ class Field {
     const db_fld = await db.selectOne("fields", where);
     return new Field(db_fld);
   }
+
+  static async update(v, id) {
+    await db.update("fields", v, id);
+  }
   get listKey() {
     return this.type.listAs
       ? r => this.type.listAs(r[this.name])
