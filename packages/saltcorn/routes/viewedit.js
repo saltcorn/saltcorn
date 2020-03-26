@@ -109,7 +109,6 @@ router.post("/save", isAdmin, async (req, res) => {
     v.configuration = {};
     await View.create(v);
   }
-  await State.refresh();
   res.redirect(`/viewedit/config/${v.name}`);
 });
 
@@ -137,16 +136,12 @@ router.post("/config/:name", isAdmin, async (req, res) => {
   if (wfres.renderForm)
     res.sendWrap(`View configuration`, renderForm(wfres.renderForm));
   else {
-    await State.refresh();
     res.redirect(wfres.redirect);
   }
 });
 
 router.post("/delete/:name", isAdmin, async (req, res) => {
   const { name } = req.params;
-
   await View.delete({ name });
-  await State.refresh();
-
   res.redirect(`/viewedit/list`);
 });
