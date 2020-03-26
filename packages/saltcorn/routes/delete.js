@@ -1,6 +1,5 @@
 const Router = require("express-promise-router");
 
-const db = require("saltcorn-data/db");
 const { loggedIn } = require("./utils.js");
 const Table = require("saltcorn-data/models/table");
 
