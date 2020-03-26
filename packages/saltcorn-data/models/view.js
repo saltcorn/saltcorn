@@ -60,13 +60,20 @@ class View {
 
   static async create(v) {
     const id = await db.insert("views", v);
-
+    await require("../db/state").refresh();
     return new View({ id, ...v });
   }
   async delete() {
     await db.query("delete FROM views WHERE id = $1", [this.id]);
   }
-
+  static async update(v, id) {
+    await db.update("views", v, id);
+    await require("../db/state").refresh();
+  }
+  static async delete(where) {
+    await db.deleteWhere("views", where);
+    await require("../db/state").refresh();
+  }
   async run(query) {
     return await this.viewtemplateObj.run(
       this.table_id,
@@ -101,7 +108,7 @@ class View {
     configFlow.onDone = async ctx => {
       const { table_id, ...configuration } = oldOnDone(ctx);
 
-      await db.update("views", { configuration }, this.id);
+      await View.update({ configuration }, this.id);
 
       return { redirect: `/viewedit/list` };
     };

@@ -28,6 +28,29 @@ class Table {
     await db.query("delete FROM tables WHERE id = $1", [this.id]);
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
+
+  async deleteRows(where) {
+    await db.deleteWhere(this.name, where);
+  }
+
+  async getRow(where) {
+    return await db.selectOne(this.name, where);
+  }
+
+  async getRows(where) {
+    return await db.select(this.name, where);
+  }
+  async countRows(where) {
+    return await db.count(this.name, where);
+  }
+  async updateRow(v, id) {
+    return await db.update(this.name, v, id);
+  }
+
+  async insertRow(v) {
+    return await db.insert(this.name, v);
+  }
+
   async getFields() {
     if (!this.fields) this.fields = await Field.find({ table_id: this.id });
     return this.fields;

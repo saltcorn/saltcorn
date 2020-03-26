@@ -1,6 +1,5 @@
 const Router = require("express-promise-router");
 
-const db = require("saltcorn-data/db");
 const { renderForm, mkTable, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const { isAdmin } = require("./utils.js");
@@ -105,12 +104,11 @@ router.post("/save", isAdmin, async (req, res) => {
   delete v.table_name;
 
   if (typeof v.id !== "undefined") {
-    await db.update("views", v, v.id);
+    await View.update(v, v.id);
   } else {
     v.configuration = {};
-    await db.insert("views", v);
+    await View.create(v);
   }
-  await State.refresh();
   res.redirect(`/viewedit/config/${v.name}`);
 });
 
@@ -138,16 +136,12 @@ router.post("/config/:name", isAdmin, async (req, res) => {
   if (wfres.renderForm)
     res.sendWrap(`View configuration`, renderForm(wfres.renderForm));
   else {
-    await State.refresh();
     res.redirect(wfres.redirect);
   }
 });
 
 router.post("/delete/:name", isAdmin, async (req, res) => {
   const { name } = req.params;
-
-  await db.deleteWhere("views", { name });
-  await State.refresh();
-
+  await View.delete({ name });
   res.redirect(`/viewedit/list`);
 });

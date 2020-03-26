@@ -1,4 +1,3 @@
-const db = require("saltcorn-data/db");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
@@ -46,7 +45,7 @@ const run = async (table_id, viewname, rels, { id }) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
 
-  const row = await db.selectOne(tbl.name, { id });
+  const row = await tbl.getRow({ id });
   const trows = fields.map(f =>
     tr(
       td(f.label),

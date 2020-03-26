@@ -1,4 +1,3 @@
-const db = require("saltcorn-data/db");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
@@ -90,7 +89,7 @@ const run = async (
       state[kv[0]] = { ilike: kv[1] };
     }
   });
-  const rows = await db.select(table.name, state);
+  const rows = await table.getRows(state);
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";

@@ -1,6 +1,5 @@
 const Router = require("express-promise-router");
 
-const db = require("saltcorn-data/db");
 const State = require("saltcorn-data/db/state");
 const { renderForm } = require("saltcorn-markup");
 const Field = require("saltcorn-data/models/field");
@@ -47,8 +46,7 @@ const fieldFlow = new Workflow({
     attributes.summary_field = context.summary_field;
     if (context.id) {
       const { table_id, name, label, type, required } = context;
-      await db.update(
-        "fields",
+      await Field.update(
         { table_id, name, label, type, required, attributes },
         context.id
       );
@@ -103,7 +101,7 @@ const fieldFlow = new Workflow({
       onlyWhen: async context => {
         if (!context.required || context.id) return false;
         const table = await Table.findOne({ id: context.table_id });
-        const nrows = await db.count(table.name); //todo count
+        const nrows = await table.countRows();
         return nrows > 0;
       },
       form: async context => {
