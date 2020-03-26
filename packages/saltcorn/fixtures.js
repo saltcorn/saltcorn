@@ -5,8 +5,9 @@ const Field = require("saltcorn-data/models/field");
 const View = require("saltcorn-data/models/view");
 const User = require("saltcorn-data/models/user");
 const basePlugin = require("saltcorn-base-plugin");
+const { registerPlugin } = require("./load_plugins");
 
-basePlugin.register();
+registerPlugin(basePlugin);
 
 const fixtures = async () => {
   const table = await Table.create("books");
@@ -50,7 +51,7 @@ const fixtures = async () => {
   await View.create({
     table_id: table.id,
     name: "authorlist",
-    viewtemplate: "list",
+    viewtemplate: "List",
     configuration: { field_list: ["author", "Link to authorshow", "Delete"] },
     is_public: true,
     on_root_page: true,
@@ -59,7 +60,7 @@ const fixtures = async () => {
   await View.create({
     table_id: table.id,
     name: "authorshow",
-    viewtemplate: "show",
+    viewtemplate: "Show",
     configuration: { "patients.favbook": true },
     is_public: true,
     on_root_page: true,
@@ -68,7 +69,7 @@ const fixtures = async () => {
   await View.create({
     table_id: patients.id,
     name: "patientlist",
-    viewtemplate: "list",
+    viewtemplate: "List",
     configuration: { field_list: ["name", "favbook", "parent"] },
     is_public: false,
     on_root_page: true,

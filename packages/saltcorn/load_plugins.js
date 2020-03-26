@@ -1,18 +1,30 @@
 const db = require("saltcorn-data/db");
 const { PluginManager } = require("live-plugin-manager");
+const State = require("saltcorn-data/db/state");
 
 const manager = new PluginManager();
 
+const registerPlugin = plugin => {
+  (plugin.types || []).forEach(t => {
+    State.addType(t);
+  });
+  (plugin.viewtemplates || []).forEach(vt => {
+    State.viewtemplates[vt.name] = vt;
+  });
+  if (plugin.layout && plugin.layout.wrap)
+    State.layout.wrap = plugin.layout.wrap;
+};
+
 const loadPlugin = async plugin => {
   if (["saltcorn-base-plugin", "saltcorn-sbadmin2"].includes(plugin.location)) {
-    require(plugin.location).register();
+    registerPlugin(require(plugin.location));
   } else if (plugin.source === "npm") {
     await manager.install(plugin.location);
-    manager.require(plugin.location).register();
+    registerPlugin(manager.require(plugin.location));
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location);
     await manager.installFromPath(plugin.location, { force: true });
-    manager.require(plugin.name).register();
+    registerPlugin(manager.require(plugin.name));
   }
 };
 
@@ -33,4 +45,9 @@ const loadAllPluginsSync = () => {
   );
 };
 
-module.exports = { loadAllPluginsSync, loadAllPlugins, loadPlugin };
+module.exports = {
+  loadAllPluginsSync,
+  loadAllPlugins,
+  loadPlugin,
+  registerPlugin
+};

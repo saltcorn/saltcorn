@@ -50,7 +50,7 @@ describe("viewedit new endpoint", () => {
 
     await request(app)
       .post("/viewedit/save")
-      .send("viewtemplate=list")
+      .send("viewtemplate=List")
       .send("table_name=books")
       .send("name=mybooklist")
       .set("Cookie", loginCookie)
