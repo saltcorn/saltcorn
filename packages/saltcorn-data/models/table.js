@@ -28,6 +28,11 @@ class Table {
     await db.query("delete FROM tables WHERE id = $1", [this.id]);
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
+
+  async deleteRows(where) {
+    await db.deleteWhere(this.name, where);
+  }
+
   async getFields() {
     if (!this.fields) this.fields = await Field.find({ table_id: this.id });
     return this.fields;
