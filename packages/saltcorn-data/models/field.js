@@ -140,8 +140,8 @@ class Field {
       }`;
       await db.query(q);
     } else {
-      const q = `
-      CREATE OR REPLACE FUNCTION add_field(thedef ${
+      const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
+      CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
         f.sql_bare_type
       }) RETURNS void AS $$
       BEGIN
@@ -153,7 +153,9 @@ class Field {
       END;
       $$ LANGUAGE plpgsql;`;
       await db.query(q);
-      await db.query("SELECT add_field($1)", [f.attributes.default]);
+      await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
+        f.attributes.default
+      ]);
     }
     await db.insert("fields", {
       table_id: f.table_id,
