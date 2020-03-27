@@ -93,6 +93,7 @@ class View {
         methodGET: true,
         action: `/view/${this.name}`,
         fields,
+        class: "stateForm",
         submitLabel: "Apply",
         values: query
       });

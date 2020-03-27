@@ -37,8 +37,8 @@ class Table {
     return await db.selectOne(this.name, where);
   }
 
-  async getRows(where) {
-    return await db.select(this.name, where);
+  async getRows(where, selopts) {
+    return await db.select(this.name, where, selopts);
   }
   async countRows(where) {
     return await db.count(this.name, where);

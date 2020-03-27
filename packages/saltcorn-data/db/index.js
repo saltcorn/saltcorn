@@ -1,11 +1,11 @@
 const { Pool } = require("pg");
-const { sqlsanitize, mkWhere } = require("./internal");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const pool = new Pool();
 
-const select = async (tbl, whereObj) => {
+const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
   const tq = await pool.query(
-    `SELECT * FROM ${sqlsanitize(tbl)} ${where}`,
+    `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(selectopts)}`,
     values
   );
 
