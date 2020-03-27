@@ -4,7 +4,7 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
 const { mkTable, h, post_btn, link } = require("saltcorn-markup");
-const { text } = require("saltcorn-markup/tags");
+const { text, script } = require("saltcorn-markup/tags");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -82,7 +82,11 @@ const run = async (
       };
     } else {
       const f = fields.find(fld => fld.name === fldnm);
-      return { label: f.label, key: f.listKey, sortkey: f.name };
+      return {
+        label: f.label,
+        key: f.listKey,
+        sortlink: `javascript:sortby('${text(f.name)}')`
+      };
     }
   });
   var qstate = {};
@@ -100,9 +104,11 @@ const run = async (
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
-  return (
-    mkTable(tfields, rows, { sortlink: `/view/${viewname}` }) + create_link
-  );
+  const js = script(`function sortby(k) {
+    $('input[name="_sortby"]').val(k);
+    $('form.stateForm').submit();
+  }`);
+  return mkTable(tfields, rows) + create_link + js;
 };
 
 module.exports = {
