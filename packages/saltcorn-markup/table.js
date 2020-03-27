@@ -1,10 +1,21 @@
-const { a, td, tr, th, text, div, table, thead, tbody } = require("./tags");
+const {
+  a,
+  td,
+  tr,
+  th,
+  text,
+  div,
+  table,
+  thead,
+  tbody,
+  script
+} = require("./tags");
 
 const headerCell = (hdr, opts) =>
   opts.sortlink && hdr.sortkey
     ? th(
         a(
-          { href: `${opts.sortlink}?_sortby=${text(hdr.sortkey)}` },
+          { href: `javascript:sortby('${text(hdr.sortkey)}')` },
           text(hdr.label)
         )
       )
@@ -25,7 +36,11 @@ const mkTable = (hdrs, vs, opts = {}) =>
           )
         )
       )
-    )
+    ),
+    script(`function sortby(k) {
+      $('input[name="_sortby"]').val(k);
+      $('form.stateForm').submit();
+    }`)
   );
 
 module.exports = mkTable;

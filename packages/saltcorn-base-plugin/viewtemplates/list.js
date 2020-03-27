@@ -49,7 +49,7 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
     if (fldnm === "Delete" || fldnm.startsWith("Link to ")) return;
     state_fields.push(table_fields.find(f => f.name == fldnm));
   });
-
+  state_fields.push({ name: "_sortby", input_type: "hidden" });
   return state_fields;
 };
 

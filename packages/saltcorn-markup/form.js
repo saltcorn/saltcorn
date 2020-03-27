@@ -114,7 +114,8 @@ const renderForm = form =>
     form.submitLabel,
     form.errors,
     form.methodGET,
-    form.blurb
+    form.blurb,
+    form.class
   );
 
 const mkForm = (
@@ -124,9 +125,12 @@ const mkForm = (
   submitLabel = "Save",
   errors = {},
   isget,
-  blurb
+  blurb,
+  theclass
 ) => {
-  const top = `<form action="${action}" method="${isget ? "get" : "post"}">`;
+  const top = `<form action="${action}" class="${theclass}" method="${
+    isget ? "get" : "post"
+  }">`;
   //console.log(hdrs);
   const flds = hdrs.map(mkFormRow(v, errors)).join("");
   const blurbp = blurb ? p(text(blurb)) : "";

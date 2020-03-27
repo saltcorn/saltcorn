@@ -9,6 +9,7 @@ class Form {
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
+    this.class = o.class;
     this.methodGET = o.methodGET;
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
