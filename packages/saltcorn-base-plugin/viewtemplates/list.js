@@ -59,7 +59,7 @@ const run = async (
   { field_list, link_to_create },
   state
 ) => {
-  console.log(state);
+  //console.log(state);
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
