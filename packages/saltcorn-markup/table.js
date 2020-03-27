@@ -1,5 +1,3 @@
-const renderForm = require("./form");
-const mkTable = require("./table");
 const { a, td, tr, th, text } = require("./tags");
 
 const mkTable = (hdrs, vs) => {
@@ -20,14 +18,4 @@ const mkTable = (hdrs, vs) => {
   return s;
 };
 
-const link = (href, s) => a({ href: text(href) }, text(s));
-
-const post_btn = (href, s) => `<form action="${text(href)}" method="post">
-<button type="submit" class="btn btn-primary">${text(s)}</button></form>`;
-
-module.exports = {
-  mkTable,
-  renderForm,
-  link,
-  post_btn
-};
+module.exports = mkTable;
