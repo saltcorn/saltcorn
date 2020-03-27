@@ -82,7 +82,7 @@ const run = async (
       };
     } else {
       const f = fields.find(fld => fld.name === fldnm);
-      return { label: f.label, key: f.listKey };
+      return { label: f.label, key: f.listKey, sortkey: f.name };
     }
   });
   var qstate = {};
@@ -90,7 +90,7 @@ const run = async (
     const field = fields.find(fld => fld.name == kv[0]);
     if (field) qstate[kv[0]] = [kv[1]];
     if (field && field.type.name === "String") {
-      state[kv[0]] = { ilike: kv[1] };
+      qstate[kv[0]] = { ilike: kv[1] };
     }
   });
   const rows = await table.getRows(

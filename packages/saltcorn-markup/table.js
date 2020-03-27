@@ -1,10 +1,10 @@
 const { a, td, tr, th, text, div, table, thead, tbody } = require("./tags");
 
 const headerCell = (hdr, opts) =>
-  opts.sortlink
+  opts.sortlink && hdr.sortkey
     ? th(
         a(
-          { href: `${opts.sortlink}?_sortby=${text(hdr.label)}` },
+          { href: `${opts.sortlink}?_sortby=${text(hdr.sortkey)}` },
           text(hdr.label)
         )
       )
