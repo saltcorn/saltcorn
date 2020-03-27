@@ -59,6 +59,7 @@ const run = async (
   { field_list, link_to_create },
   state
 ) => {
+  console.log(state);
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
@@ -84,17 +85,21 @@ const run = async (
       return { label: f.label, key: f.listKey };
     }
   });
+  var qstate = {};
   Object.entries(state).forEach(kv => {
     const field = fields.find(fld => fld.name == kv[0]);
+    if (field) qstate[kv[0]] = [kv[1]];
     if (field && field.type.name === "String") {
       state[kv[0]] = { ilike: kv[1] };
     }
   });
-  const rows = await table.getRows(state);
+  const rows = await table.getRows(qstate);
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
-  return mkTable(tfields, rows) + create_link;
+  return (
+    mkTable(tfields, rows, { sortlink: `/view/${viewname}` }) + create_link
+  );
 };
 
 module.exports = {
