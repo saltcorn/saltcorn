@@ -45,7 +45,7 @@ const string = {
 
 const int = {
   name: "Integer",
-  sql_name: "text",
+  sql_name: "int",
   editAs: (nm, v, attrs, cls) =>
     input({
       type: "number",

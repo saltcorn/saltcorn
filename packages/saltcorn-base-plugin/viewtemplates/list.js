@@ -93,7 +93,10 @@ const run = async (
       state[kv[0]] = { ilike: kv[1] };
     }
   });
-  const rows = await table.getRows(qstate);
+  const rows = await table.getRows(
+    qstate,
+    state._sortby ? { orderBy: state._sortby } : { orderBy: "id" }
+  );
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
