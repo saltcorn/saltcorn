@@ -25,11 +25,20 @@ const mkWhere = whereObj => {
   return { where, values };
 };
 
+const toInt = x =>
+  typeof x === "number"
+    ? Math.round(x)
+    : typeof x === "string"
+    ? parseInt(x)
+    : null;
+
 const mkSelectOptions = selopts => {
   const orderby = selopts.orderBy
     ? `order by ${sqlsanitize(selopts.orderBy)}`
     : "";
-  return [orderby].filter(s => s).join(" ");
+  const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
+  const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
+  return [orderby, limit, offset].filter(s => s).join(" ");
 };
 
 const fkeyPrefix = "Key to ";

@@ -50,6 +50,7 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
     state_fields.push(table_fields.find(f => f.name == fldnm));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
+  state_fields.push({ name: "_page", input_type: "hidden" });
   return state_fields;
 };
 
@@ -97,18 +98,42 @@ const run = async (
       qstate[kv[0]] = { ilike: kv[1] };
     }
   });
-  const rows = await table.getRows(
-    qstate,
-    state._sortby ? { orderBy: state._sortby } : { orderBy: "id" }
-  );
+
+  const rows_per_page = 20;
+  const current_page = parseInt(state._page) || 1;
+  const rows = await table.getRows(qstate, {
+    limit: rows_per_page,
+    offset: (current_page - 1) * rows_per_page,
+    ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
+  });
+
+  var page_opts = {};
+
+  if (rows.length === rows_per_page) {
+    const nrows = await table.countRows(qstate);
+    if (nrows > rows_per_page) {
+      page_opts = {
+        pagination: {
+          current_page,
+          pages: Math.ceil(nrows / rows_per_page),
+          get_page_link: n => `javascript:gopage(${n})`
+        }
+      };
+    }
+  }
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
   const js = script(`function sortby(k) {
     $('input[name="_sortby"]').val(k);
     $('form.stateForm').submit();
-  }`);
-  return mkTable(tfields, rows) + create_link + js;
+  };
+  function gopage(n) {
+    $('input[name="_page"]').val(n);
+    $('form.stateForm').submit();
+  }
+  `);
+  return mkTable(tfields, rows, page_opts) + create_link + js;
 };
 
 module.exports = {

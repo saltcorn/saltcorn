@@ -1,9 +1,56 @@
-const { a, td, tr, th, text, div, table, thead, tbody } = require("./tags");
+const {
+  a,
+  td,
+  tr,
+  th,
+  text,
+  div,
+  table,
+  thead,
+  tbody,
+  ul,
+  li,
+  span
+} = require("./tags");
 
 const headerCell = hdr =>
   hdr.sortlink
     ? th(a({ href: hdr.sortlink }, text(hdr.label)))
     : th(text(hdr.label));
+
+const pagination = ({ current_page, pages, get_page_link }) => {
+  const from = Math.max(1, current_page - 3);
+  const to = Math.min(pages, current_page + 3);
+  var lis = [];
+  if (from > 1) {
+    lis.push(
+      li(
+        { class: `page-item` },
+        a({ class: "page-link", href: get_page_link(1) }, 1)
+      )
+    );
+    lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
+  }
+
+  for (let index = from; index <= to; index++) {
+    lis.push(
+      li(
+        { class: `page-item ${index === current_page ? "active" : ""}` },
+        a({ class: "page-link", href: get_page_link(index) }, index)
+      )
+    );
+  }
+  if (to < pages) {
+    lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
+    lis.push(
+      li(
+        { class: `page-item` },
+        a({ class: "page-link", href: get_page_link(pages) }, pages)
+      )
+    );
+  }
+  return ul({ class: "pagination" }, lis);
+};
 
 const mkTable = (hdrs, vs, opts = {}) =>
   div(
@@ -20,7 +67,8 @@ const mkTable = (hdrs, vs, opts = {}) =>
           )
         )
       )
-    )
+    ),
+    opts.pagination && pagination(opts.pagination)
   );
 
 module.exports = mkTable;
