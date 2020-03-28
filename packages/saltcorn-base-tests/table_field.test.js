@@ -65,6 +65,16 @@ describe("Table get data", () => {
     expect(michaels[0].favbook).toBe("Leo Tolstoy");
     done();
   });
+  it("should get joined rows with limit and order", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const all = await patients.getJoinedRows({
+      limit: 2,
+      orderBy: "id"
+    });
+    expect(all.length).toStrictEqual(2);
+    expect(all[1].favbook).toBe("Leo Tolstoy");
+    done();
+  });
 });
 
 describe("Field", () => {

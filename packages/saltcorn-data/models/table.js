@@ -1,5 +1,5 @@
 const db = require("../db");
-const { sqlsanitize, mkWhere } = require("../db/internal.js");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 
 class Table {
@@ -84,10 +84,14 @@ class Table {
       });
     }
     const { where, values } = mkWhere(whereObj);
-
+    const selectopts = {
+      limit: opts.limit,
+      orderBy: opts.orderBy,
+      offset: opts.offset
+    };
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
-    )} a ${joinq} ${where}`;
+    )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql)
     const { rows } = await db.query(sql, values);
 
