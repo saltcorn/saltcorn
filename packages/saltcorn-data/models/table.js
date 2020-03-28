@@ -88,11 +88,12 @@ class Table {
           }))
       );
     Object.entries(joinFields).forEach(([fnm, { ref, reftable, target }]) => {
-      if (!joinTables.includes(reftable)) {
-        joinTables.push(reftable);
-        joinq += ` left join ${reftable} ${reftable}_jt on ${reftable}_jt.id=a.${ref}`;
-        fldNms.push(`${reftable}_jt.${target} as ${fnm}`);
+      const jtNm = `${reftable}_jt_${ref}`;
+      if (!joinTables.includes(jtNm)) {
+        joinTables.push(jtNm);
+        joinq += ` left join ${reftable} ${jtNm} on ${jtNm}.id=a.${ref}`;
       }
+      fldNms.push(`${jtNm}.${target} as ${fnm}`);
     });
     for (const f of fields) {
       if (!f.is_fkey) {

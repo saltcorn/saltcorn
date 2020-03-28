@@ -70,11 +70,13 @@ describe("Table get data", () => {
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
       joinFields: {
-        pages: { ref: "favbook", reftable: "books", target: "pages" }
+        pages: { ref: "favbook", reftable: "books", target: "pages" },
+        author: { ref: "favbook", reftable: "books", target: "author" }
       }
     });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].pages).toBe(728);
+    expect(michaels[0].author).toBe("Leo Tolstoy");
     done();
   });
   it("should get joined rows with limit and order", async done => {
