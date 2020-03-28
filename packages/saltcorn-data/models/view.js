@@ -4,8 +4,8 @@ const Table = require("../models/table");
 
 const removeEmptyStrings = obj => {
   var o = {};
-  Object.entries(obj).forEach(kv => {
-    if (kv[1] !== "") o[kv[0]] = kv[1];
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== "") o[k] = v;
   });
   return o;
 };

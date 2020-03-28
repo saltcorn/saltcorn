@@ -22,7 +22,7 @@ const fixtures = async () => {
     table,
     name: "pages",
     label: "Pages",
-    type: "String",
+    type: "Integer",
     required: true,
     attributes: { min: 0 }
   });
@@ -76,17 +76,35 @@ const fixtures = async () => {
     on_root_page: true,
     on_menu: true
   });
+  const readings = await Table.create("readings");
+  await Field.create({
+    table: readings,
+    name: "temperature",
+    label: "Temperature",
+    type: "Integer",
+    required: true
+  });
+  await Field.create({
+    table: readings,
+    name: "patient_id",
+    label: "Patient",
+    type: "Key to patients",
+    required: true
+  });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
     name: "Kirk Douglas",
     favbook: 1
   });
-  await db.insert("patients", {
+  const michael_id = await db.insert("patients", {
     name: "Michael Douglas",
     favbook: 2,
     parent: kirk_id
   });
+  await db.insert("readings", { temperature: 37, patient_id: kirk_id });
+  await db.insert("readings", { temperature: 39, patient_id: kirk_id });
+  await db.insert("readings", { temperature: 37, patient_id: michael_id });
   await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
   await User.create({
     email: "staff@foo.com",

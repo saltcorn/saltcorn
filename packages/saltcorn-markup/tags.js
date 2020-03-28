@@ -3,8 +3,8 @@ const xss = require("xss");
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
-  const ppAttrib = kv =>
-    typeof kv[1] === "boolean" ? (kv[1] ? kv[0] : "") : `${kv[0]}="${kv[1]}"`;
+  const ppAttrib = ([k, v]) =>
+    typeof v === "boolean" ? (v ? k : "") : `${k}="${v}"`;
 
   const argIter = arg => {
     if (typeof arg === "undefined" || arg === null || arg === false) {
@@ -29,7 +29,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
 };
 const input = kvs => {
   const attribs = Object.entries(kvs)
-    .map(kv => `${kv[0]}="${kv[1]}"`)
+    .map(([k, v]) => `${k}="${v}"`)
     .join(" ");
   return `<input ${attribs}>`;
 };

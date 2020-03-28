@@ -1,7 +1,16 @@
 const db = require("../db");
-const { sqlsanitize, mkWhere } = require("../db/internal.js");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 
+const catObjs = objs => {
+  var cat = {};
+  objs.forEach(o => {
+    Object.entries(o).forEach(([k, v]) => {
+      cat[k] = v;
+    });
+  });
+  return cat;
+};
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -60,37 +69,64 @@ class Table {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [new_name, id]);
   }
-  async getJoinedRows(whereObj1) {
+  async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
-    var joinTables = [];
     var fldNms = ["a.id"];
     var joinq = "";
+    var joinTables = [];
+    const joinFields =
+      opts.joinFields ||
+      catObjs(
+        fields
+          .filter(f => f.is_fkey)
+          .map(f => ({
+            [f.name]: {
+              ref: f.name,
+              reftable: f.reftable,
+              target: f.attributes.summary_field || "id"
+            }
+          }))
+      );
+    Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
+      const reftable = fields.find(f => f.name === ref).reftable;
+      const jtNm = `${reftable}_jt_${ref}`;
+      if (!joinTables.includes(jtNm)) {
+        joinTables.push(jtNm);
+        joinq += ` left join ${reftable} ${jtNm} on ${jtNm}.id=a.${ref}`;
+      }
+      fldNms.push(`${jtNm}.${target} as ${fldnm}`);
+    });
     for (const f of fields) {
-      if (f.is_fkey) {
-        joinTables.push({ table: f.reftable, field: f.name });
-        joinq += ` left join ${f.reftable} ${f.reftable}_${f.name} on ${f.reftable}_${f.name}.id=a.${f.name}`;
-        fldNms.push(
-          `${f.reftable}_${f.name}.${f.attributes.summary_field || "id"} as ${
-            f.name
-          }`
-        );
-      } else {
+      if (!f.is_fkey) {
         fldNms.push(`a.${f.name}`);
       }
     }
+    Object.entries(opts.aggregations || {}).forEach(
+      ([fldnm, { table, ref, field, aggregate }]) => {
+        fldNms.push(
+          `(select ${aggregate}(${field ||
+            "*"}) from ${table} where ${ref}=a.id) ${fldnm}`
+        );
+      }
+    );
 
     var whereObj = {};
-    if (whereObj1) {
-      Object.keys(whereObj1).forEach(k => {
-        whereObj["a." + k] = whereObj1[k];
+    if (opts.where) {
+      Object.keys(opts.where).forEach(k => {
+        whereObj["a." + k] = opts.where[k];
       });
     }
     const { where, values } = mkWhere(whereObj);
-
+    const selectopts = {
+      limit: opts.limit,
+      orderBy: opts.orderBy,
+      orderDesc: opts.orderDesc,
+      offset: opts.offset
+    };
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
-    )} a ${joinq} ${where}`;
-    //console.log(sql)
+    )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    console.log(sql);
     const { rows } = await db.query(sql, values);
 
     return rows;

@@ -58,7 +58,9 @@ const run = async (table_id, viewname, rels, { id }) => {
       const [reltblnm, relfld] = rel.split(".");
       const reltbl = await Table.findOne({ name: reltblnm });
       const rows = await reltbl.getJoinedRows({
-        [relfld]: id
+        where: {
+          [relfld]: id
+        }
       });
       const relfields = await reltbl.getFields();
       var tfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
