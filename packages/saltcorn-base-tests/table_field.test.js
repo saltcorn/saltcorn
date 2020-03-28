@@ -65,6 +65,18 @@ describe("Table get data", () => {
     expect(michaels[0].favbook).toBe("Leo Tolstoy");
     done();
   });
+  it("should get joined rows with arbitrary fieldnames", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      where: { name: "Michael Douglas" },
+      joinFields: {
+        pages: { ref: "favbook", reftable: "books", target: "pages" }
+      }
+    });
+    expect(michaels.length).toStrictEqual(1);
+    expect(michaels[0].pages).toBe(728);
+    done();
+  });
   it("should get joined rows with limit and order", async done => {
     const patients = await Table.findOne({ name: "patients" });
     const all = await patients.getJoinedRows({

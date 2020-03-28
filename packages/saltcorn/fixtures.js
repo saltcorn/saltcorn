@@ -22,7 +22,7 @@ const fixtures = async () => {
     table,
     name: "pages",
     label: "Pages",
-    type: "String",
+    type: "Integer",
     required: true,
     attributes: { min: 0 }
   });

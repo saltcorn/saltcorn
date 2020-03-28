@@ -2,6 +2,15 @@ const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 
+const catObjs = objs => {
+  var cat = {};
+  objs.forEach(o => {
+    Object.entries(o).forEach(kv => {
+      cat[kv[0]] = kv[1];
+    });
+  });
+  return cat;
+};
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -64,15 +73,29 @@ class Table {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
     var joinq = "";
+    var joinTables = [];
+    const joinFields =
+      opts.joinFields ||
+      catObjs(
+        fields
+          .filter(f => f.is_fkey)
+          .map(f => ({
+            [f.name]: {
+              ref: f.name,
+              reftable: f.reftable,
+              target: f.attributes.summary_field || "id"
+            }
+          }))
+      );
+    Object.entries(joinFields).forEach(([fnm, { ref, reftable, target }]) => {
+      if (!joinTables.includes(reftable)) {
+        joinTables.push(reftable);
+        joinq += ` left join ${reftable} ${reftable}_jt on ${reftable}_jt.id=a.${ref}`;
+        fldNms.push(`${reftable}_jt.${target} as ${fnm}`);
+      }
+    });
     for (const f of fields) {
-      if (f.is_fkey) {
-        joinq += ` left join ${f.reftable} ${f.reftable}_${f.name} on ${f.reftable}_${f.name}.id=a.${f.name}`;
-        fldNms.push(
-          `${f.reftable}_${f.name}.${f.attributes.summary_field || "id"} as ${
-            f.name
-          }`
-        );
-      } else {
+      if (!f.is_fkey) {
         fldNms.push(`a.${f.name}`);
       }
     }
