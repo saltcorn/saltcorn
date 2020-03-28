@@ -39,7 +39,8 @@ const fixtures = async () => {
     name: "favbook",
     label: "Favourite book",
     type: "Key to books",
-    required: false
+    required: false,
+    attributes: { summary_field: "author" }
   });
   await Field.create({
     table: patients,

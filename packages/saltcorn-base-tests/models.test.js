@@ -16,6 +16,54 @@ describe("Table create", () => {
   });
 });
 
+describe("Table get data", () => {
+  it("should get rows", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const all = await patients.getRows();
+    expect(all.length).toStrictEqual(2);
+    done();
+  });
+  it("should get rows where name is Michael", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getRows({ name: "Michael Douglas" });
+    expect(michaels.length).toStrictEqual(1);
+    done();
+  });
+  it("should get limited rows", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getRows(
+      { name: { ilike: "Douglas" } },
+      { limit: 1, orderBy: "id", offset: 1 }
+    );
+    expect(michaels.length).toStrictEqual(1);
+    expect(michaels[0].name).toStrictEqual("Michael Douglas");
+
+    done();
+  });
+  it("should get joined rows where name is Michael", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({ name: "Michael Douglas" });
+    expect(michaels.length).toStrictEqual(1);
+    expect(michaels[0].favbook).toBe("Leo Tolstoy");
+    done();
+  });
+});
+
+describe("Table add field", () => {
+  it("should add field", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    await Field.create({
+      table: patients,
+      name: "height1",
+      label: "height1",
+      type: "Integer",
+      required: true,
+      attributes: { default: 6 }
+    });
+    done();
+  });
+});
+
 describe("Form new", () => {
   it("should retain field class", () => {
     const form = new Form({
