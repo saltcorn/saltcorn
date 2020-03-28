@@ -91,11 +91,11 @@ const run = async (
     }
   });
   var qstate = {};
-  Object.entries(state).forEach(kv => {
-    const field = fields.find(fld => fld.name == kv[0]);
-    if (field) qstate[kv[0]] = kv[1];
+  Object.entries(state).forEach(([k, v]) => {
+    const field = fields.find(fld => fld.name == k);
+    if (field) qstate[k] = v;
     if (field && field.type.name === "String") {
-      qstate[kv[0]] = { ilike: kv[1] };
+      qstate[k] = { ilike: v };
     }
   });
   const rows_per_page = 20;

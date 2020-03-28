@@ -5,8 +5,8 @@ const Field = require("./field");
 const catObjs = objs => {
   var cat = {};
   objs.forEach(o => {
-    Object.entries(o).forEach(kv => {
-      cat[kv[0]] = kv[1];
+    Object.entries(o).forEach(([k, v]) => {
+      cat[k] = v;
     });
   });
   return cat;
