@@ -62,12 +62,10 @@ class Table {
   }
   async getJoinedRows(whereObj1) {
     const fields = await this.getFields();
-    var joinTables = [];
     var fldNms = ["a.id"];
     var joinq = "";
     for (const f of fields) {
       if (f.is_fkey) {
-        joinTables.push({ table: f.reftable, field: f.name });
         joinq += ` left join ${f.reftable} ${f.reftable}_${f.name} on ${f.reftable}_${f.name}.id=a.${f.name}`;
         fldNms.push(
           `${f.reftable}_${f.name}.${f.attributes.summary_field || "id"} as ${
