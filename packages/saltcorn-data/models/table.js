@@ -60,7 +60,7 @@ class Table {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [new_name, id]);
   }
-  async getJoinedRows(whereObj1) {
+  async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
     var joinq = "";
@@ -78,9 +78,9 @@ class Table {
     }
 
     var whereObj = {};
-    if (whereObj1) {
-      Object.keys(whereObj1).forEach(k => {
-        whereObj["a." + k] = whereObj1[k];
+    if (opts.where) {
+      Object.keys(opts.where).forEach(k => {
+        whereObj["a." + k] = opts.where[k];
       });
     }
     const { where, values } = mkWhere(whereObj);

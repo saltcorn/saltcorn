@@ -25,13 +25,11 @@ describe("Table create", () => {
   });
   it("should delete", async done => {
     const table = await Table.findOne({ name: "mytable1" });
-    await table.delete()
+    await table.delete();
     const table1 = await Table.find({ name: "mytable1" });
-    expect(table1.length).toBe(0)
+    expect(table1.length).toBe(0);
     done();
-
-  })
-
+  });
 });
 
 describe("Table get data", () => {
@@ -60,7 +58,9 @@ describe("Table get data", () => {
   });
   it("should get joined rows where name is Michael", async done => {
     const patients = await Table.findOne({ name: "patients" });
-    const michaels = await patients.getJoinedRows({ name: "Michael Douglas" });
+    const michaels = await patients.getJoinedRows({
+      where: { name: "Michael Douglas" }
+    });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe("Leo Tolstoy");
     done();
