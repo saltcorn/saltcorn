@@ -1,7 +1,5 @@
 const Table = require("saltcorn-data/models/table");
-const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
-const View = require("saltcorn-data/models/view");
 
 require("./load_base_types")();
 
@@ -14,6 +12,26 @@ describe("Table create", () => {
     expect(tf.name).toStrictEqual("mytable1");
     done();
   });
+  it("should create required field in empty table without default", async done => {
+    const mytable1 = await Table.findOne({ name: "mytable1" });
+    await Field.create({
+      table: mytable1,
+      name: "height1",
+      label: "height1",
+      type: "Integer",
+      required: true
+    });
+    done();
+  });
+  it("should delete", async done => {
+    const table = await Table.findOne({ name: "mytable1" });
+    await table.delete()
+    const table1 = await Table.find({ name: "mytable1" });
+    expect(table1.length).toBe(0)
+    done();
+
+  })
+
 });
 
 describe("Table get data", () => {
@@ -49,7 +67,7 @@ describe("Table get data", () => {
   });
 });
 
-describe("Table add field", () => {
+describe("Field", () => {
   it("should add field", async done => {
     const patients = await Table.findOne({ name: "patients" });
     await Field.create({
@@ -60,43 +78,6 @@ describe("Table add field", () => {
       required: true,
       attributes: { default: 6 }
     });
-    done();
-  });
-});
-
-describe("Form new", () => {
-  it("should retain field class", () => {
-    const form = new Form({
-      fields: [
-        new Field({
-          name: "summary_field",
-          label: "Summary field",
-          input_type: "text"
-        })
-      ]
-    });
-    expect(form.fields[0].constructor.name).toBe(Field.name);
-  });
-  it("should add field class", () => {
-    const form = new Form({
-      fields: [
-        {
-          name: "summary_field",
-          label: "Summary field",
-          input_type: "text"
-        }
-      ]
-    });
-    expect(form.fields[0].constructor.name).toBe(Field.name);
-  });
-});
-
-describe("View", () => {
-  it("should find", async done => {
-    const link_views = await View.find({
-      table_id: 1
-    });
-    expect(link_views.length).toBe(2);
     done();
   });
 });
