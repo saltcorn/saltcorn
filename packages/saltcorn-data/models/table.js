@@ -87,20 +87,28 @@ class Table {
             }
           }))
       );
-    Object.entries(joinFields).forEach(([fnm, { ref, target }]) => {
+    Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable;
       const jtNm = `${reftable}_jt_${ref}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
         joinq += ` left join ${reftable} ${jtNm} on ${jtNm}.id=a.${ref}`;
       }
-      fldNms.push(`${jtNm}.${target} as ${fnm}`);
+      fldNms.push(`${jtNm}.${target} as ${fldnm}`);
     });
     for (const f of fields) {
       if (!f.is_fkey) {
         fldNms.push(`a.${f.name}`);
       }
     }
+    Object.entries(opts.aggregations || {}).forEach(
+      ([fldnm, { table, ref, field, aggregate }]) => {
+        fldNms.push(
+          `(select ${aggregate}(${field ||
+            "*"}) from ${table} where ${ref}=a.id) ${fldnm}`
+        );
+      }
+    );
 
     var whereObj = {};
     if (opts.where) {
@@ -118,7 +126,7 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
     )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    //console.log(sql)
+    console.log(sql);
     const { rows } = await db.query(sql, values);
 
     return rows;

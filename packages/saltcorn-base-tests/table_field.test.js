@@ -100,6 +100,46 @@ describe("Table get data", () => {
     expect(all[0].favbook).toBe("Leo Tolstoy");
     done();
   });
+  it("should get joined rows with aggregations", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg"
+        }
+      }
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].avg_temp)).toBe(38);
+    done();
+  });
+  it("should get joined rows with aggregations and joins", async done => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg"
+        }
+      },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" }
+      }
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].avg_temp)).toBe(38);
+    expect(michaels[1].author).toBe("Leo Tolstoy");
+
+    done();
+  });
 });
 
 describe("Field", () => {
