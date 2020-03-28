@@ -87,7 +87,8 @@ class Table {
             }
           }))
       );
-    Object.entries(joinFields).forEach(([fnm, { ref, reftable, target }]) => {
+    Object.entries(joinFields).forEach(([fnm, { ref, target }]) => {
+      const reftable = fields.find(f => f.name === ref).reftable;
       const jtNm = `${reftable}_jt_${ref}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);

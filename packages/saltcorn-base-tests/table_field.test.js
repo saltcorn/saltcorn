@@ -70,8 +70,8 @@ describe("Table get data", () => {
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
       joinFields: {
-        pages: { ref: "favbook", reftable: "books", target: "pages" },
-        author: { ref: "favbook", reftable: "books", target: "author" }
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" }
       }
     });
     expect(michaels.length).toStrictEqual(1);
