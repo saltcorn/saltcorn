@@ -112,6 +112,7 @@ class Table {
     const selectopts = {
       limit: opts.limit,
       orderBy: opts.orderBy,
+      orderDesc: opts.orderDesc,
       offset: opts.offset
     };
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(

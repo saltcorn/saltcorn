@@ -34,7 +34,9 @@ const toInt = x =>
 
 const mkSelectOptions = selopts => {
   const orderby = selopts.orderBy
-    ? `order by ${sqlsanitize(selopts.orderBy)}`
+    ? `order by ${sqlsanitize(selopts.orderBy)}${
+        selopts.orderDesc ? " DESC" : ""
+      }`
     : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
