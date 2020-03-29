@@ -98,6 +98,7 @@ class View {
         fields,
         submitLabel: "Apply",
         isStateForm: true,
+        formStyle: "vert",
         values: removeEmptyStrings(query)
       });
       await form.fill_fkey_options(true);

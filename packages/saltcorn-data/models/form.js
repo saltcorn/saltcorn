@@ -11,6 +11,7 @@ class Form {
     this.action = o.action;
     this.collapsedSummary = o.collapsedSummary;
     this.isStateForm = o.isStateForm;
+    this.formStyle = o.formStyle || "horiz";
     this.class = o.class;
     this.methodGET = o.methodGET;
     this.blurb = o.blurb;

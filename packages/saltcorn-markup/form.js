@@ -1,13 +1,13 @@
 const { p, div, i, label, text, button } = require("./tags");
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
-
-const formRowWrap = (hdr, inner, error = "") =>
+const isHoriz = formStyle => formStyle === "horiz";
+const formRowWrap = (hdr, inner, error = "", fStyle) =>
   div(
-    { class: "form-group row" },
+    { class: `form-group ${isHoriz(fStyle) ? "row" : ""}` },
     isCheck(hdr)
       ? div(
-          { class: "col-sm-10 offset-md-2" },
+          { class: isHoriz(fStyle) ? "col-sm-10 offset-md-2" : "" },
           div(
             { class: "form-check" },
             inner,
@@ -20,13 +20,19 @@ const formRowWrap = (hdr, inner, error = "") =>
         )
       : [
           label(
-            { for: `input${text(hdr.name)}`, class: "col-sm-2 col-form-label" },
+            {
+              for: `input${text(hdr.name)}`,
+              class: isHoriz(fStyle) ? "col-sm-2 col-form-label" : ""
+            },
             text(hdr.label)
           ),
-          div({ class: "col-sm-10" }, inner, text(error))
+          div({ class: isHoriz(fStyle) ? "col-sm-10" : "" }, inner, text(error))
         ],
     hdr.sublabel &&
-      div({ class: "col-sm-10 offset-md-2" }, i(text(hdr.sublabel)))
+      div(
+        { class: isHoriz(fStyle) ? "col-sm-10 offset-md-2" : "" },
+        i(text(hdr.sublabel))
+      )
   );
 
 const isdef = x => typeof x !== "undefined";
@@ -49,7 +55,7 @@ const select_options = (v, hdr) => {
     })
     .join(""));
 };
-const mkFormRow = (v, errors) => hdr => {
+const mkFormRow = (v, errors, formStyle) => hdr => {
   const validClass = errors[hdr.name] ? "is-invalid" : "";
   const errorFeedback = errors[hdr.name]
     ? `<div class="invalid-feedback">${text(errors[hdr.name])}</div>`
@@ -65,7 +71,8 @@ const mkFormRow = (v, errors) => hdr => {
           validClass,
           hdr.required
         ),
-        errorFeedback
+        errorFeedback,
+        formStyle
       );
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass}" name="${text(
@@ -78,7 +85,8 @@ const mkFormRow = (v, errors) => hdr => {
         `<select class="form-control ${validClass}" name="${text(
           hdr.name
         )}" id="input${text(hdr.name)}">${opts}</select>`,
-        errorFeedback
+        errorFeedback,
+        formStyle
       );
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
@@ -91,7 +99,8 @@ const mkFormRow = (v, errors) => hdr => {
         )}">${mopts}</select><script>$(function(){$("#input${
           hdr.name
         }").chosen()})</script>`,
-        errorFeedback
+        errorFeedback,
+        formStyle
       );
 
     default:
@@ -102,7 +111,8 @@ const mkFormRow = (v, errors) => hdr => {
         }" id="input${text(hdr.name)}" ${
           v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
         }>`,
-        errorFeedback
+        errorFeedback,
+        formStyle
       );
   }
 };
@@ -110,6 +120,7 @@ const mkFormRow = (v, errors) => hdr => {
 const renderForm = form => {
   if (form.isStateForm) {
     form.class += " px-4 py-3";
+    form.formStyle = "vert";
     var collapsedSummary = "";
     Object.entries(form.values).forEach(([k, v]) => {
       if (k[0] !== "_") collapsedSummary += `${k}:${v} `;
@@ -141,7 +152,9 @@ const mkForm = (form, errors = {}) => {
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
   //console.log(hdrs);
-  const flds = form.fields.map(mkFormRow(form.values, errors)).join("");
+  const flds = form.fields
+    .map(mkFormRow(form.values, errors, form.formStyle))
+    .join("");
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
