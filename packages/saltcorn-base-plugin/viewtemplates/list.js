@@ -52,7 +52,12 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
   var state_fields = [];
 
   (field_list || []).forEach(fldnm => {
-    if (fldnm === "Delete" || fldnm.startsWith("Link to ")) return;
+    if (
+      fldnm === "Delete" ||
+      fldnm.startsWith("Link to ") ||
+      fldnm.includes(".")
+    )
+      return;
     state_fields.push(table_fields.find(f => f.name == fldnm));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
@@ -70,7 +75,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-
+  var joinFields = [];
   const tfields = field_list.map(fldnm => {
     if (fldnm === "Delete")
       return {
@@ -86,6 +91,14 @@ const run = async (
       return {
         label: vnm,
         key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+      };
+    } else if (fldnm.includes(".")) {
+      const [refNm, targetNm] = fldnm.split(".");
+      joinFields.push({ [targetNm]: { ref: refNm, target: targetNm } });
+      return {
+        label: targetNm,
+        key: targetNm
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
     } else {
       const f = fields.find(fld => fld.name === fldnm);

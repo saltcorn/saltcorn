@@ -92,19 +92,19 @@ class Table {
     var fldNms = ["a.id"];
     var joinq = "";
     var joinTables = [];
-    const joinFields =
-      opts.joinFields ||
-      catObjs(
-        fields
-          .filter(f => f.is_fkey)
-          .map(f => ({
-            [f.name]: {
-              ref: f.name,
-              reftable: f.reftable,
-              target: f.attributes.summary_field || "id"
-            }
-          }))
-      );
+    const joinFields = catObjs([
+      ...(opts.joinFields || []),
+
+      ...fields
+        .filter(f => f.is_fkey)
+        .map(f => ({
+          [f.name]: {
+            ref: f.name,
+            reftable: f.reftable,
+            target: f.attributes.summary_field || "id"
+          }
+        }))
+    ]);
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable;
       const jtNm = `${reftable}_jt_${ref}`;
