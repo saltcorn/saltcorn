@@ -55,7 +55,35 @@ const select_options = (v, hdr) => {
     })
     .join(""));
 };
-const mkFormRow = (v, errors, formStyle) => hdr => {
+
+const mkFormRow = (v, errors, formStyle) => hdr =>
+  hdr.isRepeat
+    ? mkFormRowForRepeat(v, errors, formStyle, hdr)
+    : mkFormRowForField(v, errors, formStyle)(hdr);
+
+const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
+  if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
+    return v[hdr.name]
+      .map((vi, ix) => {
+        return hdr.fields
+          .map(f => {
+            f.name += "_" + ix;
+            return mkFormRowForField(vi, errors, formStyle)(f);
+          })
+          .join("");
+      })
+      .join("");
+  } else {
+    return hdr.fields
+      .map(f => {
+        f.name += "_0";
+        return mkFormRowForField(v, errors, formStyle)(f);
+      })
+      .join("");
+  }
+};
+
+const mkFormRowForField = (v, errors, formStyle) => hdr => {
   const validClass = errors[hdr.name] ? "is-invalid" : "";
   const errorFeedback = errors[hdr.name]
     ? `<div class="invalid-feedback">${text(errors[hdr.name])}</div>`
