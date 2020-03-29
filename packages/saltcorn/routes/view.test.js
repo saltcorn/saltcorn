@@ -35,8 +35,7 @@ describe("view patients list endpoint", () => {
     await request(app)
       .get("/view/patientlist")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Douglas"))
-      .expect(toNotInclude("728"));
+      .expect(toInclude("Douglas"));
 
     done();
   });

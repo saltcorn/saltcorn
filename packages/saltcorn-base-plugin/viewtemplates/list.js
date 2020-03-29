@@ -13,11 +13,12 @@ const configuration_workflow = () =>
         name: "listfields",
         form: async context => {
           const table_id = context.table_id;
-
-          const fields = await Field.find({ table_id });
+          const table = await Table.findOne({ id: table_id });
+          const fields = await table.getFields();
           const fldOptions = fields.map(f => text(f.name));
           const link_views = await View.find_possible_links_to_table(table_id);
           const link_view_opts = link_views.map(v => `Link to ${text(v.name)}`);
+          const { parent_field_list } = await table.get_parent_relations();
           return new Form({
             blurb:
               "Finalise your list view by specifying the fields in the table",
@@ -26,7 +27,12 @@ const configuration_workflow = () =>
                 name: "field_list",
                 label: "Field list",
                 input_type: "ordered_multi_select",
-                options: [...fldOptions, "Delete", ...link_view_opts]
+                options: [
+                  ...fldOptions,
+                  "Delete",
+                  ...link_view_opts,
+                  ...parent_field_list
+                ]
               },
               {
                 name: "link_to_create",
@@ -46,7 +52,12 @@ const get_state_fields = async (table_id, viewname, { field_list }) => {
   var state_fields = [];
 
   (field_list || []).forEach(fldnm => {
-    if (fldnm === "Delete" || fldnm.startsWith("Link to ")) return;
+    if (
+      fldnm === "Delete" ||
+      fldnm.startsWith("Link to ") ||
+      fldnm.includes(".")
+    )
+      return;
     state_fields.push(table_fields.find(f => f.name == fldnm));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
@@ -64,7 +75,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-
+  var joinFields = {};
   const tfields = field_list.map(fldnm => {
     if (fldnm === "Delete")
       return {
@@ -80,6 +91,14 @@ const run = async (
       return {
         label: vnm,
         key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+      };
+    } else if (fldnm.includes(".")) {
+      const [refNm, targetNm] = fldnm.split(".");
+      joinFields[targetNm] = { ref: refNm, target: targetNm };
+      return {
+        label: targetNm,
+        key: targetNm
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
     } else {
       const f = fields.find(fld => fld.name === fldnm);
@@ -100,7 +119,9 @@ const run = async (
   });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
-  const rows = await table.getRows(qstate, {
+  const rows = await table.getJoinedRows({
+    where: qstate,
+    joinFields,
     limit: rows_per_page,
     offset: (current_page - 1) * rows_per_page,
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })

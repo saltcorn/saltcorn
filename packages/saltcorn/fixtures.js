@@ -71,7 +71,16 @@ const fixtures = async () => {
     table_id: patients.id,
     name: "patientlist",
     viewtemplate: "List",
-    configuration: { field_list: ["name", "favbook", "parent"] },
+    configuration: {
+      field_list: [
+        "name",
+        "favbook",
+        "parent",
+        "favbook",
+        "favbook.author",
+        "favbook.pages"
+      ]
+    },
     is_public: false,
     on_root_page: true,
     on_menu: true

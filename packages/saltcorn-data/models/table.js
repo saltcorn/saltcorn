@@ -2,15 +2,6 @@ const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 
-const catObjs = objs => {
-  var cat = {};
-  objs.forEach(o => {
-    Object.entries(o).forEach(([k, v]) => {
-      cat[k] = v;
-    });
-  });
-  return cat;
-};
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -69,24 +60,39 @@ class Table {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [new_name, id]);
   }
+
+  async get_parent_relations() {
+    const fields = await this.getFields();
+    var parent_relations = [];
+    var parent_field_list = [];
+    for (const f of fields) {
+      if (f.is_fkey) {
+        const table = await Table.findOne({ name: f.reftable });
+        await table.getFields();
+        table.fields.forEach(pf => {
+          parent_field_list.push(`${f.name}.${pf.name}`);
+        });
+        parent_relations.push({ key_field: f, table });
+      }
+    }
+    return { parent_relations, parent_field_list };
+  }
+
   async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
     var joinq = "";
     var joinTables = [];
-    const joinFields =
-      opts.joinFields ||
-      catObjs(
-        fields
-          .filter(f => f.is_fkey)
-          .map(f => ({
-            [f.name]: {
-              ref: f.name,
-              reftable: f.reftable,
-              target: f.attributes.summary_field || "id"
-            }
-          }))
-      );
+    var joinFields = opts.joinFields || [];
+    fields
+      .filter(f => f.is_fkey)
+      .forEach(f => {
+        joinFields[f.name] = {
+          ref: f.name,
+          reftable: f.reftable,
+          target: f.attributes.summary_field || "id"
+        };
+      });
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable;
       const jtNm = `${reftable}_jt_${ref}`;
@@ -126,7 +132,7 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
     )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    console.log(sql);
+    //console.log(sql);
     const { rows } = await db.query(sql, values);
 
     return rows;
