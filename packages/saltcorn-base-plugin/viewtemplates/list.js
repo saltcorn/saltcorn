@@ -119,7 +119,9 @@ const run = async (
   });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
-  const rows = await table.getRows(qstate, {
+  const rows = await table.getJoinedRows({
+    where: qstate,
+    joinFields,
     limit: rows_per_page,
     offset: (current_page - 1) * rows_per_page,
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
