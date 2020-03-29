@@ -1,4 +1,4 @@
-const { p, div, i, label, text, button } = require("./tags");
+const { p, div, i, label, text, button, a } = require("./tags");
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 const isHoriz = formStyle => formStyle === "horiz";
@@ -62,24 +62,30 @@ const mkFormRow = (v, errors, formStyle) => hdr =>
     : mkFormRowForField(v, errors, formStyle)(hdr);
 
 const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
+  const adder = a({ href: `javascript:add_repeater("${hdr.name}")` }, "Add");
   if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
-    return v[hdr.name]
-      .map((vi, ix) => {
-        return hdr.fields
-          .map(f => {
-            f.name += "_" + ix;
-            return mkFormRowForField(vi, errors, formStyle)(f);
-          })
-          .join("");
-      })
-      .join("");
+    return (
+      v[hdr.name]
+        .map((vi, ix) => {
+          return div(
+            { class: `form-repeat repeat-${hdr.name}` },
+            hdr.fields.map(f => {
+              f.name += "_" + ix;
+              return mkFormRowForField(vi, errors, formStyle)(f);
+            })
+          );
+        })
+        .join("") + adder
+    );
   } else {
-    return hdr.fields
-      .map(f => {
+    return div(
+      { class: `form-repeat repeat-${hdr.name}` },
+      hdr.fields.map(f => {
         f.name += "_0";
         return mkFormRowForField(v, errors, formStyle)(f);
-      })
-      .join("");
+      }),
+      adder
+    );
   }
 };
 
