@@ -113,7 +113,11 @@ const run = async (
   Object.entries(state).forEach(([k, v]) => {
     const field = fields.find(fld => fld.name == k);
     if (field) qstate[k] = v;
-    if (field && field.type.name === "String") {
+    if (
+      field &&
+      field.type.name === "String" &&
+      !(field.attributes && field.attributes.options)
+    ) {
       qstate[k] = { ilike: v };
     }
   });

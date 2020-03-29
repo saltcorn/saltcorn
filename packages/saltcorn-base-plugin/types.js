@@ -15,7 +15,7 @@ const string = {
     { name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
-  editAs: (nm, v, attrs, cls) =>
+  editAs: (nm, v, attrs, cls, required) =>
     attrs.options
       ? select(
           {
@@ -23,7 +23,9 @@ const string = {
             name: text(nm),
             id: `input${text(nm)}`
           },
-          getStrOptions(v, attrs.options)
+          required
+            ? getStrOptions(v, attrs.options)
+            : [option({ value: "" }, ""), ...getStrOptions(v, attrs.options)]
         )
       : input({
           type: "text",
