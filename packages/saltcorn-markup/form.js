@@ -1,4 +1,4 @@
-const { p, div, i, label, text } = require("./tags");
+const { p, div, i, label, text, button } = require("./tags");
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 
@@ -108,14 +108,32 @@ const mkFormRow = (v, errors) => hdr => {
 };
 
 const renderForm = form => {
-  const theForm = mkForm(form, form.errors);
   if (form.isStateForm) {
+    form.class += " px-4 py-3";
     var collapsedSummary = "";
     Object.entries(form.values).forEach(([k, v]) => {
       if (k[0] !== "_") collapsedSummary += `${k}:${v} `;
     });
-    return div(collapsedSummary, theForm);
-  } else return theForm;
+    return div(
+      { class: "dropdown" },
+      button(
+        {
+          class: "btn btn-secondary dropdown-toggle",
+          type: "button",
+          id: "dropdownMenuButton",
+          "data-toggle": "dropdown",
+          "aria-haspopup": "true",
+          "aria-expanded": "false"
+        },
+        collapsedSummary || "Search filter"
+      ),
+
+      div(
+        { class: "dropdown-menu", "aria-labelledby": "dropdownMenuButton" },
+        mkForm(form, form.errors)
+      )
+    );
+  } else return mkForm(form, form.errors);
 };
 
 const mkForm = (form, errors = {}) => {
