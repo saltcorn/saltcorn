@@ -62,7 +62,8 @@ const mkFormRow = (v, errors) => hdr => {
           hdr.name,
           v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
           hdr.attributes,
-          validClass
+          validClass,
+          hdr.required
         ),
         errorFeedback
       );

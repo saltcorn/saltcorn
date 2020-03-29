@@ -89,6 +89,9 @@ class View {
         this.name,
         this.configuration
       );
+      fields.forEach(f => {
+        f.required = false;
+      });
       const form = new Form({
         methodGET: true,
         action: `/view/${this.name}`,
