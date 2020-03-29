@@ -13,11 +13,12 @@ const configuration_workflow = () =>
         name: "listfields",
         form: async context => {
           const table_id = context.table_id;
-
-          const fields = await Field.find({ table_id });
+          const table = await Table.findOne({ id: table_id });
+          const fields = await table.getFields();
           const fldOptions = fields.map(f => text(f.name));
           const link_views = await View.find_possible_links_to_table(table_id);
           const link_view_opts = link_views.map(v => `Link to ${text(v.name)}`);
+          const { parent_field_list } = await table.get_parent_relations();
           return new Form({
             blurb:
               "Finalise your list view by specifying the fields in the table",
@@ -26,7 +27,12 @@ const configuration_workflow = () =>
                 name: "field_list",
                 label: "Field list",
                 input_type: "ordered_multi_select",
-                options: [...fldOptions, "Delete", ...link_view_opts]
+                options: [
+                  ...fldOptions,
+                  "Delete",
+                  ...link_view_opts,
+                  ...parent_field_list
+                ]
               },
               {
                 name: "link_to_create",

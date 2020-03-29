@@ -69,6 +69,24 @@ class Table {
     //TODO RENAME TABLE
     await db.query("update tables set name=$1 where id=$2", [new_name, id]);
   }
+
+  async get_parent_relations() {
+    const fields = await this.getFields();
+    var parent_relations = [];
+    var parent_field_list = [];
+    for (const f of fields) {
+      if (f.is_fkey) {
+        const table = await Table.findOne({ name: f.reftable });
+        await table.getFields();
+        table.fields.forEach(pf => {
+          parent_field_list.push(`${f.name}.${pf.name}`);
+        });
+        parent_relations.push({ key_field: f, table });
+      }
+    }
+    return { parent_relations, parent_field_list };
+  }
+
   async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
