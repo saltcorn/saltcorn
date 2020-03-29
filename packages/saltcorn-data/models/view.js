@@ -96,9 +96,9 @@ class View {
         methodGET: true,
         action: `/view/${this.name}`,
         fields,
-        class: "stateForm",
         submitLabel: "Apply",
-        values: query
+        isStateForm: true,
+        values: removeEmptyStrings(query)
       });
       await form.fill_fkey_options(true);
       return form;

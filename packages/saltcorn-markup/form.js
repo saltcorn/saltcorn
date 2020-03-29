@@ -107,37 +107,29 @@ const mkFormRow = (v, errors) => hdr => {
   }
 };
 
-const renderForm = form =>
-  mkForm(
-    form.action,
-    form.fields,
-    form.values,
-    form.submitLabel,
-    form.errors,
-    form.methodGET,
-    form.blurb,
-    form.class
-  );
+const renderForm = form => {
+  const theForm = mkForm(form, form.errors);
+  if (form.isStateForm) {
+    var collapsedSummary = "";
+    Object.entries(form.values).forEach(([k, v]) => {
+      if (k[0] !== "_") collapsedSummary += `${k}:${v} `;
+    });
+    return div(collapsedSummary, theForm);
+  } else return theForm;
+};
 
-const mkForm = (
-  action,
-  hdrs,
-  v,
-  submitLabel = "Save",
-  errors = {},
-  isget,
-  blurb,
-  theclass
-) => {
-  const top = `<form action="${action}" class="${theclass}" method="${
-    isget ? "get" : "post"
-  }">`;
+const mkForm = (form, errors = {}) => {
+  const top = `<form action="${form.action}" class="${
+    form.isStateForm ? "stateForm" : ""
+  } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
   //console.log(hdrs);
-  const flds = hdrs.map(mkFormRow(v, errors)).join("");
-  const blurbp = blurb ? p(text(blurb)) : "";
+  const flds = form.fields.map(mkFormRow(form.values, errors)).join("");
+  const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-10">
-    <button type="submit" class="btn btn-primary">${text(submitLabel)}</button>
+    <button type="submit" class="btn btn-primary">${text(
+      form.submitLabel || "Save"
+    )}</button>
   </div>
 </div>
 </form>`;
