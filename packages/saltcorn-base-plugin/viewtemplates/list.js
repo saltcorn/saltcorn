@@ -75,7 +75,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-  var joinFields = [];
+  var joinFields = {};
   const tfields = field_list.map(fldnm => {
     if (fldnm === "Delete")
       return {
@@ -94,7 +94,7 @@ const run = async (
       };
     } else if (fldnm.includes(".")) {
       const [refNm, targetNm] = fldnm.split(".");
-      joinFields.push({ [targetNm]: { ref: refNm, target: targetNm } });
+      joinFields[targetNm] = { ref: refNm, target: targetNm };
       return {
         label: targetNm,
         key: targetNm
