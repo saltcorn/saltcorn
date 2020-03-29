@@ -17,8 +17,10 @@ describe("Form", () => {
       ]
     });
     const html = renderForm(form);
+    form.validate({ age: 32 });
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('min="16"')).toBe(true);
+    expect(form.values.age).toBe(32);
     done();
   });
 });
