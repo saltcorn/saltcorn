@@ -22,13 +22,10 @@ function add_repeater(nm) {
 }
 
 function apply_showif() {
-  console.log("apply_showif");
-
   $("[data-show-if]").each(function(ix, element) {
     var e = $(element);
-    var func = new Function("e", "return " + e.attr("data-show-if"));
-    var to_show = func(e);
-    if (to_show) e.show();
+    var to_show = new Function("e", "return " + e.attr("data-show-if"));
+    if (to_show(e)) e.show();
     else e.hide();
   });
 }
