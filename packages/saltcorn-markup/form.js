@@ -65,8 +65,9 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
   const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
   if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
     return (
-      v[hdr.name]
-        .map((vi, ix) => {
+      div(
+        { class: `repeats-${hdr.name}` },
+        v[hdr.name].map((vi, ix) => {
           return div(
             { class: `form-repeat repeat-${hdr.name}` },
             hdr.fields.map(f => {
@@ -74,15 +75,19 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
             })
           );
         })
-        .join("") + adder
+      ) + adder
     );
   } else {
-    return div(
-      { class: `form-repeat repeat-${hdr.name}` },
-      hdr.fields.map(f => {
-        return mkFormRowForField(v, errors, formStyle, "_0")(f);
-      }),
-      adder
+    return (
+      div(
+        { class: `repeats-${hdr.name}` },
+        div(
+          { class: `form-repeat repeat-${hdr.name}` },
+          hdr.fields.map(f => {
+            return mkFormRowForField(v, errors, formStyle, "_0")(f);
+          })
+        )
+      ) + adder
     );
   }
 };

@@ -37,7 +37,7 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
   
     <!-- Custom styles for this template-->
     <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" crossorigin="anonymous">
+    <link href="/saltcorn.css" rel="stylesheet">
     <title>${text(title)}</title>
   </head>
   <body id="page-top">
