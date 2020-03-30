@@ -34,7 +34,16 @@ const configuration_workflow = () =>
                     class: "coltype",
                     required: true,
                     attributes: {
-                      options: "Field,Action,View Link,Join Field,Aggregation"
+                      options: [
+                        {
+                          name: "Field",
+                          label: `Field in ${table.name} table`
+                        },
+                        { name: "Action", label: "Action on row" },
+                        { name: "ViewLink", label: "Link to other view" },
+                        { name: "JoinField", label: "Join Field" },
+                        { name: "Aggregation", label: "Aggregation" }
+                      ]
                     }
                   },
                   {
