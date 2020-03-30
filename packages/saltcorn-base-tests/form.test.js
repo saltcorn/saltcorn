@@ -52,10 +52,17 @@ describe("Form", () => {
       ]
     });
     const html = renderForm(form);
-    //form.validate({ age: 32 });
+    form.validate({
+      subject: "Maths",
+      age_0: 18,
+      name_0: "Fred",
+      age_1: 19,
+      name_1: "George"
+    });
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('name="age_0"')).toBe(true);
-    //expect(form.values.age).toBe(32);
+    expect(form.values.subject).toBe("Maths");
+    expect(form.values.students.length).toBe(2);
     done();
   });
 });
