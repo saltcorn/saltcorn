@@ -159,16 +159,7 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
-  const js = script(`function sortby(k) {
-    $('input[name="_sortby"]').val(k);
-    $('form.stateForm').submit();
-  };
-  function gopage(n) {
-    $('input[name="_page"]').val(n);
-    $('form.stateForm').submit();
-  }
-  `);
-  return mkTable(tfields, rows, page_opts) + create_link + js;
+  return mkTable(tfields, rows, page_opts) + create_link;
 };
 
 module.exports = {

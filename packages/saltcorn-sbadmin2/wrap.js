@@ -73,8 +73,7 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
   
     <!-- Custom scripts for all pages-->
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js" crossorigin="anonymous"></script>
+    <script src="/saltcorn.js"></script>
   </body>
 </html>`;
 

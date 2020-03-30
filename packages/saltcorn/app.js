@@ -32,9 +32,16 @@ app.use(
   })
 );
 
+console.log(__dirname);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+app.use(
+  express.static(__dirname + "/public", {
+    //etag:false,
+    //maxage: 1000
+  })
+);
 
 passport.use(
   "local",
