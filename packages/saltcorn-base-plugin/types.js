@@ -83,10 +83,14 @@ const int = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  editAs: (nm, v, attrs, cls) =>
-    `<input class="form-check-input ${cls || ""}" type="checkbox" name="${text(
-      nm
-    )}" id="input${text(nm)}" ${v ? `checked` : ""}>`,
+  editAs: (nm, v, attrs, cls, fld) =>
+    input({
+      class: `form-check-input ${cls || ""}`,
+      type: "checkbox",
+      name: text(nm),
+      id: `input${text(nm)}`,
+      ...(v && { checked: true })
+    }),
   attributes: [],
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;

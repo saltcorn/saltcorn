@@ -20,3 +20,16 @@ function add_repeater(nm) {
   });
   newe.appendTo($("div.repeats-" + nm));
 }
+
+function apply_showif() {
+  console.log("apply_showif");
+
+  $("[data-show-if]").each(function(ix, element) {
+    console.log(element.attr("data-show-if"));
+  });
+}
+
+$(function() {
+  $("form").change(apply_showif);
+  apply_showif();
+});

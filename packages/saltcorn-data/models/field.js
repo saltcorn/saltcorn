@@ -7,6 +7,8 @@ class Field {
     if (!o.type && !o.input_type) throw "Field initialised with no type";
     this.label = o.label || o.name;
     this.name = o.name;
+    this.showIf = o.showIf;
+    this.class = o.class || "";
     this.id = o.id;
     this.sublabel = o.sublabel;
     const State = require("../db/state");

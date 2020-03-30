@@ -28,6 +28,16 @@ const configuration_workflow = () =>
                 name: "columns",
                 fields: [
                   {
+                    name: "type",
+                    label: "Type",
+                    type: "String",
+                    class: "coltype",
+                    required: true,
+                    attributes: {
+                      options: "Field,Action,View Link,Join Field,Aggregation"
+                    }
+                  },
+                  {
                     name: "field_name",
                     label: "Field",
                     type: "String",
@@ -39,7 +49,9 @@ const configuration_workflow = () =>
                         ...link_view_opts,
                         ...parent_field_list
                       ].join()
-                    }
+                    },
+                    showIf:
+                      "function(el){el.parent('.form-repeat').find('.coltype').val()==='Field'}"
                   },
                   {
                     name: "state_field",
