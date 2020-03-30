@@ -63,6 +63,8 @@ describe("Form", () => {
     expect(html.includes('name="age_0"')).toBe(true);
     expect(form.values.subject).toBe("Maths");
     expect(form.values.students.length).toBe(2);
+    expect(form.values.students[0].name).toBe("Fred");
+    expect(form.values.students[1].age).toBe(19);
     done();
   });
 });
