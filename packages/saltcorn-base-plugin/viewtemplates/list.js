@@ -31,6 +31,7 @@ const configuration_workflow = () =>
                     name: "field_name",
                     label: "Field",
                     type: "String",
+                    required: true,
                     attributes: {
                       options: [
                         ...fldOptions,
@@ -39,6 +40,11 @@ const configuration_workflow = () =>
                         ...parent_field_list
                       ].join()
                     }
+                  },
+                  {
+                    name: "state_field",
+                    label: "In search form",
+                    type: "Bool"
                   }
                 ]
               }),
