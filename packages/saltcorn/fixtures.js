@@ -53,7 +53,13 @@ const fixtures = async () => {
     table_id: table.id,
     name: "authorlist",
     viewtemplate: "List",
-    configuration: { field_list: ["author", "Link to authorshow", "Delete"] },
+    configuration: {
+      columns: [
+        { field_name: "author", state_field: "on" },
+        { field_name: "Link to authorshow" },
+        { field_name: "Delete" }
+      ]
+    },
     is_public: true,
     on_root_page: true,
     on_menu: true
@@ -72,13 +78,13 @@ const fixtures = async () => {
     name: "patientlist",
     viewtemplate: "List",
     configuration: {
-      field_list: [
-        "name",
-        "favbook",
-        "parent",
-        "favbook",
-        "favbook.author",
-        "favbook.pages"
+      columns: [
+        { field_name: "name" },
+        { field_name: "favbook" },
+        { field_name: "parent" },
+        { field_name: "favbook" },
+        { field_name: "favbook.author" },
+        { field_name: "favbook.pages" }
       ]
     },
     is_public: false,
