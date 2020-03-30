@@ -25,7 +25,11 @@ function apply_showif() {
   console.log("apply_showif");
 
   $("[data-show-if]").each(function(ix, element) {
-    console.log(element.attr("data-show-if"));
+    var e = $(element);
+    var func = new Function("e", "return " + e.attr("data-show-if"));
+    var to_show = func(e);
+    if (to_show) e.show();
+    else e.hide();
   });
 }
 
