@@ -62,7 +62,7 @@ const mkFormRow = (v, errors, formStyle) => hdr =>
     : mkFormRowForField(v, errors, formStyle)(hdr);
 
 const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
-  const adder = a({ href: `javascript:add_repeater("${hdr.name}")` }, "Add");
+  const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
   if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
     return (
       v[hdr.name]

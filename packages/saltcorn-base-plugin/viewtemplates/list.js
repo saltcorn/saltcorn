@@ -1,4 +1,5 @@
 const Field = require("saltcorn-data/models/field");
+const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
@@ -23,17 +24,24 @@ const configuration_workflow = () =>
             blurb:
               "Finalise your list view by specifying the fields in the table",
             fields: [
-              {
-                name: "field_list",
-                label: "Field list",
-                input_type: "ordered_multi_select",
-                options: [
-                  ...fldOptions,
-                  "Delete",
-                  ...link_view_opts,
-                  ...parent_field_list
+              new FieldRepeat({
+                name: "columns",
+                fields: [
+                  {
+                    name: "field_name",
+                    label: "Field",
+                    type: "String",
+                    attributes: {
+                      options: [
+                        ...fldOptions,
+                        "Delete",
+                        ...link_view_opts,
+                        ...parent_field_list
+                      ].join()
+                    }
+                  }
                 ]
-              },
+              }),
               {
                 name: "link_to_create",
                 label: "Link to create",
@@ -47,36 +55,32 @@ const configuration_workflow = () =>
       }
     ]
   });
-const get_state_fields = async (table_id, viewname, { field_list }) => {
+const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
 
-  (field_list || []).forEach(fldnm => {
+  (columns || []).forEach(({ field_name }) => {
     if (
-      fldnm === "Delete" ||
-      fldnm.startsWith("Link to ") ||
-      fldnm.includes(".")
+      field_name === "Delete" ||
+      field_name.startsWith("Link to ") ||
+      field_name.includes(".")
     )
       return;
-    state_fields.push(table_fields.find(f => f.name == fldnm));
+    state_fields.push(table_fields.find(f => f.name == field_name));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
   state_fields.push({ name: "_page", input_type: "hidden" });
   return state_fields;
 };
 
-const run = async (
-  table_id,
-  viewname,
-  { field_list, link_to_create },
-  state
-) => {
+const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   //console.log(state);
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
   var joinFields = {};
-  const tfields = field_list.map(fldnm => {
+  const tfields = columns.map(({ field_name }) => {
+    const fldnm = field_name;
     if (fldnm === "Delete")
       return {
         label: "Delete",
