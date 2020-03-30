@@ -70,8 +70,8 @@ describe("viewedit new List", () => {
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
       .send("stepName=listfields")
-      .send("field_list=author")
-      .send("field_list=pages")
+      .send("field_name_0=author")
+      .send("field_name_1=pages")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
     done();
@@ -123,7 +123,7 @@ describe("viewedit new List with one field", () => {
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
       .send("stepName=listfields")
-      .send("field_list=author")
+      .send("field_name_0=author")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
     done();
