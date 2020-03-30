@@ -65,14 +65,15 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
 
-  (columns || []).forEach(({ field_name }) => {
+  (columns || []).forEach(({ field_name, state_field }) => {
     if (
       field_name === "Delete" ||
       field_name.startsWith("Link to ") ||
       field_name.includes(".")
     )
       return;
-    state_fields.push(table_fields.find(f => f.name == field_name));
+    if (state_field)
+      state_fields.push(table_fields.find(f => f.name == field_name));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
   state_fields.push({ name: "_page", input_type: "hidden" });
