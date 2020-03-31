@@ -195,7 +195,7 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
       //console.log(column)
       const [table, fld] = column.agg_relation.split(".");
       const field = column[`agg_field_${table}_${fld}`];
-      const targetNm = column.stat + "_" + table + "_" + fld;
+      const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
       aggregations[targetNm] = {
         table,
         ref: fld,
@@ -256,6 +256,8 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
+  console.log(tfields);
+  console.log(rows);
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
