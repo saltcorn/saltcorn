@@ -20,6 +20,23 @@ const configuration_workflow = () =>
           const link_views = await View.find_possible_links_to_table(table_id);
           const link_view_opts = link_views.map(v => text(v.name));
           const { parent_field_list } = await table.get_parent_relations();
+          const {
+            child_field_list,
+            child_relations
+          } = await table.get_child_relations();
+          console.log("child relations", child_relations);
+          const agg_field_opts = child_relations.map(
+            ({ table, key_field }) => ({
+              name: `agg_field`,
+              label: "On Field",
+              type: "String",
+              required: true,
+              attributes: {
+                options: table.fields.map(f => f.name).join()
+              },
+              showIf: [".agg_relation", `${table.name}.${key_field.name}`]
+            })
+          );
           return new Form({
             blurb:
               "Finalise your list view by specifying the fields in the table",
@@ -88,6 +105,38 @@ const configuration_workflow = () =>
                     showIf: [".coltype", "JoinField"]
                   },
                   {
+                    name: "join_field",
+                    label: "Join Field",
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: parent_field_list.join()
+                    },
+                    showIf: [".coltype", "JoinField"]
+                  },
+                  {
+                    name: "agg_relation",
+                    label: "Relation",
+                    type: "String",
+                    class: "agg_relation",
+                    required: true,
+                    attributes: {
+                      options: child_field_list.join()
+                    },
+                    showIf: [".coltype", "Aggregation"]
+                  },
+                  ...agg_field_opts,
+                  {
+                    name: "stat",
+                    label: "Statistic",
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: "Count,Average,Sum,Max,Min"
+                    },
+                    showIf: [".coltype", "Aggregation"]
+                  },
+                  {
                     name: "state_field",
                     label: "In search form",
                     type: "Bool",
@@ -127,6 +176,7 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
 
   const fields = await Field.find({ table_id: table.id });
   var joinFields = {};
+  var aggregations = {};
   const tfields = columns.map(column => {
     const fldnm = column.field_name;
     if (column.type === "Action")
@@ -147,6 +197,14 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
     } else if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       joinFields[targetNm] = { ref: refNm, target: targetNm };
+      return {
+        label: targetNm,
+        key: targetNm
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
+      };
+    } else if (column.type === "Aggregation") {
+      const [table, fld] = column.agg_field.split(".");
+      aggregations[column.stat + "_" + table + "_" + fld] = { table, ref: fld };
       return {
         label: targetNm,
         key: targetNm
@@ -178,6 +236,7 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   const rows = await table.getJoinedRows({
     where: qstate,
     joinFields,
+    aggregations,
     limit: rows_per_page,
     offset: (current_page - 1) * rows_per_page,
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
