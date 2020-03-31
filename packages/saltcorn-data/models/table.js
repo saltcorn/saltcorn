@@ -112,7 +112,9 @@ class Table {
       const jtNm = `${reftable}_jt_${ref}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join ${reftable} ${jtNm} on ${jtNm}.id=a.${ref}`;
+        joinq += ` left join ${sqlsanitize(reftable)} ${sqlsanitize(
+          jtNm
+        )} on ${sqlsanitize(jtNm)}.id=a.${sqlsanitize(ref)}`;
       }
       fldNms.push(`${jtNm}.${target} as ${fldnm}`);
     });
@@ -124,8 +126,10 @@ class Table {
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
-          `(select ${aggregate}(${field ||
-            "*"}) from ${table} where ${ref}=a.id) ${fldnm}`
+          `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
+            "*"}) from ${sqlsanitize(table)} where ${sqlsanitize(
+            ref
+          )}=a.id) ${sqlsanitize(fldnm)}`
         );
       }
     );
