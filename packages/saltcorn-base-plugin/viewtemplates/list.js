@@ -24,10 +24,9 @@ const configuration_workflow = () =>
             child_field_list,
             child_relations
           } = await table.get_child_relations();
-          console.log("child relations", child_relations);
           const agg_field_opts = child_relations.map(
             ({ table, key_field }) => ({
-              name: `agg_field`,
+              name: `agg_field_${table.name}_${key_field.name}`,
               label: "On Field",
               type: "String",
               required: true,
@@ -105,16 +104,6 @@ const configuration_workflow = () =>
                     showIf: [".coltype", "JoinField"]
                   },
                   {
-                    name: "join_field",
-                    label: "Join Field",
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: parent_field_list.join()
-                    },
-                    showIf: [".coltype", "JoinField"]
-                  },
-                  {
                     name: "agg_relation",
                     label: "Relation",
                     type: "String",
@@ -132,7 +121,7 @@ const configuration_workflow = () =>
                     type: "String",
                     required: true,
                     attributes: {
-                      options: "Count,Average,Sum,Max,Min"
+                      options: "Count,Avg,Sum,Max,Min"
                     },
                     showIf: [".coltype", "Aggregation"]
                   },
@@ -203,8 +192,16 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
     } else if (column.type === "Aggregation") {
-      const [table, fld] = column.agg_field.split(".");
-      aggregations[column.stat + "_" + table + "_" + fld] = { table, ref: fld };
+      //console.log(column)
+      const [table, fld] = column.agg_relation.split(".");
+      const field = column[`agg_field_${table}_${fld}`];
+      const targetNm = column.stat + "_" + table + "_" + fld;
+      aggregations[targetNm] = {
+        table,
+        ref: fld,
+        field,
+        aggregate: column.stat
+      };
       return {
         label: targetNm,
         key: targetNm
