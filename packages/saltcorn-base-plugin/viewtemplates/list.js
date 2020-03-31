@@ -34,6 +34,7 @@ const configuration_workflow = () =>
                     class: "coltype",
                     required: true,
                     attributes: {
+                      //TODO omit when no options
                       options: [
                         {
                           name: "Field",
