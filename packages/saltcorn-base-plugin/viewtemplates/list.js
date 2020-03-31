@@ -59,8 +59,7 @@ const configuration_workflow = () =>
                         ...parent_field_list
                       ].join()
                     },
-                    showIf:
-                      "e.closest('.form-repeat').find('.coltype').val()==='Field';"
+                    showIf: [".coltype", "Field"]
                   },
                   {
                     name: "state_field",

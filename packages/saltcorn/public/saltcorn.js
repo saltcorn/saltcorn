@@ -20,12 +20,17 @@ function add_repeater(nm) {
   });
   newe.appendTo($("div.repeats-" + nm));
 }
+// "e.closest('.form-namespace').find('.coltype').val()==='Field';"
 
 function apply_showif() {
   $("[data-show-if]").each(function(ix, element) {
     var e = $(element);
-    var to_show = new Function("e", "return " + e.attr("data-show-if"));
-    if (to_show(e)) e.show();
+    var depends_on_elem = e
+      .closest(".form-namespace")
+      .find(e.attr("data-show-if"));
+
+    var to_show = depends_on_elem.val() == e.attr("data-show-if-is");
+    if (to_show) e.show();
     else e.hide();
   });
 }

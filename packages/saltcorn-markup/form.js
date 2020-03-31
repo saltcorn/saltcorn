@@ -6,7 +6,10 @@ const formRowWrap = (hdr, inner, error = "", fStyle) =>
   div(
     {
       class: `form-group ${isHoriz(fStyle) ? "row" : ""}`,
-      ...(hdr.showIf && { "data-show-if": hdr.showIf })
+      ...(hdr.showIf && {
+        "data-show-if": hdr.showIf[0],
+        "data-show-if-is": hdr.showIf[1]
+      })
     },
     isCheck(hdr)
       ? div(
@@ -72,7 +75,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
         { class: `repeats-${hdr.name}` },
         v[hdr.name].map((vi, ix) => {
           return div(
-            { class: `form-repeat repeat-${hdr.name}` },
+            { class: `form-repeat form-namespace repeat-${hdr.name}` },
             hdr.fields.map(f => {
               return mkFormRowForField(vi, errors, formStyle, "_" + ix)(f);
             })
@@ -187,7 +190,7 @@ const renderForm = form => {
 };
 
 const mkForm = (form, errors = {}) => {
-  const top = `<form action="${form.action}" class="${
+  const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
   //console.log(hdrs);
