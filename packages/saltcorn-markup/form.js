@@ -1,4 +1,4 @@
-const { p, div, i, label, text, button, a } = require("./tags");
+const { p, div, i, label, text, button, a, span } = require("./tags");
 
 const mkShowIf = sIf =>
   Object.entries(sIf)
@@ -76,6 +76,14 @@ const mkFormRow = (v, errors, formStyle) => hdr =>
 
 const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
   const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
+  const icons = div(
+    { class: "float-right" },
+    span({ onclick: "rep_up" }, i({ class: "fa fa-arrow-up pull-right" })),
+    "&nbsp;",
+    span({ onclick: "rep_del" }, i({ class: "fa fa-times pull-right" })),
+    "&nbsp;",
+    span({ onclick: "rep_down" }, i({ class: "fa fa-arrow-down pull-right" }))
+  );
   if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
     return (
       div(
@@ -83,6 +91,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
         v[hdr.name].map((vi, ix) => {
           return div(
             { class: `form-repeat form-namespace repeat-${hdr.name}` },
+            icons,
             hdr.fields.map(f => {
               return mkFormRowForField(vi, errors, formStyle, "_" + ix)(f);
             })
@@ -96,6 +105,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
         { class: `repeats-${hdr.name}` },
         div(
           { class: `form-repeat repeat-${hdr.name}` },
+          icons,
           hdr.fields.map(f => {
             return mkFormRowForField(v, errors, formStyle, "_0")(f);
           })
