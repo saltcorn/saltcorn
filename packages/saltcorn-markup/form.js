@@ -78,11 +78,17 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
   const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
   const icons = div(
     { class: "float-right" },
-    span({ onclick: "rep_up" }, i({ class: "fa fa-arrow-up pull-right" })),
+    span(
+      { onclick: "rep_up(this)" },
+      i({ class: "fa fa-arrow-up pull-right" })
+    ),
     "&nbsp;",
-    span({ onclick: "rep_del" }, i({ class: "fa fa-times pull-right" })),
+    span({ onclick: "rep_del(this)" }, i({ class: "fa fa-times pull-right" })),
     "&nbsp;",
-    span({ onclick: "rep_down" }, i({ class: "fa fa-arrow-down pull-right" }))
+    span(
+      { onclick: "rep_down(this)" },
+      i({ class: "fa fa-arrow-down pull-right" })
+    )
   );
   if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
     return (

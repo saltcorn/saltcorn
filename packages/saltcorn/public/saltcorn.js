@@ -30,6 +30,17 @@ function apply_showif() {
   });
 }
 
+function rep_del(e) {
+  var myrep = $(e).closest(".form-repeat");
+  var par = myrep.parent();
+  console.log("rep del", par.index(myrep));
+  console.log("rep del other", myrep.index());
+}
+
+function rep_up(e) {
+  console.log("rep del", e);
+}
+
 $(function() {
   $("form").change(apply_showif);
   apply_showif();
