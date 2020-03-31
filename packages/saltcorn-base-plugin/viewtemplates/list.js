@@ -33,7 +33,10 @@ const configuration_workflow = () =>
               attributes: {
                 options: table.fields.map(f => f.name).join()
               },
-              showIf: [".agg_relation", `${table.name}.${key_field.name}`]
+              showIf: {
+                ".agg_relation": `${table.name}.${key_field.name}`,
+                ".coltype": "Aggregation"
+              }
             })
           );
           return new Form({
@@ -71,7 +74,7 @@ const configuration_workflow = () =>
                     attributes: {
                       options: fldOptions.join()
                     },
-                    showIf: [".coltype", "Field"]
+                    showIf: { ".coltype": "Field" }
                   },
                   {
                     name: "action_name",
@@ -81,7 +84,7 @@ const configuration_workflow = () =>
                     attributes: {
                       options: "Delete,Edit"
                     },
-                    showIf: [".coltype", "Action"]
+                    showIf: { ".coltype": "Action" }
                   },
                   {
                     name: "view",
@@ -91,7 +94,7 @@ const configuration_workflow = () =>
                     attributes: {
                       options: link_view_opts.join()
                     },
-                    showIf: [".coltype", "ViewLink"]
+                    showIf: { ".coltype": "ViewLink" }
                   },
                   {
                     name: "join_field",
@@ -101,7 +104,7 @@ const configuration_workflow = () =>
                     attributes: {
                       options: parent_field_list.join()
                     },
-                    showIf: [".coltype", "JoinField"]
+                    showIf: { ".coltype": "JoinField" }
                   },
                   {
                     name: "agg_relation",
@@ -112,7 +115,7 @@ const configuration_workflow = () =>
                     attributes: {
                       options: child_field_list.join()
                     },
-                    showIf: [".coltype", "Aggregation"]
+                    showIf: { ".coltype": "Aggregation" }
                   },
                   ...agg_field_opts,
                   {
@@ -123,13 +126,13 @@ const configuration_workflow = () =>
                     attributes: {
                       options: "Count,Avg,Sum,Max,Min"
                     },
-                    showIf: [".coltype", "Aggregation"]
+                    showIf: { ".coltype": "Aggregation" }
                   },
                   {
                     name: "state_field",
                     label: "In search form",
                     type: "Bool",
-                    showIf: [".coltype", "Field"]
+                    showIf: { ".coltype": "Field" }
                   }
                 ]
               }),

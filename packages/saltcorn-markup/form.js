@@ -1,5 +1,13 @@
 const { p, div, i, label, text, button, a } = require("./tags");
 
+const mkShowIf = sIf =>
+  Object.entries(sIf)
+    .map(
+      ([target, value]) =>
+        `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+    )
+    .join(" && ");
+
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 const isHoriz = formStyle => formStyle === "horiz";
 const formRowWrap = (hdr, inner, error = "", fStyle) =>
@@ -7,8 +15,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle) =>
     {
       class: `form-group ${isHoriz(fStyle) ? "row" : ""}`,
       ...(hdr.showIf && {
-        "data-show-if": hdr.showIf[0],
-        "data-show-if-is": hdr.showIf[1]
+        "data-show-if": mkShowIf(hdr.showIf)
       })
     },
     isCheck(hdr)
