@@ -52,14 +52,39 @@ const configuration_workflow = () =>
                     type: "String",
                     required: true,
                     attributes: {
-                      options: [
-                        ...fldOptions,
-                        "Delete",
-                        ...link_view_opts,
-                        ...parent_field_list
-                      ].join()
+                      options: fldOptions.join()
                     },
                     showIf: [".coltype", "Field"]
+                  },
+                  {
+                    name: "action_name",
+                    label: "Action",
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: "Delete,Edit"
+                    },
+                    showIf: [".coltype", "Action"]
+                  },
+                  {
+                    name: "view",
+                    label: "View",
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: link_view_opts.join()
+                    },
+                    showIf: [".coltype", "ViewLink"]
+                  },
+                  {
+                    name: "join_field",
+                    label: "Join Field",
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: parent_field_list.join()
+                    },
+                    showIf: [".coltype", "JoinField"]
                   },
                   {
                     name: "state_field",
