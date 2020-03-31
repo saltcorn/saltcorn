@@ -89,7 +89,8 @@ const configuration_workflow = () =>
                   {
                     name: "state_field",
                     label: "In search form",
-                    type: "Bool"
+                    type: "Bool",
+                    showIf: [".coltype", "Field"]
                   }
                 ]
               }),
@@ -110,15 +111,9 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
 
-  (columns || []).forEach(({ field_name, state_field }) => {
-    if (
-      field_name === "Delete" ||
-      field_name.startsWith("Link to ") ||
-      field_name.includes(".")
-    )
-      return;
-    if (state_field)
-      state_fields.push(table_fields.find(f => f.name == field_name));
+  (columns || []).forEach(column => {
+    if (column.type === "Field" && column.state_field)
+      state_fields.push(table_fields.find(f => f.name == column.field_name));
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
   state_fields.push({ name: "_page", input_type: "hidden" });
