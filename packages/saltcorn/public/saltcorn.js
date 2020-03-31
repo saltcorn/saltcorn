@@ -32,7 +32,19 @@ function apply_showif() {
 
 function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
-  console.log("rep del other", myrep.index());
+  var ix = myrep.index();
+  var parent = myrep.parent();
+  parent.children().each(function(childix, element) {
+    if (childix > ix) {
+      $(element).html(
+        $(element)
+          .html()
+          .split("_" + childix)
+          .join("_" + (childix - 1))
+      );
+    }
+  });
+  myrep.remove();
 }
 
 function rep_up(e) {
