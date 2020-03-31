@@ -32,8 +32,6 @@ function apply_showif() {
 
 function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
-  var par = myrep.parent();
-  console.log("rep del", par.index(myrep));
   console.log("rep del other", myrep.index());
 }
 
