@@ -256,8 +256,6 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   const create_link = link_to_create
     ? link(`/edit/${table.name}`, "Add row")
     : "";
-  console.log(tfields);
-  console.log(rows);
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
