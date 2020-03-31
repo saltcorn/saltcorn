@@ -78,6 +78,20 @@ class Table {
     return { parent_relations, parent_field_list };
   }
 
+  async get_child_relations() {
+    const cfields = await Field.find({ type: `Key to ${this.name}` });
+    var child_relations = [];
+    var child_field_list = [];
+    for (const f of cfields) {
+      if (f.is_fkey) {
+        const table = await Table.findOne({ id: f.table_id });
+        child_field_list.push(`${table.name}.${f.name}`);
+        await table.getFields();
+        child_relations.push({ key_field: f, table });
+      }
+    }
+    return { child_relations, child_field_list };
+  }
   async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];

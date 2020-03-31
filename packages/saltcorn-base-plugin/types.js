@@ -3,10 +3,14 @@ const { input, select, option, text } = require("saltcorn-markup/tags");
 const isdef = x => (typeof x === "undefined" ? false : true);
 
 const getStrOptions = (v, optsStr) =>
-  optsStr
-    .split(",")
-    .map(o => text(o.trim()))
-    .map(o => option({ value: o, ...(v === o && { selected: true }) }, o));
+  typeof optsStr === "string"
+    ? optsStr
+        .split(",")
+        .map(o => text(o.trim()))
+        .map(o => option({ value: o, ...(v === o && { selected: true }) }, o))
+    : optsStr.map(({ name, label }) =>
+        option({ value: name, ...(v === name && { selected: true }) }, label)
+      );
 
 const string = {
   name: "String",
@@ -83,10 +87,14 @@ const int = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  editAs: (nm, v, attrs, cls) =>
-    `<input class="form-check-input ${cls || ""}" type="checkbox" name="${text(
-      nm
-    )}" id="input${text(nm)}" ${v ? `checked` : ""}>`,
+  editAs: (nm, v, attrs, cls, fld) =>
+    input({
+      class: `form-check-input ${cls || ""}`,
+      type: "checkbox",
+      name: text(nm),
+      id: `input${text(nm)}`,
+      ...(v && { checked: true })
+    }),
   attributes: [],
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;

@@ -55,9 +55,9 @@ const fixtures = async () => {
     viewtemplate: "List",
     configuration: {
       columns: [
-        { field_name: "author", state_field: "on" },
-        { field_name: "Link to authorshow" },
-        { field_name: "Delete" }
+        { type: "Field", field_name: "author", state_field: "on" },
+        { type: "ViewLink", view: "authorshow" },
+        { type: "Action", action_name: "Delete" }
       ]
     },
     is_public: true,
@@ -79,12 +79,12 @@ const fixtures = async () => {
     viewtemplate: "List",
     configuration: {
       columns: [
-        { field_name: "name" },
-        { field_name: "favbook" },
-        { field_name: "parent" },
-        { field_name: "favbook" },
-        { field_name: "favbook.author" },
-        { field_name: "favbook.pages" }
+        { type: "Field", field_name: "name" },
+        { type: "Field", field_name: "favbook" },
+        { type: "Field", field_name: "parent" },
+        { type: "Field", field_name: "favbook" },
+        { type: "JoinField", join_field: "favbook.author" },
+        { type: "JoinField", join_field: "favbook.pages" }
       ]
     },
     is_public: false,

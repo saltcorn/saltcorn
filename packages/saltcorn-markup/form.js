@@ -4,7 +4,13 @@ const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 const isHoriz = formStyle => formStyle === "horiz";
 const formRowWrap = (hdr, inner, error = "", fStyle) =>
   div(
-    { class: `form-group ${isHoriz(fStyle) ? "row" : ""}` },
+    {
+      class: `form-group ${isHoriz(fStyle) ? "row" : ""}`,
+      ...(hdr.showIf && {
+        "data-show-if": hdr.showIf[0],
+        "data-show-if-is": hdr.showIf[1]
+      })
+    },
     isCheck(hdr)
       ? div(
           { class: isHoriz(fStyle) ? "col-sm-10 offset-md-2" : "" },
@@ -69,7 +75,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
         { class: `repeats-${hdr.name}` },
         v[hdr.name].map((vi, ix) => {
           return div(
-            { class: `form-repeat repeat-${hdr.name}` },
+            { class: `form-repeat form-namespace repeat-${hdr.name}` },
             hdr.fields.map(f => {
               return mkFormRowForField(vi, errors, formStyle, "_" + ix)(f);
             })
@@ -106,21 +112,21 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
           name,
           v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
           hdr.attributes,
-          validClass,
+          validClass + " " + hdr.class,
           hdr.required
         ),
         errorFeedback,
         formStyle
       );
     case "hidden":
-      return `<input type="hidden" class="form-control ${validClass}" name="${text(
-        name
-      )}" ${v ? `value="${text(v[hdr.name])}"` : ""}>`;
+      return `<input type="hidden" class="form-control ${validClass} ${
+        hdr.class
+      }" name="${text(name)}" ${v ? `value="${text(v[hdr.name])}"` : ""}>`;
     case "select":
       const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" name="${text(
+        `<select class="form-control ${validClass} ${hdr.class}" name="${text(
           name
         )}" id="input${text(name)}">${opts}</select>`,
         errorFeedback,
@@ -130,9 +136,9 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
       const mopts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass}" class="chosen-select" multiple name="${text(
-          name
-        )}" id="input${text(
+        `<select class="form-control ${validClass} ${
+          hdr.class
+        }" class="chosen-select" multiple name="${text(name)}" id="input${text(
           name
         )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
         errorFeedback,
@@ -142,9 +148,9 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
     default:
       return formRowWrap(
         hdr,
-        `<input type="${
-          hdr.input_type
-        }" class="form-control" name="${name}" id="input${text(name)}" ${
+        `<input type="${hdr.input_type}" class="form-control ${
+          hdr.class
+        }" name="${name}" id="input${text(name)}" ${
           v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
         }>`,
         errorFeedback,
@@ -184,7 +190,7 @@ const renderForm = form => {
 };
 
 const mkForm = (form, errors = {}) => {
-  const top = `<form action="${form.action}" class="${
+  const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
   //console.log(hdrs);
