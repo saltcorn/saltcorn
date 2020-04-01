@@ -70,6 +70,7 @@ const configuration_workflow = () =>
       },
       {
         name: "fixed_fields",
+        contextField: "fixed",
         form: async context => {
           const table_id = context.table_id;
           const table = await Table.findOne({ id: table_id });

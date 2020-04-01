@@ -26,15 +26,19 @@ class Workflow {
     if (stepIx === -1) {
       //error
     }
-    const form = await applyAsync(this.steps[stepIx].form, context);
+    const step = this.steps[stepIx];
+    const form = await applyAsync(step.form, context);
 
     const valres = form.validate(stepBody);
     if (valres.errors) {
       if (this.action) form.action = this.action;
       return { renderForm: form };
     }
+    const toCtx = step.contextField
+      ? { [step.contextField]: valres.success }
+      : valres.success;
 
-    return this.runStep({ ...context, ...valres.success }, stepIx + 1);
+    return this.runStep({ ...context, ...toCtx }, stepIx + 1);
   }
   async runStep(context, stepIx) {
     if (stepIx >= this.steps.length) {
@@ -53,8 +57,10 @@ class Workflow {
       contextEnc: encodeURIComponent(JSON.stringify(context))
     };
     form.fields.forEach(fld => {
-      if (typeof context[fld.name] !== "undefined")
-        form.values[fld.name] = context[fld.name];
+      const ctxValue = step.contextField
+        ? (context[step.contextField] || {})[fld.name]
+        : context[fld.name];
+      if (typeof ctxValue !== "undefined") form.values[fld.name] = ctxValue;
     });
     if (this.action) form.action = this.action;
     return { renderForm: form };
