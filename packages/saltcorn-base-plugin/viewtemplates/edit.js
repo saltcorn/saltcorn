@@ -67,6 +67,24 @@ const configuration_workflow = () =>
             ]
           });
         }
+      },
+      {
+        name: "fixed_fields",
+        form: async context => {
+          const table_id = context.table_id;
+          const table = await Table.findOne({ id: table_id });
+          const fields = await table.getFields();
+          const in_form_fields = context.columns.map(f => f.field_name);
+          const omitted_fields = fields.filter(
+            f => !in_form_fields.includes(f.name)
+          );
+          const form = new Form({
+            blurb: "These fields were missing, you can give values here",
+            fields: omitted_fields
+          });
+          await form.fill_fkey_options();
+          return form;
+        }
       }
     ]
   });
@@ -94,7 +112,9 @@ const getForm = async (table, viewname, columns, id) => {
   return form;
 };
 
-const run = async (table_id, viewname, { columns }, state) => {
+const run = async (table_id, viewname, config, state) => {
+  //console.log({config})
+  const { columns } = config;
   const table = await Table.findOne({ id: table_id });
   const form = await getForm(table, viewname, columns, state.id);
 
