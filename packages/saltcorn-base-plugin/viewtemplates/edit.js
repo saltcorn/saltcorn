@@ -126,18 +126,27 @@ const run = async (table_id, viewname, config, state) => {
   return renderForm(form);
 };
 
-const runPost = async (table_id, viewname, { columns }, state, body, res) => {
+const runPost = async (
+  table_id,
+  viewname,
+  { columns, fixed },
+  state,
+  body,
+  res
+) => {
   const table = await Table.findOne({ id: table_id });
   const form = await getForm(table, viewname, columns, body.id);
   form.validate(body);
   if (form.hasErrors) {
     res.sendWrap(`${table.name} create new`, renderForm(form)); // vres.errors.join("\n"));
   } else {
+    const row = { ...form.values, ...fixed };
+
     if (typeof body.id === "undefined") {
-      await table.insertRow(form.values);
+      await table.insertRow(row);
     } else {
       const id = v.id;
-      await table.updateRow(form.values, id);
+      await table.updateRow(row, id);
     }
     res.redirect(`/list/${table.name}`);
   }
