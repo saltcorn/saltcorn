@@ -64,7 +64,7 @@ module.exports = {
   h3: mkTag("h3"),
   h4: mkTag("h4"),
   h5: mkTag("h5"),
-  i: mkTag("i"),
+  i: mkTag("i", true),
   hr: mkTag("hr"),
   domReady,
   input,
