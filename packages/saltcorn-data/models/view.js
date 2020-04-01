@@ -82,6 +82,17 @@ class View {
       removeEmptyStrings(query)
     );
   }
+
+  async runPost(query, body, res) {
+    return await this.viewtemplateObj.runPost(
+      this.table_id,
+      this.name,
+      this.configuration,
+      removeEmptyStrings(query),
+      body,
+      res
+    );
+  }
   async get_state_form(query) {
     if (this.viewtemplateObj.display_state_form) {
       const fields = await this.viewtemplateObj.get_state_fields(
