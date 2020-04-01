@@ -5,7 +5,7 @@ const Table = require("../models/table");
 const removeEmptyStrings = obj => {
   var o = {};
   Object.entries(obj).forEach(([k, v]) => {
-    if (v !== "") o[k] = v;
+    if (v !== "" && v !== null) o[k] = v;
   });
   return o;
 };
@@ -89,7 +89,7 @@ class View {
       this.name,
       this.configuration,
       removeEmptyStrings(query),
-      body,
+      removeEmptyStrings(body),
       res
     );
   }
