@@ -37,10 +37,10 @@ const bool = {
   generate: gen.bool
 };
 
-const class_ = cls => ({
-  name: "class_",
+const klass = cls => ({
+  name: "klass",
   options: cls,
-  check: x => (x.constructor.name = cls.name)
+  check: x => (x.constructor.name === cls.name)
 });
 
 const obj = o => ({
@@ -132,5 +132,6 @@ module.exports = {
   maybe,
   array,
   bool,
-  positive
+  positive,
+  klass
 };

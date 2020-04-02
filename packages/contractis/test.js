@@ -83,6 +83,15 @@ describe("value contract", () => {
     expect(() => contract(is.str, 4)).toThrow(Error);
   });
 });
+
+describe("class value contract", () => {
+  it("detect class", () => {
+    const c = new Counter(3);
+    expect(contract(is.klass(Counter), c)).toBe(c);
+    expect(() => contract(is.klass(Counter), 4)).toThrow(Error);
+  });
+});
+
 describe("maybe, or contract", () => {
   it("should compute if valid", () => {
     const add1C = contract.with(add1, {
