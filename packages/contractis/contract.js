@@ -25,27 +25,52 @@ const check_arguments = (arguments_contract_spec, args) => {
 const get_return_contract = (returns, args) =>
   typeof returns === "function" ? returns(...args) : returns;
 
-const contract_function = (fun, opts) => {
+const contract_function = (fun, opts, that) => {
   const newf = (...args) => {
     if (opts.arguments) check_arguments(opts.arguments, args);
-    const rv = fun(...args);
+    const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
       check_contract(get_return_contract(opts.returns, args), rv);
     return rv;
   };
-  newf.__contract = opts;
+  if (!that) newf.__contract = opts;
   return newf;
+};
+
+const contract_class = (that, cls, opts) => {
+  const check_vars = () => {
+    if (opts.variables) {
+      Object.entries(opts.variables).forEach(([k, v]) => {
+        check_contract(v, that[k]);
+      });
+    }
+  };
+
+  check_vars();
+
+  if (opts.methods) {
+    Object.entries(opts.methods).forEach(([k, v]) => {
+      const oldf = that[k];
+      that[k] = contract_function(oldf, v, that);
+    });
+  }
+  cls.prototype.__contract = opts;
 };
 
 var enabled = true;
 
 const contract = (opts, obj) => {
   if (!enabled) return obj;
+
   if (typeof obj === "function") return contract_function(obj, opts);
 };
 
 contract.disable = () => {
   enabled = false;
+};
+
+contract.class = (that, cls, opts) => {
+  contract_class(that, cls, opts);
 };
 
 contract.with = (obj, opts) => contract(opts, obj);

@@ -9,7 +9,43 @@ describe("disable", () => {
 
 const add1 = x => x + 1;
 
-describe("simple constract", () => {
+class Counter {
+  constructor(init) {
+    this.count = init || 0;
+    contract.class(this, Counter, {
+      variables: { count: is.positive },
+      methods: {
+        incr: {
+          arguments: [],
+          returns: is.positive
+        },
+        get_with_added: {
+          arguments: [is.positive],
+          returns: is.positive
+        }
+      }
+    });
+  }
+  incr() {
+    this.count += 1;
+    return this.count;
+  }
+  get_with_added(x) {
+    return this.count + x;
+  }
+}
+
+describe("class contract", () => {
+  it("should compute if valid", () => {
+    const c = new Counter(3);
+    c.incr();
+    expect(c.count).toBe(4);
+    expect(() => new Counter("foo")).toThrow(Error);
+    expect(() => c.get_with_added("bar")).toThrow(Error);
+  });
+});
+
+describe("simple contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(
       {
@@ -25,7 +61,7 @@ describe("simple constract", () => {
   });
 });
 
-describe("maybe, or constract", () => {
+describe("maybe, or contract", () => {
   it("should compute if valid", () => {
     const add1C = contract.with(add1, {
       arguments: [is.maybe(is.number())],
@@ -37,7 +73,7 @@ describe("maybe, or constract", () => {
   });
 });
 
-describe("reverse with constract", () => {
+describe("reverse with contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(
       {

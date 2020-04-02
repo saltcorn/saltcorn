@@ -19,6 +19,12 @@ const number = opts => ({
       : gen.any_num()
 });
 
+const positive = {
+  name: "number",
+  check: x => typeof x === "number" && x > 0,
+  generate: gen.num_positive
+};
+
 const fun = {
   name: "fun",
   check: x => typeof x === "function"
@@ -40,10 +46,12 @@ const num = {
   check: x => typeof x === "number",
   generate: gen.any_num
 };
+
 const str = {
   name: "str",
   check: x => typeof x === "string"
 };
+
 const eq = v => ({
   name: "eq",
   options: v,
@@ -99,6 +107,7 @@ const array = c => ({
   options: c,
   check: vs => Array.isArray(vs) && vs.every(v => c.check(v))
 });
+
 module.exports = {
   number,
   eq,
@@ -113,5 +122,6 @@ module.exports = {
   or,
   maybe,
   array,
-  bool
+  bool,
+  positive
 };
