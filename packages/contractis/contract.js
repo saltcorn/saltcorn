@@ -1,5 +1,3 @@
-const get_contract = c => (typeof c === "function" ? c() : c);
-
 const check_contract = (theContract, val) => {
   if (!theContract.check(val)) {
     const conStr = theContract.options
@@ -14,15 +12,18 @@ const check_arguments = (arguments_contract_spec, args) => {
     ? arguments_contract_spec
     : [arguments_contract_spec];
   argsContract.forEach((contr, ix) => {
-    check_contract(get_contract(contr), args[ix]);
+    check_contract(contr, args[ix]);
   });
 };
+
+const get_return_contract = (returns, args) => {};
 
 const contract_function = (fun, opts) => {
   return (...args) => {
     if (opts.arguments) check_arguments(opts.arguments, args);
     const rv = fun(...args);
-    if (opts.returns) check_contract(opts.returns, rv);
+    //if (opts.returns)
+    // check_contract(get_return_contract(opts.returns, args), rv);
     return rv;
   };
 };
