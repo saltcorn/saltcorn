@@ -1,4 +1,5 @@
 const gen = require("./generators");
+const { get_return_contract, get_arguments_returns } = require("./util.js");
 
 //https://stackoverflow.com/a/43197340
 function isClass(obj) {
@@ -20,8 +21,9 @@ const gen_arguments = args => {
 };
 
 const auto_test_fun = (f, opts) => {
+  const contr = get_arguments_returns(f.__contract);
   for (let i = 0; i < (opts.n || 100); i++) {
-    const args = gen_arguments(f.__contract.arguments);
+    const args = gen_arguments(contr.arguments);
     f(...args);
   }
 };
@@ -29,12 +31,13 @@ const auto_test_fun = (f, opts) => {
 const auto_test_class = (cls, opts) => {
   const contr = cls.contract;
   for (let i = 0; i < (opts.n || 10); i++) {
-    const cargs = contr.arguments ? gen_arguments(contr.arguments) : [];
+    const cargs = contr.constructs ? gen_arguments(contr.constructs) : [];
     const inst = new cls(...cargs);
 
     for (let j = 0; j < (opts.nmeth || 10); j++) {
       const [methnm, methcontr] = gen.oneOf(Object.entries(contr.methods));
-      const margs = gen_arguments(methcontr.arguments);
+
+      const margs = gen_arguments(get_arguments_returns(methcontr).arguments);
       inst[methnm](...margs);
     }
   }

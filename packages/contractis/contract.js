@@ -1,3 +1,5 @@
+const { get_return_contract, get_arguments_returns } = require("./util.js");
+
 const check_contract = (theContract, val) => {
   if (!theContract.check(val)) {
     if (theContract.get_error_message) {
@@ -20,15 +22,6 @@ const check_arguments = (arguments_contract_spec, args) => {
   argsContract.forEach((contr, ix) => {
     check_contract(contr, args[ix]);
   });
-};
-
-const get_return_contract = (returns, args) =>
-  typeof returns === "function" ? returns(...args) : returns;
-
-const get_arguments_returns = contract => {
-  if (contract.name === "fun")
-    return { arguments: contract.options[0], returns: contract.options[1] };
-  else return contract;
 };
 
 const contract_function = (fun, contr, that, check_vars) => {

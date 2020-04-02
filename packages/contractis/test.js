@@ -21,6 +21,9 @@ class Counter {
   get_with_added(x) {
     return this.count + x;
   }
+  get_with_added1(x) {
+    return this.count + x;
+  }
 }
 
 Counter.contract = {
@@ -34,7 +37,8 @@ Counter.contract = {
     get_with_added: {
       arguments: [is.positive],
       returns: is.positive
-    }
+    },
+    get_with_added1: is.fun(is.positive, is.positive)
   }
 };
 
@@ -150,6 +154,12 @@ describe("autotest function", () => {
   });
 });
 
+describe("autotest shortcut function", () => {
+  it("run", () => {
+    const add1C = contract(is.fun([is.num], is.num), add1);
+    auto_test(add1C);
+  });
+});
 describe("autotest class", () => {
   it("run", () => {
     auto_test(Counter);
