@@ -9,7 +9,8 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "xss": "^1.0.6"
+    "xss": "^1.0.6",
+    "contractis": "^0.0.1"
   },
   "devDependencies": {
     "jest": "^25.1.0"

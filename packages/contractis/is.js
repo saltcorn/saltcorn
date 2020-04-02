@@ -40,20 +40,33 @@ const bool = {
 const klass = cls => ({
   name: "klass",
   options: cls,
-  check: x => (x.constructor.name === cls.name)
+  check: x => x.constructor.name === cls.name
 });
 
 const obj = o => ({
   name: "obj",
   options: o,
   check: x =>
-    typeof o === "object" && Object.entries(o).every(([k, v]) => v.check(x[k]))
+    typeof x === "object" &&
+    Object.entries(o || {}).every(([k, v]) => v.check(x[k]))
 });
 
 const num = {
   name: "number",
   check: x => typeof x === "number",
   generate: gen.any_num
+};
+
+const int = {
+  name: "int",
+  check: x => typeof x === "number" && Math.round(x) === x,
+  generate: () => Math.round(gen.any_num())
+};
+
+const posint = {
+  name: "posint",
+  check: x => typeof x === "number" && Math.round(x) === x && x >= 0,
+  generate: () => Math.round(gen.num_positive())
 };
 
 const str = {
@@ -86,6 +99,11 @@ const sat = f => ({
   check: x => f(x)
 });
 
+const any = {
+  name: "any",
+  check: x => true
+};
+
 const maybe = c => ({
   name: "maybe",
   options: c,
@@ -98,8 +116,10 @@ const and = (...contrs) => ({
   get_error_message: x => {
     const failing = contrs.find(c => !c.check(x));
     return failing.options
-      ? `${x} violates (in and) ${failing.name}(${failing.options})`
-      : `${x} in and violates (in and) ${failing.name}`;
+      ? `${x} violates (in and) ${failing.name}(${JSON.stringify(
+          failing.options
+        )})`
+      : `${x} in and violates (in and) ${JSON.stringify(failing.name)}`;
   },
   options: contrs,
   check: x => contrs.every(c => c.check(x))
@@ -133,5 +153,8 @@ module.exports = {
   array,
   bool,
   positive,
-  klass
+  klass,
+  any,
+  int,
+  posint
 };

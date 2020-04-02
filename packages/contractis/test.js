@@ -77,10 +77,26 @@ describe("fun shortcut contract", () => {
     expect(() => add1C()).toThrow(Error);
   });
 });
+
+describe("fun shortcut contract", () => {
+  it("should fail if return wrong", () => {
+    const add1C = contract(is.fun([is.num], is.str), add1);
+    expect(() => add1C(5)).toThrow(Error);
+  });
+});
 describe("value contract", () => {
   it("should compute if valid", () => {
     expect(contract(is.num, 4)).toBe(4);
     expect(() => contract(is.str, 4)).toThrow(Error);
+  });
+});
+
+describe("object value contract", () => {
+  it("should compute if valid", () => {
+    const obj = { a: 1, b: "foo" };
+    expect(contract(is.obj(), obj)).toBe(obj);
+    expect(contract(is.maybe(is.obj()), obj)).toBe(obj);
+    expect(() => contract(is.str, obj)).toThrow(Error);
   });
 });
 

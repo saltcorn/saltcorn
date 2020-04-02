@@ -1,3 +1,5 @@
+const { contract, is } = require("contractis");
+
 const {
   a,
   td,
@@ -52,23 +54,43 @@ const pagination = ({ current_page, pages, get_page_link }) => {
   return ul({ class: "pagination" }, lis);
 };
 
-const mkTable = (hdrs, vs, opts = {}) =>
-  div(
-    { class: "table-responsive" },
-    table(
-      { class: "table table-sm" },
-      thead(tr(hdrs.map(hdr => headerCell(hdr)))),
-      tbody(
-        (vs || []).map(v =>
-          tr(
-            hdrs.map(hdr =>
-              td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
+const mkTable = contract(
+  is.fun(
+    [
+      is.array(is.obj({ label: is.str, key: is.or(is.str, is.fun()) })),
+      is.array(is.obj()),
+      is.maybe(
+        is.obj({
+          pagination: is.maybe(
+            is.obj({
+              current_page: is.posint,
+              pages: is.posint,
+              get_page_link: is.fun()
+            })
+          )
+        })
+      )
+    ],
+    is.str
+  ),
+  (hdrs, vs, opts = {}) =>
+    div(
+      { class: "table-responsive" },
+      table(
+        { class: "table table-sm" },
+        thead(tr(hdrs.map(hdr => headerCell(hdr)))),
+        tbody(
+          (vs || []).map(v =>
+            tr(
+              hdrs.map(hdr =>
+                td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
+              )
             )
           )
         )
-      )
-    ),
-    opts.pagination && pagination(opts.pagination)
-  );
+      ),
+      opts.pagination && pagination(opts.pagination)
+    )
+);
 
 module.exports = mkTable;

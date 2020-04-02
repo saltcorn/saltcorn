@@ -8,9 +8,11 @@ const check_contract = (theContract, val) => {
       );
     } else {
       const conStr = theContract.options
-        ? `${theContract.name}(${theContract.options})`
+        ? `${theContract.name}(${JSON.stringify(theContract.options)})`
         : theContract.name;
-      throw new Error(`Contract violation: ${val} violates ${conStr}`);
+      throw new Error(
+        `Contract violation: ${JSON.stringify(val)} violates ${conStr}`
+      );
     }
   }
 };

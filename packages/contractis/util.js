@@ -7,5 +7,4 @@ const get_arguments_returns = contract => {
   else return contract;
 };
 
-
-module.exports={get_return_contract, get_arguments_returns}
+module.exports = { get_return_contract, get_arguments_returns };
