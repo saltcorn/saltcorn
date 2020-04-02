@@ -45,4 +45,6 @@ const contract = (obj, opts) => {
 contract.disable = () => {
   enabled = false;
 };
+
+contract.with = (opts, obj) => contract(obj, opts);
 module.exports = contract;

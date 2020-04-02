@@ -18,6 +18,34 @@ describe("simple constract", () => {
     expect(add1C(3)).toBe(4);
     expect(add1("foo")).toBe("foo1");
     expect(() => add1C("foo")).toThrow(Error);
+    expect(() => add1C()).toThrow(Error);
+  });
+});
+
+describe("maybe, or constract", () => {
+  it("should compute if valid", () => {
+    const add1C = contract(add1, {
+      arguments: [is.maybe(is.number())],
+      returns: is.or(is.str, is.number())
+    });
+    expect(add1C(3)).toBe(4);
+    expect(add1C() === 7).toBe(false); //not throw
+    expect(() => add1C("foo")).toThrow(Error);
+  });
+});
+
+describe("reverse with constract", () => {
+  it("should compute if valid", () => {
+    const add1C = contract.with(
+      {
+        arguments: [is.number()],
+        returns: is.number()
+      },
+      add1
+    );
+    expect(add1C(3)).toBe(4);
+    expect(add1("foo")).toBe("foo1");
+    expect(() => add1C("foo")).toThrow(Error);
   });
 });
 

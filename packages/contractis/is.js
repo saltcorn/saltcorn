@@ -7,6 +7,17 @@ const number = opts => ({
     (typeof (opts || {}).gte === "number" ? x >= opts.gte : true)
 });
 
+const fun = {
+  name: "fun",
+  check: x => typeof x === "function"
+};
+
+const obj = o => ({
+  name: "obj",
+  options: o,
+  check: x => Object.entries(o).every(([k, v]) => v.check(x[k]))
+});
+
 const num = {
   name: "number",
   check: x => typeof x === "number"
@@ -39,6 +50,12 @@ const sat = f => ({
   check: x => f(x)
 });
 
+const maybe = c => ({
+  name: "maybe",
+  options: c,
+  check: x => typeof x === "undefined" || c.check(x)
+});
+
 const and = (...contrs) => ({
   name: "and(" + contrs.map(c => c.name).join + ")",
   get_error_message: x => {
@@ -51,6 +68,12 @@ const and = (...contrs) => ({
   check: x => contrs.every(c => c.check(x))
 });
 
+const or = (...contrs) => ({
+  name: "or(" + contrs.map(c => c.name).join + ")",
+  options: contrs,
+  check: x => contrs.some(c => c.check(x))
+});
+
 module.exports = {
   number,
   eq,
@@ -59,5 +82,9 @@ module.exports = {
   num,
   str,
   lte,
-  gte
+  gte,
+  fun,
+  obj,
+  or,
+  maybe
 };
