@@ -11,7 +11,7 @@ const add1 = x => x + 1;
 
 describe("simple constract", () => {
   it("should compute if valid", () => {
-    const add1C = contract(add1, {
+    const add1C = contract.with(add1, {
       arguments: [is.number()],
       returns: is.number()
     });
@@ -24,7 +24,7 @@ describe("simple constract", () => {
 
 describe("maybe, or constract", () => {
   it("should compute if valid", () => {
-    const add1C = contract(add1, {
+    const add1C = contract.with(add1, {
       arguments: [is.maybe(is.number())],
       returns: is.or(is.str, is.number())
     });
@@ -36,7 +36,7 @@ describe("maybe, or constract", () => {
 
 describe("reverse with constract", () => {
   it("should compute if valid", () => {
-    const add1C = contract.with(
+    const add1C = contract(
       {
         arguments: [is.number()],
         returns: is.number()
@@ -51,11 +51,11 @@ describe("reverse with constract", () => {
 
 describe("return lambda", () => {
   it("should compute if valid", () => {
-    const add1C = contract(add1, {
+    const add1C = contract.with(add1, {
       arguments: [is.number()],
       returns: x => is.number({ gte: x })
     });
-    const add1CWrong = contract(add1, {
+    const add1CWrong = contract.with(add1, {
       arguments: [is.number()],
       returns: x => is.number({ lte: x })
     });
@@ -64,7 +64,7 @@ describe("return lambda", () => {
   });
 
   it("allow and in returns", () => {
-    const add1C = contract(add1, {
+    const add1C = contract.with(add1, {
       arguments: [is.number()],
       returns: x => is.and(is.num, is.gte(x))
     });
@@ -72,7 +72,7 @@ describe("return lambda", () => {
     expect(add1C(3)).toBe(4);
   });
   it("catch and in returns", () => {
-    const add1CWrong = contract(add1, {
+    const add1CWrong = contract.with(add1, {
       arguments: [is.number()],
       returns: x => is.and(is.num, is.lte(x))
     });

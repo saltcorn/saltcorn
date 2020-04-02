@@ -37,7 +37,7 @@ const contract_function = (fun, opts) => {
 
 var enabled = true;
 
-const contract = (obj, opts) => {
+const contract = (opts, obj) => {
   if (!enabled) return obj;
   if (typeof obj === "function") return contract_function(obj, opts);
 };
@@ -46,5 +46,5 @@ contract.disable = () => {
   enabled = false;
 };
 
-contract.with = (opts, obj) => contract(obj, opts);
+contract.with = (obj, opts) => contract(opts, obj);
 module.exports = contract;
