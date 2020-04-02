@@ -63,6 +63,16 @@ describe("simple contract", () => {
     expect(() => add1C()).toThrow(Error);
   });
 });
+
+describe("fun shortcut contract", () => {
+  it("should compute if valid", () => {
+    const add1C = contract(is.fun([is.num], is.num), add1);
+    expect(add1C(3)).toBe(4);
+    expect(add1("foo")).toBe("foo1");
+    expect(() => add1C("foo")).toThrow(Error);
+    expect(() => add1C()).toThrow(Error);
+  });
+});
 describe("value contract", () => {
   it("should compute if valid", () => {
     expect(contract(is.num, 4)).toBe(4);

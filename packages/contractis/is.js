@@ -25,10 +25,11 @@ const positive = {
   generate: gen.num_positive
 };
 
-const fun = {
+const fun = (args, ret) => ({
   name: "fun",
+  options: [args, ret],
   check: x => typeof x === "function"
-};
+});
 
 const bool = {
   name: "fun",

@@ -25,8 +25,15 @@ const check_arguments = (arguments_contract_spec, args) => {
 const get_return_contract = (returns, args) =>
   typeof returns === "function" ? returns(...args) : returns;
 
-const contract_function = (fun, opts, that, check_vars) => {
+const get_arguments_returns = contract => {
+  if (contract.name === "fun")
+    return { arguments: contract.options[0], returns: contract.options[1] };
+  else return contract;
+};
+
+const contract_function = (fun, contr, that, check_vars) => {
   const newf = (...args) => {
+    const opts = get_arguments_returns(contr);
     if (opts.arguments) check_arguments(opts.arguments, args);
     const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
@@ -34,7 +41,7 @@ const contract_function = (fun, opts, that, check_vars) => {
     if (check_vars) check_vars();
     return rv;
   };
-  if (!that) newf.__contract = opts;
+  if (!that) newf.__contract = contr;
   return newf;
 };
 
