@@ -6,9 +6,13 @@ const num_positive = () => Math.pow(10, num_between(-3, 8));
 
 const any_num = () => (bool() ? num_positive() : -num_positive());
 
+const generate_from = contr =>
+  contr.generate ? contr.generate() : rejection_sample(contr);
+
 module.exports = {
   bool,
   num_between,
   num_positive,
-  any_num
+  any_num,
+  generate_from
 };

@@ -24,6 +24,11 @@ const fun = {
   check: x => typeof x === "function"
 };
 
+const bool = {
+  name: "fun",
+  check: x => typeof x === "boolean"
+};
+
 const obj = o => ({
   name: "obj",
   options: o,
@@ -67,7 +72,8 @@ const sat = f => ({
 const maybe = c => ({
   name: "maybe",
   options: c,
-  check: x => typeof x === "undefined" || c.check(x)
+  check: x => typeof x === "undefined" || c.check(x),
+  generate: () => (gen.bool() ? undefined : gen.generate_from(c))
 });
 
 const and = (...contrs) => ({
@@ -88,6 +94,11 @@ const or = (...contrs) => ({
   check: x => contrs.some(c => c.check(x))
 });
 
+const array = c => ({
+  name: "array",
+  options: c,
+  check: vs => Array.isArray(vs) && vs.every(v => c.check(v))
+});
 module.exports = {
   number,
   eq,
@@ -100,5 +111,7 @@ module.exports = {
   fun,
   obj,
   or,
-  maybe
+  maybe,
+  array,
+  bool
 };
