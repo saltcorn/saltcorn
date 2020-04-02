@@ -32,13 +32,21 @@ const fun = {
 
 const bool = {
   name: "fun",
-  check: x => typeof x === "boolean"
+  check: x => typeof x === "boolean",
+  generate: gen.bool
 };
+
+const class_ = cls => ({
+  name: "class_",
+  options: cls,
+  check: x => (x.constructor.name = cls.name)
+});
 
 const obj = o => ({
   name: "obj",
   options: o,
-  check: x => Object.entries(o).every(([k, v]) => v.check(x[k]))
+  check: x =>
+    typeof o === "object" && Object.entries(o).every(([k, v]) => v.check(x[k]))
 });
 
 const num = {

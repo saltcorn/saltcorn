@@ -63,7 +63,12 @@ describe("simple contract", () => {
     expect(() => add1C()).toThrow(Error);
   });
 });
-
+describe("value contract", () => {
+  it("should compute if valid", () => {
+    expect(contract(is.num, 4)).toBe(4);
+    expect(() => contract(is.str, 4)).toThrow(Error);
+  });
+});
 describe("maybe, or contract", () => {
   it("should compute if valid", () => {
     const add1C = contract.with(add1, {

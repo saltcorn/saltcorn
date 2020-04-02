@@ -64,6 +64,11 @@ const contract = (opts, obj) => {
   if (!enabled) return obj;
 
   if (typeof obj === "function") return contract_function(obj, opts);
+  else {
+    const theContract = opts;
+    check_contract(theContract, obj);
+    return obj;
+  }
 };
 
 contract.disable = () => {
