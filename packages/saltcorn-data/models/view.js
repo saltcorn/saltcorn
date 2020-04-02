@@ -5,7 +5,7 @@ const Table = require("../models/table");
 const removeEmptyStrings = obj => {
   var o = {};
   Object.entries(obj).forEach(([k, v]) => {
-    if (v !== "") o[k] = v;
+    if (v !== "" && v !== null) o[k] = v;
   });
   return o;
 };
@@ -80,6 +80,17 @@ class View {
       this.name,
       this.configuration,
       removeEmptyStrings(query)
+    );
+  }
+
+  async runPost(query, body, res) {
+    return await this.viewtemplateObj.runPost(
+      this.table_id,
+      this.name,
+      this.configuration,
+      removeEmptyStrings(query),
+      removeEmptyStrings(body),
+      res
     );
   }
   async get_state_form(query) {

@@ -24,3 +24,15 @@ router.get("/:viewname", async (req, res) => {
     );
   }
 });
+
+router.post("/:viewname", async (req, res) => {
+  const { viewname } = req.params;
+
+  const view = await View.findOne({ name: viewname });
+  if (!req.isAuthenticated() && !view.is_public) {
+    req.flash("danger", "Login required");
+    res.redirect("/auth/login");
+  } else {
+    await view.runPost(req.query, req.body, res);
+  }
+});

@@ -1,6 +1,6 @@
 const { input, select, option, text } = require("saltcorn-markup/tags");
 
-const isdef = x => (typeof x === "undefined" ? false : true);
+const isdef = x => (typeof x === "undefined" || x === null ? false : true);
 
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"

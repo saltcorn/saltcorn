@@ -1,6 +1,10 @@
 const db = require("../db");
 
 const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
+const readKey = v => {
+  const parsed = parseInt(v);
+  return isNaN(parsed) ? null : parsed;
+};
 
 class Field {
   constructor(o) {
@@ -83,6 +87,8 @@ class Field {
         ? Array.isArray(whole_rec[this.name])
           ? whole_rec[this.name]
           : [whole_rec[this.name]]
+        : this.is_fkey
+        ? readKey(whole_rec[this.name])
         : !type || !type.read
         ? whole_rec[this.name]
         : type.readFromFormRecord

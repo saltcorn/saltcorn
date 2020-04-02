@@ -33,6 +33,7 @@ router.get("/:id", isAdmin, async (req, res) => {
       [
         { label: "Name", key: "name" },
         { label: "Label", key: "label" },
+        { label: "Required", key: "required" },
         { label: "Type", key: r => r.type.name },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
