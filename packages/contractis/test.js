@@ -12,7 +12,8 @@ const add1 = x => x + 1;
 class Counter {
   constructor(init) {
     this.count = init || 0;
-    contract.class(this, Counter, {
+    contract.class(this, {
+      class: Counter,
       variables: { count: is.positive },
       methods: {
         incr: {

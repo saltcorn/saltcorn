@@ -37,7 +37,7 @@ const contract_function = (fun, opts, that) => {
   return newf;
 };
 
-const contract_class = (that, cls, opts) => {
+const contract_class = (that, opts) => {
   const check_vars = () => {
     if (opts.variables) {
       Object.entries(opts.variables).forEach(([k, v]) => {
@@ -54,7 +54,7 @@ const contract_class = (that, cls, opts) => {
       that[k] = contract_function(oldf, v, that);
     });
   }
-  cls.prototype.__contract = opts;
+  if (opts.class) opts.class.prototype.__contract = opts;
 };
 
 var enabled = true;
@@ -69,8 +69,8 @@ contract.disable = () => {
   enabled = false;
 };
 
-contract.class = (that, cls, opts) => {
-  contract_class(that, cls, opts);
+contract.class = (that, opts) => {
+  contract_class(that, opts);
 };
 
 contract.with = (obj, opts) => contract(opts, obj);
