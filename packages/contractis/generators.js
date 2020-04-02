@@ -9,10 +9,13 @@ const any_num = () => (bool() ? num_positive() : -num_positive());
 const generate_from = contr =>
   contr.generate ? contr.generate() : rejection_sample(contr);
 
+const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
+
 module.exports = {
   bool,
   num_between,
   num_positive,
   any_num,
-  generate_from
+  generate_from,
+  oneOf
 };

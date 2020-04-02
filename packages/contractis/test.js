@@ -12,20 +12,7 @@ const add1 = x => x + 1;
 class Counter {
   constructor(init) {
     this.count = init || 0;
-    contract.class(this, {
-      class: Counter,
-      variables: { count: is.positive },
-      methods: {
-        incr: {
-          arguments: [],
-          returns: is.positive
-        },
-        get_with_added: {
-          arguments: [is.positive],
-          returns: is.positive
-        }
-      }
-    });
+    contract.class(this, Counter);
   }
   incr() {
     this.count += 1;
@@ -35,6 +22,21 @@ class Counter {
     return this.count + x;
   }
 }
+
+Counter.contract = {
+  constructs: is.maybe(is.positive),
+  variables: { count: is.positive },
+  methods: {
+    incr: {
+      arguments: [],
+      returns: is.positive
+    },
+    get_with_added: {
+      arguments: [is.positive],
+      returns: is.positive
+    }
+  }
+};
 
 describe("class contract", () => {
   it("should compute if valid", () => {
@@ -120,7 +122,7 @@ describe("return lambda", () => {
   });
 });
 
-describe("autotest", () => {
+describe("autotest function", () => {
   it("run", () => {
     const add1C = contract(
       {
@@ -130,5 +132,11 @@ describe("autotest", () => {
       add1
     );
     auto_test(add1C);
+  });
+});
+
+describe("autotest class", () => {
+  it("run", () => {
+    auto_test(Counter);
   });
 });

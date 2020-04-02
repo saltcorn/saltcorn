@@ -20,8 +20,8 @@ const number = opts => ({
 });
 
 const positive = {
-  name: "number",
-  check: x => typeof x === "number" && x > 0,
+  name: "positive",
+  check: x => typeof x === "number" && x >= 0,
   generate: gen.num_positive
 };
 
