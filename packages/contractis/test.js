@@ -1,4 +1,4 @@
-const { contract, is } = require(".");
+const { contract, is, auto_test } = require(".");
 
 describe("disable", () => {
   it("should exist", () => {
@@ -11,10 +11,13 @@ const add1 = x => x + 1;
 
 describe("simple constract", () => {
   it("should compute if valid", () => {
-    const add1C = contract.with(add1, {
-      arguments: [is.number()],
-      returns: is.number()
-    });
+    const add1C = contract(
+      {
+        arguments: [is.number()],
+        returns: is.number()
+      },
+      add1
+    );
     expect(add1C(3)).toBe(4);
     expect(add1("foo")).toBe("foo1");
     expect(() => add1C("foo")).toThrow(Error);
@@ -77,5 +80,18 @@ describe("return lambda", () => {
       returns: x => is.and(is.num, is.lte(x))
     });
     expect(() => add1CWrong(3)).toThrow(Error);
+  });
+});
+
+describe("autotest", () => {
+  it("run", () => {
+    const add1C = contract(
+      {
+        arguments: [is.number()],
+        returns: is.number()
+      },
+      add1
+    );
+    auto_test(add1C);
   });
 });

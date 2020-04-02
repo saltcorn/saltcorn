@@ -1,3 +1,4 @@
 const contract = require("./contract");
 const is = require("./is");
-module.exports = { contract, is };
+const auto_test = require("./auto_test");
+module.exports = { contract, is, auto_test };

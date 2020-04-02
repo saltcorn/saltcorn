@@ -26,13 +26,15 @@ const get_return_contract = (returns, args) =>
   typeof returns === "function" ? returns(...args) : returns;
 
 const contract_function = (fun, opts) => {
-  return (...args) => {
+  const newf = (...args) => {
     if (opts.arguments) check_arguments(opts.arguments, args);
     const rv = fun(...args);
     if (opts.returns)
       check_contract(get_return_contract(opts.returns, args), rv);
     return rv;
   };
+  newf.__contract = opts;
+  return newf;
 };
 
 var enabled = true;

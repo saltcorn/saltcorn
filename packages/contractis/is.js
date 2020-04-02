@@ -1,10 +1,22 @@
+const gen = require("./generators");
+
+isnum = x => typeof x === "number";
+
 const number = opts => ({
   name: "number",
   options: opts,
   check: x =>
     typeof x === "number" &&
-    (typeof (opts || {}).lte === "number" ? x <= opts.lte : true) &&
-    (typeof (opts || {}).gte === "number" ? x >= opts.gte : true)
+    (isnum((opts || {}).lte) ? x <= opts.lte : true) &&
+    (isnum((opts || {}).gte) ? x >= opts.gte : true),
+  generate: () =>
+    isnum((opts || {}).lte) && isnum((opts || {}).lte)
+      ? gen.num_between(opts.lte, opts.gte)
+      : isnum((opts || {}).lte)
+      ? opts.lte - gen.num_positive
+      : isnum((opts || {}).gte)
+      ? opts.gte + gen.num_positive
+      : gen.any_num()
 });
 
 const fun = {
@@ -20,7 +32,8 @@ const obj = o => ({
 
 const num = {
   name: "number",
-  check: x => typeof x === "number"
+  check: x => typeof x === "number",
+  generate: gen.any_num
 };
 const str = {
   name: "str",
@@ -29,7 +42,8 @@ const str = {
 const eq = v => ({
   name: "eq",
   options: v,
-  check: x => x === v
+  check: x => x === v,
+  generate: () => v
 });
 
 const lte = v => ({
