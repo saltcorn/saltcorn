@@ -1,4 +1,5 @@
 const db = require("../db");
+const { contract, is } = require("contractis");
 
 const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
 const readKey = v => {
@@ -39,6 +40,7 @@ class Field {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
+    contract.class(this, Field);
   }
   get toJson() {
     return {
@@ -176,4 +178,16 @@ class Field {
     return f;
   }
 }
+
+Field.contract = {
+  variables: {
+    name: is.str
+  },
+  methods: {
+    validate: is.fun(
+      is.obj(),
+      is.or(is.obj({ errors: is.str }), is.obj({ success: is.any }))
+    )
+  }
+};
 module.exports = Field;

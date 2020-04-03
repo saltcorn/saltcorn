@@ -1,3 +1,4 @@
+const { contract, is } = require("contractis");
 const db = require("../db");
 const Field = require("./field");
 
@@ -17,6 +18,7 @@ class Form {
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
     if (o.validate) this.validate(o.validate);
+    contract.class(this, Form);
   }
   hidden(...ks) {
     ks.forEach(k => {
@@ -52,5 +54,19 @@ class Form {
     }
   }
 }
+
+Form.contract = {
+  variables: {
+    fields: is.array(is.obj({ name: is.str })),
+    values: is.obj(),
+    errors: is.obj()
+  },
+  methods: {
+    validate: is.fun(
+      is.obj(),
+      is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
+    )
+  }
+};
 
 module.exports = Form;

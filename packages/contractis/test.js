@@ -24,6 +24,9 @@ class Counter {
   get_with_added1(x) {
     return this.count + x;
   }
+  async get_with_added2(x) {
+    return this.count + x;
+  }
 }
 
 Counter.contract = {
@@ -38,7 +41,8 @@ Counter.contract = {
       arguments: [is.positive],
       returns: is.positive
     },
-    get_with_added1: is.fun(is.positive, is.positive)
+    get_with_added1: is.fun(is.positive, is.positive),
+    get_with_added2: is.fun(is.positive, is.promise)
   }
 };
 
@@ -63,6 +67,22 @@ describe("simple contract", () => {
     );
     expect(add1C(3)).toBe(4);
     expect(add1("foo")).toBe("foo1");
+    expect(() => add1C("foo")).toThrow(Error);
+    expect(() => add1C()).toThrow(Error);
+  });
+});
+
+describe("async function contract", () => {
+  it("should compute if valid", () => {
+    const add1C = contract(
+      {
+        arguments: [is.number()],
+        returns: is.promise
+      },
+      async(x) => x+1
+    );
+    console.log(((async(x) => x+1)(3)).constructor.name)
+    add1C(3)
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
   });
