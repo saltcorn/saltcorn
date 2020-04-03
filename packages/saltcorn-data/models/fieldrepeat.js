@@ -32,13 +32,16 @@ class FieldRepeat {
   }
 }
 
-FieldRepeat.contract ={
+FieldRepeat.contract = {
   variables: {
     name: is.str,
-    fields: is.array(is.obj({ name: is.str })),
+    fields: is.array(is.obj({ name: is.str }))
   },
   methods: {
-    validate: is.fun(is.obj(), is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() })))
+    validate: is.fun(
+      is.obj(),
+      is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
+    )
   }
-}
+};
 module.exports = FieldRepeat;
