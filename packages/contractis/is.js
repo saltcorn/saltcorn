@@ -40,8 +40,14 @@ const bool = {
 const klass = cls => ({
   name: "klass",
   options: cls,
-  check: x => x.constructor.name === cls.name
+  check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
 });
+
+const promise = ({
+  name: "promise",
+  check: x => x.constructor.name === Promise.name
+});
+
 
 const obj = o => ({
   name: "obj",
@@ -156,5 +162,5 @@ module.exports = {
   klass,
   any,
   int,
-  posint
+  posint,promise
 };
