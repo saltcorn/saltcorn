@@ -1,3 +1,4 @@
+const { contract, is } = require("contractis");
 const Field = require("./field");
 
 class FieldRepeat {
@@ -8,6 +9,7 @@ class FieldRepeat {
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.isRepeat = true;
+    contract.class(this, FieldRepeat);
   }
   validate(whole_rec) {
     return this.validate_from_ix(whole_rec, 0);
@@ -27,6 +29,16 @@ class FieldRepeat {
       const rest = this.validate_from_ix(whole_rec, ix + 1);
       return { success: [res, ...rest.success] };
     } else return { success: [] };
+  }
+}
+
+FieldRepeat.contract ={
+  variables: {
+    name: is.str,
+    fields: is.array(is.obj({ name: is.str })),
+  },
+  methods: {
+    validate: is.fun(is.obj(), is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() })))
   }
 }
 module.exports = FieldRepeat;
