@@ -115,4 +115,61 @@ const field_picker_fields = async ({ table }) => {
   ];
 };
 
-module.exports = { field_picker_fields };
+const picked_fields_to_query=(table, fields, columns, escapexss)=> {
+  var joinFields = {};
+  var aggregations = {};
+  const tfields = columns.map(column => {
+    const fldnm = column.field_name;
+    if (column.type === "Action")
+      return {
+        label: "Delete",
+        key: r =>
+          post_btn(
+            `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`,
+            "Delete"
+          )
+      };
+    else if (column.type === "ViewLink") {
+      const vnm = column.view;
+      return {
+        label: vnm,
+        key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+      };
+    } else if (column.type === "JoinField") {
+      const [refNm, targetNm] = column.join_field.split(".");
+      joinFields[targetNm] = { ref: refNm, target: targetNm };
+      return {
+        label: targetNm,
+        key: targetNm
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
+      };
+    } else if (column.type === "Aggregation") {
+      //console.log(column)
+      const [table, fld] = column.agg_relation.split(".");
+      const field = column[`agg_field_${table}_${fld}`];
+      const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
+      aggregations[targetNm] = {
+        table,
+        ref: fld,
+        field,
+        aggregate: column.stat
+      };
+      return {
+        label: targetNm,
+        key: targetNm
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
+      };
+    } else if (column.type === "Field") {
+      const f = fields.find(fld => fld.name === column.field_name);
+      return {
+        label: f.label,
+        key: f.listKey,
+        sortlink: `javascript:sortby('${escapexss(f.name)}')`
+      };
+    }
+  });
+
+  return {joinFields, aggregations, tfields}
+}
+
+module.exports = { field_picker_fields, picked_fields_to_query };
