@@ -21,10 +21,23 @@ const check_arguments = (arguments_contract_spec, args, caller) => {
   });
 };
 
+const argcheck = (pred, args, caller) => {
+  if (!pred(...args)) {
+    throw new ContractViolation({name:"Argument check"}, args, undefined, caller);
+  }
+};
+
+const retcheck = (pred, args, rv, caller) => {
+  if (!pred(...args)(rv)) {
+    throw new ContractViolation({name:"Return check"}, {arguments: args, return: rv}, undefined, caller);
+  }
+};
+
 const contract_function = (fun, contr, that, check_vars, caller) => {
   const newf = (...args) => {
     const opts = get_arguments_returns(contr);
     if (opts.arguments) check_arguments(opts.arguments, args, caller);
+    if (opts.argcheck) argcheck(opts.argcheck, args, caller)
     const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
       check_contract(
@@ -33,6 +46,8 @@ const contract_function = (fun, contr, that, check_vars, caller) => {
         "return value",
         caller
       );
+    if (opts.retcheck) retcheck(opts.retcheck, args, rv, caller)
+    
     if (check_vars) check_vars();
     return rv;
   };

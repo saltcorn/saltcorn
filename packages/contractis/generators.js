@@ -32,20 +32,19 @@ const string = () => {
 
 const array = g => () => {
   const n = Math.round(num_between(0, 20));
-  return ntimes(n, g)
+  return ntimes(n, g);
 };
-
 
 const konst = x => () => x;
 
-const anyObj=() => {
+const anyObj = () => {
   const n = Math.round(num_between(0, 10));
-  var res = {}
+  var res = {};
   for (let index = 0; index < n; index++) {
-    res[string()]=any()    
+    res[string()] = any();
   }
-  return res
-}
+  return res;
+};
 
 const any = () =>
   oneOf([
@@ -66,5 +65,6 @@ module.exports = {
   generate_from,
   oneOf,
   string,
-  any,array
+  any,
+  array
 };

@@ -87,6 +87,43 @@ describe("async function contract", () => {
     expect(() => add1C()).toThrow(Error);
   });
 });
+describe("argcheck contract", () => {
+  it("should compute if valid", () => {
+    const btw = contract(
+      {
+        arguments: [is.num, is.num],
+        argcheck: (lo,hi) => hi>lo,
+        returns: is.positive
+      },
+      (lo,hi)=> hi-lo
+    );
+    expect(btw(3,4)).toBe(1);
+    expect(() => btw(5,4)).toThrow(Error);
+  });
+});
+
+describe("retcheck contract", () => {
+  it("should compute if valid", () => {
+    const add1C = contract(
+      {
+        arguments: [is.number()],
+        returns: is.number(),
+        retcheck: x => r => r>x
+      },
+      add1
+    );
+    const add2C = contract(
+      {
+        arguments: [is.number()],
+        returns: is.number(),
+        retcheck: x => r => r<x
+      },
+      add1
+    );
+    expect(add1C(3)).toBe(4);
+    expect(() => add2C(3)).toThrow(Error);
+  });
+});
 
 describe("fun shortcut contract", () => {
   it("should compute if valid", () => {
@@ -96,14 +133,12 @@ describe("fun shortcut contract", () => {
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
   });
-});
-
-describe("fun shortcut contract", () => {
-  it("should fail if return wrong", () => {
+   it("should fail if return wrong", () => {
     const add1C = contract(is.fun([is.num], is.str), add1);
     expect(() => add1C(5)).toThrow(Error);
   });
 });
+
 describe("value contract", () => {
   it("should compute if valid", () => {
     expect(contract(is.num, 4)).toBe(4);
