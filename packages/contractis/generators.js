@@ -26,7 +26,7 @@ const char = () =>{
 
 const string =()=>{
   const n = Math.round(num_between(0, 15))
-  return ntimes(n, char)
+  return String(ntimes(n, char))
 }
 module.exports = {
   bool,

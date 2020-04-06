@@ -8,7 +8,7 @@ const get_arguments_returns = contract => {
 };
 
 class ContractViolation extends Error {
-  constructor(theContract, val, location, stackSite) {
+  constructor(theContract, val, location, caller) {
     const in_str = location ? ` (${location})` : "";
     var message;
     if (theContract.get_error_message) {
@@ -21,7 +21,7 @@ class ContractViolation extends Error {
       message =`value ${JSON.stringify(val)} violates contract ${conStr}${in_str}`
     }
     
-    super(message+"\n at \n"+caller);
+    super(message+(caller ? "\n at \n"+caller : ""));
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
     
