@@ -6,51 +6,82 @@ const {
   ContractViolation
 } = require("./util.js");
 
-const check_contract = (theContract, val, loc, caller) => {
+const check_contract = (theContract, val, loc, contrDefinition, callSite) => {
   if (!theContract.check(val)) {
-    throw new ContractViolation(theContract, val, loc, caller);
+    throw new ContractViolation(
+      theContract,
+      val,
+      loc,
+      contrDefinition,
+      callSite
+    );
   }
 };
 
-const check_arguments = (arguments_contract_spec, args, caller) => {
+const check_arguments = (
+  arguments_contract_spec,
+  args,
+  contrDefinition,
+  callSite
+) => {
   const argsContract = Array.isArray(arguments_contract_spec)
     ? arguments_contract_spec
     : [arguments_contract_spec];
   argsContract.forEach((contr, ix) => {
-    check_contract(contr, args[ix], `argument ${ix}`, caller);
+    check_contract(
+      contr,
+      args[ix],
+      `argument ${ix}`,
+      contrDefinition,
+      callSite
+    );
   });
 };
 
-const argcheck = (pred, args, caller) => {
+const argcheck = (pred, args, contrDefinition, callSite) => {
   if (!pred(...args)) {
-    throw new ContractViolation({name:"Argument check"}, args, undefined, caller);
+    throw new ContractViolation(
+      { name: "Argument check" },
+      args,
+      undefined,
+      contrDefinition,
+      callSite
+    );
   }
 };
 
-const retcheck = (pred, args, rv, caller) => {
+const retcheck = (pred, args, rv, contrDefinition, callSite) => {
   if (!pred(...args)(rv)) {
-    throw new ContractViolation({name:"Return check"}, {arguments: args, return: rv}, undefined, caller);
+    throw new ContractViolation(
+      { name: "Return check" },
+      { arguments: args, return: rv },
+      undefined,
+      contrDefinition,
+      callSite
+    );
   }
 };
 
-const contract_function = (fun, contr, that, check_vars, caller) => {
-  const newf = (...args) => {
+const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
+  function newf(...args) {
     const opts = get_arguments_returns(contr);
-    if (opts.arguments) check_arguments(opts.arguments, args, caller);
-    if (opts.argcheck) argcheck(opts.argcheck, args, caller)
+    if (opts.arguments)
+      check_arguments(opts.arguments, args, contrDefinition, newf);
+    if (opts.argcheck) argcheck(opts.argcheck, args, contrDefinition, newf);
     const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
         "return value",
-        caller
+        contrDefinition,
+        newf
       );
-    if (opts.retcheck) retcheck(opts.retcheck, args, rv, caller)
-    
+    if (opts.retcheck) retcheck(opts.retcheck, args, rv, contrDefinition, newf);
+
     if (check_vars) check_vars();
     return rv;
-  };
+  }
   if (!that) newf.__contract = contr;
   return newf;
 };
@@ -60,7 +91,7 @@ const contract_class = (that, cls) => {
   const check_vars = () => {
     if (opts.variables) {
       Object.entries(opts.variables).forEach(([k, v]) => {
-        check_contract(v, that[k]);
+        check_contract(v, that[k], "instance variables");
       });
     }
   };
@@ -88,7 +119,7 @@ function contract(opts, obj) {
     return contract_function(obj, opts, null, null, caller);
   else {
     const theContract = opts;
-    check_contract(theContract, obj, "value", caller);
+    check_contract(theContract, obj, "value", caller, contract);
     return obj;
   }
 }

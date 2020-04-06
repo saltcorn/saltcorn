@@ -8,7 +8,7 @@ const get_arguments_returns = contract => {
 };
 
 class ContractViolation extends Error {
-  constructor(theContract, val, location, caller) {
+  constructor(theContract, val, location, caller, callSite) {
     const in_str = location ? ` (${location})` : "";
     var message;
     if (theContract.get_error_message) {
@@ -22,9 +22,9 @@ class ContractViolation extends Error {
       )} violates contract ${conStr}${in_str}`;
     }
 
-    super(message + (caller ? "\n at \n" + caller : ""));
+    super(message + (caller ? "\n contract defined near \n" + caller : ""));
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
+    Error.captureStackTrace(this, callSite || this.constructor);
   }
 }
 

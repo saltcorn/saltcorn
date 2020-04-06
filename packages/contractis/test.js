@@ -60,8 +60,8 @@ describe("simple contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(
       {
-        arguments: [is.number()],
-        returns: is.number()
+        arguments: [is.num],
+        returns: is.num
       },
       add1
     );
@@ -92,13 +92,13 @@ describe("argcheck contract", () => {
     const btw = contract(
       {
         arguments: [is.num, is.num],
-        argcheck: (lo,hi) => hi>lo,
+        argcheck: (lo, hi) => hi > lo,
         returns: is.positive
       },
-      (lo,hi)=> hi-lo
+      (lo, hi) => hi - lo
     );
-    expect(btw(3,4)).toBe(1);
-    expect(() => btw(5,4)).toThrow(Error);
+    expect(btw(3, 4)).toBe(1);
+    expect(() => btw(5, 4)).toThrow(Error);
   });
 });
 
@@ -108,7 +108,7 @@ describe("retcheck contract", () => {
       {
         arguments: [is.number()],
         returns: is.number(),
-        retcheck: x => r => r>x
+        retcheck: x => r => r > x
       },
       add1
     );
@@ -116,7 +116,7 @@ describe("retcheck contract", () => {
       {
         arguments: [is.number()],
         returns: is.number(),
-        retcheck: x => r => r<x
+        retcheck: x => r => r < x
       },
       add1
     );
@@ -133,7 +133,7 @@ describe("fun shortcut contract", () => {
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
   });
-   it("should fail if return wrong", () => {
+  it("should fail if return wrong", () => {
     const add1C = contract(is.fun([is.num], is.str), add1);
     expect(() => add1C(5)).toThrow(Error);
   });
