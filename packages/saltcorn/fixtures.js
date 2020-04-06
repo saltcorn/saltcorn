@@ -74,7 +74,20 @@ const fixtures = async () => {
     table_id: table.id,
     name: "authorshow",
     viewtemplate: "Show",
-    configuration: { "patients.favbook": true },
+    configuration: {
+      columns: [
+        { type: "Field", field_name: "author", state_field: "on" },
+        { type: "ViewLink", view: "authorshow" },
+        { type: "Action", action_name: "Delete" },
+        {
+          type: "Aggregation",
+          agg_relation: "patients.favbook",
+          agg_field_patients_favbook: "name",
+          stat: "Count"
+        }
+      ],
+      "patients.favbook": true
+    },
     is_public: true,
     on_root_page: true,
     on_menu: true
