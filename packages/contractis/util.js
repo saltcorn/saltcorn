@@ -28,8 +28,14 @@ class ContractViolation extends Error {
   }
 }
 
+function log_it(x) {
+  console.log(x);
+  return x;
+}
+
 module.exports = {
   get_return_contract,
   get_arguments_returns,
-  ContractViolation
+  ContractViolation,
+  log_it
 };

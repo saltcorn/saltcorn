@@ -79,10 +79,10 @@ describe("async function contract", () => {
         arguments: [is.number()],
         returns: is.promise(is.number())
       },
-      async(x) => x+1
+      async x => x + 1
     );
-    console.log(((async(x) => x+1)(3)).constructor.name)
-    add1C(3)
+    console.log((async x => x + 1)(3).constructor.name);
+    add1C(3);
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
   });
@@ -206,10 +206,19 @@ describe("autotest shortcut function", () => {
   });
 });
 
-
 describe("autotest string function", () => {
   it("run", () => {
     const f1 = contract(is.fun(is.str, is.posint), v => v.length);
+    auto_test(f1);
+  });
+});
+
+describe("autotest or function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.or(is.str, is.array(is.int)), is.posint),
+      v => v.length
+    );
     auto_test(f1);
   });
 });
