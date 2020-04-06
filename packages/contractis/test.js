@@ -223,17 +223,17 @@ describe("autotest or function", () => {
   });
 });
 
-describe("autotest or function", () => {
+describe("autotest array of any function", () => {
   it("run", () => {
     const f1 = contract(
-      is.fun(is.or(is.str, is.array(is.int)), is.posint),
+      is.fun(is.or(is.str, is.array(is.any)), is.posint),
       v => v.length
     );
     auto_test(f1);
   });
 });
 
-describe("autotest or function", () => {
+describe("autotest and function", () => {
   it("run", () => {
     const f1 = contract(
       is.fun(is.and(is.str, is.str), is.posint),

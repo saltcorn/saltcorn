@@ -108,7 +108,8 @@ const sat = f => ({
 
 const any = {
   name: "any",
-  check: x => true
+  check: x => true,
+  generate: gen.any
 };
 
 const maybe = c => ({
@@ -151,7 +152,8 @@ const or = (...contrs) => ({
 const array = c => ({
   name: "array",
   options: c,
-  check: vs => Array.isArray(vs) && vs.every(v => c.check(v))
+  check: vs => Array.isArray(vs) && vs.every(v => c.check(v)),
+  generate: c.generate && gen.array(c.generate)
 });
 
 module.exports = {

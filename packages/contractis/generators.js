@@ -29,6 +29,35 @@ const string = () => {
   const n = Math.round(num_between(0, 15));
   return ntimes(n, char).join("");
 };
+
+const array = g => () => {
+  const n = Math.round(num_between(0, 20));
+  return ntimes(n, g)
+};
+
+
+const konst = x => () => x;
+
+const anyObj=() => {
+  const n = Math.round(num_between(0, 10));
+  var res = {}
+  for (let index = 0; index < n; index++) {
+    res[string()]=any()    
+  }
+  return res
+}
+
+const any = () =>
+  oneOf([
+    bool,
+    any_num,
+    string,
+    konst(undefined),
+    konst(null),
+    konst(() => any()),
+    anyObj
+  ])();
+
 module.exports = {
   bool,
   num_between,
@@ -36,5 +65,6 @@ module.exports = {
   any_num,
   generate_from,
   oneOf,
-  string
+  string,
+  any,array
 };
