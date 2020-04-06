@@ -171,7 +171,18 @@ describe("viewedit new Show", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1
+        table_id: 1,
+        columns: [
+          { type: "Field", field_name: "author" },
+          { type: "ViewLink", view: "authorshow" },
+          { type: "Action", action_name: "Delete" },
+          {
+            type: "Aggregation",
+            agg_relation: "patients.favbook",
+            agg_field_patients_favbook: "name",
+            stat: "Count"
+          }
+        ]
       })
     );
     await request(app)
