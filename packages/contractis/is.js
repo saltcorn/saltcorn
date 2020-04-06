@@ -77,7 +77,8 @@ const posint = {
 
 const str = {
   name: "str",
-  check: x => typeof x === "string"
+  check: x => typeof x === "string",
+  generate: gen.string
 };
 
 const eq = v => ({
