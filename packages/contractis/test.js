@@ -1,5 +1,5 @@
 const { contract, is, auto_test } = require(".");
-
+const { ContractViolation } = require("./util.js");
 describe("disable", () => {
   it("should exist", () => {
     expect(typeof contract.disable).toBe("function");
@@ -73,18 +73,34 @@ describe("simple contract", () => {
 });
 
 describe("async function contract", () => {
-  it("should compute if valid", () => {
+  it("should compute if valid", async () => {
     const add1C = contract(
       {
-        arguments: [is.number()],
-        returns: is.promise(is.number())
+        arguments: [is.num],
+        returns: is.promise(is.num)
       },
       async x => x + 1
     );
-    console.log((async x => x + 1)(3).constructor.name);
-    add1C(3);
+    await add1C(3);
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
+  });
+  it("should throw if wrong", async () => {
+    const add1C = contract(
+      {
+        arguments: [is.num],
+        returns: is.promise(is.str)
+      },
+      async x => x + 1
+    );
+
+    await add1C(3)
+      .then(() => {
+        throw new Error("Should go to .catch, not enter .then");
+      })
+      .catch(err => {
+        expect(err).toBeInstanceOf(ContractViolation);
+      });
   });
 });
 describe("argcheck contract", () => {

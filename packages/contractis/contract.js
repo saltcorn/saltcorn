@@ -68,8 +68,9 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
     if (opts.arguments)
       check_arguments(opts.arguments, args, contrDefinition, newf);
     if (opts.argcheck) argcheck(opts.argcheck, args, contrDefinition, newf);
-    const rv = that ? fun.apply(that, args) : fun(...args);
-    if (opts.returns)
+    var rv = that ? fun.apply(that, args) : fun(...args);
+
+    if (opts.returns) {
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
@@ -77,6 +78,21 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
         contrDefinition,
         newf
       );
+      if (opts.returns.name === "promise") {
+        var pr_rv = rv;
+        rv = pr_rv.then(v => {
+          check_contract(
+            opts.returns.options,
+            v,
+            "promise value",
+            contrDefinition,
+            newf
+          );
+          return v;
+        });
+        //console.log("promise", rv, rv.then)
+      }
+    }
     if (opts.retcheck) retcheck(opts.retcheck, args, rv, contrDefinition, newf);
 
     if (check_vars) check_vars();
