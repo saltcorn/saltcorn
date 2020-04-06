@@ -1,30 +1,32 @@
+var stackTrace = require('stack-trace');
+
 const { get_return_contract, get_arguments_returns, ContractViolation } = require("./util.js");
 
-const check_contract = (theContract, val, loc) => {
+const check_contract = (theContract, val, loc, caller) => {
   if (!theContract.check(val)) {
-    throw new ContractViolation(theContract, val, loc, check_contract);
+    throw new ContractViolation(theContract, val, loc, caller);
   }
 };
 
-const check_arguments = (arguments_contract_spec, args) => {
+const check_arguments = (arguments_contract_spec, args, caller) => {
   const argsContract = Array.isArray(arguments_contract_spec)
     ? arguments_contract_spec
     : [arguments_contract_spec];
   argsContract.forEach((contr, ix) => {
-    check_contract(contr, args[ix], `argument ${ix}`);
+    check_contract(contr, args[ix], `argument ${ix}`, caller);
   });
 };
 
-const contract_function = (fun, contr, that, check_vars) => {
+const contract_function = (fun, contr, that, check_vars, caller) => {
   const newf = (...args) => {
     const opts = get_arguments_returns(contr);
-    if (opts.arguments) check_arguments(opts.arguments, args);
+    if (opts.arguments) check_arguments(opts.arguments, args, caller);
     const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
-        "return value"
+        "return value", caller
       );
     if (check_vars) check_vars();
     return rv;
@@ -55,13 +57,15 @@ const contract_class = (that, cls) => {
 
 var enabled = true;
 
-const contract = (opts, obj) => {
+function contract(opts, obj) {
   if (!enabled) return obj;
-
-  if (typeof obj === "function") return contract_function(obj, opts);
+  var trace = stackTrace.get();
+  var callert = trace.find(t=>!t.getFileName().includes("contractis/contract.js"))
+  var caller = `${callert.getFunctionName()} (${callert.getFileName()}:${callert.getLineNumber()})`
+  if (typeof obj === "function") return contract_function(obj, opts, null, null, caller);
   else {
     const theContract = opts;
-    check_contract(theContract, obj);
+    check_contract(theContract, obj, "value", caller);
     return obj;
   }
 };

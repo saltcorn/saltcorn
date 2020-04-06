@@ -20,11 +20,11 @@ class ContractViolation extends Error {
         : theContract.name;
       message =`value ${JSON.stringify(val)} violates contract ${conStr}${in_str}`
     }
-
-    super(message);
+    
+    super(message+"\n at \n"+caller);
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, stackSite || this.constructor);
-    //console.log("stack", this.stack)
+    Error.captureStackTrace(this, this.constructor);
+    
   }
 }
 
