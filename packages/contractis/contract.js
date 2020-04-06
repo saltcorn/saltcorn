@@ -1,6 +1,10 @@
-var stackTrace = require('stack-trace');
+var stackTrace = require("stack-trace");
 
-const { get_return_contract, get_arguments_returns, ContractViolation } = require("./util.js");
+const {
+  get_return_contract,
+  get_arguments_returns,
+  ContractViolation
+} = require("./util.js");
 
 const check_contract = (theContract, val, loc, caller) => {
   if (!theContract.check(val)) {
@@ -26,7 +30,8 @@ const contract_function = (fun, contr, that, check_vars, caller) => {
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
-        "return value", caller
+        "return value",
+        caller
       );
     if (check_vars) check_vars();
     return rv;
@@ -60,15 +65,18 @@ var enabled = true;
 function contract(opts, obj) {
   if (!enabled) return obj;
   var trace = stackTrace.get();
-  var callert = trace.find(t=>!t.getFileName().includes("contractis/contract.js"))
-  var caller = `${callert.getFunctionName()} (${callert.getFileName()}:${callert.getLineNumber()})`
-  if (typeof obj === "function") return contract_function(obj, opts, null, null, caller);
+  var callert = trace.find(
+    t => !t.getFileName().includes("contractis/contract.js")
+  );
+  var caller = `${callert.getFunctionName()} (${callert.getFileName()}:${callert.getLineNumber()})`;
+  if (typeof obj === "function")
+    return contract_function(obj, opts, null, null, caller);
   else {
     const theContract = opts;
     check_contract(theContract, obj, "value", caller);
     return obj;
   }
-};
+}
 
 contract.value = (theContract, x) => {
   check_contract(theContract, x);

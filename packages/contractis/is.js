@@ -43,7 +43,7 @@ const klass = cls => ({
   check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
 });
 
-const promise = (t)=> ({
+const promise = t => ({
   name: "promise",
   options: t,
   check: x => x.constructor.name === Promise.name
@@ -131,11 +131,17 @@ const and = (...contrs) => ({
   options: contrs,
   check: x => contrs.every(c => c.check(x))
 });
+function log_it(x) {
+  console.log(x)
+  return x
+}
 
 const or = (...contrs) => ({
   name: "or(" + contrs.map(c => c.name).join + ")",
   options: contrs,
-  check: x => contrs.some(c => c.check(x))
+  check: x => contrs.some(c => c.check(x)),
+  generate: contrs.filter(c=>c.generate).length>0 && 
+    gen.oneOf(contrs.filter(c=>c.generate))  
 });
 
 const array = c => ({

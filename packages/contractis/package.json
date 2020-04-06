@@ -9,7 +9,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "stack-trace":"^0.0.10"
+    "stack-trace": "^0.0.10"
   },
   "devDependencies": {
     "jest": "^25.1.0"

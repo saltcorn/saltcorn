@@ -11,30 +11,30 @@ const generate_from = contr =>
 
 const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 
-const ntimes = (n, f)=> {
-  var res = new Array(n)
+const ntimes = (n, f) => {
+  var res = new Array(n);
   for (let index = 0; index < n; index++) {
-    res[index] = f()
+    res[index] = f();
   }
-  return res
-}
+  return res;
+};
 
-const char = () =>{
-  const chars= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789'
-  return oneOf(chars)
-}
+const char = () => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789";
+  return oneOf(chars);
+};
 
-const string =()=>{
-  const n = Math.round(num_between(0, 15))
-  return String(ntimes(n, char))
-}
+const string = () => {
+  const n = Math.round(num_between(0, 15));
+  return ntimes(n, char).join('');
+};
 module.exports = {
   bool,
   num_between,
   num_positive,
   any_num,
   generate_from,
-  oneOf, string
-
-
+  oneOf,
+  string
 };
