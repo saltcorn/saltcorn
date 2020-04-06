@@ -67,13 +67,13 @@ const run = async (table_id, viewname, { columns, ...rels }, { id }) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
-  const [row] = await table.getJoinedRows({
+  const [row] = await tbl.getJoinedRows({
     where: { id },
     joinFields,
     aggregations,
     limit: 1
   });
-  const tfields = get_viewable_fields(viewname, table, fields, columns);
+  const tfields = get_viewable_fields(viewname, tbl, fields, columns);
 
   const trows = tfields.map(f =>
     tr(
