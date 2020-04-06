@@ -43,10 +43,11 @@ const klass = cls => ({
   check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
 });
 
-const promise = {
+const promise = (t)=> ({
   name: "promise",
+  options: t,
   check: x => x.constructor.name === Promise.name
-};
+});
 
 const obj = o => ({
   name: "obj",

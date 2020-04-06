@@ -42,7 +42,7 @@ Counter.contract = {
       returns: is.positive
     },
     get_with_added1: is.fun(is.positive, is.positive),
-    get_with_added2: is.fun(is.positive, is.promise)
+    get_with_added2: is.fun(is.positive, is.promise(is.positive))
   }
 };
 
@@ -77,7 +77,7 @@ describe("async function contract", () => {
     const add1C = contract(
       {
         arguments: [is.number()],
-        returns: is.promise
+        returns: is.promise(is.number())
       },
       async(x) => x+1
     );
