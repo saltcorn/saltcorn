@@ -3,13 +3,35 @@ const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("saltcorn-data/models/workflow");
+const { get_viewable_fields } = require("./viewable_fields");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
+const {
+  field_picker_fields,
+  picked_fields_to_query
+} = require("saltcorn-data/plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({
     onDone: context => context,
     steps: [
+      {
+        name: "showfields",
+        form: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const field_picker_repeat = await field_picker_fields({ table });
+          return new Form({
+            blurb:
+              "Finalise your show view by specifying the fields in the table",
+            fields: [
+              new FieldRepeat({
+                name: "columns",
+                fields: field_picker_repeat
+              })
+            ]
+          });
+        }
+      },
       {
         name: "subtables",
         form: async context => {
@@ -41,15 +63,22 @@ const get_state_fields = () => [
   }
 ];
 
-const run = async (table_id, viewname, rels, { id }) => {
+const run = async (table_id, viewname, { columns, ...rels }, { id }) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
+  const { joinFields, aggregations } = picked_fields_to_query(columns);
+  const [row] = await table.getJoinedRows({
+    where: { id },
+    joinFields,
+    aggregations,
+    limit: 1
+  });
+  const tfields = get_viewable_fields(viewname, table, fields, columns);
 
-  const row = await tbl.getRow({ id });
-  const trows = fields.map(f =>
+  const trows = tfields.map(f =>
     tr(
       td(text(f.label)),
-      td("" + (f.type.showAs ? f.type.showAs(row[f.name]) : text(row[f.name])))
+      td(typeof f.key === "string" ? row[f.key] : f.key[row])
     )
   );
   var reltbls = [];
@@ -63,8 +92,8 @@ const run = async (table_id, viewname, rels, { id }) => {
         }
       });
       const relfields = await reltbl.getFields();
-      var tfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
-      reltbls.push(div(h4(reltbl.name), mkTable(tfields, rows)));
+      const trfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
+      reltbls.push(div(h4(reltbl.name), mkTable(trfields, rows)));
     }
   }
   return div([table(tbody(trows)), ...reltbls]);

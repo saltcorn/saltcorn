@@ -9,7 +9,7 @@ const {
   field_picker_fields,
   picked_fields_to_query
 } = require("saltcorn-data/plugin-helper");
-
+const { get_viewable_fields } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -59,48 +59,7 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
   const fields = await Field.find({ table_id: table.id });
   var qstate = {};
   const { joinFields, aggregations } = picked_fields_to_query(columns);
-  const tfields = columns.map(column => {
-    if (column.type === "Action")
-      return {
-        label: "Delete",
-        key: r =>
-          post_btn(
-            `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`,
-            "Delete"
-          )
-      };
-    else if (column.type === "ViewLink") {
-      const vnm = column.view;
-      return {
-        label: vnm,
-        key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
-      };
-    } else if (column.type === "JoinField") {
-      const [refNm, targetNm] = column.join_field.split(".");
-      return {
-        label: targetNm,
-        key: targetNm
-        // sortlink: `javascript:sortby('${text(targetNm)}')`
-      };
-    } else if (column.type === "Aggregation") {
-      //console.log(column)
-      const [table, fld] = column.agg_relation.split(".");
-      const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
-
-      return {
-        label: targetNm,
-        key: targetNm
-        // sortlink: `javascript:sortby('${text(targetNm)}')`
-      };
-    } else if (column.type === "Field") {
-      const f = fields.find(fld => fld.name === column.field_name);
-      return {
-        label: f.label,
-        key: f.listKey,
-        sortlink: `javascript:sortby('${text(f.name)}')`
-      };
-    }
-  });
+  const tfields = get_viewable_fields(viewname, table, fields, columns);
   Object.entries(state).forEach(([k, v]) => {
     const field = fields.find(fld => fld.name == k);
     if (field) qstate[k] = v;
