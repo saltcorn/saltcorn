@@ -42,7 +42,7 @@ Counter.contract = {
       returns: is.positive
     },
     get_with_added1: is.fun(is.positive, is.positive),
-    get_with_added2: is.fun(is.positive, is.promise)
+    get_with_added2: is.fun(is.positive, is.promise(is.positive))
   }
 };
 
@@ -77,12 +77,12 @@ describe("async function contract", () => {
     const add1C = contract(
       {
         arguments: [is.number()],
-        returns: is.promise
+        returns: is.promise(is.number())
       },
-      async(x) => x+1
+      async x => x + 1
     );
-    console.log(((async(x) => x+1)(3)).constructor.name)
-    add1C(3)
+    console.log((async x => x + 1)(3).constructor.name);
+    add1C(3);
     expect(() => add1C("foo")).toThrow(Error);
     expect(() => add1C()).toThrow(Error);
   });
@@ -205,6 +205,44 @@ describe("autotest shortcut function", () => {
     auto_test(add1C);
   });
 });
+
+describe("autotest string function", () => {
+  it("run", () => {
+    const f1 = contract(is.fun(is.str, is.posint), v => v.length);
+    auto_test(f1);
+  });
+});
+
+describe("autotest or function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.or(is.str, is.array(is.int)), is.posint),
+      v => v.length
+    );
+    auto_test(f1);
+  });
+});
+
+describe("autotest array of any function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.or(is.str, is.array(is.any)), is.posint),
+      v => v.length
+    );
+    auto_test(f1);
+  });
+});
+
+describe("autotest and function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.and(is.str, is.str), is.posint),
+      v => v.length
+    );
+    auto_test(f1);
+  });
+});
+
 describe("autotest class", () => {
   it("run", () => {
     auto_test(Counter);

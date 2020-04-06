@@ -43,10 +43,11 @@ const klass = cls => ({
   check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
 });
 
-const promise = {
+const promise = t => ({
   name: "promise",
+  options: t,
   check: x => x.constructor.name === Promise.name
-};
+});
 
 const obj = o => ({
   name: "obj",
@@ -76,7 +77,8 @@ const posint = {
 
 const str = {
   name: "str",
-  check: x => typeof x === "string"
+  check: x => typeof x === "string",
+  generate: gen.string
 };
 
 const eq = v => ({
@@ -106,7 +108,8 @@ const sat = f => ({
 
 const any = {
   name: "any",
-  check: x => true
+  check: x => true,
+  generate: gen.any
 };
 
 const maybe = c => ({
@@ -127,19 +130,30 @@ const and = (...contrs) => ({
       : `${x} in and violates (in and) ${JSON.stringify(failing.name)}`;
   },
   options: contrs,
-  check: x => contrs.every(c => c.check(x))
+  check: x => contrs.every(c => c.check(x)),
+  generate: contrs.filter(c => c.generate).length > 0 && (() => and_gen(contrs))
 });
+
+function and_gen(contrs) {
+  const val = gen.oneOf(contrs.filter(c => c.generate)).generate();
+  if (contrs.every(c => c.check(val))) return val;
+  else return and_gen(contrs);
+}
 
 const or = (...contrs) => ({
   name: "or(" + contrs.map(c => c.name).join + ")",
   options: contrs,
-  check: x => contrs.some(c => c.check(x))
+  check: x => contrs.some(c => c.check(x)),
+  generate:
+    contrs.filter(c => c.generate).length > 0 &&
+    (() => gen.oneOf(contrs.filter(c => c.generate)).generate())
 });
 
 const array = c => ({
   name: "array",
   options: c,
-  check: vs => Array.isArray(vs) && vs.every(v => c.check(v))
+  check: vs => Array.isArray(vs) && vs.every(v => c.check(v)),
+  generate: c.generate && gen.array(c.generate)
 });
 
 module.exports = {
