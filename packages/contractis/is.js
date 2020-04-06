@@ -129,8 +129,15 @@ const and = (...contrs) => ({
       : `${x} in and violates (in and) ${JSON.stringify(failing.name)}`;
   },
   options: contrs,
-  check: x => contrs.every(c => c.check(x))
+  check: x => contrs.every(c => c.check(x)),
+  generate: contrs.filter(c => c.generate).length > 0 && (() => and_gen(contrs))
 });
+
+function and_gen(contrs) {
+  const val = gen.oneOf(contrs.filter(c => c.generate)).generate();
+  if (contrs.every(c => c.check(val))) return val;
+  else return and_gen(contrs);
+}
 
 const or = (...contrs) => ({
   name: "or(" + contrs.map(c => c.name).join + ")",

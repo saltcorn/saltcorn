@@ -223,6 +223,26 @@ describe("autotest or function", () => {
   });
 });
 
+describe("autotest or function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.or(is.str, is.array(is.int)), is.posint),
+      v => v.length
+    );
+    auto_test(f1);
+  });
+});
+
+describe("autotest or function", () => {
+  it("run", () => {
+    const f1 = contract(
+      is.fun(is.and(is.str, is.str), is.posint),
+      v => v.length
+    );
+    auto_test(f1);
+  });
+});
+
 describe("autotest class", () => {
   it("run", () => {
     auto_test(Counter);
