@@ -1,20 +1,8 @@
-const { get_return_contract, get_arguments_returns } = require("./util.js");
+const { get_return_contract, get_arguments_returns, ContractViolation } = require("./util.js");
 
 const check_contract = (theContract, val, loc) => {
   if (!theContract.check(val)) {
-    const in_str = loc ? ` in ${loc}` : "";
-    if (theContract.get_error_message) {
-      throw new Error(
-        `Contract violation${in_str}: ${theContract.get_error_message(val)}`
-      );
-    } else {
-      const conStr = theContract.options
-        ? `${theContract.name}(${JSON.stringify(theContract.options)})`
-        : theContract.name;
-      throw new Error(
-        `Contract violation${in_str}: ${JSON.stringify(val)} violates ${conStr}`
-      );
-    }
+    throw new ContractViolation(theContract, val, loc, check_contract);
   }
 };
 
