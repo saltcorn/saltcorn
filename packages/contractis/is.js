@@ -43,11 +43,10 @@ const klass = cls => ({
   check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
 });
 
-const promise = ({
+const promise = {
   name: "promise",
   check: x => x.constructor.name === Promise.name
-});
-
+};
 
 const obj = o => ({
   name: "obj",
@@ -162,5 +161,6 @@ module.exports = {
   klass,
   any,
   int,
-  posint,promise
+  posint,
+  promise
 };

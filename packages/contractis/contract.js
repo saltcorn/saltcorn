@@ -2,7 +2,7 @@ const { get_return_contract, get_arguments_returns } = require("./util.js");
 
 const check_contract = (theContract, val, loc) => {
   if (!theContract.check(val)) {
-    const in_str =  loc ? ` in ${loc}` : ''
+    const in_str = loc ? ` in ${loc}` : "";
     if (theContract.get_error_message) {
       throw new Error(
         `Contract violation${in_str}: ${theContract.get_error_message(val)}`
@@ -33,7 +33,11 @@ const contract_function = (fun, contr, that, check_vars) => {
     if (opts.arguments) check_arguments(opts.arguments, args);
     const rv = that ? fun.apply(that, args) : fun(...args);
     if (opts.returns)
-      check_contract(get_return_contract(opts.returns, args), rv, 'return value');
+      check_contract(
+        get_return_contract(opts.returns, args),
+        rv,
+        "return value"
+      );
     if (check_vars) check_vars();
     return rv;
   };
@@ -74,10 +78,10 @@ const contract = (opts, obj) => {
   }
 };
 
-contract.value =(theContract, x) =>{
+contract.value = (theContract, x) => {
   check_contract(theContract, x);
   return x;
-}
+};
 
 contract.disable = () => {
   enabled = false;
