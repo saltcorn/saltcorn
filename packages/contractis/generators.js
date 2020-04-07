@@ -56,6 +56,19 @@ const any = () =>
     konst(() => any()),
     anyObj
   ])();
+  
+const gen_arguments = args => {
+  if (!args) return [];
+  const argumentcs = Array.isArray(args) ? args : [args];
+  return argumentcs.map(c => generate_from(c));
+};
+
+const generate_class = cls => () => {
+  const contr = cls.contract;
+  const cargs = contr.constructs ? gen_arguments(contr.constructs) : [];
+  const inst = new cls(...cargs);
+  return inst;
+};
 
 module.exports = {
   bool,
@@ -66,5 +79,7 @@ module.exports = {
   oneOf,
   string,
   any,
-  array
+  array,
+  generate_class,
+  gen_arguments
 };

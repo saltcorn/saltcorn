@@ -40,7 +40,8 @@ const bool = {
 const klass = cls => ({
   name: "klass",
   options: cls,
-  check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name)
+  check: x => x.constructor.name === (typeof cls === "string" ? cls : cls.name),
+  generate: cls.contract && gen.generate_class(cls)
 });
 
 const promise = t => ({

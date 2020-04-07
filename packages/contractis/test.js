@@ -370,3 +370,15 @@ describe("autotest class", () => {
       });
   });
 });
+
+describe("autotest function with class as arg", () => {
+  it("run when correct", () => {
+    const f1 = contract(is.fun(is.klass(Counter), is.positive), c => c.count);
+    auto_test(f1);
+  });
+
+  it("fail when incorrect", () => {
+    const f1 = contract(is.fun(is.klass(Counter), is.str), c => c.count);
+    expect(() => auto_test(f1)).toThrow(Error);
+  });
+});

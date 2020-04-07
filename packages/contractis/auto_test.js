@@ -15,34 +15,29 @@ function isClass(obj) {
   return isCtorClass || isPrototypeCtorClass;
 }
 
-const gen_arguments = args => {
-  if (!args) return [];
-  const argumentcs = Array.isArray(args) ? args : [args];
-  return argumentcs.map(c => gen.generate_from(c));
-};
-
 const auto_test_fun = (f, contr, opts) => {
   for (let i = 0; i < (opts.n || 100); i++) {
-    const args = gen_arguments(contr.arguments);
+    const args = gen.gen_arguments(contr.arguments);
     f(...args);
   }
 };
 
 const auto_test_fun_async = async (f, contr, opts) => {
   for (let i = 0; i < (opts.n || 100); i++) {
-    const args = gen_arguments(contr.arguments);
+    const args = gen.gen_arguments(contr.arguments);
     await f(...args);
   }
 };
 const auto_test_class = (cls, contr, opts) => {
   for (let i = 0; i < (opts.n || 10); i++) {
-    const cargs = contr.constructs ? gen_arguments(contr.constructs) : [];
-    const inst = new cls(...cargs);
+    const inst = gen.generate_class(cls)();
 
     for (let j = 0; j < (opts.nmeth || 10); j++) {
       const [methnm, methcontr] = gen.oneOf(Object.entries(contr.methods));
 
-      const margs = gen_arguments(get_arguments_returns(methcontr).arguments);
+      const margs = gen.gen_arguments(
+        get_arguments_returns(methcontr).arguments
+      );
       inst[methnm](...margs);
     }
   }
@@ -50,13 +45,14 @@ const auto_test_class = (cls, contr, opts) => {
 
 const auto_test_class_async = async (cls, contr, opts) => {
   for (let i = 0; i < (opts.n || 10); i++) {
-    const cargs = contr.constructs ? gen_arguments(contr.constructs) : [];
-    const inst = new cls(...cargs);
+    const inst = gen.generate_class(cls)();
 
     for (let j = 0; j < (opts.nmeth || 10); j++) {
       const [methnm, methcontr] = gen.oneOf(Object.entries(contr.methods));
 
-      const margs = gen_arguments(get_arguments_returns(methcontr).arguments);
+      const margs = gen.gen_arguments(
+        get_arguments_returns(methcontr).arguments
+      );
       if (!margs || margs.length === 0) inst[methnm];
       else await inst[methnm](...margs);
     }
