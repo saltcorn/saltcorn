@@ -27,6 +27,9 @@ class Counter {
   async get_with_added2(x) {
     return this.count + x;
   }
+  get mygetter() {
+    return this.count;
+  }
 }
 
 Counter.contract = {
@@ -42,17 +45,18 @@ Counter.contract = {
       returns: is.positive
     },
     get_with_added1: is.fun(is.positive, is.positive),
-    get_with_added2: is.fun(is.positive, is.promise(is.positive))
+    get_with_added2: is.fun(is.positive, is.promise(is.positive)),
+    mygetter: is.fun(null, is.positive)
   }
 };
 
 class AsyncWrong {
   constructor(init) {
     this.count = init || 0;
-    contract.class(this, Counter);
+    contract.class(this, AsyncWrong);
   }
 
-  async get_with_added(x) {
+  async get_in_wrong(x) {
     return this.count + x;
   }
 }
@@ -60,7 +64,7 @@ AsyncWrong.contract = {
   constructs: is.maybe(is.positive),
   variables: { count: is.positive },
   methods: {
-    get_with_added: is.fun(is.positive, is.promise(is.str))
+    get_in_wrong: is.fun(is.positive, is.promise(is.str))
   }
 };
 

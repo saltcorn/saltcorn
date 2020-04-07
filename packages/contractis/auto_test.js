@@ -16,6 +16,7 @@ function isClass(obj) {
 }
 
 const gen_arguments = args => {
+  if (!args) return [];
   const argumentcs = Array.isArray(args) ? args : [args];
   return argumentcs.map(c => gen.generate_from(c));
 };
@@ -56,7 +57,8 @@ const auto_test_class_async = async (cls, contr, opts) => {
       const [methnm, methcontr] = gen.oneOf(Object.entries(contr.methods));
 
       const margs = gen_arguments(get_arguments_returns(methcontr).arguments);
-      await inst[methnm](...margs);
+      if (!margs || margs.length === 0) inst[methnm];
+      else await inst[methnm](...margs);
     }
   }
 };

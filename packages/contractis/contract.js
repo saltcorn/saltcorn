@@ -116,8 +116,18 @@ const contract_class = (that, cls) => {
 
   if (opts.methods) {
     Object.entries(opts.methods).forEach(([k, v]) => {
-      const oldf = that[k];
-      that[k] = contract_function(oldf, v, that);
+      const proto = Object.getPrototypeOf(that);
+      const d = Object.getOwnPropertyDescriptor(proto, k);
+
+      if (d.value) {
+        const oldf = d.value;
+        d.value = contract_function(oldf, v, that);
+      } else if (d.get) {
+        const oldf = d.get;
+        d.get = contract_function(oldf, v, that);
+      }
+
+      Object.defineProperty(that, k, d);
     });
   }
 };
