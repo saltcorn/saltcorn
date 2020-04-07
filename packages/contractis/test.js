@@ -12,7 +12,7 @@ const add1 = x => x + 1;
 class Counter {
   constructor(init) {
     this.count = init || 0;
-    contract.class(this, Counter);
+    contract.class(this);
   }
   incr() {
     this.count += 1;
@@ -53,7 +53,7 @@ Counter.contract = {
 class AsyncWrong {
   constructor(init) {
     this.count = init || 0;
-    contract.class(this, AsyncWrong);
+    contract.class(this);
   }
 
   async get_in_wrong(x) {
