@@ -46,6 +46,24 @@ Counter.contract = {
   }
 };
 
+class AsyncWrong {
+  constructor(init) {
+    this.count = init || 0;
+    contract.class(this, Counter);
+  }
+
+  async get_with_added(x) {
+    return this.count + x;
+  }
+}
+AsyncWrong.contract = {
+  constructs: is.maybe(is.positive),
+  variables: { count: is.positive },
+  methods: {
+    get_with_added: is.fun(is.positive, is.promise(is.str))
+  }
+};
+
 describe("class contract", () => {
   it("should compute if valid", () => {
     const c = new Counter(3);
@@ -263,23 +281,23 @@ describe("autotest function", () => {
 describe("autotest async function", () => {
   it("run when correct", async () => {
     const add1C = contract(
-      is.fun(is.num,is.promise(is.num)),
-      async(x)=> x+1
+      is.fun(is.num, is.promise(is.num)),
+      async x => x + 1
     );
     await auto_test(add1C);
   });
   it("fail when return contract is wrong", async () => {
     const add1C = contract(
-      is.fun(is.num,is.promise(is.str)),
-      async(x)=> x+1
+      is.fun(is.num, is.promise(is.str)),
+      async x => x + 1
     );
-    await auto_test(add1C) 
-    .then(() => {
-      throw new Error("Should go to .catch, not enter .then");
-    })
-    .catch(err => {
-      expect(err).toBeInstanceOf(ContractViolation);
-    });;
+    await auto_test(add1C)
+      .then(() => {
+        throw new Error("Should go to .catch, not enter .then");
+      })
+      .catch(err => {
+        expect(err).toBeInstanceOf(ContractViolation);
+      });
   });
 });
 
@@ -328,7 +346,16 @@ describe("autotest and function", () => {
 });
 
 describe("autotest class", () => {
-  it("run", () => {
+  it("run when correct", () => {
     auto_test(Counter);
+  });
+  it("fail when return contract is wrong", async () => {
+    await auto_test(AsyncWrong)
+      .then(() => {
+        throw new Error("Should go to .catch, not enter .then");
+      })
+      .catch(err => {
+        expect(err).toBeInstanceOf(ContractViolation);
+      });
   });
 });
