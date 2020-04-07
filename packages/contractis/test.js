@@ -122,16 +122,16 @@ describe("retcheck contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(
       {
-        arguments: [is.number()],
-        returns: is.number(),
+        arguments: [is.num],
+        returns: is.num,
         retcheck: x => r => r > x
       },
       add1
     );
     const add2C = contract(
       {
-        arguments: [is.number()],
-        returns: is.number(),
+        arguments: [is.num],
+        returns: is.num,
         retcheck: x => r => r < x
       },
       add1
@@ -182,8 +182,8 @@ describe("class value contract", () => {
 describe("maybe, or contract", () => {
   it("should compute if valid", () => {
     const add1C = contract.with(add1, {
-      arguments: [is.maybe(is.number())],
-      returns: is.or(is.str, is.number())
+      arguments: [is.maybe(is.num)],
+      returns: is.or(is.str, is.num)
     });
     expect(add1C(3)).toBe(4);
     expect(add1C() === 7).toBe(false); //not throw
@@ -195,8 +195,8 @@ describe("reverse with contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(
       {
-        arguments: [is.number()],
-        returns: is.number()
+        arguments: [is.num],
+        returns: is.num
       },
       add1
     );
@@ -209,11 +209,11 @@ describe("reverse with contract", () => {
 describe("return lambda", () => {
   it("should compute if valid", () => {
     const add1C = contract.with(add1, {
-      arguments: [is.number()],
+      arguments: [is.num],
       returns: x => is.number({ gte: x })
     });
     const add1CWrong = contract.with(add1, {
-      arguments: [is.number()],
+      arguments: [is.num],
       returns: x => is.number({ lte: x })
     });
     expect(add1C(3)).toBe(4);
@@ -222,7 +222,7 @@ describe("return lambda", () => {
 
   it("allow and in returns", () => {
     const add1C = contract.with(add1, {
-      arguments: [is.number()],
+      arguments: [is.num],
       returns: x => is.and(is.num, is.gte(x))
     });
 
@@ -230,7 +230,7 @@ describe("return lambda", () => {
   });
   it("catch and in returns", () => {
     const add1CWrong = contract.with(add1, {
-      arguments: [is.number()],
+      arguments: [is.num],
       returns: x => is.and(is.num, is.lte(x))
     });
     expect(() => add1CWrong(3)).toThrow(Error);
@@ -238,15 +238,48 @@ describe("return lambda", () => {
 });
 
 describe("autotest function", () => {
-  it("run", () => {
+  it("pass when correct", () => {
     const add1C = contract(
       {
-        arguments: [is.number()],
-        returns: is.number()
+        arguments: [is.num],
+        returns: is.num
       },
       add1
     );
     auto_test(add1C);
+  });
+  it("fail when return contract is wrong", () => {
+    const add1C = contract(
+      {
+        arguments: [is.num],
+        returns: is.str
+      },
+      add1
+    );
+    expect(() => auto_test(add1C)).toThrow(Error);
+  });
+});
+
+describe("autotest async function", () => {
+  it("run when correct", async () => {
+    const add1C = contract(
+      is.fun(is.num,is.promise(is.num)),
+      async(x)=> x+1
+    );
+    await auto_test(add1C);
+  });
+  it("fail when return contract is wrong", async () => {
+    const add1C = contract(
+      is.fun(is.num,is.promise(is.str)),
+      async(x)=> x+1
+    );
+    await auto_test(add1C) 
+    .then(() => {
+      throw new Error("Should go to .catch, not enter .then");
+    })
+    .catch(err => {
+      expect(err).toBeInstanceOf(ContractViolation);
+    });;
   });
 });
 

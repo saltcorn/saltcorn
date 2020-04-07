@@ -20,14 +20,21 @@ const gen_arguments = args => {
   return argumentcs.map(c => gen.generate_from(c));
 };
 
-const auto_test_fun = (f, opts) => {
-  const contr = get_arguments_returns(f.__contract);
+const auto_test_fun = (f, contr, opts) => {
+  //const contr = get_arguments_returns(f.__contract);
   for (let i = 0; i < (opts.n || 100); i++) {
     const args = gen_arguments(contr.arguments);
     f(...args);
   }
 };
 
+const auto_test_fun_async = async (f, contr, opts) => {
+  //const contr = get_arguments_returns(f.__contract);
+  for (let i = 0; i < (opts.n || 100); i++) {
+    const args = gen_arguments(contr.arguments);
+    await f(...args);
+  }
+};
 const auto_test_class = (cls, opts) => {
   const contr = cls.contract;
   for (let i = 0; i < (opts.n || 10); i++) {
@@ -50,6 +57,10 @@ module.exports = (obj, opts = {}) => {
   if (typeof obj === "function") {
     if (typeof obj.__contract === "undefined")
       throw new Error("auto_test: no contract found");
-    return auto_test_fun(obj, opts);
+    const contr = get_arguments_returns(obj.__contract);
+    if(contr.returns.name==="promise")
+      return auto_test_fun_async(obj, contr, opts);
+    else
+      return auto_test_fun(obj, contr, opts);
   }
 };
