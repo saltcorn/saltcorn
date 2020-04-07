@@ -9,7 +9,7 @@ class FieldRepeat {
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.isRepeat = true;
-    contract.class(this, FieldRepeat);
+    contract.class(this);
   }
   validate(whole_rec) {
     return this.validate_from_ix(whole_rec, 0);

@@ -102,8 +102,10 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
   return newf;
 };
 
-const contract_class = (that, cls) => {
-  const opts = cls.contract;
+const contract_class = (that) => {
+  const proto = Object.getPrototypeOf(that);
+  const opts = proto.constructor.contract;
+  
   const check_vars = () => {
     if (opts.variables) {
       Object.entries(opts.variables).forEach(([k, v]) => {
@@ -116,8 +118,19 @@ const contract_class = (that, cls) => {
 
   if (opts.methods) {
     Object.entries(opts.methods).forEach(([k, v]) => {
-      const oldf = that[k];
-      that[k] = contract_function(oldf, v, that);
+      
+      const d = Object.getOwnPropertyDescriptor(proto, k);
+      if(!d)
+        throw new Error(`No method ${k} in ${proto.constructor.name}`)
+      if (d.value) {
+        const oldf = d.value;
+        d.value = contract_function(oldf, v, that);
+      } else if (d.get) {
+        const oldf = d.get;
+        d.get = contract_function(oldf, v, that);
+      }
+
+      Object.defineProperty(that, k, d);
     });
   }
 };

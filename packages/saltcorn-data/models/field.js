@@ -40,7 +40,7 @@ class Field {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
-    contract.class(this, Field);
+    contract.class(this);
   }
   get toJson() {
     return {

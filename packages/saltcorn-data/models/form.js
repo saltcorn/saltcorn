@@ -18,7 +18,7 @@ class Form {
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
     if (o.validate) this.validate(o.validate);
-    contract.class(this, Form);
+    contract.class(this);
   }
   hidden(...ks) {
     ks.forEach(k => {
