@@ -72,6 +72,13 @@ describe("class contract", () => {
     expect(() => new Counter("foo")).toThrow(Error);
     expect(() => c.get_with_added("bar")).toThrow(Error);
   });
+  it("should run function if valid", () => {
+    const c = new Counter(3);
+    c.incr();
+    expect(c.get_with_added1(1)).toBe(5);
+    expect(() => new Counter("foo")).toThrow(Error);
+    expect(() => c.get_with_added("bar")).toThrow(Error);
+  });
 });
 
 describe("simple contract", () => {
@@ -346,8 +353,8 @@ describe("autotest and function", () => {
 });
 
 describe("autotest class", () => {
-  it("run when correct", () => {
-    auto_test(Counter);
+  it("run when correct", async () => {
+    await auto_test(Counter);
   });
   it("fail when return contract is wrong", async () => {
     await auto_test(AsyncWrong)
