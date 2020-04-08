@@ -1,22 +1,10 @@
 var stackTrace = require("stack-trace");
-
+const check_contract = require("./check");
 const {
   get_return_contract,
   get_arguments_returns,
   ContractViolation
 } = require("./util.js");
-
-const check_contract = (theContract, val, loc, contrDefinition, callSite) => {
-  if (!theContract.check(val)) {
-    throw new ContractViolation(
-      theContract,
-      val,
-      loc,
-      contrDefinition,
-      callSite
-    );
-  }
-};
 
 const check_arguments = (
   arguments_contract_spec,
