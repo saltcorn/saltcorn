@@ -56,7 +56,7 @@ const any = () =>
     konst(() => any()),
     anyObj
   ])();
-  
+
 const gen_arguments = args => {
   if (!args) return [];
   const argumentcs = Array.isArray(args) ? args : [args];

@@ -19,8 +19,12 @@ const configuration_workflow = () =>
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const field_picker_repeat = await field_picker_fields({ table });
-          const create_views = await View.find_table_views_where(context.table_id,
-            ({state_fields, viewrow})=> viewrow.name!==context.viewname && state_fields.every(sf => !sf.required) )
+          const create_views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every(sf => !sf.required)
+          );
           const create_view_opts = create_views.map(v => v.name);
           return new Form({
             blurb:

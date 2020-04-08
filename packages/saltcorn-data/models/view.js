@@ -52,16 +52,17 @@ class View {
           viewrow.name,
           viewrow.configuration
         );
-        if (pred({viewrow, viewtemplate: vt, state_fields: sfs}))
-           link_view_opts.push(viewrow);
+        if (pred({ viewrow, viewtemplate: vt, state_fields: sfs }))
+          link_view_opts.push(viewrow);
       }
     }
     return link_view_opts;
   }
 
   static async find_possible_links_to_table(table_id) {
-    return View.find_table_views_where(table_id,
-      ({state_fields})=> state_fields.some(sf => sf.name === "id") );
+    return View.find_table_views_where(table_id, ({ state_fields }) =>
+      state_fields.some(sf => sf.name === "id")
+    );
   }
 
   static async create(v) {
