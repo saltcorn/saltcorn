@@ -37,7 +37,7 @@ class View {
     return views.map(v => new View(v));
   }
 
-  static async find_possible_links_to_table(table_id) {
+  static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
     const State = require("../db/state");
     const link_views = await View.find({
@@ -52,12 +52,22 @@ class View {
           viewrow.name,
           viewrow.configuration
         );
-        if (sfs.some(sf => sf.name === "id")) link_view_opts.push(viewrow);
+        if (pred({viewrow, viewtemplate: vt, state_fields: sfs}))
+           link_view_opts.push(viewrow);
       }
     }
     return link_view_opts;
   }
 
+  static async find_possible_links_to_table(table_id) {
+    return View.find_table_views_where(table_id,
+      ({state_fields})=> state_fields.some(sf => sf.name === "id") );
+  }
+
+  static async find_create_links_to_table(table_id) {
+    return View.find_table_views_where(table_id,
+      ({state_fields})=> state_fields.every(sf => !sf.required) );
+  }
   static async create(v) {
     const id = await db.insert("views", v);
     await require("../db/state").refresh();
