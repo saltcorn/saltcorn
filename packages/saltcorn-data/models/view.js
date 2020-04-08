@@ -64,10 +64,6 @@ class View {
       ({state_fields})=> state_fields.some(sf => sf.name === "id") );
   }
 
-  static async find_create_links_to_table(table_id) {
-    return View.find_table_views_where(table_id,
-      ({state_fields})=> state_fields.every(sf => !sf.required) );
-  }
   static async create(v) {
     const id = await db.insert("views", v);
     await require("../db/state").refresh();

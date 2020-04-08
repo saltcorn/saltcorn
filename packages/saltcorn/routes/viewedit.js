@@ -119,6 +119,7 @@ router.get("/config/:name", isAdmin, async (req, res) => {
   const configFlow = await view.get_config_flow();
   const wfres = await configFlow.run({
     table_id: view.table_id,
+    viewname: name,
     ...view.configuration
   });
   if (wfres.renderForm)
