@@ -86,7 +86,7 @@ const fixtures = async () => {
           stat: "Count"
         }
       ],
-      "patients.favbook": true
+      subtables: { "patients.favbook": true }
     },
     is_public: true,
     on_root_page: true,

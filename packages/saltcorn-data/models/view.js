@@ -37,7 +37,19 @@ class View {
     return views.map(v => new View(v));
   }
 
-  static async find_possible_links_to_table(table_id) {
+  async get_state_fields() {
+    const State = require("../db/state");
+    const vt = State.viewtemplates[this.viewtemplate];
+    if (vt.get_state_fields) {
+      return await vt.get_state_fields(
+        this.table_id,
+        this.name,
+        this.configuration
+      );
+    } else return [];
+  }
+
+  static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
     const State = require("../db/state");
     const link_views = await View.find({
@@ -52,10 +64,37 @@ class View {
           viewrow.name,
           viewrow.configuration
         );
-        if (sfs.some(sf => sf.name === "id")) link_view_opts.push(viewrow);
+        if (pred({ viewrow, viewtemplate: vt, state_fields: sfs }))
+          link_view_opts.push(viewrow);
       }
     }
     return link_view_opts;
+  }
+
+  static async find_all_views_where(pred) {
+    var link_view_opts = [];
+    const State = require("../db/state");
+    const link_views = await View.find({});
+
+    for (const viewrow of link_views) {
+      const vt = State.viewtemplates[viewrow.viewtemplate];
+      if (vt.get_state_fields) {
+        const sfs = await vt.get_state_fields(
+          viewrow.table_id,
+          viewrow.name,
+          viewrow.configuration
+        );
+        if (pred({ viewrow, viewtemplate: vt, state_fields: sfs }))
+          link_view_opts.push(viewrow);
+      }
+    }
+    return link_view_opts;
+  }
+
+  static async find_possible_links_to_table(table_id) {
+    return View.find_table_views_where(table_id, ({ state_fields }) =>
+      state_fields.some(sf => sf.name === "id")
+    );
   }
 
   static async create(v) {

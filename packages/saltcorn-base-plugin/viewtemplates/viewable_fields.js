@@ -1,7 +1,8 @@
-const {  post_btn, link } = require("saltcorn-markup");
+const { post_btn, link } = require("saltcorn-markup");
 const { text } = require("saltcorn-markup/tags");
 
-const get_viewable_fields = (viewname, table, fields, columns, isShow) => columns.map(column => {
+const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
+  columns.map(column => {
     if (column.type === "Action")
       return {
         label: "Delete",
@@ -38,10 +39,14 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) => column
       const f = fields.find(fld => fld.name === column.field_name);
       return {
         label: text(f.label),
-        key: isShow ? (f.type.showAs ? f.type.showAs(row[f.name]) : text(row[f.name])) : f.listKey,
+        key: isShow
+          ? f.type.showAs
+            ? f.type.showAs(row[f.name])
+            : text(row[f.name])
+          : f.listKey,
         sortlink: `javascript:sortby('${text(f.name)}')`
       };
     }
   });
 
-  module.exports = { get_viewable_fields}
+module.exports = { get_viewable_fields };
