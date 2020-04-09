@@ -191,6 +191,7 @@ describe("viewedit new Show", () => {
       .send("stepName=subtables")
       .send("patients.favbook=on")
       .send("field_list=pages")
+      .send("label_style=Besides")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
     done();
