@@ -63,7 +63,7 @@ const selectOne = async (tbl, where) => {
   if (rows.length === 0) {
     const w = mkWhere(where);
     console.log({ where });
-    throw new Error(`no ${tbl} where ${w.where} are ${w.values}`);
+    throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
   } else return rows[0];
 };
 
