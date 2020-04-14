@@ -14,7 +14,6 @@ const {
 
 const configuration_workflow = () =>
   new Workflow({
-    onDone: context => context,
     steps: [
       {
         name: "showfields",
@@ -41,28 +40,6 @@ const configuration_workflow = () =>
             ]
           });
         }
-      },
-      {
-        name: "subtables",
-        contextField: "subtables",
-        form: async context => {
-          const tbl = await Table.findOne({ id: context.table_id });
-          const rels = await Field.find({ type: `Key to ${tbl.name}` });
-          var fields = [];
-          for (const rel of rels) {
-            const reltbl = await Table.findOne({ id: rel.table_id });
-            fields.push({
-              name: `${reltbl.name}.${rel.name}`,
-              label: `${rel.label} on ${reltbl.name}`,
-              type: "Bool"
-            });
-          }
-          return new Form({
-            fields,
-            blurb:
-              "Which related tables would you like to show in sub-lists below the selected item?"
-          });
-        }
       }
     ]
   });
@@ -77,7 +54,7 @@ const get_state_fields = () => [
 const run = async (
   table_id,
   viewname,
-  { columns, label_style, subtables },
+  { columns, label_style,  },
   { id }
 ) => {
   if (typeof id === "undefined") return "No record selected";
@@ -93,22 +70,6 @@ const run = async (
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns);
 
-  //todo: to list-show-list
-  var reltbls = [];
-  for (const rel of Object.keys(subtables)) {
-    if (subtables[rel]) {
-      const [reltblnm, relfld] = rel.split(".");
-      const reltbl = await Table.findOne({ name: reltblnm });
-      const rows = await reltbl.getJoinedRows({
-        where: {
-          [relfld]: id
-        }
-      });
-      const relfields = await reltbl.getFields();
-      const trfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
-      reltbls.push(div(h4(reltbl.name), mkTable(trfields, rows)));
-    }
-  }
   if (label_style === "Besides") {
     const trows = tfields.map(f =>
       tr(
@@ -116,7 +77,7 @@ const run = async (
         td(typeof f.key === "string" ? row[f.key] : f.key[row])
       )
     );
-    return div([table(tbody(trows)), ...reltbls]);
+    return table(tbody(trows));
   } else if (label_style === "Above") {
     const trows = tfields.map(f =>
       div(
@@ -124,12 +85,12 @@ const run = async (
         div(typeof f.key === "string" ? row[f.key] : f.key[row])
       )
     );
-    return div([...trows, ...reltbls]);
+    return div(trows);
   } else {
     const trows = tfields.map(f =>
       div(typeof f.key === "string" ? row[f.key] : f.key[row])
     );
-    return div([...trows, ...reltbls]);
+    return div(trows);
   }
 };
 
