@@ -10,7 +10,10 @@ const {
   field_picker_fields,
   picked_fields_to_query
 } = require("saltcorn-data/plugin-helper");
-const { get_viewable_fields } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  stateFieldsToWhere
+} = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -67,20 +70,10 @@ const run = async (table_id, viewname, { columns, view_to_create }, state) => {
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-  var qstate = {};
+
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const tfields = get_viewable_fields(viewname, table, fields, columns);
-  Object.entries(state).forEach(([k, v]) => {
-    const field = fields.find(fld => fld.name == k);
-    if (field) qstate[k] = v;
-    if (
-      field &&
-      field.type.name === "String" &&
-      !(field.attributes && field.attributes.options)
-    ) {
-      qstate[k] = { ilike: v };
-    }
-  });
+  const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
   const rows = await table.getJoinedRows({

@@ -16,7 +16,7 @@ const configuration_workflow = () =>
           const list_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewrow }) =>
-              viewrow.viewtemplate==="List" &&
+              viewrow.viewtemplate === "List" &&
               viewrow.name !== context.viewname &&
               state_fields.every(sf => !sf.required)
           );
@@ -25,7 +25,7 @@ const configuration_workflow = () =>
             context.table_id,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
-                state_fields.some(sf => sf.name==="id")
+              state_fields.some(sf => sf.name === "id")
           );
           const show_view_opts = show_views.map(v => v.name);
 
@@ -74,8 +74,6 @@ const run = async (table_id, viewname, config, state) => {
   }
   return renderForm(form);
 };
-
-
 
 module.exports = {
   name: "ListShowList",
