@@ -121,8 +121,8 @@ const run = async (
           label: f.label,
           key: f.listKey
         }));
-        const tab_name= `${relfld} on ${reltbl.name}`
-        reltbls[tab_name]=mkTable(trfields, rows);
+        const tab_name = `${relfld} on ${reltbl.name}`;
+        reltbls[tab_name] = mkTable(trfields, rows);
       }
     }
   }

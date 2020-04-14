@@ -1,15 +1,15 @@
 const { a, text, div, ul, li } = require("./tags");
 
-const mkId=str=>text(str.split(' ').join('_'))
+const mkId = str => text(str.split(" ").join("_"));
 
 const tabs = obj => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
-  const lis = entries.map((e,ix) =>
+  const lis = entries.map((e, ix) =>
     li(
       { class: "nav-item" },
       a(
         {
-          class: `nav-link ${ix==0 ? 'active':''}`,
+          class: `nav-link ${ix == 0 ? "active" : ""}`,
           "data-toggle": "tab",
           href: `#${mkId(e[0])}`,
           id: `${mkId(e[0])}-tab`,
@@ -21,10 +21,10 @@ const tabs = obj => {
       )
     )
   );
-  const divs = entries.map((e,ix) =>
+  const divs = entries.map((e, ix) =>
     div(
       {
-        class: `tab-pane fade ${ix==0 ? 'show active':''}`,
+        class: `tab-pane fade ${ix == 0 ? "show active" : ""}`,
         id: `${mkId(e[0])}`,
         role: "tabpanel",
         "aria-labelledby": `${mkId(e[0])}-tab`
