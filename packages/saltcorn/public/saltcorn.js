@@ -85,6 +85,7 @@ function rep_down(e) {
     $(myrep).swapWith(swap_with);
   }
 }
+
 $(function() {
   $("form").change(apply_showif);
   apply_showif();
