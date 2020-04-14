@@ -5,7 +5,7 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
 const { text, div, h4 } = require("saltcorn-markup/tags");
-const { renderForm } = require("saltcorn-markup");
+const { renderForm, tabs } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
 
 const configuration_workflow = () =>
@@ -104,7 +104,7 @@ const run = async (
   });
   const sresp = await sview.run(state);
 
-  var reltbls = [];
+  var reltbls = {};
   if (state.id) {
     const id = state.id;
     for (const rel of Object.keys(subtables || {})) {
@@ -121,7 +121,8 @@ const run = async (
           label: f.label,
           key: f.listKey
         }));
-        reltbls.push(div(h4(reltbl.name), mkTable(trfields, rows)));
+        const tab_name= `${relfld} on ${reltbl.name}`
+        reltbls[tab_name]=mkTable(trfields, rows);
       }
     }
   }
@@ -129,7 +130,7 @@ const run = async (
   return div(
     { class: "row" },
     div({ class: "col-sm-6" }, lresp),
-    div({ class: "col-sm-6" }, sresp, ...reltbls)
+    div({ class: "col-sm-6" }, sresp, tabs(reltbls))
   );
 };
 

@@ -1,5 +1,7 @@
 const { a, text, div, ul, li } = require("./tags");
 
+const mkId=str=>text(str.split(' ').join('_'))
+
 const tabs = obj => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
   const lis = entries.map(e =>
@@ -9,8 +11,8 @@ const tabs = obj => {
         {
           class: "nav-link active",
           "data-toggle": "tab",
-          href: `#${text(e[0])}`,
-          id: `${text(e[0])}-tab`,
+          href: `#${mkId(e[0])}`,
+          id: `${mkId(e[0])}-tab`,
           role: "tab",
           "aria-controls": "home",
           "aria-selected": "true"
@@ -23,9 +25,9 @@ const tabs = obj => {
     div(
       {
         class: "tab-pane",
-        id: `${text(e[0])}`,
+        id: `${mkId(e[0])}`,
         role: "tabpanel",
-        "aria-labelledby": `${text(e[0])}-tab`
+        "aria-labelledby": `${mkId(e[0])}-tab`
       },
       e[1]
     )
