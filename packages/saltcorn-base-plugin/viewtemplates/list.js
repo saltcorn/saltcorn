@@ -10,7 +10,10 @@ const {
   field_picker_fields,
   picked_fields_to_query
 } = require("saltcorn-data/plugin-helper");
-const { get_viewable_fields } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  stateFieldsToWhere
+} = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -62,25 +65,21 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
-const run = async (table_id, viewname, { columns, view_to_create }, state) => {
+const run = async (
+  table_id,
+  viewname,
+  { columns, view_to_create },
+  state,
+  extraOpts
+) => {
   //console.log({ columns, view_to_create });
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-  var qstate = {};
+
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const tfields = get_viewable_fields(viewname, table, fields, columns);
-  Object.entries(state).forEach(([k, v]) => {
-    const field = fields.find(fld => fld.name == k);
-    if (field) qstate[k] = v;
-    if (
-      field &&
-      field.type.name === "String" &&
-      !(field.attributes && field.attributes.options)
-    ) {
-      qstate[k] = { ilike: v };
-    }
-  });
+  const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
   const rows = await table.getJoinedRows({
@@ -92,17 +91,18 @@ const run = async (table_id, viewname, { columns, view_to_create }, state) => {
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
   });
 
-  var page_opts = {};
+  var page_opts =
+    extraOpts && extraOpts.onRowSelect
+      ? { onRowSelect: extraOpts.onRowSelect }
+      : {};
 
   if (rows.length === rows_per_page) {
     const nrows = await table.countRows(qstate);
     if (nrows > rows_per_page) {
-      page_opts = {
-        pagination: {
-          current_page,
-          pages: Math.ceil(nrows / rows_per_page),
-          get_page_link: n => `javascript:gopage(${n})`
-        }
+      page_opts.pagination = {
+        current_page,
+        pages: Math.ceil(nrows / rows_per_page),
+        get_page_link: n => `javascript:gopage(${n})`
       };
     }
   }
@@ -116,6 +116,7 @@ module.exports = {
   name: "List",
   configuration_workflow,
   run,
+  view_quantity: "Many",
   get_state_fields,
   display_state_form: true
 };

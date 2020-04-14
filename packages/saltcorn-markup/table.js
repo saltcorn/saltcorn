@@ -77,11 +77,12 @@ const mkTable = contract(
     div(
       { class: "table-responsive" },
       table(
-        { class: "table table-sm" },
+        { class: `table table-sm ${opts.onRowSelect ? "table-hover" : ""}` },
         thead(tr(hdrs.map(hdr => headerCell(hdr)))),
         tbody(
           (vs || []).map(v =>
             tr(
+              mkClickHandler(opts, v),
               hdrs.map(hdr =>
                 td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
               )
@@ -92,5 +93,15 @@ const mkTable = contract(
       opts.pagination && pagination(opts.pagination)
     )
 );
+
+const mkClickHandler = (opts, v) =>
+  !opts.onRowSelect
+    ? {}
+    : {
+        onclick:
+          typeof opts.onRowSelect === "function"
+            ? opts.onRowSelect(v)
+            : opts.onRowSelect
+      };
 
 module.exports = mkTable;

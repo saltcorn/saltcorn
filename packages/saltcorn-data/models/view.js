@@ -51,42 +51,44 @@ class View {
 
   static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
-    const State = require("../db/state");
     const link_views = await View.find({
       table_id
     });
 
     for (const viewrow of link_views) {
-      const vt = State.viewtemplates[viewrow.viewtemplate];
-      if (vt.get_state_fields) {
-        const sfs = await vt.get_state_fields(
-          viewrow.table_id,
-          viewrow.name,
-          viewrow.configuration
-        );
-        if (pred({ viewrow, viewtemplate: vt, state_fields: sfs }))
+      try {
+        // may fail if incomplete view
+        const sfs = await viewrow.get_state_fields();
+        if (
+          pred({
+            viewrow,
+            viewtemplate: viewrow.viewtemplateObj,
+            state_fields: sfs
+          })
+        )
           link_view_opts.push(viewrow);
-      }
+      } catch {}
     }
     return link_view_opts;
   }
 
   static async find_all_views_where(pred) {
     var link_view_opts = [];
-    const State = require("../db/state");
     const link_views = await View.find({});
 
     for (const viewrow of link_views) {
-      const vt = State.viewtemplates[viewrow.viewtemplate];
-      if (vt.get_state_fields) {
-        const sfs = await vt.get_state_fields(
-          viewrow.table_id,
-          viewrow.name,
-          viewrow.configuration
-        );
-        if (pred({ viewrow, viewtemplate: vt, state_fields: sfs }))
+      try {
+        // may fail if incomplete view
+        const sfs = await viewrow.get_state_fields();
+        if (
+          pred({
+            viewrow,
+            viewtemplate: viewrow.viewtemplateObj,
+            state_fields: sfs
+          })
+        )
           link_view_opts.push(viewrow);
-      }
+      } catch {}
     }
     return link_view_opts;
   }
@@ -113,12 +115,13 @@ class View {
     await db.deleteWhere("views", where);
     await require("../db/state").refresh();
   }
-  async run(query) {
+  async run(query, ...extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,
       this.name,
       this.configuration,
-      removeEmptyStrings(query)
+      removeEmptyStrings(query),
+      ...extraArgs
     );
   }
 
