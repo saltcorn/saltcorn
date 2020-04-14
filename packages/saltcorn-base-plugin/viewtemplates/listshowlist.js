@@ -4,7 +4,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
-const { text } = require("saltcorn-markup/tags");
+const { text, div } = require("saltcorn-markup/tags");
 const { renderForm } = require("saltcorn-markup");
 
 const configuration_workflow = () =>
@@ -15,8 +15,8 @@ const configuration_workflow = () =>
         form: async context => {
           const list_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewrow }) =>
-              viewrow.viewtemplate === "List" &&
+            ({ state_fields, viewrow, viewtemplate }) =>
+              viewtemplate.view_quantity === "Many" &&
               viewrow.name !== context.viewname &&
               state_fields.every(sf => !sf.required)
           );
@@ -55,24 +55,29 @@ const configuration_workflow = () =>
       }
     ]
   });
-const get_state_fields = async () => [
-  {
-    name: "id",
-    type: "Integer"
-  }
-];
 
-const run = async (table_id, viewname, config, state) => {
-  //console.log({config})
-  const { columns } = config;
-  const table = await Table.findOne({ id: table_id });
-  const form = await getForm(table, viewname, columns, state.id);
+const get_state_fields = async (
+  table_id,
+  viewname,
+  { list_view, show_view }
+) => {
+  const lview = await View.findOne({ name: list_view });
+  const sview = await View.findOne({ name: show_view });
+  const lview_sfs = await lview.get_state_fields();
+  const sview_sfs = await sview.get_state_fields();
+  return [...lview_sfs, ...sview_sfs];
+};
 
-  if (state.id) {
-    const row = await table.getRow({ id: state.id });
-    form.values = row;
-  }
-  return renderForm(form);
+const run = async (table_id, viewname, { list_view, show_view }, state) => {
+  const lview = await View.findOne({ name: list_view });
+  const sview = await View.findOne({ name: show_view });
+  const lresp = await lview.run(state);
+  const sresp = await sview.run(state);
+  return div(
+    { class: "row" },
+    div({ class: "col" }, lresp),
+    div({ class: "col" }, sresp)
+  );
 };
 
 module.exports = {

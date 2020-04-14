@@ -109,6 +109,7 @@ module.exports = {
   name: "List",
   configuration_workflow,
   run,
+  view_quantity: "Many",
   get_state_fields,
   display_state_form: true
 };
