@@ -71,7 +71,9 @@ const get_state_fields = async (
 const run = async (table_id, viewname, { list_view, show_view }, state) => {
   const lview = await View.findOne({ name: list_view });
   const sview = await View.findOne({ name: show_view });
-  const lresp = await lview.run(state);
+  const lresp = await lview.run(state, {
+    onRowSelect: v => `select_id(${v.id})`
+  });
   const sresp = await sview.run(state);
   return div(
     { class: "row" },

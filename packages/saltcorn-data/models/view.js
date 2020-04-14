@@ -56,7 +56,8 @@ class View {
     });
 
     for (const viewrow of link_views) {
-      try { // may fail if incomplete view
+      try {
+        // may fail if incomplete view
         const sfs = await viewrow.get_state_fields();
         if (
           pred({
@@ -76,7 +77,8 @@ class View {
     const link_views = await View.find({});
 
     for (const viewrow of link_views) {
-      try {  // may fail if incomplete view
+      try {
+        // may fail if incomplete view
         const sfs = await viewrow.get_state_fields();
         if (
           pred({
