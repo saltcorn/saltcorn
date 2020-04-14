@@ -4,10 +4,9 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
-const { text, div,h4 } = require("saltcorn-markup/tags");
+const { text, div, h4 } = require("saltcorn-markup/tags");
 const { renderForm } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
-
 
 const configuration_workflow = () =>
   new Workflow({
@@ -92,7 +91,12 @@ const get_state_fields = async (
   return [...lview_sfs, ...sview_sfs];
 };
 
-const run = async (table_id, viewname, { list_view, show_view, subtables}, state) => {
+const run = async (
+  table_id,
+  viewname,
+  { list_view, show_view, subtables },
+  state
+) => {
   const lview = await View.findOne({ name: list_view });
   const sview = await View.findOne({ name: show_view });
   const lresp = await lview.run(state, {
@@ -101,9 +105,9 @@ const run = async (table_id, viewname, { list_view, show_view, subtables}, state
   const sresp = await sview.run(state);
 
   var reltbls = [];
-  if(state.id) {
-    const id=state.id
-    for (const rel of Object.keys(subtables||{})) {
+  if (state.id) {
+    const id = state.id;
+    for (const rel of Object.keys(subtables || {})) {
       if (subtables[rel]) {
         const [reltblnm, relfld] = rel.split(".");
         const reltbl = await Table.findOne({ name: reltblnm });
@@ -113,12 +117,15 @@ const run = async (table_id, viewname, { list_view, show_view, subtables}, state
           }
         });
         const relfields = await reltbl.getFields();
-        const trfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
+        const trfields = relfields.map(f => ({
+          label: f.label,
+          key: f.listKey
+        }));
         reltbls.push(div(h4(reltbl.name), mkTable(trfields, rows)));
       }
     }
   }
-  
+
   return div(
     { class: "row" },
     div({ class: "col-sm-6" }, lresp),

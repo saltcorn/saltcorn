@@ -51,12 +51,7 @@ const get_state_fields = () => [
   }
 ];
 
-const run = async (
-  table_id,
-  viewname,
-  { columns, label_style,  },
-  { id }
-) => {
+const run = async (table_id, viewname, { columns, label_style }, { id }) => {
   if (typeof id === "undefined") return "No record selected";
 
   const tbl = await Table.findOne({ id: table_id });
