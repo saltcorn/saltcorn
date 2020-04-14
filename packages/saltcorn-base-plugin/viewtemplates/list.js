@@ -70,7 +70,7 @@ const run = async (
   viewname,
   { columns, view_to_create },
   state,
-  { onRowSelect }
+  extraOpts
 ) => {
   //console.log({ columns, view_to_create });
   const table = await Table.findOne({ id: table_id });
@@ -91,7 +91,10 @@ const run = async (
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
   });
 
-  var page_opts = { onRowSelect };
+  var page_opts =
+    extraOpts && extraOpts.onRowSelect
+      ? { onRowSelect: extraOpts.onRowSelect }
+      : {};
 
   if (rows.length === rows_per_page) {
     const nrows = await table.countRows(qstate);
