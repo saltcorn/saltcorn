@@ -22,10 +22,11 @@ const reset = async () => {
     CREATE TABLE fields
     (
       id serial primary key,
-      table_id integer references tables(id),
+      table_id integer references tables(id) NOT NULL,
       name text NOT NULL,
       label text,
       type text,
+      reftable_id integer references tables(id),
       attributes jsonb,
       required boolean NOT NULL DEFAULT false
     )

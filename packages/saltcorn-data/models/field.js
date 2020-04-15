@@ -23,12 +23,13 @@ class Field {
     this.required = o.required;
     this.hidden = o.hidden || false;
 
-    this.is_fkey = typeof o.type === "string" && o.type.startsWith(fkeyPrefix);
+    this.is_fkey = o.type === "Key" || (o.type && o.type.name && o.type.name==="Key");
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable = sqlsanitize(o.type.replace(fkeyPrefix, ""));
+      this.reftable_id = o.reftable_id
+      //this.reftable = sqlsanitize(o.type.replace(fkeyPrefix, ""));
       this.type = o.type;
       this.input_type = "select";
     }
@@ -172,6 +173,7 @@ class Field {
       name: f.name,
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
+      reftable_id: f.is_fkey ? this.reftable_id : undefined,
       required: f.required,
       attributes: f.attributes
     });
