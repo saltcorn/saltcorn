@@ -17,7 +17,7 @@ const reset = async () => {
       name text NOT NULL unique
     )
   `);
-  
+
   await db.query(`
     CREATE INDEX idx_table_name on tables(name); 
   `);

@@ -24,21 +24,22 @@ class Field {
     this.hidden = o.hidden || false;
 
     this.is_fkey =
-      o.type === "Key" 
-      || typeof o.type === "string" && o.type.startsWith("Key to") 
-      || (o.type && o.type.name && o.type.name === "Key");
+      o.type === "Key" ||
+      (typeof o.type === "string" && o.type.startsWith("Key to")) ||
+      (o.type && o.type.name && o.type.name === "Key");
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable_name = o.reftable_name 
-        || (o.reftable && o.reftable.name) 
-        || o.type.replace("Key to ", "");
+      this.reftable_name =
+        o.reftable_name ||
+        (o.reftable && o.reftable.name) ||
+        o.type.replace("Key to ", "");
       this.reftable = o.reftable;
       this.type = "Key";
       this.input_type = "select";
     }
-    
+
     this.attributes = o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
@@ -54,7 +55,8 @@ class Field {
       table_id: this.table_id,
       name: this.name,
       label: this.label,
-      type: this.type.name,
+      type: typeof this.type === "string" ? this.type : this.type.name,
+      reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required
     };
