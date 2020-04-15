@@ -1,7 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 
-const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
+const { sqlsanitize } = require("../db/internal.js");
 const readKey = v => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -23,16 +23,22 @@ class Field {
     this.required = o.required;
     this.hidden = o.hidden || false;
 
-    this.is_fkey = typeof o.type === "string" && o.type.startsWith(fkeyPrefix);
+    this.is_fkey =
+      o.type === "Key" 
+      || typeof o.type === "string" && o.type.startsWith("Key to") 
+      || (o.type && o.type.name && o.type.name === "Key");
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable = sqlsanitize(o.type.replace(fkeyPrefix, ""));
-      this.type = o.type;
+      this.reftable_name = o.reftable_name 
+        || (o.reftable && o.reftable.name) 
+        || o.type.replace("Key to ", "");
+      this.reftable = o.reftable;
+      this.type = "Key";
       this.input_type = "select";
     }
-
+    
     this.attributes = o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
@@ -55,7 +61,7 @@ class Field {
   }
   async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
-      const rows = await db.select(this.reftable);
+      const rows = await db.select(this.reftable_name);
       const summary_field = this.attributes.summary_field || "id";
       const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
       const allOpts =
@@ -68,7 +74,7 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      return `int references ${this.reftable} (id)`;
+      return `int references ${this.reftable_name} (id)`;
     } else {
       return this.type.sql_name;
     }
@@ -167,11 +173,13 @@ class Field {
         f.attributes.default
       ]);
     }
+
     await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
+      reftable_name: f.is_fkey ? f.reftable_name : undefined,
       required: f.required,
       attributes: f.attributes
     });
