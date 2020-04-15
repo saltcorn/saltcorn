@@ -23,13 +23,14 @@ class Field {
     this.required = o.required;
     this.hidden = o.hidden || false;
 
-    this.is_fkey = o.type === "Key" || (o.type && o.type.name && o.type.name==="Key");
+    this.is_fkey =
+      o.type === "Key" || (o.type && o.type.name && o.type.name === "Key");
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable_id = o.reftable.id
-      this.reftable = o.reftable
+      this.reftable_name = o.reftable_name || o.reftable.name;
+      this.reftable = o.reftable;
       this.type = o.type;
       this.input_type = "select";
     }
@@ -69,7 +70,7 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      return `int references ${this.reftable.name} (id)`;
+      return `int references ${this.reftable_name} (id)`;
     } else {
       return this.type.sql_name;
     }
@@ -173,7 +174,7 @@ class Field {
       name: f.name,
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
-      reftable_id: f.is_fkey ? this.reftable_id : undefined,
+      reftable_name: f.is_fkey ? this.reftable_name : undefined,
       required: f.required,
       attributes: f.attributes
     });
