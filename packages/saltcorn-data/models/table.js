@@ -67,7 +67,7 @@ class Table {
     var parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey) {
-        const table = await Table.findOne({ name: f.reftable });
+        const table = await Table.findOne({ name: f.reftable_name });
         await table.getFields();
         table.fields.forEach(pf => {
           parent_field_list.push(`${f.name}.${pf.name}`);
