@@ -7,7 +7,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { fkeyPrefix, isAdmin } = require("./utils.js");
+const { isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -58,7 +58,7 @@ const fieldFlow = new Workflow({
       name: "field",
       form: async () => {
         const tables = await Table.find({});
-        const fkey_opts = tables.map(t => fkeyPrefix + t.name);
+        const fkey_opts = tables.map(t => `Key to ${t.name}`);
         return fieldForm(fkey_opts);
       }
     },

@@ -59,7 +59,7 @@ const configuration_workflow = () =>
         contextField: "subtables",
         form: async context => {
           const tbl = await Table.findOne({ id: context.table_id });
-          const rels = await Field.find({ type: `Key to ${tbl.name}` });
+          const rels = await Field.find({ reftable_name: tbl.name });
           var fields = [];
           for (const rel of rels) {
             const reltbl = await Table.findOne({ id: rel.table_id });

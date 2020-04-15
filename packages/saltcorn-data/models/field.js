@@ -24,17 +24,24 @@ class Field {
     this.hidden = o.hidden || false;
 
     this.is_fkey =
-      o.type === "Key" || (o.type && o.type.name && o.type.name === "Key");
+      o.type === "Key" 
+      || typeof o.type === "string" && o.type.startsWith("Key to") 
+      || (o.type && o.type.name && o.type.name === "Key");
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable_name = o.reftable_name || o.reftable.name;
+      this.reftable_name = o.reftable_name 
+        || (o.reftable && o.reftable.name) 
+        || o.type.replace("Key to ", "");
       this.reftable = o.reftable;
-      this.type = o.type;
+      this.type = "Key";
       this.input_type = "select";
     }
-
+    if (this.reftable_name ==="Key"){ 
+      console.log("field o",o);
+      this.foo();
+    }
     this.attributes = o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
@@ -57,7 +64,7 @@ class Field {
   }
   async fill_fkey_options(force_allow_none = false) {
     if (this.is_fkey) {
-      const rows = await db.select(this.reftable);
+      const rows = await db.select(this.reftable_name);
       const summary_field = this.attributes.summary_field || "id";
       const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
       const allOpts =

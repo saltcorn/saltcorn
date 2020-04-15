@@ -79,7 +79,7 @@ class Table {
   }
 
   async get_child_relations() {
-    const cfields = await Field.find({ type: `Key to ${this.name}` });
+    const cfields = await Field.find({ reftable_name: this.name });
     var child_relations = [];
     var child_field_list = [];
     for (const f of cfields) {
@@ -98,17 +98,21 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
+    console.log("initial jfs", joinFields)
+    console.log("flds", fields)
+
     fields
       .filter(f => f.is_fkey)
       .forEach(f => {
         joinFields[f.name] = {
           ref: f.name,
-          reftable: f.reftable,
+          reftable: f.reftable_name,
           target: f.attributes.summary_field || "id"
         };
       });
+      console.log("then jfs", joinFields)
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
-      const reftable = fields.find(f => f.name === ref).reftable;
+      const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${reftable}_jt_${ref}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
@@ -150,7 +154,7 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
     )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    //console.log(sql);
+    console.log(sql);
     const { rows } = await db.query(sql, values);
 
     return rows;

@@ -43,11 +43,8 @@ const mkSelectOptions = selopts => {
   return [orderby, limit, offset].filter(s => s).join(" ");
 };
 
-const fkeyPrefix = "Key to ";
-
 module.exports = {
   sqlsanitize,
   mkWhere,
-  fkeyPrefix,
   mkSelectOptions
 };
