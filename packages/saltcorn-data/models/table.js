@@ -98,8 +98,6 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
-    console.log("initial jfs", joinFields)
-    console.log("flds", fields)
 
     fields
       .filter(f => f.is_fkey)
@@ -110,7 +108,7 @@ class Table {
           target: f.attributes.summary_field || "id"
         };
       });
-      console.log("then jfs", joinFields)
+
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${reftable}_jt_${ref}`;
@@ -154,7 +152,7 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
       this.name
     )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    console.log(sql);
+    //console.log(sql);
     const { rows } = await db.query(sql, values);
 
     return rows;

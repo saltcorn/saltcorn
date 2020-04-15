@@ -38,10 +38,7 @@ class Field {
       this.type = "Key";
       this.input_type = "select";
     }
-    if (this.reftable_name ==="Key"){ 
-      console.log("field o",o);
-      this.foo();
-    }
+    
     this.attributes = o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
@@ -176,12 +173,13 @@ class Field {
         f.attributes.default
       ]);
     }
+
     await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
-      reftable_name: f.is_fkey ? this.reftable_name : undefined,
+      reftable_name: f.is_fkey ? f.reftable_name : undefined,
       required: f.required,
       attributes: f.attributes
     });
