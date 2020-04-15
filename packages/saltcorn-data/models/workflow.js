@@ -31,6 +31,11 @@ class Workflow {
 
     const valres = form.validate(stepBody);
     if (valres.errors) {
+      form.hidden("stepName", "contextEnc");
+      form.values = {
+        stepName: step.name,
+        contextEnc
+      };
       if (this.action) form.action = this.action;
       return { renderForm: form };
     }
