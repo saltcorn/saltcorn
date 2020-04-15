@@ -1,7 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 
-const { sqlsanitize, fkeyPrefix } = require("../db/internal.js");
+const { sqlsanitize } = require("../db/internal.js");
 const readKey = v => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -28,8 +28,8 @@ class Field {
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
     } else {
-      this.reftable_id = o.reftable_id
-      //this.reftable = sqlsanitize(o.type.replace(fkeyPrefix, ""));
+      this.reftable_id = o.reftable.id
+      this.reftable = o.reftable
       this.type = o.type;
       this.input_type = "select";
     }
@@ -69,7 +69,7 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      return `int references ${this.reftable} (id)`;
+      return `int references ${this.reftable.name} (id)`;
     } else {
       return this.type.sql_name;
     }

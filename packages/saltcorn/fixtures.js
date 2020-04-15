@@ -39,7 +39,7 @@ const fixtures = async () => {
     name: "favbook",
     label: "Favourite book",
     type: "Key",
-    reftable_id: table.id,
+    reftable: table,
     required: false,
     attributes: { summary_field: "author" }
   });
@@ -48,7 +48,7 @@ const fixtures = async () => {
     name: "parent",
     label: "Parent",
     type: "Key",
-    reftable_id: patients.id,
+    reftable: patients,
     required: false
   });
   await View.create({
@@ -125,7 +125,7 @@ const fixtures = async () => {
     name: "patient_id",
     label: "Patient",
     type: "Key",
-    reftable_id: patients.id,
+    reftable: patients,
     required: true
   });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
