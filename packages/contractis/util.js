@@ -1,8 +1,8 @@
 const get_return_contract = (returns, args) =>
-  typeof returns === "function" && !(returns.check && returns.name) ? returns(...args) : returns;
+  typeof returns === "function" && !(returns.check && returns.contract_name) ? returns(...args) : returns;
 
 const get_arguments_returns = contract => {
-  if (contract.name === "fun")
+  if (contract.contract_name === "fun")
     return { arguments: contract.options[0], returns: contract.options[1] };
   else return contract;
 };
@@ -15,8 +15,8 @@ class ContractViolation extends Error {
       message = theContract.get_error_message(val) + in_str;
     } else {
       const conStr = theContract.options
-        ? `${theContract.name}(${JSON.stringify(theContract.options)})`
-        : theContract.name;
+        ? `${theContract.contract_name}(${JSON.stringify(theContract.options)})`
+        : theContract.contract_name;
       message = `value ${JSON.stringify(
         val
       )} violates contract ${conStr}${in_str}`;

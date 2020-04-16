@@ -8,7 +8,7 @@ const mkContract = c => {
     check_contract(c, x, "value check", undefined, checker);
     return x;
   }
-  checker.name = c.name;
+  checker.contract_name = c.name;
   checker.options = c.options;
   checker.check = c.check;
   checker.generate = c.generate;
@@ -146,14 +146,14 @@ const maybe = c =>
 
 const and = (...contrs) =>
   mkContract({
-    name: "and(" + contrs.map(c => c.name).join + ")",
+    name: "and(" + contrs.map(c => c.contract_name).join + ")",
     get_error_message: x => {
       const failing = contrs.find(c => !c.check(x));
       return failing.options
-        ? `${x} violates (in and) ${failing.name}(${JSON.stringify(
+        ? `${x} violates (in and) ${failing.contract_name}(${JSON.stringify(
             failing.options
           )})`
-        : `${x} in and violates (in and) ${JSON.stringify(failing.name)}`;
+        : `${x} in and violates (in and) ${JSON.stringify(failing.contract_name)}`;
     },
     options: contrs,
     check: x => contrs.every(c => c.check(x)),
@@ -169,7 +169,7 @@ function and_gen(contrs) {
 
 const or = (...contrs) =>
   mkContract({
-    name: "or(" + contrs.map(c => c.name).join + ")",
+    name: "or(" + contrs.map(c => c.contract_name).join + ")",
     options: contrs,
     check: x => contrs.some(c => c.check(x)),
     generate:

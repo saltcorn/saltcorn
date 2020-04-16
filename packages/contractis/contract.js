@@ -29,7 +29,7 @@ const check_arguments = (
 const argcheck = (pred, args, contrDefinition, callSite) => {
   if (!pred(...args)) {
     throw new ContractViolation(
-      { name: "Argument check" },
+      { contract_name: "Argument check" },
       args,
       undefined,
       contrDefinition,
@@ -41,7 +41,7 @@ const argcheck = (pred, args, contrDefinition, callSite) => {
 const retcheck = (pred, args, rv, contrDefinition, callSite) => {
   if (!pred(...args)(rv)) {
     throw new ContractViolation(
-      { name: "Return check" },
+      { contract_name: "Return check" },
       { arguments: args, return: rv },
       undefined,
       contrDefinition,
