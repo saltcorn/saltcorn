@@ -195,7 +195,7 @@ const or = (...contrs) =>
 
 const xor = (...contrs) =>
   mkContract({
-    name: "xor(" + contrs.map(c => c.contract_name).join + ")",
+    name: `xor(${contrs.map(c => c.contract_name).join()})`,
     options: contrs,
     check: x => contrs.filter(c => c.check(x)).length === 1,
     //todo check only one is right in generate
