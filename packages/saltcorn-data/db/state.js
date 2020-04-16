@@ -12,13 +12,6 @@ class State {
     this.type_names = [];
     this.fields = [];
     this.layout = { wrap: s => s };
-    this.refresh().then(
-      () => {},
-      err => {
-        console.error("error refreshing cache", err);
-        throw err;
-      }
-    );
   }
   async refresh() {
     this.views = await View.find();

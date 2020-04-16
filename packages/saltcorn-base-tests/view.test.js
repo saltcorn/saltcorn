@@ -31,4 +31,11 @@ describe("View", () => {
     expect(res.length > 0).toBe(true);
     done();
   });
+  it("should find", async done => {
+    const link_views = await View.find({
+      table_id: 1
+    });
+    expect(link_views.length).toBe(2);
+    done();
+  });
 });
