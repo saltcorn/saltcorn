@@ -66,8 +66,9 @@ describe("user admin", () => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/")
-      .set("Cookie", loginCookie);
-    expect(toSucceed()).expect(toInclude("staff@foo.com"));
+      .set("Cookie", loginCookie)
+      .expect(toSucceed())
+      .expect(toInclude("staff@foo.com"));
     done();
   });
   it("shows new user form", async done => {
