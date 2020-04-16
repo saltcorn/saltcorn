@@ -110,7 +110,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
       div(
         { class: `repeats-${hdr.name}` },
         div(
-          { class: `form-repeat repeat-${hdr.name}` },
+          { class: `form-repeat form-namespace repeat-${hdr.name}` },
           icons,
           hdr.fields.map(f => {
             return mkFormRowForField(v, errors, formStyle, "_0")(f);

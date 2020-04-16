@@ -86,6 +86,32 @@ const configuration_workflow = () =>
           await form.fill_fkey_options();
           return form;
         }
+      },
+      {
+        name: "editoptions",
+        form: async context => {
+          const done_views = await View.find_all_views_where(
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              (viewrow.table_id === context.table_id ||
+                state_fields.every(sf => !sf.required))
+          );
+          const done_view_opts = done_views.map(v => v.name);
+
+          return new Form({
+            fields: [
+              {
+                name: "view_when_done",
+                label: "View when done",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: done_view_opts.join()
+                }
+              }
+            ]
+          });
+        }
       }
     ]
   });
@@ -129,7 +155,7 @@ const run = async (table_id, viewname, config, state) => {
 const runPost = async (
   table_id,
   viewname,
-  { columns, fixed },
+  { columns, fixed, view_when_done },
   state,
   body,
   res
@@ -138,17 +164,24 @@ const runPost = async (
   const form = await getForm(table, viewname, columns, body.id);
   form.validate(body);
   if (form.hasErrors) {
-    res.sendWrap(`${table.name} create new`, renderForm(form)); // vres.errors.join("\n"));
+    res.sendWrap(`${table.name} create new`, renderForm(form));
   } else {
     const row = { ...form.values, ...fixed };
-
-    if (typeof body.id === "undefined") {
-      await table.insertRow(row);
+    var id = body.id;
+    if (typeof id === "undefined") {
+      id = await table.insertRow(row);
     } else {
-      const id = v.id;
       await table.updateRow(row, id);
     }
-    res.redirect(`/list/${table.name}`);
+    const nxview = await View.findOne({ name: view_when_done });
+    //console.log()
+    const state_fields = await nxview.get_state_fields();
+    if (
+      nxview.table_id === table_id &&
+      state_fields.some(sf => sf.name === "id")
+    )
+      res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
+    else res.redirect(`/view/${text(view_when_done)}`);
   }
 };
 

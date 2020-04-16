@@ -171,26 +171,16 @@ describe("viewedit new Show", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
-        columns: [
-          { type: "Field", field_name: "author" },
-          { type: "ViewLink", view: "authorshow" },
-          { type: "Action", action_name: "Delete" },
-          {
-            type: "Aggregation",
-            agg_relation: "patients.favbook",
-            agg_field_patients_favbook: "name",
-            stat: "Count"
-          }
-        ]
+        table_id: 1
       })
     );
     await request(app)
       .post("/viewedit/config/mybook")
       .send("contextEnc=" + ctx)
-      .send("stepName=subtables")
-      .send("patients.favbook=on")
-      .send("field_list=pages")
+      .send("stepName=showfields")
+      .send("type_0=Field")
+      .send("field_name_0=author")
+      .send("label_style=Besides")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
     done();
@@ -201,8 +191,7 @@ describe("viewedit new Show", () => {
     await request(app)
       .get("/view/mybook?id=1")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Melville"))
-      .expect(toInclude("Kirk"));
+      .expect(toInclude("Melville"));
 
     done();
   });

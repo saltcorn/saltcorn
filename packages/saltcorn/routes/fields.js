@@ -7,7 +7,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { fkeyPrefix, isAdmin } = require("./utils.js");
+const { isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -32,34 +32,50 @@ const fieldForm = fkey_opts =>
     ]
   });
 
+const calcFieldType = ctxType =>
+  ctxType.startsWith("Key to")
+    ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
+    : { type: ctxType };
+
 const fieldFlow = new Workflow({
   action: "/field",
   onDone: async context => {
-    const type = State.types[context.type];
+    const thetype = State.types[context.type];
     var attributes = {};
     if (!new Field(context).is_fkey)
-      (type.attributes || []).forEach(a => {
+      (thetype.attributes || []).forEach(a => {
         attributes[a.name] = context[a.name];
       });
 
     attributes.default = context.default;
     attributes.summary_field = context.summary_field;
+    const { table_id, name, label, required } = context;
+    const { reftable_name, type } = calcFieldType(context.type);
+    const fldRow = {
+      table_id,
+      name,
+      label,
+      type,
+      required,
+      reftable_name,
+      attributes
+    };
     if (context.id) {
-      const { table_id, name, label, type, required } = context;
-      await Field.update(
-        { table_id, name, label, type, required, attributes },
-        context.id
-      );
-    } else await Field.create({ attributes, ...context });
+      await Field.update(fldRow, context.id);
+    } else await Field.create(fldRow);
     return { redirect: `/table/${context.table_id}` };
   },
   steps: [
     {
       name: "field",
-      form: async () => {
+      form: async context => {
         const tables = await Table.find({});
-        const fkey_opts = tables.map(t => fkeyPrefix + t.name);
-        return fieldForm(fkey_opts);
+        const fkey_opts = tables.map(t => `Key to ${t.name}`);
+        const form = fieldForm(fkey_opts);
+        if (context.type === "Key" && context.reftable_name) {
+          form.values.type = `Key to ${context.reftable_name}`;
+        }
+        return form;
       }
     },
     {
@@ -81,7 +97,7 @@ const fieldFlow = new Workflow({
       onlyWhen: context => new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
-        const table = await Table.findOne({ name: fld.reftable });
+        const table = await Table.findOne({ name: fld.reftable_name });
         const fields = await Field.find({ table_id: table.id });
         const keyfields = fields.map(f => ({ value: f.name, label: f.label }));
         return new Form({

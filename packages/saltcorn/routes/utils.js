@@ -1,4 +1,4 @@
-const { sqlsanitize, fkeyPrefix } = require("saltcorn-data/db/internal.js");
+const { sqlsanitize } = require("saltcorn-data/db/internal.js");
 
 function loggedIn(req, res, next) {
   if (req.user) {
@@ -20,7 +20,6 @@ function isAdmin(req, res, next) {
 
 module.exports = {
   sqlsanitize,
-  fkeyPrefix,
   loggedIn,
   isAdmin
 };

@@ -14,21 +14,29 @@ const reset = async () => {
     CREATE TABLE tables
     (
       id serial primary key,
-      name text NOT NULL
+      name text NOT NULL unique
     )
+  `);
+
+  await db.query(`
+    CREATE INDEX idx_table_name on tables(name); 
   `);
 
   await db.query(`
     CREATE TABLE fields
     (
       id serial primary key,
-      table_id integer references tables(id),
+      table_id integer references tables(id) NOT NULL,
       name text NOT NULL,
       label text,
       type text,
+      reftable_name text references tables(name),
       attributes jsonb,
       required boolean NOT NULL DEFAULT false
     )
+  `);
+  await db.query(`
+    CREATE INDEX idx_field_table on fields(table_id); 
   `);
 
   await db.query(`
@@ -44,7 +52,9 @@ const reset = async () => {
       on_menu boolean NOT NULL DEFAULT false
     )
   `);
-
+  await db.query(`
+    CREATE INDEX idx_view_name on fields(name); 
+  `);
   await db.query(`
     CREATE TABLE roles (
       id serial primary key,      

@@ -14,7 +14,8 @@ const userForm = async user => {
   const roleField = new Field({
     label: "Role",
     name: "role_id",
-    type: "Key to Roles"
+    type: "Key",
+    reftable_name: "roles"
   });
   const roles = await User.get_roles();
   roleField.options = roles.map(r => ({ label: r.role, value: r.id }));

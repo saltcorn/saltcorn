@@ -2,6 +2,7 @@ const Field = require("saltcorn-data/models/field");
 const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
+const View = require("saltcorn-data/models/view");
 const Workflow = require("saltcorn-data/models/workflow");
 const { mkTable, h, post_btn, link } = require("saltcorn-markup");
 const { text, script } = require("saltcorn-markup/tags");
@@ -9,7 +10,10 @@ const {
   field_picker_fields,
   picked_fields_to_query
 } = require("saltcorn-data/plugin-helper");
-const { get_viewable_fields } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  stateFieldsToWhere
+} = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -18,6 +22,13 @@ const configuration_workflow = () =>
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const field_picker_repeat = await field_picker_fields({ table });
+          const create_views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every(sf => !sf.required)
+          );
+          const create_view_opts = create_views.map(v => v.name);
           return new Form({
             blurb:
               "Finalise your list view by specifying the fields in the table",
@@ -27,11 +38,13 @@ const configuration_workflow = () =>
                 fields: field_picker_repeat
               }),
               {
-                name: "link_to_create",
-                label: "Link to create",
-                type: "Bool",
-                sublabel:
-                  "Would you like to add a link at the bottom of the list to create a new item?"
+                name: "view_to_create",
+                label: "Use view to create",
+                sublabel: "Leave blank to have no link to create a new item",
+                type: "String",
+                attributes: {
+                  options: create_view_opts.join()
+                }
               }
             ]
           });
@@ -52,25 +65,21 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
-const run = async (table_id, viewname, { columns, link_to_create }, state) => {
-  //console.log(state);
+const run = async (
+  table_id,
+  viewname,
+  { columns, view_to_create },
+  state,
+  extraOpts
+) => {
+  //console.log({ columns, view_to_create });
   const table = await Table.findOne({ id: table_id });
 
   const fields = await Field.find({ table_id: table.id });
-  var qstate = {};
+
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const tfields = get_viewable_fields(viewname, table, fields, columns);
-  Object.entries(state).forEach(([k, v]) => {
-    const field = fields.find(fld => fld.name == k);
-    if (field) qstate[k] = v;
-    if (
-      field &&
-      field.type.name === "String" &&
-      !(field.attributes && field.attributes.options)
-    ) {
-      qstate[k] = { ilike: v };
-    }
-  });
+  const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
   const rows = await table.getJoinedRows({
@@ -82,22 +91,23 @@ const run = async (table_id, viewname, { columns, link_to_create }, state) => {
     ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
   });
 
-  var page_opts = {};
+  var page_opts =
+    extraOpts && extraOpts.onRowSelect
+      ? { onRowSelect: extraOpts.onRowSelect }
+      : {};
 
   if (rows.length === rows_per_page) {
     const nrows = await table.countRows(qstate);
     if (nrows > rows_per_page) {
-      page_opts = {
-        pagination: {
-          current_page,
-          pages: Math.ceil(nrows / rows_per_page),
-          get_page_link: n => `javascript:gopage(${n})`
-        }
+      page_opts.pagination = {
+        current_page,
+        pages: Math.ceil(nrows / rows_per_page),
+        get_page_link: n => `javascript:gopage(${n})`
       };
     }
   }
-  const create_link = link_to_create
-    ? link(`/edit/${table.name}`, "Add row")
+  const create_link = view_to_create
+    ? link(`/view/${view_to_create}`, "Add row")
     : "";
   return mkTable(tfields, rows, page_opts) + create_link;
 };
@@ -106,6 +116,7 @@ module.exports = {
   name: "List",
   configuration_workflow,
   run,
+  view_quantity: "Many",
   get_state_fields,
   display_state_form: true
 };

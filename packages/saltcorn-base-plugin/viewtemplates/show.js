@@ -1,6 +1,7 @@
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
+const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("saltcorn-data/models/workflow");
 const { get_viewable_fields } = require("./viewable_fields");
@@ -13,7 +14,6 @@ const {
 
 const configuration_workflow = () =>
   new Workflow({
-    onDone: context => context,
     steps: [
       {
         name: "showfields",
@@ -27,29 +27,17 @@ const configuration_workflow = () =>
               new FieldRepeat({
                 name: "columns",
                 fields: field_picker_repeat
-              })
+              }),
+              {
+                name: "label_style",
+                label: "Label style",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: "Besides, Above, None"
+                }
+              }
             ]
-          });
-        }
-      },
-      {
-        name: "subtables",
-        form: async context => {
-          const tbl = await Table.findOne({ id: context.table_id });
-          const rels = await Field.find({ type: `Key to ${tbl.name}` });
-          var fields = [];
-          for (const rel of rels) {
-            const reltbl = await Table.findOne({ id: rel.table_id });
-            fields.push({
-              name: `${reltbl.name}.${rel.name}`,
-              label: `${rel.label} on ${reltbl.name}`,
-              type: "Bool"
-            });
-          }
-          return new Form({
-            fields,
-            blurb:
-              "Which related tables would you like to show in sub-lists below the selected item?"
           });
         }
       }
@@ -63,7 +51,9 @@ const get_state_fields = () => [
   }
 ];
 
-const run = async (table_id, viewname, { columns, ...rels }, { id }) => {
+const run = async (table_id, viewname, { columns, label_style }, { id }) => {
+  if (typeof id === "undefined") return "No record selected";
+
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
@@ -75,28 +65,28 @@ const run = async (table_id, viewname, { columns, ...rels }, { id }) => {
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns);
 
-  const trows = tfields.map(f =>
-    tr(
-      td(text(f.label)),
-      td(typeof f.key === "string" ? row[f.key] : f.key[row])
-    )
-  );
-  var reltbls = [];
-  for (const rel of Object.keys(rels)) {
-    if (rels[rel]) {
-      const [reltblnm, relfld] = rel.split(".");
-      const reltbl = await Table.findOne({ name: reltblnm });
-      const rows = await reltbl.getJoinedRows({
-        where: {
-          [relfld]: id
-        }
-      });
-      const relfields = await reltbl.getFields();
-      const trfields = relfields.map(f => ({ label: f.label, key: f.listKey }));
-      reltbls.push(div(h4(reltbl.name), mkTable(trfields, rows)));
-    }
+  if (label_style === "Besides") {
+    const trows = tfields.map(f =>
+      tr(
+        td(text(f.label)),
+        td(typeof f.key === "string" ? row[f.key] : f.key[row])
+      )
+    );
+    return table(tbody(trows));
+  } else if (label_style === "Above") {
+    const trows = tfields.map(f =>
+      div(
+        div(text(f.label)),
+        div(typeof f.key === "string" ? row[f.key] : f.key[row])
+      )
+    );
+    return div(trows);
+  } else {
+    const trows = tfields.map(f =>
+      div(typeof f.key === "string" ? row[f.key] : f.key[row])
+    );
+    return div(trows);
   }
-  return div([table(tbody(trows)), ...reltbls]);
 };
 
 module.exports = {
@@ -104,5 +94,5 @@ module.exports = {
   get_state_fields,
   configuration_workflow,
   run,
-  display_state_form: true
+  display_state_form: false
 };

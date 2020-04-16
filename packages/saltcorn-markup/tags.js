@@ -4,7 +4,13 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
   const ppAttrib = ([k, v]) =>
-    typeof v === "boolean" ? (v ? k : "") : `${k}="${v}"`;
+    typeof v === "boolean"
+      ? v
+        ? k
+        : ""
+      : typeof v === "undefined"
+      ? ""
+      : `${k}="${v}"`;
 
   const argIter = arg => {
     if (typeof arg === "undefined" || arg === null || arg === false) {

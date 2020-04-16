@@ -85,7 +85,27 @@ function rep_down(e) {
     $(myrep).swapWith(swap_with);
   }
 }
+
 $(function() {
   $("form").change(apply_showif);
   apply_showif();
 });
+
+//https://stackoverflow.com/a/6021027
+function updateQueryStringParameter(uri, key, value) {
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
+  if (uri.match(re)) {
+    return uri.replace(re, "$1" + key + "=" + value + "$2");
+  } else {
+    return uri + separator + key + "=" + value;
+  }
+}
+
+function select_id(id) {
+  window.location.href = updateQueryStringParameter(
+    window.location.href,
+    "id",
+    id
+  );
+}
