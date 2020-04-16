@@ -100,8 +100,8 @@ const contract_class = that => {
         check_contract(v, that[k], "instance variable " + k);
       });
     }
-    if (opts.varcheck) {
-      opts.varcheck(that);
+    if (opts.instance_check) {
+      opts.instance_check(that);
     }
   };
 

@@ -46,6 +46,8 @@ const fun = (args, ret) =>
     check: x => typeof x === "function"
   });
 
+const getter = (ret) => fun(null,ret)
+
 const bool = mkContract({
   name: "fun",
   check: x => typeof x === "boolean",
@@ -235,5 +237,6 @@ module.exports = {
   posint,
   promise,
   defined,
-  one_of
+  one_of,
+  getter
 };

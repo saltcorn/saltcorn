@@ -25,8 +25,7 @@ class Field {
 
     this.is_fkey =
       o.type === "Key" ||
-      (typeof o.type === "string" && o.type.startsWith("Key to")) ||
-      (o.type && o.type.name && o.type.name === "Key");
+      (typeof o.type === "string" && o.type.startsWith("Key to"));
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
@@ -195,17 +194,27 @@ Field.contract = {
     type: is.maybe(is.or(is.eq("Key"), is.obj({ name: is.str }))),
     input_type: is.maybe(
       is.one_of(["hidden", "select", "fromtype", "text", "password"])
-    )
+    ),
+    is_fkey: is.bool,
+    id:is.maybe(is.posint)
   },
-  varcheck: is.or(
-    is.obj({ type: is.defined }),
-    is.obj({ input_type: is.defined })
+  instance_check: is.and(
+    is.or(is.obj({ type: is.defined }), is.obj({ input_type: is.defined })),
+    is.or(
+      is.obj({ is_fkey: is.eq(false), reftable_name: is.eq(undefined)}),
+      is.obj({ is_fkey: is.eq(true), reftable_name: is.str })
+    )
   ),
   methods: {
     validate: is.fun(
       is.obj(),
       is.or(is.obj({ errors: is.str }), is.obj({ success: is.any }))
-    )
+    ),
+    toJson: is.getter(is.obj({type: is.str})),
+    sql_type: is.getter(is.str),
+    sql_bare_type: is.getter(is.str),
+    listKey: is.getter(is.str),
+    delete: is.fun([], is.promise(is.any)),
   }
 };
 module.exports = Field;

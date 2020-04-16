@@ -46,7 +46,7 @@ Counter.contract = {
     },
     get_with_added1: is.fun(is.positive, is.positive),
     get_with_added2: is.fun(is.positive, is.promise(is.positive)),
-    mygetter: is.fun(null, is.positive)
+    mygetter: is.getter(is.positive)
   }
 };
 
