@@ -1,7 +1,7 @@
 const gen = require("./generators");
 const { get_return_contract, get_arguments_returns } = require("./util.js");
 
-const auto_default_examples = 100
+const auto_default_examples = 100;
 
 //https://stackoverflow.com/a/43197340
 function isClass(obj) {

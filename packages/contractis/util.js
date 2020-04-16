@@ -1,5 +1,7 @@
 const get_return_contract = (returns, args) =>
-  typeof returns === "function" && !(returns.check && returns.contract_name) ? returns(...args) : returns;
+  typeof returns === "function" && !(returns.check && returns.contract_name)
+    ? returns(...args)
+    : returns;
 
 const get_arguments_returns = contract => {
   if (contract.contract_name === "fun")

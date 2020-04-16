@@ -153,7 +153,9 @@ const and = (...contrs) =>
         ? `${x} violates (in and) ${failing.contract_name}(${JSON.stringify(
             failing.options
           )})`
-        : `${x} in and violates (in and) ${JSON.stringify(failing.contract_name)}`;
+        : `${x} in and violates (in and) ${JSON.stringify(
+            failing.contract_name
+          )}`;
     },
     options: contrs,
     check: x => contrs.every(c => c.check(x)),

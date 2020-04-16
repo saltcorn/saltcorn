@@ -123,8 +123,8 @@ describe("async function contract", () => {
       async x => x + 1
     );
 
-    await add1C(3)
-      /*.then(() => {
+    await add1C(3);
+    /*.then(() => {
         throw new Error("Should go to .catch, not enter .then");
       })
       .catch(err => {
@@ -183,6 +183,13 @@ describe("fun shortcut contract", () => {
   it("should fail if return wrong", () => {
     const add1C = contract(is.fun([is.num], is.str), add1);
     expect(() => add1C(5)).toThrow(Error);
+  });
+});
+*/
+describe("value contract", () => {
+  it("should compute if valid", () => {
+    expect(is.num(4)).toBe(4);
+    expect(() => is.str(4)).toThrow(Error);
   });
 });
 
@@ -291,6 +298,7 @@ describe("autotest function", () => {
   });
 });
 
+/*
 describe("autotest async function", () => {
   it("run when correct", async () => {
     const add1C = contract(
@@ -313,7 +321,7 @@ describe("autotest async function", () => {
       });
   });
 });
-
+*/
 describe("autotest shortcut function", () => {
   it("run", () => {
     const add1C = contract(is.fun([is.num], is.num), add1);
@@ -357,7 +365,7 @@ describe("autotest and function", () => {
     auto_test(f1);
   });
 });
-
+/*
 describe("autotest class", () => {
   it("run when correct", async () => {
     await auto_test(Counter);
@@ -372,7 +380,7 @@ describe("autotest class", () => {
       });
   });
 });
-
+*/
 describe("autotest function with class as arg", () => {
   it("run when correct", () => {
     const f1 = contract(is.fun(is.klass(Counter), is.positive), c => c.count);
@@ -384,4 +392,3 @@ describe("autotest function with class as arg", () => {
     expect(() => auto_test(f1)).toThrow(Error);
   });
 });
-*/
