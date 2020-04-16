@@ -298,7 +298,6 @@ describe("autotest function", () => {
   });
 });
 
-/*
 describe("autotest async function", () => {
   it("run when correct", async () => {
     const add1C = contract(
@@ -321,7 +320,7 @@ describe("autotest async function", () => {
       });
   });
 });
-*/
+
 describe("autotest shortcut function", () => {
   it("run", () => {
     const add1C = contract(is.fun([is.num], is.num), add1);
@@ -365,7 +364,7 @@ describe("autotest and function", () => {
     auto_test(f1);
   });
 });
-/*
+
 describe("autotest class", () => {
   it("run when correct", async () => {
     await auto_test(Counter);
@@ -380,7 +379,7 @@ describe("autotest class", () => {
       });
   });
 });
-*/
+
 describe("autotest function with class as arg", () => {
   it("run when correct", () => {
     const f1 = contract(is.fun(is.klass(Counter), is.positive), c => c.count);
