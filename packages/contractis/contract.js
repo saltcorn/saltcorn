@@ -1,22 +1,10 @@
 var stackTrace = require("stack-trace");
-
+const check_contract = require("./check");
 const {
   get_return_contract,
   get_arguments_returns,
   ContractViolation
 } = require("./util.js");
-
-const check_contract = (theContract, val, loc, contrDefinition, callSite) => {
-  if (!theContract.check(val)) {
-    throw new ContractViolation(
-      theContract,
-      val,
-      loc,
-      contrDefinition,
-      callSite
-    );
-  }
-};
 
 const check_arguments = (
   arguments_contract_spec,
@@ -41,7 +29,7 @@ const check_arguments = (
 const argcheck = (pred, args, contrDefinition, callSite) => {
   if (!pred(...args)) {
     throw new ContractViolation(
-      { name: "Argument check" },
+      { contract_name: "Argument check" },
       args,
       undefined,
       contrDefinition,
@@ -53,7 +41,7 @@ const argcheck = (pred, args, contrDefinition, callSite) => {
 const retcheck = (pred, args, rv, contrDefinition, callSite) => {
   if (!pred(...args)(rv)) {
     throw new ContractViolation(
-      { name: "Return check" },
+      { contract_name: "Return check" },
       { arguments: args, return: rv },
       undefined,
       contrDefinition,
@@ -78,7 +66,7 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
         contrDefinition,
         newf
       );
-      if (opts.returns.name === "promise") {
+      if (opts.returns.contract_name === "promise") {
         var pr_rv = rv;
         rv = pr_rv.then(v => {
           check_contract(

@@ -1,6 +1,8 @@
 const gen = require("./generators");
 const { get_return_contract, get_arguments_returns } = require("./util.js");
 
+const auto_default_examples = 100;
+
 //https://stackoverflow.com/a/43197340
 function isClass(obj) {
   const isCtorClass =
@@ -16,14 +18,14 @@ function isClass(obj) {
 }
 
 const auto_test_fun = (f, contr, opts) => {
-  for (let i = 0; i < (opts.n || 100); i++) {
+  for (let i = 0; i < (opts.n || auto_default_examples); i++) {
     const args = gen.gen_arguments(contr.arguments);
     f(...args);
   }
 };
 
 const auto_test_fun_async = async (f, contr, opts) => {
-  for (let i = 0; i < (opts.n || 100); i++) {
+  for (let i = 0; i < (opts.n || auto_default_examples); i++) {
     const args = gen.gen_arguments(contr.arguments);
     await f(...args);
   }
@@ -61,7 +63,7 @@ const auto_test_class_async = async (cls, contr, opts) => {
 
 const isPromise = contr =>
   get_arguments_returns(contr).returns &&
-  get_arguments_returns(contr).returns.name === "promise";
+  get_arguments_returns(contr).returns.contract_name === "promise";
 
 module.exports = (obj, opts = {}) => {
   if (isClass(obj)) {

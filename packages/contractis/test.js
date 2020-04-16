@@ -132,6 +132,7 @@ describe("async function contract", () => {
       });
   });
 });
+
 describe("argcheck contract", () => {
   it("should compute if valid", () => {
     const btw = contract(
@@ -181,6 +182,13 @@ describe("fun shortcut contract", () => {
   it("should fail if return wrong", () => {
     const add1C = contract(is.fun([is.num], is.str), add1);
     expect(() => add1C(5)).toThrow(Error);
+  });
+});
+
+describe("value contract", () => {
+  it("should compute if valid", () => {
+    expect(is.num(4)).toBe(4);
+    expect(() => is.str(4)).toThrow(Error);
   });
 });
 
