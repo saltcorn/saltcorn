@@ -66,7 +66,7 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
         contrDefinition,
         newf
       );
-      if (opts.returns.name === "promise") {
+      if (opts.returns.contract_name === "promise") {
         var pr_rv = rv;
         rv = pr_rv.then(v => {
           check_contract(

@@ -123,17 +123,17 @@ describe("async function contract", () => {
       async x => x + 1
     );
 
-    await add1C(3);
-    /*.then(() => {
+    await add1C(3)
+    .then(() => {
         throw new Error("Should go to .catch, not enter .then");
       })
       .catch(err => {
         expect(err).toBeInstanceOf(ContractViolation);
-      });*/
+      });
   });
 });
 
-/*
+
 describe("argcheck contract", () => {
   it("should compute if valid", () => {
     const btw = contract(
@@ -185,7 +185,7 @@ describe("fun shortcut contract", () => {
     expect(() => add1C(5)).toThrow(Error);
   });
 });
-*/
+
 describe("value contract", () => {
   it("should compute if valid", () => {
     expect(is.num(4)).toBe(4);

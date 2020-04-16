@@ -63,7 +63,7 @@ const auto_test_class_async = async (cls, contr, opts) => {
 
 const isPromise = contr =>
   get_arguments_returns(contr).returns &&
-  get_arguments_returns(contr).returns.name === "promise";
+  get_arguments_returns(contr).returns.contract_name === "promise";
 
 module.exports = (obj, opts = {}) => {
   if (isClass(obj)) {
