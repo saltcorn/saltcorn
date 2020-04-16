@@ -84,7 +84,7 @@ const obj = o =>
   });
 
 const num = mkContract({
-  name: "number",
+  name: "num",
   check: x => typeof x === "number",
   generate: gen.any_num
 });
@@ -152,7 +152,7 @@ const any = mkContract({
 
 const maybe = c =>
   mkContract({
-    name: "maybe",
+    name: `maybe(${c.contract_name})`,
     options: c,
     check: x => typeof x === "undefined" || c.check(x),
     generate: () => (gen.bool() ? undefined : gen.generate_from(c))
@@ -160,7 +160,7 @@ const maybe = c =>
 
 const and = (...contrs) =>
   mkContract({
-    name: "and(" + contrs.map(c => c.contract_name).join + ")",
+    name: `and(${contrs.map(c => c.contract_name).join()})`,
     get_error_message: x => {
       const failing = contrs.find(c => !c.check(x));
       return failing.options
@@ -185,7 +185,7 @@ function and_gen(contrs) {
 
 const or = (...contrs) =>
   mkContract({
-    name: "or(" + contrs.map(c => c.contract_name).join + ")",
+    name: `or(${contrs.map(c => c.contract_name).join()})`,
     options: contrs,
     check: x => contrs.some(c => c.check(x)),
     generate:

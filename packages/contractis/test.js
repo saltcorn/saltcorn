@@ -390,3 +390,15 @@ describe("autotest function with class as arg", () => {
     expect(() => auto_test(f1)).toThrow(Error);
   });
 });
+
+describe("contract names", () => {
+  it("should be str for str", () => {
+    expect(is.str.contract_name).toBe("str");
+  });
+  it("should be maybe", () => {
+    expect(is.maybe(is.str).contract_name).toBe("maybe(str)");
+  });
+  it("should be or", () => {
+    expect(is.or(is.str, is.num).contract_name).toBe("or(str,num)");
+  });
+});
