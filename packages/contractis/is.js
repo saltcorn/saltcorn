@@ -46,7 +46,7 @@ const fun = (args, ret) =>
     check: x => typeof x === "function"
   });
 
-const getter = (ret) => fun(null,ret)
+const getter = ret => fun(null, ret);
 
 const bool = mkContract({
   name: "fun",
@@ -72,7 +72,7 @@ const klass = cls =>
 const promise = t =>
   mkContract({
     name: "promise",
-    options: typeof t ==="undefined" ? any: t,
+    options: typeof t === "undefined" ? any : t,
     check: x => x.constructor.name === Promise.name
   });
 

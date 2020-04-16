@@ -196,12 +196,12 @@ Field.contract = {
       is.one_of(["hidden", "select", "fromtype", "text", "password"])
     ),
     is_fkey: is.bool,
-    id:is.maybe(is.posint)
+    id: is.maybe(is.posint)
   },
   instance_check: is.and(
     is.or(is.obj({ type: is.defined }), is.obj({ input_type: is.defined })),
     is.or(
-      is.obj({ is_fkey: is.eq(false), reftable_name: is.eq(undefined)}),
+      is.obj({ is_fkey: is.eq(false), reftable_name: is.eq(undefined) }),
       is.obj({ is_fkey: is.eq(true), reftable_name: is.str })
     )
   ),
@@ -210,11 +210,11 @@ Field.contract = {
       is.obj(),
       is.or(is.obj({ errors: is.str }), is.obj({ success: is.any }))
     ),
-    toJson: is.getter(is.obj({type: is.str})),
+    toJson: is.getter(is.obj({ type: is.str })),
     sql_type: is.getter(is.str),
     sql_bare_type: is.getter(is.str),
     listKey: is.getter(is.str),
-    delete: is.fun([], is.promise(is.any)),
+    delete: is.fun([], is.promise(is.any))
   }
 };
 module.exports = Field;

@@ -41,4 +41,3 @@ describe("Form new", () => {
     expect(form.fields[0].constructor.name).toBe(Field.name);
   });
 });
-

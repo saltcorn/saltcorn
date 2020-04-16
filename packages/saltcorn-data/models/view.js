@@ -179,7 +179,7 @@ View.contract = {
     name: is.str,
     id: is.posint,
     viewtemplate: is.str,
-    viewtemplateObj: is.obj({name: is.str, display_state_form: is.bool})
+    viewtemplateObj: is.obj({ name: is.str, display_state_form: is.bool })
   }
-}
+};
 module.exports = View;
