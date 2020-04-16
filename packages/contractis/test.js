@@ -211,8 +211,8 @@ describe("object value contract", () => {
 describe("class value contract", () => {
   it("detect class", () => {
     const c = new Counter(3);
-    expect(contract(is.klass(Counter), c)).toBe(c);
-    expect(() => contract(is.klass(Counter), 4)).toThrow(Error);
+    expect(contract(is.class(Counter), c)).toBe(c);
+    expect(() => contract(is.class(Counter), 4)).toThrow(Error);
   });
 });
 
@@ -381,12 +381,12 @@ describe("autotest class", () => {
 
 describe("autotest function with class as arg", () => {
   it("run when correct", () => {
-    const f1 = contract(is.fun(is.klass(Counter), is.positive), c => c.count);
+    const f1 = contract(is.fun(is.class(Counter), is.positive), c => c.count);
     auto_test(f1);
   });
 
   it("fail when incorrect", () => {
-    const f1 = contract(is.fun(is.klass(Counter), is.str), c => c.count);
+    const f1 = contract(is.fun(is.class(Counter), is.str), c => c.count);
     expect(() => auto_test(f1)).toThrow(Error);
   });
 });

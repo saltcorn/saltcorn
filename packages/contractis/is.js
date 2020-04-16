@@ -231,7 +231,7 @@ module.exports = {
   array,
   bool,
   positive,
-  klass,
+  class: klass,
   any,
   int,
   posint,
