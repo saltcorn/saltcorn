@@ -72,7 +72,7 @@ const klass = cls =>
 const promise = t =>
   mkContract({
     name: "promise",
-    options: t,
+    options: typeof t ==="undefined" ? any: t,
     check: x => x.constructor.name === Promise.name
   });
 
