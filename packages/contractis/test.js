@@ -124,7 +124,7 @@ describe("async function contract", () => {
     );
 
     await add1C(3)
-    .then(() => {
+      .then(() => {
         throw new Error("Should go to .catch, not enter .then");
       })
       .catch(err => {
@@ -132,7 +132,6 @@ describe("async function contract", () => {
       });
   });
 });
-
 
 describe("argcheck contract", () => {
   it("should compute if valid", () => {
