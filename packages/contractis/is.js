@@ -5,7 +5,7 @@ isnum = x => typeof x === "number";
 
 const mkContract = c => {
   function checker(x) {
-    check_contract(c, x, "value check", undefined, checker);
+    check_contract(checker, x, "value check", undefined, checker);
     return x;
   }
   checker.contract_name = c.name;
@@ -50,6 +50,12 @@ const bool = mkContract({
   name: "fun",
   check: x => typeof x === "boolean",
   generate: gen.bool
+});
+
+const defined = mkContract({
+  name: "defined",
+  check: x => typeof x !== "undefined",
+  generate: gen.any //todo check not undefined
 });
 
 const klass = cls =>
@@ -107,6 +113,14 @@ const eq = v =>
     options: v,
     check: x => x === v,
     generate: () => v
+  });
+
+const one_of = vs =>
+  mkContract({
+    name: "one_of",
+    options: vs,
+    check: x => vs.includes(x),
+    generate: () => gen.oneOf(vs)
   });
 
 const lte = v =>
@@ -179,6 +193,17 @@ const or = (...contrs) =>
       (() => gen.oneOf(contrs.filter(c => c.generate)).generate())
   });
 
+const xor = (...contrs) =>
+  mkContract({
+    name: "xor(" + contrs.map(c => c.contract_name).join + ")",
+    options: contrs,
+    check: x => contrs.filter(c => c.check(x)).length === 1,
+    //todo check only one is right in generate
+    generate:
+      contrs.filter(c => c.generate).length > 0 &&
+      (() => gen.oneOf(contrs.filter(c => c.generate)).generate())
+  });
+
 const array = c =>
   mkContract({
     name: "array",
@@ -199,6 +224,7 @@ module.exports = {
   fun,
   obj,
   or,
+  xor,
   maybe,
   array,
   bool,
@@ -207,5 +233,7 @@ module.exports = {
   any,
   int,
   posint,
-  promise
+  promise,
+  defined,
+  one_of
 };

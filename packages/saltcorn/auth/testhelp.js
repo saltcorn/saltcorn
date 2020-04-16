@@ -24,6 +24,13 @@ const toInclude = (txt, expCode = 200) => res => {
   }
 };
 
+const toSucceed = (expCode = 200) => res => {
+  if (res.statusCode !== expCode) {
+    console.log(res.text);
+    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+  }
+};
+
 const toNotInclude = (txt, expCode = 200) => res => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
@@ -71,5 +78,6 @@ module.exports = {
   itShouldRedirectUnauthToLogin,
   toRedirect,
   toInclude,
-  toNotInclude
+  toNotInclude,
+  toSucceed
 };

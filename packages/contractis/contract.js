@@ -97,8 +97,11 @@ const contract_class = that => {
   const check_vars = () => {
     if (opts.variables) {
       Object.entries(opts.variables).forEach(([k, v]) => {
-        check_contract(v, that[k], "instance variables");
+        check_contract(v, that[k], "instance variable " + k);
       });
+    }
+    if (opts.varcheck) {
+      opts.varcheck(that);
     }
   };
 

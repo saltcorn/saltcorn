@@ -191,8 +191,16 @@ class Field {
 
 Field.contract = {
   variables: {
-    name: is.str
+    name: is.str,
+    type: is.maybe(is.or(is.eq("Key"), is.obj({ name: is.str }))),
+    input_type: is.maybe(
+      is.one_of(["hidden", "select", "fromtype", "text", "password"])
+    )
   },
+  varcheck: is.or(
+    is.obj({ type: is.defined }),
+    is.obj({ input_type: is.defined })
+  ),
   methods: {
     validate: is.fun(
       is.obj(),

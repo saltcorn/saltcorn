@@ -6,32 +6,35 @@ const {
   getStaffLoginCookie,
   getAdminLoginCookie,
   toRedirect,
-  toInclude
+  toInclude,
+  toSucceed
 } = require("../auth/testhelp");
 
 describe("Public auth Endpoints", () => {
   it("should show login", async done => {
-    const res = await request(app).get("/auth/login/");
-    expect(res.statusCode).toEqual(200);
+    await request(app)
+      .get("/auth/login/")
+      .expect(toSucceed());
     done();
   });
 
   it("should show signup", async done => {
-    const res = await request(app).get("/auth/signup/");
-    expect(res.statusCode).toEqual(200);
+    await request(app)
+      .get("/auth/signup/")
+      .expect(toSucceed());
     done();
   });
 
   it("should allow logout for unauth user", async done => {
-    const res = await request(app).get("/auth/logout/");
-    expect(res.statusCode).toEqual(302);
+    await request(app).get("/auth/logout/");
+    expect(toRedirect("/"));
     done();
   });
 });
 
 describe("login process", () => {
   it("should say Login when not logged in", async done => {
-    const res = await request(app).get("/");
+    await request(app).get("/");
     expect(toInclude("Login"));
     done();
   });
@@ -61,20 +64,18 @@ describe("signup process", () => {
 describe("user admin", () => {
   it("should list tables", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/useradmin/")
       .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
-
-    expect(toInclude("staff@foo.com"));
+    expect(toSucceed()).expect(toInclude("staff@foo.com"));
     done();
   });
   it("shows new user form", async done => {
     const loginCookie = await getAdminLoginCookie();
-    const res = await request(app)
+    await request(app)
       .get("/useradmin/new")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
+      .set("Cookie", loginCookie)
+      .expect(toSucceed());
     done();
   });
   it("creates new user", async done => {
@@ -102,17 +103,17 @@ describe("user admin", () => {
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     expect(user.role_id).toBe(3);
-    const res = await request(app)
+    await request(app)
       .get(`/useradmin/${user.id}`)
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(200);
+      .set("Cookie", loginCookie)
+      .expect(toSucceed());
     done();
   });
 
   it("edits user", async done => {
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    const res = await request(app)
+    await request(app)
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send(`id=${user.id}`)
@@ -127,7 +128,7 @@ describe("user admin", () => {
   it("deletes user", async done => {
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    const res = await request(app)
+    await request(app)
       .post(`/useradmin/delete/${user.id}`)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
