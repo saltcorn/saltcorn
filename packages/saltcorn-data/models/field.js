@@ -213,7 +213,7 @@ Field.contract = {
     toJson: is.getter(is.obj({ type: is.str })),
     sql_type: is.getter(is.str),
     sql_bare_type: is.getter(is.str),
-    listKey: is.getter(is.str),
+    listKey: is.getter(is.any), // todo why not str?
     delete: is.fun([], is.promise(is.eq(undefined))),
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
   },

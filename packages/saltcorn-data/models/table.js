@@ -49,6 +49,15 @@ class Table {
     return await db.update(this.name, v, id);
   }
 
+  async toggleBool(id, field_name) {
+    return await db.query(
+      `update ${sqlsanitize(this.name)} set ${sqlsanitize(
+        field_name
+      )}=NOT ${sqlsanitize(field_name)} where id=$1`,
+      [id]
+    );
+  }
+
   async insertRow(v) {
     return await db.insert(this.name, v);
   }
