@@ -24,10 +24,10 @@ router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({ id });
 
-  const fields = await Field.find({ table_id: id });
+  const fields = await Field.find({ table_id: id }, { orderBy: "name" });
 
   res.sendWrap(
-    `${table.name} table`,
+    `${table.name} table fields`,
 
     mkTable(
       [
@@ -52,12 +52,13 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    await Table.create(v.name);
+    const table = await Table.create(v.name);
     req.flash("success", "Table created");
+    res.redirect(`/table/${table.id}`);
   } else {
     Table.rename(v.id, v.name);
+    res.redirect(`/table/${v.id}`);
   }
-  res.redirect(`/table/`);
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
@@ -70,7 +71,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.get("/", isAdmin, async (req, res) => {
-  const rows = await Table.find();
+  const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
     mkTable(

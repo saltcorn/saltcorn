@@ -171,7 +171,7 @@ const runPost = async (
     if (typeof id === "undefined") {
       id = await table.insertRow(row);
     } else {
-      await table.updateRow(row, id);
+      await table.updateRow(row, parseInt(id));
     }
     const nxview = await View.findOne({ name: view_when_done });
     //console.log()

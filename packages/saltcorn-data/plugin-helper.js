@@ -2,6 +2,8 @@ const View = require("./models/view");
 
 const field_picker_fields = async ({ table }) => {
   const fields = await table.getFields();
+  const boolfields = fields.filter(f => f.type.name === "Bool");
+  const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
   const link_views = await View.find_possible_links_to_table(table.id);
   const link_view_opts = link_views.map(v => v.name);
@@ -60,7 +62,7 @@ const field_picker_fields = async ({ table }) => {
       type: "String",
       required: true,
       attributes: {
-        options: "Delete,Edit"
+        options: actions.join()
       },
       showIf: { ".coltype": "Action" }
     },

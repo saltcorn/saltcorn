@@ -48,8 +48,17 @@ router.post("/:tname", loggedIn, async (req, res) => {
       await table.insertRow(form.values);
     } else {
       const id = v.id;
-      await table.updateRow(form.values, id);
+      await table.updateRow(form.values, parseInt(id));
     }
     res.redirect(`/list/${table.name}`);
   }
+});
+
+router.post("/toggle/:name/:id/:field_name", loggedIn, async (req, res) => {
+  const { name, id, field_name } = req.params;
+  const { redirect } = req.query;
+  const table = await Table.findOne({ name });
+  await table.toggleBool(id, field_name);
+
+  res.redirect(redirect || `/list/${table.name}`);
 });
