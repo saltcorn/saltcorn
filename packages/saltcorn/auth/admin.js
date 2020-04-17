@@ -1,4 +1,5 @@
 const Router = require("express-promise-router");
+const { contract, is } = require("contractis");
 
 const db = require("saltcorn-data/db");
 const User = require("saltcorn-data/models/user");
@@ -10,37 +11,42 @@ const { isAdmin } = require("../routes/utils");
 const router = new Router();
 module.exports = router;
 
-const userForm = async user => {
-  const roleField = new Field({
-    label: "Role",
-    name: "role_id",
-    type: "Key",
-    reftable_name: "roles"
-  });
-  const roles = await User.get_roles();
-  roleField.options = roles.map(r => ({ label: r.role, value: r.id }));
+const userForm = contract(
+  is.fun(is.maybe(is.class("User")), is.promise(is.class("Form"))),
+  async user => {
+    const roleField = new Field({
+      label: "Role",
+      name: "role_id",
+      type: "Key",
+      reftable_name: "roles"
+    });
+    const roles = await User.get_roles();
+    roleField.options = roles.map(r => ({ label: r.role, value: r.id }));
 
-  const form = new Form({
-    fields: [new Field({ label: "E-mail", name: "email", input_type: "text" })],
-    action: "/useradmin/save",
-    submitLabel: user ? "Save" : "Create"
-  });
-  if (!user)
-    form.fields.push(
-      new Field({
-        label: "Password",
-        name: "password",
-        input_type: "password"
-      })
-    );
-  form.fields.push(roleField);
-  if (user) {
-    form.hidden("id");
-    form.values = user;
-    delete form.values.password;
+    const form = new Form({
+      fields: [
+        new Field({ label: "E-mail", name: "email", input_type: "text" })
+      ],
+      action: "/useradmin/save",
+      submitLabel: user ? "Save" : "Create"
+    });
+    if (!user)
+      form.fields.push(
+        new Field({
+          label: "Password",
+          name: "password",
+          input_type: "password"
+        })
+      );
+    form.fields.push(roleField);
+    if (user) {
+      form.hidden("id");
+      form.values = user;
+      delete form.values.password;
+    }
+    return form;
   }
-  return form;
-};
+);
 
 router.get("/", isAdmin, async (req, res) => {
   const users = await User.find();

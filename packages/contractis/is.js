@@ -62,7 +62,7 @@ const defined = mkContract({
 
 const klass = cls =>
   mkContract({
-    name: "klass",
+    name: "class",
     options: cls,
     check: x =>
       x.constructor.name === (typeof cls === "string" ? cls : cls.name),
