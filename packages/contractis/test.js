@@ -30,6 +30,10 @@ class Counter {
   get mygetter() {
     return this.count;
   }
+
+  static with_one_less_than(x) {
+    return new Counter(x - 1);
+  }
 }
 
 Counter.contract = {
@@ -47,6 +51,12 @@ Counter.contract = {
     get_with_added1: is.fun(is.positive, is.positive),
     get_with_added2: is.fun(is.positive, is.promise(is.positive)),
     mygetter: is.getter(is.positive)
+  },
+  static_methods: {
+    with_one_less_than: is.fun(
+      is.maybe(is.number({ gte: 1 })),
+      is.class("Counter")
+    )
   }
 };
 
@@ -85,6 +95,14 @@ describe("class contract", () => {
   });
 });
 
+describe("static methodclass contract", () => {
+  it("should compute if valid", () => {
+    const c = Counter.with_one_less_than(3);
+    c.incr();
+    expect(c.count).toBe(3);
+    expect(() => Counter.with_one_less_than("3")).toThrow(Error);
+  });
+});
 describe("simple contract", () => {
   it("should compute if valid", () => {
     const add1C = contract(

@@ -85,6 +85,14 @@ const obj = o =>
       Object.entries(o || {}).every(([k, v]) => v.check(x[k]))
   });
 
+const objVals = c =>
+  mkContract({
+    name: "objVals",
+    options: c,
+    check: x =>
+      typeof x === "object" && Object.entries(x).every(([k, v]) => c.check(v))
+  });
+
 const num = mkContract({
   name: "num",
   check: x => typeof x === "number",
@@ -156,7 +164,7 @@ const maybe = c =>
   mkContract({
     name: `maybe(${c.contract_name})`,
     options: c,
-    check: x => typeof x === "undefined" || c.check(x),
+    check: x => typeof x === "undefined" || x === null || c.check(x),
     generate: () => (gen.bool() ? undefined : gen.generate_from(c))
   });
 
@@ -225,6 +233,7 @@ module.exports = {
   gte,
   fun,
   obj,
+  objVals,
   or,
   xor,
   maybe,

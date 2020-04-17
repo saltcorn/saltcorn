@@ -1,4 +1,5 @@
 const { p, div, i, label, text, button, a, span } = require("./tags");
+const { contract, is } = require("contractis");
 
 const mkShowIf = sIf =>
   Object.entries(sIf)
@@ -232,4 +233,4 @@ const mkForm = (form, errors = {}) => {
   return blurbp + top + flds + bot;
 };
 
-module.exports = renderForm;
+module.exports = contract(is.fun(is.class("Form"), is.str), renderForm);

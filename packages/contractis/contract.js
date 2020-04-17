@@ -110,7 +110,8 @@ const contract_class = that => {
   if (opts.methods) {
     Object.entries(opts.methods).forEach(([k, v]) => {
       const d = Object.getOwnPropertyDescriptor(proto, k);
-      if (!d) throw new Error(`No method "${k}" in class ${proto.constructor.name}`);
+      if (!d)
+        throw new Error(`No method "${k}" in class ${proto.constructor.name}`);
       if (d.value) {
         const oldf = d.value;
         d.value = contract_function(oldf, v, that);
@@ -120,6 +121,27 @@ const contract_class = that => {
       }
 
       Object.defineProperty(that, k, d);
+    });
+  }
+  if (opts.static_methods) {
+    Object.entries(opts.static_methods).forEach(([k, v]) => {
+      const d = Object.getOwnPropertyDescriptor(proto.constructor, k);
+      // this is a hack and will not be checked on first use. TODO FIXME
+      if (d.writable) {
+        if (!d)
+          throw new Error(
+            `No static method "${k}" in class ${proto.constructor.name}`
+          );
+        if (d.value) {
+          const oldf = d.value;
+          d.value = contract_function(oldf, v, that);
+        } else if (d.get) {
+          const oldf = d.get;
+          d.get = contract_function(oldf, v, that);
+        }
+        d.writable = false;
+        Object.defineProperty(proto.constructor, k, d);
+      }
     });
   }
 };

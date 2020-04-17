@@ -1,6 +1,7 @@
 const db = require("../db");
 const State = require("../db/state");
 const Field = require("./field");
+const { contract, is } = require("contractis");
 
 const apply = (f, x) => (typeof f === "function" ? f(x) : f);
 
@@ -14,6 +15,7 @@ class Workflow {
     this.steps = o.steps || [];
     this.onDone = o.onDone || (c => c);
     this.action = o.action;
+    contract.class(this);
   }
   async run(body) {
     if (!body || !body.stepName) {
@@ -76,5 +78,16 @@ class Workflow {
     return { renderForm: form };
   }
 }
+
+Workflow.contract = {
+  variables: {
+    steps: is.array(is.obj()),
+    onDone: is.fun(is.obj(), is.obj()),
+    action: is.maybe(is.str)
+  },
+  methods: {
+    run: is.fun(is.obj(), is.obj({ renderForm: is.maybe(is.class("Form")) }))
+  }
+};
 
 module.exports = Workflow;
