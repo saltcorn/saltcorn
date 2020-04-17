@@ -180,6 +180,26 @@ View.contract = {
     id: is.posint,
     viewtemplate: is.str,
     viewtemplateObj: is.obj({ name: is.str, display_state_form: is.bool })
+  },
+  methods: {
+    get_state_fields: is.fun(
+      [],
+      is.promise(
+        is.array(
+          is.obj({
+            name: is.str,
+            input_type: is.maybe(is.str),
+            type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
+          })
+        )
+      )
+    )
+  },
+  static_methods: {
+    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("View")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("View"))),
+    create: is.fun(is.obj(), is.promise(is.class("View"))),
+    find_possible_links_to_table: is.fun(is.posint,is.promise(is.array(is.class("View"))))
   }
 };
 module.exports = View;
