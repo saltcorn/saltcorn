@@ -5,7 +5,7 @@ isnum = x => typeof x === "number";
 
 const mkContract = c => {
   function checker(x) {
-    check_contract(c, x, "value check", undefined, checker);
+    check_contract(checker, x, "value check", undefined, checker);
     return x;
   }
   checker.contract_name = c.name;
@@ -46,15 +46,23 @@ const fun = (args, ret) =>
     check: x => typeof x === "function"
   });
 
+const getter = ret => fun(null, ret);
+
 const bool = mkContract({
   name: "fun",
   check: x => typeof x === "boolean",
   generate: gen.bool
 });
 
+const defined = mkContract({
+  name: "defined",
+  check: x => typeof x !== "undefined",
+  generate: gen.any //todo check not undefined
+});
+
 const klass = cls =>
   mkContract({
-    name: "klass",
+    name: "class",
     options: cls,
     check: x =>
       x.constructor.name === (typeof cls === "string" ? cls : cls.name),
@@ -64,7 +72,7 @@ const klass = cls =>
 const promise = t =>
   mkContract({
     name: "promise",
-    options: t,
+    options: typeof t === "undefined" ? any : t,
     check: x => x.constructor.name === Promise.name
   });
 
@@ -78,7 +86,7 @@ const obj = o =>
   });
 
 const num = mkContract({
-  name: "number",
+  name: "num",
   check: x => typeof x === "number",
   generate: gen.any_num
 });
@@ -107,6 +115,14 @@ const eq = v =>
     options: v,
     check: x => x === v,
     generate: () => v
+  });
+
+const one_of = vs =>
+  mkContract({
+    name: "one_of",
+    options: vs,
+    check: x => vs.includes(x),
+    generate: () => gen.oneOf(vs)
   });
 
 const lte = v =>
@@ -138,7 +154,7 @@ const any = mkContract({
 
 const maybe = c =>
   mkContract({
-    name: "maybe",
+    name: `maybe(${c.contract_name})`,
     options: c,
     check: x => typeof x === "undefined" || c.check(x),
     generate: () => (gen.bool() ? undefined : gen.generate_from(c))
@@ -146,7 +162,7 @@ const maybe = c =>
 
 const and = (...contrs) =>
   mkContract({
-    name: "and(" + contrs.map(c => c.contract_name).join + ")",
+    name: `and(${contrs.map(c => c.contract_name).join()})`,
     get_error_message: x => {
       const failing = contrs.find(c => !c.check(x));
       return failing.options
@@ -171,9 +187,20 @@ function and_gen(contrs) {
 
 const or = (...contrs) =>
   mkContract({
-    name: "or(" + contrs.map(c => c.contract_name).join + ")",
+    name: `or(${contrs.map(c => c.contract_name).join()})`,
     options: contrs,
     check: x => contrs.some(c => c.check(x)),
+    generate:
+      contrs.filter(c => c.generate).length > 0 &&
+      (() => gen.oneOf(contrs.filter(c => c.generate)).generate())
+  });
+
+const xor = (...contrs) =>
+  mkContract({
+    name: `xor(${contrs.map(c => c.contract_name).join()})`,
+    options: contrs,
+    check: x => contrs.filter(c => c.check(x)).length === 1,
+    //todo check only one is right in generate
     generate:
       contrs.filter(c => c.generate).length > 0 &&
       (() => gen.oneOf(contrs.filter(c => c.generate)).generate())
@@ -199,13 +226,17 @@ module.exports = {
   fun,
   obj,
   or,
+  xor,
   maybe,
   array,
   bool,
   positive,
-  klass,
+  class: klass,
   any,
   int,
   posint,
-  promise
+  promise,
+  defined,
+  one_of,
+  getter
 };

@@ -41,13 +41,3 @@ describe("Form new", () => {
     expect(form.fields[0].constructor.name).toBe(Field.name);
   });
 });
-
-describe("View", () => {
-  it("should find", async done => {
-    const link_views = await View.find({
-      table_id: 1
-    });
-    expect(link_views.length).toBe(2);
-    done();
-  });
-});

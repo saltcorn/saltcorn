@@ -33,6 +33,7 @@ const loadAllPlugins = async () => {
   for (const plugin of plugins) {
     await loadPlugin(plugin);
   }
+  await State.refresh();
 };
 
 const loadAllPluginsSync = () => {

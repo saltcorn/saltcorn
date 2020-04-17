@@ -57,7 +57,7 @@ class Form {
 
 Form.contract = {
   variables: {
-    fields: is.array(is.obj({ name: is.str })),
+    fields: is.array(is.or(is.class("Field"), is.class("FieldRepeat"))),
     values: is.obj(),
     errors: is.obj()
   },
@@ -65,7 +65,8 @@ Form.contract = {
     validate: is.fun(
       is.obj(),
       is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
-    )
+    ),
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
   }
 };
 

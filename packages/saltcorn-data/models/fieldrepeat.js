@@ -35,7 +35,8 @@ class FieldRepeat {
 FieldRepeat.contract = {
   variables: {
     name: is.str,
-    fields: is.array(is.obj({ name: is.str }))
+    label: is.str,
+    fields: is.array(is.class("Field"))
   },
   methods: {
     validate: is.fun(

@@ -1,6 +1,6 @@
 const db = require("../db");
 const Form = require("../models/form");
-const Table = require("../models/table");
+const { contract, is } = require("contractis");
 
 const removeEmptyStrings = obj => {
   var o = {};
@@ -26,6 +26,7 @@ class View {
     this.on_menu = o.on_menu;
     const State = require("../db/state");
     this.viewtemplateObj = State.viewtemplates[this.viewtemplate];
+    contract.class(this);
   }
   static async findOne(where) {
     const v = await db.selectOne("views", where);
@@ -172,4 +173,13 @@ class View {
     return configFlow;
   }
 }
+
+View.contract = {
+  variables: {
+    name: is.str,
+    id: is.posint,
+    viewtemplate: is.str,
+    viewtemplateObj: is.obj({ name: is.str, display_state_form: is.bool })
+  }
+};
 module.exports = View;

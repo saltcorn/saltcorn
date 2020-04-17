@@ -13,6 +13,7 @@ class ContractViolation extends Error {
   constructor(theContract, val, location, caller, callSite) {
     const in_str = location ? ` (${location})` : "";
     var message;
+    //console.log(theContract)
     if (theContract.get_error_message) {
       message = theContract.get_error_message(val) + in_str;
     } else {
@@ -20,7 +21,9 @@ class ContractViolation extends Error {
         ? `${theContract.contract_name}(${JSON.stringify(theContract.options)})`
         : theContract.contract_name;
       message = `value ${JSON.stringify(
-        val
+        val,
+        null,
+        2
       )} violates contract ${conStr}${in_str}`;
     }
 

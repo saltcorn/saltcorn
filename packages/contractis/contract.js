@@ -97,8 +97,11 @@ const contract_class = that => {
   const check_vars = () => {
     if (opts.variables) {
       Object.entries(opts.variables).forEach(([k, v]) => {
-        check_contract(v, that[k], "instance variables");
+        check_contract(v, that[k], `instance variable "${k}"`);
       });
+    }
+    if (opts.instance_check) {
+      opts.instance_check(that);
     }
   };
 
@@ -107,7 +110,7 @@ const contract_class = that => {
   if (opts.methods) {
     Object.entries(opts.methods).forEach(([k, v]) => {
       const d = Object.getOwnPropertyDescriptor(proto, k);
-      if (!d) throw new Error(`No method ${k} in ${proto.constructor.name}`);
+      if (!d) throw new Error(`No method "${k}" in class ${proto.constructor.name}`);
       if (d.value) {
         const oldf = d.value;
         d.value = contract_function(oldf, v, that);

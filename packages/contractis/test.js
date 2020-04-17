@@ -46,7 +46,7 @@ Counter.contract = {
     },
     get_with_added1: is.fun(is.positive, is.positive),
     get_with_added2: is.fun(is.positive, is.promise(is.positive)),
-    mygetter: is.fun(null, is.positive)
+    mygetter: is.getter(is.positive)
   }
 };
 
@@ -211,8 +211,8 @@ describe("object value contract", () => {
 describe("class value contract", () => {
   it("detect class", () => {
     const c = new Counter(3);
-    expect(contract(is.klass(Counter), c)).toBe(c);
-    expect(() => contract(is.klass(Counter), 4)).toThrow(Error);
+    expect(contract(is.class(Counter), c)).toBe(c);
+    expect(() => contract(is.class(Counter), 4)).toThrow(Error);
   });
 });
 
@@ -381,12 +381,24 @@ describe("autotest class", () => {
 
 describe("autotest function with class as arg", () => {
   it("run when correct", () => {
-    const f1 = contract(is.fun(is.klass(Counter), is.positive), c => c.count);
+    const f1 = contract(is.fun(is.class(Counter), is.positive), c => c.count);
     auto_test(f1);
   });
 
   it("fail when incorrect", () => {
-    const f1 = contract(is.fun(is.klass(Counter), is.str), c => c.count);
+    const f1 = contract(is.fun(is.class(Counter), is.str), c => c.count);
     expect(() => auto_test(f1)).toThrow(Error);
+  });
+});
+
+describe("contract names", () => {
+  it("should be str for str", () => {
+    expect(is.str.contract_name).toBe("str");
+  });
+  it("should be maybe", () => {
+    expect(is.maybe(is.str).contract_name).toBe("maybe(str)");
+  });
+  it("should be or", () => {
+    expect(is.or(is.str, is.num).contract_name).toBe("or(str,num)");
   });
 });
