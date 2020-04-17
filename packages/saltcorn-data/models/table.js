@@ -1,11 +1,13 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const { contract, is } = require("contractis");
 
 class Table {
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
+    contract.class(this);
   }
   static async findOne(where) {
     const tbl = await db.selectOne("tables", where);
@@ -158,4 +160,78 @@ class Table {
     return rows;
   }
 }
+
+Table.contract = {
+  constructs: { name: is.str },
+  variables: { name: is.str },
+  methods: {
+    delete: is.fun([], is.promise(is.eq(undefined))),
+    deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
+    getRow: is.fun(is.obj(), is.promise(is.obj())),
+    getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
+    countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
+    updateRow: is.fun([is.obj(), is.positive], is.promise(is.eq(undefined))),
+    insertRow: is.fun(is.obj(), is.promise(is.posint)),
+    getFields: is.fun([], is.promise(is.array(is.class("Field")))),
+    get_parent_relations: is.fun(
+      [],
+      is.promise(
+        is.obj({
+          parent_relations: is.array(
+            is.obj({
+              key_field: is.class("Field"),
+              table: is.class("Table")
+            })
+          ),
+          parent_field_list: is.array(is.str)
+        })
+      )
+    ),
+    get_child_relations: is.fun(
+      [],
+      is.promise(
+        is.obj({
+          child_relations: is.array(
+            is.obj({
+              key_field: is.class("Field"),
+              table: is.class("Table")
+            })
+          ),
+          child_field_list: is.array(is.str)
+        })
+      )
+    ),
+    getJoinedRows: is.fun(
+      is.maybe(
+        is.obj({
+          joinFields: is.maybe(
+            is.objVals(is.obj({ ref: is.str, target: is.str }))
+          ),
+          aggregations: is.maybe(
+            is.objVals(
+              is.obj({
+                ref: is.str,
+                table: is.str,
+                field: is.str,
+                aggregate: is.str
+              })
+            )
+          ),
+          where: is.maybe(is.obj()),
+          limit: is.maybe(is.positive),
+          offset: is.maybe(is.positive),
+          orderBy: is.maybe(is.str),
+          orderDesc: is.maybe(is.bool)
+        })
+      ),
+      is.promise(is.array(is.obj({})))
+    )
+  },
+  static_methods: {
+    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Table")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("Table"))),
+    create: is.fun(is.str, is.promise(is.class("Table"))),
+    rename: is.fun([is.posint, is.str], is.promise(is.eq(undefined)))
+  }
+};
 module.exports = Table;

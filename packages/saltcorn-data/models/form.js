@@ -66,7 +66,8 @@ Form.contract = {
       is.obj(),
       is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
     ),
-    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
+    hidden: is.fun(is.any, is.eq(undefined))
   }
 };
 

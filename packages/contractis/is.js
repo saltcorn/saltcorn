@@ -85,6 +85,14 @@ const obj = o =>
       Object.entries(o || {}).every(([k, v]) => v.check(x[k]))
   });
 
+const objVals = c =>
+  mkContract({
+    name: "objVals",
+    options: c,
+    check: x =>
+      typeof x === "object" && Object.entries(x).every(([k, v]) => c.check(v))
+  });
+
 const num = mkContract({
   name: "num",
   check: x => typeof x === "number",
@@ -225,6 +233,7 @@ module.exports = {
   gte,
   fun,
   obj,
+  objVals,
   or,
   xor,
   maybe,
