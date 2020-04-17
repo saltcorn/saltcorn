@@ -48,7 +48,7 @@ router.post("/:tname", loggedIn, async (req, res) => {
       await table.insertRow(form.values);
     } else {
       const id = v.id;
-      await table.updateRow(form.values, id);
+      await table.updateRow(form.values, parseInt(id));
     }
     res.redirect(`/list/${table.name}`);
   }
