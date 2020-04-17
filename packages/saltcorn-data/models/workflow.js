@@ -86,8 +86,8 @@ Workflow.contract = {
     action: is.maybe(is.str)
   },
   methods: {
-    run: is.fun(is.obj(), is.obj({renderForm: is.maybe(is.class("Form"))}))
+    run: is.fun(is.obj(), is.obj({ renderForm: is.maybe(is.class("Form")) }))
   }
-}
+};
 
 module.exports = Workflow;
