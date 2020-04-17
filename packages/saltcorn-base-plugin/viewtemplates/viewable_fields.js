@@ -1,16 +1,22 @@
 const { post_btn, link } = require("saltcorn-markup");
 const { text } = require("saltcorn-markup/tags");
 
+const action_url = (viewname, table, column, r) => {
+  if (column.action_name === "Delete")
+    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+  else if (column.action_name.startsWith("Toggle")) {
+    const field_name = column.action_name.replace("Toggle ", "");
+    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+  }
+};
+
 const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
   columns.map(column => {
     if (column.type === "Action")
       return {
-        label: "Delete",
+        label: column.action_name,
         key: r =>
-          post_btn(
-            `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`,
-            "Delete"
-          )
+          post_btn(action_url(viewname, table, column, r), column.action_name)
       };
     else if (column.type === "ViewLink") {
       const vnm = column.view;
