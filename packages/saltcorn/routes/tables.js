@@ -52,12 +52,14 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    await Table.create(v.name);
+    const table=await Table.create(v.name);
     req.flash("success", "Table created");
+    res.redirect(`/table/${table.id}`);
   } else {
     Table.rename(v.id, v.name);
+    res.redirect(`/table/${v.id}`);
   }
-  res.redirect(`/table/`);
+  
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
