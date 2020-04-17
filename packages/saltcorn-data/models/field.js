@@ -214,7 +214,13 @@ Field.contract = {
     sql_type: is.getter(is.str),
     sql_bare_type: is.getter(is.str),
     listKey: is.getter(is.str),
-    delete: is.fun([], is.promise(is.any))
+    delete: is.fun([], is.promise(is.any)),
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
+  },
+  static_methods: {
+    find: is.fun(is.obj(), is.promise(is.array(is.class("Field")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
+    create: is.fun(is.obj(), is.promise(is.class("Field")))
   }
 };
 module.exports = Field;
