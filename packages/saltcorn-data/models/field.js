@@ -114,8 +114,8 @@ class Field {
     else return { success: readval };
   }
 
-  static async find(where) {
-    const db_flds = await db.select("fields", where);
+  static async find(where, selectopts) {
+    const db_flds = await db.select("fields", where, selectopts);
     return db_flds.map(dbf => new Field(dbf));
   }
   static async findOne(where) {
@@ -218,7 +218,10 @@ Field.contract = {
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
   },
   static_methods: {
-    find: is.fun(is.obj(), is.promise(is.array(is.class("Field")))),
+    find: is.fun(
+      [is.maybe(is.obj()), is.maybe(is.obj())],
+      is.promise(is.array(is.class("Field")))
+    ),
     findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
     create: is.fun(is.obj(), is.promise(is.class("Field")))
   }

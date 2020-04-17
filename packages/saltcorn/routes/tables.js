@@ -24,10 +24,10 @@ router.get("/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({ id });
 
-  const fields = await Field.find({ table_id: id });
+  const fields = await Field.find({ table_id: id }, { orderBy: "name" });
 
   res.sendWrap(
-    `${table.name} table`,
+    `${table.name} table fields`,
 
     mkTable(
       [
