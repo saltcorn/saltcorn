@@ -13,7 +13,7 @@ const router = new Router();
 module.exports = router;
 
 router.get("/list", isAdmin, async (req, res) => {
-  var views = await View.find();
+  var views = await View.find({}, {orderBy: 'name'});
   const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
   res.sendWrap(

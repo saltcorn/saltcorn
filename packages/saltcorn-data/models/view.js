@@ -32,8 +32,8 @@ class View {
     const v = await db.selectOne("views", where);
     return new View(v);
   }
-  static async find(where) {
-    const views = await db.select("views", where);
+  static async find(where,selectopts) {
+    const views = await db.select("views", where, selectopts);
 
     return views.map(v => new View(v));
   }
@@ -198,7 +198,7 @@ View.contract = {
     get_config_flow: is.fun([], is.promise(is.class("Workflow")))
   },
   static_methods: {
-    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("View")))),
+    find: is.fun([is.maybe(is.obj()), is.maybe(is.obj())], is.promise(is.array(is.class("View")))),
     findOne: is.fun(is.obj(), is.promise(is.class("View"))),
     create: is.fun(is.obj(), is.promise(is.class("View"))),
     find_possible_links_to_table: is.fun(
