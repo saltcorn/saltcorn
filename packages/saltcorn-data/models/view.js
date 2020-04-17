@@ -193,7 +193,9 @@ View.contract = {
           })
         )
       )
-    )
+    ),
+    get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
+    get_config_flow: is.fun([], is.promise(is.class("Workflow")))
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("View")))),

@@ -164,7 +164,7 @@ const maybe = c =>
   mkContract({
     name: `maybe(${c.contract_name})`,
     options: c,
-    check: x => typeof x === "undefined" || c.check(x),
+    check: x => typeof x === "undefined" || x === null || c.check(x),
     generate: () => (gen.bool() ? undefined : gen.generate_from(c))
   });
 
