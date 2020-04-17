@@ -52,14 +52,13 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    const table=await Table.create(v.name);
+    const table = await Table.create(v.name);
     req.flash("success", "Table created");
     res.redirect(`/table/${table.id}`);
   } else {
     Table.rename(v.id, v.name);
     res.redirect(`/table/${v.id}`);
   }
-  
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
@@ -72,7 +71,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 router.get("/", isAdmin, async (req, res) => {
-  const rows = await Table.find();
+  const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
     mkTable(

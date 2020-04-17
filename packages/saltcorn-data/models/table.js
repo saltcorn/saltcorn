@@ -14,8 +14,8 @@ class Table {
 
     return new Table(tbl);
   }
-  static async find(where) {
-    const tbls = await db.select("tables", where);
+  static async find(where, selectopts) {
+    const tbls = await db.select("tables", where, selectopts);
 
     return tbls.map(t => new Table(t));
   }
@@ -237,7 +237,10 @@ Table.contract = {
     )
   },
   static_methods: {
-    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Table")))),
+    find: is.fun(
+      [is.maybe(is.obj()), is.maybe(is.obj())],
+      is.promise(is.array(is.class("Table")))
+    ),
     findOne: is.fun(is.obj(), is.promise(is.class("Table"))),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     rename: is.fun([is.posint, is.str], is.promise(is.eq(undefined)))
