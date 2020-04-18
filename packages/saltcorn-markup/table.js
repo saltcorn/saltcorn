@@ -37,7 +37,7 @@ const pagination = ({ current_page, pages, get_page_link }) => {
   for (let index = from; index <= to; index++) {
     lis.push(
       li(
-        { class: `page-item ${index === current_page ? "active" : ""}` },
+        { class: ["page-item", index === current_page && "active"] },
         a({ class: "page-link", href: get_page_link(index) }, index)
       )
     );
@@ -77,7 +77,7 @@ const mkTable = contract(
     div(
       { class: "table-responsive" },
       table(
-        { class: `table table-sm ${opts.onRowSelect ? "table-hover" : ""}` },
+        { class: ["table table-sm", opts.onRowSelect && "table-hover"] },
         thead(tr(hdrs.map(hdr => headerCell(hdr)))),
         tbody(
           (vs || []).map(v =>

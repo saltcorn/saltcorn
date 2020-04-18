@@ -23,7 +23,7 @@ const string = {
     attrs.options
       ? select(
           {
-            class: `form-control ${cls || ""}`,
+            class: ["form-control", cls],
             name: text(nm),
             id: `input${text(nm)}`
           },
@@ -33,7 +33,7 @@ const string = {
         )
       : input({
           type: "text",
-          class: `form-control ${cls || ""}`,
+          class: ["form-control", cls],
           name: text(nm),
           id: `input${text(nm)}`,
           ...(isdef(v) && { value: text(v) })
@@ -55,7 +55,7 @@ const int = {
   editAs: (nm, v, attrs, cls) =>
     input({
       type: "number",
-      class: `form-control ${cls || ""}`,
+      class: ["form-control", cls],
       name: text(nm),
       id: `input${text(nm)}`,
       ...(attrs.max && { max: attrs.max }),
@@ -89,7 +89,7 @@ const bool = {
   sql_name: "boolean",
   editAs: (nm, v, attrs, cls, fld) =>
     input({
-      class: `form-check-input ${cls || ""}`,
+      class: ["form-check-input", cls],
       type: "checkbox",
       name: text(nm),
       id: `input${text(nm)}`,

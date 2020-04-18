@@ -21,5 +21,14 @@ describe("tags", () => {
     );
     expect(Array.isArray(["hello ", "world"])).toBe(true);
     expect(Array.isArray({})).toBe(false);
+    expect(div({ class: "foo" }, 5)).toBe('<div class="foo">5</div>');
+    expect(div({ class: false }, 5)).toBe("<div>5</div>");
+    expect(div({ class: "foo bar" }, 5)).toBe('<div class="foo bar">5</div>');
+    expect(div({ class: ["foo", "bar"] }, 5)).toBe(
+      '<div class="foo bar">5</div>'
+    );
+    expect(
+      div({ class: ["foo bar", "", undefined, null, false, "baz"] }, 5)
+    ).toBe('<div class="foo bar baz">5</div>');
   });
 });

@@ -3,6 +3,10 @@ const xss = require("xss");
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
+
+  const ppClasses = cs =>
+    typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
+
   const ppAttrib = ([k, v]) =>
     typeof v === "boolean"
       ? v
@@ -10,6 +14,8 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
         : ""
       : typeof v === "undefined"
       ? ""
+      : k === "class"
+      ? `class="${ppClasses(v)}"`
       : `${k}="${v}"`;
 
   const argIter = arg => {

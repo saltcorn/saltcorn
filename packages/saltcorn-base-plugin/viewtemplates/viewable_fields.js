@@ -47,8 +47,8 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
         label: text(f.label),
         key: isShow
           ? f.type.showAs
-            ? row=>f.type.showAs(row[f.name])
-            : row=>text(row[f.name])
+            ? row => f.type.showAs(row[f.name])
+            : row => text(row[f.name])
           : f.listKey,
         sortlink: `javascript:sortby('${text(f.name)}')`
       };

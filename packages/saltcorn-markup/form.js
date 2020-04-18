@@ -14,14 +14,14 @@ const isHoriz = formStyle => formStyle === "horiz";
 const formRowWrap = (hdr, inner, error = "", fStyle) =>
   div(
     {
-      class: `form-group ${isHoriz(fStyle) ? "row" : ""}`,
+      class: ["form-group", isHoriz(fStyle) && "row"],
       ...(hdr.showIf && {
         "data-show-if": mkShowIf(hdr.showIf)
       })
     },
     isCheck(hdr)
       ? div(
-          { class: isHoriz(fStyle) ? "col-sm-10 offset-md-2" : "" },
+          { class: isHoriz(fStyle) && "col-sm-10 offset-md-2" },
           div(
             { class: "form-check" },
             inner,
@@ -36,15 +36,15 @@ const formRowWrap = (hdr, inner, error = "", fStyle) =>
           label(
             {
               for: `input${text(hdr.name)}`,
-              class: isHoriz(fStyle) ? "col-sm-2 col-form-label" : ""
+              class: isHoriz(fStyle) && "col-sm-2 col-form-label"
             },
             text(hdr.label)
           ),
-          div({ class: isHoriz(fStyle) ? "col-sm-10" : "" }, inner, text(error))
+          div({ class: isHoriz(fStyle) && "col-sm-10" }, inner, text(error))
         ],
     hdr.sublabel &&
       div(
-        { class: isHoriz(fStyle) ? "col-sm-10 offset-md-2" : "" },
+        { class: isHoriz(fStyle) && "col-sm-10 offset-md-2" },
         i(text(hdr.sublabel))
       )
   );

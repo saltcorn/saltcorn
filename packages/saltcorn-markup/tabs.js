@@ -9,7 +9,7 @@ const tabs = obj => {
       { class: "nav-item" },
       a(
         {
-          class: `nav-link ${ix == 0 ? "active" : ""}`,
+          class: ["nav-link", ix == 0 && "active"],
           "data-toggle": "tab",
           href: `#${mkId(e[0])}`,
           id: `${mkId(e[0])}-tab`,
@@ -24,7 +24,7 @@ const tabs = obj => {
   const divs = entries.map((e, ix) =>
     div(
       {
-        class: `tab-pane fade ${ix == 0 ? "show active" : ""}`,
+        class: ["tab-pane fade", ix == 0 && "show active"],
         id: `${mkId(e[0])}`,
         role: "tabpanel",
         "aria-labelledby": `${mkId(e[0])}-tab`
