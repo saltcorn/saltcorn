@@ -71,9 +71,14 @@ const configuration_workflow = () =>
       {
         name: "fixed_fields",
         contextField: "fixed",
+        onlyWhen: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          const in_form_fields = context.columns.map(f => f.field_name);
+          return fields.some(f => !in_form_fields.includes(f.name));
+        },
         form: async context => {
-          const table_id = context.table_id;
-          const table = await Table.findOne({ id: table_id });
+          const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const in_form_fields = context.columns.map(f => f.field_name);
           const omitted_fields = fields.filter(

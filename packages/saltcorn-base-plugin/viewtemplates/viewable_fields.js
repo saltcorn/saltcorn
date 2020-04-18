@@ -37,7 +37,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
       const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
 
       return {
-        label: text(targetNm),
+        label: text(column.stat + " " + table),
         key: text(targetNm)
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
