@@ -57,8 +57,11 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   var state_fields = [];
 
   (columns || []).forEach(column => {
-    if (column.type === "Field" && column.state_field)
-      state_fields.push(table_fields.find(f => f.name == column.field_name));
+    if (column.type === "Field" && column.state_field) {
+      const f = new Field(table_fields.find(f => f.name == column.field_name))
+      f.required=false
+      state_fields.push(f);
+    }
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
   state_fields.push({ name: "_page", input_type: "hidden" });
