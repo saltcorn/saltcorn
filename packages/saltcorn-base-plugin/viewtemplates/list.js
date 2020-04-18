@@ -58,8 +58,8 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
 
   (columns || []).forEach(column => {
     if (column.type === "Field" && column.state_field) {
-      const f = new Field(table_fields.find(f => f.name == column.field_name))
-      f.required=false
+      const f = new Field(table_fields.find(f => f.name == column.field_name));
+      f.required = false;
       state_fields.push(f);
     }
   });

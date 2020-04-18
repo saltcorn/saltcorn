@@ -45,7 +45,7 @@ const configuration_workflow = () =>
                 name: "show_view",
                 label: "Show View",
                 type: "String",
-                required: true,
+                required: false,
                 attributes: {
                   options: show_view_opts.join()
                 }
@@ -85,9 +85,12 @@ const get_state_fields = async (
   { list_view, show_view }
 ) => {
   const lview = await View.findOne({ name: list_view });
-  const sview = await View.findOne({ name: show_view });
   const lview_sfs = await lview.get_state_fields();
-  const sview_sfs = await sview.get_state_fields();
+  var sview_sfs = [];
+  if (show_view) {
+    const sview = await View.findOne({ name: show_view });
+    sview_sfs = await await sview.get_state_fields();
+  }
   return [...lview_sfs, ...sview_sfs];
 };
 
@@ -98,12 +101,15 @@ const run = async (
   state
 ) => {
   const lview = await View.findOne({ name: list_view });
-  const sview = await View.findOne({ name: show_view });
   const lresp = await lview.run(state, {
     onRowSelect: v => `select_id(${v.id})`
   });
-  const sresp = await sview.run(state);
 
+  var sresp = "";
+  if (show_view) {
+    const sview = await View.findOne({ name: show_view });
+    sresp = await sview.run(state);
+  }
   var reltbls = {};
   if (state.id) {
     const id = state.id;
