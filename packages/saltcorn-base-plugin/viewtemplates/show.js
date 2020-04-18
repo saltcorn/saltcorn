@@ -63,13 +63,13 @@ const run = async (table_id, viewname, { columns, label_style }, { id }) => {
     aggregations,
     limit: 1
   });
-  const tfields = get_viewable_fields(viewname, tbl, fields, columns);
+  const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
 
   if (label_style === "Besides") {
     const trows = tfields.map(f =>
       tr(
         td(text(f.label)),
-        td(typeof f.key === "string" ? row[f.key] : f.key[row])
+        td(typeof f.key === "string" ? text(row[f.key]) : f.key(row))
       )
     );
     return table(tbody(trows));
@@ -77,13 +77,13 @@ const run = async (table_id, viewname, { columns, label_style }, { id }) => {
     const trows = tfields.map(f =>
       div(
         div(text(f.label)),
-        div(typeof f.key === "string" ? row[f.key] : f.key[row])
+        div(typeof f.key === "string" ? text(row[f.key]) : f.key(row))
       )
     );
     return div(trows);
   } else {
     const trows = tfields.map(f =>
-      div(typeof f.key === "string" ? row[f.key] : f.key[row])
+      div(typeof f.key === "string" ? text(row[f.key]) : f.key(row))
     );
     return div(trows);
   }
