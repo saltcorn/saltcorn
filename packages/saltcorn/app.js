@@ -15,7 +15,7 @@ const flash = require("connect-flash");
 const load_plugins = require("./load_plugins");
 const app = express();
 
-load_plugins.loadAllPluginsSync();
+load_plugins.loadAllPluginsSync(app);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(require("cookie-parser")());

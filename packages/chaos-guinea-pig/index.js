@@ -1,5 +1,5 @@
 const request = require("supertest");
-const cheerio = require('cheerio')
+const cheerio = require("cheerio");
 
 const toSucceed = res => {
   if (res.statusCode >= 400) {
@@ -17,13 +17,13 @@ const step = async (app, url) => {
   console.log("Checking page", url);
   const res = await request(app)
     .get(url)
-    .set('Accept', 'text/html');
-    //.expect(toSucceed);
-  console.log(res.text)
+    .set("Accept", "text/html");
+  //.expect(toSucceed);
+  console.log(res.text);
 
-    //const $ = cheerio.load(res.text)
-    //console.log($('link').html())
-    //console.log($.html())
+  //const $ = cheerio.load(res.text)
+  //console.log($('link').html())
+  //console.log($.html())
   return;
 };
 

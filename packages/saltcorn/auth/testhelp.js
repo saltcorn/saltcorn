@@ -72,6 +72,14 @@ const itShouldRedirectUnauthToLogin = path => {
   });
 };
 
+const isReady = async app => {
+  return new Promise((resolve, reject) => {
+    app.on("ready", function() {
+      resolve();
+    });
+  });
+};
+
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -79,5 +87,6 @@ module.exports = {
   toRedirect,
   toInclude,
   toNotInclude,
-  toSucceed
+  toSucceed,
+  isReady
 };
