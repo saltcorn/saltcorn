@@ -24,9 +24,12 @@ const step = async (app, url, state) => {
   console.log(res.text);
 
   const $ = cheerio.load(res.text);
-  for(const link of $("link").toArray()) {
+  for (const link of $("link").toArray()) {
     await state.check_link(link);
-};
+  }
+  for (const scr of $("script[src]").toArray()) {
+    await state.check_script_src(scr);
+  }
   //console.log($.html())
   return;
 };
