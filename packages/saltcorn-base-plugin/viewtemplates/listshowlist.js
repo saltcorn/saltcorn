@@ -63,11 +63,19 @@ const configuration_workflow = () =>
           var fields = [];
           for (const rel of rels) {
             const reltbl = await Table.findOne({ id: rel.table_id });
-            fields.push({
-              name: `${reltbl.name}.${rel.name}`,
-              label: `${rel.label} on ${reltbl.name}`,
-              type: "Bool"
-            });
+            const views = await View.find_table_views_where(
+              rel.table_id,
+              ({ state_fields, viewrow }) =>
+                viewrow.name !== context.viewname &&
+                state_fields.every(sf => !sf.required)
+            );
+            for (const view of views) {
+              fields.push({
+                name: `ChildList:${reltbl.name}.${rel.name}`,
+                label: `${view.name} of ${rel.label} on ${reltbl.name}`,
+                type: "Bool"
+              });
+            }
           }
           return new Form({
             fields,
