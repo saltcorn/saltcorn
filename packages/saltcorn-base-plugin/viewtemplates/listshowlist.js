@@ -78,9 +78,11 @@ const configuration_workflow = () =>
               });
             }
           }
-          const parentrels = (await tbl.getFields()).filter(f=>f.is_fkey)
+          const parentrels = (await tbl.getFields()).filter(f => f.is_fkey);
           for (const parentrel of parentrels) {
-            const partable = await  Table.findOne({ name:  parentrel.reftable_name });
+            const partable = await Table.findOne({
+              name: parentrel.reftable_name
+            });
             const parent_show_views = await View.find_table_views_where(
               partable.id,
               ({ state_fields, viewrow }) =>
@@ -144,22 +146,22 @@ const run = async (
       if (subtables[relspec]) {
         const [reltype, rel] = relspec.split(":");
         switch (reltype) {
-          case 'ChildList':
-            const [vname,reltblnm, relfld] = rel.split(".");
+          case "ChildList":
+            const [vname, reltblnm, relfld] = rel.split(".");
             const subview = await View.findOne({ name: vname });
-            const subresp = await subview.run({[relfld]:id});
+            const subresp = await subview.run({ [relfld]: id });
 
             const tab_name = reltblnm;
             reltbls[tab_name] = subresp;
             break;
-          case 'ParentShow':
-            const [pvname,preltblnm, prelfld] = rel.split(".");
+          case "ParentShow":
+            const [pvname, preltblnm, prelfld] = rel.split(".");
             const psubview = await View.findOne({ name: pvname });
-            if(!myrow) {
-              const mytable = await Table.findOne({id:table_id})
-              myrow=await mytable.getRow({id})
+            if (!myrow) {
+              const mytable = await Table.findOne({ id: table_id });
+              myrow = await mytable.getRow({ id });
             }
-            const psubresp = await psubview.run({id:myrow[prelfld]});
+            const psubresp = await psubview.run({ id: myrow[prelfld] });
 
             const ptab_name = prelfld;
             reltbls[ptab_name] = psubresp;
@@ -167,7 +169,6 @@ const run = async (
           default:
             break;
         }
-
       }
     }
   }
