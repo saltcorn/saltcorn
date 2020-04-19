@@ -66,6 +66,7 @@ const configuration_workflow = () =>
             const views = await View.find_table_views_where(
               rel.table_id,
               ({ state_fields, viewrow }) =>
+                //viewtemplate.view_quantity === "Many" &&
                 viewrow.name !== context.viewname &&
                 state_fields.every(sf => !sf.required)
             );
@@ -73,6 +74,23 @@ const configuration_workflow = () =>
               fields.push({
                 name: `ChildList:${view.name}.${reltbl.name}.${rel.name}`,
                 label: `${view.name} of ${rel.label} on ${reltbl.name}`,
+                type: "Bool"
+              });
+            }
+          }
+          const parentrels = (await tbl.getFields()).filter(f=>f.is_fkey)
+          for (const parentrel of parentrels) {
+            const partable = await  Table.findOne({ name:  parentrel.reftable_name });
+            const parent_show_views = await View.find_table_views_where(
+              partable.id,
+              ({ state_fields, viewrow }) =>
+                viewrow.name !== context.viewname &&
+                state_fields.some(sf => sf.name === "id")
+            );
+            for (const view of parent_show_views) {
+              fields.push({
+                name: `ParentShow:${view.name}.${partable.name}.${parentrel.name}`,
+                label: `${view.name} of ${parentrel.name} on ${partable.name}`,
                 type: "Bool"
               });
             }
@@ -125,14 +143,29 @@ const run = async (
     for (const relspec of Object.keys(subtables || {})) {
       if (subtables[relspec]) {
         const [reltype, rel] = relspec.split(":");
-        const [vname,reltblnm, relfld] = rel.split(".");
-        //console.log({relspec,reltype, rel,vname,reltblnm, relfld})
+        switch (reltype) {
+          case 'ChildList':
+            const [vname,reltblnm, relfld] = rel.split(".");
+            const subview = await View.findOne({ name: vname });
+            const subresp = await subview.run({[relfld]:id});
 
-        const subview = await View.findOne({ name: vname });
-        const subresp = await subview.run({[relfld]:id});
+            const tab_name = reltblnm;
+            reltbls[tab_name] = subresp;
+            break;
+          case 'ParentShow':
+            const [pvname,preltblnm, prelfld] = rel.split(".");
+            const psubview = await View.findOne({ name: pvname });
+            const mytable = await Table.findOne({id:table_id})
+            const myrow=await mytable.getRow({id})
+            const psubresp = await psubview.run({id:myrow[prelfld]});
 
-        const tab_name = reltblnm;
-        reltbls[tab_name] = subresp;
+            const ptab_name = preltblnm;
+            reltbls[ptab_name] = psubresp;
+            break;
+          default:
+            break;
+        }
+
       }
     }
   }
