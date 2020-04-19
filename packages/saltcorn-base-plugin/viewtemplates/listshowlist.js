@@ -137,7 +137,7 @@ const run = async (
     sresp = await sview.run(state);
   }
   var reltbls = {};
-
+  var myrow;
   if (state.id) {
     const id = state.id;
     for (const relspec of Object.keys(subtables || {})) {
@@ -155,8 +155,10 @@ const run = async (
           case 'ParentShow':
             const [pvname,preltblnm, prelfld] = rel.split(".");
             const psubview = await View.findOne({ name: pvname });
-            const mytable = await Table.findOne({id:table_id})
-            const myrow=await mytable.getRow({id})
+            if(!myrow) {
+              const mytable = await Table.findOne({id:table_id})
+              myrow=await mytable.getRow({id})
+            }
             const psubresp = await psubview.run({id:myrow[prelfld]});
 
             const ptab_name = prelfld;
