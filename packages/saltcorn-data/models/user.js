@@ -20,7 +20,7 @@ class User {
     return u;
   }
   static async authenticate(uo) {
-    const urow = await db.selectOne("users", { email: uo.email });
+    const urow = await db.selectMaybeOne("users", { email: uo.email });
     if (!urow) return false;
     const cmp = bcrypt.compareSync(uo.password, urow.password);
     if (cmp) return new User(urow);

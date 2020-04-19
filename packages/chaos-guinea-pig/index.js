@@ -14,7 +14,7 @@ const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
   const state = new CrawlState();
-  await get_link(app, startAt, state, options.steps || 10);
+  await get_link(app, startAt, state, options.steps || 100);
 };
 
 const isLocalURL = url =>
@@ -23,7 +23,7 @@ const isLocalURL = url =>
   new URL(url, "http://my.local/").origin === "http://my.local";
 
 const get_link = async (app, url, state, steps_left) => {
-  console.log("Checking page", url);
+  console.log("Checking page", url, "at step", steps_left);
   const res = await request(app)
     .get(url)
     .set("Accept", "text/html");
@@ -36,7 +36,7 @@ const genRandom = input => {
   return "foo";
 };
 
-const submit_form = async (app, form, url, state, steps_left) => {
+const submit_form = async (app, form, state, steps_left) => {
   const action = form.attr("action");
   const method = (form.attr("method") || "post").toLowerCase();
   //console.log({ form });
@@ -70,8 +70,7 @@ const rndElem = selection => {
 const process = async (res, app, url, state, steps_left) => {
   if (res.status === 302) {
     console.log("redirect to", res.headers.location);
-    const nextres = await request(app).get(res.headers.location);
-    return await process(nextres, app, url, state, steps_left);
+    return await get_link(app, res.headers.location, state, steps_left);
   }
 
   const $ = cheerio.load(res.text);
