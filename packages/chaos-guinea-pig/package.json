@@ -1,0 +1,21 @@
+{
+  "name": "chaos-guinea-pig",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "jest": "^25.1.0",
+    "stack-trace": "^0.0.10",
+    "superagent": "^5.2.2",
+    "supertest": "^4.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

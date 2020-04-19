@@ -66,10 +66,17 @@ const selectOne = async (tbl, where) => {
   } else return rows[0];
 };
 
+const selectMaybeOne = async (tbl, where) => {
+  const rows = await select(tbl, where);
+  if (rows.length === 0) return null;
+  else return rows[0];
+};
+
 module.exports = {
   query: (text, params) => pool.query(text, params),
   select,
   selectOne,
+  selectMaybeOne,
   count,
   insert,
   update,
