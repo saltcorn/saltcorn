@@ -71,7 +71,7 @@ const configuration_workflow = () =>
             );
             for (const view of views) {
               fields.push({
-                name: `ChildList:${reltbl.name}.${rel.name}`,
+                name: `ChildList:${view.name}.${reltbl.name}.${rel.name}`,
                 label: `${view.name} of ${rel.label} on ${reltbl.name}`,
                 type: "Bool"
               });
@@ -119,24 +119,20 @@ const run = async (
     sresp = await sview.run(state);
   }
   var reltbls = {};
+
   if (state.id) {
     const id = state.id;
-    for (const rel of Object.keys(subtables || {})) {
-      if (subtables[rel]) {
-        const [reltblnm, relfld] = rel.split(".");
-        const reltbl = await Table.findOne({ name: reltblnm });
-        const rows = await reltbl.getJoinedRows({
-          where: {
-            [relfld]: id
-          }
-        });
-        const relfields = await reltbl.getFields();
-        const trfields = relfields.map(f => ({
-          label: f.label,
-          key: f.listKey
-        }));
-        const tab_name = reltbl.name;
-        reltbls[tab_name] = mkTable(trfields, rows);
+    for (const relspec of Object.keys(subtables || {})) {
+      if (subtables[relspec]) {
+        const [reltype, rel] = relspec.split(":");
+        const [vname,reltblnm, relfld] = rel.split(".");
+        //console.log({relspec,reltype, rel,vname,reltblnm, relfld})
+
+        const subview = await View.findOne({ name: vname });
+        const subresp = await subview.run({[relfld]:id});
+
+        const tab_name = reltblnm;
+        reltbls[tab_name] = subresp;
       }
     }
   }
