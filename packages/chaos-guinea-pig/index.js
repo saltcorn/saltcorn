@@ -1,5 +1,6 @@
 const request = require("supertest");
 const cheerio = require("cheerio");
+const CrawlState = require("./crawl-state");
 
 const toSucceed = res => {
   if (res.statusCode >= 400) {
@@ -10,19 +11,22 @@ const toSucceed = res => {
 
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
-  await step(app, startAt);
+  const state = new CrawlState();
+  await step(app, startAt, state);
 };
 
-const step = async (app, url) => {
+const step = async (app, url, state) => {
   console.log("Checking page", url);
   const res = await request(app)
     .get(url)
     .set("Accept", "text/html");
-  //.expect(toSucceed);
+  expect(toSucceed);
   console.log(res.text);
 
-  //const $ = cheerio.load(res.text)
-  //console.log($('link').html())
+  const $ = cheerio.load(res.text);
+  for(const link of $("link").toArray()) {
+    await state.check_link(link);
+};
   //console.log($.html())
   return;
 };

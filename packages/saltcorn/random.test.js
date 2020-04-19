@@ -12,7 +12,7 @@ describe("app", () => {
   it("obeys the chaos guinea pig", async done => {
     await isReady(app);
     await chaos_guinea_pig(app);
-    //expect(2).toBe(1)
+    expect(2).toBe(1);
     done();
   });
 });
