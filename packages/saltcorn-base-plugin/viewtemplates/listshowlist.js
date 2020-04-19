@@ -159,7 +159,7 @@ const run = async (
             const myrow=await mytable.getRow({id})
             const psubresp = await psubview.run({id:myrow[prelfld]});
 
-            const ptab_name = preltblnm;
+            const ptab_name = prelfld;
             reltbls[ptab_name] = psubresp;
             break;
           default:
