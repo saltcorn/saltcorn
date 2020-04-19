@@ -63,11 +63,39 @@ const configuration_workflow = () =>
           var fields = [];
           for (const rel of rels) {
             const reltbl = await Table.findOne({ id: rel.table_id });
-            fields.push({
-              name: `${reltbl.name}.${rel.name}`,
-              label: `${rel.label} on ${reltbl.name}`,
-              type: "Bool"
+            const views = await View.find_table_views_where(
+              rel.table_id,
+              ({ state_fields, viewrow }) =>
+                //viewtemplate.view_quantity === "Many" &&
+                viewrow.name !== context.viewname &&
+                state_fields.every(sf => !sf.required)
+            );
+            for (const view of views) {
+              fields.push({
+                name: `ChildList:${view.name}.${reltbl.name}.${rel.name}`,
+                label: `${view.name} of ${rel.label} on ${reltbl.name}`,
+                type: "Bool"
+              });
+            }
+          }
+          const parentrels = (await tbl.getFields()).filter(f => f.is_fkey);
+          for (const parentrel of parentrels) {
+            const partable = await Table.findOne({
+              name: parentrel.reftable_name
             });
+            const parent_show_views = await View.find_table_views_where(
+              partable.id,
+              ({ state_fields, viewrow }) =>
+                viewrow.name !== context.viewname &&
+                state_fields.some(sf => sf.name === "id")
+            );
+            for (const view of parent_show_views) {
+              fields.push({
+                name: `ParentShow:${view.name}.${partable.name}.${parentrel.name}`,
+                label: `${view.name} of ${parentrel.name} on ${partable.name}`,
+                type: "Bool"
+              });
+            }
           }
           return new Form({
             fields,
@@ -111,24 +139,36 @@ const run = async (
     sresp = await sview.run(state);
   }
   var reltbls = {};
+  var myrow;
   if (state.id) {
     const id = state.id;
-    for (const rel of Object.keys(subtables || {})) {
-      if (subtables[rel]) {
-        const [reltblnm, relfld] = rel.split(".");
-        const reltbl = await Table.findOne({ name: reltblnm });
-        const rows = await reltbl.getJoinedRows({
-          where: {
-            [relfld]: id
-          }
-        });
-        const relfields = await reltbl.getFields();
-        const trfields = relfields.map(f => ({
-          label: f.label,
-          key: f.listKey
-        }));
-        const tab_name = reltbl.name;
-        reltbls[tab_name] = mkTable(trfields, rows);
+    for (const relspec of Object.keys(subtables || {})) {
+      if (subtables[relspec]) {
+        const [reltype, rel] = relspec.split(":");
+        switch (reltype) {
+          case "ChildList":
+            const [vname, reltblnm, relfld] = rel.split(".");
+            const subview = await View.findOne({ name: vname });
+            const subresp = await subview.run({ [relfld]: id });
+
+            const tab_name = reltblnm;
+            reltbls[tab_name] = subresp;
+            break;
+          case "ParentShow":
+            const [pvname, preltblnm, prelfld] = rel.split(".");
+            const psubview = await View.findOne({ name: pvname });
+            if (!myrow) {
+              const mytable = await Table.findOne({ id: table_id });
+              myrow = await mytable.getRow({ id });
+            }
+            const psubresp = await psubview.run({ id: myrow[prelfld] });
+
+            const ptab_name = prelfld;
+            reltbls[ptab_name] = psubresp;
+            break;
+          default:
+            break;
+        }
       }
     }
   }
