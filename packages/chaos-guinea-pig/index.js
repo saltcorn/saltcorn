@@ -14,7 +14,7 @@ const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
   const state = new CrawlState();
-  await get_link(app, startAt, state, options.steps || 100);
+  await get_link(app, startAt, state, options.steps || 20);
 };
 
 const isLocalURL = url =>
