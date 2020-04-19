@@ -24,7 +24,8 @@
   },
   "devDependencies": {
     "jest": "^25.1.0",
-    "supertest": "^4.0.2"
+    "supertest": "^4.0.2",
+    "chaos-guinea-pig": "^0.0.1"
   },
   "scripts": {
     "dev": "nodemon index.js",
