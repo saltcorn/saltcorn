@@ -2,9 +2,6 @@
 
 set -e
 
-createdb saltcorn_test
-trap "sleep 1; dropdb saltcorn_test" EXIT
-
 export PGDATABASE=saltcorn_test 
 
 saltcorn fixtures -r
