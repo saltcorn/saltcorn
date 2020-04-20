@@ -124,7 +124,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
 
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
-  if (hdr.fieldview) fieldview = hdr.type.fieldviews[hdr.fieldview];
+  if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview]) fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {
     //first isedit fieldview
     fieldview = Object.entries(hdr.type.fieldviews).find(
