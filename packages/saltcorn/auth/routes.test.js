@@ -1,5 +1,5 @@
 const request = require("supertest");
-const app = require("../app");
+const getApp = require("../app");
 const Table = require("saltcorn-data/models/table");
 const User = require("saltcorn-data/models/user");
 const {
@@ -12,6 +12,7 @@ const {
 
 describe("Public auth Endpoints", () => {
   it("should show login", async done => {
+    const app = await getApp();
     await request(app)
       .get("/auth/login/")
       .expect(toSucceed());
@@ -19,6 +20,7 @@ describe("Public auth Endpoints", () => {
   });
 
   it("should show signup", async done => {
+    const app = await getApp();
     await request(app)
       .get("/auth/signup/")
       .expect(toSucceed());
@@ -26,6 +28,7 @@ describe("Public auth Endpoints", () => {
   });
 
   it("should allow logout for unauth user", async done => {
+    const app = await getApp();
     await request(app).get("/auth/logout/");
     expect(toRedirect("/"));
     done();
@@ -34,12 +37,14 @@ describe("Public auth Endpoints", () => {
 
 describe("login process", () => {
   it("should say Login when not logged in", async done => {
+    const app = await getApp();
     await request(app).get("/");
     expect(toInclude("Login"));
     done();
   });
 
   it("should say Logout when logged in", async done => {
+    const app = await getApp();
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/")
@@ -52,6 +57,7 @@ describe("login process", () => {
 
 describe("signup process", () => {
   it("should sign up", async done => {
+    const app = await getApp();
     await request(app)
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
@@ -63,6 +69,7 @@ describe("signup process", () => {
 
 describe("user admin", () => {
   it("should list tables", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/")
@@ -72,6 +79,7 @@ describe("user admin", () => {
     done();
   });
   it("shows new user form", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/new")
@@ -80,6 +88,7 @@ describe("user admin", () => {
     done();
   });
   it("creates new user", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/useradmin/save")
@@ -92,6 +101,7 @@ describe("user admin", () => {
   });
 
   it("can login with new user", async done => {
+    const app = await getApp();
     await request(app)
       .post("/auth/login/")
       .send("email=staff2@foo.com")
@@ -101,6 +111,7 @@ describe("user admin", () => {
   });
 
   it("shows edit user form", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     expect(user.role_id).toBe(3);
@@ -112,6 +123,7 @@ describe("user admin", () => {
   });
 
   it("edits user", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     await request(app)
@@ -127,6 +139,7 @@ describe("user admin", () => {
     done();
   });
   it("deletes user", async done => {
+    const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     await request(app)

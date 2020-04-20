@@ -1,0 +1,50 @@
+{
+  "name": "saltcorn-cli",
+  "description": "Saltcorn command line interface",
+  "version": "0.0.1",
+  "author": "Tom Nielsen @glutamate",
+  "bin": {
+    "saltcorn": "./bin/run"
+  },
+  "bugs": "https://github.com/glutamate/saltcorns/issues",
+  "dependencies": {
+    "@oclif/command": "^1.5.19",
+    "@oclif/config": "^1.15.1",
+    "@oclif/plugin-help": "^2.2.3",
+    "saltcorn": "^0.0.1",
+    "saltcorn-data": "^0.0.1"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.2",
+    "globby": "^10.0.2"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json",
+    "/src"
+  ],
+  "homepage": "https://github.com/glutamate/saltcorns",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "oclif": {
+    "commands": "./src/commands",
+    "bin": "saltcorn",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "repository": "glutamate/saltcorns",
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
+    "test": "echo NO TESTS",
+    "version": "oclif-dev readme && git add README.md"
+  }
+}

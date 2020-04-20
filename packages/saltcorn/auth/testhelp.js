@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const getApp = require("../app");
 
 const toRedirect = loc => res => {
   if (res.statusCode !== 302) {
@@ -43,6 +44,7 @@ const toNotInclude = (txt, expCode = 200) => res => {
   }
 };
 const getStaffLoginCookie = async () => {
+  const app = await getApp();
   const res = await request(app)
     .post("/auth/login/")
     .send("email=staff@foo.com")
@@ -52,6 +54,7 @@ const getStaffLoginCookie = async () => {
 };
 
 const getAdminLoginCookie = async () => {
+  const app = await getApp();
   const res = await request(app)
     .post("/auth/login/")
     .send("email=admin@foo.com")
@@ -63,20 +66,13 @@ const getAdminLoginCookie = async () => {
 
 const itShouldRedirectUnauthToLogin = path => {
   it(`should redirect unauth ${path} to login`, async done => {
+    const app = await getApp();
     const res = await request(app)
       .get(path)
       .expect("Location", "/auth/login");
 
     expect(res.statusCode).toEqual(302);
     done();
-  });
-};
-
-const isReady = async app => {
-  return new Promise((resolve, reject) => {
-    app.on("ready", function() {
-      resolve();
-    });
   });
 };
 
@@ -87,6 +83,5 @@ module.exports = {
   toRedirect,
   toInclude,
   toNotInclude,
-  toSucceed,
-  isReady
+  toSucceed
 };

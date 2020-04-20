@@ -1,5 +1,5 @@
 const request = require("supertest");
-const app = require("../app");
+const getApp = require("../app");
 const {
   toRedirect,
   getAdminLoginCookie,
@@ -14,6 +14,7 @@ describe("viewedit list endpoint", () => {
 
   it("show list of views", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .get("/viewedit/list")
       .set("Cookie", loginCookie)
@@ -27,6 +28,7 @@ describe("viewedit edit endpoint", () => {
 
   it("show list of views", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .get("/viewedit/edit/authorlist")
       .set("Cookie", loginCookie)
@@ -40,6 +42,7 @@ describe("viewedit new List", () => {
 
   it("show new view", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .get("/viewedit/new")
       .set("Cookie", loginCookie)
@@ -49,6 +52,7 @@ describe("viewedit new List", () => {
   it("submit new view", async done => {
     const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=List")
@@ -66,6 +70,7 @@ describe("viewedit new List", () => {
         table_id: 1
       })
     );
+    const app = await getApp();
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
@@ -81,6 +86,7 @@ describe("viewedit new List", () => {
   it("should show new view", async done => {
     const loginCookie = await getStaffLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .get("/view/mybooklist")
       .set("Cookie", loginCookie)
@@ -92,6 +98,7 @@ describe("viewedit new List", () => {
 
   it("delete new view", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybooklist")
       .set("Cookie", loginCookie)
@@ -104,6 +111,7 @@ describe("viewedit new List with one field", () => {
   it("submit new view", async done => {
     const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=List")
@@ -121,6 +129,7 @@ describe("viewedit new List with one field", () => {
         table_id: 1
       })
     );
+    const app = await getApp();
     await request(app)
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
@@ -134,6 +143,7 @@ describe("viewedit new List with one field", () => {
   it("should show new view", async done => {
     const loginCookie = await getStaffLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .get("/view/mybooklist1")
       .set("Cookie", loginCookie)
@@ -145,6 +155,7 @@ describe("viewedit new List with one field", () => {
 
   it("delete new view", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybooklist1")
       .set("Cookie", loginCookie)
@@ -157,6 +168,7 @@ describe("viewedit new Show", () => {
   it("submit new view", async done => {
     const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=Show")
@@ -174,6 +186,7 @@ describe("viewedit new Show", () => {
         table_id: 1
       })
     );
+    const app = await getApp();
     await request(app)
       .post("/viewedit/config/mybook")
       .send("contextEnc=" + ctx)
@@ -188,6 +201,7 @@ describe("viewedit new Show", () => {
   it("should show new view", async done => {
     const loginCookie = await getStaffLoginCookie();
 
+    const app = await getApp();
     await request(app)
       .get("/view/mybook?id=1")
       .set("Cookie", loginCookie)
@@ -198,6 +212,7 @@ describe("viewedit new Show", () => {
 
   it("delete new view", async done => {
     const loginCookie = await getAdminLoginCookie();
+    const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybook")
       .set("Cookie", loginCookie)
