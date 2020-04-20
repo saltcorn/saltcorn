@@ -1,5 +1,7 @@
 class CrawlState {
-  constructor() {}
+  constructor(o) {
+    this.cookie = o.cookie || "";
+  }
 }
 
 module.exports = CrawlState;

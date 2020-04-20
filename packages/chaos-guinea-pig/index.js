@@ -13,7 +13,7 @@ const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
-  const state = new CrawlState();
+  const state = new CrawlState(options);
   await get_link(app, startAt, state, options.steps || 20);
 };
 
@@ -26,6 +26,7 @@ const get_link = async (app, url, state, steps_left) => {
   console.log("Checking page", url, "at step", steps_left);
   const res = await request(app)
     .get(url)
+    .set("Cookie", state.cookie)
     .set("Accept", "text/html");
   expect(toSucceed);
   //console.log(res.text);
@@ -45,7 +46,9 @@ const submit_form = async (app, form, state, steps_left) => {
   const inputs = form.find("input").toArray();
   //console.log({ inputs });
   if (method === "post") {
-    var req = request(app).post(action);
+    var req = request(app)
+      .post(action)
+      .set("Cookie", state.cookie);
     for (const input of inputs) {
       const oldreq = req;
       req = oldreq.send(`${input.attribs.name}=${genRandom(input)}`);
@@ -59,6 +62,7 @@ const submit_form = async (app, form, state, steps_left) => {
     }
     const res = await request(app)
       .get(action)
+      .set("Cookie", state.cookie)
       .expect(toSucceed);
     await process(res, app, url, state, steps_left);
   }

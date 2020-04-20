@@ -13,8 +13,7 @@
     "chaos-guinea-pig": "^0.0.1"
   },
   "scripts": {
-    "dev": "nodemon index.js",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
