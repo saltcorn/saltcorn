@@ -106,4 +106,4 @@ const reset = async () => {
   `);
 };
 
-module.exports=reset;
+module.exports = reset;
