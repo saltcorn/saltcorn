@@ -1,4 +1,4 @@
-const { input, select, option, text } = require("saltcorn-markup/tags");
+const { input, select, option, text, h3 } = require("saltcorn-markup/tags");
 
 const isdef = x => (typeof x === "undefined" || x === null ? false : true);
 
@@ -19,25 +19,35 @@ const string = {
     { name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
-  editAs: (nm, v, attrs, cls, required) =>
-    attrs.options
-      ? select(
-          {
-            class: ["form-control", cls],
-            name: text(nm),
-            id: `input${text(nm)}`
-          },
-          required
-            ? getStrOptions(v, attrs.options)
-            : [option({ value: "" }, ""), ...getStrOptions(v, attrs.options)]
-        )
-      : input({
-          type: "text",
-          class: ["form-control", cls],
-          name: text(nm),
-          id: `input${text(nm)}`,
-          ...(isdef(v) && { value: text(v) })
-        }),
+  fieldviews: {
+    as_text: { isEdit: false, run: s => text(s) },
+    as_header: { isEdit: false, run: s => h3(text(s)) },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, required) =>
+        attrs.options
+          ? select(
+              {
+                class: ["form-control", cls],
+                name: text(nm),
+                id: `input${text(nm)}`
+              },
+              required
+                ? getStrOptions(v, attrs.options)
+                : [
+                    option({ value: "" }, ""),
+                    ...getStrOptions(v, attrs.options)
+                  ]
+            )
+          : input({
+              type: "text",
+              class: ["form-control", cls],
+              name: text(nm),
+              id: `input${text(nm)}`,
+              ...(isdef(v) && { value: text(v) })
+            })
+    }
+  },
   read: v => {
     switch (typeof v) {
       case "string":
@@ -52,16 +62,22 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "int",
-  editAs: (nm, v, attrs, cls) =>
-    input({
-      type: "number",
-      class: ["form-control", cls],
-      name: text(nm),
-      id: `input${text(nm)}`,
-      ...(attrs.max && { max: attrs.max }),
-      ...(attrs.min && { min: attrs.min }),
-      ...(isdef(v) && { value: text(v) })
-    }),
+  fieldviews: {
+    show: { isEdit: false, run: s => text(s) },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "number",
+          class: ["form-control", cls],
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(attrs.max && { max: attrs.max }),
+          ...(attrs.min && { min: attrs.min }),
+          ...(isdef(v) && { value: text(v) })
+        })
+    }
+  },
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false }
@@ -87,14 +103,23 @@ const int = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  editAs: (nm, v, attrs, cls, fld) =>
-    input({
-      class: ["form-check-input", cls],
-      type: "checkbox",
-      name: text(nm),
-      id: `input${text(nm)}`,
-      ...(v && { checked: true })
-    }),
+  fieldviews: {
+    show: {
+      isEdit: false,
+      run: v => (v === true ? "True" : v === false ? "False" : "")
+    },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, fld) =>
+        input({
+          class: ["form-check-input", cls],
+          type: "checkbox",
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(v && { checked: true })
+        })
+    }
+  },
   attributes: [],
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;
@@ -110,7 +135,6 @@ const bool = {
         return v ? true : false;
     }
   },
-  showAs: v => (v === true ? "True" : v === false ? "False" : ""),
   validate: () => x => true
 };
 

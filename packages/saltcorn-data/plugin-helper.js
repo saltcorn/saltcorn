@@ -1,10 +1,22 @@
 const View = require("./models/view");
+const State = require("./db/state");
+
+const calcfldViewOptions = () => {
+  var fvs = [];
+  Object.values(State.types).forEach(t => {
+    Object.keys(t.fieldviews).forEach(k => {
+      fvs.push(k);
+    });
+  });
+  return [...new Set(fvs)];
+};
 
 const field_picker_fields = async ({ table }) => {
   const fields = await table.getFields();
   const boolfields = fields.filter(f => f.type.name === "Bool");
   const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
+  const fldViewOptions = calcfldViewOptions();
   const link_views = await View.find_possible_links_to_table(table.id);
   const link_view_opts = link_views.map(v => v.name);
   const { parent_field_list } = await table.get_parent_relations();
@@ -53,6 +65,16 @@ const field_picker_fields = async ({ table }) => {
       required: true,
       attributes: {
         options: fldOptions.join()
+      },
+      showIf: { ".coltype": "Field" }
+    },
+    {
+      name: "fieldview",
+      label: "Field view",
+      type: "String",
+      required: false,
+      attributes: {
+        options: fldViewOptions.join()
       },
       showIf: { ".coltype": "Field" }
     },

@@ -43,13 +43,17 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
       };
     } else if (column.type === "Field") {
       const f = fields.find(fld => fld.name === column.field_name);
+
       return {
         label: text(f.label),
-        key: isShow
-          ? f.type.showAs
-            ? row => f.type.showAs(row[f.name])
-            : row => text(row[f.name])
-          : f.listKey,
+        key:
+          column.fieldview && f.type.fieldviews[column.fieldview]
+            ? row=>f.type.fieldviews[column.fieldview].run(row[f.name])
+            : isShow
+            ? f.type.showAs
+              ? row => f.type.showAs(row[f.name])
+              : row => text(row[f.name])
+            : f.listKey,
         sortlink: `javascript:sortby('${text(f.name)}')`
       };
     }

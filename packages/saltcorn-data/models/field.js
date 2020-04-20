@@ -12,6 +12,7 @@ class Field {
     if (!o.type && !o.input_type) throw "Field initialised with no type";
     this.label = o.label || o.name;
     this.name = o.name;
+    this.fieldview = o.fieldview;
     this.showIf = o.showIf;
     this.class = o.class || "";
     this.id = o.id;
@@ -191,6 +192,7 @@ class Field {
 Field.contract = {
   variables: {
     name: is.str,
+    fieldview: is.maybe(is.str),
     type: is.maybe(is.or(is.eq("Key"), is.obj({ name: is.str }))),
     input_type: is.maybe(
       is.one_of(["hidden", "select", "fromtype", "text", "password"])
