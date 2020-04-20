@@ -122,6 +122,24 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
   }
 };
 
+const displayEdit = (hdr, name, v, extracls) => {
+  var fieldview;
+  if (hdr.fieldview) fieldview = hdr.type.fieldviews[hdr.fieldview];
+  else {
+    //first isedit fieldview
+    fieldview = Object.entries(hdr.type.fieldviews).find(
+      ([nm, fv]) => fv.isEdit
+    )[1];
+  }
+  return fieldview.run(
+    name,
+    v,
+    hdr.attributes,
+    extracls + " " + hdr.class,
+    hdr.required
+  );
+};
+
 const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
   const name = hdr.name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
@@ -132,12 +150,11 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
     case "fromtype":
       return formRowWrap(
         hdr,
-        hdr.type.editAs(
+        displayEdit(
+          hdr,
           name,
           v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
-          hdr.attributes,
-          validClass + " " + hdr.class,
-          hdr.required
+          validClass
         ),
         errorFeedback,
         formStyle
