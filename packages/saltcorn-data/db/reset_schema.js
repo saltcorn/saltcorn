@@ -106,13 +106,4 @@ const reset = async () => {
   `);
 };
 
-reset().then(
-  () => {
-    console.log("Database reset successful");
-    process.exit(0);
-  },
-  err => {
-    console.error(err);
-    process.exit(1);
-  }
-);
+module.exports = reset;

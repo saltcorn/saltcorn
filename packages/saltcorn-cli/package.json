@@ -11,6 +11,7 @@
     "@oclif/command": "^1.5.19",
     "@oclif/config": "^1.15.1",
     "@oclif/plugin-help": "^2.2.3",
+    "cli-ux": "^5.4.5",
     "saltcorn": "^0.0.1",
     "saltcorn-data": "^0.0.1"
   },

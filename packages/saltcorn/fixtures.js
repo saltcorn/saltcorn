@@ -7,9 +7,8 @@ const User = require("saltcorn-data/models/user");
 const basePlugin = require("saltcorn-base-plugin");
 const { registerPlugin } = require("./load_plugins");
 
-registerPlugin(basePlugin);
-
-const fixtures = async () => {
+module.exports = async () => {
+  registerPlugin(basePlugin);
   const table = await Table.create("books");
   await Field.create({
     table,
@@ -149,14 +148,3 @@ const fixtures = async () => {
     role_id: 2
   });
 };
-
-fixtures().then(
-  () => {
-    console.log("Fixtures loaded successful");
-    process.exit(0);
-  },
-  err => {
-    console.error(err);
-    process.exit(1);
-  }
-);
