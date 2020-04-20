@@ -7,7 +7,7 @@ trap "sleep 1; dropdb saltcorn_test" EXIT
 
 export PGDATABASE=saltcorn_test 
 
-node packages/saltcorn-data/db/reset_schema.js
+saltcorn reset-schema
 node packages/saltcorn/fixtures.js
 
 if [ -z "$1" ]
