@@ -109,3 +109,24 @@ function select_id(id) {
     id
   );
 }
+
+function tristateClick(nm) {
+  var current = $(`button#trib${nm}`).html();
+  switch (current) {
+    case "?":
+      $(`button#trib${nm}`).html("Y");
+      $(`input#input${nm}`).val("on");
+      break;
+    case "Y":
+      $(`button#trib${nm}`).html("N");
+      $(`input#input${nm}`).val("off");
+      break;
+    case "N":
+      $(`button#trib${nm}`).html("?");
+      $(`input#input${nm}`).val("");
+      break;
+
+    default:
+      break;
+  }
+}

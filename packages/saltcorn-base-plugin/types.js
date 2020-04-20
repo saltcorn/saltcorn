@@ -136,8 +136,12 @@ const bool = {
           ...(isdef(v) && { value: v })
         }) +
         button(
-          { onClick: `tristateClick("${text(nm)}")` },
-          !isdef(v) ? " " : v ? "T" : "F"
+          {
+            onClick: `tristateClick('${text(nm)}')`,
+            type: "button",
+            id: `trib${text(nm)}`
+          },
+          !isdef(v) ? "?" : v ? "T" : "F"
         )
     }
   },
