@@ -1,6 +1,8 @@
 const request = require("supertest");
 const app = require("../app");
 const getApp = require("../app");
+const fixtures = require("saltcorn/fixtures");
+const reset = require("saltcorn-data/db/reset_schema");
 
 const toRedirect = loc => res => {
   if (res.statusCode !== 302) {
@@ -76,6 +78,11 @@ const itShouldRedirectUnauthToLogin = path => {
   });
 };
 
+const resetToFixtures = async () => {
+  await reset();
+  await fixtures();
+};
+
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -83,5 +90,6 @@ module.exports = {
   toRedirect,
   toInclude,
   toNotInclude,
-  toSucceed
+  toSucceed,
+  resetToFixtures
 };
