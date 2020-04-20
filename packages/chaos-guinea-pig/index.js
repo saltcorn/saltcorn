@@ -80,7 +80,9 @@ const process = async (res, app, url, state, steps_left) => {
   const $ = cheerio.load(res.text);
 
   var local_links = $("a[href]").filter((i, e) => isLocalURL(e.attribs.href));
-  var forms = $("form");
+  var forms = $("form").filter((i, e) =>
+    state.check_form_action(e.attribs.action)
+  );
   if (steps_left) {
     if (forms.length > 0 && local_links.length > 0)
       if (Math.random() < 0.2)

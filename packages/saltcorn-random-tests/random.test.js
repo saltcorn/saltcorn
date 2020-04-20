@@ -24,7 +24,10 @@ describe("app", () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
 
-    await chaos_guinea_pig(app, { cookie: loginCookie });
+    await chaos_guinea_pig(app, {
+      cookie: loginCookie,
+      stop_form_actions: ["delete"]
+    });
     //expect(2).toBe(1);
     done();
   });
