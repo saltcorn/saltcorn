@@ -48,7 +48,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
         label: text(f.label),
         key:
           column.fieldview && f.type.fieldviews[column.fieldview]
-            ? row=>f.type.fieldviews[column.fieldview].run(row[f.name])
+            ? row => f.type.fieldviews[column.fieldview].run(row[f.name])
             : isShow
             ? f.type.showAs
               ? row => f.type.showAs(row[f.name])
