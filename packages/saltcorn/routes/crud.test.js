@@ -1,5 +1,5 @@
 const request = require("supertest");
-const app = require("../app");
+const getApp = require("../app");
 const {
   getStaffLoginCookie,
   toRedirect,
@@ -11,6 +11,7 @@ const {
 describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/edit/books");
   it("show form for new entry", async done => {
+    const app = await getApp();
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/edit/books")
@@ -21,6 +22,7 @@ describe("standard edit form", () => {
 
   it("show form for existing entry", async done => {
     const loginCookie = await getStaffLoginCookie();
+    const app = await getApp();
     await request(app)
       .get("/edit/books/1")
       .set("Cookie", loginCookie)
@@ -31,6 +33,7 @@ describe("standard edit form", () => {
 
   it("post form for new entry", async done => {
     const loginCookie = await getStaffLoginCookie();
+    const app = await getApp();
     await request(app)
       .post("/edit/books")
       .send("author=Cervantes")
@@ -49,7 +52,8 @@ describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/list/books");
   it("show list", async done => {
     const loginCookie = await getStaffLoginCookie();
-    const res = await request(app)
+    const app = await getApp();
+    await request(app)
       .get("/list/books")
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
@@ -60,12 +64,13 @@ describe("standard edit form", () => {
 
   it("should delete", async done => {
     const loginCookie = await getStaffLoginCookie();
-    const res = await request(app)
+    const app = await getApp();
+    await request(app)
       .post("/delete/books/3")
-      .set("Cookie", loginCookie);
-    expect(res.statusCode).toEqual(302);
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/list/books"));
 
-    const res1 = await request(app)
+    await request(app)
       .get("/list/books")
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
