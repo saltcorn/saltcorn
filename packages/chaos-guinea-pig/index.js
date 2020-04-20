@@ -94,7 +94,7 @@ const process = async (res, app, url, state) => {
       else return await submit_form(app, rndElem(forms), state.decr());
 
     if (forms.length > 0)
-      return await submit_form(app, rndElem(forms),state.decr());
+      return await submit_form(app, rndElem(forms), state.decr());
 
     if (local_links.length > 0)
       return await get_link(
