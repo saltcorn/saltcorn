@@ -1,12 +1,17 @@
-const getApp = require("./app");
+const getApp = require("saltcorn/app");
 const chaos_guinea_pig = require("chaos-guinea-pig");
 const {
   getStaffLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
-} = require("./auth/testhelp");
+  toNotInclude, resetToFixtures
+} = require("saltcorn/auth/testhelp");
+
+beforeAll(async()=>{
+  await resetToFixtures()
+})
+
 describe("app", () => {
   it("obeys the chaos guinea pig", async done => {
     const app = await getApp();

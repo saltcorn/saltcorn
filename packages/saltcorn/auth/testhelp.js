@@ -1,7 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
 const getApp = require("../app");
-const fixtures = require("saltcorn/fixtures");
+const fixtures = require("../fixtures");
 const reset = require("saltcorn-data/db/reset_schema");
 
 const toRedirect = loc => res => {
