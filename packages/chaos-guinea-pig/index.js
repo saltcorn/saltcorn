@@ -14,7 +14,7 @@ const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
   const state = new CrawlState(options);
-  await get_link(app, startAt, state, options.steps || 20);
+  await get_link(app, startAt, state);
 };
 
 const isLocalURL = url =>
@@ -22,22 +22,22 @@ const isLocalURL = url =>
   !url.startsWith("javascript:") &&
   new URL(url, "http://my.local/").origin === "http://my.local";
 
-const get_link = async (app, url, state, steps_left) => {
-  console.log("Checking page", url, "at step", steps_left);
+const get_link = async (app, url, state) => {
+  console.log("Checking page", url, "at step", state.steps_left);
   const res = await request(app)
     .get(url)
     .set("Cookie", state.cookie)
     .set("Accept", "text/html");
   expect(toSucceed);
   //console.log(res.text);
-  await process(res, app, url, state, steps_left);
+  await process(res, app, url, state);
 };
 
 const genRandom = input => {
   return "foo";
 };
 
-const submit_form = async (app, form, state, steps_left) => {
+const submit_form = async (app, form, state) => {
   const action = form.attr("action");
   const method = (form.attr("method") || "post").toLowerCase();
   //console.log({ form });
@@ -54,7 +54,7 @@ const submit_form = async (app, form, state, steps_left) => {
       req = oldreq.send(`${input.attribs.name}=${genRandom(input)}`);
     }
     const res = await req.expect(toSucceed);
-    await process(res, app, url, state, steps_left);
+    await process(res, app, url, state);
   } else if (method === "get") {
     var url = action + "?";
     for (const input of inputs) {
@@ -64,17 +64,17 @@ const submit_form = async (app, form, state, steps_left) => {
       .get(action)
       .set("Cookie", state.cookie)
       .expect(toSucceed);
-    await process(res, app, url, state, steps_left);
+    await process(res, app, url, state);
   }
 };
 const rndElem = selection => {
   var random = Math.floor(Math.random() * selection.length);
   return selection.eq(random);
 };
-const process = async (res, app, url, state, steps_left) => {
+const process = async (res, app, url, state) => {
   if (res.status === 302) {
     console.log("redirect to", res.headers.location);
-    return await get_link(app, res.headers.location, state, steps_left);
+    return await get_link(app, res.headers.location, state);
   }
 
   const $ = cheerio.load(res.text);
@@ -83,26 +83,24 @@ const process = async (res, app, url, state, steps_left) => {
   var forms = $("form").filter((i, e) =>
     state.check_form_action(e.attribs.action)
   );
-  if (steps_left) {
+  if (state.steps_remaining) {
     if (forms.length > 0 && local_links.length > 0)
       if (Math.random() < 0.2)
         return await get_link(
           app,
           rndElem(local_links).attr("href"),
-          state,
-          steps_left - 1
+          state.decr()
         );
-      else return await submit_form(app, rndElem(forms), state, steps_left - 1);
+      else return await submit_form(app, rndElem(forms), state.decr());
 
     if (forms.length > 0)
-      return await submit_form(app, rndElem(forms), state, steps_left - 1);
+      return await submit_form(app, rndElem(forms),state.decr());
 
     if (local_links.length > 0)
       return await get_link(
         app,
         rndElem(local_links).attr("href"),
-        state,
-        steps_left - 1
+        state.decr()
       );
   }
 };
