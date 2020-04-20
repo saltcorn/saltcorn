@@ -1,5 +1,4 @@
-saltcorn-cli
-============
+# saltcorn-cli
 
 Saltcorn command line interface
 
@@ -9,11 +8,15 @@ Saltcorn command line interface
 [![License](https://img.shields.io/npm/l/saltcorn-cli.svg)](https://github.com/glutamate/saltcorns/blob/master/package.json)
 
 <!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+
+- [Usage](#usage)
+- [Commands](#commands)
+  <!-- tocstop -->
+
 # Usage
+
 <!-- usage -->
+
 ```sh-session
 $ npm install -g saltcorn-cli
 $ saltcorn COMMAND
@@ -25,11 +28,15 @@ USAGE
   $ saltcorn COMMAND
 ...
 ```
+
 <!-- usagestop -->
+
 # Commands
+
 <!-- commands -->
-* [`saltcorn hello`](#saltcorn-hello)
-* [`saltcorn help [COMMAND]`](#saltcorn-help-command)
+
+- [`saltcorn hello`](#saltcorn-hello)
+- [`saltcorn help [COMMAND]`](#saltcorn-help-command)
 
 ## `saltcorn hello`
 
@@ -65,4 +72,5 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
+
 <!-- commandsstop -->
