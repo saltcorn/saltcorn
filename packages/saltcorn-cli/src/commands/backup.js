@@ -6,7 +6,7 @@ const os = require("os");
 const env = process.env;
 var day = dateFormat(new Date(), "yyyymmdd");
 const pgdb = env.PGDATABASE || "saltcorn";
-var default_filenm = `${day}-backup-${pgdb}-${os.hostname}.sqlc`;
+var default_filenm = `${day}-${pgdb}-${os.hostname}.sqlc`;
 
 class BackupCommand extends Command {
   async run() {
