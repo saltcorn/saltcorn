@@ -3,10 +3,10 @@ const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 
 var pool = new Pool();
 
-const changeConnection =async (connObj)=>{
-  await pool.end()
-  pool = new Pool(connObj)
-}
+const changeConnection = async connObj => {
+  await pool.end();
+  pool = new Pool(connObj);
+};
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
