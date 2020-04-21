@@ -1,6 +1,12 @@
 const { Pool } = require("pg");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
-const pool = new Pool();
+
+var pool = new Pool();
+
+const changeConnection =async (connObj)=>{
+  await pool.end()
+  pool = new Pool(connObj)
+}
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
@@ -81,5 +87,6 @@ module.exports = {
   insert,
   update,
   deleteWhere,
-  pool
+  pool,
+  changeConnection
 };
