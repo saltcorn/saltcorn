@@ -14,7 +14,7 @@ Extra documentation goes here
 `;
 
 ServeCommand.flags = {
-  port: flags.integer({ char: "p", description: "Port (default 3000)" })
+  port: flags.integer({ char: "p", description: "port", default: 3000 })
 };
 
 module.exports = ServeCommand;

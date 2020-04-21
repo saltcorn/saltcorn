@@ -13,7 +13,8 @@
     "@oclif/plugin-help": "^2.2.3",
     "cli-ux": "^5.4.5",
     "saltcorn": "^0.0.1",
-    "saltcorn-data": "^0.0.1"
+    "saltcorn-data": "^0.0.1",
+    "dateformat": "^3.0.3"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",
