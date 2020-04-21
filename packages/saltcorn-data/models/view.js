@@ -39,10 +39,8 @@ class View {
   }
 
   async get_state_fields() {
-    const State = require("../db/state");
-    const vt = State.viewtemplates[this.viewtemplate];
-    if (vt.get_state_fields) {
-      return await vt.get_state_fields(
+    if (this.viewtemplateObj.get_state_fields) {
+      return await this.viewtemplateObj.get_state_fields(
         this.table_id,
         this.name,
         this.configuration
@@ -138,13 +136,11 @@ class View {
   }
   async get_state_form(query) {
     if (this.viewtemplateObj.display_state_form) {
-      const fields = await this.viewtemplateObj.get_state_fields(
-        this.table_id,
-        this.name,
-        this.configuration
-      );
+      const fields = await this.get_state_fields();
+
       fields.forEach(f => {
         f.required = false;
+        if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
       });
       const form = new Form({
         methodGET: true,

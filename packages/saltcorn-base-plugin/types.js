@@ -1,4 +1,11 @@
-const { input, select, option, text, h3 } = require("saltcorn-markup/tags");
+const {
+  input,
+  select,
+  option,
+  text,
+  h3,
+  button
+} = require("saltcorn-markup/tags");
 
 const isdef = x => (typeof x === "undefined" || x === null ? false : true);
 
@@ -118,6 +125,24 @@ const bool = {
           id: `input${text(nm)}`,
           ...(v && { checked: true })
         })
+    },
+    tristate: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, fld) =>
+        input({
+          type: "hidden",
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(isdef(v) && { value: v })
+        }) +
+        button(
+          {
+            onClick: `tristateClick('${text(nm)}')`,
+            type: "button",
+            id: `trib${text(nm)}`
+          },
+          !isdef(v) ? "?" : v ? "T" : "F"
+        )
     }
   },
   attributes: [],
