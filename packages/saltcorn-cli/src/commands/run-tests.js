@@ -10,7 +10,8 @@ class RunTestsCommand extends Command {
     await reset();
     await fixtures();
     const env = { ...process.env, PGDATABASE: "saltcorn_test" };
-    const res = spawnSync("lerna", ["run", "test"], { stdio: "inherit", env });
+    const lerna = process.platform === 'win32' ? 'lerna.cmd' : 'lerna'
+    const res = spawnSync(lerna, ["run", "test"], { stdio: "inherit", env });
     this.exit(res.status);
   }
 }
