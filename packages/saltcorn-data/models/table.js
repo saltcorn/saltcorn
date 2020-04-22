@@ -63,7 +63,8 @@ class Table {
   }
 
   async getFields() {
-    if (!this.fields) this.fields = await Field.find({ table_id: this.id });
+    if (!this.fields)
+      this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
     return this.fields;
   }
 

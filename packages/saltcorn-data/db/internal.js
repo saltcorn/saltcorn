@@ -1,15 +1,29 @@
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 const sqlsanitize = nm => nm.replace(/[^A-Za-z_0-9.]*/g, "");
 
+const whereFTS = (v, i) => {
+  const { fields } = v;
+  const flds = fields
+    .filter(f.type && f.type.sql_name === "text")
+    .map(f => sqlsanitize(f.name))
+    .join(" || ' ' || ");
+  //to_tsvector('english', body) @@ to_tsquery('english', 'friend')
+  return `to_tsvector('english', ${flds}) @@ to_tsquery('english', $${i + 1})`;
+};
+
 const whereClause = ([k, v], i) =>
-  typeof (v || {}).in !== "undefined"
+  k === "_fts"
+    ? whereFTS(v, i)
+    : typeof (v || {}).in !== "undefined"
     ? `${sqlsanitize(k)} = ANY ($${i + 1})`
     : typeof (v || {}).ilike !== "undefined"
     ? `${sqlsanitize(k)} ILIKE '%' || $${i + 1} || '%'`
     : `${sqlsanitize(k)}=$${i + 1}`;
 
 const getVal = ([k, v]) =>
-  typeof (v || {}).in !== "undefined"
+  k === "_fts"
+    ? v.searchTerm
+    : typeof (v || {}).in !== "undefined"
     ? v.in
     : typeof (v || {}).ilike !== "undefined"
     ? v.ilike

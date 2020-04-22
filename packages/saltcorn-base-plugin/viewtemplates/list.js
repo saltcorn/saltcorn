@@ -55,7 +55,7 @@ const configuration_workflow = () =>
 const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
-
+  state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach(column => {
     if (column.type === "Field" && column.state_field) {
       const f = new Field(table_fields.find(f => f.name == column.field_name));
@@ -78,7 +78,7 @@ const run = async (
   //console.log({ columns, view_to_create });
   const table = await Table.findOne({ id: table_id });
 
-  const fields = await Field.find({ table_id: table.id });
+  const fields = await table.getFields();
 
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const tfields = get_viewable_fields(viewname, table, fields, columns);
