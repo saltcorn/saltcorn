@@ -1,13 +1,13 @@
 const View = require("./models/view");
 const State = require("./db/state");
 
-const calcfldViewOptions = (fields) => {
+const calcfldViewOptions = fields => {
   var fvs = {};
-  fields.forEach(f=>{
-    if(f.type && f.type.fieldviews) {
-    fvs[f.name] = Object.keys(f.type.fieldviews)
+  fields.forEach(f => {
+    if (f.type && f.type.fieldviews) {
+      fvs[f.name] = Object.keys(f.type.fieldviews);
     }
-  })
+  });
   return fvs;
 };
 
@@ -75,7 +75,7 @@ const field_picker_fields = async ({ table }) => {
       type: "String",
       required: false,
       attributes: {
-        calcOptions: [".field_name", fldViewOptions],
+        calcOptions: [".field_name", fldViewOptions]
       },
       showIf: { ".coltype": "Field" }
     },
