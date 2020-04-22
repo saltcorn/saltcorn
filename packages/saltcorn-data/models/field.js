@@ -110,7 +110,7 @@ class Field {
     const valres =
       type && type.validate
         ? type.validate(this.attributes || {})(readval)
-        : false;
+        : readval;
     if (valres.error) return valres;
     else return { success: readval };
   }
