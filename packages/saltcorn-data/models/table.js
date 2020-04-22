@@ -63,7 +63,8 @@ class Table {
   }
 
   async getFields() {
-    if (!this.fields) this.fields = await Field.find({ table_id: this.id });
+    if (!this.fields)
+      this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
     return this.fields;
   }
 
@@ -150,7 +151,8 @@ class Table {
     var whereObj = {};
     if (opts.where) {
       Object.keys(opts.where).forEach(k => {
-        whereObj["a." + k] = opts.where[k];
+        if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
+        else whereObj["a." + k] = opts.where[k];
       });
     }
     const { where, values } = mkWhere(whereObj);
