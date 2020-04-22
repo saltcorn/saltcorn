@@ -2,10 +2,14 @@
 const sqlsanitize = nm => nm.replace(/[^A-Za-z_0-9.]*/g, "");
 
 const whereFTS = (v, i) => {
-  const { fields } = v;
+  const { fields, table } = v;
   const flds = fields
-    .filter(f.type && f.type.sql_name === "text")
-    .map(f => sqlsanitize(f.name))
+    .filter(f => f.type && f.type.sql_name === "text")
+    .map(f =>
+      table
+        ? `${sqlsanitize(table)}.${sqlsanitize(f.name)}`
+        : sqlsanitize(f.name)
+    )
     .join(" || ' ' || ");
   //to_tsvector('english', body) @@ to_tsquery('english', 'friend')
   return `to_tsvector('english', ${flds}) @@ to_tsquery('english', $${i + 1})`;
