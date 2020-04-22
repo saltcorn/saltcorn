@@ -48,17 +48,15 @@ function apply_showif() {
       .val();
 
     var options = data[1][val];
-    var current= e.attr("data-selected");//
-    e.empty()
+    var current = e.attr("data-selected"); //
+    e.empty();
     options.forEach(o => {
-      if(current===o)
-        e.append($("<option selected>" + o + "</option>"));
-      else
-        e.append($("<option>" + o + "</option>"));
+      if (current === o) e.append($("<option selected>" + o + "</option>"));
+      else e.append($("<option>" + o + "</option>"));
     });
-    e.change(function(ec){
-      e.attr("data-selected",ec.target.value )
-    })
+    e.change(function(ec) {
+      e.attr("data-selected", ec.target.value);
+    });
   });
 }
 
