@@ -51,8 +51,10 @@ const string = {
               class: ["form-control", cls],
               name: text(nm),
               id: `input${text(nm)}`,
-              "data-calc-options": encodeURIComponent(JSON.stringify(attrs.calcOptions))
-            })
+              "data-calc-options": encodeURIComponent(
+                JSON.stringify(attrs.calcOptions)
+              )
+            },  option({ value: "" }, ""))
           : input({
               type: "text",
               class: ["form-control", cls],

@@ -41,19 +41,17 @@ function apply_showif() {
   $("[data-calc-options]").each(function(ix, element) {
     var e = $(element);
     var data = JSON.parse(decodeURIComponent(e.attr("data-calc-options")));
-    console.log(data[0]);
-    console.log(data[1]);
 
     var val = e
       .closest(".form-namespace")
       .find(data[0])
       .val();
-    console.log(val);
 
     var options = data[1][val];
-    console.log(options);
+    console.log(data[0], val, options);
+    e.empty()
     options.forEach(o => {
-      e.append($("<option>"+o+"</option>"))
+      e.append($("<option>" + o + "</option>"));
     });
   });
 }
