@@ -46,6 +46,13 @@ const string = {
                     ...getStrOptions(v, attrs.options)
                   ]
             )
+          : attrs.calcOptions
+          ? select({
+              class: ["form-control", cls],
+              name: text(nm),
+              id: `input${text(nm)}`,
+              "data-calc-options": encodeURIComponent(JSON.stringify(attrs.calcOptions))
+            })
           : input({
               type: "text",
               class: ["form-control", cls],
