@@ -4,6 +4,8 @@ const Form = require("./form");
 const Field = require("./field");
 const View = require("./view");
 
+afterAll(db.close);
+
 describe("Table create", () => {
   it("should create", async done => {
     expect.assertions(1);
