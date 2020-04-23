@@ -22,7 +22,7 @@ const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
 const is_plugin_type = is.obj({
   name: is.str,
   sql_name: is.str,
-  fieldviews: is.array(
+  fieldviews: is.objVals(
     is.obj(
       {
         isEdit: is.bool,
@@ -30,8 +30,8 @@ const is_plugin_type = is.obj({
           is.fun(is.any, is.str),
           is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
         )
-      },
-      o => (o.isEdit && o.run.length == 5) || (!o.isEdit && o.run.length == 1)
+      }
+      //o => (o.isEdit && o.run.length >=2) || (!o.isEdit && o.run.length == 1)
     )
   ),
   attributes: is.array(

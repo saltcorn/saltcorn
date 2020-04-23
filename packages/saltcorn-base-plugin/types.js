@@ -130,7 +130,7 @@ const bool = {
     },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls, fld) =>
+      run: (nm, v, attrs, cls) =>
         input({
           class: ["form-check-input", cls],
           type: "checkbox",
@@ -141,7 +141,7 @@ const bool = {
     },
     tristate: {
       isEdit: true,
-      run: (nm, v, attrs, cls, fld) =>
+      run: (nm, v, attrs, cls) =>
         input({
           type: "hidden",
           name: text(nm),
