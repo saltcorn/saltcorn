@@ -57,7 +57,7 @@ const bool = mkContract({
 const defined = mkContract({
   name: "defined",
   check: x => typeof x !== "undefined",
-  generate: gen.reject_if(gen.any, x=>typeof x==="undefined" )
+  generate: gen.reject_if(gen.any, x => typeof x === "undefined")
 });
 
 const klass = cls =>
@@ -82,9 +82,12 @@ const obj = (o, alsoCheckThat) =>
     options: o,
     check: x =>
       typeof x === "object" &&
-      (typeof alsoCheckThat==="undefined" || alsoCheckThat(o)) &&
+      (typeof alsoCheckThat === "undefined" || alsoCheckThat(o)) &&
       Object.entries(o || {}).every(([k, v]) => v.check(x[k])),
-    generate: typeof alsoCheckThat==="undefined" ? gen.obj(o) : gen.accept_if(gen.obj(o), alsoCheckThat)
+    generate:
+      typeof alsoCheckThat === "undefined"
+        ? gen.obj(o)
+        : gen.accept_if(gen.obj(o), alsoCheckThat)
   });
 
 const objVals = c =>
