@@ -70,7 +70,10 @@ const fieldFlow = new Workflow({
       name: "field",
       form: async context => {
         const tables = await Table.find({});
-        const fkey_opts = tables.map(t => `Key to ${t.name}`);
+        const fkey_opts = [
+          ...tables.map(t => `Key to ${t.name}`),
+          "Key to users"
+        ];
         const form = fieldForm(fkey_opts);
         if (context.type === "Key" && context.reftable_name) {
           form.values.type = `Key to ${context.reftable_name}`;
@@ -94,7 +97,8 @@ const fieldFlow = new Workflow({
     },
     {
       name: "summary",
-      onlyWhen: context => new Field(context).is_fkey,
+      onlyWhen: context =>
+        context.type !== "Key to users" && new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
         const table = await Table.findOne({ name: fld.reftable_name });
@@ -115,6 +119,7 @@ const fieldFlow = new Workflow({
     {
       name: "default",
       onlyWhen: async context => {
+        if (context.type === "Key to users") context.summary_field = "email";
         if (!context.required || context.id) return false;
         const table = await Table.findOne({ id: context.table_id });
         const nrows = await table.countRows();

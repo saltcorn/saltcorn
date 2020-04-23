@@ -10,10 +10,10 @@ const changeConnection = async connObj => {
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
-  const tq = await pool.query(
-    `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(selectopts)}`,
-    values
-  );
+  const sql = `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(
+    selectopts
+  )}`;
+  const tq = await pool.query(sql, values);
 
   return tq.rows;
 };
@@ -40,22 +40,20 @@ const deleteWhere = async (tbl, whereObj) => {
 
 const insert = async (tbl, obj) => {
   const kvs = Object.entries(obj);
-  const fnameList = kvs.map(([k, v]) => sqlsanitize(k)).join();
+  const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
-  const { rows } = await pool.query(
-    `insert into ${sqlsanitize(
-      tbl
-    )}(${fnameList}) values(${valPosList}) returning id`,
-    valList
-  );
+  const sql = `insert into ${sqlsanitize(
+    tbl
+  )}(${fnameList}) values(${valPosList}) returning id`;
+  const { rows } = await pool.query(sql, valList);
   return rows[0].id;
 };
 
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
   const assigns = kvs
-    .map(([k, v], ix) => sqlsanitize(k) + "=$" + (ix + 1))
+    .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
     .join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);

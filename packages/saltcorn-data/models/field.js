@@ -104,7 +104,7 @@ class Field {
         : type.readFromFormRecord
         ? type.readFromFormRecord(whole_rec, this.name)
         : type.read(whole_rec[this.name]);
-    if (typeof readval === "undefined")
+    if (typeof readval === "undefined" || readval === null)
       if (this.required) return { error: "Unable to read " + type.name };
       else return { success: null };
     const valres =
@@ -139,9 +139,9 @@ class Field {
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
     await db.query(
-      `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
+      `alter table ${sqlsanitize(table.name)} drop column "${sqlsanitize(
         this.name
-      )}`
+      )}"`
     );
   }
 
@@ -153,7 +153,7 @@ class Field {
     if (!f.attributes.default) {
       const q = `alter table ${sqlsanitize(
         f.table.name
-      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       }`;
       await db.query(q);
@@ -165,7 +165,7 @@ class Field {
       BEGIN
       EXECUTE format('alter table ${sqlsanitize(
         f.table.name
-      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);
       END;
@@ -176,7 +176,7 @@ class Field {
       ]);
     }
 
-    await db.insert("fields", {
+    f.id = await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,

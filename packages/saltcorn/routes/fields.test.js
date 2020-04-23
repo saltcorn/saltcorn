@@ -74,7 +74,17 @@ describe("Field Endpoints", () => {
 
     done();
   });
+  it("should delete new field", async done => {
+    const loginCookie = await getAdminLoginCookie();
+    const fld = await Field.findOne({ name: "AgeRating" });
+    const app = await getApp();
+    await request(app)
+      .post(`/field/delete/${fld.id}`)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/1"));
 
+    done();
+  });
   it("should post new string field", async done => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
@@ -218,18 +228,6 @@ describe("Field Endpoints", () => {
       .expect(toInclude("zowrote"))
       .expect(toInclude("weight"))
       .expect(toNotInclude("[object"));
-    done();
-  });
-
-  it("should delete field", async done => {
-    const loginCookie = await getAdminLoginCookie();
-    const fld = await Field.findOne({ name: "AgeRating" });
-    const app = await getApp();
-    await request(app)
-      .post(`/field/delete/${fld.id}`)
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/1"));
-
     done();
   });
 });
