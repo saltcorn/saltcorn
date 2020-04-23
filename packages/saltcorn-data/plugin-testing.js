@@ -4,6 +4,7 @@ const { is_plugin_wrap, is_plugin } = require("./contracts");
 const auto_test_wrap = wrap => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
+
 const auto_test_type = t => {
   const fvs = t.fieldviews || {};
 
@@ -15,8 +16,25 @@ const auto_test_type = t => {
     }
   });
   //find examples
+  var examples = [];
+  const numex = t.generate ? 20 : 200;
+  for (let index = 0; index < numex; index++) {
+    const x = t.generate ? t.generate() : t.read(is.any.generate());
+    if (typeof x !== "undefined" && x !== null)
+      if ((t.validate && t.validate(x)) || !t.validate) examples.push(x);
+  }
 
   //run all fieldview on each example
+  for (const x of examples) {
+    Object.values(fvs).forEach(fv => {
+      if (fv.isEdit) {
+        is.str(fv.run("foo", x, {}, "myclass", true));
+        is.str(fv.run("foo", x, {}, "myclass", false));
+      } else {
+        is.str(fv.run(x));
+      }
+    });
+  }
 
   //try creating a table with this type
 };
