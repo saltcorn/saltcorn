@@ -104,7 +104,7 @@ class Field {
         : type.readFromFormRecord
         ? type.readFromFormRecord(whole_rec, this.name)
         : type.read(whole_rec[this.name]);
-    if (typeof readval === "undefined" || readval===null)
+    if (typeof readval === "undefined" || readval === null)
       if (this.required) return { error: "Unable to read " + type.name };
       else return { success: null };
     const valres =
