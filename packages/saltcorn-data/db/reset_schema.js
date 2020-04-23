@@ -30,7 +30,7 @@ const reset = async () => {
       name text NOT NULL,
       label text,
       type text,
-      reftable_name text references tables(name),
+      reftable_name text,
       attributes jsonb,
       required boolean NOT NULL DEFAULT false
     )

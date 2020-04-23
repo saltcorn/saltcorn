@@ -10,10 +10,10 @@ const changeConnection = async connObj => {
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
-  const tq = await pool.query(
-    `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(selectopts)}`,
-    values
-  );
+  const sql = `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(
+    selectopts
+  )}`;
+  const tq = await pool.query(sql, values);
 
   return tq.rows;
 };
@@ -43,12 +43,10 @@ const insert = async (tbl, obj) => {
   const fnameList = kvs.map(([k, v]) => sqlsanitize(k)).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
-  const { rows } = await pool.query(
-    `insert into ${sqlsanitize(
-      tbl
-    )}(${fnameList}) values(${valPosList}) returning id`,
-    valList
-  );
+  const sql = `insert into ${sqlsanitize(
+    tbl
+  )}(${fnameList}) values(${valPosList}) returning id`;
+  const { rows } = await pool.query(sql, valList);
   return rows[0].id;
 };
 

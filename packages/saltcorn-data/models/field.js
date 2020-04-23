@@ -153,7 +153,7 @@ class Field {
     if (!f.attributes.default) {
       const q = `alter table ${sqlsanitize(
         f.table.name
-      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       }`;
       await db.query(q);
