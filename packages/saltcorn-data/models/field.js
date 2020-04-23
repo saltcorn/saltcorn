@@ -139,9 +139,9 @@ class Field {
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
     await db.query(
-      `alter table ${sqlsanitize(table.name)} drop column ${sqlsanitize(
+      `alter table ${sqlsanitize(table.name)} drop column "${sqlsanitize(
         this.name
-      )}`
+      )}"`
     );
   }
 
@@ -165,7 +165,7 @@ class Field {
       BEGIN
       EXECUTE format('alter table ${sqlsanitize(
         f.table.name
-      )} add column ${sqlsanitize(f.name)} ${f.sql_type} ${
+      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);
       END;
@@ -176,7 +176,7 @@ class Field {
       ]);
     }
 
-    f.id=await db.insert("fields", {
+    f.id = await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,
