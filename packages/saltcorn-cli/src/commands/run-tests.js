@@ -14,17 +14,22 @@ class RunTestsCommand extends Command {
     await reset();
     await fixtures();
     const env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    const covargs=flags.coverage ? ["--", "--coverage"] :[]
+    if (args.package==="core") {
+      const res = spawnSync("npm", ["run", "test", ...covargs], { stdio: "inherit", env });
+      this.exit(res.status);
+    } else
     if (args.package) {
       const cwd = "packages/" + args.package;
       const res = spawnSync(
         "npm",
-        ["run", "test", ...(flags.coverage && ["--", "--coverage"])],
+        ["run", "test", ...covargs],
         { stdio: "inherit", env, cwd }
       );
       this.exit(res.status);
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
-      const res = spawnSync(lerna, ["run", "test"], { stdio: "inherit", env });
+      const res = spawnSync(lerna, ["run", "test", ...covargs], { stdio: "inherit", env });
       this.exit(res.status);
     }
   }
