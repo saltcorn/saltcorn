@@ -40,7 +40,7 @@ const deleteWhere = async (tbl, whereObj) => {
 
 const insert = async (tbl, obj) => {
   const kvs = Object.entries(obj);
-  const fnameList = kvs.map(([k, v]) => sqlsanitize(k)).join();
+  const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
   const sql = `insert into ${sqlsanitize(
@@ -53,7 +53,7 @@ const insert = async (tbl, obj) => {
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
   const assigns = kvs
-    .map(([k, v], ix) => sqlsanitize(k) + "=$" + (ix + 1))
+    .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
     .join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);
