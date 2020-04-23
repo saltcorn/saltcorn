@@ -1,9 +1,8 @@
-const { contract, is } = require("contractis");
-const { is_plugin_wrap_arg, is_plugin }=require("./contracts")
+const { contract, is,auto_test } = require("contractis");
+const { is_plugin_wrap, is_plugin }=require("./contracts")
 
 const auto_test_wrap = wrap=>{
-    const arg = is_plugin_wrap_arg.generate()
-    return wrap(arg)
+    auto_test(contract(is_plugin_wrap, wrap, {n:5}))
 }
 
 const auto_test_plugin = plugin => {
