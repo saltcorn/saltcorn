@@ -176,7 +176,7 @@ class Field {
       ]);
     }
 
-    await db.insert("fields", {
+    f.id=await db.insert("fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,

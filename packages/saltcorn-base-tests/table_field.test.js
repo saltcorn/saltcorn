@@ -143,9 +143,9 @@ describe("Table get data", () => {
 });
 
 describe("Field", () => {
-  it("should add field", async done => {
+  it("should add and then delete field", async done => {
     const patients = await Table.findOne({ name: "patients" });
-    await Field.create({
+    const fc=await Field.create({
       table: patients,
       name: "height1",
       label: "height1",
@@ -153,6 +153,14 @@ describe("Field", () => {
       required: true,
       attributes: { default: 6 }
     });
+    expect(fc.id>0).toBe(true)
+    const f = await Field.findOne({ id: fc.id });
+  
+    await f.delete();
+    const fs = await Field.find({ name: "height1" });
+    expect(fs.length).toBe(0)
+
+    
     done();
   });
 });
