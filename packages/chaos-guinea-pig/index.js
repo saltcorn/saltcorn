@@ -23,7 +23,6 @@ const isLocalURL = url =>
   new URL(url, "http://my.local/").origin === "http://my.local";
 
 const get_link = async (app, url, state) => {
-  console.log("Checking page", url, "at step", state.steps_left);
   const res = await request(app)
     .get(url)
     .set("Cookie", state.cookie)
@@ -42,7 +41,6 @@ const submit_form = async (app, form, state) => {
   const method = (form.attr("method") || "post").toLowerCase();
   //console.log({ form });
 
-  console.log("submitting form at", action);
   const inputs = form.find("input").toArray();
   //console.log({ inputs });
   if (method === "post") {
@@ -73,7 +71,6 @@ const rndElem = selection => {
 };
 const process = async (res, app, url, state) => {
   if (res.status === 302) {
-    console.log("redirect to", res.headers.location);
     return await get_link(app, res.headers.location, state);
   }
 
