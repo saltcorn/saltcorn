@@ -14,17 +14,17 @@ class ContractViolation extends Error {
     const in_str = location ? ` (${location})` : "";
     var message;
     //console.log(theContract)
+    const conStr = theContract.options
+      ? `${theContract.contract_name}(${JSON.stringify(theContract.options)})`
+      : theContract.contract_name;
+    message = `value ${JSON.stringify(
+      val,
+      null,
+      2
+    )} violates contract ${conStr}${in_str}`;
     if (theContract.get_error_message) {
-      message = theContract.get_error_message(val) + in_str;
+      message += ". " + theContract.get_error_message(val);
     } else {
-      const conStr = theContract.options
-        ? `${theContract.contract_name}(${JSON.stringify(theContract.options)})`
-        : theContract.contract_name;
-      message = `value ${JSON.stringify(
-        val,
-        null,
-        2
-      )} violates contract ${conStr}${in_str}`;
     }
 
     super(message + (caller ? "\n contract defined near \n" + caller : ""));

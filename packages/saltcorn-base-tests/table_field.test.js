@@ -1,5 +1,8 @@
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
+const db = require("saltcorn-data/db");
+
+afterAll(db.close);
 
 require("./load_base_types")();
 

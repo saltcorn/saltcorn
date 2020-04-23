@@ -12,6 +12,7 @@ const mkContract = c => {
   checker.options = c.options;
   checker.check = c.check;
   checker.generate = c.generate;
+  checker.get_error_message = c.get_error_message;
   return checker;
 };
 
@@ -57,7 +58,7 @@ const bool = mkContract({
 const defined = mkContract({
   name: "defined",
   check: x => typeof x !== "undefined",
-  generate: gen.any //todo check not undefined
+  generate: gen.reject_if(gen.any, x => typeof x === "undefined")
 });
 
 const klass = cls =>
@@ -76,19 +77,46 @@ const promise = t =>
     check: x => x.constructor.name === Promise.name
   });
 
-const obj = o =>
+const obj = (o, alsoCheckThat) =>
   mkContract({
     name: "obj",
     options: o,
+    get_error_message: x => {
+      if (typeof x !== "object") return `Expected object, got type ${typeof x}`;
+      const failing = Object.entries(o || {}).find(([k, v]) => !v.check(x[k]));
+      if (failing) {
+        if (o[failing[0]].get_error_message)
+          return `key ${failing[0]}: ${o[failing[0]].get_error_message(
+            x[failing[0]]
+          )}`;
+        return "Unknown failure in key " + failing[0];
+      }
+      if (typeof alsoCheckThat === "function" && !alsoCheckThat(o))
+        return "failed instance check";
+    },
     check: x =>
       typeof x === "object" &&
-      Object.entries(o || {}).every(([k, v]) => v.check(x[k]))
+      (typeof alsoCheckThat === "undefined" || alsoCheckThat(o)) &&
+      Object.entries(o || {}).every(([k, v]) => v.check(x[k])),
+    generate:
+      typeof alsoCheckThat === "undefined"
+        ? gen.obj(o)
+        : gen.accept_if(gen.obj(o), alsoCheckThat)
   });
 
 const objVals = c =>
   mkContract({
     name: "objVals",
     options: c,
+    get_error_message: x => {
+      if (typeof x !== "object") return `Expected object, got type ${typeof x}`;
+      const failing = Object.entries(x).find(([k, v]) => !c.check(c));
+      if (failing) {
+        if (c.get_error_message)
+          return `key ${failing[0]}: ${c.get_error_message(x[failing[0]])}`;
+        return "Unknown failure in key " + failing[0];
+      }
+    },
     check: x =>
       typeof x === "object" && Object.entries(x).every(([k, v]) => c.check(v))
   });
@@ -164,6 +192,9 @@ const maybe = c =>
   mkContract({
     name: `maybe(${c.contract_name})`,
     options: c,
+    get_error_message: c.get_error_message
+      ? x => c.get_error_message(x)
+      : undefined,
     check: x => typeof x === "undefined" || x === null || c.check(x),
     generate: () => (gen.bool() ? undefined : gen.generate_from(c))
   });
@@ -218,6 +249,14 @@ const array = c =>
   mkContract({
     name: "array",
     options: c,
+    get_error_message: vs => {
+      if (!Array.isArray(vs)) return `Expected Array, got type ${typeof x}`;
+      const failingIx = vs.findIndex(v => !c.check(v));
+
+      if (c.get_error_message)
+        return `index ${failingIx}: ${c.get_error_message(vs[failingIx])}`;
+      return "failure in index " + failingIx;
+    },
     check: vs => Array.isArray(vs) && vs.every(v => c.check(v)),
     generate: c.generate && gen.array(c.generate)
   });

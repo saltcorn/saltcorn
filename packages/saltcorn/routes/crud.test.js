@@ -7,6 +7,9 @@ const {
   toInclude,
   toNotInclude
 } = require("../auth/testhelp");
+const db = require("saltcorn-data/db");
+
+afterAll(db.close);
 
 describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/edit/books");

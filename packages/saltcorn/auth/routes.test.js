@@ -9,6 +9,9 @@ const {
   toInclude,
   toSucceed
 } = require("../auth/testhelp");
+const db = require("saltcorn-data/db");
+
+afterAll(db.close);
 
 describe("Public auth Endpoints", () => {
   it("should show login", async done => {

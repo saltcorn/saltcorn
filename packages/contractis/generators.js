@@ -46,6 +46,14 @@ const anyObj = () => {
   return res;
 };
 
+const obj = o => () => {
+  var res = {};
+  Object.entries(o).forEach(([k, v]) => {
+    res[k] = v.generate();
+  });
+  return res;
+};
+
 const any = () =>
   oneOf([
     bool,
@@ -70,6 +78,18 @@ const generate_class = cls => () => {
   return inst;
 };
 
+const reject_if = (generator, pred) => () => {
+  var x = generator();
+  while (pred(x)) x = generator();
+  return x;
+};
+
+const accept_if = (generator, pred) => () => {
+  var x = generator();
+  while (!pred(x)) x = generator();
+  return x;
+};
+
 module.exports = {
   bool,
   num_between,
@@ -79,7 +99,10 @@ module.exports = {
   oneOf,
   string,
   any,
+  obj,
   array,
   generate_class,
-  gen_arguments
+  gen_arguments,
+  reject_if,
+  accept_if
 };

@@ -2,6 +2,8 @@ const { sqlsanitize, mkWhere } = require("./internal");
 const db = require("./index.js");
 const Table = require("../models/table");
 
+afterAll(db.close);
+
 describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
     expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");

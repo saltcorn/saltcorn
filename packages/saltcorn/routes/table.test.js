@@ -8,6 +8,9 @@ const {
   toInclude,
   toNotInclude
 } = require("../auth/testhelp");
+const db = require("saltcorn-data/db");
+
+afterAll(db.close);
 
 describe("Table Endpoints", () => {
   it("should create tables", async done => {

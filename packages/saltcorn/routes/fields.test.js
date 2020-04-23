@@ -9,6 +9,9 @@ const {
   toNotInclude,
   toRedirect
 } = require("../auth/testhelp");
+const db = require("saltcorn-data/db");
+
+afterAll(db.close);
 
 describe("Field Endpoints", () => {
   itShouldRedirectUnauthToLogin("/field/1");

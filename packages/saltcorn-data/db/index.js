@@ -3,8 +3,12 @@ const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 
 var pool = new Pool({ database: process.env.PGDATABASE || "saltcorn" });
 
-const changeConnection = async connObj => {
+const close = async () => {
   await pool.end();
+};
+
+const changeConnection = async connObj => {
+  await close();
   pool = new Pool(connObj);
 };
 
@@ -86,5 +90,6 @@ module.exports = {
   update,
   deleteWhere,
   pool,
+  close,
   changeConnection
 };
