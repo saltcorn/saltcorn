@@ -39,10 +39,10 @@ const is_plugin_type = is.obj({
 const is_plugin = is.obj({
   layout: is.maybe(
     is.obj({
-      wrap: plugin_wrap
+      wrap: is_plugin_wrap
     })
   ),
-  types: is.maybe(is.array(plugin_type))
+  types: is.maybe(is.array(is_plugin_type))
 });
 
 module.exports = { is_plugin_wrap, is_plugin_type, is_plugin };
