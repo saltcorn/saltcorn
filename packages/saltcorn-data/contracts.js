@@ -48,6 +48,18 @@ const is_plugin_type = is.obj({
   validate: is.fun(is.obj(), is.fun(is.any, is.bool))
 });
 
+const is_viewtemplate = is.obj({
+  name: is.str,
+  get_state_fields: is.fun([is.posint, is.str, is.any], is.promise(fieldlike)),
+  display_state_form: is.maybe(is.bool),
+  configuration_workflow: is.fun([], is.class("Workflow")),
+  view_quantity: is.maybe(is.one_of("Many", "ZeroOrOne", "One")),
+  run: is.fun(
+    [is.posint, is.str, is.any, is.obj(), is.obj()],
+    is.promise(is.str)
+  )
+});
+
 const is_plugin = is.obj({
   layout: is.maybe(
     is.obj({
@@ -55,19 +67,7 @@ const is_plugin = is.obj({
     })
   ),
   types: is.maybe(is.array(is_plugin_type)),
-  viewtemplates: is.maybe(
-    is.array(
-      is.obj({
-        name: is.str,
-        get_state_fields: is.fun(
-          [is.posint, is.str, is.any],
-          is.promise(fieldlike)
-        ),
-        display_state_form: is.maybe(is.bool),
-        run: is.fun([], is.promise(is.str))
-      })
-    )
-  )
+  viewtemplates: is.maybe(is.array(is_viewtemplate))
 });
 
 module.exports = {

@@ -1,5 +1,6 @@
 const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
+const State = require("./db/state");
 
 const auto_test_wrap = wrap => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -49,17 +50,25 @@ const auto_test_type = t => {
   if (t.readFromFormRecord) {
     t.readFromFormRecord({}, "akey");
   }
-
   //todo: try creating a table with this type
 };
-const auto_test_plugin = plugin => {
+
+const auto_test_viewtemplate = async vt => {
+  const wf = vt.configuration_workflow();
+  is.class("Workflow")(wf);
+  const step0=await wf.run({table_id:1, viewname:"newview"})
+};
+
+const auto_test_plugin = async plugin => {
   is_plugin(plugin);
+  State.registerPlugin(plugin)
   if (plugin.layout) {
     auto_test_wrap(plugin.layout.wrap);
   }
   if (plugin.types) {
     plugin.types.forEach(auto_test_type);
   }
+  for (const vt of plugin.viewtemplates || []) await auto_test_viewtemplate(vt);
 };
 
 module.exports = { auto_test_plugin };
