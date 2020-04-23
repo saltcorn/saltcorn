@@ -37,6 +37,7 @@ const is_plugin_type = is.obj({
   attributes: is.array(
     is.obj({ name: is.str, type: is.str, required: is.bool })
   ),
+  readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
   validate: is.fun(is.obj(), is.fun(is.any, is.bool))
 });
