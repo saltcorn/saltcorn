@@ -12,9 +12,12 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "projects": ["packages/saltcorn-markup", 
-      "packages/saltcorn-data", "packages/saltcorn-base-plugin",
+    "projects": [
+      "packages/saltcorn-markup",
+      "packages/saltcorn-data",
+      "packages/saltcorn-base-plugin",
       "packages/saltcorn-sbadmin2",
-       "packages/saltcorn-base-tests"]
+      "packages/saltcorn-base-tests"
+    ]
   }
 }
