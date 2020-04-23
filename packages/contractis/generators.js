@@ -78,6 +78,21 @@ const generate_class = cls => () => {
   return inst;
 };
 
+const reject_if=(generator, pred) => ()=> {
+  var x = generator()
+  while(pred(x))
+    x = generator();
+  return x
+}
+
+const accept_if=(generator, pred) => ()=>{
+  var x = generator()
+  while(!pred(x))
+    x = generator();
+  return x
+}
+
+
 module.exports = {
   bool,
   num_between,
@@ -90,5 +105,5 @@ module.exports = {
   obj,
   array,
   generate_class,
-  gen_arguments
+  gen_arguments, reject_if, accept_if
 };
