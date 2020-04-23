@@ -13,7 +13,7 @@ const calcfldViewOptions = fields => {
 
 const field_picker_fields = async ({ table }) => {
   const fields = await table.getFields();
-  const boolfields = fields.filter(f => f.type&& f.type.name === "Bool");
+  const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
   const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
   const fldViewOptions = calcfldViewOptions(fields);

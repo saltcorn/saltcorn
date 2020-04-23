@@ -5,7 +5,7 @@ const State = require("saltcorn-data/db/state");
 const manager = new PluginManager();
 
 const registerPlugin = plugin => {
-  State.registerPlugin(plugin)
+  State.registerPlugin(plugin);
 };
 
 const loadPlugin = async plugin => {

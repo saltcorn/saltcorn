@@ -1,10 +1,13 @@
 const { contract, is } = require("contractis");
 
-const fieldlike = is.obj({
-  name: is.str,
-  input_type: is.maybe(is.str),
-  type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
-});
+const fieldlike = is.obj(
+  {
+    name: is.str,
+    input_type: is.maybe(is.str),
+    type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
+  },
+  o => o.type || o.input_type
+);
 
 const is_plugin_wrap_arg = is.obj({
   title: is.str,

@@ -1,6 +1,7 @@
 const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
 const State = require("./db/state");
+const { renderForm } = require("saltcorn-markup");
 
 const auto_test_wrap = wrap => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -56,12 +57,13 @@ const auto_test_type = t => {
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
   is.class("Workflow")(wf);
-  const step0=await wf.run({table_id:1, viewname:"newview"})
+  const step0 = await wf.run({ table_id: 1, viewname: "newview" });
+  if (step0.renderForm) is.str(renderForm(step0.renderForm));
 };
 
 const auto_test_plugin = async plugin => {
   is_plugin(plugin);
-  State.registerPlugin(plugin)
+  State.registerPlugin(plugin);
   if (plugin.layout) {
     auto_test_wrap(plugin.layout.wrap);
   }

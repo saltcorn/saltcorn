@@ -13,7 +13,7 @@ class State {
     this.fields = [];
     this.layout = { wrap: s => s };
   }
-  
+
   async refresh() {
     this.views = await View.find();
   }
