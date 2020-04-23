@@ -82,7 +82,8 @@ const obj = o =>
     options: o,
     check: x =>
       typeof x === "object" &&
-      Object.entries(o || {}).every(([k, v]) => v.check(x[k]))
+      Object.entries(o || {}).every(([k, v]) => v.check(x[k])),
+    generate: gen.obj(o)
   });
 
 const objVals = c =>

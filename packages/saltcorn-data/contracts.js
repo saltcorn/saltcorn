@@ -1,7 +1,6 @@
 const { contract, is } = require("contractis");
 
-const is_plugin_wrap = is.fun(
-  is.obj({
+const is_plugin_wrap_arg=is.obj({
     title: is.str,
     body: is.str,
     menu: is.array(
@@ -16,7 +15,10 @@ const is_plugin_wrap = is.fun(
         msg: is.str
       })
     )
-  }),
+  })
+
+const is_plugin_wrap = is.fun(
+    is_plugin_wrap_arg,
   is.str
 );
 
@@ -45,4 +47,4 @@ const is_plugin = is.obj({
   types: is.maybe(is.array(is_plugin_type))
 });
 
-module.exports = { is_plugin_wrap, is_plugin_type, is_plugin };
+module.exports = { is_plugin_wrap, is_plugin_wrap_arg, is_plugin_type, is_plugin };

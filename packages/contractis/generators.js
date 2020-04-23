@@ -46,6 +46,14 @@ const anyObj = () => {
   return res;
 };
 
+const obj = o => ()=> {
+  var res = {}
+  Object.entries(o).forEach(([k,v])=>{
+    res[k]=v.generate()
+  })
+  return res
+}
+
 const any = () =>
   oneOf([
     bool,
@@ -79,6 +87,7 @@ module.exports = {
   oneOf,
   string,
   any,
+  obj,
   array,
   generate_class,
   gen_arguments
