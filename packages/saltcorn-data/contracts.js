@@ -1,5 +1,11 @@
 const { contract, is } = require("contractis");
 
+const fieldlike = is.obj({
+  name: is.str,
+  input_type: is.maybe(is.str),
+  type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
+});
+
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.str,
@@ -48,12 +54,26 @@ const is_plugin = is.obj({
       wrap: is_plugin_wrap
     })
   ),
-  types: is.maybe(is.array(is_plugin_type))
+  types: is.maybe(is.array(is_plugin_type)),
+  viewtemplates: is.maybe(
+    is.array(
+      is.obj({
+        name: is.str,
+        get_state_fields: is.fun(
+          [is.posint, is.str, is.any],
+          is.promise(fieldlike)
+        ),
+        display_state_form: is.maybe(is.bool),
+        run: is.fun([], is.promise(is.str))
+      })
+    )
+  )
 });
 
 module.exports = {
   is_plugin_wrap,
   is_plugin_wrap_arg,
   is_plugin_type,
-  is_plugin
+  is_plugin,
+  fieldlike
 };

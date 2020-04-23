@@ -22,24 +22,9 @@ const auto_test_type = t => {
   //run edit field views without a value
   Object.values(fvs).forEach(fv => {
     if (fv.isEdit) {
-      is.str(
-        fv.run(
-          "foo",
-          undefined,
-          generate_attributes(t.attributes),
-          "myclass",
-          true
-        )
-      );
-      is.str(
-        fv.run(
-          "foo",
-          undefined,
-          generate_attributes(t.attributes),
-          "myclass",
-          false
-        )
-      );
+      const attr = generate_attributes(t.attributes);
+      is.str(fv.run("foo", undefined, attr, "myclass", true));
+      is.str(fv.run("foo", undefined, attr, "myclass", false));
     }
   });
   //find examples, run all fieldview on each example

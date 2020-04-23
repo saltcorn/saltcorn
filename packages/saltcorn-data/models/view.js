@@ -1,6 +1,7 @@
 const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
+const { fieldlike } = require("../contracts");
 
 const removeEmptyStrings = obj => {
   var o = {};
@@ -178,18 +179,7 @@ View.contract = {
     viewtemplateObj: is.obj({ name: is.str, display_state_form: is.bool })
   },
   methods: {
-    get_state_fields: is.fun(
-      [],
-      is.promise(
-        is.array(
-          is.obj({
-            name: is.str,
-            input_type: is.maybe(is.str),
-            type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
-          })
-        )
-      )
-    ),
+    get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
     get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
     get_config_flow: is.fun([], is.promise(is.class("Workflow")))
   },
@@ -209,13 +199,7 @@ View.contract = {
         is.obj({
           viewrow: is.class("View"),
           viewtemplate: is.obj(),
-          state_fields: is.array(
-            is.obj({
-              name: is.str,
-              input_type: is.maybe(is.str),
-              type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
-            })
-          )
+          state_fields: is.array(fieldlike)
         }),
         is.bool
       ),
@@ -228,13 +212,7 @@ View.contract = {
           is.obj({
             viewrow: is.class("View"),
             viewtemplate: is.obj(),
-            state_fields: is.array(
-              is.obj({
-                name: is.str,
-                input_type: is.maybe(is.str),
-                type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
-              })
-            )
+            state_fields: is.array(fieldlike)
           }),
           is.bool
         )
