@@ -115,13 +115,13 @@ class View {
     await db.deleteWhere("views", where);
     await require("../db/state").refresh();
   }
-  async run(query, ...extraArgs) {
+  async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,
       this.name,
       this.configuration,
       removeEmptyStrings(query),
-      ...extraArgs
+      extraArgs
     );
   }
 
