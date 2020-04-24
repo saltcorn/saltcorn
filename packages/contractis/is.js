@@ -139,6 +139,12 @@ const posint = mkContract({
   generate: () => Math.round(gen.num_positive())
 });
 
+const date = mkContract({
+  name: "date",
+  check: v => v instanceof Date && !isNaN(v),
+  generate: gen.date
+});
+
 const str = mkContract({
   name: "str",
   check: x => typeof x === "string",
@@ -286,5 +292,6 @@ module.exports = {
   promise,
   defined,
   one_of,
-  getter
+  getter,
+  date
 };

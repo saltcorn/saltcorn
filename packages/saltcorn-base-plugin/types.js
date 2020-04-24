@@ -120,6 +120,23 @@ const int = {
   }
 };
 
+const date = {
+  name: "Date",
+  sql_name: "timestamp",
+  attributes: [],
+  fieldviews: {},
+  read: v => {
+    if (v instanceof Date && !isNaN(v)) return v;
+
+    if (typeof v === "string") {
+      const d = new Date(v);
+      if (d instanceof Date && !isNaN(d)) return d;
+      else return null;
+    }
+  },
+  validate: ({ }) => v =>(v instanceof Date && !isNaN(v))
+};
+
 const bool = {
   name: "Bool",
   sql_name: "boolean",
@@ -176,4 +193,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = { string, int, bool };
+module.exports = { string, int, bool, date };
