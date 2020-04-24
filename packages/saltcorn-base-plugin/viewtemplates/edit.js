@@ -84,18 +84,18 @@ const configuration_workflow = () =>
           const omitted_fields = fields.filter(
             f => !in_form_fields.includes(f.name)
           );
-          var formField=[]
+          var formFields=[]
           omitted_fields.forEach(f => {
-            if (f.type.presets) {
+            if (f.presets) {
               f.required = false;
             }
-            formField.push(f)
-            if(f.type.presets) {
-              formField.push(new Field({
+            formFields.push(f)
+            if(f.presets) {
+              formFields.push(new Field({
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
-                  attributes: { options: Object.keys(f.type.presets).join() }
+                  attributes: { options: Object.keys(f.presets).join() }
                 }))
             }
           });
@@ -179,7 +179,7 @@ const fill_presets = async (table, fixed) => {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find(f => f.name === fldnm);
-        fixed[fldnm] = fld.type.presets[fixed[k]]();
+        fixed[fldnm] = fld.presets[fixed[k]]();
       }
       delete fixed[k];
     }

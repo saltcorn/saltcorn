@@ -134,6 +134,15 @@ class Field {
       ? r => this.type.showAs(r[this.name])
       : this.name;
   }
+  get presets() {
+    if(this.type && this.type.presets) 
+      return this.type.presets
+    
+    if(this.type==="Key" && this.reftable_name==="users")
+      return {LoggedIn: ({user})=> user&&user.id}
+
+    return null
+  }
   async delete() {
     await db.deleteWhere("fields", { id: this.id });
     const Table = require("./table");
