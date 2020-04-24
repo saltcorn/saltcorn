@@ -71,10 +71,9 @@ class Workflow {
         typeof ctxValue !== "undefined" &&
         typeof form.values[fld.name] === "undefined"
       ) {
-        if(fld.type && fld.type.read)
-        form.values[fld.name] = fld.type.read(ctxValue);
-        else
-        form.values[fld.name] = ctxValue;
+        if (fld.type && fld.type.read)
+          form.values[fld.name] = fld.type.read(ctxValue);
+        else form.values[fld.name] = ctxValue;
       }
     });
     if (this.action) form.action = this.action;

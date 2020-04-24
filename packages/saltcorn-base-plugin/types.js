@@ -125,17 +125,17 @@ const date = {
   sql_name: "timestamp",
   attributes: [],
   fieldviews: {
-    show:{ isEdit: false, run: d => text(d.toISOString()) },
-    edit:{
+    show: { isEdit: false, run: d => text(d.toISOString()) },
+    edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
-      input({
-        type: "text",
-        class: ["form-control", cls],
-        name: text(nm),
-        id: `input${text(nm)}`,
-        ...(isdef(v) && { value: text(v.toISOString()) })
-      })
+        input({
+          type: "text",
+          class: ["form-control", cls],
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(isdef(v) && { value: text(v.toISOString()) })
+        })
     }
   },
   presets: {
@@ -150,7 +150,7 @@ const date = {
       else return null;
     }
   },
-  validate: ({ }) => v =>(v instanceof Date && !isNaN(v))
+  validate: ({}) => v => v instanceof Date && !isNaN(v)
 };
 
 const bool = {

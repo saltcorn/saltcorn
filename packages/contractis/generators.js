@@ -30,14 +30,14 @@ const string = () => {
   return ntimes(n, char).join("");
 };
 
-const date= ()=>{
+const date = () => {
   const date = new Date();
-  const add_days=Math.round(num_between(-400,400))
-  const add_hours=Math.round(num_between(-30,30))
+  const add_days = Math.round(num_between(-400, 400));
+  const add_hours = Math.round(num_between(-30, 30));
   date.setDate(date.getDate() + add_days);
   date.setHours(date.getHours() + add_hours);
-  return date
-}
+  return date;
+};
 
 const array = g => () => {
   const n = Math.round(num_between(0, 20));
