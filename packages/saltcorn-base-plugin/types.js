@@ -138,6 +138,9 @@ const date = {
       })
     }
   },
+  presets: {
+    Now: () => new Date()
+  },
   read: v => {
     if (v instanceof Date && !isNaN(v)) return v;
 

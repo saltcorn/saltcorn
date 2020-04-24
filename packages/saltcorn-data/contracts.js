@@ -48,7 +48,8 @@ const is_plugin_type = is.obj({
   ),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
-  validate: is.fun(is.obj(), is.fun(is.any, is.bool))
+  validate: is.fun(is.obj(), is.fun(is.any, is.bool)),
+  presets: is.maybe(is.objVals(is.fun([], is.any)))
 });
 
 const is_viewtemplate = is.obj({
