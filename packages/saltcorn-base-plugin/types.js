@@ -1,3 +1,4 @@
+const moment = require("moment");
 const {
   input,
   select,
@@ -120,6 +121,40 @@ const int = {
   }
 };
 
+const date = {
+  name: "Date",
+  sql_name: "timestamp",
+  attributes: [],
+  fieldviews: {
+    show: { isEdit: false, run: d => text(d.toISOString()) },
+    relative: { isEdit: false, run: d => text(moment(d).fromNow()) },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "text",
+          class: ["form-control", cls],
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(isdef(v) && { value: text(v.toISOString()) })
+        })
+    }
+  },
+  presets: {
+    Now: () => new Date()
+  },
+  read: v => {
+    if (v instanceof Date && !isNaN(v)) return v;
+
+    if (typeof v === "string") {
+      const d = new Date(v);
+      if (d instanceof Date && !isNaN(d)) return d;
+      else return null;
+    }
+  },
+  validate: ({}) => v => v instanceof Date && !isNaN(v)
+};
+
 const bool = {
   name: "Bool",
   sql_name: "boolean",
@@ -176,4 +211,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = { string, int, bool };
+module.exports = { string, int, bool, date };

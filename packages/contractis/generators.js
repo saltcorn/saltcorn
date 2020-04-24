@@ -30,6 +30,15 @@ const string = () => {
   return ntimes(n, char).join("");
 };
 
+const date = () => {
+  const date = new Date();
+  const add_days = Math.round(num_between(-400, 400));
+  const add_hours = Math.round(num_between(-30, 30));
+  date.setDate(date.getDate() + add_days);
+  date.setHours(date.getHours() + add_hours);
+  return date;
+};
+
 const array = g => () => {
   const n = Math.round(num_between(0, 20));
   return ntimes(n, g);
@@ -62,7 +71,8 @@ const any = () =>
     konst(undefined),
     konst(null),
     konst(() => any()),
-    anyObj
+    anyObj,
+    date
   ])();
 
 const gen_arguments = args => {
@@ -104,5 +114,6 @@ module.exports = {
   generate_class,
   gen_arguments,
   reject_if,
-  accept_if
+  accept_if,
+  date
 };
