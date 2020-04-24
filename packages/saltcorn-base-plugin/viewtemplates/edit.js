@@ -83,20 +83,23 @@ const configuration_workflow = () =>
           const in_form_fields = context.columns.map(f => f.field_name);
           const omitted_fields = fields.filter(
             f => !in_form_fields.includes(f.name)
-          )
-          omitted_fields.forEach(f=>{
-            if(f.type.presets) {
-              f.required=false
+          );
+          omitted_fields.forEach(f => {
+            if (f.type.presets) {
+              f.required = false;
             }
           });
-          const preset_fields = fields.filter(f=>f.type.presets).map(
-            f =>new Field({
-              name: "preset_"+f.name,
-              label: "Preset "+f.label,
-              type: "String",
-              attributes: { options: Object.keys(f.type.presets).join()}
-            })
-          );
+          const preset_fields = fields
+            .filter(f => f.type.presets)
+            .map(
+              f =>
+                new Field({
+                  name: "preset_" + f.name,
+                  label: "Preset " + f.label,
+                  type: "String",
+                  attributes: { options: Object.keys(f.type.presets).join() }
+                })
+            );
           const form = new Form({
             blurb: "These fields were missing, you can give values here",
             fields: [...omitted_fields, ...preset_fields]
@@ -170,20 +173,20 @@ const run = async (table_id, viewname, config, state) => {
   return renderForm(form);
 };
 
-const fill_presets = async (table, fixed)=>{
-  const fields=await table.getFields()
-  Object.keys(fixed).forEach(k=>{
-    if(k.startsWith('preset_')) {
-      if(fixed[k]) {
-        const fldnm=k.replace('preset_','')
-        const fld=fields.find(f=>f.name===fldnm)
-        fixed[fldnm]=fld.type.presets[fixed[k]]()
+const fill_presets = async (table, fixed) => {
+  const fields = await table.getFields();
+  Object.keys(fixed).forEach(k => {
+    if (k.startsWith("preset_")) {
+      if (fixed[k]) {
+        const fldnm = k.replace("preset_", "");
+        const fld = fields.find(f => f.name === fldnm);
+        fixed[fldnm] = fld.type.presets[fixed[k]]();
       }
-      delete fixed[k]
+      delete fixed[k];
     }
-  })
-  return fixed
-}
+  });
+  return fixed;
+};
 
 const runPost = async (
   table_id,
@@ -199,7 +202,7 @@ const runPost = async (
   if (form.hasErrors) {
     res.sendWrap(`${table.name} create new`, renderForm(form));
   } else {
-    const use_fixed = await fill_presets(table, fixed)
+    const use_fixed = await fill_presets(table, fixed);
     const row = { ...form.values, ...use_fixed };
     var id = body.id;
     if (typeof id === "undefined") {
