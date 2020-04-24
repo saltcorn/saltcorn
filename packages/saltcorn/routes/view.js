@@ -33,6 +33,6 @@ router.post("/:viewname", async (req, res) => {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
-    await view.runPost(req.query, req.body, res);
+    await view.runPost(req.query, req.body, {res, req});
   }
 });

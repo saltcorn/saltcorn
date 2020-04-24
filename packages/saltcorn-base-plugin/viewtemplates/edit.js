@@ -172,14 +172,14 @@ const run = async (table_id, viewname, config, state) => {
   return renderForm(form);
 };
 
-const fill_presets = async (table, fixed) => {
+const fill_presets = async (table, req, fixed) => {
   const fields = await table.getFields();
   Object.keys(fixed).forEach(k => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find(f => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]();
+        fixed[fldnm] = fld.presets[fixed[k]]({user: req.user});
       }
       delete fixed[k];
     }
@@ -193,7 +193,7 @@ const runPost = async (
   { columns, fixed, view_when_done },
   state,
   body,
-  res
+  {res,req}
 ) => {
   const table = await Table.findOne({ id: table_id });
   const form = await getForm(table, viewname, columns, body.id);
@@ -201,7 +201,7 @@ const runPost = async (
   if (form.hasErrors) {
     res.sendWrap(`${table.name} create new`, renderForm(form));
   } else {
-    const use_fixed = await fill_presets(table, fixed);
+    const use_fixed = await fill_presets(table, req, fixed);
     const row = { ...form.values, ...use_fixed };
     var id = body.id;
     if (typeof id === "undefined") {

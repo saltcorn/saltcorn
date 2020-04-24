@@ -125,14 +125,14 @@ class View {
     );
   }
 
-  async runPost(query, body, res) {
+  async runPost(query, body, extraArgs) {
     return await this.viewtemplateObj.runPost(
       this.table_id,
       this.name,
       this.configuration,
       removeEmptyStrings(query),
       removeEmptyStrings(body),
-      res
+      extraArgs
     );
   }
   async get_state_form(query) {
