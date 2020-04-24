@@ -13,8 +13,20 @@ class State {
     this.fields = [];
     this.layout = { wrap: s => s };
   }
+
   async refresh() {
     this.views = await View.find();
+  }
+
+  registerPlugin(plugin) {
+    (plugin.types || []).forEach(t => {
+      this.addType(t);
+    });
+    (plugin.viewtemplates || []).forEach(vt => {
+      this.viewtemplates[vt.name] = vt;
+    });
+    if (plugin.layout && plugin.layout.wrap)
+      this.layout.wrap = plugin.layout.wrap;
   }
 
   addType(t) {

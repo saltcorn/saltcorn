@@ -1,5 +1,14 @@
 const { contract, is } = require("contractis");
 
+const fieldlike = is.obj(
+  {
+    name: is.str,
+    input_type: is.maybe(is.str),
+    type: is.maybe(is.or(is.str, is.obj({ name: is.str })))
+  },
+  o => o.type || o.input_type
+);
+
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.str,
@@ -37,8 +46,21 @@ const is_plugin_type = is.obj({
   attributes: is.array(
     is.obj({ name: is.str, type: is.str, required: is.bool })
   ),
+  readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
   validate: is.fun(is.obj(), is.fun(is.any, is.bool))
+});
+
+const is_viewtemplate = is.obj({
+  name: is.str,
+  get_state_fields: is.fun([is.posint, is.str, is.any], is.promise(fieldlike)),
+  display_state_form: is.maybe(is.bool),
+  configuration_workflow: is.fun([], is.class("Workflow")),
+  view_quantity: is.maybe(is.one_of("Many", "ZeroOrOne", "One")),
+  run: is.fun(
+    [is.posint, is.str, is.any, is.obj(), is.obj()],
+    is.promise(is.str)
+  )
 });
 
 const is_plugin = is.obj({
@@ -47,12 +69,14 @@ const is_plugin = is.obj({
       wrap: is_plugin_wrap
     })
   ),
-  types: is.maybe(is.array(is_plugin_type))
+  types: is.maybe(is.array(is_plugin_type)),
+  viewtemplates: is.maybe(is.array(is_viewtemplate))
 });
 
 module.exports = {
   is_plugin_wrap,
   is_plugin_wrap_arg,
   is_plugin_type,
-  is_plugin
+  is_plugin,
+  fieldlike
 };

@@ -5,14 +5,7 @@ const State = require("saltcorn-data/db/state");
 const manager = new PluginManager();
 
 const registerPlugin = plugin => {
-  (plugin.types || []).forEach(t => {
-    State.addType(t);
-  });
-  (plugin.viewtemplates || []).forEach(vt => {
-    State.viewtemplates[vt.name] = vt;
-  });
-  if (plugin.layout && plugin.layout.wrap)
-    State.layout.wrap = plugin.layout.wrap;
+  State.registerPlugin(plugin);
 };
 
 const loadPlugin = async plugin => {
