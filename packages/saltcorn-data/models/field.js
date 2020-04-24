@@ -135,13 +135,12 @@ class Field {
       : this.name;
   }
   get presets() {
-    if(this.type && this.type.presets) 
-      return this.type.presets
-    
-    if(this.type==="Key" && this.reftable_name==="users")
-      return {LoggedIn: ({user})=> user&&user.id}
+    if (this.type && this.type.presets) return this.type.presets;
 
-    return null
+    if (this.type === "Key" && this.reftable_name === "users")
+      return { LoggedIn: ({ user }) => user && user.id };
+
+    return null;
   }
   async delete() {
     await db.deleteWhere("fields", { id: this.id });

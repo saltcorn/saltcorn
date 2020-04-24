@@ -126,7 +126,8 @@ const run = async (
   table_id,
   viewname,
   { list_view, show_view, subtables },
-  state, extraArgs
+  state,
+  extraArgs
 ) => {
   const lview = await View.findOne({ name: list_view });
   const lresp = await lview.run(state, {
@@ -162,7 +163,10 @@ const run = async (
               const mytable = await Table.findOne({ id: table_id });
               myrow = await mytable.getRow({ id });
             }
-            const psubresp = await psubview.run({ id: myrow[prelfld] }, extraArgs);
+            const psubresp = await psubview.run(
+              { id: myrow[prelfld] },
+              extraArgs
+            );
 
             const ptab_name = prelfld;
             reltbls[ptab_name] = psubresp;

@@ -84,19 +84,21 @@ const configuration_workflow = () =>
           const omitted_fields = fields.filter(
             f => !in_form_fields.includes(f.name)
           );
-          var formFields=[]
+          var formFields = [];
           omitted_fields.forEach(f => {
             if (f.presets) {
               f.required = false;
             }
-            formFields.push(f)
-            if(f.presets) {
-              formFields.push(new Field({
+            formFields.push(f);
+            if (f.presets) {
+              formFields.push(
+                new Field({
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
                   attributes: { options: Object.keys(f.presets).join() }
-                }))
+                })
+              );
             }
           });
           const form = new Form({
@@ -179,7 +181,7 @@ const fill_presets = async (table, req, fixed) => {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find(f => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]({user: req.user});
+        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user });
       }
       delete fixed[k];
     }
@@ -193,7 +195,7 @@ const runPost = async (
   { columns, fixed, view_when_done },
   state,
   body,
-  {res,req}
+  { res, req }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const form = await getForm(table, viewname, columns, body.id);
