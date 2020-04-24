@@ -84,25 +84,24 @@ const configuration_workflow = () =>
           const omitted_fields = fields.filter(
             f => !in_form_fields.includes(f.name)
           );
+          var formField=[]
           omitted_fields.forEach(f => {
             if (f.type.presets) {
               f.required = false;
             }
-          });
-          const preset_fields = fields
-            .filter(f => f.type.presets)
-            .map(
-              f =>
-                new Field({
+            formField.push(f)
+            if(f.type.presets) {
+              formField.push(new Field({
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
                   attributes: { options: Object.keys(f.type.presets).join() }
-                })
-            );
+                }))
+            }
+          });
           const form = new Form({
             blurb: "These fields were missing, you can give values here",
-            fields: [...omitted_fields, ...preset_fields]
+            fields: formFields
           });
           await form.fill_fkey_options();
           return form;
