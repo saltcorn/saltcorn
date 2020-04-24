@@ -1,3 +1,4 @@
+const moment = require('moment');
 const {
   input,
   select,
@@ -126,6 +127,7 @@ const date = {
   attributes: [],
   fieldviews: {
     show: { isEdit: false, run: d => text(d.toISOString()) },
+    relative: { isEdit: false, run: d => text(moment(d).fromNow()) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
