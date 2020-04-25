@@ -3,9 +3,10 @@ const Field = require("saltcorn-data/models/field");
 const View = require("saltcorn-data/models/view");
 const db = require("saltcorn-data/db");
 
-afterAll(db.close);
+const State = require("../db/state");
+State.registerPlugin(require('../base-plugin'))
 
-require("./load_base_types")();
+afterAll(db.close);
 
 describe("View", () => {
   it("should run with no query", async done => {

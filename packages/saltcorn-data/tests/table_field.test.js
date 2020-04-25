@@ -1,10 +1,10 @@
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const db = require("saltcorn-data/db");
+const State = require("../db/state");
+State.registerPlugin(require('../base-plugin'))
 
 afterAll(db.close);
-
-require("./load_base_types")();
 
 describe("Table create", () => {
   it("should create", async done => {

@@ -4,7 +4,7 @@
   "description": "Base plugin for saltcorn",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "echo No tests"
   },
   "dependencies": {
     "saltcorn-data": "^0.0.1"
