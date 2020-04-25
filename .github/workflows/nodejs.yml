@@ -22,6 +22,6 @@ jobs:
         node-version: '12.x'
     - run: npm install -g lerna
     - run: lerna bootstrap
-    - run: npm test
+    - run: packages/saltcorn-cli/bin/saltcorn run-tests core
       env:
         CI: true
