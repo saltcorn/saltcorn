@@ -18,7 +18,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres
+        image: postgres:11
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
@@ -34,6 +34,10 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
+    - name: Install postgres libraries
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client libpq-dev
     - run: npm install -g lerna
     - run: lerna bootstrap
     - run: createdb saltcorn && createdb saltcorn_test
