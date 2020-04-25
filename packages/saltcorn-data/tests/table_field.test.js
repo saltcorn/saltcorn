@@ -26,6 +26,26 @@ describe("Table create", () => {
     });
     done();
   });
+  it("should insert", async () => {
+    const mytable1 = await Table.findOne({ name: "mytable1" });
+    const id = await db.insert(mytable1.name, { height1: 6 });
+    const row = await db.selectOne(mytable1.name, { id });
+    expect(row.height1).toBe(6);
+    await db.update(mytable1.name, { height1: 7 }, id);
+    const rowup = await db.selectOne(mytable1.name, { id });
+    expect(rowup.height1).toBe(7);
+  });
+  it("should select one or zero", async () => {
+    const rows = await db.select("mytable1", {});
+    expect(rows.length).toBe(1);
+    const row = await db.selectMaybeOne("mytable1", { id: rows[0].id });
+    expect(row.height1).toBe(7);
+    const norow = await db.selectMaybeOne("mytable1", { id: 789 });
+    expect(norow).toBe(null);
+    await expect(
+      async () => await db.selectOne("mytable1", { id: 789 })
+    ).rejects.toThrow(Error);
+  });
   it("should delete", async done => {
     const table = await Table.findOne({ name: "mytable1" });
     await table.delete();

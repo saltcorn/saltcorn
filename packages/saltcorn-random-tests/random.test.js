@@ -13,7 +13,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-jest.setTimeout(20000);
+jest.setTimeout(100000);
 
 const seed = set_seed();
 
@@ -34,7 +34,7 @@ describe("app", () => {
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {
-        steps: 300,
+        steps: 2500,
         cookie: loginCookie,
         stop_form_actions: ["delete"]
       });
