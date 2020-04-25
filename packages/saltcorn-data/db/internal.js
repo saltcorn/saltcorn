@@ -11,7 +11,8 @@ const whereFTS = (v, i) => {
         : sqlsanitize(f.name)
     )
     .join(" || ' ' || ");
-  return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i + 1})`;
+  return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
+    1})`;
 };
 
 const whereClause = ([k, v], i) =>

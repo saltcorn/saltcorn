@@ -1,6 +1,6 @@
 const cheerio = require("cheerio");
 const CrawlState = require("./crawl-state");
-const seedrandom = require('seedrandom');
+const seedrandom = require("seedrandom");
 const { is } = require("contractis");
 
 const toSucceed = state => res => {
@@ -42,15 +42,23 @@ const genRandom = input => {
     case "hidden":
       return input.attribs.value;
       break;
-
+    case "text":
+    case "email":
+    case "password":
+      return is.str.generate();
+      break;
+    case "checkbox":
+      return is.bool.generate() ? "on" : undefined;
+      break;
     default:
+      console.log(input);
       return is.str.generate();
   }
 };
 
 const genRandomSelect = input => {
-  const options=input.children.map((e)=>e.attribs.value)
-  return oneOf(options)
+  const options = input.children.map(e => e.attribs.value);
+  return oneOf(options);
 };
 
 const submit_form = async (form, state) => {
@@ -73,17 +81,22 @@ const submit_form = async (form, state) => {
       .req()
       .post(action)
       .set("Cookie", state.cookie);
-    for (const [k,v] of Object.entries(body)) {
+    for (const [k, v] of Object.entries(body)) {
       const oldreq = req;
-      req = oldreq.send(`${k}=${v}`);
+      if (typeof v !== "undefined") req = oldreq.send(`${k}=${v}`);
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
-    return await processResponse(res, url, state);
+    return await processResponse(res, action, state);
   } else if (method === "get") {
-    const url = action + "?"+Object.entries(body).map(([k,v])=>`${k}=${v}`).join('&');
-    
-    state.add_log({ getForm: url});
+    const url =
+      action +
+      "?" +
+      Object.entries(body)
+        .map(([k, v]) => `${k}=${v}`)
+        .join("&");
+
+    state.add_log({ getForm: url });
     const res = await state
       .req()
       .get(url)
@@ -123,15 +136,12 @@ const processResponse = async (res, url, state) => {
   } else return state;
 };
 
-const get_rnd_seed=()=>
-  `${Math.round(Math.random()*10000)}`
+const get_rnd_seed = () => `${Math.round(Math.random() * 10000)}`;
 
-
-const set_seed=()=> {
-  const seed=process.env.JS_TEST_SEED||get_rnd_seed()
+const set_seed = () => {
+  const seed = process.env.JS_TEST_SEED || get_rnd_seed();
   seedrandom(seed, { global: true });
   return seed;
-}
+};
 
-
-module.exports = {chaos_guinea_pig: run, set_seed};
+module.exports = { chaos_guinea_pig: run, set_seed };
