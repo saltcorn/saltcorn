@@ -14,6 +14,12 @@ describe("sqlsanitize", () => {
   it("should allow dots", () => {
     expect(sqlsanitize("ffoo.oo")).toBe("ffoo.oo");
   });
+  it("should allow numbers", () => {
+    expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
+  });
+  it("should not allow numbers in initial position", () => {
+    expect(sqlsanitize("1ffoo_o1o")).toBe("_1ffoo_o1o");
+  });
 });
 
 describe("mkWhere", () => {
