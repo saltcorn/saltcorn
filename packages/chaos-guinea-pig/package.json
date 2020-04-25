@@ -14,7 +14,8 @@
     "seedrandom": "^3.0.5",
     "stack-trace": "^0.0.10",
     "superagent": "^5.2.2",
-    "supertest": "^4.0.2"
+    "supertest": "^4.0.2",
+    "contractis": "^0.0.1"
   },
   "jest": {
     "testEnvironment": "node"

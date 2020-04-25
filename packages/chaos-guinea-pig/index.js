@@ -1,6 +1,7 @@
 const cheerio = require("cheerio");
 const CrawlState = require("./crawl-state");
 const seedrandom = require('seedrandom');
+const { is } = require("contractis");
 
 const toSucceed = state => res => {
   if (res.statusCode >= 400) {
@@ -43,7 +44,7 @@ const genRandom = input => {
       break;
 
     default:
-      return "foo";
+      return is.str.generate();
   }
 };
 
@@ -74,11 +75,10 @@ const submit_form = async (form, state) => {
     var url = action + "?";
     for (const input of inputs) {
       const val = genRandom(input);
-      url += `${input.attribs.name}=${val}`;
-      body[input.attribs.name] = val;
+      url += `${input.attribs.name}=${val}&`;
     }
 
-    state.add_log({ getForm: action, query: body });
+    state.add_log({ getForm: url});
     const res = await state
       .req()
       .get(url)
@@ -106,7 +106,7 @@ const processResponse = async (res, url, state) => {
   );
   if (state.steps_remaining) {
     if (forms.length > 0 && local_links.length > 0)
-      if (Math.random() < 0.2)
+      if (Math.random() < 0.4)
         return await get_link(rndElem(local_links).attr("href"), state.decr());
       else return await submit_form(rndElem(forms), state.decr());
 
