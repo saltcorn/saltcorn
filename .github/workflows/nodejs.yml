@@ -1,0 +1,56 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    container: ubuntu:latest
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: Install postgres libraries
+      run: |
+        apt-get update
+        apt-get install -y postgresql-client libpq-dev
+    - run: npm install -g lerna
+    - run: lerna bootstrap
+    - run: createdb saltcorn && createdb saltcorn_test
+      env:
+        CI: true
+        PGHOST: postgres
+        PGUSER: postgres
+        PGPASSWORD: postgres
+    - run: packages/saltcorn-cli/bin/saltcorn run-tests
+      env:
+        CI: true
+        PGHOST: postgres
+        PGUSER: postgres
+        PGPASSWORD: postgres
+
+          # The default PostgreSQL port
