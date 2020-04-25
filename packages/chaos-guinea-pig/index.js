@@ -118,4 +118,4 @@ const process = async (res, url, state) => {
   } else return state;
 };
 
-module.exports = run;
+module.exports = {chaos_guinea_pig: run};

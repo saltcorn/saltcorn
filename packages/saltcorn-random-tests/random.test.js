@@ -1,5 +1,5 @@
 const getApp = require("saltcorn/app");
-const chaos_guinea_pig = require("chaos-guinea-pig");
+const {chaos_guinea_pig} = require("chaos-guinea-pig");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -29,12 +29,12 @@ describe("app", () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
 
-    await chaos_guinea_pig(app, {
+    const st = await chaos_guinea_pig(app, {
       steps: 300,
       cookie: loginCookie,
       stop_form_actions: ["delete"]
     });
-    //expect(2).toBe(1);
+    //console.log(st.log);
     done();
   });
 });
