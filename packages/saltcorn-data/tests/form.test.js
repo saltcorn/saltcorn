@@ -5,7 +5,7 @@ const Form = require("saltcorn-data/models/form");
 const { renderForm } = require("saltcorn-markup");
 
 const State = require("../db/state");
-State.registerPlugin(require('../base-plugin'))
+State.registerPlugin(require("../base-plugin"));
 
 const mkRepForm = () =>
   new Form({

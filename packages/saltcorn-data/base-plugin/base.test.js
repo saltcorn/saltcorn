@@ -1,4 +1,3 @@
-
 const { auto_test_plugin } = require("../plugin-testing");
 const plugin = require(".");
 const db = require("../db");

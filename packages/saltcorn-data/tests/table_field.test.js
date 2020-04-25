@@ -2,7 +2,7 @@ const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const db = require("saltcorn-data/db");
 const State = require("../db/state");
-State.registerPlugin(require('../base-plugin'))
+State.registerPlugin(require("../base-plugin"));
 
 afterAll(db.close);
 

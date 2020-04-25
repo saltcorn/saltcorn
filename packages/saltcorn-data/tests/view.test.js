@@ -4,7 +4,7 @@ const View = require("saltcorn-data/models/view");
 const db = require("saltcorn-data/db");
 
 const State = require("../db/state");
-State.registerPlugin(require('../base-plugin'))
+State.registerPlugin(require("../base-plugin"));
 
 afterAll(db.close);
 
