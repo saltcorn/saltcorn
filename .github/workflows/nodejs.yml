@@ -20,10 +20,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-    - name: action-lerna
-      uses: m19c/action-lerna@1.0.0
-    - run: npm ci
-    - run: npm run build --if-present
+    - run: npm install -g lerna
+    - run: lerna bootstrap
     - run: npm test
       env:
         CI: true
