@@ -50,8 +50,11 @@ const genRandom = input => {
     case "checkbox":
       return is.bool.generate() ? "on" : undefined;
       break;
+    case "number":
+      return is.num.generate();
+      break;
     default:
-      console.log(input);
+      //console.log(input);
       return is.str.generate();
   }
 };
