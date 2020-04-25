@@ -40,9 +40,9 @@ describe("Table create", () => {
     expect(row.height1).toBe(7);
     const norow = await db.selectMaybeOne("mytable1", { id: 789 });
     expect(norow).toBe(null);
-    /*await expect(
+    await expect(
       async () => await db.selectOne("mytable1", { id: 789 })
-    ).rejects.toThrow(Error);*/
+    ).rejects.toThrow(Error);
   });
   it("should delete", async () => {
     const table = await Table.findOne({ name: "mytable1" });

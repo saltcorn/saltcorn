@@ -32,7 +32,7 @@ describe("app", () => {
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {
-        steps: 200,
+        steps: 500,
         cookie: loginCookie,
         stop_form_actions: ["delete"]
       });
