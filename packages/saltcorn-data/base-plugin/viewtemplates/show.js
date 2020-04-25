@@ -1,16 +1,16 @@
-const Form = require("saltcorn-data/models/form");
-const Field = require("saltcorn-data/models/field");
-const Table = require("saltcorn-data/models/table");
-const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
+const Form = require("../../models/form");
+const Field = require("../../models/field");
+const Table = require("../../models/table");
+const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("saltcorn-markup");
-const Workflow = require("saltcorn-data/models/workflow");
+const Workflow = require("../../models/workflow");
 const { get_viewable_fields } = require("./viewable_fields");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
   picked_fields_to_query
-} = require("saltcorn-data/plugin-helper");
+} = require("../../plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({

@@ -1,9 +1,9 @@
-const Field = require("saltcorn-data/models/field");
-const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
-const Table = require("saltcorn-data/models/table");
-const Form = require("saltcorn-data/models/form");
-const View = require("saltcorn-data/models/view");
-const Workflow = require("saltcorn-data/models/workflow");
+const Field = require("../../models/field");
+const FieldRepeat = require("../../models/fieldrepeat");
+const Table = require("../../models/table");
+const Form = require("../../models/form");
+const View = require("../../models/view");
+const Workflow = require("../../models/workflow");
 const { text } = require("saltcorn-markup/tags");
 const { renderForm } = require("saltcorn-markup");
 
