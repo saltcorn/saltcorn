@@ -13,6 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container: node:10.18-jessie
     services:
       # Label used to access the service container
       postgres:
