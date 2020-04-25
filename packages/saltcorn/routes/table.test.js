@@ -13,7 +13,7 @@ const db = require("saltcorn-data/db");
 afterAll(db.close);
 
 describe("Table Endpoints", () => {
-  it("should create tables", async done => {
+  it("should create tables", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp();
@@ -23,12 +23,11 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie);
 
     //expect(res.statusCode).toEqual(302);
-    done();
   });
 
   itShouldRedirectUnauthToLogin("/table/");
 
-  it("should list tables", async done => {
+  it("should list tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
@@ -36,10 +35,9 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"))
       .expect(toInclude("books"));
-    done();
   });
 
-  it("should edit tables", async done => {
+  it("should edit tables", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const tbl = await Table.findOne({ name: "mypostedtable" });
@@ -51,10 +49,9 @@ describe("Table Endpoints", () => {
       .expect(toInclude("<table"))
       .expect(toInclude("Add field"))
       .expect(toNotInclude("[object"));
-    done();
   });
 
-  it("should delete tables", async done => {
+  it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     const tbl = await Table.findOne({ name: "mypostedtable" });
@@ -68,7 +65,5 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toNotInclude("mypostedtable"))
       .expect(toInclude("books"));
-
-    done();
   });
 });

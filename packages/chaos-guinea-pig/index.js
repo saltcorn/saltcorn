@@ -86,7 +86,8 @@ const submit_form = async (form, state) => {
       .set("Cookie", state.cookie);
     for (const [k, v] of Object.entries(body)) {
       const oldreq = req;
-      if (typeof v !== "undefined") req = oldreq.send(`${k}=${v}`);
+      if (typeof v !== "undefined")
+        req = oldreq.send(`${k}=${encodeURIComponent(v)}`);
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
@@ -96,7 +97,7 @@ const submit_form = async (form, state) => {
       action +
       "?" +
       Object.entries(body)
-        .map(([k, v]) => `${k}=${v}`)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
         .join("&");
 
     state.add_log({ getForm: url });

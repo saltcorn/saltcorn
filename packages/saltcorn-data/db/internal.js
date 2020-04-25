@@ -1,5 +1,11 @@
+const { contract, is } = require("contractis");
+
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
-const sqlsanitize = nm => nm.replace(/[^A-Za-z_0-9.]*/g, "");
+const sqlsanitize = contract(is.fun(is.str, is.str), nm => {
+  const s = nm.replace(/[^A-Za-z_0-9.]*/g, "");
+  if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
+  else return s;
+});
 
 const whereFTS = (v, i) => {
   const { fields, table } = v;

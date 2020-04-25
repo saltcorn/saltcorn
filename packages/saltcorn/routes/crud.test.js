@@ -13,17 +13,16 @@ afterAll(db.close);
 
 describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/edit/books");
-  it("show form for new entry", async done => {
+  it("show form for new entry", async () => {
     const app = await getApp();
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/edit/books")
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"));
-    done();
   });
 
-  it("show form for existing entry", async done => {
+  it("show form for existing entry", async () => {
     const loginCookie = await getStaffLoginCookie();
     const app = await getApp();
     await request(app)
@@ -31,10 +30,9 @@ describe("standard edit form", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
       .expect(toInclude("Melville"));
-    done();
   });
 
-  it("post form for new entry", async done => {
+  it("post form for new entry", async () => {
     const loginCookie = await getStaffLoginCookie();
     const app = await getApp();
     await request(app)
@@ -48,12 +46,10 @@ describe("standard edit form", () => {
       .expect(toRedirect("/list/books"));
     //if(res.statusCode===200) console.log(res.text)
     //expect(res.statusCode).toEqual(302);
-
-    done();
   });
 
   itShouldRedirectUnauthToLogin("/list/books");
-  it("show list", async done => {
+  it("show list", async () => {
     const loginCookie = await getStaffLoginCookie();
     const app = await getApp();
     await request(app)
@@ -61,11 +57,9 @@ describe("standard edit form", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
       .expect(toInclude("Cervantes"));
-
-    done();
   });
 
-  it("should delete", async done => {
+  it("should delete", async () => {
     const loginCookie = await getStaffLoginCookie();
     const app = await getApp();
     await request(app)
@@ -78,7 +72,5 @@ describe("standard edit form", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
       .expect(toNotInclude("Cervantes"));
-
-    done();
   });
 });

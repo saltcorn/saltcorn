@@ -35,7 +35,7 @@ const mkRepForm = () =>
   });
 
 describe("Form", () => {
-  it("should render", async done => {
+  it("should render", async () => {
     const form = new Form({
       fields: [
         new Field({
@@ -51,10 +51,9 @@ describe("Form", () => {
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('min="16"')).toBe(true);
     expect(form.values.age).toBe(32);
-    done();
   });
 
-  it("should render with repeats", async done => {
+  it("should render with repeats", async () => {
     const form = mkRepForm();
     const html = renderForm(form);
     form.validate({
@@ -70,9 +69,8 @@ describe("Form", () => {
     expect(form.values.students.length).toBe(2);
     expect(form.values.students[0].name).toBe("Fred");
     expect(form.values.students[1].age).toBe(19);
-    done();
   });
-  it("should render with repeats and values", async done => {
+  it("should render with repeats and values", async () => {
     const form = mkRepForm();
 
     form.values = {
@@ -88,6 +86,5 @@ describe("Form", () => {
     expect(html.includes('name="name_1"')).toBe(true);
     expect(html.includes("Fred")).toBe(true);
     expect(html.includes("George")).toBe(true);
-    done();
   });
 });

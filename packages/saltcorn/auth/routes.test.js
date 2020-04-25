@@ -14,39 +14,35 @@ const db = require("saltcorn-data/db");
 afterAll(db.close);
 
 describe("Public auth Endpoints", () => {
-  it("should show login", async done => {
+  it("should show login", async () => {
     const app = await getApp();
     await request(app)
       .get("/auth/login/")
       .expect(toSucceed());
-    done();
   });
 
-  it("should show signup", async done => {
+  it("should show signup", async () => {
     const app = await getApp();
     await request(app)
       .get("/auth/signup/")
       .expect(toSucceed());
-    done();
   });
 
-  it("should allow logout for unauth user", async done => {
+  it("should allow logout for unauth user", async () => {
     const app = await getApp();
     await request(app).get("/auth/logout/");
     expect(toRedirect("/"));
-    done();
   });
 });
 
 describe("login process", () => {
-  it("should say Login when not logged in", async done => {
+  it("should say Login when not logged in", async () => {
     const app = await getApp();
     await request(app).get("/");
     expect(toInclude("Login"));
-    done();
   });
 
-  it("should say Logout when logged in", async done => {
+  it("should say Logout when logged in", async () => {
     const app = await getApp();
     const loginCookie = await getStaffLoginCookie();
     await request(app)
@@ -54,24 +50,22 @@ describe("login process", () => {
       .set("Cookie", loginCookie);
 
     expect(toInclude("Logout"));
-    done();
   });
 });
 
 describe("signup process", () => {
-  it("should sign up", async done => {
+  it("should sign up", async () => {
     const app = await getApp();
     await request(app)
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
       .send("password=secret")
       .expect(toRedirect("/"));
-    done();
   });
 });
 
 describe("user admin", () => {
-  it("should list tables", async done => {
+  it("should list tables", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
@@ -79,18 +73,16 @@ describe("user admin", () => {
       .set("Cookie", loginCookie)
       .expect(toSucceed())
       .expect(toInclude("staff@foo.com"));
-    done();
   });
-  it("shows new user form", async done => {
+  it("shows new user form", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/new")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
-    done();
   });
-  it("creates new user", async done => {
+  it("creates new user", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     await request(app)
@@ -100,20 +92,18 @@ describe("user admin", () => {
       .send("role_id=3")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
-    done();
   });
 
-  it("can login with new user", async done => {
+  it("can login with new user", async () => {
     const app = await getApp();
     await request(app)
       .post("/auth/login/")
       .send("email=staff2@foo.com")
       .send("password=fidelio")
       .expect(toRedirect("/"));
-    done();
   });
 
-  it("shows edit user form", async done => {
+  it("shows edit user form", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
@@ -122,10 +112,9 @@ describe("user admin", () => {
       .get(`/useradmin/${user.id}`)
       .set("Cookie", loginCookie)
       .expect(toSucceed());
-    done();
   });
 
-  it("edits user", async done => {
+  it("edits user", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
@@ -138,10 +127,8 @@ describe("user admin", () => {
       .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
     expect(edituser.role_id).toBe(2);
-
-    done();
   });
-  it("deletes user", async done => {
+  it("deletes user", async () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
@@ -151,7 +138,5 @@ describe("user admin", () => {
       .expect(toRedirect("/useradmin"));
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
-
-    done();
   });
 });

@@ -14,6 +14,12 @@ describe("sqlsanitize", () => {
   it("should allow dots", () => {
     expect(sqlsanitize("ffoo.oo")).toBe("ffoo.oo");
   });
+  it("should allow numbers", () => {
+    expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
+  });
+  it("should not allow numbers in initial position", () => {
+    expect(sqlsanitize("1ffoo_o1o")).toBe("_1ffoo_o1o");
+  });
 });
 
 describe("mkWhere", () => {
@@ -32,31 +38,28 @@ describe("mkWhere", () => {
 });
 
 describe("where", () => {
-  it("should support in", async done => {
+  it("should support in", async () => {
     await Table.create("myothertable");
     const tf = await db.selectOne("tables", {
       name: { in: ["myothertable", "nosuchtable"] }
     });
 
     expect(tf.name).toStrictEqual("myothertable");
-    done();
   });
 
-  it("should support ilike", async done => {
+  it("should support ilike", async () => {
     const tf = await db.selectOne("tables", {
       name: { ilike: "yothertabl" }
     });
 
     expect(tf.name).toStrictEqual("myothertable");
-    done();
   });
 
-  it("should  count", async done => {
+  it("should  count", async () => {
     const tbls = await db.count("tables", {
       name: { ilike: "yothertabl" }
     });
 
     expect(tbls).toStrictEqual(1);
-    done();
   });
 });
