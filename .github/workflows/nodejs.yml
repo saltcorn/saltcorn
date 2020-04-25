@@ -46,7 +46,7 @@ jobs:
         PGHOST: postgres
         PGUSER: postgres
         PGPASSWORD: postgres
-    - run: packages/saltcorn-cli/bin/saltcorn run-tests core
+    - run: packages/saltcorn-cli/bin/saltcorn run-tests
       env:
         CI: true
         PGHOST: postgres
