@@ -48,36 +48,41 @@ const genRandom = input => {
   }
 };
 
+const genRandomSelect = input => {
+  const options=input.children.map((e)=>e.attribs.value)
+  return oneOf(options)
+};
+
 const submit_form = async (form, state) => {
   const action = form.attr("action");
   const method = (form.attr("method") || "post").toLowerCase();
   //console.log({ form });
+  var body = {};
 
   const inputs = form.find("input").toArray();
-  //console.log({ inputs });
-  var body = {};
+  for (const input of inputs) {
+    body[input.attribs.name] = genRandom(input);
+  }
+  const selects = form.find("select").toArray();
+  for (const select of selects) {
+    body[select.attribs.name] = genRandomSelect(select);
+  }
 
   if (method === "post") {
     var req = state
       .req()
       .post(action)
       .set("Cookie", state.cookie);
-    for (const input of inputs) {
+    for (const [k,v] of Object.entries(body)) {
       const oldreq = req;
-      const val = genRandom(input);
-      req = oldreq.send(`${input.attribs.name}=${val}`);
-      body[input.attribs.name] = val;
+      req = oldreq.send(`${k}=${v}`);
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
     return await processResponse(res, url, state);
   } else if (method === "get") {
-    var url = action + "?";
-    for (const input of inputs) {
-      const val = genRandom(input);
-      url += `${input.attribs.name}=${val}&`;
-    }
-
+    const url = action + "?"+Object.entries(body).map(([k,v])=>`${k}=${v}`).join('&');
+    
     state.add_log({ getForm: url});
     const res = await state
       .req()
