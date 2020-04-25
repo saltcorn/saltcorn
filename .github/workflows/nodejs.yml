@@ -13,7 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    container: node:10.18-jessie
+    container: ubuntu:latest
     services:
       # Label used to access the service container
       postgres:
@@ -36,6 +36,18 @@ jobs:
         node-version: '12.x'
     - run: npm install -g lerna
     - run: lerna bootstrap
+    - run: createdb saltcorn
+      env:
+        CI: true
+        PGHOST: postgres
+        PGUSER: postgres
+        PGPASSWORD: postgres
+    - run: createdb saltcorn_test
+      env:
+        CI: true
+        PGHOST: postgres
+        PGUSER: postgres
+        PGPASSWORD: postgres
     - run: packages/saltcorn-cli/bin/saltcorn run-tests core
       env:
         CI: true
