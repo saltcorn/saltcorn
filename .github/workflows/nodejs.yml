@@ -5,13 +5,12 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     container: ubuntu:latest
     services:
@@ -29,28 +28,28 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: '12.x'
-    - name: Install postgres libraries
-      run: |
-        apt-get update
-        apt-get install -y postgresql-client libpq-dev
-    - run: npm install -g lerna
-    - run: lerna bootstrap
-    - run: createdb saltcorn && createdb saltcorn_test
-      env:
-        CI: true
-        PGHOST: postgres
-        PGUSER: postgres
-        PGPASSWORD: postgres
-    - run: packages/saltcorn-cli/bin/saltcorn run-tests
-      env:
-        CI: true
-        PGHOST: postgres
-        PGUSER: postgres
-        PGPASSWORD: postgres
-
-          # The default PostgreSQL port
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Install postgres libraries
+        run: |
+          apt-get update
+          apt-get install -y postgresql-client libpq-dev
+      - run: npm install -g lerna
+      - run: lerna bootstrap
+      - run: createdb saltcorn && createdb saltcorn_test
+        env:
+          CI: true
+          PGHOST: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+      - run: packages/saltcorn-cli/bin/saltcorn run-tests
+        env:
+          CI: true
+          PGHOST: postgres
+          PGUSER: postgres
+          PGPASSWORD:
+            postgres
+            # The default PostgreSQL port

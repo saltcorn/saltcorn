@@ -11,7 +11,8 @@
     "connect-pg-simple": "^6.1.0",
     "bcrypt": "^3.0.8",
     "pg": "^7.18.2",
-    "contractis": "^0.0.1"
+    "contractis": "^0.0.1",
+    "moment": "^2.24.0"
   },
   "devDependencies": {
     "jest": "^25.1.0",
