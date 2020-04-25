@@ -27,7 +27,7 @@ const pluginForm = plugin => {
     submitLabel: plugin ? "Save" : "Create"
   });
   if (plugin) {
-    form.hidden("id");
+    if (plugin.id) form.hidden("id");
     form.values = plugin;
   }
   return form;
@@ -70,15 +70,21 @@ router.get("/:id/", isAdmin, async (req, res) => {
 
 router.post("/", isAdmin, async (req, res) => {
   const { id, ...v } = req.body;
-  if (typeof id === "undefined") {
-    // insert
-    await db.insert("plugins", v);
-    req.flash("success", "Plugin created");
-  } else {
-    await db.update("plugins", v, id);
+  try {
+    await load_plugins.loadPlugin(v);
+    if (typeof id === "undefined") {
+      // insert
+      await db.insert("plugins", v);
+      req.flash("success", "Plugin created");
+    } else {
+      await db.update("plugins", v, id);
+    }
+    res.redirect(`/plugins`);
+  } catch (e) {
+    req.flash("error", `${e}`);
+    const form = pluginForm(req.body);
+    res.sendWrap(`Edit Plugin`, renderForm(form));
   }
-  await load_plugins.loadPlugin(v);
-  res.redirect(`/plugins`);
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
