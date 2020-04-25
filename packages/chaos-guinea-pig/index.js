@@ -15,7 +15,7 @@ const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
   const state = new CrawlState({ app, ...options });
-  await get_link(startAt, state);
+  return await get_link(startAt, state);
 };
 
 const isLocalURL = url =>
@@ -32,7 +32,7 @@ const get_link = async (url, state) => {
     .set("Accept", "text/html");
   expect(toSucceed(state));
   //console.log(res.text);
-  await process(res, url, state);
+  return await process(res, url, state);
 };
 
 const genRandom = input => {
@@ -69,7 +69,7 @@ const submit_form = async (form, state) => {
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
-    await process(res, url, state);
+    return await process(res, url, state);
   } else if (method === "get") {
     var url = action + "?";
     for (const input of inputs) {
@@ -84,7 +84,7 @@ const submit_form = async (form, state) => {
       .get(url)
       .set("Cookie", state.cookie)
       .expect(toSucceed(state));
-    await process(res, url, state);
+    return await process(res, url, state);
   }
 };
 
@@ -115,7 +115,7 @@ const process = async (res, url, state) => {
 
     if (local_links.length > 0)
       return await get_link(rndElem(local_links).attr("href"), state.decr());
-  }
+  } else return state;
 };
 
 module.exports = run;
