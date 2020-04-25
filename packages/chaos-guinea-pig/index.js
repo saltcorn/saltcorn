@@ -72,11 +72,11 @@ const submit_form = async (form, state) => {
 
   const inputs = form.find("input").toArray();
   for (const input of inputs) {
-    body[input.attribs.name] = genRandom(input);
+    body[input.attribs.name] = encodeURIComponent(genRandom(input));
   }
   const selects = form.find("select").toArray();
   for (const select of selects) {
-    body[select.attribs.name] = genRandomSelect(select);
+    body[select.attribs.name] = encodeURIComponent(genRandomSelect(select));
   }
 
   if (method === "post") {
