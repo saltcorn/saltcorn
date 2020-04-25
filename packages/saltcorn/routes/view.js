@@ -15,7 +15,7 @@ router.get("/:viewname", async (req, res) => {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
-    const resp = await view.run(req.query);
+    const resp = await view.run(req.query, { res, req });
     const state_form = await view.get_state_form(req.query);
 
     res.sendWrap(
@@ -33,6 +33,6 @@ router.post("/:viewname", async (req, res) => {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
-    await view.runPost(req.query, req.body, res);
+    await view.runPost(req.query, req.body, { res, req });
   }
 });

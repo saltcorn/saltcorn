@@ -52,7 +52,12 @@ const getApp = async () => {
         loginAttempt();
         async function loginAttempt() {
           const mu = await User.authenticate({ email, password });
-          if (mu) return done(null, { email: mu.email, role_id: mu.role_id });
+          if (mu)
+            return done(null, {
+              email: mu.email,
+              id: mu.id,
+              role_id: mu.role_id
+            });
           else {
             return done(
               null,

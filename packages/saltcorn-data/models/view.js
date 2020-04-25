@@ -115,24 +115,24 @@ class View {
     await db.deleteWhere("views", where);
     await require("../db/state").refresh();
   }
-  async run(query, ...extraArgs) {
+  async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,
       this.name,
       this.configuration,
       removeEmptyStrings(query),
-      ...extraArgs
+      extraArgs
     );
   }
 
-  async runPost(query, body, res) {
+  async runPost(query, body, extraArgs) {
     return await this.viewtemplateObj.runPost(
       this.table_id,
       this.name,
       this.configuration,
       removeEmptyStrings(query),
       removeEmptyStrings(body),
-      res
+      extraArgs
     );
   }
   async get_state_form(query) {

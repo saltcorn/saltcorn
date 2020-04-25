@@ -126,17 +126,19 @@ const run = async (
   table_id,
   viewname,
   { list_view, show_view, subtables },
-  state
+  state,
+  extraArgs
 ) => {
   const lview = await View.findOne({ name: list_view });
   const lresp = await lview.run(state, {
+    ...extraArgs,
     onRowSelect: v => `select_id(${v.id})`
   });
 
   var sresp = "";
   if (show_view) {
     const sview = await View.findOne({ name: show_view });
-    sresp = await sview.run(state);
+    sresp = await sview.run(state, extraArgs);
   }
   var reltbls = {};
   var myrow;
@@ -149,7 +151,7 @@ const run = async (
           case "ChildList":
             const [vname, reltblnm, relfld] = rel.split(".");
             const subview = await View.findOne({ name: vname });
-            const subresp = await subview.run({ [relfld]: id });
+            const subresp = await subview.run({ [relfld]: id }, extraArgs);
 
             const tab_name = reltblnm;
             reltbls[tab_name] = subresp;
@@ -161,7 +163,10 @@ const run = async (
               const mytable = await Table.findOne({ id: table_id });
               myrow = await mytable.getRow({ id });
             }
-            const psubresp = await psubview.run({ id: myrow[prelfld] });
+            const psubresp = await psubview.run(
+              { id: myrow[prelfld] },
+              extraArgs
+            );
 
             const ptab_name = prelfld;
             reltbls[ptab_name] = psubresp;
