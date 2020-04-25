@@ -72,11 +72,11 @@ const submit_form = async (form, state) => {
 
   const inputs = form.find("input").toArray();
   for (const input of inputs) {
-    body[input.attribs.name] = encodeURIComponent(genRandom(input));
+    body[input.attribs.name] = genRandom(input);
   }
   const selects = form.find("select").toArray();
   for (const select of selects) {
-    body[select.attribs.name] = encodeURIComponent(genRandomSelect(select));
+    body[select.attribs.name] = genRandomSelect(select);
   }
 
   if (method === "post") {
@@ -86,7 +86,7 @@ const submit_form = async (form, state) => {
       .set("Cookie", state.cookie);
     for (const [k, v] of Object.entries(body)) {
       const oldreq = req;
-      if (typeof v !== "undefined") req = oldreq.send(`${k}=${v}`);
+      if (typeof v !== "undefined") req = oldreq.send(`${k}=${encodeURIComponent(v)}`);
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
@@ -96,7 +96,7 @@ const submit_form = async (form, state) => {
       action +
       "?" +
       Object.entries(body)
-        .map(([k, v]) => `${k}=${v}`)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
         .join("&");
 
     state.add_log({ getForm: url });
