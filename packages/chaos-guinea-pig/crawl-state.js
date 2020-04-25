@@ -1,9 +1,15 @@
+const request = require("supertest");
+
 class CrawlState {
   constructor(o) {
     this.cookie = o.cookie || "";
     this.stop_form_actions = o.stop_form_actions || [];
     this.steps_left = o.steps || 20;
     this.log = [];
+    this.app = o.app;
+  }
+  req() {
+    return request(this.app);
   }
   add_log(l) {
     this.log.push(l);

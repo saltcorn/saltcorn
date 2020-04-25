@@ -13,6 +13,8 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
+jest.setTimeout(20000);
+
 describe("app", () => {
   it("obeys the chaos guinea pig", async done => {
     const app = await getApp();
@@ -28,7 +30,7 @@ describe("app", () => {
     const loginCookie = await getAdminLoginCookie();
 
     await chaos_guinea_pig(app, {
-      steps: 100,
+      steps: 300,
       cookie: loginCookie,
       stop_form_actions: ["delete"]
     });
