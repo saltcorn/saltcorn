@@ -2,9 +2,10 @@ const request = require("supertest");
 const cheerio = require("cheerio");
 const CrawlState = require("./crawl-state");
 
-const toSucceed = res => {
+const toSucceed = state => res => {
   if (res.statusCode >= 400) {
     console.log(res.text);
+    console.log(state.log.slice(Math.max(state.log.length - 3, 0)));
     throw new Error(`Received ${res.statusCode}`);
   }
 };
@@ -23,11 +24,12 @@ const isLocalURL = url =>
   new URL(url, "http://my.local/").origin === "http://my.local";
 
 const get_link = async (app, url, state) => {
+  state.add_log({ get: url });
   const res = await request(app)
     .get(url)
     .set("Cookie", state.cookie)
     .set("Accept", "text/html");
-  expect(toSucceed);
+  expect(toSucceed(state));
   //console.log(res.text);
   await process(res, app, url, state);
 };
@@ -43,25 +45,34 @@ const submit_form = async (app, form, state) => {
 
   const inputs = form.find("input").toArray();
   //console.log({ inputs });
+  var body = {};
+
   if (method === "post") {
     var req = request(app)
       .post(action)
       .set("Cookie", state.cookie);
     for (const input of inputs) {
       const oldreq = req;
-      req = oldreq.send(`${input.attribs.name}=${genRandom(input)}`);
+      const val = genRandom(input);
+      req = oldreq.send(`${input.attribs.name}=${val}`);
+      body[input.attribs.name] = val;
     }
-    const res = await req.expect(toSucceed);
+    state.add_log({ post: action, body });
+    const res = await req.expect(toSucceed(state));
     await process(res, app, url, state);
   } else if (method === "get") {
     var url = action + "?";
     for (const input of inputs) {
-      url += `${input.attribs.name}=${genRandom(input)}`;
+      const val = genRandom(input);
+      url += `${input.attribs.name}=${val}`;
+      body[input.attribs.name] = val;
     }
+
+    state.add_log({ getForm: action, query: body });
     const res = await request(app)
-      .get(action)
+      .get(url)
       .set("Cookie", state.cookie)
-      .expect(toSucceed);
+      .expect(toSucceed(state));
     await process(res, app, url, state);
   }
 };

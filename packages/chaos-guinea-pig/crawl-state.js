@@ -3,6 +3,10 @@ class CrawlState {
     this.cookie = o.cookie || "";
     this.stop_form_actions = o.stop_form_actions || [];
     this.steps_left = o.steps || 20;
+    this.log = [];
+  }
+  add_log(l) {
+    this.log.push(l);
   }
   check_form_action(action) {
     return !this.stop_form_actions.some(sfa => action.includes(sfa));
