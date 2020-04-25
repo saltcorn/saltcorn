@@ -1,5 +1,5 @@
 const getApp = require("saltcorn/app");
-const {chaos_guinea_pig} = require("chaos-guinea-pig");
+const {chaos_guinea_pig, set_seed} = require("chaos-guinea-pig");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -15,8 +15,10 @@ afterAll(db.close);
 
 jest.setTimeout(20000);
 
+const seed = set_seed();
+
 describe("app", () => {
-  it("obeys the chaos guinea pig", async done => {
+  it("obeys the chaos guinea pig with seed "+seed, async done => {
     const app = await getApp();
     await chaos_guinea_pig(app);
     //expect(2).toBe(1);
@@ -25,7 +27,7 @@ describe("app", () => {
 });
 
 describe("app", () => {
-  it("obeys the chaos guinea pig when logged in", async done => {
+  it("obeys the chaos guinea pig when logged in with seed "+seed, async done => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
 

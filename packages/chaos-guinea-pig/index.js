@@ -1,6 +1,6 @@
-const request = require("supertest");
 const cheerio = require("cheerio");
 const CrawlState = require("./crawl-state");
+const seedrandom = require('seedrandom');
 
 const toSucceed = state => res => {
   if (res.statusCode >= 400) {
@@ -32,7 +32,7 @@ const get_link = async (url, state) => {
     .set("Accept", "text/html");
   expect(toSucceed(state));
   //console.log(res.text);
-  return await process(res, url, state);
+  return await processResponse(res, url, state);
 };
 
 const genRandom = input => {
@@ -69,7 +69,7 @@ const submit_form = async (form, state) => {
     }
     state.add_log({ post: action, body });
     const res = await req.expect(toSucceed(state));
-    return await process(res, url, state);
+    return await processResponse(res, url, state);
   } else if (method === "get") {
     var url = action + "?";
     for (const input of inputs) {
@@ -84,7 +84,7 @@ const submit_form = async (form, state) => {
       .get(url)
       .set("Cookie", state.cookie)
       .expect(toSucceed(state));
-    return await process(res, url, state);
+    return await processResponse(res, url, state);
   }
 };
 
@@ -93,7 +93,7 @@ const rndElem = selection => {
   return selection.eq(random);
 };
 
-const process = async (res, url, state) => {
+const processResponse = async (res, url, state) => {
   if (res.status === 302) {
     return await get_link(res.headers.location, state);
   }
@@ -118,4 +118,15 @@ const process = async (res, url, state) => {
   } else return state;
 };
 
-module.exports = {chaos_guinea_pig: run};
+const get_rnd_seed=()=>
+  `${Math.round(Math.random()*10000)}`
+
+
+const set_seed=()=> {
+  const seed=process.env.JS_TEST_SEED||get_rnd_seed()
+  seedrandom(seed, { global: true });
+  return seed;
+}
+
+
+module.exports = {chaos_guinea_pig: run, set_seed};
