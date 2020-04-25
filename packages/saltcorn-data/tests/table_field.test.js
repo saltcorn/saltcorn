@@ -149,6 +149,16 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
     expect(michaels[1].author).toBe("Leo Tolstoy");
   });
+
+  it("should support full text search", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    const fields=await table.getFields();
+    const rows = await db.select("patients", {
+      _fts: {fields, searchTerm: "Douglas"}
+    });
+
+    expect(rows.length).toBe(2);
+  });
 });
 
 describe("Field", () => {
