@@ -67,14 +67,13 @@ const getAdminLoginCookie = async () => {
 };
 
 const itShouldRedirectUnauthToLogin = path => {
-  it(`should redirect unauth ${path} to login`, async done => {
+  it(`should redirect unauth ${path} to login`, async () => {
     const app = await getApp();
     const res = await request(app)
       .get(path)
       .expect("Location", "/auth/login");
 
     expect(res.statusCode).toEqual(302);
-    done();
   });
 };
 

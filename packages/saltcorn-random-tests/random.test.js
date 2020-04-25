@@ -18,28 +18,25 @@ jest.setTimeout(100000);
 const seed = set_seed();
 
 describe("app", () => {
-  it("obeys the chaos guinea pig with seed " + seed, async done => {
+  it("obeys the chaos guinea pig with seed " + seed, async () => {
     const app = await getApp();
     await chaos_guinea_pig(app);
-    //expect(2).toBe(1);
-    done();
   });
 });
 
 describe("app", () => {
   it(
     "obeys the chaos guinea pig when logged in with seed " + seed,
-    async done => {
+    async () => {
       const app = await getApp();
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {
-        steps: 2500,
+        steps: 200,
         cookie: loginCookie,
         stop_form_actions: ["delete"]
       });
       //console.log(st.log);
-      done();
     }
   );
 });

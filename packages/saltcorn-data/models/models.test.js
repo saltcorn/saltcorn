@@ -7,13 +7,12 @@ const View = require("./view");
 afterAll(db.close);
 
 describe("Table create", () => {
-  it("should create", async done => {
+  it("should create", async () => {
     expect.assertions(1);
     const tc = await Table.create("mytable");
     const tf = await Table.findOne({ id: tc.id });
 
     expect(tf.name).toStrictEqual("mytable");
-    done();
   });
 });
 

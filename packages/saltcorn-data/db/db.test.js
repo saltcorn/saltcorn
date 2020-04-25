@@ -38,31 +38,28 @@ describe("mkWhere", () => {
 });
 
 describe("where", () => {
-  it("should support in", async done => {
+  it("should support in", async () => {
     await Table.create("myothertable");
     const tf = await db.selectOne("tables", {
       name: { in: ["myothertable", "nosuchtable"] }
     });
 
     expect(tf.name).toStrictEqual("myothertable");
-    done();
   });
 
-  it("should support ilike", async done => {
+  it("should support ilike", async () => {
     const tf = await db.selectOne("tables", {
       name: { ilike: "yothertabl" }
     });
 
     expect(tf.name).toStrictEqual("myothertable");
-    done();
   });
 
-  it("should  count", async done => {
+  it("should  count", async () => {
     const tbls = await db.count("tables", {
       name: { ilike: "yothertabl" }
     });
 
     expect(tbls).toStrictEqual(1);
-    done();
   });
 });

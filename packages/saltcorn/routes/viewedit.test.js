@@ -15,44 +15,41 @@ afterAll(db.close);
 describe("viewedit list endpoint", () => {
   itShouldRedirectUnauthToLogin("/viewedit/list");
 
-  it("show list of views", async done => {
+  it("show list of views", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .get("/viewedit/list")
       .set("Cookie", loginCookie)
       .expect(toInclude("authorlist"));
-    done();
   });
 });
 
 describe("viewedit edit endpoint", () => {
   itShouldRedirectUnauthToLogin("/viewedit/edit/authorlist");
 
-  it("show list of views", async done => {
+  it("show list of views", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .get("/viewedit/edit/authorlist")
       .set("Cookie", loginCookie)
       .expect(toInclude("author"));
-    done();
   });
 });
 
 describe("viewedit new List", () => {
   itShouldRedirectUnauthToLogin("/viewedit/new");
 
-  it("show new view", async done => {
+  it("show new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .get("/viewedit/new")
       .set("Cookie", loginCookie)
       .expect(toInclude("Template"));
-    done();
   });
-  it("submit new view", async done => {
+  it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp();
@@ -64,9 +61,8 @@ describe("viewedit new List", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybooklist"));
     //expect(res.text.includes("View configuration")).toBe(true);
-    done();
   });
-  it("save new view", async done => {
+  it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -84,9 +80,8 @@ describe("viewedit new List", () => {
       .send("field_name_1=pages")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
-  it("should show new view", async done => {
+  it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
     const app = await getApp();
@@ -95,23 +90,20 @@ describe("viewedit new List", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Tolstoy"))
       .expect(toNotInclude("Kirk"));
-
-    done();
   });
 
-  it("delete new view", async done => {
+  it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybooklist")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
 });
 
 describe("viewedit new List with one field", () => {
-  it("submit new view", async done => {
+  it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp();
@@ -123,9 +115,8 @@ describe("viewedit new List with one field", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybooklist1"));
     //expect(res.text.includes("View configuration")).toBe(true);
-    done();
   });
-  it("save new view", async done => {
+  it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -141,9 +132,8 @@ describe("viewedit new List with one field", () => {
       .send("field_name_0=author")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
-  it("should show new view", async done => {
+  it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
     const app = await getApp();
@@ -152,23 +142,20 @@ describe("viewedit new List with one field", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Tolstoy"))
       .expect(toNotInclude("Kirk"));
-
-    done();
   });
 
-  it("delete new view", async done => {
+  it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybooklist1")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
 });
 
 describe("viewedit new Show", () => {
-  it("submit new view", async done => {
+  it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp();
@@ -180,9 +167,8 @@ describe("viewedit new Show", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybook"));
     //expect(res.text.includes("View configuration")).toBe(true);
-    done();
   });
-  it("save new view", async done => {
+  it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -199,9 +185,8 @@ describe("viewedit new Show", () => {
       .send("label_style=Besides")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
-  it("should show new view", async done => {
+  it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
     const app = await getApp();
@@ -209,17 +194,14 @@ describe("viewedit new Show", () => {
       .get("/view/mybook?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("Melville"));
-
-    done();
   });
 
-  it("delete new view", async done => {
+  it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
       .post("/viewedit/delete/mybook")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
-    done();
   });
 });
