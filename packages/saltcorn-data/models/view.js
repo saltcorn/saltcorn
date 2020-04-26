@@ -124,7 +124,15 @@ class View {
       extraArgs
     );
   }
-
+  async runMany(query, extraArgs) {
+    return await this.viewtemplateObj.runMany(
+      this.table_id,
+      this.name,
+      this.configuration,
+      query,
+      extraArgs
+    );
+  }
   async runPost(query, body, extraArgs) {
     return await this.viewtemplateObj.runPost(
       this.table_id,

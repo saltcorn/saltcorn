@@ -4,7 +4,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4 } = require("saltcorn-markup/tags");
+const { text, div, h4,hr } = require("saltcorn-markup/tags");
 const { renderForm, tabs } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
 
@@ -63,8 +63,8 @@ const run = async (
   extraArgs
 ) => {
   const sview = await View.findOne({ name: show_view });
-  const sresp = await sview.run(state, extraArgs);
-  return sresp
+  const sresp = await sview.runMany(state, extraArgs);
+  return sresp.map(r=>div(r.html)+hr())
   
 };
 
