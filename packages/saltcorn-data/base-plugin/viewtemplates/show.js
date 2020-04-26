@@ -68,8 +68,6 @@ const run = async (table_id, viewname, { columns, label_style }, { id }) => {
 };
 
 const runMany = async (table_id, viewname, { columns, label_style }, filter) => {
-  if (typeof id === "undefined") return "No record selected";
-
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
