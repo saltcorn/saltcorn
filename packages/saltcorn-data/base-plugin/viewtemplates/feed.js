@@ -17,7 +17,7 @@ const configuration_workflow = () =>
         form: async context => {
           const show_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewrow }) =>
+            ({ state_fields, viewtemplate, viewrow }) =>
               viewtemplate.runMany &&
               viewrow.name !== context.viewname &&
               state_fields.some(sf => sf.name === "id")

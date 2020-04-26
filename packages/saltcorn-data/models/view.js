@@ -67,7 +67,7 @@ class View {
           })
         )
           link_view_opts.push(viewrow);
-      } catch {}
+      } catch(e) {console.log("error", viewrow,e)}
     }
     return link_view_opts;
   }
