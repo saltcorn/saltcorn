@@ -38,6 +38,32 @@ const configuration_workflow = () =>
             ]
           });
         }
+      },
+      {
+        name: "order",
+        form: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          return new Form({
+            fields: [
+              {
+                name: "order_field",
+                label: "Order by",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: fields.map(f => f.name).join()
+                }
+              },
+              {
+                name: "descending",
+                label: "Descending",
+                type: "Bool",
+                required: true
+              }
+            ]
+          });
+        }
       }
     ]
   });
@@ -54,12 +80,16 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 const run = async (
   table_id,
   viewname,
-  { list_view, show_view, subtables },
+  { show_view, order_field, descending },
   state,
   extraArgs
 ) => {
   const sview = await View.findOne({ name: show_view });
-  const sresp = await sview.runMany(state, extraArgs);
+  const sresp = await sview.runMany(state, {
+    ...extraArgs,
+    orderBy: order_field,
+    ...(descending && { orderDesc: true })
+  });
   return sresp.map(r => div(r.html) + hr());
 };
 
