@@ -38,6 +38,35 @@ const configuration_workflow = () =>
             ]
           });
         }
+      },
+      {
+        name: "order",
+        form: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields=await table.getFields()
+          return new Form({
+            fields: [
+              {
+                name: "order_field",
+                label: "Order by",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: fields.map(f=>f.name).join()
+                }
+              },
+              {
+                name: "direction",
+                label: "Direction",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: "Ascending,Descending"
+                }
+              }
+            ]
+          });
+        }
       }
     ]
   });
