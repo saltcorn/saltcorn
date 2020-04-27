@@ -1,4 +1,6 @@
 const View = require("./models/view");
+const Field = require("./models/field");
+const Table = require("./models/table");
 const State = require("./db/state");
 
 const calcfldViewOptions = fields => {
@@ -140,6 +142,21 @@ const field_picker_fields = async ({ table }) => {
   ];
 };
 
+const get_child_views = async (table, viewname) => {
+  const rels = await Field.find({ reftable_name: table.name });
+  var child_views = [];
+  for (const rel of rels) {
+    const reltbl = await Table.findOne({ id: rel.table_id });
+    const views = await View.find_table_views_where(
+      rel.table_id,
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.every(sf => !sf.required)
+    );
+    child_views.push({ rel, reltbl, views });
+  }
+  return child_views;
+};
+
 const picked_fields_to_query = columns => {
   var joinFields = {};
   var aggregations = {};
@@ -164,4 +181,8 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
-module.exports = { field_picker_fields, picked_fields_to_query };
+module.exports = {
+  field_picker_fields,
+  picked_fields_to_query,
+  get_child_views
+};

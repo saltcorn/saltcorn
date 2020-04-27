@@ -4,7 +4,10 @@ const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("../../models/workflow");
-const { get_viewable_fields, stateFieldsToWhere } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  stateFieldsToWhere
+} = require("./viewable_fields");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
@@ -64,7 +67,7 @@ const run = async (table_id, viewname, { columns, label_style }, { id }) => {
     limit: 1
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
-  return render(row, tfields, label_style)
+  return render(row, tfields, label_style);
 };
 
 const runMany = async (table_id, viewname, { columns, label_style }, state) => {
@@ -72,20 +75,20 @@ const runMany = async (table_id, viewname, { columns, label_style }, state) => {
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const qstate = await stateFieldsToWhere({ fields, state });
-  
+
   const rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
-  return rows.map(row=>({
+  return rows.map(row => ({
     html: render(row, tfields, label_style),
     row
-  }))
+  }));
 };
 
-const render = (row, tfields, label_style)=>{
+const render = (row, tfields, label_style) => {
   if (label_style === "Besides") {
     const trows = tfields.map(f =>
       tr(
@@ -108,12 +111,13 @@ const render = (row, tfields, label_style)=>{
     );
     return div(trows);
   }
-}
+};
 
 module.exports = {
   name: "Show",
   get_state_fields,
   configuration_workflow,
-  run, runMany,
+  run,
+  runMany,
   display_state_form: false
 };
