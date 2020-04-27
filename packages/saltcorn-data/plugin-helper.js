@@ -28,6 +28,18 @@ const get_link_view_opts = async (table, viewname) => {
       });
     }
   }
+  /*
+  doesnt work for now because related fields have been replaced by the summary field in the row
+
+  const parent_views = await get_parent_views(table, viewname);
+  for (const { relation, related_table, views } of parent_views) {
+    for (const view of views) {
+      link_view_opts.push({
+        name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
+        label: `${view.name} of ${relation.name} on ${related_table.name}`
+      });
+    }
+  }*/
   return link_view_opts;
 };
 const field_picker_fields = async ({ table, viewname }) => {
@@ -177,7 +189,9 @@ const get_child_views = async (table, viewname) => {
 
 const get_parent_views = async (table, viewname) => {
   var parent_views = [];
-  const parentrels = (await table.getFields()).filter(f => f.is_fkey);
+  const parentrels = (await table.getFields()).filter(
+    f => f.is_fkey && f.reftable_name !== "users"
+  );
   for (const relation of parentrels) {
     const related_table = await Table.findOne({
       name: relation.reftable_name
