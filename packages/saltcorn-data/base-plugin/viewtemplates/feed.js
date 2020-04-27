@@ -73,5 +73,5 @@ module.exports = {
   configuration_workflow,
   run,
   get_state_fields,
-  display_state_form: true
+  display_state_form: false
 };
