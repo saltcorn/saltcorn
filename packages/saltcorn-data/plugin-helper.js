@@ -157,6 +157,24 @@ const get_child_views = async (table, viewname) => {
   return child_views;
 };
 
+const get_parent_views = async (table, viewname) => {
+  var parent_views = [];
+  const parentrels = (await table.getFields()).filter(f => f.is_fkey);
+  for (const parentrel of parentrels) {
+    const partable = await Table.findOne({
+      name: parentrel.reftable_name
+    });
+    const views = await View.find_table_views_where(
+      partable.id,
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.some(sf => sf.name === "id")
+    );
+
+    parent_views.push({ parentrel, partable, views });
+  }
+  return parent_views;
+};
+
 const picked_fields_to_query = columns => {
   var joinFields = {};
   var aggregations = {};
@@ -184,5 +202,6 @@ const picked_fields_to_query = columns => {
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
-  get_child_views
+  get_child_views,
+  get_parent_views
 };

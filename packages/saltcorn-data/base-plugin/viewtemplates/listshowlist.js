@@ -7,7 +7,7 @@ const Workflow = require("../../models/workflow");
 const { text, div, h4 } = require("saltcorn-markup/tags");
 const { renderForm, tabs } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
-const { get_child_views } = require("../../plugin-helper");
+const { get_child_views, get_parent_views } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -61,8 +61,7 @@ const configuration_workflow = () =>
         form: async context => {
           const tbl = await Table.findOne({ id: context.table_id });
           var fields = [];
-          const child_views = await get_child_views(tbl);
-          console.log({ child_views });
+          const child_views = await get_child_views(tbl, context.viewname);
           for (const { rel, reltbl, views } of child_views) {
             for (const view of views) {
               fields.push({
@@ -72,18 +71,9 @@ const configuration_workflow = () =>
               });
             }
           }
-          const parentrels = (await tbl.getFields()).filter(f => f.is_fkey);
-          for (const parentrel of parentrels) {
-            const partable = await Table.findOne({
-              name: parentrel.reftable_name
-            });
-            const parent_show_views = await View.find_table_views_where(
-              partable.id,
-              ({ state_fields, viewrow }) =>
-                viewrow.name !== context.viewname &&
-                state_fields.some(sf => sf.name === "id")
-            );
-            for (const view of parent_show_views) {
+          const parent_views = await get_parent_views(tbl, context.viewname);
+          for (const { parentrel, partable, views } of parent_views) {
+            for (const view of views) {
               fields.push({
                 name: `ParentShow:${view.name}.${partable.name}.${parentrel.name}`,
                 label: `${view.name} of ${parentrel.name} on ${partable.name}`,
