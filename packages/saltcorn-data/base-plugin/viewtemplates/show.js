@@ -73,16 +73,23 @@ const run = async (table_id, viewname, { columns, label_style }, { id }) => {
   return render(row, tfields, label_style);
 };
 
-const runMany = async (table_id, viewname, { columns, label_style }, state) => {
+const runMany = async (
+  table_id,
+  viewname,
+  { columns, label_style },
+  state,
+  extra
+) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
   const qstate = await stateFieldsToWhere({ fields, state });
-
   const rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
-    aggregations
+    aggregations,
+    ...(extra.orderBy && { orderBy: extra.orderBy }),
+    ...(extra.orderDesc && { orderDesc: extra.orderDesc })
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
   return rows.map(row => ({
