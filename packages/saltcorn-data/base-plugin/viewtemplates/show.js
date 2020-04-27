@@ -22,7 +22,10 @@ const configuration_workflow = () =>
         name: "showfields",
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
-          const field_picker_repeat = await field_picker_fields({ table });
+          const field_picker_repeat = await field_picker_fields({
+            table,
+            viewname: context.viewname
+          });
           return new Form({
             blurb:
               "Finalise your show view by specifying the fields in the table",

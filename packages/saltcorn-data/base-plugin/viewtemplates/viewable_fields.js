@@ -27,7 +27,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
             key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
           };
         default:
-          throw new Error(column.view)
+          throw new Error(column.view);
       }
     } else if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");

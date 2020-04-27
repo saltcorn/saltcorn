@@ -13,18 +13,24 @@ const calcfldViewOptions = fields => {
   return fvs;
 };
 
-const field_picker_fields = async ({ table }) => {
-  const fields = await table.getFields();
-  const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
-  const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
-  const fldOptions = fields.map(f => f.name);
-  const fldViewOptions = calcfldViewOptions(fields);
+const get_link_view_opts = async table => {
   const own_link_views = await View.find_possible_links_to_table(table.id);
   const own_link_view_opts = own_link_views.map(v => ({
     label: v.name,
     name: `Own:${v.name}`
   }));
-  const link_view_opts = [...own_link_view_opts];
+
+  return [...own_link_view_opts];
+};
+const field_picker_fields = async ({ table, viewname }) => {
+  const fields = await table.getFields();
+  const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
+  const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
+  const fldOptions = fields.map(f => f.name);
+  const fldViewOptions = calcfldViewOptions(fields);
+
+  const link_view_opts = await get_link_view_opts(table);
+
   const { parent_field_list } = await table.get_parent_relations();
   const {
     child_field_list,

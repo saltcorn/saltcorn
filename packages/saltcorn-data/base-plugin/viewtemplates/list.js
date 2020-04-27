@@ -21,7 +21,10 @@ const configuration_workflow = () =>
         name: "listfields",
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
-          const field_picker_repeat = await field_picker_fields({ table });
+          const field_picker_repeat = await field_picker_fields({
+            table,
+            viewname: context.viewname
+          });
           const create_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewrow }) =>
