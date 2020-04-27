@@ -13,14 +13,22 @@ const calcfldViewOptions = fields => {
   return fvs;
 };
 
-const get_link_view_opts = async table => {
+const get_link_view_opts = async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table.id);
-  const own_link_view_opts = own_link_views.map(v => ({
+  const link_view_opts = own_link_views.map(v => ({
     label: v.name,
     name: `Own:${v.name}`
   }));
-
-  return [...own_link_view_opts];
+  const child_views = await get_child_views(table, viewname);
+  for (const { relation, related_table, views } of child_views) {
+    for (const view of views) {
+      link_view_opts.push({
+        name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+        label: `${view.name} of ${relation.label} on ${related_table.name}`
+      });
+    }
+  }
+  return link_view_opts;
 };
 const field_picker_fields = async ({ table, viewname }) => {
   const fields = await table.getFields();
@@ -29,7 +37,7 @@ const field_picker_fields = async ({ table, viewname }) => {
   const fldOptions = fields.map(f => f.name);
   const fldViewOptions = calcfldViewOptions(fields);
 
-  const link_view_opts = await get_link_view_opts(table);
+  const link_view_opts = await get_link_view_opts(table, viewname);
 
   const { parent_field_list } = await table.get_parent_relations();
   const {

@@ -19,12 +19,19 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
           post_btn(action_url(viewname, table, column, r), column.action_name)
       };
     else if (column.type === "ViewLink") {
-      const [vtype, vnm] = column.view.split(":");
+      const [vtype, vrest] = column.view.split(":");
       switch (vtype) {
         case "Own":
+          const vnm = vrest;
           return {
             label: vnm,
             key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+          };
+        case "ChildList":
+          const [viewnm, tbl, fld] = vrest.split(".");
+          return {
+            label: viewnm,
+            key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
           };
         default:
           throw new Error(column.view);
