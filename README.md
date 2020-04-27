@@ -1,3 +1,7 @@
+# Saltcorn
+
+![Node.js CI](https://github.com/glutamate/saltcorns/workflows/Node.js%20CI/badge.svg)
+
 ### Install
 
 `lerna bootstrap`
