@@ -205,6 +205,7 @@ const runPost = async (
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
     const row = { ...form.values, ...use_fixed };
+    const row = { ...use_fixed ,...form.values };
     var id = body.id;
     if (typeof id === "undefined") {
       id = await table.insertRow(row);
