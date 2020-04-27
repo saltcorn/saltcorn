@@ -62,21 +62,21 @@ const configuration_workflow = () =>
           const tbl = await Table.findOne({ id: context.table_id });
           var fields = [];
           const child_views = await get_child_views(tbl, context.viewname);
-          for (const { rel, reltbl, views } of child_views) {
+          for (const { relation, related_table, views } of child_views) {
             for (const view of views) {
               fields.push({
-                name: `ChildList:${view.name}.${reltbl.name}.${rel.name}`,
-                label: `${view.name} of ${rel.label} on ${reltbl.name}`,
+                name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+                label: `${view.name} of ${relation.label} on ${related_table.name}`,
                 type: "Bool"
               });
             }
           }
           const parent_views = await get_parent_views(tbl, context.viewname);
-          for (const { parentrel, partable, views } of parent_views) {
+          for (const { relation, related_table, views } of parent_views) {
             for (const view of views) {
               fields.push({
-                name: `ParentShow:${view.name}.${partable.name}.${parentrel.name}`,
-                label: `${view.name} of ${parentrel.name} on ${partable.name}`,
+                name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
+                label: `${view.name} of ${relation.name} on ${related_table.name}`,
                 type: "Bool"
               });
             }

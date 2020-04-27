@@ -145,14 +145,14 @@ const field_picker_fields = async ({ table }) => {
 const get_child_views = async (table, viewname) => {
   const rels = await Field.find({ reftable_name: table.name });
   var child_views = [];
-  for (const rel of rels) {
-    const reltbl = await Table.findOne({ id: rel.table_id });
+  for (const relation of rels) {
+    const related_table = await Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
-      rel.table_id,
+      relation.table_id,
       ({ state_fields, viewrow }) =>
         viewrow.name !== viewname && state_fields.every(sf => !sf.required)
     );
-    child_views.push({ rel, reltbl, views });
+    child_views.push({ relation, related_table, views });
   }
   return child_views;
 };
@@ -160,17 +160,17 @@ const get_child_views = async (table, viewname) => {
 const get_parent_views = async (table, viewname) => {
   var parent_views = [];
   const parentrels = (await table.getFields()).filter(f => f.is_fkey);
-  for (const parentrel of parentrels) {
-    const partable = await Table.findOne({
-      name: parentrel.reftable_name
+  for (const relation of parentrels) {
+    const related_table = await Table.findOne({
+      name: relation.reftable_name
     });
     const views = await View.find_table_views_where(
-      partable.id,
+      related_table.id,
       ({ state_fields, viewrow }) =>
         viewrow.name !== viewname && state_fields.some(sf => sf.name === "id")
     );
 
-    parent_views.push({ parentrel, partable, views });
+    parent_views.push({ relation, related_table, views });
   }
   return parent_views;
 };
