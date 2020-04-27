@@ -47,12 +47,12 @@ const get_state_fields = async (
   viewname,
   { show_view }
 ) => {
-  var sview_sfs = [];
-  if (show_view) {
-    const sview = await View.findOne({ name: show_view });
-    sview_sfs = await await sview.get_state_fields();
-  }
-  return sview_sfs;
+    const table_fields = await Field.find({ table_id });
+    return table_fields.map(f=>{
+        const sf=new Field(f)
+        sf.required=false
+        return sf
+    })
 };
 
 const run = async (
