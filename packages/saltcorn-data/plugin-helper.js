@@ -19,8 +19,12 @@ const field_picker_fields = async ({ table }) => {
   const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
   const fldViewOptions = calcfldViewOptions(fields);
-  const link_views = await View.find_possible_links_to_table(table.id);
-  const link_view_opts = link_views.map(v => v.name);
+  const own_link_views = await View.find_possible_links_to_table(table.id);
+  const own_link_view_opts = own_link_views.map(v => ({
+    label: v.name,
+    name: `Own:${v.name}`
+  }));
+  const link_view_opts = [...own_link_view_opts];
   const { parent_field_list } = await table.get_parent_relations();
   const {
     child_field_list,
@@ -97,7 +101,7 @@ const field_picker_fields = async ({ table }) => {
       type: "String",
       required: true,
       attributes: {
-        options: link_view_opts.join()
+        options: link_view_opts
       },
       showIf: { ".coltype": "ViewLink" }
     },

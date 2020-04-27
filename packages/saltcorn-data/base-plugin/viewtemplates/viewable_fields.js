@@ -19,11 +19,16 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
           post_btn(action_url(viewname, table, column, r), column.action_name)
       };
     else if (column.type === "ViewLink") {
-      const vnm = column.view;
-      return {
-        label: vnm,
-        key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
-      };
+      const [vtype, vnm] = column.view.split(":");
+      switch (vtype) {
+        case "Own":
+          return {
+            label: vnm,
+            key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+          };
+        default:
+          throw new Error(column.view)
+      }
     } else if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       return {
