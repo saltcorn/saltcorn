@@ -1,4 +1,6 @@
 const View = require("./models/view");
+const Field = require("./models/field");
+const Table = require("./models/table");
 const State = require("./db/state");
 
 const calcfldViewOptions = fields => {
@@ -11,14 +13,44 @@ const calcfldViewOptions = fields => {
   return fvs;
 };
 
-const field_picker_fields = async ({ table }) => {
+const get_link_view_opts = async (table, viewname) => {
+  const own_link_views = await View.find_possible_links_to_table(table.id);
+  const link_view_opts = own_link_views.map(v => ({
+    label: v.name,
+    name: `Own:${v.name}`
+  }));
+  const child_views = await get_child_views(table, viewname);
+  for (const { relation, related_table, views } of child_views) {
+    for (const view of views) {
+      link_view_opts.push({
+        name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+        label: `${view.name} of ${relation.label} on ${related_table.name}`
+      });
+    }
+  }
+  /*
+  doesnt work for now because related fields have been replaced by the summary field in the row
+
+  const parent_views = await get_parent_views(table, viewname);
+  for (const { relation, related_table, views } of parent_views) {
+    for (const view of views) {
+      link_view_opts.push({
+        name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
+        label: `${view.name} of ${relation.name} on ${related_table.name}`
+      });
+    }
+  }*/
+  return link_view_opts;
+};
+const field_picker_fields = async ({ table, viewname }) => {
   const fields = await table.getFields();
   const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
   const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
   const fldViewOptions = calcfldViewOptions(fields);
-  const link_views = await View.find_possible_links_to_table(table.id);
-  const link_view_opts = link_views.map(v => v.name);
+
+  const link_view_opts = await get_link_view_opts(table, viewname);
+
   const { parent_field_list } = await table.get_parent_relations();
   const {
     child_field_list,
@@ -95,7 +127,7 @@ const field_picker_fields = async ({ table }) => {
       type: "String",
       required: true,
       attributes: {
-        options: link_view_opts.join()
+        options: link_view_opts
       },
       showIf: { ".coltype": "ViewLink" }
     },
@@ -140,6 +172,41 @@ const field_picker_fields = async ({ table }) => {
   ];
 };
 
+const get_child_views = async (table, viewname) => {
+  const rels = await Field.find({ reftable_name: table.name });
+  var child_views = [];
+  for (const relation of rels) {
+    const related_table = await Table.findOne({ id: relation.table_id });
+    const views = await View.find_table_views_where(
+      relation.table_id,
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.every(sf => !sf.required)
+    );
+    child_views.push({ relation, related_table, views });
+  }
+  return child_views;
+};
+
+const get_parent_views = async (table, viewname) => {
+  var parent_views = [];
+  const parentrels = (await table.getFields()).filter(
+    f => f.is_fkey && f.reftable_name !== "users"
+  );
+  for (const relation of parentrels) {
+    const related_table = await Table.findOne({
+      name: relation.reftable_name
+    });
+    const views = await View.find_table_views_where(
+      related_table.id,
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.some(sf => sf.name === "id")
+    );
+
+    parent_views.push({ relation, related_table, views });
+  }
+  return parent_views;
+};
+
 const picked_fields_to_query = columns => {
   var joinFields = {};
   var aggregations = {};
@@ -164,4 +231,9 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
-module.exports = { field_picker_fields, picked_fields_to_query };
+module.exports = {
+  field_picker_fields,
+  picked_fields_to_query,
+  get_child_views,
+  get_parent_views
+};

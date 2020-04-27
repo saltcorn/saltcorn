@@ -4,7 +4,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4,hr } = require("saltcorn-markup/tags");
+const { text, div, h4, hr } = require("saltcorn-markup/tags");
 const { renderForm, tabs } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
 
@@ -42,17 +42,13 @@ const configuration_workflow = () =>
     ]
   });
 
-const get_state_fields = async (
-  table_id,
-  viewname,
-  { show_view }
-) => {
-    const table_fields = await Field.find({ table_id });
-    return table_fields.map(f=>{
-        const sf=new Field(f)
-        sf.required=false
-        return sf
-    })
+const get_state_fields = async (table_id, viewname, { show_view }) => {
+  const table_fields = await Field.find({ table_id });
+  return table_fields.map(f => {
+    const sf = new Field(f);
+    sf.required = false;
+    return sf;
+  });
 };
 
 const run = async (
@@ -64,8 +60,7 @@ const run = async (
 ) => {
   const sview = await View.findOne({ name: show_view });
   const sresp = await sview.runMany(state, extraArgs);
-  return sresp.map(r=>div(r.html)+hr())
-  
+  return sresp.map(r => div(r.html) + hr());
 };
 
 module.exports = {

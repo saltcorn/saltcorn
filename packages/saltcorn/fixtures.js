@@ -57,7 +57,7 @@ module.exports = async () => {
     configuration: {
       columns: [
         { type: "Field", field_name: "author", state_field: "on" },
-        { type: "ViewLink", view: "authorshow" },
+        { type: "ViewLink", view: "Own:authorshow" },
         { type: "Action", action_name: "Delete" },
         {
           type: "Aggregation",
@@ -78,7 +78,7 @@ module.exports = async () => {
     configuration: {
       columns: [
         { type: "Field", field_name: "author", state_field: "on" },
-        { type: "ViewLink", view: "authorshow" },
+        { type: "ViewLink", view: "Own:authorshow" },
         { type: "Action", action_name: "Delete" },
         {
           type: "Aggregation",

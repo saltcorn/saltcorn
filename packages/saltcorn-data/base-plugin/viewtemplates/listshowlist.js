@@ -7,6 +7,7 @@ const Workflow = require("../../models/workflow");
 const { text, div, h4 } = require("saltcorn-markup/tags");
 const { renderForm, tabs } = require("saltcorn-markup");
 const { mkTable } = require("saltcorn-markup");
+const { get_child_views, get_parent_views } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -59,40 +60,23 @@ const configuration_workflow = () =>
         contextField: "subtables",
         form: async context => {
           const tbl = await Table.findOne({ id: context.table_id });
-          const rels = await Field.find({ reftable_name: tbl.name });
           var fields = [];
-          for (const rel of rels) {
-            const reltbl = await Table.findOne({ id: rel.table_id });
-            const views = await View.find_table_views_where(
-              rel.table_id,
-              ({ state_fields, viewrow }) =>
-                //viewtemplate.view_quantity === "Many" &&
-                viewrow.name !== context.viewname &&
-                state_fields.every(sf => !sf.required)
-            );
+          const child_views = await get_child_views(tbl, context.viewname);
+          for (const { relation, related_table, views } of child_views) {
             for (const view of views) {
               fields.push({
-                name: `ChildList:${view.name}.${reltbl.name}.${rel.name}`,
-                label: `${view.name} of ${rel.label} on ${reltbl.name}`,
+                name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+                label: `${view.name} of ${relation.label} on ${related_table.name}`,
                 type: "Bool"
               });
             }
           }
-          const parentrels = (await tbl.getFields()).filter(f => f.is_fkey);
-          for (const parentrel of parentrels) {
-            const partable = await Table.findOne({
-              name: parentrel.reftable_name
-            });
-            const parent_show_views = await View.find_table_views_where(
-              partable.id,
-              ({ state_fields, viewrow }) =>
-                viewrow.name !== context.viewname &&
-                state_fields.some(sf => sf.name === "id")
-            );
-            for (const view of parent_show_views) {
+          const parent_views = await get_parent_views(tbl, context.viewname);
+          for (const { relation, related_table, views } of parent_views) {
+            for (const view of views) {
               fields.push({
-                name: `ParentShow:${view.name}.${partable.name}.${parentrel.name}`,
-                label: `${view.name} of ${parentrel.name} on ${partable.name}`,
+                name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
+                label: `${view.name} of ${relation.name} on ${related_table.name}`,
                 type: "Bool"
               });
             }
