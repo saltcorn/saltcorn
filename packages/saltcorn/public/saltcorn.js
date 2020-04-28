@@ -131,6 +131,10 @@ function select_id(id) {
   );
 }
 
+function href_to(href) {
+  window.location.href = href
+}
+
 function tristateClick(nm) {
   var current = $(`button#trib${nm}`).html();
   switch (current) {
