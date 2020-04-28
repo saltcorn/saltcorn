@@ -26,7 +26,7 @@ const is_plugin_wrap_arg = is.obj({
       msg: is.str
     })
   ),
-  header: is.array(is_header)
+  headers: is.array(is_header)
 });
 
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
@@ -46,12 +46,12 @@ const is_plugin_type = is.obj({
       //o => (o.isEdit && o.run.length >=2) || (!o.isEdit && o.run.length == 1)
     )
   ),
-  attributes: is.array(
-    is.obj({ name: is.str, type: is.str, required: is.bool })
+  attributes: is.maybe(
+    is.array(is.obj({ name: is.str, type: is.str, required: is.bool }))
   ),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
-  validate: is.fun(is.obj(), is.fun(is.any, is.bool)),
+  validate: is.maybe(is.fun(is.obj(), is.fun(is.any, is.bool))),
   presets: is.maybe(is.objVals(is.fun([], is.any)))
 });
 
@@ -83,5 +83,7 @@ module.exports = {
   is_plugin_wrap_arg,
   is_plugin_type,
   is_plugin,
-  fieldlike
+  fieldlike,
+  is_viewtemplate,
+  is_header
 };
