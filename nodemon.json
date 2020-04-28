@@ -1,0 +1,4 @@
+{
+    "verbose": true,
+    "ignore": ["plugin_packages/"]
+}
