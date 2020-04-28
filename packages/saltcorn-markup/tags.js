@@ -46,7 +46,8 @@ const input = kvs => {
   return `<input ${attribs}>`;
 };
 
-const domReady = js => `$(function(){${js}})`;
+const domReady = js =>
+  `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
 const text = t => xss(t);
 
