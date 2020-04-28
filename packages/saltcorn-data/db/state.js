@@ -36,7 +36,7 @@ class State {
       this.viewtemplates[vt.name] = vt;
     });
     if (plugin.layout && plugin.layout.wrap)
-      this.layout.wrap = plugin.layout.wrap;
+      this.layout.wrap = contract(is_plugin_wrap, plugin.layout.wrap);
     if (plugin.headers)
       if (!this.headers.includes(plugin.headers))
         plugin.headers.forEach(h => {

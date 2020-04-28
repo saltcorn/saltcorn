@@ -22,8 +22,8 @@ const is_plugin_wrap_arg = is.obj({
   ),
   alerts: is.array(
     is.obj({
-      type: is.one_of(["error", "danger", "success"]),
-      msg: is.str
+      type: is.one_of(["error", "danger", "success", "warning"]),
+      msg: is.or(is.str, is.array(is.str))
     })
   ),
   headers: is.array(is_header)
