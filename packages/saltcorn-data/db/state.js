@@ -12,6 +12,7 @@ class State {
     this.type_names = [];
     this.fields = [];
     this.layout = { wrap: s => s };
+    this.headers = [];
   }
 
   async refresh() {
@@ -27,6 +28,11 @@ class State {
     });
     if (plugin.layout && plugin.layout.wrap)
       this.layout.wrap = plugin.layout.wrap;
+    if (plugin.headers)
+      if (!this.headers.includes(plugin.headers))
+        plugin.headers.forEach(h => {
+          this.headers.push(h);
+        });
   }
 
   addType(t) {

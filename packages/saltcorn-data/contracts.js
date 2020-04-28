@@ -9,6 +9,8 @@ const fieldlike = is.obj(
   o => o.type || o.input_type
 );
 
+const is_header = is.obj({ script: is.maybe(is.str) });
+
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.str,
@@ -23,7 +25,8 @@ const is_plugin_wrap_arg = is.obj({
       type: is.one_of(["error", "danger", "success"]),
       msg: is.str
     })
-  )
+  ),
+  header: is.array(is_header)
 });
 
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
@@ -65,6 +68,7 @@ const is_viewtemplate = is.obj({
 });
 
 const is_plugin = is.obj({
+  headers: is.maybe(is.array(is_header)),
   layout: is.maybe(
     is.obj({
       wrap: is_plugin_wrap

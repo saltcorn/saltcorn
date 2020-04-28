@@ -71,6 +71,8 @@ const auto_test_plugin = async plugin => {
     plugin.types.forEach(auto_test_type);
   }
   for (const vt of plugin.viewtemplates || []) await auto_test_viewtemplate(vt);
+
+  //is each header reachable
 };
 
 module.exports = { auto_test_plugin };

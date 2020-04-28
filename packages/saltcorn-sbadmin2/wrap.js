@@ -24,7 +24,7 @@ const sidebar = sections =>
     sections.map(sideBarSection)
   );
 
-const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
+const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -38,6 +38,10 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
     <!-- Custom styles for this template-->
     <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
     <link href="/saltcorn.css" rel="stylesheet">
+    ${headers
+      .filter(h => h.css)
+      .map(h => `<link href="${h.css}" rel="stylesheet">`)
+      .join("")}
     <title>${text(title)}</title>
   </head>
   <body id="page-top">
@@ -74,6 +78,10 @@ const wrap = ({ title, menu, alerts, body }) => `<!doctype html>
     <!-- Custom scripts for all pages-->
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js"></script>
     <script src="/saltcorn.js"></script>
+    ${headers
+      .filter(h => h.script)
+      .map(h => `<script src="${h.script}"></script>`)
+      .join("")}
   </body>
 </html>`;
 

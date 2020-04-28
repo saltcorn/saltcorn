@@ -1,4 +1,4 @@
 {
-    "verbose": true,
-    "ignore": ["plugin_packages/"]
+  "verbose": true,
+  "ignore": ["plugin_packages/"]
 }

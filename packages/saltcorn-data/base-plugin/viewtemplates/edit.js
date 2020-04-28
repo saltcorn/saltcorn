@@ -171,15 +171,15 @@ const run = async (table_id, viewname, config, state) => {
     const row = await table.getRow({ id: state.id });
     form.values = row;
   }
-  Object.entries(state).forEach(([k,v])=>{
-    if(k!=="id") { 
-      const field=form.fields.find(f=>f.name===k)
-      if(field && field.type && field.type.read){
-        form.values[k]=field.type.read(v)
-        field.input_type='hidden'
+  Object.entries(state).forEach(([k, v]) => {
+    if (k !== "id") {
+      const field = form.fields.find(f => f.name === k);
+      if (field && field.type && field.type.read) {
+        form.values[k] = field.type.read(v);
+        field.input_type = "hidden";
       }
     }
-  })
+  });
   return renderForm(form);
 };
 

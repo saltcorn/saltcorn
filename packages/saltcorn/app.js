@@ -122,7 +122,8 @@ const getApp = async () => {
           title,
           menu,
           alerts: getFlashes(req),
-          body: html.join("")
+          body: html.join(""),
+          headers: State.headers
         })
       );
     };

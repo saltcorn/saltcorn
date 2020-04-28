@@ -10,7 +10,7 @@
 
 `git ls-files | xargs prettier --write`
 
-### dev server 
+### dev server
 
 `nodemon packages/saltcorn-cli/bin/saltcorn serve`
 
