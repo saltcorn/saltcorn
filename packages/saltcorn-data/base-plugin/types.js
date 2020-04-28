@@ -202,7 +202,7 @@ const bool = {
   read: v => {
     switch (typeof v) {
       case "string":
-        if (v.toUpperCase === "TRUE" || v.toUpperCase === "T") return true;
+        if (v.toUpperCase() === "TRUE" || v.toUpperCase() === "T") return true;
         else return false;
       default:
         return v ? true : false;
