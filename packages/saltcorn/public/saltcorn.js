@@ -152,3 +152,12 @@ function tristateClick(nm) {
       break;
   }
 }
+
+function view_post(viewname, route, data) {
+  $.ajax('/view/'+viewname+'/'+route, {
+    dataType: 'json',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data), 
+  });  
+}
