@@ -20,6 +20,7 @@ const getApp = async () => {
   await load_plugins.loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
   app.use(require("cookie-parser")());
 
   app.use(

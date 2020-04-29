@@ -145,6 +145,22 @@ class View {
       extraArgs
     );
   }
+
+  async runRoute(route, body, res, extraArgs) {
+    const result = await this.viewtemplateObj.routes[route](
+      this.table_id,
+      this.name,
+      this.configuration,
+      body,
+      extraArgs
+    );
+    if(result.json)
+      res.json(result.json)
+    else if(result.html)
+      res.send(result.html)
+    else res.json({success: "ok"})
+      
+  }
   async get_state_form(query) {
     if (this.viewtemplateObj.display_state_form) {
       const fields = await this.get_state_fields();
