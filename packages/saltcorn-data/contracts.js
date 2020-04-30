@@ -34,6 +34,7 @@ const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
 const is_plugin_type = is.obj({
   name: is.str,
   sql_name: is.str,
+  contract: is.maybe(is.contract),
   fieldviews: is.objVals(
     is.obj(
       {

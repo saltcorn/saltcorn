@@ -7,6 +7,7 @@ const {
   h3,
   button
 } = require("saltcorn-markup/tags");
+const { contract, is } = require("contractis");
 
 const isdef = x => (typeof x === "undefined" || x === null ? false : true);
 
@@ -27,6 +28,7 @@ const string = {
     { name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
+  contract: is.str,
   fieldviews: {
     as_text: { isEdit: false, run: s => text(s) },
     as_header: { isEdit: false, run: s => h3(text(s)) },
@@ -83,6 +85,7 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "int",
+  contract: is.int,
   fieldviews: {
     show: { isEdit: false, run: s => text(s) },
     edit: {
@@ -106,7 +109,7 @@ const int = {
   read: v => {
     switch (typeof v) {
       case "number":
-        return v;
+        return Math.round(v);
       case "string":
         const parsed = parseInt(v);
         return isNaN(parsed) ? undefined : parsed;
@@ -124,6 +127,7 @@ const int = {
 const float = {
   name: "Float",
   sql_name: "double precision",
+  contract: is.num,
   fieldviews: {
     show: { isEdit: false, run: s => text(s) },
     edit: {
@@ -167,6 +171,7 @@ const float = {
 const date = {
   name: "Date",
   sql_name: "timestamp",
+  contract: is.date,
   attributes: [],
   fieldviews: {
     show: { isEdit: false, run: d => text(d.toISOString()) },
@@ -201,6 +206,7 @@ const date = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
+  contract: is.bool,
   fieldviews: {
     show: {
       isEdit: false,
