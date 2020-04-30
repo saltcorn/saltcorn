@@ -121,6 +121,49 @@ const int = {
   }
 };
 
+const float = {
+  name: "Float",
+  sql_name: "double precision",
+  fieldviews: {
+    show: { isEdit: false, run: s => text(s) },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "number",
+          class: ["form-control", cls],
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(attrs.max && { max: attrs.max }),
+          ...(attrs.min && { min: attrs.min }),
+          ...(isdef(v) && { value: text(v) })
+        })
+    }
+  },
+  attributes: [
+    { name: "max", type: "Float", required: false },
+    { name: "min", type: "Float", required: false },
+    { name: "units", type: "String", required: false }
+  ],
+  read: v => {
+    switch (typeof v) {
+      case "number":
+        return v;
+      case "string":
+        const parsed = parseFloat(v);
+        return isNaN(parsed) ? undefined : parsed;
+      default:
+        return undefined;
+    }
+  },
+  validate: ({ min, max }) => x => {
+    if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+    if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+    return true;
+  }
+};
+
+
 const date = {
   name: "Date",
   sql_name: "timestamp",
@@ -211,4 +254,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = { string, int, bool, date };
+module.exports = { string, int, bool, date , float };
