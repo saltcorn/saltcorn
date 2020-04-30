@@ -167,7 +167,6 @@ const float = {
   }
 };
 
-
 const date = {
   name: "Date",
   sql_name: "timestamp",
@@ -260,4 +259,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = { string, int, bool, date , float };
+module.exports = { string, int, bool, date, float };
