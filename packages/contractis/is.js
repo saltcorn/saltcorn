@@ -74,7 +74,14 @@ const promise = t =>
   mkContract({
     name: "promise",
     options: typeof t === "undefined" ? any : t,
-    check: x => x.constructor.name === Promise.name
+    check: x => x.constructor.name === Promise.name,
+    generate: t && t.generate ? ()=>Promise.resolve(t.generate()) : undefined
+  });
+
+const contract = 
+  mkContract({
+    name: "contract",
+    check: x=> x.contract_name && x.check
   });
 
 const obj = (o, alsoCheckThat) =>
@@ -293,5 +300,6 @@ module.exports = {
   defined,
   one_of,
   getter,
-  date
+  date,
+  contract
 };
