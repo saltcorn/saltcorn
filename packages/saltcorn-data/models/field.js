@@ -90,6 +90,21 @@ class Field {
     }
   }
 
+  async generate() {
+    if (this.is_fkey) {
+      const rows = await db.select(
+        this.reftable_name,
+        {},
+        { limit: 1, orderBy: "RANDOM()" }
+      );
+      if (rows.length === 1) return rows[0].id;
+    } else {
+      if (this.type.contract) {
+        if (this.type.contract) return this.type.contract.generate();
+      }
+    }
+  }
+
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval =
@@ -225,6 +240,7 @@ Field.contract = {
     sql_bare_type: is.getter(is.str),
     listKey: is.getter(is.any), // todo why not str?
     delete: is.fun([], is.promise(is.eq(undefined))),
+    generate: is.fun([], is.promise(is.any)),
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
   },
   static_methods: {
