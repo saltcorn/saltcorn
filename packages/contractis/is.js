@@ -81,7 +81,7 @@ const promise = t =>
 const contract = 
   mkContract({
     name: "contract",
-    check: x=> x.contract_name && x.check
+    check: x=> x && typeof x.contract_name ==="string" && typeof x.check === "function"
   });
 
 const obj = (o, alsoCheckThat) =>
@@ -301,5 +301,6 @@ module.exports = {
   one_of,
   getter,
   date,
-  contract
+  contract,
+  undefined: eq(undefined)
 };
