@@ -20,6 +20,7 @@ const getApp = async () => {
   await load_plugins.loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
   app.use(require("cookie-parser")());
 
   app.use(
@@ -122,7 +123,8 @@ const getApp = async () => {
           title,
           menu,
           alerts: getFlashes(req),
-          body: html.join("")
+          body: html.join(""),
+          headers: State.headers
         })
       );
     };

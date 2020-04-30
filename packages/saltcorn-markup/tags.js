@@ -46,7 +46,8 @@ const input = kvs => {
   return `<input ${attribs}>`;
 };
 
-const domReady = js => `$(function(){${js}})`;
+const domReady = js =>
+  `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
 const text = t => xss(t);
 
@@ -61,11 +62,13 @@ module.exports = {
   textarea: mkTag("textarea", true),
   form: mkTag("form"),
   script: mkTag("script"),
+  style: mkTag("style"),
   p: mkTag("p"),
   table: mkTag("table"),
   thead: mkTag("thead"),
   tbody: mkTag("tbody"),
   small: mkTag("small"),
+  pre: mkTag("pre"),
   tr: mkTag("tr"),
   th: mkTag("th"),
   td: mkTag("td"),

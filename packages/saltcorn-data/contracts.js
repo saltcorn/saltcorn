@@ -9,6 +9,8 @@ const fieldlike = is.obj(
   o => o.type || o.input_type
 );
 
+const is_header = is.obj({ script: is.maybe(is.str) });
+
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.str,
@@ -20,10 +22,11 @@ const is_plugin_wrap_arg = is.obj({
   ),
   alerts: is.array(
     is.obj({
-      type: is.one_of(["error", "danger", "success"]),
-      msg: is.str
+      type: is.one_of(["error", "danger", "success", "warning"]),
+      msg: is.or(is.str, is.array(is.str))
     })
-  )
+  ),
+  headers: is.array(is_header)
 });
 
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
@@ -43,12 +46,12 @@ const is_plugin_type = is.obj({
       //o => (o.isEdit && o.run.length >=2) || (!o.isEdit && o.run.length == 1)
     )
   ),
-  attributes: is.array(
-    is.obj({ name: is.str, type: is.str, required: is.bool })
+  attributes: is.maybe(
+    is.array(is.obj({ name: is.str, type: is.str, required: is.bool }))
   ),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
-  validate: is.fun(is.obj(), is.fun(is.any, is.bool)),
+  validate: is.maybe(is.fun(is.obj(), is.fun(is.any, is.bool))),
   presets: is.maybe(is.objVals(is.fun([], is.any)))
 });
 
@@ -65,6 +68,7 @@ const is_viewtemplate = is.obj({
 });
 
 const is_plugin = is.obj({
+  headers: is.maybe(is.array(is_header)),
   layout: is.maybe(
     is.obj({
       wrap: is_plugin_wrap
@@ -79,5 +83,7 @@ module.exports = {
   is_plugin_wrap_arg,
   is_plugin_type,
   is_plugin,
-  fieldlike
+  fieldlike,
+  is_viewtemplate,
+  is_header
 };

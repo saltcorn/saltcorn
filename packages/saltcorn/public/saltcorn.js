@@ -131,6 +131,10 @@ function select_id(id) {
   );
 }
 
+function href_to(href) {
+  window.location.href = href;
+}
+
 function tristateClick(nm) {
   var current = $(`button#trib${nm}`).html();
   switch (current) {
@@ -147,4 +151,13 @@ function tristateClick(nm) {
       $(`input#input${nm}`).val("");
       break;
   }
+}
+
+function view_post(viewname, route, data) {
+  $.ajax('/view/'+viewname+'/'+route, {
+    dataType: 'json',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data), 
+  });  
 }

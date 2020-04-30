@@ -24,6 +24,17 @@ router.get("/:viewname", async (req, res) => {
     );
   }
 });
+router.post("/:viewname/:route", async (req, res) => {
+  const { viewname, route } = req.params;
+
+  const view = await View.findOne({ name: viewname });
+  if (!req.isAuthenticated() && !view.is_public) {
+    req.flash("danger", "Login required");
+    res.redirect("/auth/login");
+  } else {
+    await view.runRoute(route, req.body, res, { res, req });
+  }
+});
 
 router.post("/:viewname", async (req, res) => {
   const { viewname } = req.params;
@@ -36,3 +47,4 @@ router.post("/:viewname", async (req, res) => {
     await view.runPost(req.query, req.body, { res, req });
   }
 });
+

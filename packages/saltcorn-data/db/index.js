@@ -50,6 +50,7 @@ const insert = async (tbl, obj) => {
   const sql = `insert into ${sqlsanitize(
     tbl
   )}(${fnameList}) values(${valPosList}) returning id`;
+  //console.log(sql, valList)
   const { rows } = await pool.query(sql, valList);
   return rows[0].id;
 };
@@ -63,6 +64,7 @@ const update = async (tbl, obj, id) => {
   valList.push(id);
   const q = `update ${sqlsanitize(tbl)} set ${assigns} where id=$${kvs.length +
     1}`;
+  //console.log(q, valList)
   await pool.query(q, valList);
 };
 

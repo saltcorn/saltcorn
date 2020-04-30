@@ -10,7 +10,6 @@ const { mkTable } = require("saltcorn-markup");
 
 const configuration_workflow = () =>
   new Workflow({
-    // need order
     steps: [
       {
         name: "views",
