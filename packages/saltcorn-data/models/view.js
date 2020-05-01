@@ -154,12 +154,9 @@ class View {
       body,
       extraArgs
     );
-    if(result.json)
-      res.json(result.json)
-    else if(result.html)
-      res.send(result.html)
-    else res.json({success: "ok"})
-      
+    if (result.json) res.json(result.json);
+    else if (result.html) res.send(result.html);
+    else res.json({ success: "ok" });
   }
   async get_state_form(query) {
     if (this.viewtemplateObj.display_state_form) {

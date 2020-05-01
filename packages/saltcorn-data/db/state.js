@@ -37,11 +37,9 @@ class State {
     });
     if (plugin.layout && plugin.layout.wrap)
       this.layout.wrap = contract(is_plugin_wrap, plugin.layout.wrap);
-    if (plugin.headers)
-      if (!this.headers.includes(plugin.headers))
-        plugin.headers.forEach(h => {
-          this.headers.push(h);
-        });
+    (plugin.headers || []).forEach(h => {
+      if (!this.headers.includes(h)) this.headers.push(h);
+    });
   }
   get type_names() {
     return Object.keys(this.types);

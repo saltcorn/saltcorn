@@ -47,4 +47,3 @@ router.post("/:viewname", async (req, res) => {
     await view.runPost(req.query, req.body, { res, req });
   }
 });
-

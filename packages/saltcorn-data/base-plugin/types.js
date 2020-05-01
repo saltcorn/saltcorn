@@ -7,6 +7,7 @@ const {
   h3,
   button
 } = require("saltcorn-markup/tags");
+const { contract, is } = require("contractis");
 
 const isdef = x => (typeof x === "undefined" || x === null ? false : true);
 
@@ -27,6 +28,7 @@ const string = {
     { name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
+  contract: is.str,
   fieldviews: {
     as_text: { isEdit: false, run: s => text(s) },
     as_header: { isEdit: false, run: s => h3(text(s)) },
@@ -83,6 +85,7 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "int",
+  contract: is.int,
   fieldviews: {
     show: { isEdit: false, run: s => text(s) },
     edit: {
@@ -106,9 +109,52 @@ const int = {
   read: v => {
     switch (typeof v) {
       case "number":
-        return v;
+        return Math.round(v);
       case "string":
         const parsed = parseInt(v);
+        return isNaN(parsed) ? undefined : parsed;
+      default:
+        return undefined;
+    }
+  },
+  validate: ({ min, max }) => x => {
+    if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+    if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+    return true;
+  }
+};
+
+const float = {
+  name: "Float",
+  sql_name: "double precision",
+  contract: is.num,
+  fieldviews: {
+    show: { isEdit: false, run: s => text(s) },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "number",
+          class: ["form-control", cls],
+          name: text(nm),
+          id: `input${text(nm)}`,
+          ...(attrs.max && { max: attrs.max }),
+          ...(attrs.min && { min: attrs.min }),
+          ...(isdef(v) && { value: text(v) })
+        })
+    }
+  },
+  attributes: [
+    { name: "max", type: "Float", required: false },
+    { name: "min", type: "Float", required: false },
+    { name: "units", type: "String", required: false }
+  ],
+  read: v => {
+    switch (typeof v) {
+      case "number":
+        return v;
+      case "string":
+        const parsed = parseFloat(v);
         return isNaN(parsed) ? undefined : parsed;
       default:
         return undefined;
@@ -124,6 +170,7 @@ const int = {
 const date = {
   name: "Date",
   sql_name: "timestamp",
+  contract: is.date,
   attributes: [],
   fieldviews: {
     show: { isEdit: false, run: d => text(d.toISOString()) },
@@ -158,6 +205,7 @@ const date = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
+  contract: is.bool,
   fieldviews: {
     show: {
       isEdit: false,
@@ -211,4 +259,4 @@ const bool = {
   validate: () => x => true
 };
 
-module.exports = { string, int, bool, date };
+module.exports = { string, int, bool, date, float };

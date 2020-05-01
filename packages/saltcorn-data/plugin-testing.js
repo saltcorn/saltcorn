@@ -11,8 +11,9 @@ const generate_attributes = attrs => {
   var res = {};
   attrs.forEach(a => {
     if (a.required || is.bool.generate()) {
-      const gen = { String: is.str, Integer: is.int, Bool: is.bool }[a.type];
-      if (gen) res[a.name] = gen.generate();
+      const contract = a.type.contract || State.types[a.type].contract;
+      const gen = contract.generate;
+      if (gen) res[a.name] = gen();
     }
   });
   return res;
@@ -30,12 +31,14 @@ const auto_test_type = t => {
     }
   });
   //find examples, run all fieldview on each example
-  const numex = t.generate ? 20 : 200;
+
+  const has_contract = t.contract && t.contract.generate;
+  const numex = has_contract ? 20 : 200;
   for (let index = 0; index < numex; index++) {
-    const x = t.generate ? t.generate() : t.read(is.any.generate());
+    const x = has_contract ? t.contract.generate() : t.read(is.any.generate());
 
     const attribs = generate_attributes(t.attributes);
-    if (typeof x !== "undefined" && x !== null)
+    if (has_contract || (typeof x !== "undefined" && x !== null))
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
         Object.values(fvs).forEach(fv => {
           if (fv.isEdit) {
