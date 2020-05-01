@@ -12,7 +12,7 @@ const generate_attributes = attrs => {
   attrs.forEach(a => {
     if (a.required || is.bool.generate()) {
       const contract = a.type.contract || State.types[a.type].contract;
-      const gen = contract.generate;
+      const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
     }
   });
