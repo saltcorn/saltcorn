@@ -17,7 +17,7 @@ class FieldRepeat {
     for (let index = 0; index < nrepeats; index++) {
       for (const f of this.fields) {
         if (f.required || is.bool.generate()) {
-          r[f.name] = await f.generate();
+          r[`${f.name}_${index}`] = await f.generate();
         }
       }
     }

@@ -73,10 +73,16 @@ const auto_test_workflow = async (wf, initialCtx) => {
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
   is.class("Workflow")(wf);
-  const cfg = await auto_test_workflow(wf, {
-    table_id: 1,
-    viewname: "newview"
-  });
+  for (let index = 0; index < 10; index++) {
+    const cfg = await auto_test_workflow(wf, {
+      table_id: 1,
+      viewname: "newview"
+    });
+    const sfs = await vt.get_state_fields(1, "newview", cfg)
+    const res = await vt.run(1, "newview", cfg, {})
+    is.or(is.str, is.array(is.str))(res)
+  }
+
 };
 
 const auto_test_plugin = async plugin => {
