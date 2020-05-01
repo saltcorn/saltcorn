@@ -78,11 +78,14 @@ const auto_test_viewtemplate = async vt => {
       table_id: 1,
       viewname: "newview"
     });
-    const sfs = await vt.get_state_fields(1, "newview", cfg)
-    const res = await vt.run(1, "newview", cfg, {})
-    is.or(is.str, is.array(is.str))(res)
+    const sfs = await vt.get_state_fields(1, "newview", cfg);
+    const res = await vt.run(1, "newview", cfg, {});
+    is.or(is.str, is.array(is.str))(res);
+    if (sfs.some(sf => (sf.name = "id"))) {
+      const resid = await vt.run(1, "newview", cfg, { id: 1 });
+      is.or(is.str, is.array(is.str))(resid);
+    }
   }
-
 };
 
 const auto_test_plugin = async plugin => {
