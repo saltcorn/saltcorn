@@ -89,7 +89,7 @@ const obj = (o, alsoCheckThat) =>
     name: "obj",
     options: o,
     get_error_message: x => {
-      if (typeof x !== "object") return `Expected object, got type ${typeof x}`;
+      if (typeof x !== "object") return `Expected object with fields ${o}, got type ${typeof x}`;
       const failing = Object.entries(o || {}).find(([k, v]) => !v.check(x[k]));
       if (failing) {
         if (o[failing[0]].get_error_message)

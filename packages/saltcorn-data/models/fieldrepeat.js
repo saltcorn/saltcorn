@@ -11,6 +11,9 @@ class FieldRepeat {
     this.isRepeat = true;
     contract.class(this);
   }
+  async generate() {
+    
+  }
   validate(whole_rec) {
     return this.validate_from_ix(whole_rec, 0);
   }
