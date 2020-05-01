@@ -12,7 +12,15 @@ class FieldRepeat {
     contract.class(this);
   }
   async generate() {
-    
+    const nrepeats=Math.round(Math.random()*5)
+    var r = {}
+    for (let index = 0; index < nrepeats; index++) {
+      for (const f of this.fields) {
+        if(f.required || is.bool.generate()) {
+          r[f.name] = await f.generate()
+        }
+      }
+    }
   }
   validate(whole_rec) {
     return this.validate_from_ix(whole_rec, 0);
