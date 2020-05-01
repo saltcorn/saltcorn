@@ -57,24 +57,26 @@ const auto_test_type = t => {
   //todo: try creating a table with this type
 };
 const auto_test_workflow = async (wf, initialCtx) => {
-  const step = async (wf, ctx)=>{
-    is.obj(ctx)
+  const step = async (wf, ctx) => {
+    is.obj(ctx);
     const res = await wf.run(ctx);
 
     if (res.renderForm) {
       is.str(renderForm(res.renderForm));
 
-      const vs=await res.renderForm.generate()
-      return await step(wf, vs)
-    } else return res
-  }
-  return await step(wf, initialCtx)
-}
+      const vs = await res.renderForm.generate();
+      return await step(wf, vs);
+    } else return res;
+  };
+  return await step(wf, initialCtx);
+};
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
   is.class("Workflow")(wf);
-  const cfg = await auto_test_workflow(wf, { table_id: 1, viewname: "newview" });
-
+  const cfg = await auto_test_workflow(wf, {
+    table_id: 1,
+    viewname: "newview"
+  });
 };
 
 const auto_test_plugin = async plugin => {

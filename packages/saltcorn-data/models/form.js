@@ -37,16 +37,15 @@ class Form {
   }
 
   async generate() {
-    var r = {}
+    var r = {};
 
     for (const f of this.fields) {
-      if(f.input_type==="hidden")
-        r[f.name] =  this.values[f.name]
-      else if(f.required || is.bool.generate()) {
-        r[f.name] = await f.generate()
+      if (f.input_type === "hidden") r[f.name] = this.values[f.name];
+      else if (f.required || is.bool.generate()) {
+        r[f.name] = await f.generate();
       }
     }
-    return r
+    return r;
   }
 
   validate(v) {
