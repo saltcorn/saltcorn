@@ -29,7 +29,11 @@ const string = {
     { name: "options", type: "String", required: false }
   ],
   contract: ({ match, options }) =>
-    typeof options === "string" ? is.one_of(options.split(",")) : is.str,
+    typeof options === "string"
+      ? is.one_of(options.split(","))
+      : typeof options === "undefined"
+      ? is.str
+      : is.one_of(options.map(o => o.name)),
   fieldviews: {
     as_text: { isEdit: false, run: s => text(s) },
     as_header: { isEdit: false, run: s => h3(text(s)) },
