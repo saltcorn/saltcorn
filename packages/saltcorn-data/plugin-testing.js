@@ -12,7 +12,7 @@ const generate_attributes = attrs => {
   attrs.forEach(a => {
     if (a.required || is.bool.generate()) {
       const contract = a.type.contract || State.types[a.type].contract;
-      const gen = contract.generate;
+      const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
     }
   });
@@ -56,12 +56,36 @@ const auto_test_type = t => {
   }
   //todo: try creating a table with this type
 };
+const auto_test_workflow = async (wf, initialCtx) => {
+  const step = async (wf, ctx) => {
+    is.obj(ctx);
+    const res = await wf.run(ctx);
 
+    if (res.renderForm) {
+      is.str(renderForm(res.renderForm));
+
+      const vs = await res.renderForm.generate();
+      return await step(wf, vs);
+    } else return res;
+  };
+  return await step(wf, initialCtx);
+};
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
   is.class("Workflow")(wf);
-  const step0 = await wf.run({ table_id: 1, viewname: "newview" });
-  if (step0.renderForm) is.str(renderForm(step0.renderForm));
+  for (let index = 0; index < 10; index++) {
+    const cfg = await auto_test_workflow(wf, {
+      table_id: 1,
+      viewname: "newview"
+    });
+    const sfs = await vt.get_state_fields(1, "newview", cfg);
+    const res = await vt.run(1, "newview", cfg, {});
+    is.or(is.str, is.array(is.str))(res);
+    if (sfs.some(sf => (sf.name = "id"))) {
+      const resid = await vt.run(1, "newview", cfg, { id: 1 });
+      is.or(is.str, is.array(is.str))(resid);
+    }
+  }
 };
 
 const auto_test_plugin = async plugin => {

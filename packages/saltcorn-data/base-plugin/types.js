@@ -28,7 +28,12 @@ const string = {
     { name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
-  contract: is.str,
+  contract: ({ match, options }) =>
+    typeof options === "string"
+      ? is.one_of(options.split(","))
+      : typeof options === "undefined"
+      ? is.str
+      : is.one_of(options.map(o => o.name)),
   fieldviews: {
     as_text: { isEdit: false, run: s => text(s) },
     as_header: { isEdit: false, run: s => h3(text(s)) },
@@ -85,7 +90,7 @@ const string = {
 const int = {
   name: "Integer",
   sql_name: "int",
-  contract: is.int,
+  contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
   fieldviews: {
     show: { isEdit: false, run: s => text(s) },
     edit: {
@@ -127,7 +132,7 @@ const int = {
 const float = {
   name: "Float",
   sql_name: "double precision",
-  contract: is.num,
+  contract: ({ min, max }) => is.number({ lte: max, gte: min }),
   fieldviews: {
     show: { isEdit: false, run: s => text(s) },
     edit: {
@@ -170,7 +175,7 @@ const float = {
 const date = {
   name: "Date",
   sql_name: "timestamp",
-  contract: is.date,
+  contract: () => is.date,
   attributes: [],
   fieldviews: {
     show: { isEdit: false, run: d => text(d.toISOString()) },
@@ -205,7 +210,7 @@ const date = {
 const bool = {
   name: "Bool",
   sql_name: "boolean",
-  contract: is.bool,
+  contract: () => is.bool,
   fieldviews: {
     show: {
       isEdit: false,

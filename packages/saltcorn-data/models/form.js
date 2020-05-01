@@ -35,6 +35,19 @@ class Form {
       await f.fill_fkey_options(force_allow_none);
     }
   }
+
+  async generate() {
+    var r = {};
+
+    for (const f of this.fields) {
+      if (f.input_type === "hidden") r[f.name] = this.values[f.name];
+      else if (f.required || is.bool.generate()) {
+        r[f.name] = await f.generate();
+      }
+    }
+    return r;
+  }
+
   validate(v) {
     this.fields.forEach(f => {
       const valres = f.validate(v);
@@ -66,6 +79,7 @@ Form.contract = {
       is.obj(),
       is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
     ),
+    generate: is.fun([], is.promise(is.obj())),
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
     hidden: is.fun(is.any, is.eq(undefined))
   }

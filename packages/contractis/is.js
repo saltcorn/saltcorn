@@ -34,6 +34,14 @@ const number = opts =>
         : gen.any_num()
   });
 
+const integer = opts =>
+  mkContract({
+    name: "integer",
+    options: opts,
+    check: x => number(opts).check(x) && x === Math.round(x),
+    generate: () => Math.round(number(opts).generate())
+  });
+
 const positive = mkContract({
   name: "positive",
   check: x => typeof x === "number" && x >= 0,
@@ -89,7 +97,8 @@ const obj = (o, alsoCheckThat) =>
     name: "obj",
     options: o,
     get_error_message: x => {
-      if (typeof x !== "object") return `Expected object, got type ${typeof x}`;
+      if (typeof x !== "object")
+        return `Expected object with fields ${o}, got type ${typeof x}`;
       const failing = Object.entries(o || {}).find(([k, v]) => !v.check(x[k]));
       if (failing) {
         if (o[failing[0]].get_error_message)
@@ -276,6 +285,7 @@ const array = c =>
 
 module.exports = {
   number,
+  integer,
   eq,
   sat,
   and,

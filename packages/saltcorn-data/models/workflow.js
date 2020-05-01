@@ -84,7 +84,7 @@ class Workflow {
 
 Workflow.contract = {
   variables: {
-    steps: is.array(is.obj()),
+    steps: is.array(is.obj({ name: is.str })),
     onDone: is.fun(is.obj(), is.obj()),
     action: is.maybe(is.str)
   },

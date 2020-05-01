@@ -31,10 +31,12 @@ const is_plugin_wrap_arg = is.obj({
 
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
 
+const is_attribute = is.obj({ name: is.str, type: is.str, required: is.bool });
+
 const is_plugin_type = is.obj({
   name: is.str,
   sql_name: is.str,
-  contract: is.maybe(is.contract),
+  contract: is.maybe(is.fun(is.obj(), is.contract)),
   fieldviews: is.objVals(
     is.obj(
       {
@@ -47,9 +49,7 @@ const is_plugin_type = is.obj({
       //o => (o.isEdit && o.run.length >=2) || (!o.isEdit && o.run.length == 1)
     )
   ),
-  attributes: is.maybe(
-    is.array(is.obj({ name: is.str, type: is.str, required: is.bool }))
-  ),
+  attributes: is.maybe(is.array(is_attribute)),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
   validate: is.maybe(is.fun(is.obj(), is.fun(is.any, is.bool))),
