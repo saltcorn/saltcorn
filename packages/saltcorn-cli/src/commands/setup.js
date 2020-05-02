@@ -51,20 +51,53 @@ const setup_connection = async () => {
       require("saltcorn-data/db");
       console.log("I already know how to connect!");
     } catch {
+      console.log("Cannot connect to specified database. Error: ");
+      console.log(e);
       await setup_connection_config();
+      console.log("You may need to run 'saltcorn setup' again if there are any errors.");
+
     }
   } else {
+    console.log("No database specified");
     await setup_connection_config();
   }
 };
+
+const table_exists= async (db, tblname)=> {
+    const {rows} = await db.query(`SELECT EXISTS 
+    (
+        SELECT 1
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+        AND table_name = '${tblname}'
+    );`)
+    return rows[0].exists;
+}
+
+const setup_schema = async () => {
+    const db = require("saltcorn-data/db");
+    const ex_tables = await table_exists(db, 'tables');
+    const ex_fields = await table_exists(db, 'fields');
+    if(!(ex_fields && ex_tables)) {
+        console.log("Installing schema")
+        const reset = require("saltcorn-data/db/reset_schema");
+        await reset(true)
+    } else
+    console.log("Schema already present")
+
+}
 
 class SetupCommand extends Command {
   async run() {
     // check if i already know how to connect
     await setup_connection();
     // check if schema is live
-
+    await setup_schema()
     //check if there are any users
+
+
+    await require("saltcorn-data/db").close();
+
   }
 }
 

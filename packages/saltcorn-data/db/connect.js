@@ -11,7 +11,7 @@ const getConnectObject = (connSpec = {}) => {
 
   connObj.user = connObj.user || process.env.PGUSER;
   connObj.password = connObj.password || process.env.PGPASSWORD;
-  connObj.database = connObj.database || process.env.PGDATABASE || "saltcorn";
+  connObj.database = connObj.database || process.env.PGDATABASE;
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};

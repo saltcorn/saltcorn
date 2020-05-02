@@ -1,7 +1,8 @@
 const db = require(".");
 
 //https://stackoverflow.com/a/21247009
-const reset = async () => {
+const reset = async (dontDrop) => {
+  if(!dontDrop) {
   await db.query(`
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public;
@@ -9,6 +10,7 @@ const reset = async () => {
     GRANT ALL ON SCHEMA public TO public;
     COMMENT ON SCHEMA public IS 'standard public schema';
   `);
+  }
 
   await db.query(`
     CREATE TABLE tables
