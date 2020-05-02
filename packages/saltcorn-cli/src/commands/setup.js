@@ -6,14 +6,23 @@ const {
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
 
-const gen_password = () => is.str.generate().replace(" ", "");
+const gen_password = () => {
+    const s = is.str.generate().replace(" ", "");
+    if(s.length>7)
+        return s
+    else 
+        return gen_password()
+}
+
 const prompt_connection = async () => {
-  const host = await cli.prompt("Database host [localhost]");
-  const port = await cli.prompt("Database port [5432]");
-  const database = await cli.prompt("Database name [saltcorn]");
-  const user = await cli.prompt("Database user [saltcorn]");
+  console.log("Enter database connection parameters");
+  const host = await cli.prompt("Database host [localhost]", {required: false });
+  const port = await cli.prompt("Database port [5432]", {required: false });
+  const database = await cli.prompt("Database name [saltcorn]", {required: false });
+  const user = await cli.prompt("Database user [saltcorn]", {required: false });
   const password = await cli.prompt("Database password [auto-generate]", {
-    type: "hide"
+    type: "hide",
+    required: false 
   });
   return {
     host: host || "localhost",
