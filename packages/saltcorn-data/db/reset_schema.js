@@ -16,7 +16,11 @@ const reset = async dontDrop => {
     CREATE TABLE tables
     (
       id serial primary key,
-      name text NOT NULL unique
+      name text NOT NULL unique,
+      expose_api_read boolean NOT NULL DEFAULT false,
+      expose_api_write boolean NOT NULL DEFAULT false,
+      min_role_read integer NOT NULL DEFAULT 3,
+      min_role_write integer NOT NULL DEFAULT 3
     )
   `);
 

@@ -7,6 +7,10 @@ class Table {
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
+    this.expose_api_read = o.expose_api_read;
+    this.expose_api_write = o.expose_api_write;
+    this.min_role_read = o.min_role_read;
+    this.min_role_write = o.min_role_write;
     contract.class(this);
   }
   static async findOne(where) {
@@ -21,8 +25,15 @@ class Table {
   }
   static async create(name) {
     await db.query(`create table ${sqlsanitize(name)} (id serial primary key)`);
-    const id = await db.insert("tables", { name });
-    return new Table({ name, id });
+    const tblrow = {
+      name,
+      expose_api_read: false,
+      expose_api_write: false,
+      min_role_read: 3,
+      min_role_write: 3
+    };
+    const id = await db.insert("tables", tblrow);
+    return new Table({ ...tblrow, id });
   }
   async delete() {
     await db.query("delete FROM fields WHERE table_id = $1", [this.id]);
