@@ -13,14 +13,25 @@ const reset = async dontDrop => {
   }
 
   await db.query(`
+    CREATE TABLE roles (
+      id serial primary key,      
+      role VARCHAR(50)
+    )
+  `);
+  await db.insert("roles", { role: "admin", id: 1 });
+  await db.insert("roles", { role: "staff", id: 2 });
+  await db.insert("roles", { role: "user", id: 3 });
+  await db.insert("roles", { role: "public", id: 4 });
+
+  await db.query(`
     CREATE TABLE tables
     (
       id serial primary key,
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
-      min_role_read integer NOT NULL DEFAULT 3,
-      min_role_write integer NOT NULL DEFAULT 3
+      min_role_read integer NOT NULL references roles(id) DEFAULT 1,
+      min_role_write integer NOT NULL references roles(id) DEFAULT 1
     )
   `);
 
@@ -61,15 +72,6 @@ const reset = async dontDrop => {
   await db.query(`
     CREATE INDEX idx_view_name on fields(name); 
   `);
-  await db.query(`
-    CREATE TABLE roles (
-      id serial primary key,      
-      role VARCHAR(50)
-    )
-  `);
-  await db.insert("roles", { role: "admin", id: 1 });
-  await db.insert("roles", { role: "staff", id: 2 });
-  await db.insert("roles", { role: "user", id: 3 });
 
   await db.query(`
     CREATE TABLE users (
