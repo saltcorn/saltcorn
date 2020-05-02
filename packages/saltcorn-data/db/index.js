@@ -1,7 +1,8 @@
 const { Pool } = require("pg");
+const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 
-var pool = new Pool({ database: process.env.PGDATABASE || "saltcorn" });
+var pool = new Pool(getConnectObject());
 
 const close = async () => {
   await pool.end();
