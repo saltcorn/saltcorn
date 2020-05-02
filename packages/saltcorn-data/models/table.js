@@ -29,8 +29,8 @@ class Table {
       name,
       expose_api_read: false,
       expose_api_write: false,
-      min_role_read: 3,
-      min_role_write: 3
+      min_role_read: 1,
+      min_role_write: 1
     };
     const id = await db.insert("tables", tblrow);
     return new Table({ ...tblrow, id });
