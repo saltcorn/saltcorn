@@ -1,4 +1,4 @@
-const { ul, li, a, span, hr, div, text, i } = require("saltcorn-markup/tags");
+const { ul, li, a, span, hr, div, text, i, h6 } = require("saltcorn-markup/tags");
 
 const subItem = item =>
   item.link
