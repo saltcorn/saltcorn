@@ -1,6 +1,7 @@
 const xdgBasedir = require("xdg-basedir");
 const path = require("path");
 const os = require("os");
+const fs = require("fs");
 
 const getConnectObject = (connSpec = {}) => {
   if (process.env.DATABASE_URL) {
@@ -10,7 +11,7 @@ const getConnectObject = (connSpec = {}) => {
 
   connObj.user = connObj.user || process.env.PGUSER;
   connObj.password = connObj.password || process.env.PGPASSWORD;
-  connObj.database = connObj.database || process.env.PGDATABASE || "saltcorn";
+  connObj.database = connObj.database || process.env.PGDATABASE;
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};
@@ -35,9 +36,10 @@ const configFilePath = path.join(
 
 const getConfigFile = () => {
   try {
-    return require(configFilePath);
-  } catch {
+    let rawdata = fs.readFileSync(configFilePath);
+    return JSON.parse(rawdata);
+  } catch (e) {
     return false;
   }
 };
-module.exports = { getConnectObject, getConfigFile };
+module.exports = { getConnectObject, getConfigFile, configFilePath };

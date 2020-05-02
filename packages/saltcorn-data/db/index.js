@@ -8,9 +8,9 @@ const close = async () => {
   await pool.end();
 };
 
-const changeConnection = async connObj => {
+const changeConnection = async (connObj = {}) => {
   await close();
-  pool = new Pool(connObj);
+  pool = new Pool(getConnectObject(connObj));
 };
 
 const select = async (tbl, whereObj, selectopts = {}) => {

@@ -1,14 +1,16 @@
 const db = require(".");
 
 //https://stackoverflow.com/a/21247009
-const reset = async () => {
-  await db.query(`
+const reset = async dontDrop => {
+  if (!dontDrop) {
+    await db.query(`
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public;
     GRANT ALL ON SCHEMA public TO postgres;
     GRANT ALL ON SCHEMA public TO public;
     COMMENT ON SCHEMA public IS 'standard public schema';
   `);
+  }
 
   await db.query(`
     CREATE TABLE tables
