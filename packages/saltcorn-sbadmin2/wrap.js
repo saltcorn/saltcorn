@@ -1,10 +1,42 @@
 const { ul, li, a, span, hr, div, text } = require("saltcorn-markup/tags");
 
+const subItem = item =>
+  item.link
+    ? a({ class: "collapse-item", href: "utilities-color.html" }, item.label)
+    : h6({ class: "collapse-header" }, item.label);
+
 const sideBarItem = item =>
   li(
     { class: "nav-item" },
     item.link
       ? a({ class: "nav-link", href: text(item.link) }, span(text(item.label)))
+      : item.subitems
+      ? [
+          a(
+            {
+              class: "nav-link collapsed",
+              href: "#",
+              "data-toggle": "collapse",
+              "data-target": "#collapseUtilities",
+              "aria-expanded": "true",
+              "aria-controls": "collapseUtilities"
+            },
+            i({ class: "fas fa-fw fa-wrench" }),
+            span("Utilities")
+          ),
+          div(
+            {
+              id: "collapseUtilities",
+              class: "collapse",
+              "aria-labelledby": "headingUtilities",
+              "data-parent": "#accordionSidebar"
+            },
+            div(
+              { class: "bg-white py-2 collapse-inner rounded" },
+              item.subitems.map(subItem)
+            )
+          )
+        ]
       : span({ class: "nav-link" }, text(item.label))
   );
 

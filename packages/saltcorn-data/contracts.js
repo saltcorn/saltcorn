@@ -11,13 +11,19 @@ const fieldlike = is.obj(
 
 const is_header = is.obj({ script: is.maybe(is.str) });
 
+const is_menu_item = is.obj({
+  label: is.str,
+  link: is.maybe(is.str),
+  subitems: is.maybe(is.array(is_menu_item))
+});
+
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.str,
   menu: is.array(
     is.obj({
       section: is.maybe(is.str),
-      items: is.array(is.obj({ label: is.str, link: is.maybe(is.str) }))
+      items: is.array(is_menu_item)
     })
   ),
   alerts: is.array(
