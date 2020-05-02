@@ -1,9 +1,9 @@
 const db = require(".");
 
 //https://stackoverflow.com/a/21247009
-const reset = async (dontDrop) => {
-  if(!dontDrop) {
-  await db.query(`
+const reset = async dontDrop => {
+  if (!dontDrop) {
+    await db.query(`
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public;
     GRANT ALL ON SCHEMA public TO postgres;

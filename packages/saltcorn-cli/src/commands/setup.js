@@ -49,12 +49,12 @@ const setup_connection = async () => {
     // check if it works
     const db = require("saltcorn-data/db");
     try {
-      await db.query('select 1')
+      await db.query("select 1");
       console.log("I already know how to connect!");
-    } catch(e) {
+    } catch (e) {
       console.log("Cannot connect to specified database. Error: ", e.message);
       await setup_connection_config();
-      await db.changeConnection()
+      await db.changeConnection();
     }
   } else {
     console.log("No database specified");
@@ -62,41 +62,51 @@ const setup_connection = async () => {
   }
 };
 
-const table_exists= async (db, tblname)=> {
-    const {rows} = await db.query(`SELECT EXISTS 
+const table_exists = async (db, tblname) => {
+  const { rows } = await db.query(`SELECT EXISTS 
     (
         SELECT 1
         FROM information_schema.tables 
         WHERE table_schema = 'public'
         AND table_name = '${tblname}'
-    );`)
-    return rows[0].exists;
-}
+    );`);
+  return rows[0].exists;
+};
 
 const setup_schema = async () => {
-    const db = require("saltcorn-data/db");
-    const ex_tables = await table_exists(db, 'tables');
-    const ex_fields = await table_exists(db, 'fields');
-    if(!(ex_fields && ex_tables)) {
-        console.log("Installing schema")
-        const reset = require("saltcorn-data/db/reset_schema");
-        await reset(true)
-    } else
-    console.log("Schema already present")
+  const db = require("saltcorn-data/db");
+  const ex_tables = await table_exists(db, "tables");
+  const ex_fields = await table_exists(db, "fields");
+  if (!(ex_fields && ex_tables)) {
+    console.log("Installing schema");
+    const reset = require("saltcorn-data/db/reset_schema");
+    await reset(true);
+  } else console.log("Schema already present");
+};
 
-}
+const setup_users = async () => {
+  const User = require("saltcorn-data/models/user");
+  const users = await User.find({});
+  if (users.length === 0) {
+    console.log("No users found. Please create an admin user");
+    const email = await cli.prompt("Email address");
+    const password = await cli.prompt("Password", { type: "hide" });
+    await User.create({ email, password, role_id: 1 });
+  } else {
+    console.log("Users already present", users);
+  }
+};
 
 class SetupCommand extends Command {
   async run() {
     // check if i already know how to connect
     await setup_connection();
     // check if schema is live
-    await setup_schema()
+    await setup_schema();
     //check if there are any users
-
+    await setup_users();
 
     await require("saltcorn-data/db").close();
-
   }
 }
 
