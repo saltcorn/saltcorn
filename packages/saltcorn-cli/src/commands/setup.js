@@ -48,14 +48,13 @@ const setup_connection = async () => {
   if (connobj) {
     // check if it works
     try {
-      require("saltcorn-data/db");
+      const db = require("saltcorn-data/db");
+      await db.query('select 1')
       console.log("I already know how to connect!");
-    } catch {
-      console.log("Cannot connect to specified database. Error: ");
-      console.log(e);
+    } catch(e) {
+      console.log("Cannot connect to specified database. Error: ", e.message);
       await setup_connection_config();
       console.log("You may need to run 'saltcorn setup' again if there are any errors.");
-
     }
   } else {
     console.log("No database specified");
