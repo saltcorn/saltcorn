@@ -14,6 +14,7 @@
     "cli-ux": "^5.4.5",
     "saltcorn": "^0.0.1",
     "saltcorn-data": "^0.0.1",
+    "contractis": "^0.0.1",
     "dateformat": "^3.0.3"
   },
   "devDependencies": {

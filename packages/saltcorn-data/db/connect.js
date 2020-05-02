@@ -40,4 +40,4 @@ const getConfigFile = () => {
     return false;
   }
 };
-module.exports = { getConnectObject, getConfigFile };
+module.exports = { getConnectObject, getConfigFile, configFilePath };
