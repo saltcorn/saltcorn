@@ -1,9 +1,11 @@
-const { ul, li, a, span, hr, div, text } = require("saltcorn-markup/tags");
+const { ul, li, a, span, hr, div, text, i } = require("saltcorn-markup/tags");
 
 const subItem = item =>
   item.link
-    ? a({ class: "collapse-item", href: "utilities-color.html" }, item.label)
+    ? a({ class: "collapse-item", href: text(item.link) }, item.label)
     : h6({ class: "collapse-header" }, item.label);
+
+const labelToId = item => text(item.label.replace(" ", ""));
 
 const sideBarItem = item =>
   li(
@@ -17,18 +19,17 @@ const sideBarItem = item =>
               class: "nav-link collapsed",
               href: "#",
               "data-toggle": "collapse",
-              "data-target": "#collapseUtilities",
+              "data-target": `#collapse${labelToId(item)}`,
               "aria-expanded": "true",
-              "aria-controls": "collapseUtilities"
+              "aria-controls": `collapse${labelToId(item)}`
             },
-            i({ class: "fas fa-fw fa-wrench" }),
-            span("Utilities")
+            //i({ class: "fas fa-fw fa-wrench" }),
+            span(text(item.label))
           ),
           div(
             {
-              id: "collapseUtilities",
+              id: `collapse${labelToId(item)}`,
               class: "collapse",
-              "aria-labelledby": "headingUtilities",
               "data-parent": "#accordionSidebar"
             },
             div(
@@ -100,7 +101,9 @@ const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
     </div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
+            crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->

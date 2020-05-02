@@ -14,7 +14,14 @@ const is_header = is.obj({ script: is.maybe(is.str) });
 const is_menu_item = is.obj({
   label: is.str,
   link: is.maybe(is.str),
-  subitems: is.maybe(is.array(is_menu_item))
+  subitems: is.maybe(
+    is.array(
+      is.obj({
+        label: is.str,
+        link: is.maybe(is.str)
+      })
+    )
+  )
 });
 
 const is_plugin_wrap_arg = is.obj({

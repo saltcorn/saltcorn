@@ -101,7 +101,10 @@ const getApp = async () => {
         { link: "/table", label: "Tables" },
         { link: "/viewedit/list", label: "Views" },
         { link: "/plugins", label: "Plugins" },
-        { link: "/useradmin", label: "Users" }
+        {
+          label: "Settings",
+          subitems: [{ link: "/useradmin", label: "Users" }]
+        }
       ];
 
       const menu = [
