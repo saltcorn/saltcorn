@@ -1,10 +1,9 @@
 const xdgBasedir = require("xdg-basedir");
 const path = require("path");
 const os = require("os");
-const fs = require('fs');
+const fs = require("fs");
 
 const getConnectObject = (connSpec = {}) => {
-
   if (process.env.DATABASE_URL) {
     return { connectionString: process.env.DATABASE_URL };
   }
@@ -39,7 +38,7 @@ const getConfigFile = () => {
   try {
     let rawdata = fs.readFileSync(configFilePath);
     return JSON.parse(rawdata);
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 };
