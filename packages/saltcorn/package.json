@@ -28,7 +28,7 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
