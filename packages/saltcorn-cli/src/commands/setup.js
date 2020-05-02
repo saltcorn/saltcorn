@@ -93,7 +93,7 @@ const setup_users = async () => {
     const password = await cli.prompt("Password", { type: "hide" });
     await User.create({ email, password, role_id: 1 });
   } else {
-    console.log("Users already present", users);
+    console.log("Users already present");
   }
 };
 
