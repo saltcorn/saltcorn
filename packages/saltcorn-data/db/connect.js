@@ -22,6 +22,7 @@ const getConnectObject = (connSpec = {}) => {
     connObj.database = connObj.database || cfg.database;
   }
   console.log("found connobj", connObj)
+  console.log("env", process.env)
 
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
