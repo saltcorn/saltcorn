@@ -25,7 +25,6 @@ class Plugin {
     if (typeof this.id === "undefined") {
       // insert
       await db.insert("plugins", row);
-      req.flash("success", "Plugin created");
     } else {
       await db.update("plugins", row, this.id);
     }
@@ -37,6 +36,15 @@ class Plugin {
     const response = await fetch("https://www.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map(p => new Plugin(p));
+  }
+
+  static async store_by_name(name) {
+    const response = await fetch(
+      "https://www.saltcorn.com/api/extensions?name=" + encodeURIComponent(name)
+    );
+    const json = await response.json();
+    if (json.success.length == 1) return new Plugin(json.success[0]);
+    else return null;
   }
 }
 

@@ -6,9 +6,7 @@ const State = require("saltcorn-data/db/state");
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const load_plugins = require("../load_plugins");
-const {
-   stateFieldsToWhere
-} = require("saltcorn-data/plugin-helper");
+const { stateFieldsToWhere } = require("saltcorn-data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
@@ -22,11 +20,14 @@ router.get("/:tableName/", async (req, res) => {
   const table = await Table.findOne({ name: tableName });
   const role = req.isAuthenticated() ? req.user.role_id : 4;
   if (table.expose_api_read && role <= table.min_role_read) {
-    var rows
-    console.log(req.query)
-    if(req.query && req.query !== {}) {
+    var rows;
+    if (req.query && req.query !== {}) {
       const fields = await table.getFields();
-      const qstate = await stateFieldsToWhere({ fields, approximate: false, state: req.query });
+      const qstate = await stateFieldsToWhere({
+        fields,
+        approximate: false,
+        state: req.query
+      });
       rows = await table.getRows(qstate);
     } else {
       rows = await table.getRows();

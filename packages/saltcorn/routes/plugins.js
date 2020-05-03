@@ -87,6 +87,8 @@ router.post("/", isAdmin, async (req, res) => {
   try {
     await load_plugins.loadPlugin(plugin);
     await plugin.upsert();
+  req.flash("success", "Plugin installed");
+
     res.redirect(`/plugins`);
   } catch (e) {
     req.flash("error", `${e}`);
@@ -109,5 +111,15 @@ router.post("/reload/:id", isAdmin, async (req, res) => {
   const plugin = await Plugin.findOne({ id });
   await load_plugins.loadPlugin(plugin);
 
+  res.redirect(`/plugins`);
+});
+
+router.post("/install/:name", isAdmin, async (req, res) => {
+  const { name } = req.params;
+
+  const plugin = await Plugin.store_by_name(name);
+  await load_plugins.loadPlugin(plugin);
+  await plugin.upsert();
+  req.flash("success", "Plugin installed");
   res.redirect(`/plugins`);
 });
