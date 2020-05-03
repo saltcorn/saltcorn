@@ -4,6 +4,8 @@ image saltcorn:
 container saltcorn:
   image: saltcorn
   expose: [4649]
+  useDatabase: saltcorn
+
 
 domain saltcorn.com:
   proxyContainer: saltcorn:4649
