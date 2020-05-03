@@ -8,12 +8,10 @@ const { mkTable, h, post_btn, link } = require("saltcorn-markup");
 const { text, script } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
-  picked_fields_to_query
-} = require("../../plugin-helper");
-const {
-  get_viewable_fields,
+  picked_fields_to_query,
   stateFieldsToWhere
-} = require("./viewable_fields");
+} = require("../../plugin-helper");
+const { get_viewable_fields } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [

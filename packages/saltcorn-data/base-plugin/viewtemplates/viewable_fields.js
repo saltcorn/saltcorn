@@ -79,23 +79,4 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
     }
   });
 
-const stateFieldsToWhere = ({ fields, state }) => {
-  var qstate = {};
-  Object.entries(state).forEach(([k, v]) => {
-    if (k === "_fts") {
-      qstate[k] = { searchTerm: v, fields };
-      return;
-    }
-    const field = fields.find(fld => fld.name == k);
-    if (
-      field &&
-      field.type.name === "String" &&
-      !(field.attributes && field.attributes.options)
-    ) {
-      qstate[k] = { ilike: v };
-    } else if (field) qstate[k] = v;
-  });
-  return qstate;
-};
-
-module.exports = { stateFieldsToWhere, get_viewable_fields };
+module.exports = { get_viewable_fields };

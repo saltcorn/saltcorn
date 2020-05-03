@@ -1,11 +1,12 @@
 const Router = require("express-promise-router");
-const db = require("saltcorn-data/db");
 const { isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
+const Plugin = require("saltcorn-data/models/plugin");
 const load_plugins = require("../load_plugins");
+const { h5 } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -33,9 +34,11 @@ const pluginForm = plugin => {
   return form;
 };
 router.get("/", isAdmin, async (req, res) => {
-  const rows = await db.select("plugins");
+  const rows = await Plugin.find({});
+  const instore = await Plugin.store_plugins_available();
   res.sendWrap(
     "Plugins",
+    h5("Installed"),
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -53,6 +56,17 @@ router.get("/", isAdmin, async (req, res) => {
       ],
       rows
     ),
+    h5("Available"),
+    mkTable(
+      [
+        { label: "Name", key: "name" },
+        {
+          label: "Install",
+          key: r => post_btn(`/plugins/install/${r.name}`, "Install")
+        }
+      ],
+      instore
+    ),
     link(`/plugins/new`, "Add plugin")
   );
 });
@@ -63,33 +77,29 @@ router.get("/new/", isAdmin, async (req, res) => {
 
 router.get("/:id/", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const plugin = await db.selectOne("plugins", { id });
+  const plugin = await Plugin.findOne({ id });
 
   res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin)));
 });
 
 router.post("/", isAdmin, async (req, res) => {
-  const { id, ...v } = req.body;
+  const plugin = new Plugin(req.body);
   try {
-    await load_plugins.loadPlugin(v);
-    if (typeof id === "undefined") {
-      // insert
-      await db.insert("plugins", v);
-      req.flash("success", "Plugin created");
-    } else {
-      await db.update("plugins", v, id);
-    }
+    await load_plugins.loadPlugin(plugin);
+    await plugin.upsert();
+    req.flash("success", "Plugin installed");
+
     res.redirect(`/plugins`);
   } catch (e) {
     req.flash("error", `${e}`);
-    const form = pluginForm(req.body);
+    const form = pluginForm(plugin);
     res.sendWrap(`Edit Plugin`, renderForm(form));
   }
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const u = await db.deleteWhere("plugins", { id });
+  await Plugin.deleteWhere({ id });
   req.flash("success", "Plugin removed");
 
   res.redirect(`/plugins`);
@@ -98,8 +108,18 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 router.post("/reload/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
 
-  const plugin = await db.selectOne("plugins", { id });
+  const plugin = await Plugin.findOne({ id });
   await load_plugins.loadPlugin(plugin);
 
+  res.redirect(`/plugins`);
+});
+
+router.post("/install/:name", isAdmin, async (req, res) => {
+  const { name } = req.params;
+
+  const plugin = await Plugin.store_by_name(name);
+  await load_plugins.loadPlugin(plugin);
+  await plugin.upsert();
+  req.flash("success", "Plugin installed");
   res.redirect(`/plugins`);
 });
