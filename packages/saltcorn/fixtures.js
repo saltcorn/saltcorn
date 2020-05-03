@@ -9,7 +9,10 @@ const { registerPlugin } = require("./load_plugins");
 
 module.exports = async () => {
   registerPlugin(basePlugin);
-  const table = await Table.create("books");
+  const table = await Table.create("books", {
+    expose_api_read: true,
+    min_role_read: 4
+  });
   await Field.create({
     table,
     name: "author",
@@ -25,7 +28,10 @@ module.exports = async () => {
     required: true,
     attributes: { min: 0 }
   });
-  const patients = await Table.create("patients");
+  const patients = await Table.create("patients", {
+    expose_api_read: true,
+    min_role_read: 2
+  });
   await Field.create({
     table: patients,
     name: "name",
