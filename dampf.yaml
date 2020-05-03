@@ -11,3 +11,4 @@ domain saltcorn.com:
 
 postgresdb saltcorn:
   user: tomn
+  extensions: []
