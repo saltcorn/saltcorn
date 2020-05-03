@@ -1,10 +1,10 @@
 const Router = require("express-promise-router");
-const db = require("saltcorn-data/db");
 const { isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const State = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
+const Plugin = require("saltcorn-data/models/plugin");
 const load_plugins = require("../load_plugins");
 
 const router = new Router();
@@ -33,7 +33,7 @@ const pluginForm = plugin => {
   return form;
 };
 router.get("/", isAdmin, async (req, res) => {
-  const rows = await db.select("plugins");
+  const rows = await Plugin.find({});
   res.sendWrap(
     "Plugins",
     mkTable(
@@ -63,33 +63,27 @@ router.get("/new/", isAdmin, async (req, res) => {
 
 router.get("/:id/", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const plugin = await db.selectOne("plugins", { id });
+  const plugin = await Plugin.findOne({ id });
 
   res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin)));
 });
 
 router.post("/", isAdmin, async (req, res) => {
-  const { id, ...v } = req.body;
+  const plugin = new Plugin(req.body);
   try {
-    await load_plugins.loadPlugin(v);
-    if (typeof id === "undefined") {
-      // insert
-      await db.insert("plugins", v);
-      req.flash("success", "Plugin created");
-    } else {
-      await db.update("plugins", v, id);
-    }
+    await load_plugins.loadPlugin(plugin);
+    await plugin.upsert();
     res.redirect(`/plugins`);
   } catch (e) {
     req.flash("error", `${e}`);
-    const form = pluginForm(req.body);
+    const form = pluginForm(plugin);
     res.sendWrap(`Edit Plugin`, renderForm(form));
   }
 });
 
 router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
-  const u = await db.deleteWhere("plugins", { id });
+  await Plugin.deleteWhere({ id });
   req.flash("success", "Plugin removed");
 
   res.redirect(`/plugins`);
@@ -98,7 +92,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 router.post("/reload/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
 
-  const plugin = await db.selectOne("plugins", { id });
+  const plugin = await Plugin.findOne({ id });
   await load_plugins.loadPlugin(plugin);
 
   res.redirect(`/plugins`);
