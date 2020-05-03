@@ -3,7 +3,7 @@ const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 
 var pool = new Pool(getConnectObject());
-
+console.log("connecting with", getConnectObject())
 const close = async () => {
   await pool.end();
 };
