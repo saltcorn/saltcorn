@@ -4,14 +4,12 @@ const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("../../models/workflow");
-const {
-  get_viewable_fields,
-  stateFieldsToWhere
-} = require("./viewable_fields");
+const { get_viewable_fields } = require("./viewable_fields");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
+  stateFieldsToWhere,
   picked_fields_to_query
 } = require("../../plugin-helper");
 

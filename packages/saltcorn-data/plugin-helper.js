@@ -231,9 +231,29 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
+const stateFieldsToWhere = ({ fields, state }) => {
+  var qstate = {};
+  Object.entries(state).forEach(([k, v]) => {
+    if (k === "_fts") {
+      qstate[k] = { searchTerm: v, fields };
+      return;
+    }
+    const field = fields.find(fld => fld.name == k);
+    if (
+      field &&
+      field.type.name === "String" &&
+      !(field.attributes && field.attributes.options)
+    ) {
+      qstate[k] = { ilike: v };
+    } else if (field) qstate[k] = v;
+  });
+  return qstate;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
   get_child_views,
-  get_parent_views
+  get_parent_views,
+  stateFieldsToWhere
 };
