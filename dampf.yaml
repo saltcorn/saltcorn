@@ -1,0 +1,13 @@
+image saltcorn:
+  dockerFile: .
+
+container saltcorn:
+  image: saltcorn
+  expose: [4649]
+
+domain saltcorn.com:
+  proxyContainer: saltcorn:4649
+  letsEncrypt: true
+
+postgresdb saltcorn:
+  user: tomn
