@@ -87,7 +87,7 @@ router.post("/", isAdmin, async (req, res) => {
   try {
     await load_plugins.loadPlugin(plugin);
     await plugin.upsert();
-  req.flash("success", "Plugin installed");
+    req.flash("success", "Plugin installed");
 
     res.redirect(`/plugins`);
   } catch (e) {
