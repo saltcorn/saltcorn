@@ -20,7 +20,7 @@ const pluginForm = plugin => {
         name: "source",
         type: State.types.String,
         required: true,
-        attributes: { options: "npm,local,git" }
+        attributes: { options: "npm,local,github" }
       }),
       new Field({ label: "Location", name: "location", input_type: "text" })
     ],
