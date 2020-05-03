@@ -6,6 +6,7 @@ const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
 const load_plugins = require("../load_plugins");
+const { h5 } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -34,8 +35,10 @@ const pluginForm = plugin => {
 };
 router.get("/", isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
+  const instore = await Plugin.store_plugins_available();
   res.sendWrap(
     "Plugins",
+    h5("Installed"),
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -52,6 +55,17 @@ router.get("/", isAdmin, async (req, res) => {
         }
       ],
       rows
+    ),
+    h5("Available"),
+    mkTable(
+      [
+        { label: "Name", key: "name" },
+        {
+          label: "Install",
+          key: r => post_btn(`/plugins/install/${r.name}`, "Install")
+        }
+      ],
+      instore
     ),
     link(`/plugins/new`, "Add plugin")
   );

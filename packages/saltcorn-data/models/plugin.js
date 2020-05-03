@@ -1,7 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 
-const { sqlsanitize } = require("../db/internal.js");
+const fetch = require("node-fetch");
 
 class Plugin {
   constructor(o) {
@@ -32,6 +32,11 @@ class Plugin {
   }
   static async deleteWhere(where) {
     await db.deleteWhere("plugins", where);
+  }
+  static async store_plugins_available() {
+    const response = await fetch("https://www.saltcorn.com/api/extensions");
+    const json = await response.json();
+    return json.success.map(p => new Plugin(p));
   }
 }
 
