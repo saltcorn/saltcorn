@@ -231,7 +231,7 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
-const stateFieldsToWhere = ({ fields, state, approximate = false }) => {
+const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
   var qstate = {};
   Object.entries(state).forEach(([k, v]) => {
     if (k === "_fts") {
