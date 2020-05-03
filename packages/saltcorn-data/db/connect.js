@@ -21,6 +21,7 @@ const getConnectObject = (connSpec = {}) => {
     connObj.port = connObj.port || cfg.port;
     connObj.database = connObj.database || cfg.database;
   }
+  console.log("found connobj", connObj)
 
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
