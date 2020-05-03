@@ -23,14 +23,14 @@ class Table {
 
     return tbls.map(t => new Table(t));
   }
-  static async create(name) {
+  static async create(name, options={}) {
     await db.query(`create table ${sqlsanitize(name)} (id serial primary key)`);
     const tblrow = {
       name,
-      expose_api_read: false,
-      expose_api_write: false,
-      min_role_read: 1,
-      min_role_write: 1
+      expose_api_read: options.expose_api_read|| false,
+      expose_api_write: options.expose_api_write|| false,
+      min_role_read: options.min_role_read|| 1,
+      min_role_write: options.min_role_write|| 1,
     };
     const id = await db.insert("tables", tblrow);
     return new Table({ ...tblrow, id });
@@ -79,9 +79,9 @@ class Table {
     return this.fields;
   }
 
-  static async rename(id, new_name) {
+  static async update(id, new_table) {
     //TODO RENAME TABLE
-    await db.query("update tables set name=$1 where id=$2", [new_name, id]);
+    await db.update("tables",new_table, id)
   }
 
   async get_parent_relations() {
@@ -262,7 +262,7 @@ Table.contract = {
     ),
     findOne: is.fun(is.obj(), is.promise(is.class("Table"))),
     create: is.fun(is.str, is.promise(is.class("Table"))),
-    rename: is.fun([is.posint, is.str], is.promise(is.eq(undefined)))
+    update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
 };
 module.exports = Table;
