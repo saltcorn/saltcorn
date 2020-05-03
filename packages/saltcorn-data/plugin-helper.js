@@ -231,7 +231,7 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
-const stateFieldsToWhere = ({ fields, state }) => {
+const stateFieldsToWhere = ({ fields, state, approximate=false }) => {
   var qstate = {};
   Object.entries(state).forEach(([k, v]) => {
     if (k === "_fts") {
@@ -242,7 +242,8 @@ const stateFieldsToWhere = ({ fields, state }) => {
     if (
       field &&
       field.type.name === "String" &&
-      !(field.attributes && field.attributes.options)
+      !(field.attributes && field.attributes.options) &&
+      approximate
     ) {
       qstate[k] = { ilike: v };
     } else if (field) qstate[k] = v;

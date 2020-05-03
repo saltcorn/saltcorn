@@ -26,7 +26,7 @@ router.get("/:tableName/", async (req, res) => {
     console.log(req.query)
     if(req.query && req.query !== {}) {
       const fields = await table.getFields();
-      const qstate = await stateFieldsToWhere({ fields, state: req.query });
+      const qstate = await stateFieldsToWhere({ fields, approximate: false, state: req.query });
       rows = await table.getRows(qstate);
     } else {
       rows = await table.getRows();
