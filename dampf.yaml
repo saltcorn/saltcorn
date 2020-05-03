@@ -6,7 +6,6 @@ container saltcorn:
   expose: [4649]
   useDatabase: saltcorn
 
-
 domain saltcorn.com:
   proxyContainer: saltcorn:4649
   letsEncrypt: true

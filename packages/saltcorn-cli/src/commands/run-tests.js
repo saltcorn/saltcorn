@@ -5,9 +5,6 @@ const db = require("saltcorn-data/db");
 const { spawnSync } = require("child_process");
 
 class RunTestsCommand extends Command {
-  static args = [
-    { name: "package", description: "which package to run tests for" }
-  ];
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     await db.changeConnection({ database: "saltcorn_test" });
@@ -39,6 +36,10 @@ class RunTestsCommand extends Command {
     }
   }
 }
+
+RunTestsCommand.args = [
+  { name: "package", description: "which package to run tests for" }
+];
 
 RunTestsCommand.description = `Describe the command here
 ...

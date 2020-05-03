@@ -4,9 +4,6 @@ const { spawnSync } = require("child_process");
 const env = process.env;
 
 class RestoreCommand extends Command {
-  static args = [
-    { name: "file", required: true, description: "backup file to restore" }
-  ];
   async run() {
     const { args } = this.parse(RestoreCommand);
 
@@ -22,6 +19,10 @@ class RestoreCommand extends Command {
     this.exit(res.status);
   }
 }
+
+RestoreCommand.args = [
+  { name: "file", required: true, description: "backup file to restore" }
+];
 
 RestoreCommand.description = `Describe the command here
 ...
