@@ -2,7 +2,6 @@ const { contract, is } = require("contractis");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 const sqlsanitize = contract(is.fun(is.str, is.str), nm => {
-  if (nm.toUpperCase() === "RANDOM()") return "RANDOM()";
   const s = nm.replace(/[^A-Za-z_0-9.]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
@@ -58,11 +57,14 @@ const toInt = x =>
     : null;
 
 const mkSelectOptions = selopts => {
-  const orderby = selopts.orderBy
-    ? `order by ${sqlsanitize(selopts.orderBy)}${
-        selopts.orderDesc ? " DESC" : ""
-      }`
-    : "";
+  const orderby =
+    selopts.orderBy === "RANDOM()"
+      ? "order by RANDOM()"
+      : selopts.orderBy
+      ? `order by ${sqlsanitize(selopts.orderBy)}${
+          selopts.orderDesc ? " DESC" : ""
+        }`
+      : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
   return [orderby, limit, offset].filter(s => s).join(" ");
