@@ -23,14 +23,14 @@ class Table {
 
     return tbls.map(t => new Table(t));
   }
-  static async create(name, options={}) {
+  static async create(name, options = {}) {
     await db.query(`create table ${sqlsanitize(name)} (id serial primary key)`);
     const tblrow = {
       name,
-      expose_api_read: options.expose_api_read|| false,
-      expose_api_write: options.expose_api_write|| false,
-      min_role_read: options.min_role_read|| 1,
-      min_role_write: options.min_role_write|| 1,
+      expose_api_read: options.expose_api_read || false,
+      expose_api_write: options.expose_api_write || false,
+      min_role_read: options.min_role_read || 1,
+      min_role_write: options.min_role_write || 1
     };
     const id = await db.insert("tables", tblrow);
     return new Table({ ...tblrow, id });
@@ -81,7 +81,7 @@ class Table {
 
   static async update(id, new_table) {
     //TODO RENAME TABLE
-    await db.update("tables",new_table, id)
+    await db.update("tables", new_table, id);
   }
 
   async get_parent_relations() {

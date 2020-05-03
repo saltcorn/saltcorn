@@ -17,7 +17,7 @@ const roleOptions = [
   { value: 4, label: "Public" }
 ];
 
-const tableForm = (table) => {
+const tableForm = table => {
   const form = new Form({
     action: "/table",
     fields: [
@@ -42,8 +42,8 @@ const tableForm = (table) => {
     if (table.id) form.hidden("id");
     form.values = table;
   }
-  return form
-}
+  return form;
+};
 
 router.get("/new/", isAdmin, async (req, res) => {
   res.sendWrap(`New table`, renderForm(tableForm()));
@@ -54,30 +54,29 @@ router.get("/:id", isAdmin, async (req, res) => {
   const table = await Table.findOne({ id });
 
   const fields = await Field.find({ table_id: id }, { orderBy: "name" });
-  const tableHtml= mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Label", key: "label" },
-        { label: "Required", key: "required" },
-        { label: "Type", key: r => r.type.name },
-        { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
-        {
-          label: "Delete",
-          key: r => post_btn(`/field/delete/${r.id}`, "Delete")
-        }
-      ],
-      fields
-    )
+  const tableHtml = mkTable(
+    [
+      { label: "Name", key: "name" },
+      { label: "Label", key: "label" },
+      { label: "Required", key: "required" },
+      { label: "Type", key: r => r.type.name },
+      { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+      {
+        label: "Delete",
+        key: r => post_btn(`/field/delete/${r.id}`, "Delete")
+      }
+    ],
+    fields
+  );
   res.sendWrap(
     `${table.name} table`,
     h5("Fields"),
     tableHtml,
-   
+
     span({ class: "mr-3" }, link(`/list/${table.name}`, "List")),
     link(`/field/new/${table.id}`, "Add field"),
     h5("Edit table properties"),
     renderForm(tableForm(table))
-
   );
 });
 
@@ -85,13 +84,13 @@ router.post("/", isAdmin, async (req, res) => {
   const v = req.body;
   if (typeof v.id === "undefined") {
     // insert
-    const {name, ...rest} = v
+    const { name, ...rest } = v;
 
     const table = await Table.create(name, rest);
     req.flash("success", "Table created");
     res.redirect(`/table/${table.id}`);
   } else {
-    const {id, ...rest} = v
+    const { id, ...rest } = v;
     Table.update(parseInt(id), rest);
     res.redirect(`/table/${id}`);
   }
