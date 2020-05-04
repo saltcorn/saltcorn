@@ -13,11 +13,11 @@ const pgSession = require("connect-pg-simple")(session);
 const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
 const load_plugins = require("./load_plugins");
-const {migrate} = require("saltcorn-data/migrate");
+const { migrate } = require("saltcorn-data/migrate");
 
 const getApp = async () => {
   const app = express();
-  await migrate()
+  await migrate();
   await load_plugins.loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));

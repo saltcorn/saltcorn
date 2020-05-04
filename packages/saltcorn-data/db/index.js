@@ -43,20 +43,18 @@ const deleteWhere = async (tbl, whereObj) => {
   return tq.rows;
 };
 
-const insert = async (tbl, obj, noid=false) => {
+const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
   const sql = `insert into ${sqlsanitize(
     tbl
-  )}(${fnameList}) values(${valPosList}) returning ${noid ? '*':"id"}`;
+  )}(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
   //console.log(sql, valList)
   const { rows } = await pool.query(sql, valList);
-  if(noid)
-    return;
-    else
-  return rows[0].id;
+  if (noid) return;
+  else return rows[0].id;
 };
 
 const update = async (tbl, obj, id) => {
