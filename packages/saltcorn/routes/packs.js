@@ -7,7 +7,7 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Plugin = require("saltcorn-data/models/plugin");
 const load_plugins = require("../load_plugins");
-const { h5, pre } = require("saltcorn-markup/tags");
+const { h5, pre, code } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -98,5 +98,5 @@ router.post("/create", isAdmin, async (req, res) => {
         break;
     }
   }
-  res.sendWrap(`Pack`, pre(JSON.stringify(pack, null, 2)));
+  res.sendWrap(`Pack`, pre({class:"wsprewrap"},code(JSON.stringify(pack))));
 });
