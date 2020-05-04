@@ -5,6 +5,7 @@ const State = require("saltcorn-data/db/state");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
+const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
 const load_plugins = require("../load_plugins");
 const { h5, pre, code } = require("saltcorn-markup/tags");
@@ -120,12 +121,21 @@ router.get("/install", isAdmin, async (req, res) => {
 });
 
 router.post("/install", isAdmin, async (req, res) => {
-    const pack=JSON.parse(req.body.pack)
-    //console.log(pack)
-    for(const tableSpec of pack.tables) {
-        const table = await Table.create(tableSpec.name, tableSpec)
-        for(const field of tableSpec.fields) 
-            await Field.create({table, ...field})
-    }
+  const pack = JSON.parse(req.body.pack);
+  //console.log(pack)
+  for (const tableSpec of pack.tables) {
+    const table = await Table.create(tableSpec.name, tableSpec);
+    for (const field of tableSpec.fields)
+      await Field.create({ table, ...field });
+  }
+  for (const viewSpec of pack.views) {
+    const { table, ...viewNoTable } = viewSpec;
+    const table = await Table.findOne({ name: table });
+    await View.create({ ...viewNoTable, table_id });
+  }
+  for (const plugin of pack.plugins) {
+    await Plugin.upsert(plugin);
+  }
+
   res.redirect(`/plugins`);
-})
+});
