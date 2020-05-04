@@ -11,7 +11,7 @@ class User {
   static async create(uo) {
     const u = new User(uo);
     const hashpw = await bcrypt.hash(u.password, 5);
-    const id = await db.insert("users", {
+    const id = await db.insert("_sc_users", {
       email: u.email,
       password: hashpw,
       role_id: u.role_id
@@ -27,18 +27,18 @@ class User {
     else return false;
   }
   static async find(where) {
-    const us = await db.select("users", where);
+    const us = await db.select("_sc_users", where);
     return us.map(u => new User(u));
   }
   static async findOne(where) {
-    const u = await db.selectOne("users", where);
+    const u = await db.selectOne("_sc_users", where);
     return new User(u);
   }
   async delete() {
     await db.query("delete FROM users WHERE id = $1", [this.id]);
   }
   static async get_roles() {
-    const rs = await db.select("roles");
+    const rs = await db.select("_sc_roles");
     return rs;
   }
 }

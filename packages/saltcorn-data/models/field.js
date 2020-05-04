@@ -132,16 +132,16 @@ class Field {
   }
 
   static async find(where, selectopts) {
-    const db_flds = await db.select("fields", where, selectopts);
+    const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map(dbf => new Field(dbf));
   }
   static async findOne(where) {
-    const db_fld = await db.selectOne("fields", where);
+    const db_fld = await db.selectOne("_sc_fields", where);
     return new Field(db_fld);
   }
 
   static async update(v, id) {
-    await db.update("fields", v, id);
+    await db.update("_sc_fields", v, id);
   }
   get listKey() {
     return this.type.listAs
@@ -159,7 +159,7 @@ class Field {
     return null;
   }
   async delete() {
-    await db.deleteWhere("fields", { id: this.id });
+    await db.deleteWhere("_sc_fields", { id: this.id });
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
     await db.query(
@@ -200,7 +200,7 @@ class Field {
       ]);
     }
 
-    f.id = await db.insert("fields", {
+    f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
       name: f.name,
       label: f.label,

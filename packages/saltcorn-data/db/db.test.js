@@ -40,7 +40,7 @@ describe("mkWhere", () => {
 describe("where", () => {
   it("should support in", async () => {
     await Table.create("myothertable");
-    const tf = await db.selectOne("tables", {
+    const tf = await db.selectOne("_sc_tables", {
       name: { in: ["myothertable", "nosuchtable"] }
     });
 
@@ -48,7 +48,7 @@ describe("where", () => {
   });
 
   it("should support ilike", async () => {
-    const tf = await db.selectOne("tables", {
+    const tf = await db.selectOne("_sc_tables", {
       name: { ilike: "yothertabl" }
     });
 

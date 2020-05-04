@@ -18,10 +18,10 @@ const reset = async dontDrop => {
       role VARCHAR(50)
     )
   `);
-  await db.insert("roles", { role: "admin", id: 1 });
-  await db.insert("roles", { role: "staff", id: 2 });
-  await db.insert("roles", { role: "user", id: 3 });
-  await db.insert("roles", { role: "public", id: 4 });
+  await db.insert("_sc_roles", { role: "admin", id: 1 });
+  await db.insert("_sc_roles", { role: "staff", id: 2 });
+  await db.insert("_sc_roles", { role: "user", id: 3 });
+  await db.insert("_sc_roles", { role: "public", id: 4 });
 
   await db.query(`
     CREATE TABLE _sc_tables
