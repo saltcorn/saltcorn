@@ -18,6 +18,20 @@ const reset = async dontDrop => {
       role VARCHAR(50)
     )
   `);
+
+  await db.query(`
+    CREATE TABLE _sc_config (
+      key text primary key,      
+      value JSONB not null
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE _sc_migrations (
+      migration text primary key
+    )
+  `);
+
   await db.insert("_sc_roles", { role: "admin", id: 1 });
   await db.insert("_sc_roles", { role: "staff", id: 2 });
   await db.insert("_sc_roles", { role: "user", id: 3 });
