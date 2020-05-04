@@ -5,7 +5,8 @@ const {
   option,
   text,
   h3,
-  button
+  button,
+  textarea
 } = require("saltcorn-markup/tags");
 const { contract, is } = require("contractis");
 
@@ -74,6 +75,19 @@ const string = {
               id: `input${text(nm)}`,
               ...(isdef(v) && { value: text(v) })
             })
+    },
+    textarea: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        textarea(
+          {
+            class: ["form-control", cls],
+            name: text(nm),
+            id: `input${text(nm)}`,
+            rows: 10
+          },
+          text(v) || ""
+        )
     }
   },
   read: v => {

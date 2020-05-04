@@ -100,3 +100,32 @@ router.post("/create", isAdmin, async (req, res) => {
   }
   res.sendWrap(`Pack`, pre({ class: "wsprewrap" }, code(JSON.stringify(pack))));
 });
+
+router.get("/install", isAdmin, async (req, res) => {
+  res.sendWrap(
+    `Install Pack`,
+    renderForm(
+      new Form({
+        action: "/packs/install",
+        fields: [
+          {
+            name: "pack",
+            type: "String",
+            fieldview: "textarea"
+          }
+        ]
+      })
+    )
+  );
+});
+
+router.post("/install", isAdmin, async (req, res) => {
+    const pack=JSON.parse(req.body.pack)
+    //console.log(pack)
+    for(const tableSpec of pack.tables) {
+        const table = await Table.create(tableSpec.name, tableSpec)
+        for(const field of tableSpec.fields) 
+            await Field.create({table, ...field})
+    }
+  res.redirect(`/plugins`);
+})
