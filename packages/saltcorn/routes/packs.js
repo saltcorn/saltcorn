@@ -130,8 +130,8 @@ router.post("/install", isAdmin, async (req, res) => {
   }
   for (const viewSpec of pack.views) {
     const { table, ...viewNoTable } = viewSpec;
-    const table = await Table.findOne({ name: table });
-    await View.create({ ...viewNoTable, table_id });
+    const vtable = await Table.findOne({ name: table });
+    await View.create({ ...viewNoTable, table_id:vtable.id });
   }
   for (const plugin of pack.plugins) {
     await Plugin.upsert(plugin);
