@@ -13,7 +13,7 @@ const reset = async dontDrop => {
   }
 
   await db.query(`
-    CREATE TABLE roles (
+    CREATE TABLE _sc_roles (
       id serial primary key,      
       role VARCHAR(50)
     )
@@ -24,26 +24,26 @@ const reset = async dontDrop => {
   await db.insert("roles", { role: "public", id: 4 });
 
   await db.query(`
-    CREATE TABLE tables
+    CREATE TABLE _sc_tables
     (
       id serial primary key,
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
-      min_role_read integer NOT NULL references roles(id) DEFAULT 1,
-      min_role_write integer NOT NULL references roles(id) DEFAULT 1
+      min_role_read integer NOT NULL references _sc_roles(id) DEFAULT 1,
+      min_role_write integer NOT NULL references _sc_roles(id) DEFAULT 1
     )
   `);
 
   await db.query(`
-    CREATE INDEX idx_table_name on tables(name); 
+    CREATE INDEX _sc_idx_table_name on _sc_tables(name); 
   `);
 
   await db.query(`
-    CREATE TABLE fields
+    CREATE TABLE _sc_fields
     (
       id serial primary key,
-      table_id integer references tables(id) NOT NULL,
+      table_id integer references _sc_tables(id) NOT NULL,
       name text NOT NULL,
       label text,
       type text,
@@ -53,16 +53,16 @@ const reset = async dontDrop => {
     )
   `);
   await db.query(`
-    CREATE INDEX idx_field_table on fields(table_id); 
+    CREATE INDEX _sc_idx_field_table on _sc_fields(table_id); 
   `);
 
   await db.query(`
-    CREATE TABLE views
+    CREATE TABLE _sc_views
     (
       id serial primary key,
       viewtemplate text NOT NULL,
       name text NOT NULL,
-      table_id integer references tables(id),
+      table_id integer references _sc_tables(id),
       configuration jsonb NOT NULL,
       is_public boolean NOT NULL DEFAULT false,
       on_root_page boolean NOT NULL DEFAULT false,
@@ -70,47 +70,47 @@ const reset = async dontDrop => {
     )
   `);
   await db.query(`
-    CREATE INDEX idx_view_name on fields(name); 
+    CREATE INDEX _sc_idx_view_name on _sc_views(name); 
   `);
 
   await db.query(`
-    CREATE TABLE users (
+    CREATE TABLE _sc_users (
       id serial primary key,      
       email VARCHAR(128),
       password VARCHAR(60),
-      role_id integer not null references roles(id)
+      role_id integer not null references _sc_roles(id)
     )
   `);
 
   await db.query(`
-  CREATE TABLE plugins (
+  CREATE TABLE _sc_plugins (
     id serial primary key,      
     name VARCHAR(128),
     source VARCHAR(128),
     location VARCHAR(128)
   )
   `);
-  await db.insert("plugins", {
+  await db.insert("_sc_plugins", {
     name: "base",
     source: "npm",
     location: "saltcorn-base-plugin"
   });
-  await db.insert("plugins", {
+  await db.insert("_sc_plugins", {
     name: "sbadmin2",
     source: "npm",
     location: "saltcorn-sbadmin2"
   });
   await db.query(`
-    CREATE TABLE "session" (
+    CREATE UNLOGGED TABLE "_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL
     )
     WITH (OIDS=FALSE);
     
-    ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+    ALTER TABLE "_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
     
-    CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+    CREATE INDEX "_sc_IDX_session_expire" ON "_sc_session" ("expire");
   `);
 };
 

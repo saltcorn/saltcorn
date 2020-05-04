@@ -26,7 +26,8 @@ const getApp = async () => {
   app.use(
     session({
       store: new pgSession({
-        pool: db.pool
+        pool: db.pool,
+        tableName: "_sc_session"
       }),
       secret: "tja3j675m5wsjj65",
       resave: false,
