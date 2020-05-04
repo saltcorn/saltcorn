@@ -55,29 +55,29 @@ const table_pack = async name => {
   };
 };
 const view_pack = async name => {
-    const view = await View.findOne({ name });
+  const view = await View.findOne({ name });
   const table = await Table.findOne({ id: view.table_id });
 
-    return {
-      name: view.name,
-      viewtemplate: view.viewtemplate,
-      configuration: view.configuration,
-      is_public: view.is_public,
-      on_root_page: view.on_root_page,
-      on_menu: view.on_menu,
-      table: table.name
-    };
+  return {
+    name: view.name,
+    viewtemplate: view.viewtemplate,
+    configuration: view.configuration,
+    is_public: view.is_public,
+    on_root_page: view.on_root_page,
+    on_menu: view.on_menu,
+    table: table.name
   };
+};
 
-  const plugin_pack = async name => {
-    const plugin = await Plugin.findOne({ name });
+const plugin_pack = async name => {
+  const plugin = await Plugin.findOne({ name });
 
-    return {
-        name: plugin.name,
-        source: plugin.source,
-        location: plugin.location,
-    };
+  return {
+    name: plugin.name,
+    source: plugin.source,
+    location: plugin.location
   };
+};
 
 router.post("/create", isAdmin, async (req, res) => {
   var pack = { tables: [], views: [], plugins: [] };
@@ -87,16 +87,16 @@ router.post("/create", isAdmin, async (req, res) => {
       case "table":
         pack.tables.push(await table_pack(name));
         break;
-        case "view":
-            pack.views.push(await view_pack(name));
-            break;
-            case "plugin":
-            pack.plugins.push(await plugin_pack(name));
-            break;
-    
+      case "view":
+        pack.views.push(await view_pack(name));
+        break;
+      case "plugin":
+        pack.plugins.push(await plugin_pack(name));
+        break;
+
       default:
         break;
     }
   }
-  res.sendWrap(`Pack`, pre({class:"wsprewrap"},code(JSON.stringify(pack))));
+  res.sendWrap(`Pack`, pre({ class: "wsprewrap" }, code(JSON.stringify(pack))));
 });
