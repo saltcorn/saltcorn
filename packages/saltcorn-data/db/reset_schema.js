@@ -74,7 +74,7 @@ const reset = async dontDrop => {
   `);
 
   await db.query(`
-    CREATE TABLE _sc_users (
+    CREATE TABLE users (
       id serial primary key,      
       email VARCHAR(128),
       password VARCHAR(60),

@@ -36,9 +36,9 @@ class Table {
     return new Table({ ...tblrow, id });
   }
   async delete() {
-    await db.query("delete FROM fields WHERE table_id = $1", [this.id]);
+    await db.query("delete FROM _sc_fields WHERE table_id = $1", [this.id]);
 
-    await db.query("delete FROM tables WHERE id = $1", [this.id]);
+    await db.query("delete FROM _sc_tables WHERE id = $1", [this.id]);
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
 

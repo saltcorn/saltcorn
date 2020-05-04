@@ -56,7 +56,7 @@ describe("where", () => {
   });
 
   it("should  count", async () => {
-    const tbls = await db.count("tables", {
+    const tbls = await db.count("_sc_tables", {
       name: { ilike: "yothertabl" }
     });
 

@@ -75,8 +75,8 @@ const table_exists = async (db, tblname) => {
 
 const setup_schema = async () => {
   const db = require("saltcorn-data/db");
-  const ex_tables = await table_exists(db, "tables");
-  const ex_fields = await table_exists(db, "fields");
+  const ex_tables = await table_exists(db, "_sc_tables");
+  const ex_fields = await table_exists(db, "_sc_fields");
   if (!(ex_fields && ex_tables)) {
     console.log("Installing schema");
     const reset = require("saltcorn-data/db/reset_schema");

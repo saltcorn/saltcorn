@@ -90,7 +90,7 @@ router.get("/:id", isAdmin, async (req, res) => {
 router.post("/save", isAdmin, async (req, res) => {
   const { email, password, role_id, id } = req.body;
   if (id) {
-    await db.update("_sc_users", { email, role_id }, id);
+    await db.update("users", { email, role_id }, id);
 
     req.flash("success", "User saved");
   } else {
