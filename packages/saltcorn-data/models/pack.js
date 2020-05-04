@@ -46,6 +46,11 @@ const plugin_pack = async name => {
 };
 
 const install_pack = async pack => {
+  const existingPlugins = await Plugin.find({});
+  for (const plugin of pack.plugins) {
+    if (!existingPlugins.some(ep => ep.name === plugin.name))
+      await Plugin.upsert(plugin);
+  }
   for (const tableSpec of pack.tables) {
     const table = await Table.create(tableSpec.name, tableSpec);
     for (const field of tableSpec.fields)
@@ -55,11 +60,6 @@ const install_pack = async pack => {
     const { table, ...viewNoTable } = viewSpec;
     const vtable = await Table.findOne({ name: table });
     await View.create({ ...viewNoTable, table_id: vtable.id });
-  }
-  const existingPlugins = await Plugin.find({});
-  for (const plugin of pack.plugins) {
-    if (!existingPlugins.some(ep => ep.name === plugin.name))
-      await Plugin.upsert(plugin);
   }
 };
 module.exports = { table_pack, view_pack, plugin_pack, install_pack };
