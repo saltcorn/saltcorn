@@ -1,4 +1,5 @@
 const db = require(".");
+const {migrate} = require("../migrate");
 
 //https://stackoverflow.com/a/21247009
 const reset = async dontDrop => {
@@ -126,6 +127,8 @@ const reset = async dontDrop => {
     
     CREATE INDEX "_sc_IDX_session_expire" ON "_sc_session" ("expire");
   `);
+
+  await migrate()
 };
 
 module.exports = reset;
