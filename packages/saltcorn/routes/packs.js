@@ -7,6 +7,12 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
+const {
+  table_pack,
+  view_pack,
+  plugin_pack,
+  install_pack
+} = require("saltcorn-data/models/pack");
 const load_plugins = require("../load_plugins");
 const { h5, pre, code } = require("saltcorn-markup/tags");
 
@@ -42,48 +48,6 @@ router.get("/create/", isAdmin, async (req, res) => {
     )
   );
 });
-
-const table_pack = async name => {
-  const table = await Table.findOne({ name });
-  const fields = await table.getFields();
-  const strip_ids = o=>{
-      delete o.id
-      delete o.table_id
-      return o
-  }
-  return {
-    name: table.name,
-    expose_api_read: table.expose_api_read,
-    expose_api_write: table.expose_api_write,
-    min_role_read: table.min_role_read,
-    min_role_write: table.min_role_write,
-    fields: fields.map(f => strip_ids(f.toJson))
-  };
-};
-const view_pack = async name => {
-  const view = await View.findOne({ name });
-  const table = await Table.findOne({ id: view.table_id });
-
-  return {
-    name: view.name,
-    viewtemplate: view.viewtemplate,
-    configuration: view.configuration,
-    is_public: view.is_public,
-    on_root_page: view.on_root_page,
-    on_menu: view.on_menu,
-    table: table.name
-  };
-};
-
-const plugin_pack = async name => {
-  const plugin = await Plugin.findOne({ name });
-
-  return {
-    name: plugin.name,
-    source: plugin.source,
-    location: plugin.location
-  };
-};
 
 router.post("/create", isAdmin, async (req, res) => {
   var pack = { tables: [], views: [], plugins: [] };
@@ -128,21 +92,7 @@ router.get("/install", isAdmin, async (req, res) => {
 router.post("/install", isAdmin, async (req, res) => {
   const pack = JSON.parse(req.body.pack);
   //console.log(pack)
-  for (const tableSpec of pack.tables) {
-    const table = await Table.create(tableSpec.name, tableSpec);
-    for (const field of tableSpec.fields)
-      await Field.create({ table, ...field });
-  }
-  for (const viewSpec of pack.views) {
-    const { table, ...viewNoTable } = viewSpec;
-    const vtable = await Table.findOne({ name: table });
-    await View.create({ ...viewNoTable, table_id:vtable.id });
-  }
-  const existingPlugins=await Plugin.find({});
-  for (const plugin of pack.plugins) {
-    if(!existingPlugins.some(ep=>ep.name===plugin.name))
-      await Plugin.upsert(plugin);
-  }
+  await install_pack(pack);
 
   res.redirect(`/plugins`);
 });

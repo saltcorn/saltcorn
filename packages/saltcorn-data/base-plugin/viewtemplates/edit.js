@@ -185,7 +185,7 @@ const run = async (table_id, viewname, config, state) => {
 
 const fill_presets = async (table, req, fixed) => {
   const fields = await table.getFields();
-  Object.keys(fixed|| {}).forEach(k => {
+  Object.keys(fixed || {}).forEach(k => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
