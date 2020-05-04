@@ -4,6 +4,7 @@ const list = require("./list");
 const view = require("./view");
 const api = require("./api");
 const plugins = require("./plugins");
+const packs = require("./packs");
 const edit = require("./edit");
 const viewedit = require("./viewedit");
 const del = require("./delete");
@@ -16,6 +17,7 @@ module.exports = app => {
   app.use("/list", list);
   app.use("/edit", edit);
   app.use("/plugins", plugins);
+  app.use("/packs", packs);
   app.use("/view", view);
   app.use("/api", api);
   app.use("/viewedit", viewedit);

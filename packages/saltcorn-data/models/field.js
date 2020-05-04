@@ -55,6 +55,8 @@ class Field {
       table_id: this.table_id,
       name: this.name,
       label: this.label,
+      sublabel: this.sublabel,
+      fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type.name,
       reftable_name: this.reftable_name,
       attributes: this.attributes,

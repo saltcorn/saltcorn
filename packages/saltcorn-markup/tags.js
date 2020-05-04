@@ -69,6 +69,7 @@ module.exports = {
   tbody: mkTag("tbody"),
   small: mkTag("small"),
   pre: mkTag("pre"),
+  code: mkTag("code"),
   tr: mkTag("tr"),
   th: mkTag("th"),
   td: mkTag("td"),
