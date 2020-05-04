@@ -46,13 +46,18 @@ router.get("/create/", isAdmin, async (req, res) => {
 const table_pack = async name => {
   const table = await Table.findOne({ name });
   const fields = await table.getFields();
+  const strip_ids = o=>{
+      delete o.id
+      delete o.table_id
+      return o
+  }
   return {
     name: table.name,
     expose_api_read: table.expose_api_read,
     expose_api_write: table.expose_api_write,
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
-    fields: fields.map(f => f.toJson)
+    fields: fields.map(f => strip_ids(f.toJson))
   };
 };
 const view_pack = async name => {
