@@ -11,10 +11,10 @@ class Plugin {
     this.location = o.location;
   }
   static async findOne(where) {
-    return await db.selectOne("plugins", where);
+    return await db.selectOne("_sc_plugins", where);
   }
   static async find(where) {
-    return await db.select("plugins", where);
+    return await db.select("_sc_plugins", where);
   }
   async upsert() {
     const row = {
@@ -24,13 +24,13 @@ class Plugin {
     };
     if (typeof this.id === "undefined") {
       // insert
-      await db.insert("plugins", row);
+      await db.insert("_sc_plugins", row);
     } else {
-      await db.update("plugins", row, this.id);
+      await db.update("_sc_plugins", row, this.id);
     }
   }
   static async deleteWhere(where) {
-    await db.deleteWhere("plugins", where);
+    await db.deleteWhere("_sc_plugins", where);
   }
   static async store_plugins_available() {
     const response = await fetch("https://www.saltcorn.com/api/extensions");

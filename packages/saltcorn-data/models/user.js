@@ -38,7 +38,7 @@ class User {
     await db.query("delete FROM users WHERE id = $1", [this.id]);
   }
   static async get_roles() {
-    const rs = await db.select("roles");
+    const rs = await db.select("_sc_roles");
     return rs;
   }
 }

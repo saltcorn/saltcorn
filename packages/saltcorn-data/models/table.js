@@ -14,12 +14,12 @@ class Table {
     contract.class(this);
   }
   static async findOne(where) {
-    const tbl = await db.selectOne("tables", where);
+    const tbl = await db.selectOne("_sc_tables", where);
 
     return new Table(tbl);
   }
   static async find(where, selectopts) {
-    const tbls = await db.select("tables", where, selectopts);
+    const tbls = await db.select("_sc_tables", where, selectopts);
 
     return tbls.map(t => new Table(t));
   }
@@ -32,13 +32,13 @@ class Table {
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1
     };
-    const id = await db.insert("tables", tblrow);
+    const id = await db.insert("_sc_tables", tblrow);
     return new Table({ ...tblrow, id });
   }
   async delete() {
-    await db.query("delete FROM fields WHERE table_id = $1", [this.id]);
+    await db.query("delete FROM _sc_fields WHERE table_id = $1", [this.id]);
 
-    await db.query("delete FROM tables WHERE id = $1", [this.id]);
+    await db.query("delete FROM _sc_tables WHERE id = $1", [this.id]);
     await db.query(`drop table ${sqlsanitize(this.name)}`);
   }
 
@@ -81,7 +81,7 @@ class Table {
 
   static async update(id, new_table) {
     //TODO RENAME TABLE
-    await db.update("tables", new_table, id);
+    await db.update("_sc_tables", new_table, id);
   }
 
   async get_parent_relations() {

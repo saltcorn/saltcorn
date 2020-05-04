@@ -30,11 +30,11 @@ class View {
     contract.class(this);
   }
   static async findOne(where) {
-    const v = await db.selectOne("views", where);
+    const v = await db.selectOne("_sc_views", where);
     return new View(v);
   }
   static async find(where, selectopts) {
-    const views = await db.select("views", where, selectopts);
+    const views = await db.select("_sc_views", where, selectopts);
 
     return views.map(v => new View(v));
   }
@@ -102,7 +102,7 @@ class View {
   }
 
   static async create(v) {
-    const id = await db.insert("views", v);
+    const id = await db.insert("_sc_views", v);
     await require("../db/state").refresh();
     return new View({ id, ...v });
   }
@@ -110,11 +110,11 @@ class View {
     await db.query("delete FROM views WHERE id = $1", [this.id]);
   }
   static async update(v, id) {
-    await db.update("views", v, id);
+    await db.update("_sc_views", v, id);
     await require("../db/state").refresh();
   }
   static async delete(where) {
-    await db.deleteWhere("views", where);
+    await db.deleteWhere("_sc_views", where);
     await require("../db/state").refresh();
   }
   async run(query, extraArgs) {

@@ -13,10 +13,11 @@ const pgSession = require("connect-pg-simple")(session);
 const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
 const load_plugins = require("./load_plugins");
+const { migrate } = require("saltcorn-data/migrate");
 
 const getApp = async () => {
   const app = express();
-
+  await migrate();
   await load_plugins.loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
@@ -26,7 +27,8 @@ const getApp = async () => {
   app.use(
     session({
       store: new pgSession({
-        pool: db.pool
+        pool: db.pool,
+        tableName: "_sc_session"
       }),
       secret: "tja3j675m5wsjj65",
       resave: false,

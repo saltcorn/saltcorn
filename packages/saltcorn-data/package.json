@@ -11,6 +11,7 @@
     "bcrypt": "^3.0.8",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.1",
+    "dateformat": "^3.0.3",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "pg": "^7.18.2",

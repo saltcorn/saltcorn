@@ -24,7 +24,7 @@ const loadPlugin = async plugin => {
 };
 
 const loadAllPlugins = async () => {
-  const plugins = await db.select("plugins");
+  const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     await loadPlugin(plugin);
   }
