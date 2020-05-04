@@ -138,8 +138,10 @@ router.post("/install", isAdmin, async (req, res) => {
     const vtable = await Table.findOne({ name: table });
     await View.create({ ...viewNoTable, table_id:vtable.id });
   }
+  const existingPlugins=await Plugin.find({});
   for (const plugin of pack.plugins) {
-    await Plugin.upsert(plugin);
+    if(!existingPlugins.some(ep=>ep.name===plugin.name))
+      await Plugin.upsert(plugin);
   }
 
   res.redirect(`/plugins`);
