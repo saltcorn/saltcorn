@@ -78,7 +78,7 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      return `int references ${this.reftable_name} (id)`;
+      return `int references "${this.reftable_name}" (id)`;
     } else {
       return this.type.sql_name;
     }
@@ -177,9 +177,9 @@ class Field {
     if (!f.table && f.table_id)
       f.table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
-      const q = `alter table ${sqlsanitize(
+      const q = `alter table "${sqlsanitize(
         f.table.name
-      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       }`;
       await db.query(q);
