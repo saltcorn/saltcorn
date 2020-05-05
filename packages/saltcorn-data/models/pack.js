@@ -2,7 +2,7 @@ const Table = require("./table");
 const View = require("./view");
 const Field = require("./field");
 const Plugin = require("./plugin");
-const { is_pack } = require("../constracts");
+const { is_pack } = require("../contracts");
 const { contract, is } = require("contractis");
 
 const table_pack = async name => {
