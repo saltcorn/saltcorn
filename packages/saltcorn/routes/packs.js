@@ -7,6 +7,7 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
+const { getConfig, setConfig } = require("saltcorn-data/models/config");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("saltcorn-data/contracts");
@@ -23,8 +24,8 @@ const router = new Router();
 module.exports = router;
 
 const install_pack = contract(
-  is.fun(is_pack, is.promise(is.undefined)),
-  async pack => {
+  is.fun([is_pack, is.maybe(is.str)], is.promise(is.undefined)),
+  async (pack, name) => {
     const existingPlugins = await Plugin.find({});
     for (const plugin of pack.plugins) {
       if (!existingPlugins.some(ep => ep.name === plugin.name)) {
@@ -45,6 +46,10 @@ const install_pack = contract(
       const { table, ...viewNoTable } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
+    }
+    if (name) {
+      const existPacks = await getConfig("installed_packs", []);
+      await setConfig("installed_packs", [...existPacks, name]);
     }
   }
 );
@@ -101,30 +106,42 @@ router.post("/create", isAdmin, async (req, res) => {
   res.sendWrap(`Pack`, pre({ class: "wsprewrap" }, code(JSON.stringify(pack))));
 });
 
+const install_pack_form = () =>
+  new Form({
+    action: "/packs/install",
+    fields: [
+      {
+        name: "pack",
+        type: "String",
+        fieldview: "textarea"
+      }
+    ]
+  });
+
 router.get("/install", isAdmin, async (req, res) => {
-  res.sendWrap(
-    `Install Pack`,
-    renderForm(
-      new Form({
-        action: "/packs/install",
-        fields: [
-          {
-            name: "pack",
-            type: "String",
-            fieldview: "textarea"
-          }
-        ]
-      })
-    )
-  );
+  res.sendWrap(`Install Pack`, renderForm(install_pack_form()));
 });
 
 router.post("/install", isAdmin, async (req, res) => {
-  const pack = JSON.parse(req.body.pack);
-  //console.log(pack)
-  await install_pack(pack);
+  var pack, error;
+  try {
+    pack = JSON.parse(req.body.pack);
+  } catch (e) {
+    error = e.message;
+  }
+  if (!error && !is_pack.check(pack)) {
+    error = "Not a valid pack";
+  }
+  if (error) {
+    const form = install_pack_form();
+    form.values = { pack: req.body.pack };
+    req.flash("error", error);
+    res.sendWrap(`Install Pack`, renderForm(form));
+  } else {
+    await install_pack(pack);
 
-  res.redirect(`/plugins`);
+    res.redirect(`/plugins`);
+  }
 });
 
 router.post("/install-named/:name", isAdmin, async (req, res) => {
@@ -132,7 +149,7 @@ router.post("/install-named/:name", isAdmin, async (req, res) => {
 
   const pack = await fetch_pack_by_name(name);
   //console.log(pack)
-  await install_pack(pack.pack);
+  await install_pack(pack.pack, name);
 
   res.redirect(`/plugins`);
 });
