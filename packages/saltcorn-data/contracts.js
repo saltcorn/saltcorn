@@ -92,6 +92,14 @@ const is_plugin = is.obj({
   viewtemplates: is.maybe(is.array(is_viewtemplate))
 });
 
+const is_pack = is.obj({
+  tables: is.array(is.obj({ name: is.str, fields: is.array(fieldlike) })),
+  views: is.array(
+    is.obj({ name: is.str, viewtemplate: is.str, configuration: is.any })
+  ),
+  plugins: is.array(is.obj({ name: is.str, source: is.str, location: is.str }))
+});
+
 module.exports = {
   is_plugin_wrap,
   is_plugin_wrap_arg,
@@ -99,5 +107,6 @@ module.exports = {
   is_plugin,
   fieldlike,
   is_viewtemplate,
-  is_header
+  is_header,
+  is_pack
 };
