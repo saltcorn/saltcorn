@@ -6,9 +6,10 @@ const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
 const {
-  fetch_available_packs,
-  fetch_pack_by_name
+  fetch_available_packs
 } = require("saltcorn-data/models/pack");
+const { getConfig, setConfig } = require("saltcorn-data/models/config");
+
 const load_plugins = require("../load_plugins");
 const { h5, nbsp } = require("saltcorn-markup/tags");
 
@@ -41,6 +42,7 @@ router.get("/", isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
+  const packs_installed = await getConfig("installed_packs",[])
   res.sendWrap(
     "Plugins",
     h5("Installed"),
@@ -68,8 +70,9 @@ router.get("/", isAdmin, async (req, res) => {
         {
           label: "Install",
           key: r =>
-            post_btn(
-              `/plugins/install/${encodeURIComponent(r.name)}`,
+          packs_installed.includes(r.name) ? "Installed"
+            : post_btn(
+              `/plugins/install/${encodeURIComponent()}`,
               "Install"
             )
         }
