@@ -19,6 +19,16 @@ describe("Config", () => {
     const x = await getConfig("cfg1", 5);
     expect(x).toBe(9);
   });
+  it("should set list int", async () => {
+    await setConfig("list_ints", [8]);
+    const d = await getConfig("list_ints", 5);
+    expect(d).toStrictEqual([8]);
+  });
+  it("should set list strings", async () => {
+    await setConfig("list_strs", ["hello", "World"]);
+    const d = await getConfig("list_strs", 5);
+    expect(d).toStrictEqual(["hello", "World"]);
+  });
   it("should get all value", async () => {
     const d = await getAllConfig();
     expect(d.cfg1).toBe(9);
