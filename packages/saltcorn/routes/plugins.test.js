@@ -73,7 +73,7 @@ describe("Pack Endpoints", () => {
           .expect(toInclude("Install Pack"))
     
       });
-      /*it("should install named", async () => {
+      it("should install named", async () => {
         const loginCookie = await getAdminLoginCookie();
     
         const app = await getApp();
@@ -81,9 +81,7 @@ describe("Pack Endpoints", () => {
           .post("/packs/install-named/Simple%20Project%20Management")
           .set("Cookie", loginCookie)
           .expect(toRedirect("/plugins"))
-    
-        //expect(res.statusCode).toEqual(302);
-      });*/
+      });
 
     itShouldRedirectUnauthToLogin("/plugins/create");
     itShouldRedirectUnauthToLogin("/plugins/install");

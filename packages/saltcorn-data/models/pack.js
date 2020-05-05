@@ -2,8 +2,7 @@ const Table = require("./table");
 const View = require("./view");
 const Field = require("./field");
 const Plugin = require("./plugin");
-const { is_pack } = require("../contracts");
-const { contract, is } = require("contractis");
+
 const fetch = require("node-fetch");
 
 const table_pack = async name => {
@@ -48,26 +47,7 @@ const plugin_pack = async name => {
   };
 };
 
-const install_pack = contract(
-  is.fun(is_pack, is.promise(is.undefined)),
-  async pack => {
-    const existingPlugins = await Plugin.find({});
-    for (const plugin of pack.plugins) {
-      if (!existingPlugins.some(ep => ep.name === plugin.name))
-        await new Plugin(plugin).upsert();
-    }
-    for (const tableSpec of pack.tables) {
-      const table = await Table.create(tableSpec.name, tableSpec);
-      for (const field of tableSpec.fields)
-        await Field.create({ table, ...field });
-    }
-    for (const viewSpec of pack.views) {
-      const { table, ...viewNoTable } = viewSpec;
-      const vtable = await Table.findOne({ name: table });
-      await View.create({ ...viewNoTable, table_id: vtable.id });
-    }
-  }
-);
+
 
 const fetch_available_packs = async () => {
   const response = await fetch("https://www.saltcorn.com/api/packs");
@@ -88,7 +68,6 @@ module.exports = {
   table_pack,
   view_pack,
   plugin_pack,
-  install_pack,
   fetch_available_packs,
   fetch_pack_by_name
 };

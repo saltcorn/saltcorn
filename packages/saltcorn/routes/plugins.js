@@ -6,7 +6,6 @@ const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
 const {
-  install_pack,
   fetch_available_packs,
   fetch_pack_by_name
 } = require("saltcorn-data/models/pack");
