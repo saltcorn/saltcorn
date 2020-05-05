@@ -15,7 +15,7 @@ const {
   table_pack,
   view_pack,
   plugin_pack,
-  fetch_pack_by_name,
+  fetch_pack_by_name
 } = require("saltcorn-data/models/pack");
 const { h5, pre, code } = require("saltcorn-markup/tags");
 
@@ -28,7 +28,7 @@ const install_pack = contract(
     const existingPlugins = await Plugin.find({});
     for (const plugin of pack.plugins) {
       if (!existingPlugins.some(ep => ep.name === plugin.name)) {
-        const p = new Plugin(plugin)
+        const p = new Plugin(plugin);
         await load_plugins.loadPlugin(p);
         await p.upsert();
       }

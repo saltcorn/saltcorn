@@ -47,8 +47,6 @@ const plugin_pack = async name => {
   };
 };
 
-
-
 const fetch_available_packs = async () => {
   const response = await fetch("https://www.saltcorn.com/api/packs");
   const json = await response.json();
