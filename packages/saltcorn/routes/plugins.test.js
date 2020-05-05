@@ -1,6 +1,7 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Table = require("saltcorn-data/models/table");
+
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -20,8 +21,8 @@ describe("Plugin Endpoints", () => {
     const app = await getApp();
     await request(app)
       .get("/plugins")
-      .set("Cookie", loginCookie).expect(toInclude("Available plugins"));
-
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Available plugins"));
   });
 
   it("should show new", async () => {
@@ -30,8 +31,8 @@ describe("Plugin Endpoints", () => {
     const app = await getApp();
     await request(app)
       .get("/plugins/new")
-      .set("Cookie", loginCookie).expect(toInclude("New Plugin"));
-
+      .set("Cookie", loginCookie)
+      .expect(toInclude("New Plugin"));
   });
 
   it("should show edit existing", async () => {
@@ -40,8 +41,8 @@ describe("Plugin Endpoints", () => {
     const app = await getApp();
     await request(app)
       .get("/plugins/1")
-      .set("Cookie", loginCookie).expect(toInclude("Edit Plugin"));
-
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Edit Plugin"));
   });
 
   itShouldRedirectUnauthToLogin("/plugins");
@@ -50,40 +51,37 @@ describe("Plugin Endpoints", () => {
 });
 
 describe("Pack Endpoints", () => {
-    it("should show get create", async () => {
-      const loginCookie = await getAdminLoginCookie();
-  
-      const app = await getApp();
-      await request(app)
-        .get("/packs/create/")
-        .set("Cookie", loginCookie)
-        .expect(toInclude("Create Pack"))
-        ;
-  
-    });
-  
+  it("should show get create", async () => {
+    const loginCookie = await getAdminLoginCookie();
 
-      it("should show get install", async () => {
-        const loginCookie = await getAdminLoginCookie();
-    
-        const app = await getApp();
-        await request(app)
-          .get("/packs/install/")
-          .set("Cookie", loginCookie)
-          .expect(toInclude("Install Pack"))
-    
-      });
-      it("should install named", async () => {
-        const loginCookie = await getAdminLoginCookie();
-    
-        const app = await getApp();
-        await request(app)
-          .post("/packs/install-named/Simple%20Project%20Management")
-          .set("Cookie", loginCookie)
-          .expect(toRedirect("/plugins"))
-      });
-
-    itShouldRedirectUnauthToLogin("/plugins/create");
-    itShouldRedirectUnauthToLogin("/plugins/install");
+    const app = await getApp();
+    await request(app)
+      .get("/packs/create/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Create Pack"));
   });
-  
+
+  it("should show get install", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .get("/packs/install/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Install Pack"));
+  });
+  it("should install named", async () => {
+    db.set_sql_logging(true);
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .post("/packs/install-named/Simple%20Project%20Management")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    db.set_sql_logging(false);
+  });
+
+  itShouldRedirectUnauthToLogin("/plugins/create");
+  itShouldRedirectUnauthToLogin("/plugins/install");
+});
