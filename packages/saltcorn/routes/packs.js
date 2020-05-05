@@ -34,7 +34,10 @@ const install_pack = contract(
       }
     }
     for (const tableSpec of pack.tables) {
-      const table = await Table.create(tableSpec.name, tableSpec);
+      await Table.create(tableSpec.name, tableSpec);
+    }
+    for (const tableSpec of pack.tables) {
+      const table = await Table.findOne({ name: tableSpec.name });
       for (const field of tableSpec.fields)
         await Field.create({ table, ...field });
     }
