@@ -24,7 +24,9 @@ class Table {
     return tbls.map(t => new Table(t));
   }
   static async create(name, options = {}) {
-    await db.query(`create table ${sqlsanitize(name)} (id serial primary key)`);
+    await db.query(
+      `create table "${sqlsanitize(name)}" (id serial primary key)`
+    );
     const tblrow = {
       name,
       expose_api_read: options.expose_api_read || false,

@@ -50,7 +50,7 @@ const domReady = js =>
   `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
 const text = t => xss(t);
-
+const nbsp = "&nbsp;";
 module.exports = {
   a: mkTag("a"),
   div: mkTag("div"),
@@ -85,5 +85,6 @@ module.exports = {
   hr: mkTag("hr"),
   domReady,
   input,
-  text
+  text,
+  nbsp
 };

@@ -3,7 +3,17 @@ const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 
 var pool = new Pool(getConnectObject());
+var log_sql_enabled = false;
 
+function set_sql_logging(val = true) {
+  log_sql_enabled = val;
+}
+
+function sql_log(sql, vs) {
+  if (log_sql_enabled)
+    if (typeof vs === "undefined") console.log(sql);
+    else console.log(sql, vs);
+}
 const close = async () => {
   await pool.end();
 };
@@ -18,6 +28,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   const sql = `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(
     selectopts
   )}`;
+  sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
   return tq.rows;
@@ -25,20 +36,19 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const tq = await pool.query(
-    `SELECT COUNT(*) FROM ${sqlsanitize(tbl)} ${where}`,
-    values
-  );
+  const sql = `SELECT COUNT(*) FROM ${sqlsanitize(tbl)} ${where}`;
+  sql_log(sql, values);
+  const tq = await pool.query(sql, values);
 
   return parseInt(tq.rows[0].count);
 };
 
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const tq = await pool.query(
-    `delete FROM ${sqlsanitize(tbl)} ${where}`,
-    values
-  );
+  const sql = `delete FROM ${sqlsanitize(tbl)} ${where}`;
+  sql_log(sql, values);
+
+  const tq = await pool.query(sql, values);
 
   return tq.rows;
 };
@@ -51,7 +61,7 @@ const insert = async (tbl, obj, noid = false) => {
   const sql = `insert into ${sqlsanitize(
     tbl
   )}(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
-  //console.log(sql, valList)
+  sql_log(sql, valList);
   const { rows } = await pool.query(sql, valList);
   if (noid) return;
   else return rows[0].id;
@@ -66,7 +76,7 @@ const update = async (tbl, obj, id) => {
   valList.push(id);
   const q = `update ${sqlsanitize(tbl)} set ${assigns} where id=$${kvs.length +
     1}`;
-  //console.log(q, valList)
+  sql_log(q, valList);
   await pool.query(q, valList);
 };
 
@@ -85,7 +95,10 @@ const selectMaybeOne = async (tbl, where) => {
 };
 
 module.exports = {
-  query: (text, params) => pool.query(text, params),
+  query: (text, params) => {
+    sql_log(text, params);
+    return pool.query(text, params);
+  },
   select,
   selectOne,
   selectMaybeOne,
@@ -95,5 +108,6 @@ module.exports = {
   deleteWhere,
   pool,
   close,
-  changeConnection
+  changeConnection,
+  set_sql_logging
 };
