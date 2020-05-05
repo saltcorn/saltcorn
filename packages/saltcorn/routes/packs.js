@@ -46,7 +46,7 @@ const install_pack = contract(
       const { table, ...viewNoTable } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
-    }
+    } 
     if(name){
       const existPacks = await getConfig("installed_packs",[])
       await setConfig("installed_packs", [...existPacks, name])
