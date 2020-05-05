@@ -4,6 +4,7 @@ const Field = require("./field");
 const Plugin = require("./plugin");
 const { is_pack } = require("../contracts");
 const { contract, is } = require("contractis");
+const fetch = require("node-fetch");
 
 const table_pack = async name => {
   const table = await Table.findOne({ name });
@@ -67,4 +68,27 @@ const install_pack = contract(
     }
   }
 );
-module.exports = { table_pack, view_pack, plugin_pack, install_pack };
+
+const fetch_available_packs = async () => {
+  const response = await fetch("https://www.saltcorn.com/api/packs");
+  const json = await response.json();
+  return json.success.map(p => p.name);
+};
+
+const fetch_pack_by_name = async name => {
+  const response = await fetch(
+    "https://www.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
+  );
+  const json = await response.json();
+  if (json.success.length == 1) return json.success[0];
+  else return null;
+};
+
+module.exports = {
+  table_pack,
+  view_pack,
+  plugin_pack,
+  install_pack,
+  fetch_available_packs,
+  fetch_pack_by_name
+};
