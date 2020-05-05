@@ -5,8 +5,13 @@ const State = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
+const {
+  install_pack,
+  fetch_available_packs,
+  fetch_pack_by_name
+} = require("saltcorn-data/models/pack");
 const load_plugins = require("../load_plugins");
-const { h5 } = require("saltcorn-markup/tags");
+const { h5, nbsp } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -36,6 +41,7 @@ const pluginForm = plugin => {
 router.get("/", isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
+  const packs_available = await fetch_available_packs();
   res.sendWrap(
     "Plugins",
     h5("Installed"),
@@ -56,7 +62,7 @@ router.get("/", isAdmin, async (req, res) => {
       ],
       rows
     ),
-    h5("Available"),
+    h5("Available plugins"),
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -67,7 +73,23 @@ router.get("/", isAdmin, async (req, res) => {
       ],
       instore
     ),
-    link(`/plugins/new`, "Add plugin")
+    link(`/plugins/new`, "Add another plugin"),
+    h5("Available packs"),
+    mkTable(
+      [
+        { label: "Name", key: "name" },
+        {
+          label: "Install",
+          key: r => post_btn(`/packs/install-named/${r.name}`, "Install")
+        }
+      ],
+      packs_available
+    ),
+    link(`/packs/install`, "Install another pack"),
+    nbsp,
+    "|",
+    nbsp,
+    link(`/packs/create`, "Create pack")
   );
 });
 

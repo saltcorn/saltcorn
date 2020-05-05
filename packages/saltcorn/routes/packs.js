@@ -11,6 +11,7 @@ const {
   table_pack,
   view_pack,
   plugin_pack,
+  fetch_pack_by_name,
   install_pack
 } = require("saltcorn-data/models/pack");
 const load_plugins = require("../load_plugins");
@@ -93,6 +94,16 @@ router.post("/install", isAdmin, async (req, res) => {
   const pack = JSON.parse(req.body.pack);
   //console.log(pack)
   await install_pack(pack);
+
+  res.redirect(`/plugins`);
+});
+
+router.post("/install-named/:name", isAdmin, async (req, res) => {
+  const { name } = req.params;
+
+  const pack = await fetch_pack_by_name(name);
+  //console.log(pack)
+  await install_pack(pack.pack);
 
   res.redirect(`/plugins`);
 });

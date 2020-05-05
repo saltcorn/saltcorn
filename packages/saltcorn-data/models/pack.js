@@ -72,7 +72,7 @@ const install_pack = contract(
 const fetch_available_packs = async () => {
   const response = await fetch("https://www.saltcorn.com/api/packs");
   const json = await response.json();
-  return json.success.map(p => p.name);
+  return json.success;
 };
 
 const fetch_pack_by_name = async name => {
