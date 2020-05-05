@@ -54,7 +54,7 @@ const install_pack = contract(
     const existingPlugins = await Plugin.find({});
     for (const plugin of pack.plugins) {
       if (!existingPlugins.some(ep => ep.name === plugin.name))
-        await Plugin.upsert(plugin);
+        await new Plugin(plugin).upsert();
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.create(tableSpec.name, tableSpec);

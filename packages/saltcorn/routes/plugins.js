@@ -68,7 +68,11 @@ router.get("/", isAdmin, async (req, res) => {
         { label: "Name", key: "name" },
         {
           label: "Install",
-          key: r => post_btn(`/plugins/install/${r.name}`, "Install")
+          key: r =>
+            post_btn(
+              `/plugins/install/${encodeURIComponent(r.name)}`,
+              "Install"
+            )
         }
       ],
       instore
@@ -80,7 +84,11 @@ router.get("/", isAdmin, async (req, res) => {
         { label: "Name", key: "name" },
         {
           label: "Install",
-          key: r => post_btn(`/packs/install-named/${r.name}`, "Install")
+          key: r =>
+            post_btn(
+              `/packs/install-named/${encodeURIComponent(r.name)}`,
+              "Install"
+            )
         }
       ],
       packs_available
