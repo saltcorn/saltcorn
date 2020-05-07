@@ -6,7 +6,7 @@
 
 ### Installing node and npm on Ubuntu
 
-`sudo apt install nodejs npm` 
+`sudo apt install nodejs npm`
 
 will give you a usable version. For a more recent version (v13) of Node.js:
 
@@ -20,31 +20,29 @@ I had problems connecting to the database on Node 14.
 
 ### Prepare Node
 
-assuming you have cloned this repository to $HOME/saltcorns (otherwise adjust PATH)
+assuming you have cloned this repository to \$HOME/saltcorns (otherwise adjust PATH)
 
 ```
 npm config set prefix ~/.local
-echo 'export PATH=$HOME/saltcorns/packages/saltcorn-cli/bin:$HOME/.local/bin:$PATH' >> ~/.bashrc 
+echo 'export PATH=$HOME/saltcorns/packages/saltcorn-cli/bin:$HOME/.local/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
-install lerna with 
+
+install lerna with
 
 ```
 npm install -g lerna
 ```
 
-### Install packages 
+### Install packages
 
-run 
+run
 
 ```
 lerna bootstrap
 ```
 
-
 to install everything. If successful, you should now be able to run `saltcorn` in your shell
-
-
 
 ## Prettier
 

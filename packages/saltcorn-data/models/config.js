@@ -20,7 +20,7 @@ const setConfig = async (key, value) => {
   await db.query(
     `insert into _sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
-    [key, {v:value}]
+    [key, { v: value }]
   );
 };
 module.exports = { getConfig, getAllConfig, setConfig };
