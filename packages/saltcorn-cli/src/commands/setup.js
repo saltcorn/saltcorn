@@ -8,6 +8,7 @@ const { is } = require("contractis");
 const inquirer  = require("inquirer");
 var tcpPortUsed = require('tcp-port-used');
 const { spawnSync } = require("child_process");
+var sudo = require('sudo');
 
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
@@ -27,7 +28,7 @@ const check_db=async ()=> {
       {name: 'Connect to a remote database', value:'connect'}],
     }])
     if(responses.whatnow==='install') {
-      
+      await install_db()
     } else {
       await setup_connection_config();
     }
@@ -35,8 +36,46 @@ const check_db=async ()=> {
     console.log("Found local database, how do I connect?");
 
     await setup_connection_config();
+  } 
+}
+
+const asyncSudo = args => {
+    return new Promise(function(resolve, reject) {
+    var child = sudo(args, {cachePassword: true})
+    //var child = sudo(['ls'], {cachePassword: true})
+    child.stdout.on('data', function (data) {
+        console.log(data.toString());
+    });
+    child.stdout.on('close', function (data) {
+
+     resolve()
+  });
+  })
+}
+
+const get_password=(for_who) =>{
+    var password = await cli.prompt(
+    `Set ${for_who} password to [auto-generate]`, {
+    type: "hide",
+    required: false
+  });
+  if(!password) {
+    password = gen_password()
+    console.log(`Setting ${for_who} password to:`, password)
+    await cli.anykey()
   }
-  
+  return password
+
+}
+
+const install_db = ()=>{
+  await asyncSudo(['apt','install', '-y','postgresql','postgresql-client'])
+  //const pgpass=await get_password("postgres")
+  //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
+  const scpass=await get_password("saltcorn")
+  await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-c', `CREATE USER saltcorn WITH PASSWORD '${pgpass}';`])
+  await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-c', `CREATE DATABASE "saltcorn";GRANT ALL PRIVILEGES ON DATABASE "saltcorn" to saltcorn;"`])
+  await write_connection_config({host:"localhost", port:5432, database:"saltcorn", user:"saltcorn",password:scpass})
 }
 
 const prompt_connection = async () => {
@@ -66,6 +105,11 @@ const prompt_connection = async () => {
 
 const setup_connection_config = async () => {
   const connobj = await prompt_connection();
+  await write_connection_config(connobj)
+
+};
+
+const write_connection_config = async (connobj) => {
   const fs = require("fs");
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
