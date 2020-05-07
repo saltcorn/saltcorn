@@ -53,7 +53,7 @@ const asyncSudo = args => {
   })
 }
 
-const get_password=(for_who) =>{
+const get_password=async(for_who) =>{
     var password = await cli.prompt(
     `Set ${for_who} password to [auto-generate]`, {
     type: "hide",
@@ -68,12 +68,12 @@ const get_password=(for_who) =>{
 
 }
 
-const install_db = ()=>{
+const install_db = async ()=>{
   await asyncSudo(['apt','install', '-y','postgresql','postgresql-client'])
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
   const scpass=await get_password("saltcorn")
-  await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-c', `CREATE USER saltcorn WITH PASSWORD '${pgpass}';`])
+  await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-c', `CREATE USER saltcorn WITH PASSWORD '${scpass}';`])
   await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-c', `CREATE DATABASE "saltcorn";GRANT ALL PRIVILEGES ON DATABASE "saltcorn" to saltcorn;"`])
   await write_connection_config({host:"localhost", port:5432, database:"saltcorn", user:"saltcorn",password:scpass})
 }
@@ -129,7 +129,9 @@ const setup_connection = async () => {
     }
   } else {
     console.log("No database specified");
-    await check_db()    
+    await check_db()
+    await db.changeConnection();
+
   }
 };
 
