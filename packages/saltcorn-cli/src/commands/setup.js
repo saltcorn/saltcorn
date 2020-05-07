@@ -130,6 +130,7 @@ const setup_connection = async () => {
   } else {
     console.log("No database specified");
     await check_db()
+    const db = require("saltcorn-data/db");
     await db.changeConnection();
 
   }
