@@ -5,12 +5,39 @@ const {
 } = require("saltcorn-data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
+const inquirer  = require("inquirer");
+var tcpPortUsed = require('tcp-port-used');
+const { spawnSync } = require("child_process");
 
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;
   else return gen_password();
 };
+
+const check_db=async ()=> {
+  const inUse = await tcpPortUsed.check(5432, '127.0.0.1')
+  if(!inUse){
+    console.log("No local database running. ");
+    const responses = await inquirer.prompt([{
+      name: 'whatnow',
+      message: 'How would you like to connect to a database?',
+      type: 'list',
+      choices: [{name: 'Install PostgreSQL locally', value:'install'}, 
+      {name: 'Connect to a remote database', value:'connect'}],
+    }])
+    if(responses.whatnow==='install') {
+      
+    } else {
+      await setup_connection_config();
+    }
+  } else {
+    console.log("Found local database, how do I connect?");
+
+    await setup_connection_config();
+  }
+  
+}
 
 const prompt_connection = async () => {
   console.log("Enter database connection parameters");
@@ -24,16 +51,16 @@ const prompt_connection = async () => {
   const user = await cli.prompt("Database user [saltcorn]", {
     required: false
   });
-  const password = await cli.prompt("Database password [auto-generate]", {
+  const password = await cli.prompt("Database password", {
     type: "hide",
-    required: false
+    required: true
   });
   return {
     host: host || "localhost",
     port: port || 5432,
     database: database || "saltcorn",
     user: user || "saltcorn",
-    password: password || gen_password()
+    password: password 
   };
 };
 
@@ -58,7 +85,7 @@ const setup_connection = async () => {
     }
   } else {
     console.log("No database specified");
-    await setup_connection_config();
+    await check_db()    
   }
 };
 
