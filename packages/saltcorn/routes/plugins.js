@@ -68,9 +68,7 @@ router.get("/", isAdmin, async (req, res) => {
         {
           label: "Install",
           key: r =>
-            packs_installed.includes(r.name)
-              ? "Installed"
-              : post_btn(
+            post_btn(
                   `/plugins/install/${encodeURIComponent(r.name)}`,
                   "Install"
                 )
@@ -86,7 +84,9 @@ router.get("/", isAdmin, async (req, res) => {
         {
           label: "Install",
           key: r =>
-            post_btn(
+            packs_installed.includes(r.name)
+              ? "Installed"
+              : post_btn(
               `/packs/install-named/${encodeURIComponent(r.name)}`,
               "Install"
             )
