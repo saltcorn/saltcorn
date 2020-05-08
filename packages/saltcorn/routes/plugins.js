@@ -70,7 +70,10 @@ router.get("/", isAdmin, async (req, res) => {
           key: r =>
             packs_installed.includes(r.name)
               ? "Installed"
-              : post_btn(`/plugins/install/${encodeURIComponent(r.name)}`, "Install")
+              : post_btn(
+                  `/plugins/install/${encodeURIComponent(r.name)}`,
+                  "Install"
+                )
         }
       ],
       instore

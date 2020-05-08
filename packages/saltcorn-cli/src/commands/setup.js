@@ -5,11 +5,106 @@ const {
 } = require("saltcorn-data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
+const inquirer = require("inquirer");
+var tcpPortUsed = require("tcp-port-used");
+const { spawnSync } = require("child_process");
+var sudo = require("sudo");
 
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;
   else return gen_password();
+};
+
+const check_db = async () => {
+  const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
+  if (!inUse) {
+    console.log("No local database running. ");
+    const responses = await inquirer.prompt([
+      {
+        name: "whatnow",
+        message: "How would you like to connect to a database?",
+        type: "list",
+        choices: [
+          { name: "Install PostgreSQL locally", value: "install" },
+          { name: "Connect to a remote database", value: "connect" }
+        ]
+      }
+    ]);
+    if (responses.whatnow === "install") {
+      await install_db();
+    } else {
+      await setup_connection_config();
+    }
+  } else {
+    console.log("Found local database, how do I connect?");
+
+    await setup_connection_config();
+  }
+};
+
+const asyncSudo = args => {
+  return new Promise(function(resolve, reject) {
+    var child = sudo(args, { cachePassword: true });
+    //var child = sudo(['ls'], {cachePassword: true})
+    child.stdout.on("data", function(data) {
+      console.log(data.toString());
+    });
+    child.stderr.on("data", function(data) {
+      console.error(data.toString());
+    });
+    child.on("exit", function(data) {
+      resolve();
+    });
+  });
+};
+
+const get_password = async for_who => {
+  var password = await cli.prompt(
+    `Set ${for_who} password to [auto-generate]`,
+    {
+      type: "hide",
+      required: false
+    }
+  );
+  if (!password) {
+    password = gen_password();
+    console.log(`Setting ${for_who} password to:`, password);
+    await cli.anykey();
+  }
+  return password;
+};
+
+const install_db = async () => {
+  await asyncSudo(["apt", "install", "-y", "postgresql", "postgresql-client"]);
+  const user = process.env.USER;
+  console.log({ user });
+  //const pgpass=await get_password("postgres")
+  //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
+  const scpass = await get_password(user + "'s database");
+  await asyncSudo([
+    "sudo",
+    "-u",
+    "postgres",
+    "psql",
+    "-U",
+    "postgres",
+    "-c",
+    `CREATE USER ${user} WITH CREATEDB PASSWORD '${scpass}';`
+  ]);
+  spawnSync("createdb", ["saltcorn"], {
+    stdio: "inherit"
+  });
+  spawnSync("createdb", ["saltcorn_test"], {
+    stdio: "inherit"
+  });
+  await write_connection_config({
+    host: "localhost",
+    port: 5432,
+    database: "saltcorn",
+    user,
+    password: scpass
+  });
 };
 
 const prompt_connection = async () => {
@@ -24,21 +119,25 @@ const prompt_connection = async () => {
   const user = await cli.prompt("Database user [saltcorn]", {
     required: false
   });
-  const password = await cli.prompt("Database password [auto-generate]", {
+  const password = await cli.prompt("Database password", {
     type: "hide",
-    required: false
+    required: true
   });
   return {
     host: host || "localhost",
     port: port || 5432,
     database: database || "saltcorn",
     user: user || "saltcorn",
-    password: password || gen_password()
+    password: password
   };
 };
 
 const setup_connection_config = async () => {
   const connobj = await prompt_connection();
+  await write_connection_config(connobj);
+};
+
+const write_connection_config = async connobj => {
   const fs = require("fs");
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
@@ -58,7 +157,9 @@ const setup_connection = async () => {
     }
   } else {
     console.log("No database specified");
-    await setup_connection_config();
+    await check_db();
+    const db = require("saltcorn-data/db");
+    await db.changeConnection();
   }
 };
 
