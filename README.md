@@ -20,7 +20,6 @@ I had problems connecting to the database on Node 14.
 
 ### Prepare Node
 
-
 assuming you have cloned this repository to \$HOME/saltcorns (otherwise adjust PATH)
 
 ```

@@ -25,7 +25,7 @@ const changeConnection = async (connObj = {}) => {
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `SELECT * FROM ${sqlsanitize(tbl)} ${where} ${mkSelectOptions(
+  const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
     selectopts
   )}`;
   sql_log(sql, values);
@@ -36,7 +36,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `SELECT COUNT(*) FROM ${sqlsanitize(tbl)} ${where}`;
+  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
   sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
@@ -45,7 +45,7 @@ const count = async (tbl, whereObj) => {
 
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `delete FROM ${sqlsanitize(tbl)} ${where}`;
+  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
   sql_log(sql, values);
 
   const tq = await pool.query(sql, values);
@@ -58,9 +58,9 @@ const insert = async (tbl, obj, noid = false) => {
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
-  const sql = `insert into ${sqlsanitize(
+  const sql = `insert into "${sqlsanitize(
     tbl
-  )}(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
+  )}"(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
   sql_log(sql, valList);
   const { rows } = await pool.query(sql, valList);
   if (noid) return;
@@ -74,8 +74,9 @@ const update = async (tbl, obj, id) => {
     .join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);
-  const q = `update ${sqlsanitize(tbl)} set ${assigns} where id=$${kvs.length +
-    1}`;
+  const q = `update "${sqlsanitize(
+    tbl
+  )}" set ${assigns} where id=$${kvs.length + 1}`;
   sql_log(q, valList);
   await pool.query(q, valList);
 };

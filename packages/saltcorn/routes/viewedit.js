@@ -95,21 +95,30 @@ router.get("/new", isAdmin, async (req, res) => {
 });
 
 router.post("/save", isAdmin, async (req, res) => {
-  var v = { ...req.body };
+  const tables = await Table.find();
+  const tableOptions = tables.map(t => t.name);
+  const form = viewForm(tableOptions);
+  const result = form.validate(req.body);
 
-  const table = await Table.findOne({ name: v.table_name });
+  if (result.success) {
+    var v = result.success;
 
-  v.table_id = table.id;
+    const table = await Table.findOne({ name: v.table_name });
 
-  delete v.table_name;
+    v.table_id = table.id;
 
-  if (typeof v.id !== "undefined") {
-    await View.update(v, v.id);
+    delete v.table_name;
+
+    if (typeof req.body.id !== "undefined") {
+      await View.update(v, req.body.id);
+    } else {
+      v.configuration = {};
+      await View.create(v);
+    }
+    res.redirect(`/viewedit/config/${v.name}`);
   } else {
-    v.configuration = {};
-    await View.create(v);
+    res.sendWrap(`Edit view`, renderForm(form));
   }
-  res.redirect(`/viewedit/config/${v.name}`);
 });
 
 router.get("/config/:name", isAdmin, async (req, res) => {

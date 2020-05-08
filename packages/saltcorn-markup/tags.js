@@ -49,7 +49,7 @@ const input = kvs => {
 const domReady = js =>
   `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
-const text = t => xss(t);
+const text = t => (t === 0 ? "0" : xss(t));
 const nbsp = "&nbsp;";
 module.exports = {
   a: mkTag("a"),
