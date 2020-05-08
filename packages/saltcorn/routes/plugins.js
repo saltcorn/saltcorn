@@ -118,7 +118,7 @@ router.post("/", isAdmin, async (req, res) => {
   try {
     await load_plugins.loadPlugin(plugin);
     await plugin.upsert();
-    req.flash("success", "Plugin installed");
+    req.flash("success", `Plugin ${plugin.name} installed`);
 
     res.redirect(`/plugins`);
   } catch (e) {
@@ -151,6 +151,6 @@ router.post("/install/:name", isAdmin, async (req, res) => {
   const plugin = await Plugin.store_by_name(name);
   await load_plugins.loadPlugin(plugin);
   await plugin.upsert();
-  req.flash("success", "Plugin installed");
+  req.flash("success", `Plugin ${plugin.name} installed`);
   res.redirect(`/plugins`);
 });

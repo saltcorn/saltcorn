@@ -92,11 +92,11 @@ router.post("/save", isAdmin, async (req, res) => {
   if (id) {
     await db.update("users", { email, role_id }, id);
 
-    req.flash("success", "User saved");
+    req.flash("success", `User ${email} saved`);
   } else {
     const u = await User.create({ email, password, role_id });
 
-    req.flash("success", "User created");
+    req.flash("success", `User ${email} created`);
   }
   res.redirect(`/useradmin`);
 });
@@ -105,7 +105,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const u = await User.findOne({ id });
   await u.delete();
-  req.flash("success", "User deleted");
+  req.flash("success", `User ${u.email} deleted`);
 
   res.redirect(`/useradmin`);
 });
