@@ -63,7 +63,7 @@ describe("Table Endpoints", () => {
     await request(app)
       .get("/table/")
       .set("Cookie", loginCookie)
-      .expect(toNotInclude("mypostedtable"))
+      .expect(toNotInclude(`/table/${tbl.id}`))
       .expect(toInclude("books"));
   });
 });
