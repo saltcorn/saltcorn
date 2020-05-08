@@ -30,9 +30,8 @@ describe("tags", () => {
     expect(
       div({ class: ["foo bar", "", undefined, null, false, "baz"] }, 5)
     ).toBe('<div class="foo bar baz">5</div>');
-    expect(text("foo")).toBe('foo');
-    expect(text(1)).toBe('1');
-    expect(text(0)).toBe('0');
-
+    expect(text("foo")).toBe("foo");
+    expect(text(1)).toBe("1");
+    expect(text(0)).toBe("0");
   });
 });

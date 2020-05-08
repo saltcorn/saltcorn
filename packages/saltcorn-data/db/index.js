@@ -74,8 +74,9 @@ const update = async (tbl, obj, id) => {
     .join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);
-  const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=$${kvs.length +
-    1}`;
+  const q = `update "${sqlsanitize(
+    tbl
+  )}" set ${assigns} where id=$${kvs.length + 1}`;
   sql_log(q, valList);
   await pool.query(q, valList);
 };

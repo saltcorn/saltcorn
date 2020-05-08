@@ -97,10 +97,10 @@ router.get("/new", isAdmin, async (req, res) => {
 router.post("/save", isAdmin, async (req, res) => {
   const tables = await Table.find();
   const tableOptions = tables.map(t => t.name);
-  const form = viewForm(tableOptions)
-  const result=form.validate(req.body)
-  
-  if(result.success) {
+  const form = viewForm(tableOptions);
+  const result = form.validate(req.body);
+
+  if (result.success) {
     var v = result.success;
 
     const table = await Table.findOne({ name: v.table_name });
