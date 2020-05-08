@@ -87,7 +87,7 @@ router.post("/", isAdmin, async (req, res) => {
     const { name, ...rest } = v;
 
     const table = await Table.create(name, rest);
-    req.flash("success", "Table created");
+    req.flash("success", `Table ${name} created`);
     res.redirect(`/table/${table.id}`);
   } else {
     const { id, ...rest } = v;
@@ -100,7 +100,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
   const t = await Table.findOne({ id });
   await t.delete();
-  req.flash("success", "Table deleted");
+  req.flash("success", `Table ${t.name} deleted`);
 
   res.redirect(`/table`);
 });
