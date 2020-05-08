@@ -160,7 +160,7 @@ class Table {
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
           `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from ${sqlsanitize(table)} where ${sqlsanitize(
+            "*"}) from "${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -181,9 +181,9 @@ class Table {
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
-    const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
+    const sql = `SELECT ${fldNms.join()} FROM "${sqlsanitize(
       this.name
-    )} a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql);
     const { rows } = await db.query(sql, values);
 
