@@ -90,28 +90,14 @@ const install_db = async () => {
     "-U",
     "postgres",
     "-c",
-    `CREATE USER ${user} WITH PASSWORD '${scpass}';`
+    `CREATE USER ${user} WITH CREATEDB PASSWORD '${scpass}';`
   ]);
-  await asyncSudo([
-    "sudo",
-    "-u",
-    "postgres",
-    "psql",
-    "-U",
-    "postgres",
-    "-c",
-    `CREATE DATABASE "saltcorn";`
-  ]);
-  await asyncSudo([
-    "sudo",
-    "-u",
-    "postgres",
-    "psql",
-    "-U",
-    "postgres",
-    "-c",
-    `GRANT ALL PRIVILEGES ON DATABASE "saltcorn" to ${user};`
-  ]);
+  spawnSync("createdb", ["saltcorn"], {
+    stdio: "inherit"
+  });
+  spawnSync("createdb", ["saltcorn_test"], {
+    stdio: "inherit"
+  });
   await write_connection_config({
     host: "localhost",
     port: 5432,
