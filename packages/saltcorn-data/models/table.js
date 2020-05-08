@@ -145,7 +145,7 @@ class Table {
       const jtNm = `${reftable}_jt_${ref}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join ${sqlsanitize(reftable)} ${sqlsanitize(
+        joinq += ` left join "${sqlsanitize(reftable)}" ${sqlsanitize(
           jtNm
         )} on ${sqlsanitize(jtNm)}.id=a.${sqlsanitize(ref)}`;
       }
