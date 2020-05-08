@@ -17,13 +17,24 @@ const roleOptions = [
   { value: 4, label: "Public" }
 ];
 
+const apiOptions = [
+  { value: "No API", label: "No API" },
+  { value: "Read only", label: "Read only" },
+  { value: "Read and write", label: "Read and write" }
+];
+
 const tableForm = table => {
   const form = new Form({
     action: "/table",
     fields: [
-      { label: "Name", name: "name", input_type: "text" },
-      { label: "Read API", name: "expose_api_read", type: "Bool" },
-      { label: "Write API", name: "expose_api_write", type: "Bool" },
+      {
+        label: "API access",
+        sublabel:
+          "APIs allow developers access to your data without using a user interface",
+        name: "api_access",
+        input_type: "select",
+        options: apiOptions
+      },
       {
         label: "Minimum role for read",
         name: "min_role_read",
@@ -41,12 +52,24 @@ const tableForm = table => {
   if (table) {
     if (table.id) form.hidden("id");
     form.values = table;
+    if (table.expose_api_read && table.expose_api_write)
+      form.values.api_access = "Read and write";
+    else if (table.expose_api_read) form.values.api_access = "Read only";
+    else form.values.api_access = "No API";
   }
   return form;
 };
 
 router.get("/new/", isAdmin, async (req, res) => {
-  res.sendWrap(`New table`, renderForm(tableForm()));
+  res.sendWrap(
+    `New table`,
+    renderForm(
+      new Form({
+        action: "/table",
+        fields: [{ label: "Name", name: "name", input_type: "text" }]
+      })
+    )
+  );
 });
 
 router.get("/:id", isAdmin, async (req, res) => {
@@ -81,7 +104,29 @@ router.get("/:id", isAdmin, async (req, res) => {
 });
 
 router.post("/", isAdmin, async (req, res) => {
-  const v = req.body;
+  const set_api_access = v => {
+    switch (v.api_access) {
+      case "No API":
+        v.expose_api_read = false;
+        v.expose_api_write = false;
+        break;
+      case "Read only":
+        v.expose_api_read = true;
+        v.expose_api_write = false;
+        break;
+      case "Read and write":
+        v.expose_api_read = true;
+        v.expose_api_write = true;
+        break;
+      default:
+        v.expose_api_read = false;
+        v.expose_api_write = false;
+        break;
+    }
+    delete v.api_access;
+    return v;
+  };
+  const v = set_api_access(req.body);
   if (typeof v.id === "undefined") {
     // insert
     const { name, ...rest } = v;
