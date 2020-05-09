@@ -24,11 +24,18 @@ router.get("/list", isAdmin, async (req, res) => {
         { label: "Name", key: "name" },
         { label: "Template", key: "viewtemplate" },
         { label: "Table", key: r => getTable(r.table_id) },
-        { label: "Run", key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run") },
-        { label: "Edit", key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit") },
+        {
+          label: "Run",
+          key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+        },
+        {
+          label: "Edit",
+          key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+        },
         {
           label: "Delete",
-          key: r => post_btn(`/viewedit/delete/${encodeURIComponent(r.name)}`, "Delete")
+          key: r =>
+            post_btn(`/viewedit/delete/${encodeURIComponent(r.name)}`, "Delete")
         }
       ],
       views

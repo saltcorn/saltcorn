@@ -35,8 +35,8 @@ const no_views_logged_in = async (req, res) => {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
     if (tables.length === 0) {
-        const packs_available = await fetch_available_packs();
-        const packs_installed = await getConfig("installed_packs", []);
+      const packs_available = await fetch_available_packs();
+      const packs_installed = await getConfig("installed_packs", []);
 
       res.sendWrap(
         "Hello",
@@ -59,7 +59,7 @@ const no_views_logged_in = async (req, res) => {
               }
             ],
             packs_available
-          ),         
+          )
         )
       );
     } else if (views.length === 0) {
