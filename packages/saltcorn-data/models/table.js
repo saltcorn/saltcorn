@@ -41,7 +41,7 @@ class Table {
     await db.query("delete FROM _sc_fields WHERE table_id = $1", [this.id]);
 
     await db.query("delete FROM _sc_tables WHERE id = $1", [this.id]);
-    await db.query(`drop table ${sqlsanitize(this.name)}`);
+    await db.query(`drop table "${sqlsanitize(this.name)}"`);
   }
 
   async deleteRows(where) {
@@ -64,7 +64,7 @@ class Table {
 
   async toggleBool(id, field_name) {
     return await db.query(
-      `update ${sqlsanitize(this.name)} set ${sqlsanitize(
+      `update "${sqlsanitize(this.name)}" set ${sqlsanitize(
         field_name
       )}=NOT ${sqlsanitize(field_name)} where id=$1`,
       [id]
