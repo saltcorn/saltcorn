@@ -51,7 +51,7 @@ const genRandom = input => {
       return is.bool.generate() ? "on" : undefined;
       break;
     case "number":
-      return is.num.generate();
+      return input.attribs.step === "1" ? is.int.generate() : is.num.generate();
       break;
     default:
       //console.log(input);
