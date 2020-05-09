@@ -77,7 +77,7 @@ describe("Pack Endpoints", () => {
     await request(app)
       .post("/packs/install-named/Simple%20Project%20Management")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"));
+      .expect(toRedirect("/"));
   });
 
   itShouldRedirectUnauthToLogin("/plugins/create");

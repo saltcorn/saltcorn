@@ -140,7 +140,7 @@ router.post("/install", isAdmin, async (req, res) => {
   } else {
     await install_pack(pack);
 
-    res.redirect(`/plugins`);
+    res.redirect(`/`);
   }
 });
 
@@ -151,5 +151,5 @@ router.post("/install-named/:name", isAdmin, async (req, res) => {
   //console.log(pack)
   await install_pack(pack.pack, name);
 
-  res.redirect(`/plugins`);
+  res.redirect(`/`);
 });

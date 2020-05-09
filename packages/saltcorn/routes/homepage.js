@@ -1,9 +1,11 @@
 const State = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
 const View = require("saltcorn-data/models/view");
-const { link, renderForm, mkTable } = require("saltcorn-markup");
+const { link, renderForm, mkTable, post_btn } = require("saltcorn-markup");
 const { ul, li, div, small, a, h5 } = require("saltcorn-markup/tags");
 const Table = require("saltcorn-data/models/table");
+const { fetch_available_packs } = require("saltcorn-data/models/pack");
+const { getConfig } = require("saltcorn-data/models/config");
 
 const tableTable = tables =>
   mkTable(
@@ -33,11 +35,31 @@ const no_views_logged_in = async (req, res) => {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
     if (tables.length === 0) {
+      const packs_available = await fetch_available_packs();
+      const packs_installed = await getConfig("installed_packs", []);
+
       res.sendWrap(
         "Hello",
         div(
           div("You have no tables and no views!"),
-          div(link("/table/new", "Create a table »"))
+          div(link("/table/new", "Create a table »")),
+          div("Or install a pack:"),
+          mkTable(
+            [
+              { label: "Name", key: "name" },
+              {
+                label: "Install",
+                key: r =>
+                  packs_installed.includes(r.name)
+                    ? "Installed"
+                    : post_btn(
+                        `/packs/install-named/${encodeURIComponent(r.name)}`,
+                        "Install"
+                      )
+              }
+            ],
+            packs_available
+          )
         )
       );
     } else if (views.length === 0) {

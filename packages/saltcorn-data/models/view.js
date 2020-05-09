@@ -168,7 +168,7 @@ class View {
       });
       const form = new Form({
         methodGET: true,
-        action: `/view/${this.name}`,
+        action: `/view/${encodeURIComponent(this.name)}`,
         fields,
         submitLabel: "Apply",
         isStateForm: true,
@@ -181,7 +181,7 @@ class View {
 
   async get_config_flow() {
     const configFlow = this.viewtemplateObj.configuration_workflow();
-    configFlow.action = `/viewedit/config/${this.name}`;
+    configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || (c => c);
     configFlow.onDone = async ctx => {
       const { table_id, ...configuration } = oldOnDone(ctx);

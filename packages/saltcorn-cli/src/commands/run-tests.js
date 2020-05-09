@@ -5,6 +5,18 @@ const db = require("saltcorn-data/db");
 const { spawnSync } = require("child_process");
 
 class RunTestsCommand extends Command {
+  async do_test(cmd, args, forever, cwd) {
+    const env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    const res = spawnSync(cmd, args, {
+      stdio: "inherit",
+      env,
+      cwd
+    });
+    if (forever && res.status === 0)
+      await this.do_test(cmd, args, forever, cwd);
+    else this.exit(res.status);
+  }
+
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     await db.changeConnection({ database: "saltcorn_test" });
@@ -13,26 +25,18 @@ class RunTestsCommand extends Command {
     const env = { ...process.env, PGDATABASE: "saltcorn_test" };
     const covargs = flags.coverage ? ["--", "--coverage"] : [];
     if (args.package === "core") {
-      const res = spawnSync("npm", ["run", "test", ...covargs], {
-        stdio: "inherit",
-        env
-      });
-      this.exit(res.status);
+      await this.do_test("npm", ["run", "test", ...covargs], flags.forever);
     } else if (args.package) {
       const cwd = "packages/" + args.package;
-      const res = spawnSync("npm", ["run", "test", ...covargs], {
-        stdio: "inherit",
-        env,
+      await this.do_test(
+        "npm",
+        ["run", "test", ...covargs],
+        flags.forever,
         cwd
-      });
-      this.exit(res.status);
+      );
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
-      const res = spawnSync(lerna, ["run", "test", ...covargs], {
-        stdio: "inherit",
-        env
-      });
-      this.exit(res.status);
+      await this.do_test(lerna, ["run", "test", ...covargs], flags.forever);
     }
   }
 }
@@ -47,7 +51,8 @@ Extra documentation goes here
 `;
 
 RunTestsCommand.flags = {
-  coverage: flags.boolean({ char: "c", description: "Coverage" })
+  coverage: flags.boolean({ char: "c", description: "Coverage" }),
+  forever: flags.boolean({ char: "f", description: "Run forever till failure" })
 };
 
 module.exports = RunTestsCommand;

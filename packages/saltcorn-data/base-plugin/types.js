@@ -115,6 +115,7 @@ const int = {
           class: ["form-control", cls],
           name: text(nm),
           id: `input${text(nm)}`,
+          step: "1",
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
           ...(isdef(v) && { value: text(v) })

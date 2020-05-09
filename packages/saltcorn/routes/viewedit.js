@@ -24,11 +24,18 @@ router.get("/list", isAdmin, async (req, res) => {
         { label: "Name", key: "name" },
         { label: "Template", key: "viewtemplate" },
         { label: "Table", key: r => getTable(r.table_id) },
-        { label: "Run", key: r => link(`/view/${r.name}`, "Run") },
-        { label: "Edit", key: r => link(`/viewedit/edit/${r.name}`, "Edit") },
+        {
+          label: "Run",
+          key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+        },
+        {
+          label: "Edit",
+          key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+        },
         {
           label: "Delete",
-          key: r => post_btn(`/viewedit/delete/${r.name}`, "Delete")
+          key: r =>
+            post_btn(`/viewedit/delete/${encodeURIComponent(r.name)}`, "Delete")
         }
       ],
       views
@@ -115,7 +122,7 @@ router.post("/save", isAdmin, async (req, res) => {
       v.configuration = {};
       await View.create(v);
     }
-    res.redirect(`/viewedit/config/${v.name}`);
+    res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
   } else {
     res.sendWrap(`Edit view`, renderForm(form));
   }
