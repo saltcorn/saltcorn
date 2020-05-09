@@ -12,7 +12,7 @@ const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
 const load_plugins = require("./load_plugins");
 const { migrate } = require("saltcorn-data/migrate");
-const homepage = require("./routes/homepage")
+const homepage = require("./routes/homepage");
 
 const getApp = async () => {
   const app = express();
@@ -136,7 +136,7 @@ const getApp = async () => {
   });
   mountRoutes(app);
 
-  app.get("/", homepage );
+  app.get("/", homepage);
   return app;
 };
 module.exports = getApp;
