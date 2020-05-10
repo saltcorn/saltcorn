@@ -69,6 +69,10 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+const initial_config=async ({table_id}) => {
+return {}
+  }
+
 const run = async (
   table_id,
   viewname,
@@ -122,5 +126,6 @@ module.exports = {
   run,
   view_quantity: "Many",
   get_state_fields,
+  initial_config,
   display_state_form: true
 };
