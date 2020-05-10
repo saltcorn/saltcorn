@@ -119,11 +119,9 @@ router.post("/save", isAdmin, async (req, res) => {
     if (typeof req.body.id !== "undefined") {
       await View.update(v, req.body.id);
     } else {
-      const vt=State.viewtemplates[v.viewtemplate]
-      if(vt.initial_config)
-        v.configuration = await vt.initial_config(v)
-      else
-        v.configuration = {};
+      const vt = State.viewtemplates[v.viewtemplate];
+      if (vt.initial_config) v.configuration = await vt.initial_config(v);
+      else v.configuration = {};
       await View.create(v);
     }
     res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
