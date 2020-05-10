@@ -56,7 +56,6 @@ class View {
     });
 
     for (const viewrow of link_views) {
-      try {
         // may fail if incomplete view
         const sfs = await viewrow.get_state_fields();
         if (
@@ -67,9 +66,6 @@ class View {
           })
         )
           link_view_opts.push(viewrow);
-      } catch (e) {
-        console.log("error", viewrow, e);
-      }
     }
     return link_view_opts;
   }
@@ -79,7 +75,6 @@ class View {
     const link_views = await View.find({});
 
     for (const viewrow of link_views) {
-      try {
         // may fail if incomplete view
         const sfs = await viewrow.get_state_fields();
         if (
@@ -90,7 +85,6 @@ class View {
           })
         )
           link_view_opts.push(viewrow);
-      } catch {}
     }
     return link_view_opts;
   }
