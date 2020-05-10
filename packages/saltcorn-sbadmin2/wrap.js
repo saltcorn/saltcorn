@@ -7,7 +7,9 @@ const {
   div,
   text,
   i,
-  h6, h1, p
+  h6,
+  h1,
+  p
 } = require("saltcorn-markup/tags");
 
 const subItem = item =>
@@ -96,15 +98,17 @@ const renderAbove = elems =>
     .join("");
 
 const renderBody = (title, body) =>
-  [body.pageHeader 
-    ? h1({class:"h3 mb-0 mt-2 text-gray-800"}, body.pageHeader): '',
-    body.pageBlurb 
-    ? p({class:"mb-0 text-gray-800"}, body.pageBlurb): '',
-  typeof body === "string"
-    ? renderCard(title, body)
-    : body.above
-    ? renderAbove(body.above)
-    : renderBesides(body.besides)].join('');
+  [
+    body.pageHeader
+      ? h1({ class: "h3 mb-0 mt-2 text-gray-800" }, body.pageHeader)
+      : "",
+    body.pageBlurb ? p({ class: "mb-0 text-gray-800" }, body.pageBlurb) : "",
+    typeof body === "string"
+      ? renderCard(title, body)
+      : body.above
+      ? renderAbove(body.above)
+      : renderBesides(body.besides)
+  ].join("");
 
 const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
 <html lang="en">
