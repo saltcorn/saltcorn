@@ -10,7 +10,8 @@ const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
   stateFieldsToWhere,
-  picked_fields_to_query
+  picked_fields_to_query,
+  initial_config_all_fields
 } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
@@ -55,23 +56,7 @@ const get_state_fields = () => [
   }
 ];
 
-const initial_config = async ({ table_id }) => {
-  const table = await Table.findOne({ id: table_id });
-
-  const fields = await table.getFields();
-  var cfg = { columns: [] };
-  fields.forEach(f => {
-    const fvNm = f.type.fieldviews
-      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => !fv.isEdit)[0]
-      : undefined;
-    cfg.columns.push({
-      field_name: f.name,
-      type: "Field",
-      fieldview: fvNm
-    });
-  });
-  return cfg;
-};
+const initial_config = initial_config_all_fields(false);
 
 const run = async (table_id, viewname, { columns, label_style }, { id }) => {
   if (typeof id === "undefined") return "No record selected";

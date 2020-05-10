@@ -6,6 +6,7 @@ const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text } = require("saltcorn-markup/tags");
 const { renderForm } = require("saltcorn-markup");
+const { initial_config_all_fields } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -161,23 +162,7 @@ const getForm = async (table, viewname, columns, id) => {
   return form;
 };
 
-const initial_config = async ({ table_id }) => {
-  const table = await Table.findOne({ id: table_id });
-
-  const fields = await table.getFields();
-  var cfg = { columns: [] };
-  fields.forEach(f => {
-    const fvNm = f.type.fieldviews
-      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => fv.isEdit)[0]
-      : undefined;
-    cfg.columns.push({
-      field_name: f.name,
-      type: "Field",
-      fieldview: fvNm
-    });
-  });
-  return cfg;
-};
+const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state) => {
   //console.log({config})

@@ -9,7 +9,8 @@ const { text, script } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
   picked_fields_to_query,
-  stateFieldsToWhere
+  stateFieldsToWhere,
+  initial_config_all_fields
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const configuration_workflow = () =>
@@ -69,23 +70,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
-const initial_config = async ({ table_id }) => {
-  const table = await Table.findOne({ id: table_id });
-
-  const fields = await table.getFields();
-  var cfg = { columns: [] };
-  fields.forEach(f => {
-    const fvNm = f.type.fieldviews
-      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => !fv.isEdit)[0]
-      : undefined;
-    cfg.columns.push({
-      field_name: f.name,
-      type: "Field",
-      fieldview: fvNm
-    });
-  });
-  return cfg;
-};
+const initial_config = initial_config_all_fields(false);
 
 const run = async (
   table_id,

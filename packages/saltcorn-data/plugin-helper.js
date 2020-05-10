@@ -251,10 +251,31 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
   return qstate;
 };
 
+const initial_config_all_fields = isEdit => async ({ table_id }) => {
+  const table = await Table.findOne({ id: table_id });
+
+  const fields = await table.getFields();
+  var cfg = { columns: [] };
+  fields.forEach(f => {
+    const fvNm = f.type.fieldviews
+      ? Object.entries(f.type.fieldviews).find(
+          ([nm, fv]) => fv.isEdit === isEdit
+        )[0]
+      : undefined;
+    cfg.columns.push({
+      field_name: f.name,
+      type: "Field",
+      fieldview: fvNm
+    });
+  });
+  return cfg;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
   get_child_views,
   get_parent_views,
-  stateFieldsToWhere
+  stateFieldsToWhere,
+  initial_config_all_fields
 };
