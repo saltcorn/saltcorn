@@ -9,7 +9,8 @@ const { text, script } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
   picked_fields_to_query,
-  stateFieldsToWhere
+  stateFieldsToWhere,
+  initial_config_all_fields
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const configuration_workflow = () =>
@@ -69,6 +70,8 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+const initial_config = initial_config_all_fields(false);
+
 const run = async (
   table_id,
   viewname,
@@ -122,5 +125,6 @@ module.exports = {
   run,
   view_quantity: "Many",
   get_state_fields,
+  initial_config,
   display_state_form: true
 };

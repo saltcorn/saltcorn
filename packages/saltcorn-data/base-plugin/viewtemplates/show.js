@@ -10,7 +10,8 @@ const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
   field_picker_fields,
   stateFieldsToWhere,
-  picked_fields_to_query
+  picked_fields_to_query,
+  initial_config_all_fields
 } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
@@ -54,6 +55,8 @@ const get_state_fields = () => [
     required: true
   }
 ];
+
+const initial_config = initial_config_all_fields(false);
 
 const run = async (table_id, viewname, { columns, label_style }, { id }) => {
   if (typeof id === "undefined") return "No record selected";
@@ -127,5 +130,6 @@ module.exports = {
   configuration_workflow,
   run,
   runMany,
+  initial_config,
   display_state_form: false
 };

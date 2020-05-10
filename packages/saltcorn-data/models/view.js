@@ -56,20 +56,16 @@ class View {
     });
 
     for (const viewrow of link_views) {
-      try {
-        // may fail if incomplete view
-        const sfs = await viewrow.get_state_fields();
-        if (
-          pred({
-            viewrow,
-            viewtemplate: viewrow.viewtemplateObj,
-            state_fields: sfs
-          })
-        )
-          link_view_opts.push(viewrow);
-      } catch (e) {
-        console.log("error", viewrow, e);
-      }
+      // may fail if incomplete view
+      const sfs = await viewrow.get_state_fields();
+      if (
+        pred({
+          viewrow,
+          viewtemplate: viewrow.viewtemplateObj,
+          state_fields: sfs
+        })
+      )
+        link_view_opts.push(viewrow);
     }
     return link_view_opts;
   }
@@ -79,18 +75,16 @@ class View {
     const link_views = await View.find({});
 
     for (const viewrow of link_views) {
-      try {
-        // may fail if incomplete view
-        const sfs = await viewrow.get_state_fields();
-        if (
-          pred({
-            viewrow,
-            viewtemplate: viewrow.viewtemplateObj,
-            state_fields: sfs
-          })
-        )
-          link_view_opts.push(viewrow);
-      } catch {}
+      // may fail if incomplete view
+      const sfs = await viewrow.get_state_fields();
+      if (
+        pred({
+          viewrow,
+          viewtemplate: viewrow.viewtemplateObj,
+          state_fields: sfs
+        })
+      )
+        link_view_opts.push(viewrow);
     }
     return link_view_opts;
   }

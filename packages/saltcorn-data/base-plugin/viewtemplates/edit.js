@@ -6,6 +6,7 @@ const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text } = require("saltcorn-markup/tags");
 const { renderForm } = require("saltcorn-markup");
+const { initial_config_all_fields } = require("../../plugin-helper");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -161,6 +162,8 @@ const getForm = async (table, viewname, columns, id) => {
   return form;
 };
 
+const initial_config = initial_config_all_fields(true);
+
 const run = async (table_id, viewname, config, state) => {
   //console.log({config})
   const { columns } = config;
@@ -238,5 +241,6 @@ module.exports = {
   run,
   runPost,
   get_state_fields,
+  initial_config,
   display_state_form: false
 };
