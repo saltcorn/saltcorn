@@ -29,6 +29,8 @@ const is_layout_card = t => is.obj({ title: is.str, contents: t });
 const is_layout = t =>
   is.obj(
     {
+      pageHeader: is.maybe(is.str),
+      pageBlurb: is.maybe(is.str),
       above: is.maybe(
         is.array(
           is.or(

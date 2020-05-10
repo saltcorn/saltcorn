@@ -92,6 +92,7 @@ router.get("/:id", isAdmin, async (req, res) => {
     fields
   );
   res.sendWrap(`${table.name} table`, {
+    pageHeader: `${table.name} table`,
     above: [
       {
         title: "Fields",
