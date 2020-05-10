@@ -41,65 +41,82 @@ router.get("/", isAdmin, async (req, res) => {
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = await getConfig("installed_packs", []);
-  res.sendWrap(
-    "Plugins",
-    h5("Installed"),
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Source", key: "source" },
-        { label: "Location", key: "location" },
-        { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
-        {
-          label: "Reload",
-          key: r => post_btn(`/plugins/reload/${r.id}`, "Reload")
-        },
-        {
-          label: "Delete",
-          key: r => post_btn(`/plugins/delete/${r.id}`, "Remove")
-        }
-      ],
-      rows
-    ),
-    h5("Available plugins"),
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        {
-          label: "Install",
-          key: r =>
-            post_btn(
-              `/plugins/install/${encodeURIComponent(r.name)}`,
-              "Install"
-            )
-        }
-      ],
-      instore
-    ),
-    link(`/plugins/new`, "Add another plugin"),
-    h5("Available packs"),
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        {
-          label: "Install",
-          key: r =>
-            packs_installed.includes(r.name)
-              ? "Installed"
-              : post_btn(
-                  `/packs/install-named/${encodeURIComponent(r.name)}`,
-                  "Install"
-                )
-        }
-      ],
-      packs_available
-    ),
-    link(`/packs/install`, "Install another pack"),
-    nbsp,
-    "|",
-    nbsp,
-    link(`/packs/create`, "Create pack")
-  );
+  res.sendWrap("Plugins", {
+    above: [
+      {
+        title: "Installed plugins",
+        contents: mkTable(
+          [
+            { label: "Name", key: "name" },
+            { label: "Source", key: "source" },
+            { label: "Location", key: "location" },
+            { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+            {
+              label: "Reload",
+              key: r => post_btn(`/plugins/reload/${r.id}`, "Reload")
+            },
+            {
+              label: "Delete",
+              key: r => post_btn(`/plugins/delete/${r.id}`, "Remove")
+            }
+          ],
+          rows
+        )
+      },
+      {
+        besides: [
+          {
+            title: "Available plugins",
+            contents: [
+              mkTable(
+                [
+                  { label: "Name", key: "name" },
+                  {
+                    label: "Install",
+                    key: r =>
+                      post_btn(
+                        `/plugins/install/${encodeURIComponent(r.name)}`,
+                        "Install"
+                      )
+                  }
+                ],
+                instore
+              ),
+              link(`/plugins/new`, "Add another plugin")
+            ]
+          },
+          {
+            title: "Available packs",
+            contents: [
+              mkTable(
+                [
+                  { label: "Name", key: "name" },
+                  {
+                    label: "Install",
+                    key: r =>
+                      packs_installed.includes(r.name)
+                        ? "Installed"
+                        : post_btn(
+                            `/packs/install-named/${encodeURIComponent(
+                              r.name
+                            )}`,
+                            "Install"
+                          )
+                  }
+                ],
+                packs_available
+              ),
+              link(`/packs/install`, "Install another pack"),
+              nbsp,
+              "|",
+              nbsp,
+              link(`/packs/create`, "Create pack")
+            ]
+          }
+        ]
+      }
+    ]
+  });
 });
 
 router.get("/new/", isAdmin, async (req, res) => {
