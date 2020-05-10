@@ -76,7 +76,7 @@ const initial_config = async ({ table_id }) => {
   var cfg = { columns: [] };
   fields.forEach(f => {
     const fvNm = f.type.fieldviews
-      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => !fv.isEdit)
+      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => !fv.isEdit)[0]
       : undefined;
     cfg.columns.push({
       field_name: f.name,

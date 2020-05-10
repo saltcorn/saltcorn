@@ -161,6 +161,24 @@ const getForm = async (table, viewname, columns, id) => {
   return form;
 };
 
+const initial_config = async ({ table_id }) => {
+  const table = await Table.findOne({ id: table_id });
+
+  const fields = await table.getFields();
+  var cfg = { columns: [] };
+  fields.forEach(f => {
+    const fvNm = f.type.fieldviews
+      ? Object.entries(f.type.fieldviews).find(([nm, fv]) => fv.isEdit)[0]
+      : undefined;
+    cfg.columns.push({
+      field_name: f.name,
+      type: "Field",
+      fieldview: fvNm
+    });
+  });
+  return cfg;
+};
+
 const run = async (table_id, viewname, config, state) => {
   //console.log({config})
   const { columns } = config;
@@ -238,5 +256,6 @@ module.exports = {
   run,
   runPost,
   get_state_fields,
+  initial_config,
   display_state_form: false
 };
