@@ -70,7 +70,7 @@ const sidebar = sections =>
   );
 
 const renderCard = (title, body) => `
-  <div class="card shadow mb-4 mt-4">
+  <div class="card shadow mt-4">
     <div class="card-header py-3">
       <h6 class="m-0 font-weight-bold text-primary">${text(title)}</h6>
     </div>
