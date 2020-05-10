@@ -73,7 +73,7 @@ const renderCard = (title, body) => `
       <h6 class="m-0 font-weight-bold text-primary">${text(title)}</h6>
     </div>
     <div class="card-body">
-      ${body}
+      ${Array.isArray(body) ? body.join("") : body}
     </div>
   </div>`;
 

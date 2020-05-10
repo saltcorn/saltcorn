@@ -5,7 +5,7 @@ const Field = require("saltcorn-data/models/field");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const { isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
-const { span, h5 } = require("saltcorn-markup/tags");
+const { span, h5, nbsp } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -91,16 +91,22 @@ router.get("/:id", isAdmin, async (req, res) => {
     ],
     fields
   );
-  res.sendWrap(
-    `${table.name} table`,
-    h5("Fields"),
-    tableHtml,
-
-    span({ class: "mr-3" }, link(`/list/${table.name}`, "List")),
-    link(`/field/new/${table.id}`, "Add field"),
-    h5("Edit table properties"),
-    renderForm(tableForm(table))
-  );
+  res.sendWrap(`${table.name} table`, {
+    above: [
+      {
+        title: "Fields",
+        contents: [
+          tableHtml,
+          link(`/list/${table.name}`, "List"),
+          nbsp,
+          "|",
+          nbsp,
+          link(`/field/new/${table.id}`, "Add field")
+        ]
+      },
+      { title: "Edit table properties", contents: renderForm(tableForm(table)) }
+    ]
+  });
 });
 
 router.post("/", isAdmin, async (req, res) => {

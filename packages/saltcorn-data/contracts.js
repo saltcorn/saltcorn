@@ -51,7 +51,7 @@ const is_layout = t =>
 
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
-  body: is.or(is.str, is_layout(is.str)),
+  body: is.or(is.str, is_layout(is.or(is.str, is.array(is.str)))),
   menu: is.array(
     is.obj({
       section: is.maybe(is.str),
