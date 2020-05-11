@@ -104,7 +104,10 @@ const getApp = async () => {
         { link: "/plugins", label: "Plugins" },
         {
           label: "Settings",
-          subitems: [{ link: "/useradmin", label: "Users" }]
+          subitems: [
+            { link: "/useradmin", label: "Users" },
+            { link: "/config", label: "Configuration" }
+          ]
         }
       ];
 

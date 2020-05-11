@@ -23,4 +23,8 @@ const setConfig = async (key, value) => {
     [key, { v: value }]
   );
 };
-module.exports = { getConfig, getAllConfig, setConfig };
+
+const deleteConfig = async key => {
+  await db.deleteWhere("_sc_config", { key });
+};
+module.exports = { getConfig, getAllConfig, setConfig, deleteConfig };
