@@ -38,54 +38,82 @@ const no_views_logged_in = async (req, res) => {
       const packs_available = await fetch_available_packs();
       const packs_installed = await getConfig("installed_packs", []);
 
-      res.sendWrap(
-        "Hello",
-        div(
-          div("You have no tables and no views!"),
-          div(link("/table/new", "Create a table »")),
-          div("Or install a pack:"),
-          mkTable(
-            [
-              { label: "Name", key: "name" },
-              {
-                label: "Install",
-                key: r =>
-                  packs_installed.includes(r.name)
-                    ? "Installed"
-                    : post_btn(
-                        `/packs/install-named/${encodeURIComponent(r.name)}`,
-                        "Install"
-                      )
-              }
-            ],
-            packs_available
-          )
-        )
-      );
+      res.sendWrap("Hello", {
+        pageHeader: "Quick Start",
+        above: [
+          {
+            title: "Tables",
+            contents: div(
+              div("You have no tables and no views!"),
+              div(link("/table/new", "Create a table »"))
+            )
+          },
+          {
+            title: "Packs",
+            contents: [
+              div("Or install a pack:"),
+              mkTable(
+                [
+                  { label: "Name", key: "name" },
+                  {
+                    label: "Install",
+                    key: r =>
+                      packs_installed.includes(r.name)
+                        ? "Installed"
+                        : post_btn(
+                            `/packs/install-named/${encodeURIComponent(
+                              r.name
+                            )}`,
+                            "Install"
+                          )
+                  }
+                ],
+                packs_available
+              )
+            ]
+          }
+        ]
+      });
     } else if (views.length === 0) {
-      res.sendWrap(
-        "Hello",
-        div(
-          h5("Tables"),
-          tableTable(tables),
-          link(`/table/new`, "Create a table »"),
-          h5("Views"),
-          div("You have no views!"),
-          div(link("/viewedit/new", "Create a view »"))
-        )
-      );
+      res.sendWrap("Hello", {
+        pageHeader: "Quick Start",
+        above: [
+          {
+            title: "Tables",
+            contents: div(
+              tableTable(tables),
+              div(link("/table/new", "Create a table »"))
+            )
+          },
+          {
+            title: "Views",
+            contents: [
+              div("You have no views!"),
+              div(link("/viewedit/new", "Create a view »"))
+            ]
+          }
+        ]
+      });
     } else {
-      res.sendWrap(
-        "Hello",
-        div(
-          h5("Tables"),
-          tableTable(tables),
-          link(`/table/new`, "Add table"),
-          h5("Views"),
-          viewTable(views),
-          div(link("/viewedit/new", "Create a view »"))
-        )
-      );
+      res.sendWrap("Hello", {
+        pageHeader: "Quick Start",
+        above: [
+          {
+            title: "Tables",
+            contents: div(
+              tableTable(tables),
+              div(link("/table/new", "Create a table »"))
+            )
+          },
+          {
+            title: "Views",
+            contents: [
+              viewTable(views),
+              div(link("/viewedit/new", "Create a view »"))
+            ]
+          }
+        ]
+      });
     }
   }
 };
