@@ -112,7 +112,7 @@ const obj = (o, alsoCheckThat) =>
     },
     check: x =>
       typeof x === "object" &&
-      (typeof alsoCheckThat === "undefined" || alsoCheckThat(o)) &&
+      (typeof alsoCheckThat === "undefined" || alsoCheckThat(x)) &&
       Object.entries(o || {}).every(([k, v]) => v.check(x[k])),
     generate:
       typeof alsoCheckThat === "undefined"

@@ -127,7 +127,7 @@ const getApp = async () => {
           title,
           menu,
           alerts: getFlashes(req),
-          body: html.join(""),
+          body: html.length === 1 ? html[0] : html.join(""),
           headers: State.headers
         })
       );

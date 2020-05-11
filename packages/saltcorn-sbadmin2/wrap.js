@@ -7,7 +7,9 @@ const {
   div,
   text,
   i,
-  h6
+  h6,
+  h1,
+  p
 } = require("saltcorn-markup/tags");
 
 const subItem = item =>
@@ -67,6 +69,47 @@ const sidebar = sections =>
     sections.map(sideBarSection)
   );
 
+const renderCard = (title, body) => `
+  <div class="card shadow mt-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">${text(title)}</h6>
+    </div>
+    <div class="card-body">
+      ${Array.isArray(body) ? body.join("") : body}
+    </div>
+  </div>`;
+
+const renderBesides = elems => {
+  const w = Math.round(12 / elems.length);
+  const row = elems.map(e =>
+    div(
+      { class: `col-sm-${w}` },
+      e.above ? renderAbove(e.above) : renderCard(e.title, e.contents)
+    )
+  );
+  return div({ class: "row" }, row);
+};
+
+const renderAbove = elems =>
+  elems
+    .map(e =>
+      e.besides ? renderBesides(e.besides) : renderCard(e.title, e.contents)
+    )
+    .join("");
+
+const renderBody = (title, body) =>
+  [
+    body.pageHeader
+      ? h1({ class: "h3 mb-0 mt-2 text-gray-800" }, body.pageHeader)
+      : "",
+    body.pageBlurb ? p({ class: "mb-0 text-gray-800" }, body.pageBlurb) : "",
+    typeof body === "string"
+      ? renderCard(title, body)
+      : body.above
+      ? renderAbove(body.above)
+      : renderBesides(body.besides)
+  ].join("");
+
 const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
 <html lang="en">
   <head>
@@ -95,16 +138,7 @@ const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
         <div id="content">
           <div class="container-fluid">
             ${alerts.map(a => alert(a.type, a.msg)).join("")}
-            <div class="card shadow mb-4 mt-4">
-              <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">${text(
-                  title
-                )}</h6>
-              </div>
-              <div class="card-body">
-                ${body}
-              </div>
-            </div>
+            ${renderBody(title, body)}
           </div>
         </div>
       </div>
