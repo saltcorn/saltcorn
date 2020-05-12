@@ -16,7 +16,7 @@ const subItem = currentUrl => item =>
   item.link
     ? a(
         {
-          class: ["collapse-item", currentUrl === item.link && "active"],
+          class: ["collapse-item", active(currentUrl, item) && "active"],
           href: text(item.link)
         },
         item.label
@@ -31,8 +31,9 @@ const logit = (x, s) => {
   return x;
 };
 const active = (currentUrl, item) =>
-  currentUrl === item.link ||
-  (item.subitems && item.subitems.some(si => si.link === currentUrl));
+  (item.link && currentUrl.startsWith(item.link)) ||
+  (item.subitems &&
+    item.subitems.some(si => si.link && currentUrl.startsWith(si.link)));
 
 const sideBarItem = currentUrl => item => {
   const is_active = active(currentUrl, item);
