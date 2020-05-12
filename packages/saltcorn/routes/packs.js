@@ -7,7 +7,6 @@ const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
-const { getConfig, setConfig } = require("saltcorn-data/models/config");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("saltcorn-data/contracts");
@@ -48,8 +47,8 @@ const install_pack = contract(
       await View.create({ ...viewNoTable, table_id: vtable.id });
     }
     if (name) {
-      const existPacks = await getConfig("installed_packs", []);
-      await setConfig("installed_packs", [...existPacks, name]);
+      const existPacks = State.getConfig("installed_packs", []);
+      await State.setConfig("installed_packs", [...existPacks, name]);
     }
   }
 );

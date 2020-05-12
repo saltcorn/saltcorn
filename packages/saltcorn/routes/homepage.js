@@ -5,7 +5,6 @@ const { link, renderForm, mkTable, post_btn } = require("saltcorn-markup");
 const { ul, li, div, small, a, h5 } = require("saltcorn-markup/tags");
 const Table = require("saltcorn-data/models/table");
 const { fetch_available_packs } = require("saltcorn-data/models/pack");
-const { getConfig } = require("saltcorn-data/models/config");
 
 const tableTable = tables =>
   mkTable(
@@ -36,7 +35,7 @@ const no_views_logged_in = async (req, res) => {
     const views = await View.find({});
     if (tables.length === 0) {
       const packs_available = await fetch_available_packs();
-      const packs_installed = await getConfig("installed_packs", []);
+      const packs_installed = State.getConfig("installed_packs", []);
 
       res.sendWrap("Hello", {
         pageHeader: "Quick Start",
