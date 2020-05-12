@@ -114,7 +114,7 @@ const getApp = async () => {
           ]
         }
       ];
-
+      const currentUrl = req.originalUrl.split("?")[0];
       const menu = [
         {
           brandName: State.getConfig("site_name")
@@ -136,6 +136,7 @@ const getApp = async () => {
         State.layout.wrap({
           title,
           menu,
+          currentUrl,
           alerts: getFlashes(req),
           body: html.length === 1 ? html[0] : html.join(""),
           headers: State.headers
