@@ -79,7 +79,6 @@ router.get("/:id", isAdmin, async (req, res) => {
   const fields = await Field.find({ table_id: id }, { orderBy: "name" });
   const tableHtml = mkTable(
     [
-      { label: "Name", key: "name" },
       { label: "Label", key: "label" },
       { label: "Required", key: "required" },
       { label: "Type", key: r => r.type.name },
