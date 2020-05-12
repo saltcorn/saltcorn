@@ -6,32 +6,30 @@ const { loggedIn } = require("./utils.js");
 const Table = require("saltcorn-data/models/table");
 
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const { getConfig, setConfig, getAllConfig, deleteConfig } = require("saltcorn-data/models/config");
+const { getConfig, setConfig, getAllConfigOrDefaults, deleteConfig } = require("saltcorn-data/models/config");
 
 const router = new Router();
 module.exports = router;
 
-const configTypes = {
-}
+
 
 //create -- new
 router.get("/", loggedIn, async (req, res) => {
-  const cfgs = await getAllConfig()
+  const cfgs = await getAllConfigOrDefaults();
   const configTable = mkTable(
     [
-      { label: "Key", key: r=>r[0] },
-      { label: "Value", key: r=>JSON.stringify(r[1]) },
+      { label: "Key", key: r=>r.key },
+      { label: "Value", key: r=>JSON.stringify(r.value) },
       {
         label: "Edit",
-        key: r => post_btn(`/config/edit/${r[0]}`, "Edit")
+        key: r => link(`/config/edit/${r.key}`, "Edit")
       },
       {
         label: "Delete",
-        key: r => post_btn(`/config/delete/${r[0]}`, "Delete")
+        key: r => post_btn(`/config/delete/${r.key}`, "Delete")
       }
-
     ],
-    Object.entries(cfgs)
+    Object.entries(cfgs).map(([k,v])=>({key:k, ...v}))
   )
   res.sendWrap(`Configuration`, configTable);
 });
