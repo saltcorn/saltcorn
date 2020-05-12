@@ -153,7 +153,7 @@ class Table {
     });
     for (const f of fields) {
       if (!f.is_fkey) {
-        fldNms.push(`a.${f.name}`);
+        fldNms.push(`a."${f.name}"`);
       }
     }
     Object.entries(opts.aggregations || {}).forEach(
