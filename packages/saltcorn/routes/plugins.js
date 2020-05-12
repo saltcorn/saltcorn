@@ -40,7 +40,7 @@ router.get("/", isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
-  const packs_installed = await getConfig("installed_packs", []);
+  const packs_installed = State.getConfig("installed_packs", []);
   res.sendWrap("Plugins", {
     above: [
       {

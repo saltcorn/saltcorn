@@ -71,7 +71,7 @@ router.post("/edit/:key", isAdmin, async (req, res) => {
   if (valres.errors)
     res.sendWrap(`Edit configuration key ${key}`, renderForm(form));
   else {
-    await setConfig(key, valres.success[key]);
+    await State.setConfig(key, valres.success[key]);
     req.flash("success", `Configuration key ${key} saved`);
 
     res.redirect(`/config/`);
@@ -80,7 +80,7 @@ router.post("/edit/:key", isAdmin, async (req, res) => {
 
 router.post("/delete/:key", isAdmin, async (req, res) => {
   const { key } = req.params;
-  await deleteConfig(key);
+  await State.deleteConfig(key);
   req.flash("success", `Configuration key ${key} deleted`);
   res.redirect(`/config/`);
 });

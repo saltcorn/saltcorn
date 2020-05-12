@@ -11,6 +11,11 @@ const db = require(".");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
+const {
+  getAllConfigOrDefaults,
+  setConfig,
+  deleteConfig
+} = require("../models/config");
 
 class State {
   constructor() {
@@ -19,6 +24,7 @@ class State {
     this.tables = [];
     this.types = {};
     this.fields = [];
+    this.configs = {};
     this.layout = { wrap: s => s };
     this.headers = [];
     contract.class(this);
@@ -26,6 +32,22 @@ class State {
 
   async refresh() {
     this.views = await View.find();
+    this.configs = await getAllConfigOrDefaults();
+  }
+
+  getConfig(key, def) {
+    if (this.configs[key] && typeof this.configs[key].value !== "undefined")
+      return this.configs[key].value;
+    else return def;
+  }
+
+  async setConfig(key, value) {
+    await setConfig(key, value);
+    this.configs[key].value = value;
+  }
+  async deleteConfig(key) {
+    await deleteConfig(key);
+    delete this.configs[key];
   }
 
   registerPlugin(plugin) {

@@ -12,23 +12,40 @@ const {
   p
 } = require("saltcorn-markup/tags");
 
-const subItem = item =>
+const subItem = currentUrl => item =>
   item.link
-    ? a({ class: "collapse-item", href: text(item.link) }, item.label)
+    ? a(
+        {
+          class: ["collapse-item", active(currentUrl, item) && "active"],
+          href: text(item.link)
+        },
+        item.label
+      )
     : h6({ class: "collapse-header" }, item.label);
 
 const labelToId = item => text(item.label.replace(" ", ""));
 
-const sideBarItem = item =>
-  li(
-    { class: "nav-item" },
+const logit = (x, s) => {
+  if (s) console.log(s, x);
+  else console.log(x);
+  return x;
+};
+const active = (currentUrl, item) =>
+  (item.link && currentUrl.startsWith(item.link)) ||
+  (item.subitems &&
+    item.subitems.some(si => si.link && currentUrl.startsWith(si.link)));
+
+const sideBarItem = currentUrl => item => {
+  const is_active = active(currentUrl, item);
+  return li(
+    { class: ["nav-item", is_active && "active"] },
     item.link
       ? a({ class: "nav-link", href: text(item.link) }, span(text(item.label)))
       : item.subitems
       ? [
           a(
             {
-              class: "nav-link collapsed",
+              class: ["nav-link", !is_active && "collapsed"],
               href: "#",
               "data-toggle": "collapse",
               "data-target": `#collapse${labelToId(item)}`,
@@ -41,32 +58,45 @@ const sideBarItem = item =>
           div(
             {
               id: `collapse${labelToId(item)}`,
-              class: "collapse",
+              class: ["collapse", is_active && "show"],
               "data-parent": "#accordionSidebar"
             },
             div(
               { class: "bg-white py-2 collapse-inner rounded" },
-              item.subitems.map(subItem)
+              item.subitems.map(subItem(currentUrl))
             )
           )
         ]
       : span({ class: "nav-link" }, text(item.label))
   );
+};
 
-const sideBarSection = section => [
-  section.section &&
-    hr({ class: "sidebar-divider" }) +
-      div({ class: "sidebar-heading" }, section.section),
-  section.items.map(sideBarItem).join("")
-];
+const sideBarSection = currentUrl => section =>
+  section.brandName
+    ? a(
+        {
+          class:
+            "sidebar-brand d-flex align-items-center justify-content-center",
+          href: "/"
+        },
+        //div({class:"sidebar-brand-icon rotate-n-15"},
+        //i({class:"fas fa-laugh-wink"})),
+        div({ class: "sidebar-brand-text mx-3" }, section.brandName)
+      )
+    : [
+        section.section &&
+          hr({ class: "sidebar-divider" }) +
+            div({ class: "sidebar-heading" }, section.section),
+        section.items.map(sideBarItem(currentUrl)).join("")
+      ];
 
-const sidebar = sections =>
+const sidebar = (sections, currentUrl) =>
   ul(
     {
       class: "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion",
       id: "accordionSidebar"
     },
-    sections.map(sideBarSection)
+    sections.map(sideBarSection(currentUrl))
   );
 
 const renderCard = (title, body) => `
@@ -110,7 +140,14 @@ const renderBody = (title, body) =>
       : renderBesides(body.besides)
   ].join("");
 
-const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
+const wrap = ({
+  title,
+  menu,
+  alerts,
+  currentUrl,
+  body,
+  headers
+}) => `<!doctype html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -132,7 +169,7 @@ const wrap = ({ title, menu, alerts, body, headers }) => `<!doctype html>
   </head>
   <body id="page-top">
     <div id="wrapper">
-      ${sidebar(menu)}
+      ${sidebar(menu, currentUrl)}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
