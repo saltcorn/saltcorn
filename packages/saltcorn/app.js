@@ -89,6 +89,8 @@ const getApp = async () => {
       })
       .filter(a => a.msg && a.msg.length && a.msg.length > 0);
 
+  const site_name = await getConfig("site_name");
+
   app.use(function(req, res, next) {
     res.sendWrap = function(title, ...html) {
       const isAuth = req.isAuthenticated();
@@ -117,6 +119,9 @@ const getApp = async () => {
 
       const menu = [
         {
+          brandName: site_name
+        },
+        views.length > 0 && {
           section: "Views",
           items: views
         },

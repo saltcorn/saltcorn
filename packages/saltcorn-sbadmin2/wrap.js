@@ -53,12 +53,24 @@ const sideBarItem = item =>
       : span({ class: "nav-link" }, text(item.label))
   );
 
-const sideBarSection = section => [
-  section.section &&
-    hr({ class: "sidebar-divider" }) +
-      div({ class: "sidebar-heading" }, section.section),
-  section.items.map(sideBarItem).join("")
-];
+const sideBarSection = section =>
+  section.brandName
+    ? a(
+        {
+          class:
+            "sidebar-brand d-flex align-items-center justify-content-center",
+          href: "/"
+        },
+        //div({class:"sidebar-brand-icon rotate-n-15"},
+        //i({class:"fas fa-laugh-wink"})),
+        div({ class: "sidebar-brand-text mx-3" }, section.brandName)
+      )
+    : [
+        section.section &&
+          hr({ class: "sidebar-divider" }) +
+            div({ class: "sidebar-heading" }, section.section),
+        section.items.map(sideBarItem).join("")
+      ];
 
 const sidebar = sections =>
   ul(
