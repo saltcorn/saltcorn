@@ -56,11 +56,14 @@ const is_plugin_wrap_arg = is.obj({
   body: is.or(is.str, is_layout(is.or(is.str, is.array(is.str)))),
   currentUrl: is.str,
   menu: is.array(
-    is.obj({
-      brandName: is.maybe(is.str),
-      section: is.maybe(is.str),
-      items: is.maybe(is.array(is_menu_item))
-    }, o=> o.brandName || o.items && o.section)
+    is.obj(
+      {
+        brandName: is.maybe(is.str),
+        section: is.maybe(is.str),
+        items: is.maybe(is.array(is_menu_item))
+      },
+      o => o.brandName || (o.items && o.section)
+    )
   ),
   alerts: is.array(
     is.obj({
@@ -88,7 +91,7 @@ const is_plugin_type = is.obj({
           is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
         )
       },
-      o => (o.isEdit && o.run.length >=2) || (!o.isEdit && o.run.length == 1)
+      o => (o.isEdit && o.run.length >= 2) || (!o.isEdit && o.run.length == 1)
     )
   ),
   attributes: is.maybe(is.array(is_attribute)),

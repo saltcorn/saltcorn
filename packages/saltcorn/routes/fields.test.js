@@ -208,7 +208,7 @@ describe("Field Endpoints", () => {
       .get(`/table/2`)
       .set("Cookie", loginCookie)
       .expect(toInclude("wrote"))
-      .expect(toInclude("zowrote"))
+      .expect(toInclude("ZoWrote"))
       .expect(toInclude("weight"))
       .expect(toNotInclude("[object"));
   });
