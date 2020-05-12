@@ -6,7 +6,7 @@ const configTypes = {
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
-    label: "Log SQL",
+    label: "Log SQL to stdout",
     default: false,
     onChange(val) {
       db.set_sql_logging(val);

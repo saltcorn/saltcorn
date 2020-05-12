@@ -23,7 +23,7 @@ router.get("/", isAdmin, async (req, res) => {
   const canEdit = key => State.types[configTypes[key].type];
   const configTable = mkTable(
     [
-      { label: "Key", key: r => r.key },
+      { label: "Key", key: r => r.label || r.key },
       { label: "Value", key: r => JSON.stringify(r.value) },
       {
         label: "Edit",
