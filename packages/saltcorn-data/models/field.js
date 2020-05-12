@@ -7,8 +7,7 @@ const readKey = v => {
   return isNaN(parsed) ? null : parsed;
 };
 
-const labelToName = label=>
-  sqlsanitize(label.toLowerCase().replace(' ', '_'))
+const labelToName = label => sqlsanitize(label.toLowerCase().replace(" ", "_"));
 
 class Field {
   constructor(o) {
