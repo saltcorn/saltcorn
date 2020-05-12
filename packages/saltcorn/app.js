@@ -13,10 +13,14 @@ const flash = require("connect-flash");
 const load_plugins = require("./load_plugins");
 const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
+const { getConfig } = require("saltcorn-data/models/config");
 
 const getApp = async () => {
   const app = express();
+  const sql_log = await getConfig("log_sql");
+  db.set_sql_logging(sql_log);
   await migrate();
+
   await load_plugins.loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
