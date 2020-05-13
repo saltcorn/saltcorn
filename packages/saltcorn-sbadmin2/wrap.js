@@ -122,12 +122,12 @@ const renderHero = (caption, blurb) =>
         },
         div(
           { class: "col-lg-10 align-self-end" },
-          h1({ class: "text-uppercase text-white font-weight-bold" }, caption),
+          h1({ class: "text-uppercase font-weight-bold" }, caption),
           hr({ class: "divider my-4" })
         ),
         div(
           { class: "col-lg-8 align-self-baseline" },
-          p({ class: "text-white-75 font-weight-light mb-5" }, blurb)
+          p({ class: "font-weight-light mb-5" }, blurb)
           /*a(
             {
               class: "btn btn-primary btn-xl",

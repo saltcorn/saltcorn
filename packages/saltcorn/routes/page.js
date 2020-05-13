@@ -11,5 +11,10 @@ module.exports = router;
 router.get("/:pagename", async (req, res) => {
   const { pagename } = req.params;
   const page = State.pages[pagename];
-  res.sendWrap(`${pagename} page`, page);
+  if (page) {
+    const contents = await page.getPage();
+    res.sendWrap(page.title || `${pagename} page`, contents);
+  } else {
+    res.status(404).sendWrap(`${pagename} page`, `Page ${pagename} not found`);
+  }
 });

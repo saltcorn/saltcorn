@@ -120,7 +120,9 @@ const is_plugin = is.obj({
     })
   ),
   types: is.maybe(is.array(is_plugin_type)),
-  pages: is.maybe(is.objVals(is_layout)),
+  pages: is.maybe(
+    is.objVals(is.obj({ getPage: is.fun([], is.promise(is_layout)) }))
+  ),
   viewtemplates: is.maybe(is.array(is_viewtemplate))
 });
 
