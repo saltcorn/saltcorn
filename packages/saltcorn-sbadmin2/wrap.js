@@ -145,6 +145,8 @@ const renderContainer = ({ type, ...rest }) =>
     ? renderCard(rest.title, rest.contents)
     : type === "hero"
     ? renderHero(rest.caption, rest.blurb)
+    : type === "blank"
+    ? rest.contents
     : "";
 
 const renderBesides = elems => {
