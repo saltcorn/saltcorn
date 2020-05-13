@@ -1,6 +1,7 @@
 const { Pool } = require("pg");
 const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
+const { createNamespace, getNamespace } = require("cls-hooked");
 
 var pool = new Pool(getConnectObject());
 var log_sql_enabled = false;
@@ -23,11 +24,20 @@ const changeConnection = async (connObj = {}) => {
   pool = new Pool(getConnectObject(connObj));
 };
 
+const tenantNamespace = createNamespace("tenant");
+//tenant.set('tenant', 'public')
+
+const setTenant = ten => {
+  //var session = getNamespace('tenant');
+  tenantNamespace.set("tenant", ten);
+};
+const getTenantSchema = () => tenantNamespace.get("tenant") || "public";
+
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts
-  )}`;
+  const sql = `SELECT * FROM "${getTenantSchema()}"."${sqlsanitize(
+    tbl
+  )}" ${where} ${mkSelectOptions(selectopts)}`;
   sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
@@ -36,7 +46,9 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
+  const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
+    tbl
+  )}" ${where}`;
   sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
@@ -45,7 +57,9 @@ const count = async (tbl, whereObj) => {
 
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
+  const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
+    tbl
+  )}" ${where}`;
   sql_log(sql, values);
 
   const tq = await pool.query(sql, values);
@@ -58,7 +72,7 @@ const insert = async (tbl, obj, noid = false) => {
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
   const valList = kvs.map(([k, v]) => v);
-  const sql = `insert into "${sqlsanitize(
+  const sql = `insert into "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
   sql_log(sql, valList);
@@ -74,7 +88,7 @@ const update = async (tbl, obj, id) => {
     .join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);
-  const q = `update "${sqlsanitize(
+  const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where id=$${kvs.length + 1}`;
   sql_log(q, valList);
@@ -95,7 +109,7 @@ const selectMaybeOne = async (tbl, where) => {
   else return rows[0];
 };
 
-const getClient = async () => await pool.connect()
+const getClient = async () => await pool.connect();
 
 module.exports = {
   query: (text, params) => {
@@ -113,5 +127,8 @@ module.exports = {
   close,
   changeConnection,
   set_sql_logging,
-  getClient
+  getClient,
+  setTenant,
+  getTenantSchema,
+  tenantNamespace
 };

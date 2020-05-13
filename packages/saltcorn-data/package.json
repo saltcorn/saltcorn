@@ -9,6 +9,7 @@
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^3.0.8",
+    "cls-hooked": "^4.2.2",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.1",
     "dateformat": "^3.0.3",

@@ -5,7 +5,7 @@ const db = require("./db");
 const dateFormat = require("dateformat");
 
 const migrate = async (schema = "public") => {
-  const dbmigrationRows = await db.select(schema + "._sc_migrations");
+  const dbmigrationRows = await db.select("_sc_migrations");
   const dbmigrations = dbmigrationRows.map(r => r.migration);
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
   const files = fs
@@ -22,7 +22,7 @@ const migrate = async (schema = "public") => {
       if (contents.sql) {
         await db.query(contents.sql);
       }
-      await db.insert(schema + "._sc_migrations", { migration: name }, true);
+      await db.insert("_sc_migrations", { migration: name }, true);
     }
   }
   client.release(true);

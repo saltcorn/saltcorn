@@ -33,10 +33,10 @@ const reset = async (dontDrop = false, schema = "public") => {
     )
   `);
 
-  await db.insert(`${schema}._sc_roles`, { role: "admin", id: 1 });
-  await db.insert(`${schema}._sc_roles`, { role: "staff", id: 2 });
-  await db.insert(`${schema}._sc_roles`, { role: "user", id: 3 });
-  await db.insert(`${schema}._sc_roles`, { role: "public", id: 4 });
+  await db.insert(`_sc_roles`, { role: "admin", id: 1 });
+  await db.insert(`_sc_roles`, { role: "staff", id: 2 });
+  await db.insert(`_sc_roles`, { role: "user", id: 3 });
+  await db.insert(`_sc_roles`, { role: "public", id: 4 });
 
   await db.query(`
     CREATE TABLE ${schema}._sc_tables
@@ -105,12 +105,12 @@ const reset = async (dontDrop = false, schema = "public") => {
     location VARCHAR(128)
   )
   `);
-  await db.insert(schema + "_sc_plugins", {
+  await db.insert("_sc_plugins", {
     name: "base",
     source: "npm",
     location: "saltcorn-base-plugin"
   });
-  await db.insert(schema + "_sc_plugins", {
+  await db.insert("_sc_plugins", {
     name: "sbadmin2",
     source: "npm",
     location: "saltcorn-sbadmin2"
