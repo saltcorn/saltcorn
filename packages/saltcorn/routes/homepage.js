@@ -41,6 +41,7 @@ const no_views_logged_in = async (req, res) => {
         pageHeader: "Quick Start",
         above: [
           {
+            type: "card",
             title: "Tables",
             contents: div(
               div("You have no tables and no views!"),
@@ -48,6 +49,7 @@ const no_views_logged_in = async (req, res) => {
             )
           },
           {
+            type: "card",
             title: "Packs",
             contents: [
               div("Or install a pack:"),
@@ -78,6 +80,7 @@ const no_views_logged_in = async (req, res) => {
         pageHeader: "Quick Start",
         above: [
           {
+            type: "card",
             title: "Tables",
             contents: div(
               tableTable(tables),
@@ -85,6 +88,7 @@ const no_views_logged_in = async (req, res) => {
             )
           },
           {
+            type: "card",
             title: "Views",
             contents: [
               div("You have no views!"),
@@ -98,6 +102,7 @@ const no_views_logged_in = async (req, res) => {
         pageHeader: "Quick Start",
         above: [
           {
+            type: "card",
             title: "Tables",
             contents: div(
               tableTable(tables),
@@ -105,6 +110,7 @@ const no_views_logged_in = async (req, res) => {
             )
           },
           {
+            type: "card",
             title: "Views",
             contents: [
               viewTable(views),

@@ -24,7 +24,7 @@ const is_menu_item = is.obj({
   )
 });
 
-const is_layout_card = t => is.obj({ title: is.str, contents: t });
+const is_layout_container = t => is.obj({ type: is.str });
 
 const is_layout = t =>
   is.obj(
@@ -34,16 +34,16 @@ const is_layout = t =>
       above: is.maybe(
         is.array(
           is.or(
-            is_layout_card(t),
-            is.obj({ besides: is.array(is_layout_card(t)) })
+            is_layout_container(t),
+            is.obj({ besides: is.array(is_layout_container(t)) })
           )
         )
       ),
       besides: is.maybe(
         is.array(
           is.or(
-            is_layout_card(t),
-            is.obj({ above: is.array(is_layout_card(t)) })
+            is_layout_container(t),
+            is.obj({ above: is.array(is_layout_container(t)) })
           )
         )
       )

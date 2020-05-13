@@ -44,6 +44,7 @@ router.get("/", isAdmin, async (req, res) => {
   res.sendWrap("Plugins", {
     above: [
       {
+        type: "card",
         title: "Installed plugins",
         contents: mkTable(
           [
@@ -66,6 +67,7 @@ router.get("/", isAdmin, async (req, res) => {
       {
         besides: [
           {
+            type: "card",
             title: "Available plugins",
             contents: [
               mkTable(
@@ -86,6 +88,7 @@ router.get("/", isAdmin, async (req, res) => {
             ]
           },
           {
+            type: "card",
             title: "Available packs",
             contents: [
               mkTable(
