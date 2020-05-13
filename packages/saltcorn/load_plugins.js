@@ -31,20 +31,7 @@ const loadAllPlugins = async () => {
   await getState().refresh();
 };
 
-const loadAllPluginsSync = app => {
-  loadAllPlugins().then(
-    () => {
-      app.emit("ready");
-    },
-    err => {
-      console.error(err);
-      process.exit(1);
-    }
-  );
-};
-
 module.exports = {
-  loadAllPluginsSync,
   loadAllPlugins,
   loadPlugin,
   registerPlugin
