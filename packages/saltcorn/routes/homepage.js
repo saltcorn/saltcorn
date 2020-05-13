@@ -125,6 +125,21 @@ const no_views_logged_in = async (req, res) => {
 
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
+  if(!isAuth) {
+    const page= State.pages[State.getConfig('public_home')]
+    if(page) {
+      const contents = await page.getPage();
+      res.sendWrap(page.title || `${pagename} page`, contents);
+      return
+    }
+  } else if(isAuth && req.user.role_id===3) {
+    const page= State.pages[State.getConfig('user_home')]
+    if(page) {
+      const contents = await page.getPage();
+      res.sendWrap(page.title || `${pagename} page`, contents);
+      return
+    }
+  }
   const views = State.views.filter(
     v => v.on_root_page && (isAuth || v.is_public)
   );
