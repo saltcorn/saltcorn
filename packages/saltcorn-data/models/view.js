@@ -97,7 +97,9 @@ class View {
 
   static async create(v) {
     const id = await db.insert("_sc_views", v);
-    await require("../db/state").getState().refresh();
+    await require("../db/state")
+      .getState()
+      .refresh();
     return new View({ id, ...v });
   }
   async delete() {
@@ -105,11 +107,15 @@ class View {
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
-    await require("../db/state").getState().refresh();
+    await require("../db/state")
+      .getState()
+      .refresh();
   }
   static async delete(where) {
     await db.deleteWhere("_sc_views", where);
-    await require("../db/state").getState().refresh();
+    await require("../db/state")
+      .getState()
+      .refresh();
   }
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(

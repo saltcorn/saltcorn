@@ -92,8 +92,8 @@ const getApp = async () => {
   app.use(function(req, res, next) {
     res.sendWrap = function(title, ...html) {
       const isAuth = req.isAuthenticated();
-      const views = getState().views
-        .filter(v => v.on_menu && (isAuth || v.is_public))
+      const views = getState()
+        .views.filter(v => v.on_menu && (isAuth || v.is_public))
         .map(v => ({ link: `/view/${v.name}`, label: v.name }));
       const authItems = isAuth
         ? [
