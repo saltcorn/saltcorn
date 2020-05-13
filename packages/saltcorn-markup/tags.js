@@ -70,6 +70,7 @@ module.exports = {
   small: mkTag("small"),
   pre: mkTag("pre"),
   code: mkTag("code"),
+  header: mkTag("header"),
   tr: mkTag("tr"),
   th: mkTag("th"),
   td: mkTag("td"),

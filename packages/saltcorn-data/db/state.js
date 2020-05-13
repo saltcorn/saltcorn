@@ -23,6 +23,7 @@ class State {
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
+    this.pages = {};
     this.fields = [];
     this.configs = {};
     this.layout = { wrap: s => s };
@@ -56,6 +57,9 @@ class State {
     });
     (plugin.viewtemplates || []).forEach(vt => {
       this.viewtemplates[vt.name] = vt;
+    });
+    Object.entries(plugin.pages || {}).forEach(([k, v]) => {
+      this.pages[k] = v;
     });
     if (plugin.layout && plugin.layout.wrap)
       this.layout.wrap = contract(is_plugin_wrap, plugin.layout.wrap);

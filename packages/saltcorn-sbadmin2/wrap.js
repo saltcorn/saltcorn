@@ -9,7 +9,8 @@ const {
   i,
   h6,
   h1,
-  p
+  p,
+  header
 } = require("saltcorn-markup/tags");
 
 const subItem = currentUrl => item =>
@@ -99,22 +100,61 @@ const sidebar = (sections, currentUrl) =>
     sections.map(sideBarSection(currentUrl))
   );
 
-const renderCard = (title, body) => `
-  <div class="card shadow mt-4">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">${text(title)}</h6>
-    </div>
-    <div class="card-body">
-      ${Array.isArray(body) ? body.join("") : body}
-    </div>
-  </div>`;
+const renderCard = (title, body) =>
+  div(
+    { class: "card shadow mt-4" },
+    div(
+      { class: "card-header py-3" },
+      h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
+    ),
+    div({ class: "card-body" }, Array.isArray(body) ? body.join("") : body)
+  );
+
+const renderHero = (caption, blurb) =>
+  header(
+    { class: "masthead" },
+    div(
+      { class: "container h-100" },
+      div(
+        {
+          class:
+            "row h-100 align-items-center justify-content-center text-center"
+        },
+        div(
+          { class: "col-lg-10 align-self-end" },
+          h1({ class: "text-uppercase font-weight-bold" }, caption),
+          hr({ class: "divider my-4" })
+        ),
+        div(
+          { class: "col-lg-8 align-self-baseline" },
+          p({ class: "font-weight-light mb-5" }, blurb)
+          /*a(
+            {
+              class: "btn btn-primary btn-xl",
+              href: "#about"
+            },
+            "Find Out More"
+          )*/
+        )
+      )
+    )
+  );
+
+const renderContainer = ({ type, ...rest }) =>
+  type === "card"
+    ? renderCard(rest.title, rest.contents)
+    : type === "hero"
+    ? renderHero(rest.caption, rest.blurb)
+    : type === "blank"
+    ? rest.contents
+    : "";
 
 const renderBesides = elems => {
   const w = Math.round(12 / elems.length);
   const row = elems.map(e =>
     div(
       { class: `col-sm-${w}` },
-      e.above ? renderAbove(e.above) : renderCard(e.title, e.contents)
+      e.above ? renderAbove(e.above) : renderContainer(e)
     )
   );
   return div({ class: "row" }, row);
@@ -122,9 +162,7 @@ const renderBesides = elems => {
 
 const renderAbove = elems =>
   elems
-    .map(e =>
-      e.besides ? renderBesides(e.besides) : renderCard(e.title, e.contents)
-    )
+    .map(e => (e.besides ? renderBesides(e.besides) : renderContainer(e)))
     .join("");
 
 const renderBody = (title, body) =>
