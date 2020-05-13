@@ -11,6 +11,7 @@ const db = require(".");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
+const { getAllTenants, createTenant } = require("../models/tenant");
 const {
   getAllConfigOrDefaults,
   setConfig,
@@ -92,6 +93,25 @@ State.contract = {
 
 const singleton = new State();
 
-const getState = () => singleton;
+const getState = () =>
+  is_multi_tenent && tenents["domain"] ? tenents["domain"] : singleton;
 
-module.exports = { getState };
+var is_multi_tenent = false;
+var tenents = {};
+
+const init_multi_tenant = async () => {
+  is_multi_tenent = true;
+  const tenentList = await getAllTenants();
+  tenentList.forEach(domain => {
+    tenents[domain] = new State();
+    //load plugins in each
+  });
+};
+
+const create_tenant = async t => {
+  await createTenant(t);
+  tenents[t.subdomain] = new State();
+  // load base plugins
+};
+
+module.exports = { getState, init_multi_tenant, create_tenant };

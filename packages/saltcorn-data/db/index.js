@@ -95,6 +95,10 @@ const selectMaybeOne = async (tbl, where) => {
   else return rows[0];
 };
 
+const getClient = async () => {
+  return await pool.connect();
+};
+
 module.exports = {
   query: (text, params) => {
     sql_log(text, params);
@@ -110,5 +114,6 @@ module.exports = {
   pool,
   close,
   changeConnection,
-  set_sql_logging
+  set_sql_logging,
+  getClient
 };
