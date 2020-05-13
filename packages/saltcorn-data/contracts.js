@@ -24,36 +24,35 @@ const is_menu_item = is.obj({
   )
 });
 
-const is_layout_container = t => is.obj({ type: is.str });
+const is_layout_container = is.obj({ type: is.str });
 
-const is_layout = t =>
-  is.obj(
-    {
-      pageHeader: is.maybe(is.str),
-      pageBlurb: is.maybe(is.str),
-      above: is.maybe(
-        is.array(
-          is.or(
-            is_layout_container(t),
-            is.obj({ besides: is.array(is_layout_container(t)) })
-          )
-        )
-      ),
-      besides: is.maybe(
-        is.array(
-          is.or(
-            is_layout_container(t),
-            is.obj({ above: is.array(is_layout_container(t)) })
-          )
+const is_layout = is.obj(
+  {
+    pageHeader: is.maybe(is.str),
+    pageBlurb: is.maybe(is.str),
+    above: is.maybe(
+      is.array(
+        is.or(
+          is_layout_container,
+          is.obj({ besides: is.array(is_layout_container) })
         )
       )
-    },
-    l => (l.above && !l.besides) || (!l.above && l.besides)
-  );
+    ),
+    besides: is.maybe(
+      is.array(
+        is.or(
+          is_layout_container,
+          is.obj({ above: is.array(is_layout_container) })
+        )
+      )
+    )
+  },
+  l => (l.above && !l.besides) || (!l.above && l.besides)
+);
 
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
-  body: is.or(is.str, is_layout(is.or(is.str, is.array(is.str)))),
+  body: is.or(is.str, is_layout),
   currentUrl: is.str,
   menu: is.array(
     is.obj(
@@ -121,6 +120,7 @@ const is_plugin = is.obj({
     })
   ),
   types: is.maybe(is.array(is_plugin_type)),
+  pages: is.maybe(is.objVals(is_layout)),
   viewtemplates: is.maybe(is.array(is_viewtemplate))
 });
 

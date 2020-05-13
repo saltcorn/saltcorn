@@ -9,7 +9,7 @@ const {
   i,
   h6,
   h1,
-  p, 
+  p,
   header
 } = require("saltcorn-markup/tags");
 
