@@ -90,4 +90,8 @@ State.contract = {
   }
 };
 
-module.exports = new State();
+const singleton = new State()
+
+const getState = ()=> singleton
+
+module.exports = { getState } ;

@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const { renderForm, mkTable, link, post_btn } = require("saltcorn-markup");
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const { isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
@@ -54,7 +54,7 @@ const viewForm = (tableOptions, values) =>
         label: "Template",
         name: "viewtemplate",
         input_type: "select",
-        options: Object.keys(State.viewtemplates)
+        options: Object.keys(getState().viewtemplates)
       }),
       new Field({
         label: "Table",
@@ -119,7 +119,7 @@ router.post("/save", isAdmin, async (req, res) => {
     if (typeof req.body.id !== "undefined") {
       await View.update(v, req.body.id);
     } else {
-      const vt = State.viewtemplates[v.viewtemplate];
+      const vt = getState().viewtemplates[v.viewtemplate];
       if (vt.initial_config) v.configuration = await vt.initial_config(v);
       else v.configuration = {};
       await View.create(v);

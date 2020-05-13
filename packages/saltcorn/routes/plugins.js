@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 const { isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Plugin = require("saltcorn-data/models/plugin");
@@ -22,7 +22,7 @@ const pluginForm = plugin => {
       new Field({
         label: "Source",
         name: "source",
-        type: State.types.String,
+        type: getState().types.String,
         required: true,
         attributes: { options: "npm,local,github" }
       }),
@@ -40,7 +40,7 @@ router.get("/", isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
-  const packs_installed = State.getConfig("installed_packs", []);
+  const packs_installed = getState().getConfig("installed_packs", []);
   res.sendWrap("Plugins", {
     above: [
       {

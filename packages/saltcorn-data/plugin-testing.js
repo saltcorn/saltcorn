@@ -1,6 +1,6 @@
 const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
-const State = require("./db/state");
+const { getState } = require("./db/state");
 const { renderForm } = require("saltcorn-markup");
 
 const auto_test_wrap = wrap => {
@@ -11,7 +11,7 @@ const generate_attributes = attrs => {
   var res = {};
   attrs.forEach(a => {
     if (a.required || is.bool.generate()) {
-      const contract = a.type.contract || State.types[a.type].contract;
+      const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
     }
@@ -90,7 +90,7 @@ const auto_test_viewtemplate = async vt => {
 
 const auto_test_plugin = async plugin => {
   is_plugin(plugin);
-  State.registerPlugin(plugin);
+  getState().registerPlugin(plugin);
   if (plugin.layout) {
     auto_test_wrap(plugin.layout.wrap);
   }

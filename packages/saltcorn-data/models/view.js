@@ -25,8 +25,8 @@ class View {
     this.is_public = o.is_public;
     this.on_root_page = o.on_root_page;
     this.on_menu = o.on_menu;
-    const State = require("../db/state");
-    this.viewtemplateObj = State.viewtemplates[this.viewtemplate];
+    const { getState } = require("../db/state");
+    this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     contract.class(this);
   }
   static async findOne(where) {
@@ -97,7 +97,7 @@ class View {
 
   static async create(v) {
     const id = await db.insert("_sc_views", v);
-    await require("../db/state").refresh();
+    await require("../db/state").getState().refresh();
     return new View({ id, ...v });
   }
   async delete() {
@@ -105,11 +105,11 @@ class View {
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
-    await require("../db/state").refresh();
+    await require("../db/state").getState().refresh();
   }
   static async delete(where) {
     await db.deleteWhere("_sc_views", where);
-    await require("../db/state").refresh();
+    await require("../db/state").getState().refresh();
   }
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(

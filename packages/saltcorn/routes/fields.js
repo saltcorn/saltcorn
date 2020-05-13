@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const { renderForm } = require("saltcorn-markup");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
@@ -21,12 +21,12 @@ const fieldForm = fkey_opts =>
         label: "Type",
         name: "type",
         input_type: "select",
-        options: State.type_names.concat(fkey_opts || [])
+        options: getState().type_names.concat(fkey_opts || [])
       }),
       new Field({
         label: "Required",
         name: "required",
-        type: State.types["Bool"]
+        type: getState().types["Bool"]
       })
     ]
   });
@@ -39,7 +39,7 @@ const calcFieldType = ctxType =>
 const fieldFlow = new Workflow({
   action: "/field",
   onDone: async context => {
-    const thetype = State.types[context.type];
+    const thetype = getState().types[context.type];
     var attributes = {};
     if (!new Field(context).is_fkey)
       (thetype.attributes || []).forEach(a => {
@@ -84,11 +84,11 @@ const fieldFlow = new Workflow({
       name: "attributes",
       onlyWhen: context => {
         if (new Field(context).is_fkey) return false;
-        const type = State.types[context.type];
+        const type = getState().types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
       form: context => {
-        const type = State.types[context.type];
+        const type = getState().types[context.type];
         return new Form({
           fields: type.attributes
         });

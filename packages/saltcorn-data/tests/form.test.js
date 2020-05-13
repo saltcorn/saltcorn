@@ -4,8 +4,8 @@ const FieldRepeat = require("saltcorn-data/models/fieldrepeat");
 const Form = require("saltcorn-data/models/form");
 const { renderForm } = require("saltcorn-markup");
 
-const State = require("../db/state");
-State.registerPlugin(require("../base-plugin"));
+const { getState } = require("../db/state");
+getState().registerPlugin(require("../base-plugin"));
 
 const mkRepForm = () =>
   new Form({

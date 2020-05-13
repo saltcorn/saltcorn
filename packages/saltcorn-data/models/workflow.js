@@ -1,5 +1,5 @@
 const db = require("../db");
-const State = require("../db/state");
+const { getState } = require("../db/state");
 const Field = require("./field");
 const { contract, is } = require("contractis");
 

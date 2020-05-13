@@ -2,7 +2,7 @@ const express = require("express");
 const mountRoutes = require("./routes");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
 
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
@@ -92,7 +92,7 @@ const getApp = async () => {
   app.use(function(req, res, next) {
     res.sendWrap = function(title, ...html) {
       const isAuth = req.isAuthenticated();
-      const views = State.views
+      const views = getState().views
         .filter(v => v.on_menu && (isAuth || v.is_public))
         .map(v => ({ link: `/view/${v.name}`, label: v.name }));
       const authItems = isAuth
@@ -117,7 +117,7 @@ const getApp = async () => {
       const currentUrl = req.originalUrl.split("?")[0];
       const menu = [
         {
-          brandName: State.getConfig("site_name")
+          brandName: getState().getConfig("site_name")
         },
         views.length > 0 && {
           section: "Views",
@@ -133,13 +133,13 @@ const getApp = async () => {
         }
       ].filter(s => s);
       res.send(
-        State.layout.wrap({
+        getState().layout.wrap({
           title,
           menu,
           currentUrl,
           alerts: getFlashes(req),
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: State.headers
+          headers: getState().headers
         })
       );
     };

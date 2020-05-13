@@ -19,9 +19,9 @@ class Field {
     this.class = o.class || "";
     this.id = o.id;
     this.sublabel = o.sublabel;
-    const State = require("../db/state");
+    const { getState } = require("../db/state");
 
-    this.type = typeof o.type === "string" ? State.types[o.type] : o.type;
+    this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
     this.options = o.options;
     this.required = o.required;
     this.hidden = o.hidden || false;

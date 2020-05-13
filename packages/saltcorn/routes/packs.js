@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 const { isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const View = require("saltcorn-data/models/view");
@@ -47,8 +47,8 @@ const install_pack = contract(
       await View.create({ ...viewNoTable, table_id: vtable.id });
     }
     if (name) {
-      const existPacks = State.getConfig("installed_packs", []);
-      await State.setConfig("installed_packs", [...existPacks, name]);
+      const existPacks = getState().getConfig("installed_packs", []);
+      await getState().setConfig("installed_packs", [...existPacks, name]);
     }
   }
 );

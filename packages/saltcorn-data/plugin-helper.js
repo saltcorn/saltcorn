@@ -1,7 +1,7 @@
 const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
-const State = require("./db/state");
+const { getState } = require("./db/state");
 
 const calcfldViewOptions = fields => {
   var fvs = {};

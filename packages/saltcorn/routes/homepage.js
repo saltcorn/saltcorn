@@ -1,4 +1,4 @@
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
 const View = require("saltcorn-data/models/view");
 const { link, renderForm, mkTable, post_btn } = require("saltcorn-markup");
@@ -35,7 +35,7 @@ const no_views_logged_in = async (req, res) => {
     const views = await View.find({});
     if (tables.length === 0) {
       const packs_available = await fetch_available_packs();
-      const packs_installed = State.getConfig("installed_packs", []);
+      const packs_installed = getState().getConfig("installed_packs", []);
 
       res.sendWrap("Hello", {
         pageHeader: "Quick Start",
@@ -126,21 +126,21 @@ const no_views_logged_in = async (req, res) => {
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
   if (!isAuth) {
-    const page = State.pages[State.getConfig("public_home")];
+    const page = getState().pages[getState().getConfig("public_home")];
     if (page) {
       const contents = await page.getPage();
       res.sendWrap(page.title || `${pagename} page`, contents);
       return;
     }
   } else if (isAuth && req.user.role_id === 3) {
-    const page = State.pages[State.getConfig("user_home")];
+    const page = getState().pages[getState().getConfig("user_home")];
     if (page) {
       const contents = await page.getPage();
       res.sendWrap(page.title || `${pagename} page`, contents);
       return;
     }
   }
-  const views = State.views.filter(
+  const views = getState().views.filter(
     v => v.on_root_page && (isAuth || v.is_public)
   );
 
