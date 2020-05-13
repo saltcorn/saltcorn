@@ -95,9 +95,7 @@ const selectMaybeOne = async (tbl, where) => {
   else return rows[0];
 };
 
-const getClient = async () => {
-  return await pool.connect();
-};
+const getClient = async () => await pool.connect()
 
 module.exports = {
   query: (text, params) => {
