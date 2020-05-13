@@ -105,7 +105,11 @@ router.get("/:id", isAdmin, async (req, res) => {
           link(`/field/new/${table.id}`, "Add field")
         ]
       },
-      { type: "card", title: "Edit table properties", contents: renderForm(tableForm(table)) }
+      {
+        type: "card",
+        title: "Edit table properties",
+        contents: renderForm(tableForm(table))
+      }
     ]
   });
 });
