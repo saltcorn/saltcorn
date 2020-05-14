@@ -3,7 +3,8 @@ const Form = require("saltcorn-data/models/form");
 const { getState, create_tenant } = require("saltcorn-data/db/state");
 const { renderForm, link, post_btn } = require("saltcorn-markup");
 const { div } = require("saltcorn-markup/tags");
-
+const db = require("saltcorn-data/db");
+const url = require("url");
 const router = new Router();
 module.exports = router;
 
@@ -22,21 +23,40 @@ const tenant_form = () =>
   });
 //TODO only if multi ten and not already in subdomain
 router.get("/create", async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    return;
+  }
   res.sendWrap(`Create tenant`, renderForm(tenant_form()));
 });
 
+const getNewURL = (req, subdomain) => {
+  var ports = "";
+  const host = req.get("host");
+  if (typeof host === "string") {
+    const hosts = host.split(":");
+    if (hosts.length > 1) ports = `:${hosts[1]}`;
+  }
+  const newurl = `${req.protocol}://${subdomain}.${req.hostname}${ports}/`;
+
+  return newurl;
+};
+
 router.post("/create", async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    return;
+  }
   const form = tenant_form();
   const valres = form.validate(req.body);
   if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
   else {
     await create_tenant(valres.success);
-    const subdomain = valres.success.subdomain;
     res.sendWrap(
       `Create tenant`,
       div(
-        "Success!",
-        link(`//${subdomain}.${req.host}/`, "Visit your new site")
+        div("Success!"),
+        link(getNewURL(req, valres.success.subdomain), "Visit your new site")
       )
     );
   }

@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 describe("tenant routes", () => {
   it("creates tenant", async () => {
-      db.enable_multi_tenant()
+    db.enable_multi_tenant();
     /*const app = await getApp();
     await request(app)
       .post("/tenant/create")
@@ -27,6 +27,6 @@ describe("tenant routes", () => {
       .send("email=foo@bar.com")
       .send("password=secret")
       .expect(toInclude("Success"));*/
-      expect(1).toBe(1)
+    expect(1).toBe(1);
   });
 });
