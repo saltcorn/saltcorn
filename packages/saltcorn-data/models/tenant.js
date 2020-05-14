@@ -17,7 +17,7 @@ const createTenant = async ({ subdomain, email, password }) => {
 
   // set continuation storage
   //db.tenantNamespace.set("tenant", saneDomain);
-  await db.runWithTenant.run(ten, async () => {
+  await db.runWithTenant(saneDomain, async () => {
     //reset schema
     await reset(true, saneDomain);
 

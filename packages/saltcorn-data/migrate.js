@@ -21,7 +21,7 @@ const migrate = async (schema = "public") => {
       console.log("Running migration", name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
-        await db.query(contents.sql);
+        await client.query(contents.sql);
       }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
