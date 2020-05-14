@@ -36,7 +36,7 @@ jobs:
       - name: Install postgres libraries
         run: |
           apt-get update
-          apt-get install -y postgresql-client libpq-dev
+          apt-get install -y postgresql-client python3 libpq-dev
       - run: npm install -g lerna
       - run: lerna bootstrap
       - run: createdb saltcorn && createdb saltcorn_test
