@@ -103,12 +103,12 @@ const getState = () => {
 
 var tenents = {};
 
-const init_multi_tenant = async () => {
+const init_multi_tenant = async plugin_loader => {
   const tenentList = await getAllTenants();
-  tenentList.forEach(domain => {
+  for (const domain of tenentList) {
     tenents[domain] = new State();
-    //load plugins in each
-  });
+    await db.runWithTenant(domain, plugin_loader);
+  }
 };
 
 const create_tenant = async t => {

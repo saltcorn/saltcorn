@@ -10,7 +10,7 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
-const load_plugins = require("./load_plugins");
+const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
@@ -28,14 +28,14 @@ const getApp = async () => {
   db.set_sql_logging(sql_log);
   await migrate();
 
-  await load_plugins.loadAllPlugins();
+  await loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(require("cookie-parser")());
 
   if (db.is_it_multi_tenant()) {
-    await init_multi_tenant();
+    await init_multi_tenant(loadAllPlugins);
     app.use(tenantMiddleware);
   }
   app.use(

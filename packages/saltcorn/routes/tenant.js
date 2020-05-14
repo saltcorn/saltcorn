@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 const Form = require("saltcorn-data/models/form");
 const { getState, create_tenant } = require("saltcorn-data/db/state");
 const { renderForm, link, post_btn } = require("saltcorn-markup");
-const { div } = require("saltcorn-markup/tags");
+const { div, nbsp } = require("saltcorn-markup/tags");
 const db = require("saltcorn-data/db");
 const url = require("url");
 const router = new Router();
@@ -52,11 +52,12 @@ router.post("/create", async (req, res) => {
   if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
   else {
     await create_tenant(valres.success);
+    const newurl = getNewURL(req, valres.success.subdomain);
     res.sendWrap(
       `Create tenant`,
       div(
         div("Success!"),
-        link(getNewURL(req, valres.success.subdomain), "Visit your new site")
+        div("Visit your new site: ", nbsp, link(newurl, newurl))
       )
     );
   }
