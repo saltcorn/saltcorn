@@ -4,6 +4,8 @@ const db = require("saltcorn-data/db");
 const User = require("saltcorn-data/models/user");
 const Field = require("saltcorn-data/models/field");
 const Form = require("saltcorn-data/models/form");
+const { setTenant } = require("../routes/utils.js");
+
 const {
   mkTable,
   renderForm,
@@ -27,7 +29,7 @@ const loginForm = () =>
     submitLabel: "Login"
   });
 
-router.get("/login", async (req, res) => {
+router.get("/login", setTenant, async (req, res) => {
   res.sendWrap(
     `Login`,
     renderForm(loginForm()),
@@ -36,7 +38,7 @@ router.get("/login", async (req, res) => {
   );
 });
 
-router.get("/logout", (req, res) => {
+router.get("/logout", setTenant, (req, res) => {
   req.logout();
   req.session.destroy(err => {
     if (err) return next(err);
@@ -45,7 +47,7 @@ router.get("/logout", (req, res) => {
   });
 });
 
-router.get("/signup", async (req, res) => {
+router.get("/signup", setTenant, async (req, res) => {
   const form = loginForm();
   form.action = "/auth/signup";
   form.submitLabel = "Sign up";
@@ -57,7 +59,7 @@ router.get("/signup", async (req, res) => {
   );
 });
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", setTenant, async (req, res) => {
   const { email, password } = req.body;
   const u = await User.create({ email, password });
 
@@ -73,6 +75,7 @@ router.post("/signup", async (req, res) => {
 
 router.post(
   "/login",
+  setTenant,
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/auth/login",

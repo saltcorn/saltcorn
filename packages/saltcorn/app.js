@@ -14,13 +14,7 @@ const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
-
-const tenantMiddleware = (req, res, next) => {
-  const ten = req.subdomains.length > 0 ? req.subdomains[0] : "public";
-  db.runWithTenant(ten, () => {
-    next();
-  });
-};
+const { setTenant } = require("./routes/utils.js");
 
 const getApp = async () => {
   const app = express();
@@ -36,7 +30,6 @@ const getApp = async () => {
 
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins);
-    app.use(tenantMiddleware);
   }
   app.use(
     session({
@@ -153,7 +146,7 @@ const getApp = async () => {
   });
   mountRoutes(app);
 
-  app.get("/", homepage);
+  app.get("/", setTenant, homepage);
   return app;
 };
 module.exports = getApp;
