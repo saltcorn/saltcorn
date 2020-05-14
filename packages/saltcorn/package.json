@@ -6,21 +6,21 @@
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^3.0.8",
-    "saltcorn-markup": "^0.0.1",
-    "saltcorn-data": "^0.0.1",
-    "saltcorn-base-plugin": "^0.0.1",
-    "saltcorn-sbadmin2": "^0.0.1",
-    "live-plugin-manager": "^0.14.0",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
-    "cookie-parser": "^1.4.4",
     "contractis": "^0.0.1",
+    "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.0",
+    "live-plugin-manager": "^0.14.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
-    "pg": "^7.18.2"
+    "pg": "^8.1.0",
+    "saltcorn-base-plugin": "^0.0.1",
+    "saltcorn-data": "^0.0.1",
+    "saltcorn-markup": "^0.0.1",
+    "saltcorn-sbadmin2": "^0.0.1"
   },
   "devDependencies": {
     "jest": "^25.1.0",
