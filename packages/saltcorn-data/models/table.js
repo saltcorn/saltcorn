@@ -24,8 +24,9 @@ class Table {
     return tbls.map(t => new Table(t));
   }
   static async create(name, options = {}) {
+    const schema = db.getTenantSchema()
     await db.query(
-      `create table "${sqlsanitize(name)}" (id serial primary key)`
+      `create table ${schema}."${sqlsanitize(name)}" (id serial primary key)`
     );
     const tblrow = {
       name,
@@ -181,7 +182,9 @@ class Table {
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
-    const sql = `SELECT ${fldNms.join()} FROM "${sqlsanitize(
+    const schema = db.getTenantSchema()
+
+    const sql = `SELECT ${fldNms.join()} FROM ${schema}."${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql);

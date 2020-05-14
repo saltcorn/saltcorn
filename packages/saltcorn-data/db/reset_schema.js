@@ -45,8 +45,8 @@ const reset = async (dontDrop = false, schema = "public") => {
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
-      min_role_read integer NOT NULL references _sc_roles(id) DEFAULT 1,
-      min_role_write integer NOT NULL references _sc_roles(id) DEFAULT 1
+      min_role_read integer NOT NULL references ${schema}._sc_roles(id) DEFAULT 1,
+      min_role_write integer NOT NULL references ${schema}._sc_roles(id) DEFAULT 1
     )
   `);
 
@@ -58,7 +58,7 @@ const reset = async (dontDrop = false, schema = "public") => {
     CREATE TABLE ${schema}._sc_fields
     (
       id serial primary key,
-      table_id integer references _sc_tables(id) NOT NULL,
+      table_id integer references ${schema}._sc_tables(id) NOT NULL,
       name text NOT NULL,
       label text,
       type text,
@@ -77,7 +77,7 @@ const reset = async (dontDrop = false, schema = "public") => {
       id serial primary key,
       viewtemplate text NOT NULL,
       name text NOT NULL,
-      table_id integer references _sc_tables(id),
+      table_id integer references ${schema}._sc_tables(id),
       configuration jsonb NOT NULL,
       is_public boolean NOT NULL DEFAULT false,
       on_root_page boolean NOT NULL DEFAULT false,
@@ -93,7 +93,7 @@ const reset = async (dontDrop = false, schema = "public") => {
       id serial primary key,      
       email VARCHAR(128),
       password VARCHAR(60),
-      role_id integer not null references _sc_roles(id)
+      role_id integer not null references ${schema}._sc_roles(id)
     )
   `);
 
