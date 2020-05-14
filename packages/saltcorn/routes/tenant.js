@@ -1,7 +1,8 @@
 const Router = require("express-promise-router");
 const Form = require("saltcorn-data/models/form");
-const { createTenant } = require("saltcorn-data/models/tenant");
+const { getState, create_tenant } = require("saltcorn-data/db/state");
 const { renderForm, link, post_btn } = require("saltcorn-markup");
+const { div } = require("saltcorn-markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -29,7 +30,14 @@ router.post("/create", async (req, res) => {
   const valres = form.validate(req.body);
   if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
   else {
-    await createTenant(valres.success);
-    res.sendWrap(`Create tenant`, "sucess!");
+    await create_tenant(valres.success);
+    const subdomain = valres.success.subdomain;
+    res.sendWrap(
+      `Create tenant`,
+      div(
+        "Success!",
+        link(`//${subdomain}.${req.host}/`, "Visit your new site")
+      )
+    );
   }
 });

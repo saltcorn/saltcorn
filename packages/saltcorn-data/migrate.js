@@ -13,6 +13,7 @@ const migrate = async (schema = "public") => {
     .filter(file => file.match(/\.js$/) !== null);
 
   const client = await db.getClient();
+  console.log(`SET search_path TO ${schema};`)
   await client.query(`SET search_path TO ${schema};`);
   for (const file of files) {
     const name = file.replace(".js", "");
