@@ -11,7 +11,7 @@ const getAllTenants = async () => {
 
 const createTenant = async ({ subdomain, email, password }) => {
   const saneDomain = sqlsanitize(subdomain.replace(".", "").toLowerCase());
-  const id = await db.insert("_sc_tenants", { saneDomain, email });
+  const id = await db.insert("_sc_tenants", { subdomain: saneDomain, email }, true);
   //create schema
   await db.query(`CREATE SCHEMA ${saneDomain};`);
 
@@ -22,7 +22,7 @@ const createTenant = async ({ subdomain, email, password }) => {
     await reset(true, saneDomain);
 
     //create user
-    await User.create({ email, password });
+    await User.create({ email, password, role_id = 1 });
   });
 };
 

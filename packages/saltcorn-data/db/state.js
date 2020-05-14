@@ -93,20 +93,23 @@ State.contract = {
 
 const singleton = new State();
 
-const getState = () => {
+const getState = contract(is.fun([], is.class("State")), () => {
+  //console.log(db.is_it_multi_tenant(), db.getTenantSchema(), Object.keys(tenents))
   if (!db.is_it_multi_tenant()) return singleton;
 
   const ten = db.getTenantSchema();
   if (ten === "public") return singleton;
   else return tenents[ten];
-};
+});
 
 var tenents = {};
 
 const init_multi_tenant = async plugin_loader => {
   const tenentList = await getAllTenants();
+  console.log({tenentList})
   for (const domain of tenentList) {
     tenents[domain] = new State();
+    console.log("loading tenent", domain)
     await db.runWithTenant(domain, plugin_loader);
   }
 };
