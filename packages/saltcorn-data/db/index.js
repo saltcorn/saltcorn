@@ -1,7 +1,6 @@
 const { Pool } = require("pg");
 const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
-//const { createNamespace, getNamespace } = require("cls-hooked");
 const { AsyncLocalStorage } = require("async_hooks");
 
 var connectObj = getConnectObject();

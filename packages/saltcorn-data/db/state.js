@@ -8,6 +8,7 @@ const {
 } = require("../contracts");
 
 const db = require(".");
+const { migrate } = require("../migrate");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
@@ -94,7 +95,6 @@ State.contract = {
 const singleton = new State();
 
 const getState = contract(is.fun([], is.class("State")), () => {
-  //console.log(db.is_it_multi_tenant(), db.getTenantSchema(), Object.keys(tenents))
   if (!db.is_it_multi_tenant()) return singleton;
 
   const ten = db.getTenantSchema();
@@ -108,6 +108,7 @@ const init_multi_tenant = async plugin_loader => {
   const tenentList = await getAllTenants();
   for (const domain of tenentList) {
     tenents[domain] = new State();
+    await db.runWithTenant(domain, () => migrate(domain));
     await db.runWithTenant(domain, plugin_loader);
   }
 };

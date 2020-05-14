@@ -5,6 +5,7 @@ const db = require("./db");
 const dateFormat = require("dateformat");
 
 const migrate = async (schema = "public") => {
+  //console.log("migrating",schema )
   const dbmigrationRows = await db.select("_sc_migrations");
   const dbmigrations = dbmigrationRows.map(r => r.migration);
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
@@ -13,7 +14,6 @@ const migrate = async (schema = "public") => {
     .filter(file => file.match(/\.js$/) !== null);
 
   const client = await db.getClient();
-  //console.log(`SET search_path TO ${schema};`)
   await client.query(`SET search_path TO ${schema};`);
   for (const file of files) {
     const name = file.replace(".js", "");
