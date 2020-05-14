@@ -106,10 +106,8 @@ var tenents = {};
 
 const init_multi_tenant = async plugin_loader => {
   const tenentList = await getAllTenants();
-  console.log({ tenentList });
   for (const domain of tenentList) {
     tenents[domain] = new State();
-    console.log("loading tenent", domain);
     await db.runWithTenant(domain, plugin_loader);
   }
 };

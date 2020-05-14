@@ -159,7 +159,7 @@ router.post("/config/:name",setTenant, isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:name", setTenantisAdmin, async (req, res) => {
+router.post("/delete/:name", setTenant, isAdmin, async (req, res) => {
   const { name } = req.params;
   await View.delete({ name });
   res.redirect(`/viewedit/list`);
