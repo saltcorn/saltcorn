@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const { renderForm, mkTable, link, post_btn } = require("saltcorn-markup");
 const { getState } = require("saltcorn-data/db/state");
-const { isAdmin } = require("./utils.js");
+const { setTenant,isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
 const Field = require("saltcorn-data/models/field");
 const Table = require("saltcorn-data/models/table");
@@ -12,7 +12,7 @@ const Workflow = require("saltcorn-data/models/workflow");
 const router = new Router();
 module.exports = router;
 
-router.get("/list", isAdmin, async (req, res) => {
+router.get("/list",setTenant, isAdmin, async (req, res) => {
   var views = await View.find({}, { orderBy: "name" });
   const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
@@ -81,7 +81,7 @@ const viewForm = (tableOptions, values) =>
     values
   });
 
-router.get("/edit/:viewname", isAdmin, async (req, res) => {
+router.get("/edit/:viewname",setTenant, isAdmin, async (req, res) => {
   const { viewname } = req.params;
 
   var viewrow = await View.findOne({ name: viewname });
@@ -95,13 +95,13 @@ router.get("/edit/:viewname", isAdmin, async (req, res) => {
   res.sendWrap(`Edit view`, renderForm(form));
 });
 
-router.get("/new", isAdmin, async (req, res) => {
+router.get("/new",setTenant, isAdmin, async (req, res) => {
   const tables = await Table.find();
   const tableOptions = tables.map(t => t.name);
   res.sendWrap(`Edit view`, renderForm(viewForm(tableOptions)));
 });
 
-router.post("/save", isAdmin, async (req, res) => {
+router.post("/save",setTenant, isAdmin, async (req, res) => {
   const tables = await Table.find();
   const tableOptions = tables.map(t => t.name);
   const form = viewForm(tableOptions);
@@ -130,7 +130,7 @@ router.post("/save", isAdmin, async (req, res) => {
   }
 });
 
-router.get("/config/:name", isAdmin, async (req, res) => {
+router.get("/config/:name", setTenant,isAdmin, async (req, res) => {
   const { name } = req.params;
 
   const view = await View.findOne({ name });
@@ -145,7 +145,7 @@ router.get("/config/:name", isAdmin, async (req, res) => {
   else res.redirect(wfres.redirect);
 });
 
-router.post("/config/:name", isAdmin, async (req, res) => {
+router.post("/config/:name",setTenant, isAdmin, async (req, res) => {
   const { name } = req.params;
 
   const view = await View.findOne({ name });
@@ -159,7 +159,7 @@ router.post("/config/:name", isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:name", isAdmin, async (req, res) => {
+router.post("/delete/:name", setTenantisAdmin, async (req, res) => {
   const { name } = req.params;
   await View.delete({ name });
   res.redirect(`/viewedit/list`);
