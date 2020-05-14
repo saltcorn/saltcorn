@@ -22,7 +22,7 @@ const createTenant = async ({ subdomain, email, password }) => {
     await reset(true, saneDomain);
 
     //create user
-    await User.create({ email, password, role_id = 1 });
+    await User.create({ email, password, role_id:1 });
   });
 };
 

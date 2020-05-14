@@ -114,10 +114,10 @@ const init_multi_tenant = async plugin_loader => {
   }
 };
 
-const create_tenant = async t => {
+const create_tenant = async (t, plugin_loader) => {
   await createTenant(t);
   tenents[t.subdomain] = new State();
-  // load base plugins
+  await db.runWithTenant(domain, plugin_loader);
 };
 
 module.exports = { getState, init_multi_tenant, create_tenant };

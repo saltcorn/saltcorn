@@ -5,6 +5,8 @@ const { renderForm, link, post_btn } = require("saltcorn-markup");
 const { div, nbsp } = require("saltcorn-markup/tags");
 const db = require("saltcorn-data/db");
 const url = require("url");
+const { loadAllPlugins } = require("../load_plugins");
+
 const router = new Router();
 module.exports = router;
 
@@ -51,7 +53,7 @@ router.post("/create", async (req, res) => {
   const valres = form.validate(req.body);
   if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
   else {
-    await create_tenant(valres.success);
+    await create_tenant(valres.success, loadAllPlugins);
     const newurl = getNewURL(req, valres.success.subdomain);
     res.sendWrap(
       `Create tenant`,
