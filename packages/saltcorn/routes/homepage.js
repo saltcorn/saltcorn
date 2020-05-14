@@ -27,6 +27,7 @@ const viewTable = views =>
     views
   );
 
+  
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 4;
   if (role > 1) res.sendWrap("Hello", "Welcome to saltcorn!");
