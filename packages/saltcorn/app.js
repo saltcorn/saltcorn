@@ -15,6 +15,15 @@ const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
 
+const tenantMiddleware = (req, res, next) => {
+  if(req.subdomains.length >0) {
+    db.tenantNamespace.run(() => {
+        db.tenantNamespace.set("tenant", req.subdomains[0]);
+        next();
+      });
+  } else next()
+};
+
 const getApp = async () => {
   const app = express();
   const sql_log = await getConfig("log_sql");
@@ -26,7 +35,7 @@ const getApp = async () => {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(require("cookie-parser")());
-
+  app.use(tenantMiddleware);
   app.use(
     session({
       store: new pgSession({
@@ -43,12 +52,7 @@ const getApp = async () => {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());
-  app.use(
-    express.static(__dirname + "/public", {
-      //etag:false,
-      //maxage: 1000
-    })
-  );
+  app.use(express.static(__dirname + "/public"));
 
   passport.use(
     "local",
