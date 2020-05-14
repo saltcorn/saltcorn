@@ -99,15 +99,15 @@ const getState = contract(is.fun([], is.class("State")), () => {
 
   const ten = db.getTenantSchema();
   if (ten === "public") return singleton;
-  else return tenents[ten];
+  else return tenants[ten];
 });
 
-var tenents = {};
+var tenants = {};
 
 const init_multi_tenant = async plugin_loader => {
-  const tenentList = await getAllTenants();
-  for (const domain of tenentList) {
-    tenents[domain] = new State();
+  const tenantList = await getAllTenants();
+  for (const domain of tenantList) {
+    tenants[domain] = new State();
     await db.runWithTenant(domain, () => migrate(domain));
     await db.runWithTenant(domain, plugin_loader);
   }
@@ -115,7 +115,7 @@ const init_multi_tenant = async plugin_loader => {
 
 const create_tenant = async (t, plugin_loader) => {
   await createTenant(t);
-  tenents[t.subdomain] = new State();
+  tenants[t.subdomain] = new State();
   await db.runWithTenant(t.subdomain, plugin_loader);
 };
 

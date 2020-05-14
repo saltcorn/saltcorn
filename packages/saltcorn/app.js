@@ -61,7 +61,8 @@ const getApp = async () => {
             return done(null, {
               email: mu.email,
               id: mu.id,
-              role_id: mu.role_id
+              role_id: mu.role_id,
+              tenant: db.getTenantSchema()
             });
           else {
             return done(

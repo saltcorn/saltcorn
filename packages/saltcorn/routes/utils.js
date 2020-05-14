@@ -2,7 +2,7 @@ const { sqlsanitize } = require("saltcorn-data/db/internal.js");
 const db = require("saltcorn-data/db");
 
 function loggedIn(req, res, next) {
-  if (req.user) {
+  if (req.user && req.user.tenant === db.getTenantSchema()) {
     next();
   } else {
     req.flash("danger", "Must be logged in first");
@@ -11,7 +11,11 @@ function loggedIn(req, res, next) {
 }
 
 function isAdmin(req, res, next) {
-  if (req.user && req.user.role_id === 1) {
+  if (
+    req.user &&
+    req.user.role_id === 1 &&
+    req.user.tenant === db.getTenantSchema()
+  ) {
     next();
   } else {
     req.flash("danger", "Must be admin");

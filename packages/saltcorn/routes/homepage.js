@@ -29,7 +29,8 @@ const viewTable = views =>
 
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 4;
-  if (role > 1) res.sendWrap("Hello", "Welcome to saltcorn!");
+  if (role > 1 || req.user.tenant !== db.getTenantSchema())
+    res.sendWrap("Hello", "Welcome to saltcorn!");
   else {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
