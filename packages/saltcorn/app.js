@@ -17,7 +17,7 @@ const { getConfig } = require("saltcorn-data/models/config");
 
 const tenantMiddleware = (req, res, next) => {
   db.tenantNamespace.run(() => {
-    if(req.subdomains.length >0) 
+    if (req.subdomains.length > 0)
       db.tenantNamespace.set("tenant", req.subdomains[0]);
     next();
   });

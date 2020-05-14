@@ -17,7 +17,11 @@ describe("Tenant", () => {
           console.log(v);
 
           //db.query(`drop schema test1;`).then(() => );
-        }).catch(err=>{console.log(err);done()})
+        })
+        .catch(err => {
+          console.log(err);
+          done();
+        })
         .finally(() => done());
     });
   });

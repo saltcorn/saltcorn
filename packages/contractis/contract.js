@@ -69,7 +69,7 @@ const contract_function = (
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
-        "return value "+(fname||''),
+        "return value " + (fname || ""),
         contrDefinition,
         newf
       );
@@ -79,7 +79,7 @@ const contract_function = (
           check_contract(
             opts.returns.options,
             v,
-            "promise value "+(fname||''),
+            "promise value " + (fname || ""),
             contrDefinition,
             newf
           );
