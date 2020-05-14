@@ -25,7 +25,7 @@ const tenant_form = () =>
     ]
   });
 //TODO only if multi ten and not already in subdomain
-router.get("/create",setTenant, async (req, res) => {
+router.get("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
     return;
@@ -45,7 +45,7 @@ const getNewURL = (req, subdomain) => {
   return newurl;
 };
 
-router.post("/create",setTenant, async (req, res) => {
+router.post("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
     return;

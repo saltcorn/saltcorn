@@ -9,7 +9,7 @@ const { setTenant } = require("../routes/utils.js");
 const router = new Router();
 module.exports = router;
 
-router.get("/:pagename",setTenant, async (req, res) => {
+router.get("/:pagename", setTenant, async (req, res) => {
   const { pagename } = req.params;
   const page = getState().pages[pagename];
   if (page) {

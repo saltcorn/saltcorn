@@ -7,7 +7,7 @@ const Table = require("saltcorn-data/models/table");
 const Form = require("saltcorn-data/models/form");
 const Workflow = require("saltcorn-data/models/workflow");
 
-const { setTenant,isAdmin } = require("./utils.js");
+const { setTenant, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -139,19 +139,19 @@ const fieldFlow = new Workflow({
     }
   ]
 });
-router.get("/:id",setTenant, isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const field = await Field.findOne({ id });
   const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
   res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
 });
 
-router.get("/new/:table_id", setTenant,isAdmin, async (req, res) => {
+router.get("/new/:table_id", setTenant, isAdmin, async (req, res) => {
   const wfres = await fieldFlow.run(req.params);
   res.sendWrap(`New field`, renderForm(wfres.renderForm));
 });
 
-router.post("/delete/:id",setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const f = await Field.findOne({ id });
   const table_id = f.table_id;
@@ -161,7 +161,7 @@ router.post("/delete/:id",setTenant, isAdmin, async (req, res) => {
   res.redirect(`/table/${table_id}`);
 });
 
-router.post("/", setTenant,isAdmin, async (req, res) => {
+router.post("/", setTenant, isAdmin, async (req, res) => {
   const wfres = await fieldFlow.run(req.body);
   if (wfres.renderForm)
     res.sendWrap(`Field attributes`, renderForm(wfres.renderForm));

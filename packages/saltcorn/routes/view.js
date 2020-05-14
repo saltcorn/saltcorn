@@ -8,7 +8,7 @@ const { setTenant } = require("../routes/utils.js");
 const router = new Router();
 module.exports = router;
 
-router.get("/:viewname", setTenant,async (req, res) => {
+router.get("/:viewname", setTenant, async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });
@@ -25,7 +25,7 @@ router.get("/:viewname", setTenant,async (req, res) => {
     );
   }
 });
-router.post("/:viewname/:route", setTenant,async (req, res) => {
+router.post("/:viewname/:route", setTenant, async (req, res) => {
   const { viewname, route } = req.params;
 
   const view = await View.findOne({ name: viewname });
@@ -37,7 +37,7 @@ router.post("/:viewname/:route", setTenant,async (req, res) => {
   }
 });
 
-router.post("/:viewname",setTenant, async (req, res) => {
+router.post("/:viewname", setTenant, async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });

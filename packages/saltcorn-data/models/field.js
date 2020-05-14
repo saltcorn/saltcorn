@@ -80,7 +80,7 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      const schema = db.getTenantSchema()
+      const schema = db.getTenantSchema();
       return `int references ${schema}."${this.reftable_name}" (id)`;
     } else {
       return this.type.sql_name;
@@ -167,18 +167,18 @@ class Field {
     await db.deleteWhere("_sc_fields", { id: this.id });
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
-    const schema = db.getTenantSchema()
+    const schema = db.getTenantSchema();
 
     await db.query(
-      `alter table ${schema}.${sqlsanitize(table.name)} drop column "${sqlsanitize(
-        this.name
-      )}"`
+      `alter table ${schema}.${sqlsanitize(
+        table.name
+      )} drop column "${sqlsanitize(this.name)}"`
     );
   }
 
   static async create(fld) {
     const f = new Field(fld);
-    const schema = db.getTenantSchema()
+    const schema = db.getTenantSchema();
 
     const Table = require("./table");
     if (!f.table && f.table_id)

@@ -18,7 +18,7 @@ const router = new Router();
 module.exports = router;
 
 //create -- new
-router.get("/", setTenant,isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   const cfgs = await getAllConfigOrDefaults();
   const canEdit = key => getState().types[configTypes[key].type];
   const configTable = mkTable(
@@ -52,7 +52,7 @@ const formForKey = (key, value) =>
     ...(typeof value !== "undefined" && { values: { [key]: value } })
   });
 
-router.get("/edit/:key", setTenant,isAdmin , async (req, res) => {
+router.get("/edit/:key", setTenant, isAdmin, async (req, res) => {
   const { key } = req.params;
 
   const value = await getConfig(key);
@@ -62,7 +62,7 @@ router.get("/edit/:key", setTenant,isAdmin , async (req, res) => {
   );
 });
 
-router.post("/edit/:key",setTenant, isAdmin, async (req, res) => {
+router.post("/edit/:key", setTenant, isAdmin, async (req, res) => {
   const { key } = req.params;
 
   const form = formForKey(key);
@@ -77,7 +77,7 @@ router.post("/edit/:key",setTenant, isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:key", setTenant,isAdmin, async (req, res) => {
+router.post("/delete/:key", setTenant, isAdmin, async (req, res) => {
   const { key } = req.params;
   await getState().deleteConfig(key);
   req.flash("success", `Configuration key ${key} deleted`);

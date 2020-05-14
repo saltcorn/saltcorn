@@ -1,5 +1,5 @@
 const Router = require("express-promise-router");
-const { setTenant,isAdmin } = require("./utils.js");
+const { setTenant, isAdmin } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
 const { getState } = require("saltcorn-data/db/state");
 const Form = require("saltcorn-data/models/form");
@@ -36,7 +36,7 @@ const pluginForm = plugin => {
   }
   return form;
 };
-router.get("/", setTenant,isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
@@ -122,18 +122,18 @@ router.get("/", setTenant,isAdmin, async (req, res) => {
   });
 });
 
-router.get("/new/", setTenant,isAdmin, async (req, res) => {
+router.get("/new/", setTenant, isAdmin, async (req, res) => {
   res.sendWrap(`New Plugin`, renderForm(pluginForm()));
 });
 
-router.get("/:id/", setTenant,isAdmin, async (req, res) => {
+router.get("/:id/", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const plugin = await Plugin.findOne({ id });
 
   res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin)));
 });
 
-router.post("/",setTenant, isAdmin, async (req, res) => {
+router.post("/", setTenant, isAdmin, async (req, res) => {
   const plugin = new Plugin(req.body);
   try {
     await load_plugins.loadPlugin(plugin);
@@ -148,7 +148,7 @@ router.post("/",setTenant, isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:id", setTenant,isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   await Plugin.deleteWhere({ id });
   req.flash("success", "Plugin removed");
@@ -156,7 +156,7 @@ router.post("/delete/:id", setTenant,isAdmin, async (req, res) => {
   res.redirect(`/plugins`);
 });
 
-router.post("/reload/:id",setTenant, isAdmin, async (req, res) => {
+router.post("/reload/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
 
   const plugin = await Plugin.findOne({ id });
@@ -165,7 +165,7 @@ router.post("/reload/:id",setTenant, isAdmin, async (req, res) => {
   res.redirect(`/plugins`);
 });
 
-router.post("/install/:name",setTenant, isAdmin, async (req, res) => {
+router.post("/install/:name", setTenant, isAdmin, async (req, res) => {
   const { name } = req.params;
 
   const plugin = await Plugin.store_by_name(name);
