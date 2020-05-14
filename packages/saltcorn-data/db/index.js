@@ -41,8 +41,12 @@ const runWithTenant = (tenant, f) => tenantNamespace.run(tenant, f);
 
 if (connectObj.multi_tenant) enable_multi_tenant();
 
-const getTenantSchema = () =>
-  is_multi_tenant ? tenantNamespace.getStore() || "public" : "public";
+const getTenantSchema = () => {
+  if(!is_multi_tenant)
+    return "public";
+  const storeVal=tenantNamespace.getStore()
+  return storeVal || "public";
+}
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
