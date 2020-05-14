@@ -16,13 +16,14 @@ const createTenant = async ({ subdomain, email, password }) => {
   await db.query(`CREATE SCHEMA ${saneDomain};`);
 
   // set continuation storage
-  db.tenantNamespace.set("tenant", saneDomain);
+  //db.tenantNamespace.set("tenant", saneDomain);
+  await db.runWithTenant.run(ten, async () => {
+    //reset schema
+    await reset(true, saneDomain);
 
-  //reset schema
-  await reset(true, saneDomain);
-
-  //create user
-  await User.create({ email, password });
+    //create user
+    await User.create({ email, password });
+  });
 };
 
 module.exports = {

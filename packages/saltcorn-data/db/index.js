@@ -2,8 +2,11 @@ const { Pool } = require("pg");
 const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { createNamespace, getNamespace } = require("cls-hooked");
+const { AsyncLocalStorage } = require("async_hooks");
 
-var pool = new Pool(getConnectObject());
+var connectObj = getConnectObject();
+var pool = new Pool(connectObj);
+
 var log_sql_enabled = false;
 
 function set_sql_logging(val = true) {
@@ -23,11 +26,23 @@ const changeConnection = async (connObj = {}) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
 };
+var is_multi_tenant = false;
 
-const tenantNamespace = createNamespace("tenant");
-//tenant.set('tenant', 'public')
+const is_it_multi_tenant = () => is_multi_tenant;
+var tenantNamespace;
 
-const getTenantSchema = () => tenantNamespace.get("tenant") || "public";
+const enable_multi_tenant = () => {
+  is_multi_tenant = true;
+  tenantNamespace = new AsyncLocalStorage();
+};
+const setTenant = domain => {};
+
+const runWithTenant = (tenant, f) => tenantNamespace.run(tenant, f);
+
+if (connectObj.multi_tenant) enable_multi_tenant();
+
+const getTenantSchema = () =>
+  is_multi_tenant ? tenantNamespace.getStore() || "public" : "public";
 
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
@@ -125,5 +140,9 @@ module.exports = {
   set_sql_logging,
   getClient,
   getTenantSchema,
-  tenantNamespace
+  tenantNamespace,
+  enable_multi_tenant,
+  setTenant,
+  runWithTenant,
+  is_it_multi_tenant
 };

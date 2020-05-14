@@ -2,7 +2,7 @@ const express = require("express");
 const mountRoutes = require("./routes");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
 
-const { getState } = require("saltcorn-data/db/state");
+const { getState, init_multi_tenant } = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
@@ -16,9 +16,8 @@ const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
 
 const tenantMiddleware = (req, res, next) => {
-  db.tenantNamespace.run(() => {
-    if (req.subdomains.length > 0)
-      db.tenantNamespace.set("tenant", req.subdomains[0]);
+  const ten = req.subdomains.length > 0 ? req.subdomains[0] : "public";
+  db.runWithTenant(ten, () => {
     next();
   });
 };
@@ -34,7 +33,11 @@ const getApp = async () => {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(require("cookie-parser")());
-  app.use(tenantMiddleware);
+
+  if (db.is_it_multi_tenant()) {
+    await init_multi_tenant();
+    app.use(tenantMiddleware);
+  }
   app.use(
     session({
       store: new pgSession({
