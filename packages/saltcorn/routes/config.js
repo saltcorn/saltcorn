@@ -66,7 +66,6 @@ router.post("/edit/:key", isAdmin, async (req, res) => {
   const { key } = req.params;
 
   const form = formForKey(key);
-  form.validate(req.body);
   const valres = form.validate(req.body);
   if (valres.errors)
     res.sendWrap(`Edit configuration key ${key}`, renderForm(form));

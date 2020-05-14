@@ -16,12 +16,11 @@ const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
 
 const tenantMiddleware = (req, res, next) => {
-  if(req.subdomains.length >0) {
-    db.tenantNamespace.run(() => {
-        db.tenantNamespace.set("tenant", req.subdomains[0]);
-        next();
-      });
-  } else next()
+  db.tenantNamespace.run(() => {
+    if(req.subdomains.length >0) 
+      db.tenantNamespace.set("tenant", req.subdomains[0]);
+    next();
+  });
 };
 
 const getApp = async () => {

@@ -13,11 +13,12 @@ const createTenant = async ({ subdomain, email, password }) => {
   //const id = await db.insert("_sc_tenants",{saneDomain})
   //create schema
   console.log("sane domain", saneDomain);
-
+  db.tenantNamespace.set("tenant", saneDomain);
+  //db.setTenant(saneDomain);
   await db.query(`CREATE SCHEMA ${saneDomain};`);
   // set cont storage
   //db.createTenantNamespace()
-  db.setTenant(saneDomain);
+
   //reset schema
   console.log("set tenent");
 
