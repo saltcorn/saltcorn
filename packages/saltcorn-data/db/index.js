@@ -27,10 +27,6 @@ const changeConnection = async (connObj = {}) => {
 const tenantNamespace = createNamespace("tenant");
 //tenant.set('tenant', 'public')
 
-const setTenant = ten => {
-  //var session = getNamespace('tenant');
-  tenantNamespace.set("tenant", ten);
-};
 const getTenantSchema = () => tenantNamespace.get("tenant") || "public";
 
 const select = async (tbl, whereObj, selectopts = {}) => {
@@ -128,7 +124,6 @@ module.exports = {
   changeConnection,
   set_sql_logging,
   getClient,
-  setTenant,
   getTenantSchema,
   tenantNamespace
 };

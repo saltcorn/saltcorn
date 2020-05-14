@@ -11,20 +11,16 @@ const getAllTenants = async () => {
 const createTenant = async ({ subdomain, email, password }) => {
   const saneDomain = sqlsanitize(subdomain);
   //const id = await db.insert("_sc_tenants",{saneDomain})
-  //create schema
-  console.log("sane domain", saneDomain);
-  db.tenantNamespace.set("tenant", saneDomain);
-  //db.setTenant(saneDomain);
   await db.query(`CREATE SCHEMA ${saneDomain};`);
+  //create schema
+  db.tenantNamespace.set("tenant", saneDomain);
   // set cont storage
-  //db.createTenantNamespace()
 
   //reset schema
-  console.log("set tenent");
-
   await reset(true, saneDomain);
   //create user
-  console.log("done createTenant");
+
+
 };
 
 module.exports = {
