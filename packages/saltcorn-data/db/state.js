@@ -104,7 +104,7 @@ const getState = () => {
 var tenents = {};
 
 const init_multi_tenant = async () => {
-  const tenentList = []; //await getAllTenants();
+  const tenentList = await getAllTenants();
   tenentList.forEach(domain => {
     tenents[domain] = new State();
     //load plugins in each
