@@ -40,6 +40,7 @@ jobs:
       - name: Set . ownership to current user
         run: chown -R $(id -u):$(id -g) .          
       - run: npm install -g lerna
+      - run: npm install node-pre-gyp -g
       - run: lerna bootstrap
       - run: createdb saltcorn && createdb saltcorn_test
         env:
