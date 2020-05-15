@@ -36,11 +36,8 @@ jobs:
       - name: Install postgres libraries
         run: |
           apt-get update
-          apt-get install -y postgresql-client python3 libpq-dev
-      - name: Set . ownership to current user
-        run: chown -R $(id -u):$(id -g) .          
+          apt-get install -y postgresql-client python3 libpq-dev      
       - run: npm install -g lerna
-      - run: npm install node-pre-gyp -g
       - run: lerna bootstrap
       - run: createdb saltcorn && createdb saltcorn_test
         env:
@@ -48,7 +45,7 @@ jobs:
           PGHOST: postgres
           PGUSER: postgres
           PGPASSWORD: postgres
-      - run: packages/saltcorn-cli/bin/saltcorn run-tests
+      - run: DEBUG=\* packages/saltcorn-cli/bin/saltcorn run-tests
         env:
           CI: true
           PGHOST: postgres
