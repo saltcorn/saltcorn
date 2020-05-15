@@ -1,8 +1,8 @@
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const db = require("saltcorn-data/db");
-const State = require("../db/state");
-State.registerPlugin(require("../base-plugin"));
+const { getState } = require("../db/state");
+getState().registerPlugin(require("../base-plugin"));
 const { getConfig, getAllConfig, setConfig } = require("../models/config");
 afterAll(db.close);
 

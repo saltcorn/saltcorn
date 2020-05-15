@@ -3,7 +3,7 @@ const Router = require("express-promise-router");
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const { isAdmin } = require("./utils.js");
+const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
 const { span, h5, nbsp } = require("saltcorn-markup/tags");
 
@@ -60,7 +60,7 @@ const tableForm = table => {
   return form;
 };
 
-router.get("/new/", isAdmin, async (req, res) => {
+router.get("/new/", setTenant, isAdmin, async (req, res) => {
   res.sendWrap(
     `New table`,
     renderForm(
@@ -72,7 +72,7 @@ router.get("/new/", isAdmin, async (req, res) => {
   );
 });
 
-router.get("/:id", isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({ id });
 
@@ -114,7 +114,7 @@ router.get("/:id", isAdmin, async (req, res) => {
   });
 });
 
-router.post("/", isAdmin, async (req, res) => {
+router.post("/", setTenant, isAdmin, async (req, res) => {
   const set_api_access = v => {
     switch (v.api_access) {
       case "No API":
@@ -152,7 +152,7 @@ router.post("/", isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:id", isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const t = await Table.findOne({ id });
   await t.delete();
@@ -161,7 +161,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
   res.redirect(`/table`);
 });
 
-router.get("/", isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",

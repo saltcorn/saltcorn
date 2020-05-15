@@ -1,11 +1,11 @@
 const db = require("saltcorn-data/db");
 const { PluginManager } = require("live-plugin-manager");
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 
 const manager = new PluginManager();
 
 const registerPlugin = plugin => {
-  State.registerPlugin(plugin);
+  getState().registerPlugin(plugin);
 };
 
 const loadPlugin = async plugin => {
@@ -28,23 +28,10 @@ const loadAllPlugins = async () => {
   for (const plugin of plugins) {
     await loadPlugin(plugin);
   }
-  await State.refresh();
-};
-
-const loadAllPluginsSync = app => {
-  loadAllPlugins().then(
-    () => {
-      app.emit("ready");
-    },
-    err => {
-      console.error(err);
-      process.exit(1);
-    }
-  );
+  await getState().refresh();
 };
 
 module.exports = {
-  loadAllPluginsSync,
   loadAllPlugins,
   loadPlugin,
   registerPlugin

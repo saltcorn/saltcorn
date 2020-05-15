@@ -14,7 +14,7 @@
     "dateformat": "^3.0.3",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
-    "pg": "^7.18.2",
+    "pg": "^8.1.0",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {

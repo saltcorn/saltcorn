@@ -8,9 +8,11 @@ const {
 } = require("../contracts");
 
 const db = require(".");
+const { migrate } = require("../migrate");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
+const { getAllTenants, createTenant } = require("../models/tenant");
 const {
   getAllConfigOrDefaults,
   setConfig,
@@ -90,4 +92,31 @@ State.contract = {
   }
 };
 
-module.exports = new State();
+const singleton = new State();
+
+const getState = contract(is.fun([], is.class("State")), () => {
+  if (!db.is_it_multi_tenant()) return singleton;
+
+  const ten = db.getTenantSchema();
+  if (ten === "public") return singleton;
+  else return tenants[ten];
+});
+
+var tenants = {};
+
+const init_multi_tenant = async plugin_loader => {
+  const tenantList = await getAllTenants();
+  for (const domain of tenantList) {
+    tenants[domain] = new State();
+    await db.runWithTenant(domain, () => migrate(domain));
+    await db.runWithTenant(domain, plugin_loader);
+  }
+};
+
+const create_tenant = async (t, plugin_loader) => {
+  await createTenant(t);
+  tenants[t.subdomain] = new State();
+  await db.runWithTenant(t.subdomain, plugin_loader);
+};
+
+module.exports = { getState, init_multi_tenant, create_tenant };

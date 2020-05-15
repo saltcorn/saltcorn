@@ -1,5 +1,5 @@
 const db = require("saltcorn-data/db");
-const State = require("saltcorn-data/db/state");
+const { getState } = require("saltcorn-data/db/state");
 const Table = require("saltcorn-data/models/table");
 const Field = require("saltcorn-data/models/field");
 const View = require("saltcorn-data/models/view");

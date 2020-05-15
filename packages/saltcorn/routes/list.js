@@ -3,13 +3,13 @@ const Router = require("express-promise-router");
 const db = require("saltcorn-data/db");
 const { mkTable, h, link, post_btn } = require("saltcorn-markup");
 const Table = require("saltcorn-data/models/table");
-const { loggedIn } = require("./utils");
+const { setTenant, loggedIn } = require("./utils");
 const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
 
-router.get("/:tname", loggedIn, async (req, res) => {
+router.get("/:tname", setTenant, loggedIn, async (req, res) => {
   const { tname } = req.params;
   const table = await Table.findOne({ name: tname });
 

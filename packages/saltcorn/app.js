@@ -2,7 +2,7 @@ const express = require("express");
 const mountRoutes = require("./routes");
 const { ul, li, div, small } = require("saltcorn-markup/tags");
 
-const State = require("saltcorn-data/db/state");
+const { getState, init_multi_tenant } = require("saltcorn-data/db/state");
 const db = require("saltcorn-data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
@@ -10,10 +10,11 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const User = require("saltcorn-data/models/user");
 const flash = require("connect-flash");
-const load_plugins = require("./load_plugins");
+const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
+const { setTenant } = require("./routes/utils.js");
 
 const getApp = async () => {
   const app = express();
@@ -21,12 +22,15 @@ const getApp = async () => {
   db.set_sql_logging(sql_log);
   await migrate();
 
-  await load_plugins.loadAllPlugins();
+  await loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(require("cookie-parser")());
 
+  if (db.is_it_multi_tenant()) {
+    await init_multi_tenant(loadAllPlugins);
+  }
   app.use(
     session({
       store: new pgSession({
@@ -43,12 +47,7 @@ const getApp = async () => {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());
-  app.use(
-    express.static(__dirname + "/public", {
-      //etag:false,
-      //maxage: 1000
-    })
-  );
+  app.use(express.static(__dirname + "/public"));
 
   passport.use(
     "local",
@@ -62,7 +61,8 @@ const getApp = async () => {
             return done(null, {
               email: mu.email,
               id: mu.id,
-              role_id: mu.role_id
+              role_id: mu.role_id,
+              tenant: db.getTenantSchema()
             });
           else {
             return done(
@@ -92,8 +92,8 @@ const getApp = async () => {
   app.use(function(req, res, next) {
     res.sendWrap = function(title, ...html) {
       const isAuth = req.isAuthenticated();
-      const views = State.views
-        .filter(v => v.on_menu && (isAuth || v.is_public))
+      const views = getState()
+        .views.filter(v => v.on_menu && (isAuth || v.is_public))
         .map(v => ({ link: `/view/${v.name}`, label: v.name }));
       const authItems = isAuth
         ? [
@@ -117,7 +117,7 @@ const getApp = async () => {
       const currentUrl = req.originalUrl.split("?")[0];
       const menu = [
         {
-          brandName: State.getConfig("site_name")
+          brandName: getState().getConfig("site_name")
         },
         views.length > 0 && {
           section: "Views",
@@ -133,13 +133,13 @@ const getApp = async () => {
         }
       ].filter(s => s);
       res.send(
-        State.layout.wrap({
+        getState().layout.wrap({
           title,
           menu,
           currentUrl,
           alerts: getFlashes(req),
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: State.headers
+          headers: getState().headers
         })
       );
     };
@@ -147,7 +147,7 @@ const getApp = async () => {
   });
   mountRoutes(app);
 
-  app.get("/", homepage);
+  app.get("/", setTenant, homepage);
   return app;
 };
 module.exports = getApp;

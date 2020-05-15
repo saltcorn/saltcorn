@@ -16,8 +16,6 @@ curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 
-I had problems connecting to the database on Node 14.
-
 ### Prepare Node
 
 assuming you have cloned this repository to \$HOME/saltcorns (otherwise adjust PATH)

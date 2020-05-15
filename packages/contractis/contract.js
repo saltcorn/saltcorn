@@ -50,7 +50,14 @@ const retcheck = (pred, args, rv, contrDefinition, callSite) => {
   }
 };
 
-const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
+const contract_function = (
+  fun,
+  contr,
+  that,
+  check_vars,
+  contrDefinition,
+  fname
+) => {
   function newf(...args) {
     const opts = get_arguments_returns(contr);
     if (opts.arguments)
@@ -62,7 +69,7 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
-        "return value",
+        "return value " + (fname || ""),
         contrDefinition,
         newf
       );
@@ -72,7 +79,7 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
           check_contract(
             opts.returns.options,
             v,
-            "promise value",
+            "promise value " + (fname || ""),
             contrDefinition,
             newf
           );
@@ -91,6 +98,7 @@ const contract_function = (fun, contr, that, check_vars, contrDefinition) => {
 };
 
 const contract_class = that => {
+  if (!enabled) return;
   const proto = Object.getPrototypeOf(that);
   const opts = proto.constructor.contract;
 
@@ -114,10 +122,24 @@ const contract_class = that => {
         throw new Error(`No method "${k}" in class ${proto.constructor.name}`);
       if (d.value) {
         const oldf = d.value;
-        d.value = contract_function(oldf, v, that);
+        d.value = contract_function(
+          oldf,
+          v,
+          that,
+          undefined,
+          undefined,
+          `${proto.constructor.name}.${k}`
+        );
       } else if (d.get) {
         const oldf = d.get;
-        d.get = contract_function(oldf, v, that);
+        d.get = contract_function(
+          oldf,
+          v,
+          that,
+          undefined,
+          undefined,
+          `${proto.constructor.name}.${k}`
+        );
       }
 
       Object.defineProperty(that, k, d);
@@ -134,10 +156,24 @@ const contract_class = that => {
           );
         if (d.value) {
           const oldf = d.value;
-          d.value = contract_function(oldf, v, that);
+          d.value = contract_function(
+            oldf,
+            v,
+            that,
+            undefined,
+            undefined,
+            `${proto.constructor.name}.${k}`
+          );
         } else if (d.get) {
           const oldf = d.get;
-          d.get = contract_function(oldf, v, that);
+          d.get = contract_function(
+            oldf,
+            v,
+            that,
+            undefined,
+            undefined,
+            `${proto.constructor.name}.${k}`
+          );
         }
         d.writable = false;
         Object.defineProperty(proto.constructor, k, d);
