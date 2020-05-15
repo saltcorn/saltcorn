@@ -50,7 +50,7 @@ jobs:
           CI: true
           PGHOST: postgres
           PGUSER: postgres
-          PGUSER: saltcorn
+          PGDATABASE: saltcorn
           PGPASSWORD:
             postgres
             # The default PostgreSQL port
