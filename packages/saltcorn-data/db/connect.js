@@ -24,7 +24,7 @@ const getConnectObject = (connSpec = {}) => {
     connObj.database = connObj.database || cfg.database;
     connObj.multi_tenant = connObj.multi_tenant || cfg.multi_tenant;
   }
-
+  console.log(connObj)
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
   } else {
