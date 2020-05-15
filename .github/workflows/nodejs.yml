@@ -38,7 +38,7 @@ jobs:
           apt-get update
           apt-get install -y postgresql-client python3 libpq-dev
       - name: Set . ownership to current user
-        run: sudo chown -R $(id -u):$(id -g) .          
+        run: chown -R $(id -u):$(id -g) .          
       - run: npm install -g lerna
       - run: lerna bootstrap
       - run: createdb saltcorn && createdb saltcorn_test
