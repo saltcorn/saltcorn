@@ -8,18 +8,18 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "bcrypt": "^3.0.8",
+    "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.1",
     "dateformat": "^3.0.3",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "pg": "^8.1.0",
+    "saltcorn-markup": "^0.0.1",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
-    "jest": "^25.1.0",
-    "saltcorn-markup": "^0.0.1"
+    "jest": "^25.1.0"
   },
   "jest": {
     "testEnvironment": "node"

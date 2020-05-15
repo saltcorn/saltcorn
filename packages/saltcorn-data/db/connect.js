@@ -24,10 +24,10 @@ const getConnectObject = (connSpec = {}) => {
     connObj.database = connObj.database || cfg.database;
     connObj.multi_tenant = connObj.multi_tenant || cfg.multi_tenant;
   }
-
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
   } else {
+    console.log("Cannot find user, password and database in supplied credentials: ", connObj)
     return false;
   }
 };
