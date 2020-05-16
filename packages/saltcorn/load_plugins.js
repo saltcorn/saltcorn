@@ -9,17 +9,22 @@ const registerPlugin = plugin => {
 };
 
 const loadPlugin = async plugin => {
+  const plugin_module = await requirePlugin(plugin)
+  registerPlugin(plugin_module)
+};
+
+const requirePlugin = async plugin => {
   if (["saltcorn-base-plugin", "saltcorn-sbadmin2"].includes(plugin.location)) {
-    registerPlugin(require(plugin.location));
+    return require(plugin.location);
   } else if (plugin.source === "npm") {
     await manager.install(plugin.location);
-    registerPlugin(manager.require(plugin.location));
+    return manager.require(plugin.location);
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location, { force: true });
-    registerPlugin(manager.require(plugin.name));
+    return manager.require(plugin.name);
   } else if (plugin.source === "github") {
     await manager.installFromGithub(plugin.location, { force: true });
-    registerPlugin(manager.require(plugin.name));
+    return manager.require(plugin.name);
   }
 };
 
@@ -34,5 +39,6 @@ const loadAllPlugins = async () => {
 module.exports = {
   loadAllPlugins,
   loadPlugin,
-  registerPlugin
+  registerPlugin,
+  requirePlugin
 };
