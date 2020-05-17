@@ -8,6 +8,7 @@ class CreateUserCommand extends Command {
     const email = await cli.prompt("Email address");
     const password = await cli.prompt("Password", { type: "hide" });
     await User.create({ email, password, role_id: flags.admin ? 1 : 3 });
+    this.exit(0)
   }
 }
 

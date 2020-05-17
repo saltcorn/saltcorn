@@ -148,5 +148,6 @@ module.exports = {
   setTenant,
   runWithTenant,
   getTenantNS,
-  is_it_multi_tenant
+  is_it_multi_tenant,
+  connectObj
 };
