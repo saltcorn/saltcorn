@@ -59,6 +59,15 @@ const asyncSudo = args => {
   });
 };
 
+const asyncSudoPostgres = args => {
+  return asyncSudo([
+    "sudo",
+    "-u",
+    "postgres",
+    ...args
+  ]);
+}
+
 const get_password = async for_who => {
   var password = await cli.prompt(
     `Set ${for_who} password to [auto-generate]`,
@@ -82,10 +91,7 @@ const install_db = async () => {
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
   const scpass = await get_password(user + "'s database");
-  await asyncSudo([
-    "sudo",
-    "-u",
-    "postgres",
+  await asyncSudoPostgres([    
     "psql",
     "-U",
     "postgres",
@@ -98,6 +104,24 @@ const install_db = async () => {
   spawnSync("createdb", ["saltcorn_test"], {
     stdio: "inherit"
   });
+  await asyncSudoPostgres([    
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "saltcorn",
+    "-c",
+    `ALTER SCHEMA public OWNER TO ${user};`
+  ]);
+  await asyncSudoPostgres([    
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "saltcorn_test",
+    "-c",
+    `ALTER SCHEMA public OWNER TO ${user};`
+  ]);
   await write_connection_config({
     host: "localhost",
     port: 5432,
