@@ -113,6 +113,7 @@ const is_viewtemplate = is.obj({
 });
 
 const is_plugin = is.obj({
+  sc_plugin_api_version: is.posint,
   headers: is.maybe(is.array(is_header)),
   layout: is.maybe(
     is.obj({
