@@ -128,7 +128,8 @@ const install_db = async () => {
     database: "saltcorn",
     user,
     password: scpass,
-    session_secret
+    session_secret,
+    multi_tenant: false
   });
 };
 
@@ -155,7 +156,8 @@ const prompt_connection = async () => {
     database: database || "saltcorn",
     user: user || "saltcorn",
     password: password,
-    session_secret
+    session_secret,
+    multi_tenant: false
   };
 };
 

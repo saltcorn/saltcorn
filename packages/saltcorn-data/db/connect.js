@@ -12,6 +12,7 @@ const getConnectObject = (connSpec = {}) => {
   connObj.user = connObj.user || process.env.PGUSER;
   connObj.password = connObj.password || process.env.PGPASSWORD;
   connObj.database = connObj.database || process.env.PGDATABASE;
+  connObj.session_secret = connObj.session_secret || process.env.SALTCORN_SESSION_SECRET;
   connObj.multi_tenant =
     connObj.multi_tenant || process.env.SALTCORN_MULTI_TENANT;
 
@@ -22,7 +23,11 @@ const getConnectObject = (connSpec = {}) => {
     connObj.host = connObj.host || cfg.host;
     connObj.port = connObj.port || cfg.port;
     connObj.database = connObj.database || cfg.database;
-    connObj.multi_tenant = connObj.multi_tenant || cfg.multi_tenant;
+    connObj.session_secret = connObj.session_secret || cfg.session_secret;
+    connObj.multi_tenant = 
+    typeof connObj.multi_tenant ==="undefined" 
+    ? cfg.multi_tenant
+    : connObj.multi_tenant;
   }
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
