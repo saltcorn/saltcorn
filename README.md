@@ -12,7 +12,7 @@ will give you a usable version. For a more recent version (v13) of Node.js:
 
 ```
 sudo apt install curl
-curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 
@@ -43,6 +43,12 @@ lerna bootstrap
 to install everything. If successful, you should now be able to run `saltcorn` in your shell
 
 ## Prettier
+
+we use prettier 1.x:
+
+`npm install -g prettier@1.19.1`
+
+to format code:
 
 `git ls-files | xargs prettier --write`
 

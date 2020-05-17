@@ -13,14 +13,13 @@ class ResetCommand extends Command {
       );
       if (ans) await reset();
     }
-    this.exit(0)
-
+    this.exit(0);
   }
 }
 
-ResetCommand.description = `Describe the command here
+ResetCommand.description = `Reset the database
 ...
-Extra documentation goes here
+This will delete all existing information
 `;
 
 ResetCommand.flags = {

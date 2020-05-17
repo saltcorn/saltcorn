@@ -11,9 +11,9 @@ class FixturesCommand extends Command {
   }
 }
 
-FixturesCommand.description = `Describe the command here
+FixturesCommand.description = `Load fixtures for testing
 ...
-Extra documentation goes here
+This manual step it is never required for users and rarely required for developers
 `;
 
 FixturesCommand.flags = {

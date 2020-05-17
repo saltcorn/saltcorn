@@ -19,7 +19,7 @@ const gen_password = () => {
 const check_db = async () => {
   const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
   if (!inUse) {
-    console.log("No local database running. ");
+    console.log("Local database not found.");
     const responses = await inquirer.prompt([
       {
         name: "whatnow",
@@ -27,7 +27,7 @@ const check_db = async () => {
         type: "list",
         choices: [
           { name: "Install PostgreSQL locally", value: "install" },
-          { name: "Connect to a remote database", value: "connect" }
+          { name: "Connect to a an existing database", value: "connect" }
         ]
       }
     ]);
@@ -59,17 +59,18 @@ const asyncSudo = args => {
   });
 };
 
+const asyncSudoPostgres = args => {
+  return asyncSudo(["sudo", "-u", "postgres", ...args]);
+};
+
 const get_password = async for_who => {
-  var password = await cli.prompt(
-    `Set ${for_who} password to [auto-generate]`,
-    {
-      type: "hide",
-      required: false
-    }
-  );
+  var password = await cli.prompt(`Set ${for_who} to [auto-generate]`, {
+    type: "hide",
+    required: false
+  });
   if (!password) {
     password = gen_password();
-    console.log(`Setting ${for_who} password to:`, password);
+    console.log(`Setting ${for_who} to:`, password);
     await cli.anykey();
   }
   return password;
@@ -78,14 +79,10 @@ const get_password = async for_who => {
 const install_db = async () => {
   await asyncSudo(["apt", "install", "-y", "postgresql", "postgresql-client"]);
   const user = process.env.USER;
-  console.log({ user });
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
-  const scpass = await get_password(user + "'s database");
-  await asyncSudo([
-    "sudo",
-    "-u",
-    "postgres",
+  const scpass = await get_password(user + "'s database password");
+  await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
@@ -98,12 +95,33 @@ const install_db = async () => {
   spawnSync("createdb", ["saltcorn_test"], {
     stdio: "inherit"
   });
+  await asyncSudoPostgres([
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "saltcorn",
+    "-c",
+    `ALTER SCHEMA public OWNER TO ${user};`
+  ]);
+  await asyncSudoPostgres([
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "saltcorn_test",
+    "-c",
+    `ALTER SCHEMA public OWNER TO ${user};`
+  ]);
+  const session_secret = await get_password("session secret");
   await write_connection_config({
     host: "localhost",
     port: 5432,
     database: "saltcorn",
     user,
-    password: scpass
+    password: scpass,
+    session_secret,
+    multi_tenant: false
   });
 };
 
@@ -123,12 +141,15 @@ const prompt_connection = async () => {
     type: "hide",
     required: true
   });
+  const session_secret = await get_password("session secret");
   return {
     host: host || "localhost",
     port: port || 5432,
     database: database || "saltcorn",
     user: user || "saltcorn",
-    password: password
+    password: password,
+    session_secret,
+    multi_tenant: false
   };
 };
 
@@ -211,9 +232,10 @@ class SetupCommand extends Command {
   }
 }
 
-SetupCommand.description = `Describe the command here
+SetupCommand.description = `Set up a new system
 ...
-Extra documentation goes here
+This will attempt to install or connect a database, and set up a 
+configuration file
 `;
 
 SetupCommand.flags = {

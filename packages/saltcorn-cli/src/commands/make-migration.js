@@ -7,9 +7,10 @@ class MigrationCommand extends Command {
   }
 }
 
-MigrationCommand.description = `Describe the command here
+MigrationCommand.description = `Create a new blank migration file
 ...
-Extra documentation goes here
+These migrations track internal structures to the database. You should not
+normally need to run this unless you are a developer.
 `;
 
 module.exports = MigrationCommand;

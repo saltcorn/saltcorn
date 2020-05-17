@@ -37,7 +37,7 @@ const getApp = async () => {
         pool: db.pool,
         tableName: "_sc_session"
       }),
-      secret: "tja3j675m5wsjj65",
+      secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
       resave: false,
       saveUninitialized: false,
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
