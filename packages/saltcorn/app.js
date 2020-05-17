@@ -115,6 +115,7 @@ const getApp = async () => {
         }
       ];
       const currentUrl = req.originalUrl.split("?")[0];
+      const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
       const menu = [
         {
           brandName: getState().getConfig("site_name")
@@ -139,7 +140,7 @@ const getApp = async () => {
           currentUrl,
           alerts: getFlashes(req),
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: getState().headers
+          headers: [...stdHeaders, ...getState().headers]
         })
       );
     };
