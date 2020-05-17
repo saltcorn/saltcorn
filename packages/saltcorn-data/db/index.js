@@ -5,8 +5,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 
 var connectObj = getConnectObject();
 var pool;
-if(connectObj) 
-  pool= new Pool(connectObj);
+if (connectObj) pool = new Pool(connectObj);
 
 var log_sql_enabled = false;
 
@@ -20,8 +19,7 @@ function sql_log(sql, vs) {
     else console.log(sql, vs);
 }
 const close = async () => {
-  if(pool)
-    await pool.end();
+  if (pool) await pool.end();
 };
 
 const changeConnection = async (connObj = {}) => {

@@ -44,6 +44,12 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
 ## Prettier
 
+we use prettier 1.x:
+
+`npm install -g prettier@1.19.1`
+
+to format code:
+
 `git ls-files | xargs prettier --write`
 
 ## dev server
