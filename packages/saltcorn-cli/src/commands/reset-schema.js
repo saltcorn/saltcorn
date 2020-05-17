@@ -13,8 +13,7 @@ class ResetCommand extends Command {
       );
       if (ans) await reset();
     }
-    this.exit(0)
-
+    this.exit(0);
   }
 }
 

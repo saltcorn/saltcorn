@@ -60,22 +60,14 @@ const asyncSudo = args => {
 };
 
 const asyncSudoPostgres = args => {
-  return asyncSudo([
-    "sudo",
-    "-u",
-    "postgres",
-    ...args
-  ]);
-}
+  return asyncSudo(["sudo", "-u", "postgres", ...args]);
+};
 
 const get_password = async for_who => {
-  var password = await cli.prompt(
-    `Set ${for_who} to [auto-generate]`,
-    {
-      type: "hide",
-      required: false
-    }
-  );
+  var password = await cli.prompt(`Set ${for_who} to [auto-generate]`, {
+    type: "hide",
+    required: false
+  });
   if (!password) {
     password = gen_password();
     console.log(`Setting ${for_who} to:`, password);
@@ -90,7 +82,7 @@ const install_db = async () => {
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
   const scpass = await get_password(user + "'s database password");
-  await asyncSudoPostgres([    
+  await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
@@ -103,7 +95,7 @@ const install_db = async () => {
   spawnSync("createdb", ["saltcorn_test"], {
     stdio: "inherit"
   });
-  await asyncSudoPostgres([    
+  await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
@@ -112,7 +104,7 @@ const install_db = async () => {
     "-c",
     `ALTER SCHEMA public OWNER TO ${user};`
   ]);
-  await asyncSudoPostgres([    
+  await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
@@ -121,7 +113,7 @@ const install_db = async () => {
     "-c",
     `ALTER SCHEMA public OWNER TO ${user};`
   ]);
-  const session_secret=await get_password("session secret")
+  const session_secret = await get_password("session secret");
   await write_connection_config({
     host: "localhost",
     port: 5432,
@@ -149,7 +141,7 @@ const prompt_connection = async () => {
     type: "hide",
     required: true
   });
-  const session_secret=await get_password("session secret")
+  const session_secret = await get_password("session secret");
   return {
     host: host || "localhost",
     port: port || 5432,

@@ -9,7 +9,7 @@ const auto_test_wrap = wrap => {
 
 const generate_attributes = attrs => {
   var res = {};
-  (attrs||[]).forEach(a => {
+  (attrs || []).forEach(a => {
     if (a.required || is.bool.generate()) {
       const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
