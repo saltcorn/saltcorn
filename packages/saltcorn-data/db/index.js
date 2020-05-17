@@ -4,7 +4,9 @@ const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { AsyncLocalStorage } = require("async_hooks");
 
 var connectObj = getConnectObject();
-var pool = new Pool(connectObj);
+var pool;
+if(connectObj) 
+  pool= new Pool(connectObj);
 
 var log_sql_enabled = false;
 
@@ -18,7 +20,8 @@ function sql_log(sql, vs) {
     else console.log(sql, vs);
 }
 const close = async () => {
-  await pool.end();
+  if(pool)
+    await pool.end();
 };
 
 const changeConnection = async (connObj = {}) => {

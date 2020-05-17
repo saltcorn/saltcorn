@@ -19,7 +19,7 @@ const gen_password = () => {
 const check_db = async () => {
   const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
   if (!inUse) {
-    console.log("No local database running. ");
+    console.log("Local database not found.");
     const responses = await inquirer.prompt([
       {
         name: "whatnow",
@@ -27,7 +27,7 @@ const check_db = async () => {
         type: "list",
         choices: [
           { name: "Install PostgreSQL locally", value: "install" },
-          { name: "Connect to a remote database", value: "connect" }
+          { name: "Connect to a an existing database", value: "connect" }
         ]
       }
     ]);

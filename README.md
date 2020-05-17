@@ -12,7 +12,7 @@ will give you a usable version. For a more recent version (v13) of Node.js:
 
 ```
 sudo apt install curl
-curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 
