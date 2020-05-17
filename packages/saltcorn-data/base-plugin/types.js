@@ -249,7 +249,7 @@ const bool = {
           type: "hidden",
           name: text(nm),
           id: `input${text(nm)}`,
-          ...(isdef(v) && { value: v })
+          value: !isdef(v) ? "" : v ? "T" : "F"
         }) +
         button(
           {
