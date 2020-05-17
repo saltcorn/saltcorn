@@ -24,10 +24,7 @@ RestoreCommand.args = [
   { name: "file", required: true, description: "backup file to restore" }
 ];
 
-RestoreCommand.description = `Describe the command here
-...
-Extra documentation goes here
-`;
+RestoreCommand.description = `Restore a previously backed up database from a file`;
 
 RestoreCommand.flags = {};
 

@@ -45,10 +45,7 @@ RunTestsCommand.args = [
   { name: "package", description: "which package to run tests for" }
 ];
 
-RunTestsCommand.description = `Describe the command here
-...
-Extra documentation goes here
-`;
+RunTestsCommand.description = `Run test suites`;
 
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),

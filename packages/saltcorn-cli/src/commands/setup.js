@@ -232,9 +232,10 @@ class SetupCommand extends Command {
   }
 }
 
-SetupCommand.description = `Describe the command here
+SetupCommand.description = `Set up a new system
 ...
-Extra documentation goes here
+This will attempt to install or connect a database, and set up a 
+configuration file
 `;
 
 SetupCommand.flags = {

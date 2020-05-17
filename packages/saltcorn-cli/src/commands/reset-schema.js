@@ -17,9 +17,9 @@ class ResetCommand extends Command {
   }
 }
 
-ResetCommand.description = `Describe the command here
+ResetCommand.description = `Reset the database
 ...
-Extra documentation goes here
+This will delete all existing information
 `;
 
 ResetCommand.flags = {

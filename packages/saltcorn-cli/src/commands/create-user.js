@@ -12,10 +12,7 @@ class CreateUserCommand extends Command {
   }
 }
 
-CreateUserCommand.description = `Describe the command here
-...
-Extra documentation goes here
-`;
+CreateUserCommand.description = `Create a new user`;
 
 CreateUserCommand.flags = {
   admin: flags.boolean({ char: "a", description: "Admin user" })

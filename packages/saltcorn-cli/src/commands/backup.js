@@ -19,10 +19,7 @@ class BackupCommand extends Command {
   }
 }
 
-BackupCommand.description = `Describe the command here
-...
-Extra documentation goes here
-`;
+BackupCommand.description = `Backup the database to a file`;
 
 BackupCommand.flags = {
   output: flags.string({

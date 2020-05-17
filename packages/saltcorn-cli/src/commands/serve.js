@@ -8,10 +8,7 @@ class ServeCommand extends Command {
   }
 }
 
-ServeCommand.description = `Describe the command here
-...
-Extra documentation goes here
-`;
+ServeCommand.description = `Start the Saltcorn server`;
 
 ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 })

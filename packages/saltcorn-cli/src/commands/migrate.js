@@ -7,9 +7,11 @@ class MigrateCommand extends Command {
   }
 }
 
-MigrateCommand.description = `Describe the command here
+MigrateCommand.description = `Run migrations
 ...
-Extra documentation goes here
+This is not normally required as migrations will be run when the server starts. 
+However, this command may be useful if you are running multiple application 
+servers and need to control when the migrations are run.
 `;
 
 module.exports = MigrateCommand;
