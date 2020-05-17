@@ -8,4 +8,4 @@ const { string, int, bool, date, float } = require("./types");
 const types = [string, int, bool, date, float];
 const viewtemplates = [list, edit, show, listshowlist, feed];
 
-module.exports = { types, viewtemplates };
+module.exports = { sc_plugin_api_version: 1, types, viewtemplates };
