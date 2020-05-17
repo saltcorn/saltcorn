@@ -70,7 +70,7 @@ const asyncSudoPostgres = args => {
 
 const get_password = async for_who => {
   var password = await cli.prompt(
-    `Set ${for_who} password to [auto-generate]`,
+    `Set ${for_who} to [auto-generate]`,
     {
       type: "hide",
       required: false
@@ -78,7 +78,7 @@ const get_password = async for_who => {
   );
   if (!password) {
     password = gen_password();
-    console.log(`Setting ${for_who} password to:`, password);
+    console.log(`Setting ${for_who} to:`, password);
     await cli.anykey();
   }
   return password;
@@ -87,10 +87,9 @@ const get_password = async for_who => {
 const install_db = async () => {
   await asyncSudo(["apt", "install", "-y", "postgresql", "postgresql-client"]);
   const user = process.env.USER;
-  console.log({ user });
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
-  const scpass = await get_password(user + "'s database");
+  const scpass = await get_password(user + "'s database password");
   await asyncSudoPostgres([    
     "psql",
     "-U",
@@ -122,12 +121,14 @@ const install_db = async () => {
     "-c",
     `ALTER SCHEMA public OWNER TO ${user};`
   ]);
+  const session_secret=await get_password("session secret")
   await write_connection_config({
     host: "localhost",
     port: 5432,
     database: "saltcorn",
     user,
-    password: scpass
+    password: scpass,
+    session_secret
   });
 };
 
@@ -147,12 +148,14 @@ const prompt_connection = async () => {
     type: "hide",
     required: true
   });
+  const session_secret=await get_password("session secret")
   return {
     host: host || "localhost",
     port: port || 5432,
     database: database || "saltcorn",
     user: user || "saltcorn",
-    password: password
+    password: password,
+    session_secret
   };
 };
 
