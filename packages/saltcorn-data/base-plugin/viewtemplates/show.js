@@ -89,8 +89,8 @@ const runMany = async (
     where: qstate,
     joinFields,
     aggregations,
-    ...(extra.orderBy && { orderBy: extra.orderBy }),
-    ...(extra.orderDesc && { orderDesc: extra.orderDesc })
+    ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
+    ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
   const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
   return rows.map(row => ({
