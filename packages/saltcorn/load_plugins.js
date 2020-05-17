@@ -10,7 +10,7 @@ const registerPlugin = plugin => {
 
 const loadPlugin = async plugin => {
   const plugin_module = await requirePlugin(plugin)
-  registerPlugin(plugin_module)
+  getState().registerPlugin(plugin_module)
 };
 
 const requirePlugin = async plugin => {
