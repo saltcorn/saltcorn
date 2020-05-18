@@ -18,7 +18,12 @@ const configuration_workflow = () =>
           const table = await Table.findOne({ id: table_id });
           const fields = await table.getFields();
           const fldOptions = fields.map(f => text(f.name));
-
+          var fldViewOptions = {};
+          fields.forEach(f => {
+            if (f.type && f.type.fieldviews) {
+              fldViewOptions[f.name] = Object.keys(f.type.fieldviews);
+            }
+          });
           return new Form({
             blurb:
               "Finalise your edit view by specifying the fields in the table",
@@ -47,9 +52,20 @@ const configuration_workflow = () =>
                     name: "field_name",
                     label: "Field",
                     type: "String",
+                    class: "field_name",
                     required: true,
                     attributes: {
                       options: fldOptions.join()
+                    },
+                    showIf: { ".coltype": "Field" }
+                  },
+                  {
+                    name: "fieldview",
+                    label: "Field view",
+                    type: "String",
+                    required: false,
+                    attributes: {
+                      calcOptions: [".field_name", fldViewOptions]
                     },
                     showIf: { ".coltype": "Field" }
                   },
