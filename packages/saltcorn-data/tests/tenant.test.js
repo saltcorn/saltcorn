@@ -1,6 +1,6 @@
 const db = require("saltcorn-data/db");
 const { getState } = require("../db/state");
-getState().registerPlugin("base",require("../base-plugin"));
+getState().registerPlugin("base", require("../base-plugin"));
 const { createTenant } = require("../models/tenant");
 
 afterAll(db.close);

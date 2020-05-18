@@ -55,7 +55,7 @@ class State {
   }
 
   registerPlugin(name, plugin) {
-    this.plugins[name]=plugin;
+    this.plugins[name] = plugin;
     (plugin.types || []).forEach(t => {
       this.addType(t);
     });

@@ -151,13 +151,16 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
 router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
 
-  const plugin = await Plugin.findOne({id})
-  const can_delete = await plugin.canBeDeleted()
-  if(can_delete) {
+  const plugin = await Plugin.findOne({ id });
+  const depviews = await plugin.dependant_views();
+  if (depviews.length === 0) {
     await plugin.delete();
     req.flash("success", "Plugin removed");
   } else {
-    req.flash("error", "Cannot remove plugin: views depend on it");
+    req.flash(
+      "error",
+      `Cannot remove plugin: views ${depviews.join()} depend on it`
+    );
   }
   res.redirect(`/plugins`);
 });

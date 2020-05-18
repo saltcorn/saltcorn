@@ -6,7 +6,7 @@ const View = require("saltcorn-data/models/view");
 const User = require("saltcorn-data/models/user");
 const basePlugin = require("saltcorn-base-plugin");
 
-getState().registerPlugin("base",basePlugin);
+getState().registerPlugin("base", basePlugin);
 
 const rndElem = vs => vs[Math.floor(Math.random() * vs.length)];
 
