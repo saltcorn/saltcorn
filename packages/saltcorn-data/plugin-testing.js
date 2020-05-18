@@ -90,7 +90,7 @@ const auto_test_viewtemplate = async vt => {
 
 const auto_test_plugin = async plugin => {
   is_plugin(plugin);
-  getState().registerPlugin(plugin);
+  getState().registerPlugin("test_plugin", plugin);
   if (plugin.layout) {
     auto_test_wrap(plugin.layout.wrap);
   }

@@ -1,6 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-
+const View = require("./view");
 const fetch = require("node-fetch");
 
 class Plugin {
@@ -11,10 +11,10 @@ class Plugin {
     this.location = o.location;
   }
   static async findOne(where) {
-    return await db.selectOne("_sc_plugins", where);
+    return new Plugin(await db.selectOne("_sc_plugins", where));
   }
   static async find(where) {
-    return await db.select("_sc_plugins", where);
+    return (await db.select("_sc_plugins", where)).map(p => new Plugin(p));
   }
   async upsert() {
     const row = {
@@ -29,9 +29,20 @@ class Plugin {
       await db.update("_sc_plugins", row, this.id);
     }
   }
-  static async deleteWhere(where) {
-    await db.deleteWhere("_sc_plugins", where);
+  async delete() {
+    await db.deleteWhere("_sc_plugins", { id: this.id });
   }
+
+  async dependant_views() {
+    const views = await View.find({});
+    const { getState } = require("../db/state");
+    const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
+    const vt_names = myViewTemplates.map(vt => vt.name);
+    return views
+      .filter(v => vt_names.includes(v.viewtemplate))
+      .map(v => v.name);
+  }
+
   static async store_plugins_available() {
     const response = await fetch("https://www.saltcorn.com/api/extensions");
     const json = await response.json();

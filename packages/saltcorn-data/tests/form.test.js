@@ -5,7 +5,7 @@ const Form = require("saltcorn-data/models/form");
 const { renderForm } = require("saltcorn-markup");
 
 const { getState } = require("../db/state");
-getState().registerPlugin(require("../base-plugin"));
+getState().registerPlugin("base", require("../base-plugin"));
 
 const mkRepForm = () =>
   new Form({
@@ -87,4 +87,22 @@ describe("Form", () => {
     expect(html.includes("Fred")).toBe(true);
     expect(html.includes("George")).toBe(true);
   });
+});
+
+describe("Bool Form", () => {
+  const form = new Form({
+    fields: [
+      new Field({
+        name: "done",
+        label: "Done",
+        type: "Bool"
+      })
+    ]
+  });
+  form.validate({ done: "off" });
+  expect(form.values.done).toBe(false);
+  form.validate({});
+  expect(form.values.done).toBe(false);
+  form.validate({ done: "on" });
+  expect(form.values.done).toBe(true);
 });

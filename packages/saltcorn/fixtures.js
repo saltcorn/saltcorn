@@ -5,10 +5,9 @@ const Field = require("saltcorn-data/models/field");
 const View = require("saltcorn-data/models/view");
 const User = require("saltcorn-data/models/user");
 const basePlugin = require("saltcorn-base-plugin");
-const { registerPlugin } = require("./load_plugins");
 
 module.exports = async () => {
-  registerPlugin(basePlugin);
+  getState().registerPlugin("base", basePlugin);
   const table = await Table.create("books", {
     expose_api_read: true,
     min_role_read: 4
