@@ -116,10 +116,10 @@ const getApp = async () => {
       ];
       const currentUrl = req.originalUrl.split("?")[0];
       const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
+      const brand = {
+        name: getState().getConfig("site_name")
+      };
       const menu = [
-        {
-          brandName: getState().getConfig("site_name")
-        },
         views.length > 0 && {
           section: "Views",
           items: views
@@ -136,6 +136,7 @@ const getApp = async () => {
       res.send(
         getState().layout.wrap({
           title,
+          brand,
           menu,
           currentUrl,
           alerts: getFlashes(req),

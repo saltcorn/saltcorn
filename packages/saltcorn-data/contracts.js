@@ -54,14 +54,13 @@ const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.or(is.str, is_layout),
   currentUrl: is.str,
+  brand: is.obj({ name: is.str }),
   menu: is.array(
     is.obj(
       {
-        brandName: is.maybe(is.str),
-        section: is.maybe(is.str),
-        items: is.maybe(is.array(is_menu_item))
-      },
-      o => o.brandName || (o.items && o.section)
+        section: is.str,
+        items: is.array(is_menu_item)
+      }
     )
   ),
   alerts: is.array(

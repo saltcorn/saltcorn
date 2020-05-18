@@ -72,31 +72,28 @@ const sideBarItem = currentUrl => item => {
   );
 };
 
-const sideBarSection = currentUrl => section =>
-  section.brandName
-    ? a(
-        {
-          class:
-            "sidebar-brand d-flex align-items-center justify-content-center",
-          href: "/"
-        },
-        //div({class:"sidebar-brand-icon rotate-n-15"},
-        //i({class:"fas fa-laugh-wink"})),
-        div({ class: "sidebar-brand-text mx-3" }, section.brandName)
-      )
-    : [
-        section.section &&
-          hr({ class: "sidebar-divider" }) +
-            div({ class: "sidebar-heading" }, section.section),
-        section.items.map(sideBarItem(currentUrl)).join("")
-      ];
+const sideBarSection = currentUrl => section => [
+  section.section &&
+    hr({ class: "sidebar-divider" }) +
+      div({ class: "sidebar-heading" }, section.section),
+  section.items.map(sideBarItem(currentUrl)).join("")
+];
 
-const sidebar = (sections, currentUrl) =>
+const sidebar = (brand, sections, currentUrl) =>
   ul(
     {
       class: "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion",
       id: "accordionSidebar"
     },
+    a(
+      {
+        class: "sidebar-brand d-flex align-items-center justify-content-center",
+        href: "/"
+      },
+      //div({class:"sidebar-brand-icon rotate-n-15"},
+      //i({class:"fas fa-laugh-wink"})),
+      div({ class: "sidebar-brand-text mx-3" }, brand.name)
+    ),
     sections.map(sideBarSection(currentUrl))
   );
 
@@ -181,6 +178,7 @@ const renderBody = (title, body) =>
 const wrap = ({
   title,
   menu,
+  brand,
   alerts,
   currentUrl,
   body,
@@ -206,7 +204,7 @@ const wrap = ({
   </head>
   <body id="page-top">
     <div id="wrapper">
-      ${sidebar(menu, currentUrl)}
+      ${sidebar(brand, menu, currentUrl)}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
