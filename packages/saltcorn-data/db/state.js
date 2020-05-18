@@ -28,6 +28,7 @@ class State {
     this.pages = {};
     this.fields = [];
     this.configs = {};
+    this.plugins = {};
     this.layout = { wrap: s => s };
     this.headers = [];
     contract.class(this);
@@ -53,7 +54,8 @@ class State {
     delete this.configs[key];
   }
 
-  registerPlugin(plugin) {
+  registerPlugin(name, plugin) {
+    this.plugins[name]=plugin;
     (plugin.types || []).forEach(t => {
       this.addType(t);
     });
@@ -86,7 +88,7 @@ State.contract = {
   },
   methods: {
     addType: is.fun(is_plugin_type, is.eq(undefined)),
-    registerPlugin: is.fun(is_plugin, is.eq(undefined)),
+    registerPlugin: is.fun([is.str, is_plugin], is.eq(undefined)),
     refresh: is.fun([], is.promise(is.eq(undefined))),
     type_names: is.getter(is.array(is.str))
   }

@@ -1,6 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-
+const View= require("./view")
 const fetch = require("node-fetch");
 
 class Plugin {
@@ -29,9 +29,14 @@ class Plugin {
       await db.update("_sc_plugins", row, this.id);
     }
   }
-  static async deleteWhere(where) {
-    await db.deleteWhere("_sc_plugins", where);
+  async delete() {
+    await db.deleteWhere("_sc_plugins", {id: this.id});
   }
+
+  async canBeDeleted() {
+    return true
+  }
+
   static async store_plugins_available() {
     const response = await fetch("https://www.saltcorn.com/api/extensions");
     const json = await response.json();
