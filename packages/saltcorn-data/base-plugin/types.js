@@ -264,13 +264,13 @@ const bool = {
   attributes: [],
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;
-    if (rec[name] === "undefined" || rec[name] === "false") return false;
+    if (["undefined", "false", "off"].includes(rec[name])) return false;
     return rec[name] ? true : false;
   },
   read: v => {
     switch (typeof v) {
       case "string":
-        if (v.toUpperCase() === "TRUE" || v.toUpperCase() === "T") return true;
+        if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
         else return false;
       default:
         return v ? true : false;

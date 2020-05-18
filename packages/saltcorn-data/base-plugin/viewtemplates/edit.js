@@ -21,12 +21,11 @@ const configuration_workflow = () =>
           var fldViewOptions = {};
           fields.forEach(f => {
             if (f.type && f.type.fieldviews) {
-              fldViewOptions[f.name] = []
-              Object.entries(f.type.fieldviews).forEach(([nm,fv])=>{
-                if(fv.isEdit) 
-                fldViewOptions[f.name].push(nm)
-            })
-          }
+              fldViewOptions[f.name] = [];
+              Object.entries(f.type.fieldviews).forEach(([nm, fv]) => {
+                if (fv.isEdit) fldViewOptions[f.name].push(nm);
+              });
+            }
           });
           return new Form({
             blurb:
@@ -171,7 +170,7 @@ const getForm = async (table, viewname, columns, id) => {
   const tfields = columns.map(column => {
     if (column.type === "Field") {
       const f = fields.find(fld => fld.name === column.field_name);
-      f.fieldview = column.fieldview
+      f.fieldview = column.fieldview;
       return f;
     }
   });

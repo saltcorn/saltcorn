@@ -88,3 +88,21 @@ describe("Form", () => {
     expect(html.includes("George")).toBe(true);
   });
 });
+
+describe("Bool Form", () => {
+  const form = new Form({
+    fields: [
+      new Field({
+        name: "done",
+        label: "Done",
+        type: "Bool"
+      })
+    ]
+  });
+  form.validate({ done: "off" });
+  expect(form.values.done).toBe(false);
+  form.validate({});
+  expect(form.values.done).toBe(false);
+  form.validate({ done: "on" });
+  expect(form.values.done).toBe(true);
+});
