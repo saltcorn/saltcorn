@@ -142,8 +142,8 @@ class Table {
       }
       fldNms.push(`${jtNm}.${target} as ${fldnm}`);
     });
-    for (const f of fields) {      
-        fldNms.push(`a."${f.name}"`);      
+    for (const f of fields) {
+      fldNms.push(`a."${f.name}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
