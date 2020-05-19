@@ -131,16 +131,6 @@ class Table {
     var joinTables = [];
     var joinFields = opts.joinFields || [];
 
-    fields
-      .filter(f => f.is_fkey)
-      .forEach(f => {
-        joinFields[f.name] = {
-          ref: f.name,
-          reftable: f.reftable_name,
-          target: f.attributes.summary_field || "id"
-        };
-      });
-
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${reftable}_jt_${ref}`;
@@ -152,10 +142,8 @@ class Table {
       }
       fldNms.push(`${jtNm}.${target} as ${fldnm}`);
     });
-    for (const f of fields) {
-      if (!f.is_fkey) {
-        fldNms.push(`a."${f.name}"`);
-      }
+    for (const f of fields) {      
+        fldNms.push(`a."${f.name}"`);      
     }
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
