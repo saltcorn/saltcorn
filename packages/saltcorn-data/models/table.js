@@ -172,9 +172,11 @@ class Table {
     };
     const schema = db.getTenantSchema();
 
-    const sql = `SELECT ${fldNms.join()} FROM ${schema}."${sqlsanitize(
-      this.name
-    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
+      schema
+    )}."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
+      selectopts
+    )}`;
     //console.log(sql);
     const { rows } = await db.query(sql, values);
 
