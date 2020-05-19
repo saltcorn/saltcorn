@@ -28,8 +28,6 @@ const is_layout_container = is.obj({ type: is.str });
 
 const is_layout = is.obj(
   {
-    pageHeader: is.maybe(is.str),
-    pageBlurb: is.maybe(is.str),
     above: is.maybe(
       is.array(
         is.or(
@@ -56,12 +54,10 @@ const is_plugin_wrap_arg = is.obj({
   currentUrl: is.str,
   brand: is.obj({ name: is.str }),
   menu: is.array(
-    is.obj(
-      {
-        section: is.str,
-        items: is.array(is_menu_item)
-      }
-    )
+    is.obj({
+      section: is.str,
+      items: is.array(is_menu_item)
+    })
   ),
   alerts: is.array(
     is.obj({

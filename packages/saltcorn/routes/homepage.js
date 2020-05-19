@@ -39,8 +39,11 @@ const no_views_logged_in = async (req, res) => {
       const packs_installed = getState().getConfig("installed_packs", []);
 
       res.sendWrap("Hello", {
-        pageHeader: "Quick Start",
         above: [
+          {
+            type: "pageHeader",
+            title: "Quick Start"
+          },
           {
             type: "card",
             title: "Tables",
@@ -78,8 +81,11 @@ const no_views_logged_in = async (req, res) => {
       });
     } else if (views.length === 0) {
       res.sendWrap("Hello", {
-        pageHeader: "Quick Start",
         above: [
+          {
+            type: "pageHeader",
+            title: "Quick Start"
+          },
           {
             type: "card",
             title: "Tables",
@@ -100,8 +106,11 @@ const no_views_logged_in = async (req, res) => {
       });
     } else {
       res.sendWrap("Hello", {
-        pageHeader: "Quick Start",
         above: [
+          {
+            type: "pageHeader",
+            title: "Quick Start"
+          },
           {
             type: "card",
             title: "Tables",

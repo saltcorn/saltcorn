@@ -137,6 +137,12 @@ const renderHero = (caption, blurb) =>
     )
   );
 
+const renderTitle = ({ title, blurb }) =>
+  div(
+    h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
+    blurb && p({ class: "mb-0 text-gray-800" }, blurb)
+  );
+
 const renderContainer = ({ type, ...rest }) =>
   type === "card"
     ? renderCard(rest.title, rest.contents)
@@ -144,6 +150,8 @@ const renderContainer = ({ type, ...rest }) =>
     ? renderHero(rest.caption, rest.blurb)
     : type === "blank"
     ? rest.contents
+    : type === "pageHeader"
+    ? renderTitle(rest)
     : "";
 
 const renderBesides = elems => {
