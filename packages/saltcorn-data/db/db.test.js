@@ -1,4 +1,4 @@
-const { sqlsanitize, mkWhere } = require("./internal");
+const { sqlsanitize, mkWhere, sqlsanitizeAllowDots } = require("./internal");
 const db = require("./index.js");
 const Table = require("../models/table");
 
@@ -11,8 +11,11 @@ describe("sqlsanitize", () => {
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
   });
-  it("should allow dots", () => {
-    expect(sqlsanitize("ffoo.oo")).toBe("ffoo.oo");
+  it("should not allow dots", () => {
+    expect(sqlsanitize("ffoo.oo")).toBe("ffoooo");
+  });
+  it("should allow dots when specified", () => {
+    expect(sqlsanitizeAllowDots("ffoo.oo")).toBe("ffoo.oo");
   });
   it("should allow numbers", () => {
     expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
