@@ -91,8 +91,11 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
     fields
   );
   res.sendWrap(`${table.name} table`, {
-    pageHeader: `${table.name} table`,
     above: [
+      {
+        type: "pageHeader",
+        title: `${table.name} table`
+      },
       {
         type: "card",
         title: "Fields",
