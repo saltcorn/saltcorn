@@ -28,8 +28,6 @@ const get_link_view_opts = async (table, viewname) => {
       });
     }
   }
-  /*
-  doesnt work for now because related fields have been replaced by the summary field in the row
 
   const parent_views = await get_parent_views(table, viewname);
   for (const { relation, related_table, views } of parent_views) {
@@ -39,7 +37,7 @@ const get_link_view_opts = async (table, viewname) => {
         label: `${view.name} of ${relation.name} on ${related_table.name}`
       });
     }
-  }*/
+  }
   return link_view_opts;
 };
 const field_picker_fields = async ({ table, viewname }) => {

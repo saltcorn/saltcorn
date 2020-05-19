@@ -131,31 +131,19 @@ class Table {
     var joinTables = [];
     var joinFields = opts.joinFields || [];
 
-    fields
-      .filter(f => f.is_fkey)
-      .forEach(f => {
-        joinFields[f.name] = {
-          ref: f.name,
-          reftable: f.reftable_name,
-          target: f.attributes.summary_field || "id"
-        };
-      });
-
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
-      const jtNm = `${reftable}_jt_${ref}`;
+      const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${sqlsanitize(reftable)}" ${sqlsanitize(
-          jtNm
-        )} on ${sqlsanitize(jtNm)}.id=a.${sqlsanitize(ref)}`;
+        joinq += ` left join "${sqlsanitize(
+          reftable
+        )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
-      fldNms.push(`${jtNm}.${target} as ${fldnm}`);
+      fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
     for (const f of fields) {
-      if (!f.is_fkey) {
-        fldNms.push(`a."${f.name}"`);
-      }
+      fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
@@ -184,9 +172,11 @@ class Table {
     };
     const schema = db.getTenantSchema();
 
-    const sql = `SELECT ${fldNms.join()} FROM ${schema}."${sqlsanitize(
-      this.name
-    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
+      schema
+    )}."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
+      selectopts
+    )}`;
     //console.log(sql);
     const { rows } = await db.query(sql, values);
 

@@ -78,7 +78,7 @@ describe("Table get data", () => {
       where: { name: "Michael Douglas" }
     });
     expect(michaels.length).toStrictEqual(1);
-    expect(michaels[0].favbook).toBe("Leo Tolstoy");
+    expect(michaels[0].favbook).toBe(2);
   });
   it("should get joined rows with arbitrary fieldnames", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -100,7 +100,7 @@ describe("Table get data", () => {
       orderBy: "id"
     });
     expect(all.length).toStrictEqual(2);
-    expect(all[1].favbook).toBe("Leo Tolstoy");
+    expect(all[1].favbook).toBe(2);
   });
   it("should get joined rows with limit and desc order", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -110,7 +110,7 @@ describe("Table get data", () => {
       orderDesc: true
     });
     expect(all.length).toStrictEqual(2);
-    expect(all[0].favbook).toBe("Leo Tolstoy");
+    expect(all[0].favbook).toBe(2);
   });
   it("should get joined rows with aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });

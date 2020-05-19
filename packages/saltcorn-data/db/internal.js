@@ -2,6 +2,11 @@ const { contract, is } = require("contractis");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 const sqlsanitize = contract(is.fun(is.str, is.str), nm => {
+  const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
+  if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
+  else return s;
+});
+const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), nm => {
   const s = nm.replace(/[^A-Za-z_0-9.]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
@@ -25,10 +30,10 @@ const whereClause = ([k, v], i) =>
   k === "_fts"
     ? whereFTS(v, i)
     : typeof (v || {}).in !== "undefined"
-    ? `${sqlsanitize(k)} = ANY ($${i + 1})`
+    ? `${sqlsanitizeAllowDots(k)} = ANY ($${i + 1})`
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitize(k)} ILIKE '%' || $${i + 1} || '%'`
-    : `${sqlsanitize(k)}=$${i + 1}`;
+    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || $${i + 1} || '%'`
+    : `${sqlsanitizeAllowDots(k)}=$${i + 1}`;
 
 const getVal = ([k, v]) =>
   k === "_fts"
@@ -73,5 +78,6 @@ const mkSelectOptions = selopts => {
 module.exports = {
   sqlsanitize,
   mkWhere,
-  mkSelectOptions
+  mkSelectOptions,
+  sqlsanitizeAllowDots
 };

@@ -80,8 +80,11 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const tableHtml = mkTable(
     [
       { label: "Label", key: "label" },
-      { label: "Required", key: "required" },
-      { label: "Type", key: r => r.type.name },
+      { label: "Required", key: r => (r.required ? "true" : "false") },
+      {
+        label: "Type",
+        key: r => (r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name)
+      },
       { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
       {
         label: "Delete",
