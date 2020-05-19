@@ -133,17 +133,17 @@ class Table {
 
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
-      const jtNm = `${reftable}_jt_${ref}`;
+      const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${sqlsanitize(reftable)}" ${sqlsanitize(
-          jtNm
-        )} on ${sqlsanitize(jtNm)}.id=a.${sqlsanitize(ref)}`;
+        joinq += ` left join "${sqlsanitize(
+          reftable
+        )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
-      fldNms.push(`${jtNm}.${target} as ${fldnm}`);
+      fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
     for (const f of fields) {
-      fldNms.push(`a."${f.name}"`);
+      fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
