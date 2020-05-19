@@ -6,14 +6,11 @@ const {
   hr,
   div,
   text,
-  i,
-  h6,
-  h1,
-  p,
-  header,
-  section,
+
   button,
-  nav
+  nav,
+  script,
+  domReady
 } = require("./tags");
 
 const labelToId = item => text(item.replace(" ", ""));
@@ -119,6 +116,15 @@ const alert = (type, s) => {
       </div>`
     : "";
 };
+const navbarSolidOnScroll = script(
+  domReady(`$(window).scroll(function () {
+    if ($(window).scrollTop() >= 50) {
+    $('.navbar').css('background','white');
+    } else {
+    $('.navbar').css('background','transparent');
+    }
+    });`)
+);
 
 const logit = (x, s) => {
   if (s) console.log(s, x);
@@ -126,4 +132,4 @@ const logit = (x, s) => {
   return x;
 };
 
-module.exports = { navbar, alert, logit };
+module.exports = { navbar, alert, logit, navbarSolidOnScroll };
