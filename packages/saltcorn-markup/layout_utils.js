@@ -94,7 +94,7 @@ const leftNavBar = ({ name }) => [
 const navbar = (brand, sections, currentUrl) =>
   nav(
     {
-      class: "navbar navbar-expand-lg navbar-light fixed-top py-3",
+      class: "navbar navbar-expand-lg navbar-light fixed-top",
       id: "mainNav"
     },
     div(
