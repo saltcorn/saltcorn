@@ -1,6 +1,12 @@
 const Router = require("express-promise-router");
 
-const { renderForm, mkTable, link, post_btn, renderBuilder } = require("saltcorn-markup");
+const {
+  renderForm,
+  mkTable,
+  link,
+  post_btn,
+  renderBuilder
+} = require("saltcorn-markup");
 const { getState } = require("saltcorn-data/db/state");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("saltcorn-data/models/form");
@@ -142,9 +148,8 @@ router.get("/config/:name", setTenant, isAdmin, async (req, res) => {
   });
   if (wfres.renderForm)
     res.sendWrap(`View configuration`, renderForm(wfres.renderForm));
-  else if(wfres.renderBuilder)
+  else if (wfres.renderBuilder)
     res.sendWrap(`View configuration`, renderBuilder(wfres.renderBuilder));
-
   else res.redirect(wfres.redirect);
 });
 

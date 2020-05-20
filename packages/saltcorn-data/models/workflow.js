@@ -57,7 +57,7 @@ class Workflow {
 
       if (!toRun) return this.runStep(context, stepIx + 1);
     }
-    if(step.form) {
+    if (step.form) {
       const form = await applyAsync(step.form, context);
 
       form.hidden("stepName", "contextEnc");
@@ -80,11 +80,10 @@ class Workflow {
       if (this.action) form.action = this.action;
 
       return { renderForm: form };
-    } else if(step.builder) {
+    } else if (step.builder) {
       const builder = await applyAsync(step.builder, context);
-      return { renderBuilder: builder }
+      return { renderBuilder: builder };
     }
-
   }
 }
 

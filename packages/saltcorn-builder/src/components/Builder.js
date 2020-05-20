@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 
-const Builder = ({}) => <div>Hello from react builder!</div>
+const Builder = ({}) => <div>Hello from react builder!</div>;
 
 export default Builder;
 
