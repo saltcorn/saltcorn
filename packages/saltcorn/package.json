@@ -19,7 +19,8 @@
     "saltcorn-base-plugin": "^0.0.1",
     "saltcorn-data": "^0.0.1",
     "saltcorn-markup": "^0.0.1",
-    "saltcorn-sbadmin2": "^0.0.1"
+    "saltcorn-sbadmin2": "^0.0.1",
+    "saltcorn-builder": "^0.0.1"
   },
   "devDependencies": {
     "jest": "^25.1.0",
