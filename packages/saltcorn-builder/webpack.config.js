@@ -13,6 +13,9 @@ module.exports = {
     ]
   },
   output: {
-    filename: "builder_bundle.js"
+    filename: "builder_bundle.js",
+    library: "builder"
+    //libraryTarget: 'window',
+    //libraryExport: 'default'
   }
 };

@@ -61,7 +61,7 @@ module.exports = {
   button: mkTag("button"),
   textarea: mkTag("textarea", true),
   form: mkTag("form"),
-  script: mkTag("script"),
+  script: mkTag("script", true),
   style: mkTag("style"),
   p: mkTag("p"),
   table: mkTag("table"),

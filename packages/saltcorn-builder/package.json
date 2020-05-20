@@ -4,7 +4,7 @@
   "description": "Builder for Saltcorn",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "webpack --mode none",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Tom Nielsen",
