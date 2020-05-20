@@ -1,4 +1,5 @@
 const renderForm = require("./form");
+const renderBuilder = require("./builder");
 const mkTable = require("./table");
 const tabs = require("./tabs");
 const { a, text } = require("./tags");
@@ -11,6 +12,7 @@ const post_btn = (href, s) => `<form action="${text(href)}" method="post">
 module.exports = {
   mkTable,
   renderForm,
+  renderBuilder,
   link,
   post_btn,
   tabs

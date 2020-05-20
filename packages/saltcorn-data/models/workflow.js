@@ -57,28 +57,34 @@ class Workflow {
 
       if (!toRun) return this.runStep(context, stepIx + 1);
     }
-    const form = await applyAsync(step.form, context);
+    if(step.form) {
+      const form = await applyAsync(step.form, context);
 
-    form.hidden("stepName", "contextEnc");
-    form.values.stepName = step.name;
-    form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
+      form.hidden("stepName", "contextEnc");
+      form.values.stepName = step.name;
+      form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
 
-    form.fields.forEach(fld => {
-      const ctxValue = step.contextField
-        ? (context[step.contextField] || {})[fld.name]
-        : context[fld.name];
-      if (
-        typeof ctxValue !== "undefined" &&
-        typeof form.values[fld.name] === "undefined"
-      ) {
-        if (fld.type && fld.type.read)
-          form.values[fld.name] = fld.type.read(ctxValue);
-        else form.values[fld.name] = ctxValue;
-      }
-    });
-    if (this.action) form.action = this.action;
+      form.fields.forEach(fld => {
+        const ctxValue = step.contextField
+          ? (context[step.contextField] || {})[fld.name]
+          : context[fld.name];
+        if (
+          typeof ctxValue !== "undefined" &&
+          typeof form.values[fld.name] === "undefined"
+        ) {
+          if (fld.type && fld.type.read)
+            form.values[fld.name] = fld.type.read(ctxValue);
+          else form.values[fld.name] = ctxValue;
+        }
+      });
+      if (this.action) form.action = this.action;
 
-    return { renderForm: form };
+      return { renderForm: form };
+    } else if(step.builder) {
+      const builder = await applyAsync(step.builder, context);
+      return { renderBuilder: builder }
+    }
+
   }
 }
 
