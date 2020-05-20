@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
     module: {
       rules: [
@@ -9,5 +11,8 @@ module.exports = {
           }
         }
       ]
+    },
+    output: {
+        filename: 'builder_bundle.js',
     }
   };
