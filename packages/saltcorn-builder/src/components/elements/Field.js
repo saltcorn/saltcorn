@@ -19,7 +19,6 @@ export const FieldSettings = () => {
     fieldview: node.data.props.fieldview
   }));
   const options = useContext(optionsCtx);
-  console.log("FieldSettings", options);
   const fvs = options.field_view_options[name];
   return (
     <div>

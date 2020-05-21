@@ -4,7 +4,7 @@ import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 import optionsCtx from "./context";
-
+import { craftToSaltcorn } from "./storage";
 const { Provider } = optionsCtx;
 
 const Toolbox = () => {
@@ -80,6 +80,20 @@ const SettingsPanel = () => {
   );
 };
 
+const SaveButton = () => {
+  const { query } = useEditor(() => {});
+  return (
+    <button
+      className="btn btn-primary"
+      onClick={() => {
+        console.log(craftToSaltcorn(JSON.parse(query.serialize())));
+      }}
+    >
+      Save
+    </button>
+  );
+};
+
 const Builder = ({ options }) => {
   return (
     <Editor>
@@ -97,6 +111,7 @@ const Builder = ({ options }) => {
             <SettingsPanel />
           </div>
         </div>
+        <SaveButton />
       </Provider>
     </Editor>
   );
