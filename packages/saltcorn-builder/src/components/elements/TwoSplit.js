@@ -1,4 +1,6 @@
 import React from "react";
+import { Text } from "./Text";
+
 import { Canvas, useNode } from "@craftjs/core";
 
 export const TwoSplit = ({ leftCols }) => {
@@ -7,11 +9,16 @@ export const TwoSplit = ({ leftCols }) => {
   } = useNode();
   return (
     <div className="row" ref={dom => connect(drag(dom))}>
-      <div className={`col-sm-${leftCols}`}>
-        <Canvas id="Left" is="div"></Canvas>
+      <div className={`split-col col-sm-${leftCols}`}>
+        <Canvas id="Left" is="div">
+            <Text text="Left" />
+        </Canvas>
       </div>
-      <div className={`col-sm-${12 - leftCols}`}>
-        <Canvas id="Right" is="div"></Canvas>
+      <div className={`split-col col-sm-${12 - leftCols}`}>
+        <Canvas id="Right" is="div">
+        <Text text="Right" />
+
+        </Canvas>
       </div>
     </div>
   );

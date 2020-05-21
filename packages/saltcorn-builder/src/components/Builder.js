@@ -16,7 +16,7 @@ const Toolbox = () => {
             </button>
           </td>
           <td>
-            <button>||</button>
+            <button ref={ref => connectors.create(ref, <TwoSplit/>)}>||</button>
           </td>
         </tr>
       </tbody>
@@ -27,14 +27,14 @@ const Builder = ({}) => {
   return (
     <Editor>
       <div className="row">
-        <div className="col-sm-8">
+        <div className="col-sm-10">
           <Frame resolver={(Text, TwoSplit)}>
             <Canvas>
               <Text text="I'm already rendered here" />
             </Canvas>
           </Frame>
         </div>
-        <div className="col-sm-4">
+        <div className="col-sm-2">
           <Toolbox />
         </div>
       </div>
