@@ -98,6 +98,7 @@ class Workflow {
         renderBuilder: {
           options,
           context,
+          craft_nodes: context.craft_nodes,
           action: this.action,
           stepName: step.name
         }

@@ -104,13 +104,14 @@ const SaveButton = () => {
   );
 };
 
-const Builder = ({ options }) => {
+const Builder = ({ options, craft_nodes }) => {
+  console.log(craft_nodes);
   return (
     <Editor>
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <Frame resolver={(Text, TwoSplit)}>
+            <Frame resolver={(Text, TwoSplit)} json={craft_nodes}>
               <Canvas>
                 <Text text="I'm already rendered here" />
               </Canvas>
