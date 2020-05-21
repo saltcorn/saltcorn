@@ -50,8 +50,8 @@ class Workflow {
     } else if (step.builder) {
       const toCtx0 = {
         columns: JSON.parse(decodeURIComponent(body.columns)),
-        layout: JSON.parse(decodeURIComponent(body.layout)),
-        craft_nodes: JSON.parse(decodeURIComponent(body.craft_nodes))
+        layout: JSON.parse(decodeURIComponent(body.layout))
+        //craft_nodes: JSON.parse(decodeURIComponent(body.craft_nodes))
       };
       const toCtx = step.contextField
         ? { [step.contextField]: toCtx0 }
@@ -98,7 +98,7 @@ class Workflow {
         renderBuilder: {
           options,
           context,
-          craft_nodes: context.craft_nodes,
+          layout: context.layout,
           action: this.action,
           stepName: step.name
         }

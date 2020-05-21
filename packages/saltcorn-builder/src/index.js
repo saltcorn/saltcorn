@@ -2,9 +2,9 @@ import React from "react";
 import Builder from "./components/Builder";
 import ReactDOM from "react-dom";
 
-function renderBuilder(id, options, craft_nodes) {
+function renderBuilder(id, options, layout) {
   ReactDOM.render(
-    <Builder options={options} craft_nodes={JSON.stringify(craft_nodes)} />,
+    <Builder options={options} layout={layout} />,
     document.getElementById(id)
   );
 }

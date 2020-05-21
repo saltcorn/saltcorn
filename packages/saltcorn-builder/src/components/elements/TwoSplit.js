@@ -3,7 +3,7 @@ import { Text } from "./Text";
 
 import { Canvas, useNode } from "@craftjs/core";
 
-export const TwoSplit = ({ leftCols }) => {
+export const TwoSplit = ({ leftCols, left, right }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
@@ -11,12 +11,12 @@ export const TwoSplit = ({ leftCols }) => {
     <div className="row" ref={dom => connect(drag(dom))}>
       <div className={`split-col col-sm-${leftCols}`}>
         <Canvas id="Left" is="div">
-          <Text text="Left" />
+          {left}
         </Canvas>
       </div>
       <div className={`split-col col-sm-${12 - leftCols}`}>
         <Canvas id="Right" is="div">
-          <Text text="Right" />
+          {right}
         </Canvas>
       </div>
     </div>

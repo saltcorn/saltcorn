@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 import optionsCtx from "./context";
-import { craftToSaltcorn } from "./storage";
+import { craftToSaltcorn, layoutToNodes } from "./storage";
 const { Provider } = optionsCtx;
 
 const Toolbox = () => {
@@ -21,7 +21,17 @@ const Toolbox = () => {
             </button>
           </td>
           <td>
-            <button ref={ref => connectors.create(ref, <TwoSplit />)}>
+            <button
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <TwoSplit
+                    left={<Text text="Left" />}
+                    right={<Text text="Right" />}
+                  />
+                )
+              }
+            >
               ||
             </button>
           </td>
@@ -80,22 +90,20 @@ const SettingsPanel = () => {
   );
 };
 
-const SaveButton = () => {
-  const { query } = useEditor(() => {});
+const SaveButton = ({ layout }) => {
+  const { query, actions } = useEditor(() => {});
+  useEffect(() => {
+    layoutToNodes(layout, query, actions);
+  }, []);
   const onClick = () => {
-    const { columns, layout, craft_nodes } = craftToSaltcorn(
-      JSON.parse(query.serialize())
-    );
+    const { columns, layout } = craftToSaltcorn(JSON.parse(query.serialize()));
     document
       .querySelector("form#scbuildform input[name=columns]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));
     document
       .querySelector("form#scbuildform input[name=layout]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(layout)));
-    document
-      .querySelector("form#scbuildform input[name=craft_nodes]")
-      .setAttribute("value", encodeURIComponent(JSON.stringify(craft_nodes)));
-    document.getElementById("scbuildform").submit();
+    //document.getElementById("scbuildform").submit();
   };
   return (
     <button className="btn btn-primary" onClick={onClick}>
@@ -104,16 +112,15 @@ const SaveButton = () => {
   );
 };
 
-const Builder = ({ options, craft_nodes }) => {
-  console.log(craft_nodes);
+const Builder = ({ options, layout }) => {
   return (
     <Editor>
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <Frame resolver={(Text, TwoSplit)} json={craft_nodes}>
+            <Frame resolver={(Text, TwoSplit)}>
               <Canvas>
-                <Text text="I'm already rendered here" />
+                <Text text="I was already rendered here" />
               </Canvas>
             </Frame>
           </div>
@@ -122,7 +129,7 @@ const Builder = ({ options, craft_nodes }) => {
             <SettingsPanel />
           </div>
         </div>
-        <SaveButton />
+        <SaveButton layout={layout} />
       </Provider>
     </Editor>
   );
