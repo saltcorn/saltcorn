@@ -103,7 +103,7 @@ const SaveButton = ({ layout }) => {
     document
       .querySelector("form#scbuildform input[name=layout]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(layout)));
-    //document.getElementById("scbuildform").submit();
+    document.getElementById("scbuildform").submit();
   };
   return (
     <button className="btn btn-primary" onClick={onClick}>
