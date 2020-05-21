@@ -42,7 +42,9 @@ lerna bootstrap
 
 to install everything. If successful, you should now be able to run `saltcorn` in your shell
 
-## Prettier
+## Development Tips
+
+### Prettier
 
 we use prettier 1.x:
 
@@ -52,10 +54,16 @@ to format code:
 
 `git ls-files | xargs prettier --write`
 
-## dev server
+### dev server
 
 `nodemon packages/saltcorn-cli/bin/saltcorn serve`
 
 to also watch a local module
 
 `nodemon --watch ../saltcorn-kanban/ packages/saltcorn-cli/bin/saltcorn serve`
+
+### React rebuild on save
+
+in `saltcorns/packages/saltcorn-builder/` run:
+
+`git ls-files | entr npm run build`
