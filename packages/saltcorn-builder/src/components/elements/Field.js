@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext} from "react";
 import { useNode } from "@craftjs/core";
+import optionsCtx from "../context"
 
 export const Field = ({ name }) => {
   const {
@@ -9,9 +10,12 @@ export const Field = ({ name }) => {
 };
 
 export const FieldSettings = () => {
+
   const { setProp, name } = useNode(node => ({
     name: node.data.props.name
   }));
+  const options = useContext(optionsCtx);
+  console.log("FieldSettings", options)
   return (
     <div>
       <h6>Field settings</h6>

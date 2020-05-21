@@ -3,6 +3,10 @@ import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
+import optionsCtx from "./context"
+
+const { Provider }= optionsCtx
+
 const Toolbox = () => {
   const { connectors, query } = useEditor();
   return (
@@ -38,6 +42,7 @@ const Toolbox = () => {
 };
 
 const SettingsPanel = () => {
+
   const { actions, selected } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
@@ -75,9 +80,11 @@ const SettingsPanel = () => {
     ""
   );
 };
-const Builder = ({}) => {
+
+const Builder = ({options}) => {
   return (
     <Editor>
+        <Provider value={options}>
       <div className="row">
         <div className="col-sm-9">
           <Frame resolver={(Text, TwoSplit)}>
@@ -87,10 +94,10 @@ const Builder = ({}) => {
           </Frame>
         </div>
         <div className="col-sm-3">
-          <Toolbox />
+          <Toolbox/>
           <SettingsPanel />
         </div>
-      </div>
+      </div></Provider>
     </Editor>
   );
 };

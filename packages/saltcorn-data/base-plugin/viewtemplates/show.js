@@ -19,7 +19,11 @@ const configuration_workflow = () =>
     steps: [
       {
         name: "showfields",
-        builder: () => "build me",
+        builder: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          return {fields}
+        },
         form1: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const field_picker_repeat = await field_picker_fields({
