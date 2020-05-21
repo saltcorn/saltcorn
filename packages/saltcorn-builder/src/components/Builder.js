@@ -1,6 +1,7 @@
 import React from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
+import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 const Toolbox = () => {
   const { connectors, query } = useEditor();
@@ -20,6 +21,16 @@ const Toolbox = () => {
               ||
             </button>
           </td>
+        </tr>
+        <tr>
+          <td>
+            <button
+              ref={ref => connectors.create(ref, <Field name="field_name" />)}
+            >
+              Field
+            </button>
+          </td>
+          <td></td>
         </tr>
       </tbody>
     </table>
