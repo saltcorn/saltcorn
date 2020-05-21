@@ -82,13 +82,23 @@ const SettingsPanel = () => {
 
 const SaveButton = () => {
   const { query } = useEditor(() => {});
+  const onClick = () => {
+    const { columns, layout, craft_nodes } = craftToSaltcorn(
+      JSON.parse(query.serialize())
+    );
+    document
+      .querySelector("form#scbuildform input[name=columns]")
+      .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));
+    document
+      .querySelector("form#scbuildform input[name=layout]")
+      .setAttribute("value", encodeURIComponent(JSON.stringify(layout)));
+    document
+      .querySelector("form#scbuildform input[name=craft_nodes]")
+      .setAttribute("value", encodeURIComponent(JSON.stringify(craft_nodes)));
+    console.log("done");
+  };
   return (
-    <button
-      className="btn btn-primary"
-      onClick={() => {
-        console.log(craftToSaltcorn(JSON.parse(query.serialize())));
-      }}
-    >
+    <button className="btn btn-primary" onClick={onClick}>
       Save
     </button>
   );

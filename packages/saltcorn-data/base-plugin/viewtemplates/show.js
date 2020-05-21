@@ -66,8 +66,8 @@ const get_state_fields = () => [
 const initial_config = initial_config_all_fields(false);
 
 const run = async (table_id, viewname, { columns, label_style }, { id }) => {
+  console.log(columns);
   if (typeof id === "undefined") return "No record selected";
-
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);

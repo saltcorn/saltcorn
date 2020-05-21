@@ -81,8 +81,15 @@ class Workflow {
 
       return { renderForm: form };
     } else if (step.builder) {
-      const builder = await applyAsync(step.builder, context);
-      return { renderBuilder: builder };
+      const options = await applyAsync(step.builder, context);
+      return {
+        renderBuilder: {
+          options,
+          context,
+          action: this.action,
+          stepName: step.name
+        }
+      };
     }
   }
 }
