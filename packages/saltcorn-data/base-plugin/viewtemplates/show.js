@@ -22,7 +22,7 @@ const configuration_workflow = () =>
         builder: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          return {fields}
+          return { fields };
         },
         form1: async context => {
           const table = await Table.findOne({ id: context.table_id });
