@@ -16,26 +16,68 @@ const Toolbox = () => {
             </button>
           </td>
           <td>
-            <button ref={ref => connectors.create(ref, <TwoSplit/>)}>||</button>
+            <button ref={ref => connectors.create(ref, <TwoSplit />)}>
+              ||
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
   );
 };
+
+const SettingsPanel = () => {
+  const { actions, selected } = useEditor((state, query) => {
+    const currentNodeId = state.events.selected;
+    let selected;
+
+    if (currentNodeId) {
+      selected = {
+        id: currentNodeId,
+        name: state.nodes[currentNodeId].data.name,
+        settings:
+          state.nodes[currentNodeId].related &&
+          state.nodes[currentNodeId].related.settings,
+        isDeletable: query.node(currentNodeId).isDeletable()
+      };
+    }
+
+    return {
+      selected
+    };
+  });
+
+  return selected ? (
+    <div>
+      {selected.settings && React.createElement(selected.settings)}
+      {selected.isDeletable && (
+        <button
+          onClick={() => {
+            actions.delete(selected.id);
+          }}
+        >
+          Delete
+        </button>
+      )}
+    </div>
+  ) : (
+    ""
+  );
+};
 const Builder = ({}) => {
   return (
     <Editor>
       <div className="row">
-        <div className="col-sm-10">
+        <div className="col-sm-9">
           <Frame resolver={(Text, TwoSplit)}>
             <Canvas>
               <Text text="I'm already rendered here" />
             </Canvas>
           </Frame>
         </div>
-        <div className="col-sm-2">
+        <div className="col-sm-3">
           <Toolbox />
+          <SettingsPanel />
         </div>
       </div>
     </Editor>

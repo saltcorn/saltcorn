@@ -14,7 +14,7 @@ export const TextSettings = () => {
   }));
   return (
     <div>
-      <h2>Text settings</h2>
+      <h6>Text settings</h6>
       <input
         type="text"
         value={text}
@@ -26,6 +26,6 @@ export const TextSettings = () => {
 
 Text.craft = {
   related: {
-    toolbar: TextSettings
+    settings: TextSettings
   }
 };

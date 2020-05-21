@@ -11,13 +11,12 @@ export const TwoSplit = ({ leftCols }) => {
     <div className="row" ref={dom => connect(drag(dom))}>
       <div className={`split-col col-sm-${leftCols}`}>
         <Canvas id="Left" is="div">
-            <Text text="Left" />
+          <Text text="Left" />
         </Canvas>
       </div>
       <div className={`split-col col-sm-${12 - leftCols}`}>
         <Canvas id="Right" is="div">
-        <Text text="Right" />
-
+          <Text text="Right" />
         </Canvas>
       </div>
     </div>
