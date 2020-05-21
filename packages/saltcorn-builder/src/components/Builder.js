@@ -95,7 +95,7 @@ const SaveButton = () => {
     document
       .querySelector("form#scbuildform input[name=craft_nodes]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(craft_nodes)));
-    console.log("done");
+    document.getElementById("scbuildform").submit();
   };
   return (
     <button className="btn btn-primary" onClick={onClick}>
