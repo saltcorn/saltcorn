@@ -1,7 +1,10 @@
 import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
+import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
+import { ViewLink } from "./elements/ViewLink";
+import { Action } from "./elements/Action";
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout))
@@ -16,11 +19,17 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
         />
       );
+    } else if (segment.type === "join_field") {
+      return <JoinField key={ix} name={segment.join_field} />;
+    } else if (segment.type === "view_link") {
+      return <ViewLink key={ix} name={segment.view} />;
+    } else if (segment.type === "action") {
+      return <Action key={ix} name={segment.action_name} />;
     } else if (segment.besides) {
       return (
         <TwoSplit
           key={ix}
-          leftCols={6}
+          leftCols={segment.widths ? segment.widths[0] : 6}
           left={toTag(segment.besides[0])}
           right={toTag(segment.besides[1])}
         />
@@ -35,12 +44,12 @@ export const layoutToNodes = (layout, query, actions) => {
   function go(segment, parent) {
     if (segment.above) {
       segment.above.forEach(child => {
-        go(child, parent);
+        if (child) go(child, parent);
       });
     } else if (segment.besides) {
       const node = query.createNode(
         <TwoSplit
-          leftCols={6}
+          leftCols={segment.widths ? segment.widths[0] : 6}
           left={toTag(segment.besides[0])}
           right={toTag(segment.besides[1])}
         />
@@ -73,7 +82,8 @@ export const craftToSaltcorn = nodes => {
         besides: [
           go(nodes[node._childCanvas.Left]),
           go(nodes[node._childCanvas.Right])
-        ]
+        ],
+        widths: [node.props.leftCols, 12 - node.props.leftCols]
       };
     }
     if (node.displayName === "Field") {
@@ -86,6 +96,36 @@ export const craftToSaltcorn = nodes => {
         type: "field",
         field_name: node.props.name,
         fieldview: node.props.fieldview
+      };
+    }
+    if (node.displayName === "JoinField") {
+      columns.push({
+        type: "JoinField",
+        join_field: node.props.name
+      });
+      return {
+        type: "join_field",
+        join_field: node.props.name
+      };
+    }
+    if (node.displayName === "ViewLink") {
+      columns.push({
+        type: "ViewLink",
+        view: node.props.name
+      });
+      return {
+        type: "view_link",
+        view: node.props.name
+      };
+    }
+    if (node.displayName === "Action") {
+      columns.push({
+        type: "Action",
+        action_name: node.props.name
+      });
+      return {
+        type: "action",
+        action_name: node.props.name
       };
     }
   };

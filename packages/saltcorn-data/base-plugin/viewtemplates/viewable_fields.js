@@ -79,4 +79,4 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
     }
   });
 
-module.exports = { get_viewable_fields };
+module.exports = { get_viewable_fields, action_url };
