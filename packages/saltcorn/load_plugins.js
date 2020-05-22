@@ -10,7 +10,7 @@ const loadPlugin = async plugin => {
 };
 
 const requirePlugin = async plugin => {
-  if (["saltcorn-base-plugin", "saltcorn-sbadmin2"].includes(plugin.location)) {
+  if (["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(plugin.location)) {
     return require(plugin.location);
   } else if (plugin.source === "npm") {
     await manager.install(plugin.location);

@@ -1,5 +1,5 @@
 {
-  "name": "saltcorn-sbadmin2",
+  "name": "@saltcorn/sbadmin2",
   "version": "0.0.1",
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
