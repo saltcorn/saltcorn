@@ -66,4 +66,4 @@ to also watch a local module
 
 in `saltcorn/packages/saltcorn-builder/` run:
 
-`git ls-files | entr npm run build`
+`git ls-files | entr npm run builddev`
