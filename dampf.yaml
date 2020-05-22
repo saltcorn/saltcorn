@@ -9,6 +9,10 @@ container saltcorn:
 domain saltcorn.com:
   proxyContainer: saltcorn:4649
   letsEncrypt: true
+  
+domain store.saltcorn.com:
+  proxyContainer: saltcorn:4649
+  letsEncrypt: true
 
 postgresdb saltcorn:
   user: tomn

@@ -48,14 +48,14 @@ const plugin_pack = async name => {
 };
 
 const fetch_available_packs = async () => {
-  const response = await fetch("https://www.saltcorn.com/api/packs");
+  const response = await fetch("https://store.saltcorn.com/api/packs");
   const json = await response.json();
   return json.success;
 };
 
 const fetch_pack_by_name = async name => {
   const response = await fetch(
-    "https://www.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
+    "https://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
   );
   const json = await response.json();
   if (json.success.length == 1) return json.success[0];

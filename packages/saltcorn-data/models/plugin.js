@@ -44,14 +44,14 @@ class Plugin {
   }
 
   static async store_plugins_available() {
-    const response = await fetch("https://www.saltcorn.com/api/extensions");
+    const response = await fetch("https://store.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map(p => new Plugin(p));
   }
 
   static async store_by_name(name) {
     const response = await fetch(
-      "https://www.saltcorn.com/api/extensions?name=" + encodeURIComponent(name)
+      "https://store.saltcorn.com/api/extensions?name=" + encodeURIComponent(name)
     );
     const json = await response.json();
     if (json.success.length == 1) return new Plugin(json.success[0]);
