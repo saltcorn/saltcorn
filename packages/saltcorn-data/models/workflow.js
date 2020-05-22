@@ -29,23 +29,35 @@ class Workflow {
       //error
     }
     const step = this.steps[stepIx];
-    const form = await applyAsync(step.form, context);
+    if (step.form) {
+      const form = await applyAsync(step.form, context);
 
-    const valres = form.validate(stepBody);
-    if (valres.errors) {
-      form.hidden("stepName", "contextEnc");
-      form.values = {
-        stepName: step.name,
-        contextEnc
+      const valres = form.validate(stepBody);
+      if (valres.errors) {
+        form.hidden("stepName", "contextEnc");
+        form.values = {
+          stepName: step.name,
+          contextEnc
+        };
+        if (this.action) form.action = this.action;
+        return { renderForm: form };
+      }
+      const toCtx = step.contextField
+        ? { [step.contextField]: valres.success }
+        : valres.success;
+
+      return this.runStep({ ...context, ...toCtx }, stepIx + 1);
+    } else if (step.builder) {
+      const toCtx0 = {
+        columns: JSON.parse(decodeURIComponent(body.columns)),
+        layout: JSON.parse(decodeURIComponent(body.layout))
+        //craft_nodes: JSON.parse(decodeURIComponent(body.craft_nodes))
       };
-      if (this.action) form.action = this.action;
-      return { renderForm: form };
+      const toCtx = step.contextField
+        ? { [step.contextField]: toCtx0 }
+        : toCtx0;
+      return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
-    const toCtx = step.contextField
-      ? { [step.contextField]: valres.success }
-      : valres.success;
-
-    return this.runStep({ ...context, ...toCtx }, stepIx + 1);
   }
   async runStep(context, stepIx) {
     if (stepIx >= this.steps.length) {
@@ -57,28 +69,41 @@ class Workflow {
 
       if (!toRun) return this.runStep(context, stepIx + 1);
     }
-    const form = await applyAsync(step.form, context);
+    if (step.form) {
+      const form = await applyAsync(step.form, context);
 
-    form.hidden("stepName", "contextEnc");
-    form.values.stepName = step.name;
-    form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
+      form.hidden("stepName", "contextEnc");
+      form.values.stepName = step.name;
+      form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
 
-    form.fields.forEach(fld => {
-      const ctxValue = step.contextField
-        ? (context[step.contextField] || {})[fld.name]
-        : context[fld.name];
-      if (
-        typeof ctxValue !== "undefined" &&
-        typeof form.values[fld.name] === "undefined"
-      ) {
-        if (fld.type && fld.type.read)
-          form.values[fld.name] = fld.type.read(ctxValue);
-        else form.values[fld.name] = ctxValue;
-      }
-    });
-    if (this.action) form.action = this.action;
+      form.fields.forEach(fld => {
+        const ctxValue = step.contextField
+          ? (context[step.contextField] || {})[fld.name]
+          : context[fld.name];
+        if (
+          typeof ctxValue !== "undefined" &&
+          typeof form.values[fld.name] === "undefined"
+        ) {
+          if (fld.type && fld.type.read)
+            form.values[fld.name] = fld.type.read(ctxValue);
+          else form.values[fld.name] = ctxValue;
+        }
+      });
+      if (this.action) form.action = this.action;
 
-    return { renderForm: form };
+      return { renderForm: form };
+    } else if (step.builder) {
+      const options = await applyAsync(step.builder, context);
+      return {
+        renderBuilder: {
+          options,
+          context,
+          layout: context.layout,
+          action: this.action,
+          stepName: step.name
+        }
+      };
+    }
   }
 }
 

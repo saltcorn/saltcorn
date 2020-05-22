@@ -175,14 +175,27 @@ describe("viewedit new Show", () => {
         table_id: 1
       })
     );
+    const columns = [
+      { type: "Field", field_name: "author", state_field: "on" },
+      { type: "ViewLink", view: "Own:authorshow" },
+      { type: "Action", action_name: "Delete" },
+      {
+        type: "Aggregation",
+        agg_relation: "patients.favbook",
+        agg_field_patients_favbook: "name",
+        stat: "Count"
+      }
+    ];
+    const layout = {
+      above: [{ type: "field", fieldview: "show", field_name: "author" }]
+    };
     const app = await getApp();
     await request(app)
       .post("/viewedit/config/mybook")
       .send("contextEnc=" + ctx)
       .send("stepName=showfields")
-      .send("type_0=Field")
-      .send("field_name_0=author")
-      .send("label_style=Besides")
+      .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
+      .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
   });

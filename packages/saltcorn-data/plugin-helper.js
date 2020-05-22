@@ -208,7 +208,7 @@ const get_parent_views = async (table, viewname) => {
 const picked_fields_to_query = columns => {
   var joinFields = {};
   var aggregations = {};
-  columns.forEach(column => {
+  (columns || []).forEach(column => {
     if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       joinFields[targetNm] = { ref: refNm, target: targetNm };
@@ -275,5 +275,6 @@ module.exports = {
   get_child_views,
   get_parent_views,
   stateFieldsToWhere,
-  initial_config_all_fields
+  initial_config_all_fields,
+  calcfldViewOptions
 };

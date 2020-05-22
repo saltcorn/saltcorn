@@ -6,3 +6,8 @@ div.form-repeat {
 pre.wsprewrap {
   white-space: pre-wrap;
 }
+
+.split-col {
+  min-height: 50px;
+  border: 1px dotted black;
+}

@@ -15,6 +15,7 @@ const { migrate } = require("saltcorn-data/migrate");
 const homepage = require("./routes/homepage");
 const { getConfig } = require("saltcorn-data/models/config");
 const { setTenant } = require("./routes/utils.js");
+const path = require("path");
 
 const getApp = async () => {
   const app = express();
@@ -48,6 +49,11 @@ const getApp = async () => {
   app.use(passport.session());
   app.use(flash());
   app.use(express.static(__dirname + "/public"));
+  app.use(
+    express.static(
+      path.dirname(require.resolve("saltcorn-builder/package.json")) + "/dist"
+    )
+  );
 
   passport.use(
     "local",

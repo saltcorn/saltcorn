@@ -53,7 +53,7 @@ const text = t => (t === 0 ? "0" : xss(t));
 const nbsp = "&nbsp;";
 module.exports = {
   a: mkTag("a"),
-  div: mkTag("div"),
+  div: mkTag("div", true),
   span: mkTag("span"),
   label: mkTag("label"),
   option: mkTag("option"),
@@ -61,7 +61,7 @@ module.exports = {
   button: mkTag("button"),
   textarea: mkTag("textarea", true),
   form: mkTag("form"),
-  script: mkTag("script"),
+  script: mkTag("script", true),
   style: mkTag("style"),
   p: mkTag("p"),
   table: mkTag("table"),
