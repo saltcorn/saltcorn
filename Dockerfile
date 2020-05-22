@@ -13,5 +13,7 @@ RUN lerna bootstrap
 
 EXPOSE 4649
 
+ENV SALTCORN_MULTI_TENANT true
+
 CMD ["/saltcorn/packages/saltcorn-cli/bin/saltcorn", "serve", "-p", "4649"]
 
