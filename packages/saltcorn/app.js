@@ -51,7 +51,7 @@ const getApp = async () => {
   app.use(express.static(__dirname + "/public"));
   app.use(
     express.static(
-      path.dirname(require.resolve("saltcorn-builder/package.json")) + "/dist"
+      path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist"
     )
   );
 
