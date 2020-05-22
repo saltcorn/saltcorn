@@ -1,6 +1,7 @@
 import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
+import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
 
 export const layoutToNodes = (layout, query, actions) => {
@@ -14,6 +15,13 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.field_name}
           fieldview={segment.fieldview}
+        />
+      );
+    }  else if (segment.type === "join_field") {
+      return (
+        <JoinField
+          key={ix}
+          name={segment.join_field}
         />
       );
     } else if (segment.besides) {
@@ -95,8 +103,8 @@ export const craftToSaltcorn = nodes => {
         join_field: node.props.name
       });
       return {
-        type: "field",
-        field_name: node.props.name,        
+        type: "join_field",
+        join_field: node.props.name,        
       };
     }
   };

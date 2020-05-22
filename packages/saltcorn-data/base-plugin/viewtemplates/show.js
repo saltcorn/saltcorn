@@ -95,8 +95,12 @@ const render = (row, fields, layout) => {
       if (segment.fieldview && field.type.fieldviews[segment.fieldview])
         return field.type.fieldviews[segment.fieldview].run(val);
       else return text(val);
+    } else if (segment.type === "join_field") {
+      const [refNm, targetNm] = segment.join_field.split(".");
+      const val = row[targetNm];
+      return text(val);
     } else if (segment.above) {
-      return segment.above.map(go).join("");
+      return segment.above.map(s=>div(go(s))).join("");
     } else if (segment.besides) {
       const defwidth=Math.round(12 / segment.besides.length)
       return div(
@@ -108,7 +112,7 @@ const render = (row, fields, layout) => {
           )
         )
       );
-    } else throw new Error("unknown layout " + JSON.stringify(layout));
+    } else throw new Error("unknown layout setment" + JSON.stringify(segment));
   }
   return go(layout);
 };
