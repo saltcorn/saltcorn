@@ -75,7 +75,7 @@ describe("Pack Endpoints", () => {
 
     const app = await getApp();
     await request(app)
-      .post("/packs/install-named/Simple%20Project%20Management")
+      .post("/packs/install-named/Project%20management")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/"));
   });
