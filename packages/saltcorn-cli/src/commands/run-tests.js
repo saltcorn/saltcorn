@@ -1,7 +1,7 @@
 const { Command, flags } = require("@oclif/command");
-const fixtures = require("saltcorn/fixtures");
-const reset = require("saltcorn-data/db/reset_schema");
-const db = require("saltcorn-data/db");
+const fixtures = require("@saltcorn/server/fixtures");
+const reset = require("@saltcorn/data/db/reset_schema");
+const db = require("@saltcorn/data/db");
 const { spawnSync } = require("child_process");
 
 class RunTestsCommand extends Command {

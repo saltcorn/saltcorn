@@ -4,9 +4,9 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr } = require("saltcorn-markup/tags");
-const { renderForm, tabs } = require("saltcorn-markup");
-const { mkTable } = require("saltcorn-markup");
+const { text, div, h4, hr } = require("@saltcorn/markup/tags");
+const { renderForm, tabs } = require("@saltcorn/markup");
+const { mkTable } = require("@saltcorn/markup");
 
 const configuration_workflow = () =>
   new Workflow({

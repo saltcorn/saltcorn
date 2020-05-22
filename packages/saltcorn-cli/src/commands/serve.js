@@ -1,5 +1,5 @@
 const { Command, flags } = require("@oclif/command");
-const serve = require("saltcorn/serve");
+const serve = require("@saltcorn/server/serve");
 class ServeCommand extends Command {
   async run() {
     const { flags } = this.parse(ServeCommand);

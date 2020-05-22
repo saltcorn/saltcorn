@@ -1,11 +1,11 @@
 {
-  "name": "saltcorn-random-tests",
+  "name": "@saltcorn/random-tests",
   "version": "0.0.1",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "saltcorn": "^0.0.1",
-    "saltcorn-data": "^0.0.1"
+    "@saltcorn/server": "^0.0.1",
+    "@saltcorn/data": "^0.0.1"
   },
   "devDependencies": {
     "jest": "^25.1.0",

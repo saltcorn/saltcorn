@@ -4,8 +4,8 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text } = require("saltcorn-markup/tags");
-const { renderForm } = require("saltcorn-markup");
+const { text } = require("@saltcorn/markup/tags");
+const { renderForm } = require("@saltcorn/markup");
 const { initial_config_all_fields } = require("../../plugin-helper");
 
 const configuration_workflow = () =>

@@ -1,6 +1,6 @@
 # Saltcorn
 
-![Build and Test](https://github.com/glutamate/saltcorns/workflows/Node.js%20CI/badge.svg)
+![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)
 
 ## Install from source (for saltcorn developers)
 
@@ -18,11 +18,11 @@ sudo apt-get install -y nodejs libpq-dev
 
 ### Prepare Node
 
-assuming you have cloned this repository to \$HOME/saltcorns (otherwise adjust PATH)
+assuming you have cloned this repository to \$HOME/saltcorn (otherwise adjust PATH)
 
 ```
 npm config set prefix ~/.local
-echo 'export PATH=$HOME/saltcorns/packages/saltcorn-cli/bin:$HOME/.local/bin:$PATH' >> ~/.bashrc
+echo 'export PATH=$HOME/saltcorn/packages/saltcorn-cli/bin:$HOME/.local/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -64,6 +64,6 @@ to also watch a local module
 
 ### React rebuild on save
 
-in `saltcorns/packages/saltcorn-builder/` run:
+in `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run build`

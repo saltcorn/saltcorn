@@ -1,5 +1,5 @@
 {
-  "name": "saltcorn-data",
+  "name": "@saltcorn/data",
   "version": "0.0.1",
   "description": "",
   "scripts": {
@@ -15,7 +15,7 @@
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "pg": "^8.1.0",
-    "saltcorn-markup": "^0.0.1",
+    "@saltcorn/markup": "^0.0.1",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
