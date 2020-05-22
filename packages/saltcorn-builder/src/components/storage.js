@@ -20,7 +20,7 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <TwoSplit
           key={ix}
-          leftCols={6}
+          leftCols={segment.widths ? segment.widths[0] : 6}
           left={toTag(segment.besides[0])}
           right={toTag(segment.besides[1])}
         />
@@ -40,7 +40,7 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.besides) {
       const node = query.createNode(
         <TwoSplit
-          leftCols={6}
+          leftCols={segment.widths ? segment.widths[0] : 6}
           left={toTag(segment.besides[0])}
           right={toTag(segment.besides[1])}
         />
@@ -73,7 +73,8 @@ export const craftToSaltcorn = nodes => {
         besides: [
           go(nodes[node._childCanvas.Left]),
           go(nodes[node._childCanvas.Right])
-        ]
+        ],
+        widths: [node.props.leftCols, 12-node.props.leftCols]
       };
     }
     if (node.displayName === "Field") {

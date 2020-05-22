@@ -121,11 +121,12 @@ const render = (row, fields, layout) => {
     } else if (segment.above) {
       return segment.above.map(go).join("");
     } else if (segment.besides) {
+      const defwidth=Math.round(12 / segment.besides.length)
       return div(
         { class: "row" },
-        segment.besides.map(t =>
+        segment.besides.map((t,ix) =>
           div(
-            { class: `col-sm-${Math.round(12 / segment.besides.length)}` },
+            { class: `col-sm-${segment.widths?segment.widths[ix] :defwidth}` },
             go(t)
           )
         )
