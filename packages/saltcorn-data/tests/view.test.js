@@ -1,7 +1,7 @@
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const View = require("@saltcorn/data/models/view");
-const db = require("@saltcorn/data/db");
+const Table = require("../models/table");
+const Field = require("../models/field");
+const View = require("../models/view");
+const db = require("../db");
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));

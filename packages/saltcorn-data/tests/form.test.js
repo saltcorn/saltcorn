@@ -1,7 +1,7 @@
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const Form = require("@saltcorn/data/models/form");
+const Table = require("../models/table");
+const Field = require("../models/field");
+const FieldRepeat = require("../models/fieldrepeat");
+const Form = require("../models/form");
 const { renderForm } = require("@saltcorn/markup");
 
 const { getState } = require("../db/state");
