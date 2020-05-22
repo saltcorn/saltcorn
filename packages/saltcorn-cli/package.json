@@ -1,5 +1,5 @@
 {
-  "name": "saltcorn-cli",
+  "name": "@saltcorn/cli",
   "description": "Saltcorn command line interface",
   "version": "0.0.1",
   "author": "Tom Nielsen @glutamate",

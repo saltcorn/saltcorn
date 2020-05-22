@@ -1,5 +1,5 @@
 {
-  "name": "saltcorn-random-tests",
+  "name": "@saltcorn/random-tests",
   "version": "0.0.1",
   "description": "Pluggable nocode",
   "license": "MIT",
