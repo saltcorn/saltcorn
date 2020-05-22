@@ -92,11 +92,9 @@ module.exports = async () => {
           stat: "Count"
         }
       ],
-      layout: 
-        {above: [
-          { type: 'field', fieldview: 'show', field_name: 'author' }
-        ]}
-      
+      layout: {
+        above: [{ type: "field", fieldview: "show", field_name: "author" }]
+      }
     },
     is_public: true,
     on_root_page: true,

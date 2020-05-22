@@ -67,6 +67,7 @@ const initial_config = initial_config_all_fields(false);
 
 const run = async (table_id, viewname, { columns, layout }, { id }) => {
   //console.log(columns);
+  //console.log(layout);
   if (typeof id === "undefined") return "No record selected";
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
@@ -108,30 +109,30 @@ const runMany = async (
 
 const render = (row, fields, layout) => {
   function go(segment) {
-    if(!segment)
-      return 'missing layout';
+    if (!segment) return "missing layout";
     if (segment.type === "blank") {
       return segment.contents;
-    }  if (segment.type === "field") {
+    } else if (segment.type === "field") {
       const val = row[segment.field_name];
       const field = fields.find(fld => fld.name === segment.field_name);
-      if(segment.fieldview && field.type.fieldviews[segment.fieldview])
-        return field.type.fieldviews[segment.fieldview].run(val)
-      else 
-        return text(val)
-    } else if(segment.above) {
-        return segment.above.map(go).join('')
-    } else if(segment.besides) {
+      if (segment.fieldview && field.type.fieldviews[segment.fieldview])
+        return field.type.fieldviews[segment.fieldview].run(val);
+      else return text(val);
+    } else if (segment.above) {
+      return segment.above.map(go).join("");
+    } else if (segment.besides) {
       return div(
-        {class:"row"}, 
-        segment.besides.map(t=>div(
-          {class: `col-sm-${Math.round(12/segment.besides.length)}`},
-          go(t)
-        )) )
-    } else throw new Error("unknown layout "+JSON.stringify(layout))
+        { class: "row" },
+        segment.besides.map(t =>
+          div(
+            { class: `col-sm-${Math.round(12 / segment.besides.length)}` },
+            go(t)
+          )
+        )
+      );
+    } else throw new Error("unknown layout " + JSON.stringify(layout));
   }
-  return go(layout)
-
+  return go(layout);
 };
 
 module.exports = {

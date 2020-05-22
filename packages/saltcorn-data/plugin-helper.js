@@ -208,7 +208,7 @@ const get_parent_views = async (table, viewname) => {
 const picked_fields_to_query = columns => {
   var joinFields = {};
   var aggregations = {};
-  (columns||[]).forEach(column => {
+  (columns || []).forEach(column => {
     if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       joinFields[targetNm] = { ref: refNm, target: targetNm };
