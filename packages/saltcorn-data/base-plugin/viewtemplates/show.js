@@ -108,6 +108,8 @@ const runMany = async (
 
 const render = (row, fields, layout) => {
   function go(segment) {
+    if(!segment)
+      return 'missing layout';
     if (segment.type === "blank") {
       return segment.contents;
     }  if (segment.type === "field") {
@@ -126,7 +128,7 @@ const render = (row, fields, layout) => {
           {class: `col-sm-${Math.round(12/segment.besides.length)}`},
           go(t)
         )) )
-    }
+    } else throw new Error("unknown layout "+JSON.stringify(layout))
   }
   return go(layout)
 
