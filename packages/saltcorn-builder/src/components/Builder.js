@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
+import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
@@ -44,7 +45,11 @@ const Toolbox = () => {
               Field
             </button>
           </td>
-          <td></td>
+          <td><button
+              ref={ref => connectors.create(ref, <JoinField name="join_field_name" />)}
+            >
+              Join
+            </button></td>
         </tr>
       </tbody>
     </table>
@@ -118,7 +123,7 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <Frame resolver={(Text, TwoSplit)}>
+            <Frame resolver={(Text, TwoSplit, JoinField, Field)}>
               <Canvas>
                 <Text text="I was already rendered here" />
               </Canvas>

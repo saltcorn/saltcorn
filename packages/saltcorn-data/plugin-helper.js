@@ -276,5 +276,6 @@ module.exports = {
   get_parent_views,
   stateFieldsToWhere,
   initial_config_all_fields,
-  calcfldViewOptions
+  calcfldViewOptions,
+  get_link_view_opts
 };

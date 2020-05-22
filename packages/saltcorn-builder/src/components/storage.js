@@ -89,6 +89,16 @@ export const craftToSaltcorn = nodes => {
         fieldview: node.props.fieldview
       };
     }
+    if (node.displayName === "JoinField") {
+      columns.push({
+        type: "JoinField",
+        join_field: node.props.name
+      });
+      return {
+        type: "field",
+        field_name: node.props.name,        
+      };
+    }
   };
   const layout = go(nodes["canvas-ROOT"]);
   /*console.log("nodes", nodes);

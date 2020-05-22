@@ -8,8 +8,8 @@ const { get_viewable_fields } = require("./viewable_fields");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
-  field_picker_fields,
   stateFieldsToWhere,
+  get_link_view_opts,
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions
@@ -24,33 +24,10 @@ const configuration_workflow = () =>
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const field_view_options = calcfldViewOptions(fields);
-          return { fields, field_view_options };
-        },
+          const link_view_opts = await get_link_view_opts(table, context.viewname);
+          const { parent_field_list } = await table.get_parent_relations();
         form1: async context => {
-          const table = await Table.findOne({ id: context.table_id });
-          const field_picker_repeat = await field_picker_fields({
-            table,
-            viewname: context.viewname
-          });
-          return new Form({
-            blurb:
-              "Finalise your show view by specifying the fields in the table",
-            fields: [
-              new FieldRepeat({
-                name: "columns",
-                fields: field_picker_repeat
-              }),
-              {
-                name: "label_style",
-                label: "Label style",
-                type: "String",
-                required: true,
-                attributes: {
-                  options: "Besides, Above, None"
-                }
-              }
-            ]
-          });
+          return { fields, field_view_options, link_view_opts, parent_field_list };
         }
       }
     ]
