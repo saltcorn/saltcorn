@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
+FROM node:14
 
 RUN apt-get update \ 
- && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs npm libpq-dev
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y libpq-dev
 
 RUN npm install -g lerna
 
