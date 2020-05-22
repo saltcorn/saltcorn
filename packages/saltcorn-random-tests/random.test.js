@@ -1,10 +1,10 @@
-const getApp = require("saltcorn/app");
+const getApp = require("@saltcorn/server/app");
 const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
   resetToFixtures
-} = require("saltcorn/auth/testhelp");
+} = require("@saltcorn/server/auth/testhelp");
 const db = require("@saltcorn/data/db");
 
 beforeAll(async () => {

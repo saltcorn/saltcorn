@@ -4,7 +4,7 @@
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "saltcorn": "^0.0.1",
+    "@saltcorn/server": "^0.0.1",
     "@saltcorn/data": "^0.0.1"
   },
   "devDependencies": {

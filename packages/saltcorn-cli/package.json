@@ -15,7 +15,7 @@
     "contractis": "^0.0.1",
     "dateformat": "^3.0.3",
     "inquirer": "^7.1.0",
-    "saltcorn": "^0.0.1",
+    "@saltcorn/server": "^0.0.1",
     "@saltcorn/data": "^0.0.1",
     "sudo": "^1.0.3",
     "tcp-port-used": "^1.0.1"
