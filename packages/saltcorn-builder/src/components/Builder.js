@@ -1,16 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useContext } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
+import { Action } from "./elements/Action";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 const { Provider } = optionsCtx;
 
 const Toolbox = () => {
   const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
   return (
     <table>
       <tbody>
@@ -46,18 +48,29 @@ const Toolbox = () => {
               Field
             </button>
           </td>
-          <td><button
-              ref={ref => connectors.create(ref, <JoinField name="join_field_name" />)}
+          <td>
+            <button
+              ref={ref =>
+                connectors.create(ref, <JoinField name="join_field_name" />)
+              }
             >
               Join
-            </button></td>
+            </button>
+          </td>
         </tr>
         <tr>
           <td>
-          <button
+            <button
               ref={ref => connectors.create(ref, <ViewLink name="view_link" />)}
             >
               Link
+            </button>
+          </td>
+          <td>
+            <button
+              ref={ref => connectors.create(ref, <Action name={options.actions[0]} />)}
+            >
+              Action
             </button>
           </td>
         </tr>
@@ -133,7 +146,9 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <Frame resolver={(Text, TwoSplit, JoinField, Field, ViewLink)}>
+            <Frame
+              resolver={(Text, TwoSplit, JoinField, Field, ViewLink, Action)}
+            >
               <Canvas>
                 <Text text="I was already rendered here" />
               </Canvas>

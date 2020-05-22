@@ -6,7 +6,7 @@ const { mkTable } = require("saltcorn-markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("saltcorn-markup");
 
-const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
+const { div,text } = require("saltcorn-markup/tags");
 const {
   stateFieldsToWhere,
   get_link_view_opts,
@@ -14,6 +14,7 @@ const {
   initial_config_all_fields,
   calcfldViewOptions
 } = require("../../plugin-helper");
+const { action_url } = require("./viewable_fields")
 
 const configuration_workflow = () =>
   new Workflow({
@@ -23,10 +24,12 @@ const configuration_workflow = () =>
         builder: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
+          const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
+          const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
           const field_view_options = calcfldViewOptions(fields);
           const link_view_opts = await get_link_view_opts(table, context.viewname);
           const { parent_field_list } = await table.get_parent_relations();
-          return { fields, field_view_options, link_view_opts, parent_field_list };
+          return { fields, actions, field_view_options, link_view_opts, parent_field_list };
         }
       }
     ]
@@ -55,7 +58,7 @@ const run = async (table_id, viewname, { columns, layout }, { id }) => {
     limit: 1
   });
   //const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
-  return render(row, fields, layout);
+  return render(row, fields, layout, viewname, tbl);
 };
 
 const runMany = async (
@@ -78,12 +81,12 @@ const runMany = async (
   });
   //const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
   return rows.map(row => ({
-    html: render(row, fields, layout),
+    html: render(row, fields, layout, viewname, tbl),
     row
   }));
 };
 
-const render = (row, fields, layout) => {
+const render = (row, fields, layout, viewname, table) => {
   function go(segment) {
     if (!segment) return "missing layout";
     if (segment.type === "blank") {
@@ -98,6 +101,8 @@ const render = (row, fields, layout) => {
       const [refNm, targetNm] = segment.join_field.split(".");
       const val = row[targetNm];
       return text(val);
+    } else if (segment.type === "action") {
+      return post_btn(action_url(viewname, table, segment, row), segment.action_name);
     } else if (segment.type === "view_link") {
       const [vtype, vrest] = segment.view.split(":");
       switch (vtype) {

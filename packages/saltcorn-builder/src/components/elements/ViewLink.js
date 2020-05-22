@@ -18,7 +18,6 @@ export const ViewLinkSettings = () => {
     name: node.data.props.name
   }));
   const options = useContext(optionsCtx);
-  console.log(options.link_view_opts)
   return (
     <div>
       <h6>View Link settings</h6>

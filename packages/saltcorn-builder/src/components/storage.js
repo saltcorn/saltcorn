@@ -4,6 +4,7 @@ import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
 import { ViewLink } from "./elements/ViewLink";
+import { Action } from "./elements/Action";
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout))
@@ -18,20 +19,12 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
         />
       );
-    }  else if (segment.type === "join_field") {
-      return (
-        <JoinField
-          key={ix}
-          name={segment.join_field}
-        />
-      );
+    } else if (segment.type === "join_field") {
+      return <JoinField key={ix} name={segment.join_field} />;
     } else if (segment.type === "view_link") {
-      return (
-        <ViewLink
-          key={ix}
-          name={segment.view}
-        />
-      );
+      return <ViewLink key={ix} name={segment.view} />;
+    } else if (segment.type === "action") {
+      return <Action key={ix} name={segment.action_name} />;
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -51,7 +44,7 @@ export const layoutToNodes = (layout, query, actions) => {
   function go(segment, parent) {
     if (segment.above) {
       segment.above.forEach(child => {
-        if(child) go(child, parent);
+        if (child) go(child, parent);
       });
     } else if (segment.besides) {
       const node = query.createNode(
@@ -90,7 +83,7 @@ export const craftToSaltcorn = nodes => {
           go(nodes[node._childCanvas.Left]),
           go(nodes[node._childCanvas.Right])
         ],
-        widths: [node.props.leftCols, 12-node.props.leftCols]
+        widths: [node.props.leftCols, 12 - node.props.leftCols]
       };
     }
     if (node.displayName === "Field") {
@@ -112,7 +105,7 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "join_field",
-        join_field: node.props.name,        
+        join_field: node.props.name
       };
     }
     if (node.displayName === "ViewLink") {
@@ -122,7 +115,17 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "view_link",
-        view: node.props.name,        
+        view: node.props.name
+      };
+    }
+    if (node.displayName === "Action") {
+      columns.push({
+        type: "Action",
+        action_name: node.props.name
+      });
+      return {
+        type: "action",
+        action_name: node.props.name
       };
     }
   };
