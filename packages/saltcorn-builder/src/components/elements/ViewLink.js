@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 
-export const JoinField = ({ name }) => {
+export const ViewLink = ({ name }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
@@ -13,22 +13,23 @@ export const JoinField = ({ name }) => {
   );
 };
 
-export const JoinFieldSettings = () => {
+export const ViewLinkSettings = () => {
   const { setProp, name } = useNode(node => ({
     name: node.data.props.name
   }));
   const options = useContext(optionsCtx);
+  console.log(options.link_view_opts)
   return (
     <div>
-      <h6>Join Field settings</h6>
+      <h6>View Link settings</h6>
       <div>
         <select
           value={name}
           onChange={e => setProp(prop => (prop.name = e.target.value))}
         >
-          {options.parent_field_list.map((f, ix) => (
-            <option key={ix} value={f}>
-              {f}
+          {options.link_view_opts.map((f, ix) => (
+            <option key={ix} value={f.name}>
+              {f.label}
             </option>
           ))}
         </select>
@@ -38,8 +39,8 @@ export const JoinFieldSettings = () => {
   );
 };
 
-JoinField.craft = {
+ViewLink.craft = {
   related: {
-    settings: JoinFieldSettings
+    settings: ViewLinkSettings
   }
 };

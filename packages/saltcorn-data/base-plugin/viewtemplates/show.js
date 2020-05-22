@@ -4,7 +4,7 @@ const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("saltcorn-markup");
 const Workflow = require("../../models/workflow");
-const { get_viewable_fields } = require("./viewable_fields");
+const { post_btn, link } = require("saltcorn-markup");
 
 const { div, h4, table, tbody, tr, td, text } = require("saltcorn-markup/tags");
 const {
@@ -98,6 +98,19 @@ const render = (row, fields, layout) => {
       const [refNm, targetNm] = segment.join_field.split(".");
       const val = row[targetNm];
       return text(val);
+    } else if (segment.type === "view_link") {
+      const [vtype, vrest] = segment.view.split(":");
+      switch (vtype) {
+        case "Own":
+          const vnm = vrest;
+          return link(`/view/${vnm}?id=${row.id}`, vnm)          
+        case "ChildList":
+          const [viewnm, tbl, fld] = vrest.split(".");
+          return link(`/view/${viewnm}?${fld}=${row.id}`, viewnm)
+        case "ParentShow":
+          const [pviewnm, ptbl, pfld] = vrest.split(".");
+          return row[pfld] ? link(`/view/${pviewnm}?id=${row[pfld]}`, pviewnm) : ""
+      }
     } else if (segment.above) {
       return segment.above.map(s=>div(go(s))).join("");
     } else if (segment.besides) {

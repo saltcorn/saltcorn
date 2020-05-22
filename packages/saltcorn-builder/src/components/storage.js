@@ -3,6 +3,7 @@ import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
+import { ViewLink } from "./elements/ViewLink";
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout))
@@ -24,6 +25,13 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.join_field}
         />
       );
+    } else if (segment.type === "view_link") {
+      return (
+        <ViewLink
+          key={ix}
+          name={segment.view}
+        />
+      );
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -43,7 +51,7 @@ export const layoutToNodes = (layout, query, actions) => {
   function go(segment, parent) {
     if (segment.above) {
       segment.above.forEach(child => {
-        go(child, parent);
+        if(child) go(child, parent);
       });
     } else if (segment.besides) {
       const node = query.createNode(
@@ -105,6 +113,16 @@ export const craftToSaltcorn = nodes => {
       return {
         type: "join_field",
         join_field: node.props.name,        
+      };
+    }
+    if (node.displayName === "ViewLink") {
+      columns.push({
+        type: "ViewLink",
+        view: node.props.name
+      });
+      return {
+        type: "view_link",
+        view: node.props.name,        
       };
     }
   };

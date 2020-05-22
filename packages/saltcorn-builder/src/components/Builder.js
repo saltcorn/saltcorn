@@ -3,6 +3,7 @@ import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
+import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
@@ -50,6 +51,15 @@ const Toolbox = () => {
             >
               Join
             </button></td>
+        </tr>
+        <tr>
+          <td>
+          <button
+              ref={ref => connectors.create(ref, <ViewLink name="view_link" />)}
+            >
+              Link
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -123,7 +133,7 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <Frame resolver={(Text, TwoSplit, JoinField, Field)}>
+            <Frame resolver={(Text, TwoSplit, JoinField, Field, ViewLink)}>
               <Canvas>
                 <Text text="I was already rendered here" />
               </Canvas>
