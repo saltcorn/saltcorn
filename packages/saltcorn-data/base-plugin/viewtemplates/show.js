@@ -26,7 +26,6 @@ const configuration_workflow = () =>
           const field_view_options = calcfldViewOptions(fields);
           const link_view_opts = await get_link_view_opts(table, context.viewname);
           const { parent_field_list } = await table.get_parent_relations();
-        form1: async context => {
           return { fields, field_view_options, link_view_opts, parent_field_list };
         }
       }
