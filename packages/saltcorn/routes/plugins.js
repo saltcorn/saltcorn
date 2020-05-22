@@ -1,15 +1,15 @@
 const Router = require("express-promise-router");
 const { setTenant, isAdmin } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const { getState } = require("saltcorn-data/db/state");
-const Form = require("saltcorn-data/models/form");
-const Field = require("saltcorn-data/models/field");
-const Plugin = require("saltcorn-data/models/plugin");
-const { fetch_available_packs } = require("saltcorn-data/models/pack");
-const { getConfig, setConfig } = require("saltcorn-data/models/config");
+const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const { getState } = require("@saltcorn/data/db/state");
+const Form = require("@saltcorn/data/models/form");
+const Field = require("@saltcorn/data/models/field");
+const Plugin = require("@saltcorn/data/models/plugin");
+const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp } = require("saltcorn-markup/tags");
+const { h5, nbsp } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;

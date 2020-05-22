@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const { setTenant, loggedIn } = require("./utils.js");
-const Table = require("saltcorn-data/models/table");
+const Table = require("@saltcorn/data/models/table");
 
 const router = new Router();
 

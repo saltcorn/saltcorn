@@ -1,11 +1,11 @@
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
-const db = require("saltcorn-data/db");
-const User = require("saltcorn-data/models/user");
-const Field = require("saltcorn-data/models/field");
-const Form = require("saltcorn-data/models/form");
-const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
+const db = require("@saltcorn/data/db");
+const User = require("@saltcorn/data/models/user");
+const Field = require("@saltcorn/data/models/field");
+const Form = require("@saltcorn/data/models/form");
+const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { isAdmin } = require("../routes/utils");
 
 const router = new Router();

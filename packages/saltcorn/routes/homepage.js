@@ -1,10 +1,10 @@
-const { getState } = require("saltcorn-data/db/state");
-const db = require("saltcorn-data/db");
-const View = require("saltcorn-data/models/view");
-const { link, renderForm, mkTable, post_btn } = require("saltcorn-markup");
-const { ul, li, div, small, a, h5 } = require("saltcorn-markup/tags");
-const Table = require("saltcorn-data/models/table");
-const { fetch_available_packs } = require("saltcorn-data/models/pack");
+const { getState } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db");
+const View = require("@saltcorn/data/models/view");
+const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
+const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
+const Table = require("@saltcorn/data/models/table");
+const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 
 const tableTable = tables =>
   mkTable(

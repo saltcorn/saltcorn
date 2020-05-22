@@ -1,5 +1,5 @@
-const { post_btn, link } = require("saltcorn-markup");
-const { text } = require("saltcorn-markup/tags");
+const { post_btn, link } = require("@saltcorn/markup");
+const { text } = require("@saltcorn/markup/tags");
 
 const action_url = (viewname, table, column, r) => {
   if (column.action_name === "Delete")

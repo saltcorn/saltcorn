@@ -1,2 +1,2 @@
-const plugin = require("saltcorn-data/base-plugin");
+const plugin = require("@saltcorn/data/base-plugin");
 module.exports = plugin;

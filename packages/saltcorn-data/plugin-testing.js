@@ -1,7 +1,7 @@
 const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");
-const { renderForm } = require("saltcorn-markup");
+const { renderForm } = require("@saltcorn/markup");
 
 const auto_test_wrap = wrap => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));

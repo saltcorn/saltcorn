@@ -1,6 +1,6 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const User = require("saltcorn-data/models/user");
+const User = require("@saltcorn/data/models/user");
 
 class CreateUserCommand extends Command {
   async run() {

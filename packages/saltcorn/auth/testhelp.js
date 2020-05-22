@@ -2,7 +2,7 @@ const request = require("supertest");
 const app = require("../app");
 const getApp = require("../app");
 const fixtures = require("../fixtures");
-const reset = require("saltcorn-data/db/reset_schema");
+const reset = require("@saltcorn/data/db/reset_schema");
 
 const toRedirect = loc => res => {
   if (res.statusCode !== 302) {

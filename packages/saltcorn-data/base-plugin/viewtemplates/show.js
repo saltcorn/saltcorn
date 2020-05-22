@@ -2,11 +2,11 @@ const Form = require("../../models/form");
 const Field = require("../../models/field");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
-const { mkTable } = require("saltcorn-markup");
+const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
-const { post_btn, link } = require("saltcorn-markup");
+const { post_btn, link } = require("@saltcorn/markup");
 
-const { div,text } = require("saltcorn-markup/tags");
+const { div,text } = require("@saltcorn/markup/tags");
 const {
   stateFieldsToWhere,
   get_link_view_opts,

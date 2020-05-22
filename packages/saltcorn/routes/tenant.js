@@ -1,9 +1,9 @@
 const Router = require("express-promise-router");
-const Form = require("saltcorn-data/models/form");
-const { getState, create_tenant } = require("saltcorn-data/db/state");
-const { renderForm, link, post_btn } = require("saltcorn-markup");
-const { div, nbsp } = require("saltcorn-markup/tags");
-const db = require("saltcorn-data/db");
+const Form = require("@saltcorn/data/models/form");
+const { getState, create_tenant } = require("@saltcorn/data/db/state");
+const { renderForm, link, post_btn } = require("@saltcorn/markup");
+const { div, nbsp } = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant } = require("../routes/utils.js");

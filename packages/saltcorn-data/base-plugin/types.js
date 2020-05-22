@@ -7,7 +7,7 @@ const {
   h3,
   button,
   textarea
-} = require("saltcorn-markup/tags");
+} = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 
 const isdef = x => (typeof x === "undefined" || x === null ? false : true);

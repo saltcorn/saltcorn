@@ -1,11 +1,11 @@
 const Router = require("express-promise-router");
 
-const Table = require("saltcorn-data/models/table");
-const Field = require("saltcorn-data/models/field");
-const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
+const Table = require("@saltcorn/data/models/table");
+const Field = require("@saltcorn/data/models/field");
+const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { setTenant, isAdmin } = require("./utils.js");
-const Form = require("saltcorn-data/models/form");
-const { span, h5, nbsp } = require("saltcorn-markup/tags");
+const Form = require("@saltcorn/data/models/form");
+const { span, h5, nbsp } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;

@@ -1,5 +1,5 @@
-const { sqlsanitize } = require("saltcorn-data/db/internal.js");
-const db = require("saltcorn-data/db");
+const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
+const db = require("@saltcorn/data/db");
 
 function loggedIn(req, res, next) {
   if (req.user && req.user.tenant === db.getTenantSchema()) {

@@ -1,6 +1,6 @@
-const db = require("saltcorn-data/db");
+const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
-const { getState } = require("saltcorn-data/db/state");
+const { getState } = require("@saltcorn/data/db/state");
 
 const manager = new PluginManager();
 

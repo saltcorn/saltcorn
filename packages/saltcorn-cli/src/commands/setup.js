@@ -2,7 +2,7 @@ const { Command, flags } = require("@oclif/command");
 const {
   getConnectObject,
   configFilePath
-} = require("saltcorn-data/db/connect");
+} = require("@saltcorn/data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
 const inquirer = require("inquirer");
@@ -167,7 +167,7 @@ const setup_connection = async () => {
   const connobj = getConnectObject();
   if (connobj) {
     // check if it works
-    const db = require("saltcorn-data/db");
+    const db = require("@saltcorn/data/db");
     try {
       await db.query("select 1");
       console.log("I already know how to connect!");
@@ -179,7 +179,7 @@ const setup_connection = async () => {
   } else {
     console.log("No database specified");
     await check_db();
-    const db = require("saltcorn-data/db");
+    const db = require("@saltcorn/data/db");
     await db.changeConnection();
   }
 };
@@ -196,18 +196,18 @@ const table_exists = async (db, tblname) => {
 };
 
 const setup_schema = async () => {
-  const db = require("saltcorn-data/db");
+  const db = require("@saltcorn/data/db");
   const ex_tables = await table_exists(db, "_sc_tables");
   const ex_fields = await table_exists(db, "_sc_fields");
   if (!(ex_fields && ex_tables)) {
     console.log("Installing schema");
-    const reset = require("saltcorn-data/db/reset_schema");
+    const reset = require("@saltcorn/data/db/reset_schema");
     await reset(true);
   } else console.log("Schema already present");
 };
 
 const setup_users = async () => {
-  const User = require("saltcorn-data/models/user");
+  const User = require("@saltcorn/data/models/user");
   const users = await User.find({});
   if (users.length === 0) {
     console.log("No users found. Please create an admin user");
@@ -228,7 +228,7 @@ class SetupCommand extends Command {
     //check if there are any users
     await setup_users();
 
-    await require("saltcorn-data/db").close();
+    await require("@saltcorn/data/db").close();
   }
 }
 

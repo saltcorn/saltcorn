@@ -5,7 +5,7 @@ const {
   getAdminLoginCookie,
   resetToFixtures
 } = require("saltcorn/auth/testhelp");
-const db = require("saltcorn-data/db");
+const db = require("@saltcorn/data/db");
 
 beforeAll(async () => {
   await resetToFixtures();

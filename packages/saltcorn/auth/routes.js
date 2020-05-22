@@ -1,9 +1,9 @@
 const Router = require("express-promise-router");
 
-const db = require("saltcorn-data/db");
-const User = require("saltcorn-data/models/user");
-const Field = require("saltcorn-data/models/field");
-const Form = require("saltcorn-data/models/form");
+const db = require("@saltcorn/data/db");
+const User = require("@saltcorn/data/models/user");
+const Field = require("@saltcorn/data/models/field");
+const Form = require("@saltcorn/data/models/form");
 const { setTenant } = require("../routes/utils.js");
 
 const {
@@ -13,7 +13,7 @@ const {
   h,
   link,
   post_btn
-} = require("saltcorn-markup");
+} = require("@saltcorn/markup");
 const passport = require("passport");
 
 const router = new Router();

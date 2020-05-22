@@ -6,14 +6,14 @@ const {
   link,
   post_btn,
   renderBuilder
-} = require("saltcorn-markup");
-const { getState } = require("saltcorn-data/db/state");
+} = require("@saltcorn/markup");
+const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, isAdmin } = require("./utils.js");
-const Form = require("saltcorn-data/models/form");
-const Field = require("saltcorn-data/models/field");
-const Table = require("saltcorn-data/models/table");
-const View = require("saltcorn-data/models/view");
-const Workflow = require("saltcorn-data/models/workflow");
+const Form = require("@saltcorn/data/models/form");
+const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
+const Workflow = require("@saltcorn/data/models/workflow");
 
 const router = new Router();
 module.exports = router;

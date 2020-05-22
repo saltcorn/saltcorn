@@ -11,7 +11,7 @@ const {
   h1,
   p,
   header
-} = require("saltcorn-markup/tags");
+} = require("@saltcorn/markup/tags");
 
 const subItem = currentUrl => item =>
   item.link

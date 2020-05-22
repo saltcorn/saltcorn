@@ -5,7 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "saltcorn": "^0.0.1",
-    "saltcorn-data": "^0.0.1"
+    "@saltcorn/data": "^0.0.1"
   },
   "devDependencies": {
     "jest": "^25.1.0",

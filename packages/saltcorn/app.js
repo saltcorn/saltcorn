@@ -1,19 +1,19 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { ul, li, div, small } = require("saltcorn-markup/tags");
+const { ul, li, div, small } = require("@saltcorn/markup/tags");
 
-const { getState, init_multi_tenant } = require("saltcorn-data/db/state");
-const db = require("saltcorn-data/db");
+const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
-const User = require("saltcorn-data/models/user");
+const User = require("@saltcorn/data/models/user");
 const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
-const { migrate } = require("saltcorn-data/migrate");
+const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
-const { getConfig } = require("saltcorn-data/models/config");
+const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
 

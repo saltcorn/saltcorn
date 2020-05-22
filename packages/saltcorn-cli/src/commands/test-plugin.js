@@ -1,8 +1,8 @@
 const { Command, flags } = require("@oclif/command");
 const fixtures = require("saltcorn/fixtures");
-const reset = require("saltcorn-data/db/reset_schema");
-const { auto_test_plugin } = require("saltcorn-data/plugin-testing");
-const db = require("saltcorn-data/db");
+const reset = require("@saltcorn/data/db/reset_schema");
+const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
+const db = require("@saltcorn/data/db");
 const { requirePlugin } = require("saltcorn/load_plugins");
 
 const lastPath = ps =>

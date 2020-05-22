@@ -1,6 +1,6 @@
 const request = require("supertest");
 const getApp = require("../app");
-const Table = require("saltcorn-data/models/table");
+const Table = require("@saltcorn/data/models/table");
 
 const {
   getStaffLoginCookie,
@@ -10,7 +10,7 @@ const {
   toNotInclude,
   toRedirect
 } = require("../auth/testhelp");
-const db = require("saltcorn-data/db");
+const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
 

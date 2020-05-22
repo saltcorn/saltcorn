@@ -1,4 +1,4 @@
-const db = require("saltcorn-data/db");
+const db = require("@saltcorn/data/db");
 const request = require("supertest");
 
 const getApp = require("../app");

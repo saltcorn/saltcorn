@@ -1,23 +1,23 @@
 const Router = require("express-promise-router");
 const { setTenant, isAdmin } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn } = require("saltcorn-markup");
-const { getState } = require("saltcorn-data/db/state");
-const Table = require("saltcorn-data/models/table");
-const Form = require("saltcorn-data/models/form");
-const View = require("saltcorn-data/models/view");
-const Field = require("saltcorn-data/models/field");
-const Plugin = require("saltcorn-data/models/plugin");
+const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const { getState } = require("@saltcorn/data/db/state");
+const Table = require("@saltcorn/data/models/table");
+const Form = require("@saltcorn/data/models/form");
+const View = require("@saltcorn/data/models/view");
+const Field = require("@saltcorn/data/models/field");
+const Plugin = require("@saltcorn/data/models/plugin");
 const load_plugins = require("../load_plugins");
 
-const { is_pack } = require("saltcorn-data/contracts");
+const { is_pack } = require("@saltcorn/data/contracts");
 const { contract, is } = require("contractis");
 const {
   table_pack,
   view_pack,
   plugin_pack,
   fetch_pack_by_name
-} = require("saltcorn-data/models/pack");
-const { h5, pre, code } = require("saltcorn-markup/tags");
+} = require("@saltcorn/data/models/pack");
+const { h5, pre, code } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;

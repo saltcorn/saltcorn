@@ -4,8 +4,8 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { mkTable, h, post_btn, link } = require("saltcorn-markup");
-const { text, script } = require("saltcorn-markup/tags");
+const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
+const { text, script } = require("@saltcorn/markup/tags");
 const {
   field_picker_fields,
   picked_fields_to_query,

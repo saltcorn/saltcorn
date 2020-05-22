@@ -1,11 +1,11 @@
 const Router = require("express-promise-router");
 
-const { getState } = require("saltcorn-data/db/state");
-const { renderForm } = require("saltcorn-markup");
-const Field = require("saltcorn-data/models/field");
-const Table = require("saltcorn-data/models/table");
-const Form = require("saltcorn-data/models/form");
-const Workflow = require("saltcorn-data/models/workflow");
+const { getState } = require("@saltcorn/data/db/state");
+const { renderForm } = require("@saltcorn/markup");
+const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
+const Form = require("@saltcorn/data/models/form");
+const Workflow = require("@saltcorn/data/models/workflow");
 
 const { setTenant, isAdmin } = require("./utils.js");
 
