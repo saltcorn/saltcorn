@@ -35,5 +35,8 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
