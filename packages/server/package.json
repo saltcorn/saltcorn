@@ -5,6 +5,11 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "@saltcorn/base-plugin": "^0.0.1",
+    "@saltcorn/builder": "^0.0.1",
+    "@saltcorn/data": "^0.0.1",
+    "@saltcorn/markup": "^0.0.1",
+    "@saltcorn/sbadmin2": "^0.0.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.1",
@@ -15,12 +20,7 @@
     "live-plugin-manager": "^0.14.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
-    "pg": "^8.1.0",
-    "@saltcorn/base-plugin": "^0.0.1",
-    "@saltcorn/data": "^0.0.1",
-    "@saltcorn/markup": "^0.0.1",
-    "@saltcorn/sbadmin2": "^0.0.1",
-    "@saltcorn/builder": "^0.0.1"
+    "pg": "^8.1.0"
   },
   "devDependencies": {
     "jest": "^25.1.0",

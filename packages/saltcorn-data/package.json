@@ -8,6 +8,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
+    "@saltcorn/markup": "^0.0.1",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.1",
@@ -15,7 +16,6 @@
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "pg": "^8.1.0",
-    "@saltcorn/markup": "^0.0.1",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
