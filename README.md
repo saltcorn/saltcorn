@@ -37,7 +37,7 @@ skip this section if you ran `saltcorn setup`
       * password: PostgreSQL user password
       * session_secret: Saltcorb session secret
       * multi_tenant: run as multi-tenant (true/false)
-      For example: `{"host":"localhost","port":5432,"database":"saltcorn","user":"tomn","password":"dgg2342vfB","session_secret":"hrh64b45b3","multi_tenant":true}`. Or, 
+     For example: `{"host":"localhost","port":5432,"database":"saltcorn","user":"tomn","password":"dgg2342vfB","session_secret":"hrh64b45b3","multi_tenant":true}`. Or, 
    - Set environment variables. TODO
 
 ### Run
