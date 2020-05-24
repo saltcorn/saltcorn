@@ -20,6 +20,15 @@ sudo apt-get install -y nodejs libpq-dev
 `npm install -g @saltcorn/cli`
 
 ### Setup (automated)
+if you are `root`, create a user with sudo and switch to that user:
+
+```
+adduser saltcorn
+adduser saltcorn sudo
+su saltcorn
+cd
+mkdir -p ~/.config/
+```
 
 `saltcorn setup` and follow instructions
 
@@ -62,7 +71,7 @@ skip this section if you ran `saltcorn setup`
 
 #### nginx install and setup
 
-Install nginx: `apt install nginx`
+Install nginx: `sudo apt install nginx`
 
 create a file `/etc/nginx/sites-available/domain.com`, replacing `domain.com` with your domain, with these contents:
 ```
@@ -81,15 +90,20 @@ server {
 
 link this file to the `sites-enabled` directory:
 
-`ln -s /etc/nginx/sites-available/domain.com /etc/nginx/sites-enabled/domain.com`
+`sudo ln -s /etc/nginx/sites-available/domain.com /etc/nginx/sites-enabled/domain.com`
 
 reload nginx:
 
-`service nginx reload`
+`sudo service nginx reload`
 
 now run saltcorn:
 
-`saltcorn serve`
+`sudo -u saltcorn saltcorn serve`
+
+or
+
+`saltcorn serve` if you didn't created a new user.
+
 
 Check whether you can access your new site in the browser.
 
@@ -107,7 +121,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=saltcorn
 ExecStart=/usr/bin/saltcorn serve
 Restart=on-failure
 
@@ -120,7 +134,7 @@ run:
 ```
 sudo systemctl daemon-reload
 sudo systemctl start saltcorn
-sudo systemtl enable saltcorn
+sudo systemctl enable saltcorn
 ```
 
 #### SSL certificate
