@@ -95,6 +95,34 @@ Check whether you can access your new site in the browser.
 
 #### Install saltcorn as a service
 
+Installing saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
+
+create a file `/lib/systemd/system/saltcorn.service` with these contents:
+
+```
+[Unit]
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/saltcorn serve
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+run:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl start saltcorn
+sudo systemtl enable saltcorn
+```
+
 #### SSL certificate
 
 Use cloudflare or lets encrypt to get a free SSL certificate (for https).
