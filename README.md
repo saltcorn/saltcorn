@@ -52,7 +52,7 @@ skip this section if you ran `saltcorn setup`
      ``` 
 
      Or, 
-   - Set environment variables. TODO
+   - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`.
 
 ### Run
 

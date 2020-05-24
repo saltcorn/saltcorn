@@ -10,6 +10,8 @@ const getConnectObject = (connSpec = {}) => {
   var connObj = { ...connSpec };
 
   connObj.user = connObj.user || process.env.PGUSER;
+  connObj.host = connObj.host || process.env.PGHOST;
+  connObj.port = connObj.port || process.env.PGPORT;
   connObj.password = connObj.password || process.env.PGPASSWORD;
   connObj.database = connObj.database || process.env.PGDATABASE;
   connObj.session_secret =
