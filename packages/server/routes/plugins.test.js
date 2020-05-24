@@ -14,6 +14,9 @@ const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
 
+jest.setTimeout(10000);
+
+
 describe("Plugin Endpoints", () => {
   it("should show list", async () => {
     const loginCookie = await getAdminLoginCookie();

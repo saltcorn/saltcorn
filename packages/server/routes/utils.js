@@ -29,7 +29,7 @@ const setTenant = (req, res, next) => {
       req.subdomains.length > 0 && req.subdomains[0] !== "www"
         ? req.subdomains[0]
         : "public";
-    db.getTenantNS().run(ten, () => {
+    db.runWithTenant(ten, () => {
       next();
     });
   } else {

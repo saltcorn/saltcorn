@@ -47,7 +47,7 @@ const getAllConfigOrDefaults = async () => {
 
 const setConfig = async (key, value) => {
   await db.query(
-    `insert into _sc_config(key, value) values($1, $2) 
+    `insert into "${db.getTenantSchema()}"._sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
     [key, { v: value }]
   );
