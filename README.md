@@ -200,6 +200,8 @@ to format code:
 
 `git ls-files | grep -v builder_bundle | xargs prettier --write`
 
+Run this before every pull request.
+
 ### dev server
 
 `nodemon packages/saltcorn-cli/bin/saltcorn serve`

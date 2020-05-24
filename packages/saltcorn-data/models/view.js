@@ -103,7 +103,8 @@ class View {
     return new View({ id, ...v });
   }
   async delete() {
-    await db.query("delete FROM views WHERE id = $1", [this.id]);
+    const schema = db.getTenantSchema();
+    await db.query(`delete FROM "${schema}"._sc_views WHERE id = $1`, [this.id]);
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);

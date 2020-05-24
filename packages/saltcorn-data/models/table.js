@@ -39,10 +39,11 @@ class Table {
     return new Table({ ...tblrow, id });
   }
   async delete() {
-    await db.query("delete FROM _sc_fields WHERE table_id = $1", [this.id]);
+    const schema = db.getTenantSchema();
+    await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [this.id]);
 
-    await db.query("delete FROM _sc_tables WHERE id = $1", [this.id]);
-    await db.query(`drop table "${sqlsanitize(this.name)}"`);
+    await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [this.id]);
+    await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
   }
 
   async deleteRows(where) {
@@ -64,8 +65,9 @@ class Table {
   }
 
   async toggleBool(id, field_name) {
+    const schema = db.getTenantSchema();
     return await db.query(
-      `update "${sqlsanitize(this.name)}" set ${sqlsanitize(
+      `update "${schema}"."${sqlsanitize(this.name)}" set ${sqlsanitize(
         field_name
       )}=NOT ${sqlsanitize(field_name)} where id=$1`,
       [id]
