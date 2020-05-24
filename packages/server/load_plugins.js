@@ -15,7 +15,7 @@ const requirePlugin = async plugin => {
   ) {
     return require(plugin.location);
   } else if (plugin.source === "npm") {
-    await manager.install(plugin.location);
+    await manager.install(plugin.location, plugin.version);
     return manager.require(plugin.location);
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location, { force: true });
