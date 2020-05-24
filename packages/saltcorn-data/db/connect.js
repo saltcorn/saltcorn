@@ -10,6 +10,8 @@ const getConnectObject = (connSpec = {}) => {
   var connObj = { ...connSpec };
 
   connObj.user = connObj.user || process.env.PGUSER;
+  connObj.host = connObj.host || process.env.PGHOST;
+  connObj.port = connObj.port || process.env.PGPORT;
   connObj.password = connObj.password || process.env.PGPASSWORD;
   connObj.database = connObj.database || process.env.PGDATABASE;
   connObj.session_secret =
@@ -37,8 +39,11 @@ const getConnectObject = (connSpec = {}) => {
   }
 };
 
+const configFileDir = 
+  xdgBasedir.config || os.homeDir()
+
 const configFilePath = path.join(
-  xdgBasedir.config || os.homeDir(),
+  configFileDir,
   ".saltcorn"
 );
 
@@ -50,4 +55,4 @@ const getConfigFile = () => {
     return false;
   }
 };
-module.exports = { getConnectObject, getConfigFile, configFilePath };
+module.exports = { getConnectObject, getConfigFile, configFileDir, configFilePath };
