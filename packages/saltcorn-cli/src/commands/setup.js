@@ -1,7 +1,8 @@
 const { Command, flags } = require("@oclif/command");
 const {
   getConnectObject,
-  configFilePath
+  configFilePath,
+  configFileDir
 } = require("@saltcorn/data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
@@ -160,6 +161,9 @@ const setup_connection_config = async () => {
 
 const write_connection_config = async connobj => {
   const fs = require("fs");
+  spawnSync("mkdir", ["-p", configFileDir], {
+    stdio: "inherit"
+  });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
 
