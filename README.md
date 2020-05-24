@@ -122,6 +122,7 @@ After=network.target
 [Service]
 Type=simple
 User=saltcorn
+WorkingDirectory=/home/saltcorn
 ExecStart=/usr/bin/saltcorn serve
 Restart=on-failure
 
