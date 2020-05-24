@@ -8,46 +8,42 @@ Saltcorn command line interface
 [![License](https://img.shields.io/npm/l/saltcorn-cli.svg)](https://github.com/glutamate/saltcorns/blob/master/package.json)
 
 <!-- toc -->
-
-- [saltcorn-cli](#saltcorn-cli)
-- [Usage](#usage)
-- [Commands](#commands)
-  <!-- tocstop -->
+* [saltcorn-cli](#saltcorn-cli)
+* [Usage](#usage)
+* [Commands](#commands)
+<!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.0.2 linux-x64 node-v14.2.0
+@saltcorn/cli/0.0.3 linux-x64 node-v14.3.0
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-
-- [`saltcorn backup`](#saltcorn-backup)
-- [`saltcorn create-user`](#saltcorn-create-user)
-- [`saltcorn fixtures`](#saltcorn-fixtures)
-- [`saltcorn help [COMMAND]`](#saltcorn-help-command)
-- [`saltcorn make-migration`](#saltcorn-make-migration)
-- [`saltcorn migrate`](#saltcorn-migrate)
-- [`saltcorn reset-schema`](#saltcorn-reset-schema)
-- [`saltcorn restore FILE`](#saltcorn-restore-file)
-- [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
-- [`saltcorn serve`](#saltcorn-serve)
-- [`saltcorn setup`](#saltcorn-setup)
-- [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
+* [`saltcorn backup`](#saltcorn-backup)
+* [`saltcorn create-user`](#saltcorn-create-user)
+* [`saltcorn fixtures`](#saltcorn-fixtures)
+* [`saltcorn help [COMMAND]`](#saltcorn-help-command)
+* [`saltcorn make-migration`](#saltcorn-make-migration)
+* [`saltcorn migrate`](#saltcorn-migrate)
+* [`saltcorn reset-schema`](#saltcorn-reset-schema)
+* [`saltcorn restore FILE`](#saltcorn-restore-file)
+* [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
+* [`saltcorn serve`](#saltcorn-serve)
+* [`saltcorn setup`](#saltcorn-setup)
+* [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
 
 ## `saltcorn backup`
 
@@ -58,10 +54,10 @@ USAGE
   $ saltcorn backup
 
 OPTIONS
-  -o, --output=output  [default: 20200523-saltcorn-tomn-VirtualBox.sqlc] output filename
+  -o, --output=output  [default: 20200524-saltcorn-tomn-VirtualBox.sqlc] output filename
 ```
 
-_See code: [src/commands/backup.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/backup.js)_
+_See code: [src/commands/backup.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/backup.js)_
 
 ## `saltcorn create-user`
 
@@ -75,7 +71,7 @@ OPTIONS
   -a, --admin  Admin user
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/create-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -93,7 +89,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/fixtures.js)_
 
 ## `saltcorn help [COMMAND]`
 
@@ -126,7 +122,7 @@ DESCRIPTION
   normally need to run this unless you are a developer.
 ```
 
-_See code: [src/commands/make-migration.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/make-migration.js)_
+_See code: [src/commands/make-migration.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/make-migration.js)_
 
 ## `saltcorn migrate`
 
@@ -138,12 +134,12 @@ USAGE
 
 DESCRIPTION
   ...
-  This is not normally required as migrations will be run when the server starts.
-  However, this command may be useful if you are running multiple application
+  This is not normally required as migrations will be run when the server starts. 
+  However, this command may be useful if you are running multiple application 
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/migrate.js)_
 
 ## `saltcorn reset-schema`
 
@@ -161,7 +157,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -175,7 +171,7 @@ ARGUMENTS
   FILE  backup file to restore
 ```
 
-_See code: [src/commands/restore.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/restore.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -193,7 +189,7 @@ OPTIONS
   -f, --forever   Run forever till failure
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/run-tests.js)_
 
 ## `saltcorn serve`
 
@@ -207,7 +203,7 @@ OPTIONS
   -p, --port=port  [default: 3000] port
 ```
 
-_See code: [src/commands/serve.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/serve.js)_
 
 ## `saltcorn setup`
 
@@ -222,11 +218,11 @@ OPTIONS
 
 DESCRIPTION
   ...
-  This will attempt to install or connect a database, and set up a
+  This will attempt to install or connect a database, and set up a 
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/setup.js)_
 
 ## `saltcorn test-plugin PATH`
 
@@ -244,6 +240,5 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/test-plugin.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/test-plugin.js)_
-
+_See code: [src/commands/test-plugin.js](https://github.com/glutamate/saltcorns/blob/v0.0.3/src/commands/test-plugin.js)_
 <!-- commandsstop -->

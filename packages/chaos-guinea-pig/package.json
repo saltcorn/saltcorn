@@ -1,6 +1,6 @@
 {
   "name": "chaos-guinea-pig",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
-    "contractis": "^0.0.2",
+    "contractis": "^0.0.3",
     "jest": "^25.1.0",
     "seedrandom": "^3.0.5",
     "stack-trace": "^0.0.10",
