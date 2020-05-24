@@ -58,6 +58,46 @@ skip this section if you ran `saltcorn setup`
 
 `saltcorn serve`
 
+### Server install
+
+#### nginx install and setup
+
+Install nginx: `apt install nginx`
+
+create a file `/etc/nginx/sites-available/domain.com`, replacing `domain.com` with your domain, with these contents:
+```
+server {
+    listen 80;
+    server_name domain.com www.domain.com;
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+link this file to the `sites-enabled` directory:
+
+`ln -s /etc/nginx/sites-available/domain.com /etc/nginx/sites-enabled/domain.com`
+
+reload nginx:
+
+`service nginx reload`
+
+now run saltcorn:
+
+`saltcorn serve`
+
+Check whether you can access your new site in the browser.
+
+#### Install saltcorn as a service
+
+#### SSL certificate
+
+Use cloudflare or lets encrypt to get a free SSL certificate (for https).
 
 
 ## Install from source (for saltcorn developers)
