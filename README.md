@@ -198,7 +198,7 @@ we use prettier 1.x:
 
 to format code:
 
-`git ls-files | xargs prettier --write`
+`git ls-files | grep -v builder_bundle | xargs prettier --write`
 
 ### dev server
 
