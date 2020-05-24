@@ -29,16 +29,20 @@ skip this section if you ran `saltcorn setup`
 
 1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`
 2. Either,
-   - Create a JSON file `.saltcorn` in your XDF config directory (on Ubuntu this is normally $HOME/.config) with these values:
-      * host: address of PostgreSQL server
-      * port: port of PostgreSQL server
-      * database: PostgreSQL database
-      * user: PostgreSQL user name
-      * password: PostgreSQL user password
-      * session_secret: Saltcorb session secret
-      * multi_tenant: run as multi-tenant (true/false)
+   - Create a JSON file `.saltcorn` in your XDG config directory (on Ubuntu this is normally $HOME/.config) with these values:
+      * `host`: address of PostgreSQL server
+      * `port`: port of PostgreSQL server
+      * `database`: PostgreSQL database
+      * `user`: PostgreSQL user name
+      * `password`: PostgreSQL user password
+      * `session_secret`: Saltcorb session secret
+      * `multi_tenant`: run as multi-tenant (true/false)
      
-     For example: `{"host":"localhost","port":5432,"database":"saltcorn","user":"tomn","password":"dgg2342vfB","session_secret":"hrh64b45b3","multi_tenant":true}`. Or, 
+     For example: 
+         ```
+         {"host":"localhost","port":5432,"database":"saltcorn","user":"tomn","password":"dgg2342vfB","session_secret":"hrh64b45b3","multi_tenant":true}
+         ``` 
+     Or, 
    - Set environment variables. TODO
 
 ### Run
