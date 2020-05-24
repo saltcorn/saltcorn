@@ -2,13 +2,57 @@
 
 ![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)
 
+## Install from packages
+
+### Installing node and npm
+
+Instructions have been tested on Ubuntu 20.04
+
+For a recent version (v14) of Node.js:
+
+```
+wget -qO - https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt-get install -y nodejs libpq-dev
+```
+
+### Install saltcorn
+
+`npm install -g @saltcorn/cli`
+
+### Setup (automated)
+
+`saltcorn setup` and follow instructions
+
+### Setup (manual)
+
+skip this section if you ran `saltcorn setup`
+
+1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`
+2. Either,
+    a. Create a JSON file `.saltcorn` in your XDF config directory (on Ubuntu this is normally $HOME/.config) with these values:
+        - host: address of PostgreSQL server
+        - port: port of PostgreSQL server
+        - database: PostgreSQL database
+        - user: PostgreSQL user name
+        - password: PostgreSQL user password
+        - session_secret: Saltcorb session secret
+        - multi_tenant: run as multi-tenant (true/false)
+    For example: `{"host":"localhost","port":5432,"database":"saltcorn","user":"tomn","password":"dgg2342vfB","session_secret":"hrh64b45b3","multi_tenant":true}`
+    b. Set environment variables. TODO
+    
+### Run
+
+`saltcorn serve`
+
+
+
 ## Install from source (for saltcorn developers)
 
 ### Installing node and npm on Ubuntu
 
 `sudo apt install nodejs npm libpq-dev`
 
-will give you a usable version. For a more recent version (v13) of Node.js:
+will give you a usable version. For a more recent version (v14) of Node.js:
 
 ```
 wget -qO - https://deb.nodesource.com/setup_14.x | sudo -E bash -
