@@ -4,7 +4,7 @@ const { migrate } = require("@saltcorn/data/migrate");
 class MigrateCommand extends Command {
   async run() {
     await migrate();
-    this.exit(0)
+    this.exit(0);
   }
 }
 

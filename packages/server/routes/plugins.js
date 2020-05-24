@@ -35,7 +35,7 @@ const pluginForm = plugin => {
     if (plugin.id) form.hidden("id");
     form.values = plugin;
   } else {
-    form.values.version='latest'
+    form.values.version = "latest";
   }
   return form;
 };

@@ -108,7 +108,9 @@ const getApp = async () => {
             { link: "/auth/logout", label: "Logout" }
           ]
         : [
-            ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
+            ...(allow_signup
+              ? [{ link: "/auth/signup", label: "Sign up" }]
+              : []),
             { link: "/auth/login", label: "Login" }
           ];
       const isAdmin = (req.user || {}).role_id === 1;

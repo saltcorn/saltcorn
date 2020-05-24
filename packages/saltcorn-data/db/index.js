@@ -36,7 +36,8 @@ const enable_multi_tenant = () => {
   tenantNamespace = new AsyncLocalStorage();
 };
 
-const runWithTenant = (tenant, f) => tenantNamespace.run(sqlsanitize(tenant), f);
+const runWithTenant = (tenant, f) =>
+  tenantNamespace.run(sqlsanitize(tenant), f);
 
 if (connectObj.multi_tenant) enable_multi_tenant();
 
