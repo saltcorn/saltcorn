@@ -25,7 +25,10 @@ function isAdmin(req, res, next) {
 
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
-    const ten = req.subdomains.length > 0 && req.subdomains[0] !== 'www' ? req.subdomains[0] : "public";
+    const ten =
+      req.subdomains.length > 0 && req.subdomains[0] !== "www"
+        ? req.subdomains[0]
+        : "public";
     db.getTenantNS().run(ten, () => {
       next();
     });

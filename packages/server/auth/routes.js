@@ -5,6 +5,7 @@ const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { setTenant } = require("../routes/utils.js");
+const { getState } = require("@saltcorn/data/db/state");
 
 const {
   mkTable,
@@ -30,11 +31,13 @@ const loginForm = () =>
   });
 
 router.get("/login", setTenant, async (req, res) => {
+  const allow_signup = getState().getConfig("allow_signup");
   res.sendWrap(
     `Login`,
     renderForm(loginForm()),
-    "Don't have an account? ",
-    link("/auth/signup", "Signup »")
+    ...(allow_signup
+      ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
+      : [])
   );
 });
 
@@ -48,29 +51,39 @@ router.get("/logout", setTenant, (req, res) => {
 });
 
 router.get("/signup", setTenant, async (req, res) => {
-  const form = loginForm();
-  form.action = "/auth/signup";
-  form.submitLabel = "Sign up";
-  res.sendWrap(
-    `Sign up`,
-    renderForm(form),
-    "Already have an account? ",
-    link("/auth/login", "Login »")
-  );
+  if (getState().getConfig("allow_signup")) {
+    const form = loginForm();
+    form.action = "/auth/signup";
+    form.submitLabel = "Sign up";
+    res.sendWrap(
+      `Sign up`,
+      renderForm(form),
+      "Already have an account? ",
+      link("/auth/login", "Login »")
+    );
+  } else {
+    req.flash("danger", "Signups not enabled");
+    res.redirect("/auth/login");
+  }
 });
 
 router.post("/signup", setTenant, async (req, res) => {
-  const { email, password } = req.body;
-  const u = await User.create({ email, password });
+  if (getState().getConfig("allow_signup")) {
+    const { email, password } = req.body;
+    const u = await User.create({ email, password });
 
-  req.login({ email: u.email, role_id: u.role_id }, function(err) {
-    if (!err) {
-      res.redirect("/");
-    } else {
-      req.flash("danger", err);
-      res.redirect("/auth/signup");
-    }
-  });
+    req.login({ email: u.email, role_id: u.role_id }, function(err) {
+      if (!err) {
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/auth/signup");
+      }
+    });
+  } else {
+    req.flash("danger", "Signups not enabled");
+    res.redirect("/auth/login");
+  }
 });
 
 router.post(

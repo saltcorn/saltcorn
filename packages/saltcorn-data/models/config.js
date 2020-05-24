@@ -5,6 +5,7 @@ const configTypes = {
   site_name: { type: "String", label: "Site name", default: "Saltcorn" },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
+  allow_signup: { type: "Bool", label: "Allow signups", default: true },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",

@@ -20,6 +20,7 @@ sudo apt-get install -y nodejs libpq-dev
 `npm install -g @saltcorn/cli`
 
 ### Setup (automated)
+
 if you are `root`, create a user with sudo and switch to that user:
 
 ```
@@ -30,7 +31,7 @@ cd
 mkdir -p ~/.config/
 ```
 
-run 
+run
 
 `saltcorn setup` and follow instructions
 
@@ -40,16 +41,19 @@ Skip this section if you ran `saltcorn setup`
 
 1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`
 2. Either,
-   - Create a JSON file `.saltcorn` in your XDG config directory (on Ubuntu this is normally $HOME/.config) with these values:
-      * `host`: address of PostgreSQL server
-      * `port`: port of PostgreSQL server
-      * `database`: PostgreSQL database
-      * `user`: PostgreSQL user name
-      * `password`: PostgreSQL user password
-      * `session_secret`: Saltcorb session secret
-      * `multi_tenant`: run as multi-tenant (true/false)
-     
-     For example: 
+
+   - Create a JSON file `.saltcorn` in your XDG config directory (on Ubuntu this is normally \$HOME/.config) with these values:
+
+     - `host`: address of PostgreSQL server
+     - `port`: port of PostgreSQL server
+     - `database`: PostgreSQL database
+     - `user`: PostgreSQL user name
+     - `password`: PostgreSQL user password
+     - `session_secret`: Saltcorb session secret
+     - `multi_tenant`: run as multi-tenant (true/false)
+
+     For example:
+
      ```
      {
         "host":"localhost",
@@ -60,9 +64,10 @@ Skip this section if you ran `saltcorn setup`
         "session_secret":"hrh64b45b3",
         "multi_tenant":true
      }
-     ``` 
+     ```
 
-     Or, 
+     Or,
+
    - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`.
 
 ### Run
@@ -76,6 +81,7 @@ Skip this section if you ran `saltcorn setup`
 Install nginx: `sudo apt install nginx`
 
 create a file `/etc/nginx/sites-available/domain.com`, replacing `domain.com` with your domain, with these contents:
+
 ```
 server {
     listen 80;
@@ -105,7 +111,6 @@ now run saltcorn:
 or
 
 `saltcorn serve` if you didn't created a new user.
-
 
 Check whether you can access your new site in the browser.
 
@@ -143,7 +148,6 @@ sudo systemctl enable saltcorn
 #### SSL certificate
 
 Use cloudflare or lets encrypt to get a free SSL certificate (for https).
-
 
 ## Install from source (for saltcorn developers)
 
@@ -194,7 +198,7 @@ we use prettier 1.x:
 
 to format code:
 
-`git ls-files | xargs prettier --write`
+`git ls-files | grep -v builder_bundle | xargs prettier --write`
 
 ### dev server
 

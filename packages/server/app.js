@@ -98,6 +98,7 @@ const getApp = async () => {
   app.use(function(req, res, next) {
     res.sendWrap = function(title, ...html) {
       const isAuth = req.isAuthenticated();
+      const allow_signup = getState().getConfig("allow_signup");
       const views = getState()
         .views.filter(v => v.on_menu && (isAuth || v.is_public))
         .map(v => ({ link: `/view/${v.name}`, label: v.name }));
@@ -106,7 +107,10 @@ const getApp = async () => {
             { label: small(req.user.email.split("@")[0]) },
             { link: "/auth/logout", label: "Logout" }
           ]
-        : [{ link: "/auth/login", label: "Login" }];
+        : [
+            ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
+            { link: "/auth/login", label: "Login" }
+          ];
       const isAdmin = (req.user || {}).role_id === 1;
       const adminItems = [
         { link: "/table", label: "Tables" },
