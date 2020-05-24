@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "scripts": {
     "test": "jest"
@@ -8,10 +8,10 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/markup": "^0.0.3",
+    "@saltcorn/markup": "^0.0.4",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
-    "contractis": "^0.0.3",
+    "contractis": "^0.0.4",
     "dateformat": "^3.0.3",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
