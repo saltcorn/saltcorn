@@ -199,7 +199,7 @@ View.contract = {
     name: is.str,
     id: is.posint,
     viewtemplate: is.str,
-    viewtemplateObj: is.obj({ name: is.str, display_state_form: is.bool })
+    viewtemplateObj: is.maybe(is.obj({ name: is.str, display_state_form: is.bool }))
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
