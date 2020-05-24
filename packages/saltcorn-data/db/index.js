@@ -35,7 +35,6 @@ const enable_multi_tenant = () => {
   is_multi_tenant = true;
   tenantNamespace = new AsyncLocalStorage();
 };
-const setTenant = domain => {};
 
 const runWithTenant = (tenant, f) => tenantNamespace.run(sqlsanitize(tenant), f);
 
@@ -143,9 +142,7 @@ module.exports = {
   set_sql_logging,
   getClient,
   getTenantSchema,
-  tenantNamespace,
   enable_multi_tenant,
-  setTenant,
   runWithTenant,
   is_it_multi_tenant,
   connectObj
