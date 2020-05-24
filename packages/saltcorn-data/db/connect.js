@@ -39,13 +39,9 @@ const getConnectObject = (connSpec = {}) => {
   }
 };
 
-const configFileDir = 
-  xdgBasedir.config || os.homeDir()
+const configFileDir = xdgBasedir.config || os.homeDir();
 
-const configFilePath = path.join(
-  configFileDir,
-  ".saltcorn"
-);
+const configFilePath = path.join(configFileDir, ".saltcorn");
 
 const getConfigFile = () => {
   try {
@@ -55,4 +51,9 @@ const getConfigFile = () => {
     return false;
   }
 };
-module.exports = { getConnectObject, getConfigFile, configFileDir, configFilePath };
+module.exports = {
+  getConnectObject,
+  getConfigFile,
+  configFileDir,
+  configFilePath
+};

@@ -6,7 +6,7 @@ const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
 
-const { div,text } = require("@saltcorn/markup/tags");
+const { div, text } = require("@saltcorn/markup/tags");
 const {
   stateFieldsToWhere,
   get_link_view_opts,
@@ -14,7 +14,7 @@ const {
   initial_config_all_fields,
   calcfldViewOptions
 } = require("../../plugin-helper");
-const { action_url } = require("./viewable_fields")
+const { action_url } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -24,12 +24,26 @@ const configuration_workflow = () =>
         builder: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
-          const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
+          const boolfields = fields.filter(
+            f => f.type && f.type.name === "Bool"
+          );
+          const actions = [
+            "Delete",
+            ...boolfields.map(f => `Toggle ${f.name}`)
+          ];
           const field_view_options = calcfldViewOptions(fields);
-          const link_view_opts = await get_link_view_opts(table, context.viewname);
+          const link_view_opts = await get_link_view_opts(
+            table,
+            context.viewname
+          );
           const { parent_field_list } = await table.get_parent_relations();
-          return { fields, actions, field_view_options, link_view_opts, parent_field_list };
+          return {
+            fields,
+            actions,
+            field_view_options,
+            link_view_opts,
+            parent_field_list
+          };
         }
       }
     ]
@@ -102,29 +116,36 @@ const render = (row, fields, layout, viewname, table) => {
       const val = row[targetNm];
       return text(val);
     } else if (segment.type === "action") {
-      return post_btn(action_url(viewname, table, segment, row), segment.action_name);
+      return post_btn(
+        action_url(viewname, table, segment, row),
+        segment.action_name
+      );
     } else if (segment.type === "view_link") {
       const [vtype, vrest] = segment.view.split(":");
       switch (vtype) {
         case "Own":
           const vnm = vrest;
-          return link(`/view/${vnm}?id=${row.id}`, vnm)          
+          return link(`/view/${vnm}?id=${row.id}`, vnm);
         case "ChildList":
           const [viewnm, tbl, fld] = vrest.split(".");
-          return link(`/view/${viewnm}?${fld}=${row.id}`, viewnm)
+          return link(`/view/${viewnm}?${fld}=${row.id}`, viewnm);
         case "ParentShow":
           const [pviewnm, ptbl, pfld] = vrest.split(".");
-          return row[pfld] ? link(`/view/${pviewnm}?id=${row[pfld]}`, pviewnm) : ""
+          return row[pfld]
+            ? link(`/view/${pviewnm}?id=${row[pfld]}`, pviewnm)
+            : "";
       }
     } else if (segment.above) {
-      return segment.above.map(s=>div(go(s))).join("");
+      return segment.above.map(s => div(go(s))).join("");
     } else if (segment.besides) {
-      const defwidth=Math.round(12 / segment.besides.length)
+      const defwidth = Math.round(12 / segment.besides.length);
       return div(
         { class: "row" },
-        segment.besides.map((t,ix) =>
+        segment.besides.map((t, ix) =>
           div(
-            { class: `col-sm-${segment.widths?segment.widths[ix] :defwidth}` },
+            {
+              class: `col-sm-${segment.widths ? segment.widths[ix] : defwidth}`
+            },
             go(t)
           )
         )

@@ -8,14 +8,16 @@ Saltcorn command line interface
 [![License](https://img.shields.io/npm/l/saltcorn-cli.svg)](https://github.com/glutamate/saltcorns/blob/master/package.json)
 
 <!-- toc -->
-* [saltcorn-cli](#saltcorn-cli)
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+
+- [saltcorn-cli](#saltcorn-cli)
+- [Usage](#usage)
+- [Commands](#commands)
+  <!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
+
 ```sh-session
 $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
@@ -27,23 +29,25 @@ USAGE
   $ saltcorn COMMAND
 ...
 ```
+
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-* [`saltcorn backup`](#saltcorn-backup)
-* [`saltcorn create-user`](#saltcorn-create-user)
-* [`saltcorn fixtures`](#saltcorn-fixtures)
-* [`saltcorn help [COMMAND]`](#saltcorn-help-command)
-* [`saltcorn make-migration`](#saltcorn-make-migration)
-* [`saltcorn migrate`](#saltcorn-migrate)
-* [`saltcorn reset-schema`](#saltcorn-reset-schema)
-* [`saltcorn restore FILE`](#saltcorn-restore-file)
-* [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
-* [`saltcorn serve`](#saltcorn-serve)
-* [`saltcorn setup`](#saltcorn-setup)
-* [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
+
+- [`saltcorn backup`](#saltcorn-backup)
+- [`saltcorn create-user`](#saltcorn-create-user)
+- [`saltcorn fixtures`](#saltcorn-fixtures)
+- [`saltcorn help [COMMAND]`](#saltcorn-help-command)
+- [`saltcorn make-migration`](#saltcorn-make-migration)
+- [`saltcorn migrate`](#saltcorn-migrate)
+- [`saltcorn reset-schema`](#saltcorn-reset-schema)
+- [`saltcorn restore FILE`](#saltcorn-restore-file)
+- [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
+- [`saltcorn serve`](#saltcorn-serve)
+- [`saltcorn setup`](#saltcorn-setup)
+- [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
 
 ## `saltcorn backup`
 
@@ -134,8 +138,8 @@ USAGE
 
 DESCRIPTION
   ...
-  This is not normally required as migrations will be run when the server starts. 
-  However, this command may be useful if you are running multiple application 
+  This is not normally required as migrations will be run when the server starts.
+  However, this command may be useful if you are running multiple application
   servers and need to control when the migrations are run.
 ```
 
@@ -218,7 +222,7 @@ OPTIONS
 
 DESCRIPTION
   ...
-  This will attempt to install or connect a database, and set up a 
+  This will attempt to install or connect a database, and set up a
   configuration file
 ```
 
@@ -241,4 +245,5 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/test-plugin.js](https://github.com/glutamate/saltcorns/blob/v0.0.2/src/commands/test-plugin.js)_
+
 <!-- commandsstop -->

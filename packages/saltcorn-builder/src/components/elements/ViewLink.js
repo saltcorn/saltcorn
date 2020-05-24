@@ -6,11 +6,7 @@ export const ViewLink = ({ name }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return (
-    <div ref={dom => connect(drag(dom))}>
-      [{name}]
-    </div>
-  );
+  return <div ref={dom => connect(drag(dom))}>[{name}]</div>;
 };
 
 export const ViewLinkSettings = () => {
@@ -33,7 +29,6 @@ export const ViewLinkSettings = () => {
           ))}
         </select>
       </div>
-     
     </div>
   );
 };

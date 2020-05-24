@@ -68,7 +68,9 @@ const Toolbox = () => {
           </td>
           <td>
             <button
-              ref={ref => connectors.create(ref, <Action name={options.actions[0]} />)}
+              ref={ref =>
+                connectors.create(ref, <Action name={options.actions[0]} />)
+              }
             >
               Action
             </button>
