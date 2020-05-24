@@ -4,9 +4,9 @@
 
 ## Install from packages
 
-### Installing node and npm
-
 Instructions have been tested on Ubuntu 20.04
+
+### Installing node and npm
 
 For a recent version (v14) of Node.js:
 
@@ -30,11 +30,13 @@ cd
 mkdir -p ~/.config/
 ```
 
+run 
+
 `saltcorn setup` and follow instructions
 
 ### Setup (manual)
 
-skip this section if you ran `saltcorn setup`
+Skip this section if you ran `saltcorn setup`
 
 1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`
 2. Either,
