@@ -26,13 +26,16 @@ const pluginForm = plugin => {
         required: true,
         attributes: { options: "npm,local,github" }
       }),
-      new Field({ label: "Location", name: "location", input_type: "text" })
+      new Field({ label: "Location", name: "location", input_type: "text" }),
+      new Field({ label: "Version", name: "version", input_type: "text" })
     ],
     submitLabel: plugin ? "Save" : "Create"
   });
   if (plugin) {
     if (plugin.id) form.hidden("id");
     form.values = plugin;
+  } else {
+    form.values.version='latest'
   }
   return form;
 };

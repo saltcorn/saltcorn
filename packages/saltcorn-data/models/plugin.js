@@ -9,6 +9,7 @@ class Plugin {
     this.name = o.name;
     this.source = o.source;
     this.location = o.location;
+    this.version = o.version;
   }
   static async findOne(where) {
     return new Plugin(await db.selectOne("_sc_plugins", where));
@@ -20,7 +21,8 @@ class Plugin {
     const row = {
       name: this.name,
       source: this.source,
-      location: this.location
+      location: this.location,
+      version: this.version
     };
     if (typeof this.id === "undefined") {
       // insert
@@ -55,7 +57,7 @@ class Plugin {
         encodeURIComponent(name)
     );
     const json = await response.json();
-    if (json.success.length == 1) return new Plugin(json.success[0]);
+    if (json.success.length == 1) return new Plugin({version: 'latest', ...json.success[0]});
     else return null;
   }
 }
