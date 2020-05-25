@@ -8,7 +8,7 @@ This repository contains the entire core code base, including the code necessary
 
 ## Trying out Saltcorn
 
-A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn/tenant/create](https://saltcorn/tenant/create)
+A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn/tenant/create)
 this service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
 
 
