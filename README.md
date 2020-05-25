@@ -4,7 +4,11 @@
 
 Saltcorn is an extensible open source no-code database application builder. Use it to build web applications based on relational data with flexible views, datatypes and layouts.
 
+
+
 This repository contains the entire core code base, including the code necessary to self host an instance and to host a multitenant instance.
+
+**WARNING: In early stages of development. Expect poor usability, limited functionality and security vulnerabilities**
 
 ## Trying out Saltcorn
 
