@@ -3,6 +3,7 @@ const field = require("./fields");
 const list = require("./list");
 const view = require("./view");
 const page = require("./page");
+const admin = require("./admin");
 const tenant = require("./tenant");
 const api = require("./api");
 const plugins = require("./plugins");
@@ -24,6 +25,7 @@ module.exports = app => {
   app.use("/packs", packs);
   app.use("/view", view);
   app.use("/page", page);
+  app.use("/admin", admin);
   app.use("/tenant", tenant);
   app.use("/api", api);
   app.use("/viewedit", viewedit);
