@@ -12,7 +12,7 @@ A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn
 this service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
 
 
-For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
+For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. Installation instructions are given below. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
 
 ## Acknowledgements
 
