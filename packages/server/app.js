@@ -108,7 +108,9 @@ const getApp = async () => {
             { link: "/auth/logout", label: "Logout" }
           ]
         : [
-            ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
+            ...(allow_signup
+              ? [{ link: "/auth/signup", label: "Sign up" }]
+              : []),
             { link: "/auth/login", label: "Login" }
           ];
       const isAdmin = (req.user || {}).role_id === 1;
@@ -120,7 +122,8 @@ const getApp = async () => {
           label: "Settings",
           subitems: [
             { link: "/useradmin", label: "Users" },
-            { link: "/config", label: "Configuration" }
+            { link: "/config", label: "Configuration" },
+            { link: "/admin", label: "Admin" }
           ]
         }
       ];

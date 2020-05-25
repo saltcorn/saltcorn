@@ -76,7 +76,6 @@ class State {
   }
   addType(t) {
     this.types[t.name] = t;
-    if (!this.type_names.includes(t.name)) this.type_names.push(t.name);
   }
 }
 

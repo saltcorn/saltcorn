@@ -10,7 +10,7 @@ module.exports = async () => {
   getState().registerPlugin("base", basePlugin);
   const table = await Table.create("books", {
     expose_api_read: true,
-    min_role_read: 4
+    min_role_read: 10
   });
   await Field.create({
     table,
@@ -29,7 +29,7 @@ module.exports = async () => {
   });
   const patients = await Table.create("patients", {
     expose_api_read: true,
-    min_role_read: 2
+    min_role_read: 4
   });
   await Field.create({
     table: patients,
@@ -152,6 +152,11 @@ module.exports = async () => {
   await User.create({
     email: "staff@foo.com",
     password: "secret",
-    role_id: 2
+    role_id: 4
+  });
+  await User.create({
+    email: "user@foo.com",
+    password: "secret",
+    role_id: 8
   });
 };

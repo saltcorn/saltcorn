@@ -6,7 +6,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.id = o.id;
-    this.role_id = o.role_id || 3;
+    this.role_id = o.role_id || 8;
   }
   static async create(uo) {
     const u = new User(uo);
@@ -39,7 +39,7 @@ class User {
     await db.query(`delete FROM "${schema}".users WHERE id = $1`, [this.id]);
   }
   static async get_roles() {
-    const rs = await db.select("_sc_roles");
+    const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
   }
 }

@@ -65,7 +65,10 @@ router.get("/", isAdmin, async (req, res) => {
         { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
         {
           label: "Delete",
-          key: r => post_btn(`/useradmin/delete/${r.id}`, "Delete")
+          key: r =>
+            r.id !== req.user.id
+              ? post_btn(`/useradmin/delete/${r.id}`, "Delete")
+              : ""
         }
       ],
       users

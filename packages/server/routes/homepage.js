@@ -28,7 +28,7 @@ const viewTable = views =>
   );
 
 const no_views_logged_in = async (req, res) => {
-  const role = req.isAuthenticated() ? req.user.role_id : 4;
+  const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
     res.sendWrap("Hello", "Welcome to saltcorn!");
   else {
@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
       res.sendWrap(page.title || `${pagename} page`, contents);
       return;
     }
-  } else if (isAuth && req.user.role_id === 3) {
+  } else if (isAuth && req.user.role_id === 8) {
     const page = getState().pages[getState().getConfig("user_home")];
     if (page) {
       const contents = await page.getPage();

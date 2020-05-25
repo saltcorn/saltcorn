@@ -57,7 +57,8 @@ class Plugin {
         encodeURIComponent(name)
     );
     const json = await response.json();
-    if (json.success.length == 1) return new Plugin({version: 'latest', ...json.success[0]});
+    if (json.success.length == 1)
+      return new Plugin({ version: "latest", ...json.success[0] });
     else return null;
   }
 }

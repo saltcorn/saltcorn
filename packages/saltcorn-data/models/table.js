@@ -40,9 +40,13 @@ class Table {
   }
   async delete() {
     const schema = db.getTenantSchema();
-    await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [this.id]);
+    await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [
+      this.id
+    ]);
 
-    await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [this.id]);
+    await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [
+      this.id
+    ]);
     await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
   }
 

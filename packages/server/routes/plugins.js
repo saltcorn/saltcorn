@@ -35,7 +35,7 @@ const pluginForm = plugin => {
     if (plugin.id) form.hidden("id");
     form.values = plugin;
   } else {
-    form.values.version='latest'
+    form.values.version = "latest";
   }
   return form;
 };
@@ -158,7 +158,10 @@ router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const depviews = await plugin.dependant_views();
   if (depviews.length === 0) {
     await plugin.delete();
-    req.flash("success", "Plugin removed");
+    req.flash(
+      "success",
+      "Plugin removed. You may need to restart the server (Settings » Admin) for changes to take effect."
+    );
   } else {
     req.flash(
       "error",
