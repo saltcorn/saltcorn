@@ -2,6 +2,16 @@
 
 ![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)
 
+Saltcorn is an extensible open source no-code database application builder. 
+
+This repository contains the entire core code base, including the code necessary to self host and instance and to host a multitenant instance.
+
+## Trying out Saltcorn
+
+A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn/tenant/create](https://saltcorn/tenant/create)
+this service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
+
+
 ## Install from packages
 
 Instructions have been tested on Ubuntu 20.04
@@ -188,7 +198,11 @@ lerna bootstrap
 
 to install everything. If successful, you should now be able to run `saltcorn` in your shell
 
-## Development Tips
+## Packages
+
+* [@saltcorn-cli](https://github.com/saltcorn/saltcorn/tree/master/packages/saltcorn-cli): command-line interface
+
+## Development tips
 
 ### Prettier
 
