@@ -34,9 +34,9 @@ const reset = async (dontDrop = false, schema = "public") => {
   `);
 
   await db.insert(`_sc_roles`, { role: "admin", id: 1 });
-  await db.insert(`_sc_roles`, { role: "staff", id: 2 });
-  await db.insert(`_sc_roles`, { role: "user", id: 3 });
-  await db.insert(`_sc_roles`, { role: "public", id: 4 });
+  await db.insert(`_sc_roles`, { role: "staff", id: 4 });
+  await db.insert(`_sc_roles`, { role: "user", id: 8 });
+  await db.insert(`_sc_roles`, { role: "public", id: 10 });
 
   await db.query(`
     CREATE TABLE ${schema}._sc_tables

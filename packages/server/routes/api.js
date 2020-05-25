@@ -18,7 +18,7 @@ const noId = r => {
 router.get("/:tableName/", setTenant, async (req, res) => {
   const { tableName } = req.params;
   const table = await Table.findOne({ name: tableName });
-  const role = req.isAuthenticated() ? req.user.role_id : 4;
+  const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (table.expose_api_read && role <= table.min_role_read) {
     var rows;
     if (req.query && req.query !== {}) {

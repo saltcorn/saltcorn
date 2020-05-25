@@ -12,9 +12,9 @@ module.exports = router;
 
 const roleOptions = [
   { value: 1, label: "Admin" },
-  { value: 2, label: "Staff" },
-  { value: 3, label: "User" },
-  { value: 4, label: "Public" }
+  { value: 4, label: "Staff" },
+  { value: 8, label: "User" },
+  { value: 10, label: "Public" }
 ];
 
 const apiOptions = [

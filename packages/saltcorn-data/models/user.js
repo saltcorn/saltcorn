@@ -6,7 +6,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.id = o.id;
-    this.role_id = o.role_id || 3;
+    this.role_id = o.role_id || 8;
   }
   static async create(uo) {
     const u = new User(uo);

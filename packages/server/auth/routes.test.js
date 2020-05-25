@@ -89,7 +89,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fidelio")
-      .send("role_id=3")
+      .send("role_id=8")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
   });
@@ -107,7 +107,7 @@ describe("user admin", () => {
     const app = await getApp();
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    expect(user.role_id).toBe(3);
+    expect(user.role_id).toBe(8);
     await request(app)
       .get(`/useradmin/${user.id}`)
       .set("Cookie", loginCookie)
@@ -122,11 +122,11 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send(`id=${user.id}`)
-      .send("role_id=2")
+      .send("role_id=4")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
-    expect(edituser.role_id).toBe(2);
+    expect(edituser.role_id).toBe(4);
   });
   it("deletes user", async () => {
     const app = await getApp();
