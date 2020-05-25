@@ -11,13 +11,16 @@ This repository contains the entire core code base, including the code necessary
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create)
 this service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
 
+
+For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
+
 ## Acknowledgements
 
 Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/) and other awesome free and open source projects.
 
 ## Install from packages
 
-Instructions have been tested on Ubuntu 20.04 on a 1GB VPS, which is sufficient to run Saltcorn unless you expect high traffic volumes. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda).
+Instructions have been tested on Ubuntu 20.04 on a 1GB VM.
 
 TL;DR: `npm install -g @saltcorn/cli && saltcorn setup`
 
