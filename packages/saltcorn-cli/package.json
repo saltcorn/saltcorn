@@ -6,7 +6,7 @@
   "bin": {
     "saltcorn": "./bin/saltcorn"
   },
-  "bugs": "https://github.com/glutamate/saltcorns/issues",
+  "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
     "@oclif/command": "^1.5.19",
     "@oclif/config": "^1.15.1",
@@ -33,7 +33,7 @@
     "/oclif.manifest.json",
     "/src"
   ],
-  "homepage": "https://github.com/glutamate/saltcorns",
+  "homepage": "https://github.com/saltcorn/saltcorn",
   "keywords": [
     "oclif"
   ],
@@ -46,7 +46,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "glutamate/saltcorns",
+  "repository": "saltcorn/saltcorn",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
