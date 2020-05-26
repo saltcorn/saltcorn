@@ -5,7 +5,7 @@ const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text, div, h4, hr } = require("@saltcorn/markup/tags");
-const { renderForm, tabs } = require("@saltcorn/markup");
+const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 
 const configuration_workflow = () =>
@@ -21,8 +21,14 @@ const configuration_workflow = () =>
               viewrow.name !== context.viewname &&
               state_fields.some(sf => sf.name === "id")
           );
+          const create_views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every(sf => !sf.required)
+          );
           const show_view_opts = show_views.map(v => v.name);
-
+          const create_view_opts = create_views.map(v => v.name);
           return new Form({
             fields: [
               {
@@ -32,6 +38,15 @@ const configuration_workflow = () =>
                 required: true,
                 attributes: {
                   options: show_view_opts.join()
+                }
+              },
+              {
+                name: "view_to_create",
+                label: "Use view to create",
+                sublabel: "Leave blank to have no link to create a new item",
+                type: "String",
+                attributes: {
+                  options: create_view_opts.join()
                 }
               }
             ]
@@ -79,7 +94,7 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 const run = async (
   table_id,
   viewname,
-  { show_view, order_field, descending },
+  { show_view, order_field, descending, view_to_create },
   state,
   extraArgs
 ) => {
@@ -89,7 +104,13 @@ const run = async (
     orderBy: order_field,
     ...(descending && { orderDesc: true })
   });
-  return sresp.map(r => div(r.html) + hr());
+  const create_link = view_to_create
+    ? link(`/view/${view_to_create}`, "Add row")
+    : "";
+  return div(
+    sresp.map(r => div(r.html) + hr()),
+    create_link
+  );
 };
 
 module.exports = {

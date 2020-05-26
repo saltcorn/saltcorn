@@ -116,7 +116,7 @@ const run = async (
   extraArgs
 ) => {
   var lresp;
-  if(list_view) {
+  if (list_view) {
     const lview = await View.findOne({ name: list_view });
     lresp = await lview.run(state, {
       ...extraArgs,
@@ -166,15 +166,18 @@ const run = async (
       }
     }
   }
-  const relTblResp = Object.keys(reltbls).length===1 ? reltbls[Object.keys(reltbls)[0]] : tabs(reltbls)
-  if(lresp) {
+  const relTblResp =
+    Object.keys(reltbls).length === 1
+      ? reltbls[Object.keys(reltbls)[0]]
+      : tabs(reltbls);
+  if (lresp) {
     return div(
       { class: "row" },
       div({ class: "col-sm-6" }, lresp),
       div({ class: "col-sm-6" }, sresp, relTblResp)
     );
   } else {
-    return div( sresp, relTblResp );
+    return div(sresp, relTblResp);
   }
 };
 
