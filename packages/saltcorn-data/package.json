@@ -16,6 +16,7 @@
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "pg": "^8.1.0",
+    "pluralize": "^8.0.0",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {

@@ -8,7 +8,7 @@ const { text, div, h4, hr } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { stateToQueryString } = require("./viewable_fields");
-
+const pluralize = require("pluralize");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -98,6 +98,8 @@ const run = async (
   state,
   extraArgs
 ) => {
+  const table = await Table.findOne({ id: table_id });
+
   const sview = await View.findOne({ name: show_view });
   const sresp = await sview.runMany(state, {
     ...extraArgs,
@@ -105,7 +107,10 @@ const run = async (
     ...(descending && { orderDesc: true })
   });
   const create_link = view_to_create
-    ? link(`/view/${view_to_create}${stateToQueryString(state)}`, "Add row")
+    ? link(
+        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `Add ${pluralize(table.name, 1)}`
+      )
     : "";
   return div(
     sresp.map(r => div(r.html) + hr()),
