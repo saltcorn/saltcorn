@@ -7,6 +7,7 @@ const Workflow = require("../../models/workflow");
 const { text, div, h4, hr } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
+const { stateToQueryString } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -90,7 +91,6 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
     return sf;
   });
 };
-
 const run = async (
   table_id,
   viewname,
@@ -105,7 +105,7 @@ const run = async (
     ...(descending && { orderDesc: true })
   });
   const create_link = view_to_create
-    ? link(`/view/${view_to_create}`, "Add row")
+    ? link(`/view/${view_to_create}${stateToQueryString(state)}`, "Add row")
     : "";
   return div(
     sresp.map(r => div(r.html) + hr()),

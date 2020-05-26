@@ -196,8 +196,8 @@ const run = async (table_id, viewname, config, state) => {
   Object.entries(state).forEach(([k, v]) => {
     if (k !== "id") {
       const field = form.fields.find(f => f.name === k);
-      if (field && field.type && field.type.read) {
-        form.values[k] = field.type.read(v);
+      if (field && ((field.type && field.type.read) || field.is_fkey)) {
+        form.values[k] = field.type.read ? field.type.read(v) : v;
         field.input_type = "hidden";
       }
     }
