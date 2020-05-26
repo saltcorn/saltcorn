@@ -6,6 +6,8 @@ const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script } = require("@saltcorn/markup/tags");
+const pluralize = require("pluralize");
+
 const {
   field_picker_fields,
   picked_fields_to_query,
@@ -114,7 +116,7 @@ const run = async (
     }
   }
   const create_link = view_to_create
-    ? link(`/view/${view_to_create}`, "Add row")
+    ? link(`/view/${view_to_create}`, `Add ${pluralize(table.name, 1)}`)
     : "";
   return mkTable(tfields, rows, page_opts) + create_link;
 };

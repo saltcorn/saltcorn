@@ -78,5 +78,15 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
       };
     }
   });
+const stateToQueryString = state => {
+  if (!state || Object.keys(state).length === 0) return "";
 
-module.exports = { get_viewable_fields, action_url };
+  return (
+    "?" +
+    Object.entries(state)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&")
+  );
+};
+
+module.exports = { get_viewable_fields, action_url, stateToQueryString };

@@ -37,7 +37,7 @@ const configuration_workflow = () =>
                 name: "list_view",
                 label: "List View",
                 type: "String",
-                required: true,
+                required: false,
                 attributes: {
                   options: list_view_opts.join()
                 }
@@ -96,16 +96,16 @@ const get_state_fields = async (
   viewname,
   { list_view, show_view }
 ) => {
-  const lview = await View.findOne({ name: list_view });
-  const lview_sfs = await lview.get_state_fields();
-  return [
-    {
-      name: "id",
-      type: "Integer",
-      required: false
-    },
-    ...lview_sfs
-  ];
+  const id = {
+    name: "id",
+    type: "Integer",
+    required: false
+  };
+  if (list_view) {
+    const lview = await View.findOne({ name: list_view });
+    const lview_sfs = await lview.get_state_fields();
+    return [id, ...lview_sfs];
+  } else return [id];
 };
 
 const run = async (
@@ -115,11 +115,14 @@ const run = async (
   state,
   extraArgs
 ) => {
-  const lview = await View.findOne({ name: list_view });
-  const lresp = await lview.run(state, {
-    ...extraArgs,
-    onRowSelect: v => `select_id(${v.id})`
-  });
+  var lresp;
+  if (list_view) {
+    const lview = await View.findOne({ name: list_view });
+    lresp = await lview.run(state, {
+      ...extraArgs,
+      onRowSelect: v => `select_id(${v.id})`
+    });
+  }
 
   var sresp = "";
   if (show_view) {
@@ -163,12 +166,19 @@ const run = async (
       }
     }
   }
-
-  return div(
-    { class: "row" },
-    div({ class: "col-sm-6" }, lresp),
-    div({ class: "col-sm-6" }, sresp, tabs(reltbls))
-  );
+  const relTblResp =
+    Object.keys(reltbls).length === 1
+      ? reltbls[Object.keys(reltbls)[0]]
+      : tabs(reltbls);
+  if (lresp) {
+    return div(
+      { class: "row" },
+      div({ class: "col-sm-6" }, lresp),
+      div({ class: "col-sm-6" }, sresp, relTblResp)
+    );
+  } else {
+    return div(sresp, relTblResp);
+  }
 };
 
 module.exports = {
