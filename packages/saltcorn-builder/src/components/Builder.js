@@ -19,7 +19,7 @@ const Toolbox = () => {
         <tr>
           <td>
             <button
-              ref={ref => connectors.create(ref, <Text text="Hi world" />)}
+              ref={ref => connectors.create(ref, <Text text="Hello world" />)}
             >
               Text
             </button>
@@ -43,7 +43,17 @@ const Toolbox = () => {
         <tr>
           <td>
             <button
-              ref={ref => connectors.create(ref, <Field name="field_name" />)}
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Field
+                    name={options.fields[0].name}
+                    fieldview={
+                      options.field_view_options[options.fields[0].name][0]
+                    }
+                  />
+                )
+              }
             >
               Field
             </button>
@@ -51,7 +61,10 @@ const Toolbox = () => {
           <td>
             <button
               ref={ref =>
-                connectors.create(ref, <JoinField name="join_field_name" />)
+                connectors.create(
+                  ref,
+                  <JoinField name={options.parent_field_list[0]} />
+                )
               }
             >
               Join
@@ -61,7 +74,12 @@ const Toolbox = () => {
         <tr>
           <td>
             <button
-              ref={ref => connectors.create(ref, <ViewLink name="view_link" />)}
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <ViewLink name={options.link_view_opts[0].name} />
+                )
+              }
             >
               Link
             </button>

@@ -14,7 +14,8 @@ module.exports = router;
 const tenant_form = () =>
   new Form({
     action: "/tenant/create",
-    blurb: "Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. Do not use for private information that needs to be secure. For that purpose, we recommend self hosting Saltcorn. See https://github.com/saltcorn/saltcorn",
+    blurb:
+      "Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. Do not use for private information that needs to be secure. For that purpose, we recommend self hosting Saltcorn. See https://github.com/saltcorn/saltcorn",
     fields: [
       {
         name: "subdomain",

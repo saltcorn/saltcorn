@@ -6,7 +6,10 @@ export const ViewLink = ({ name }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <div ref={dom => connect(drag(dom))}>[{name}]</div>;
+  const options = useContext(optionsCtx);
+  const chosen = options.link_view_opts.find(v => (v.name = name));
+  const label = chosen ? chosen.label : "View Link";
+  return <div ref={dom => connect(drag(dom))}>[{label}]</div>;
 };
 
 export const ViewLinkSettings = () => {

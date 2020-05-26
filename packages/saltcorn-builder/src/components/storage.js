@@ -7,8 +7,9 @@ import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
 export const layoutToNodes = (layout, query, actions) => {
-  //console.log("layoutToNodes", JSON.stringify(layout))
+  //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
+    if (!segment) return;
     if (segment.type === "blank") {
       return <Text key={ix} text={segment.contents} />;
     } else if (segment.type === "field") {
@@ -36,12 +37,10 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.above) {
       return segment.above.map((e, ix) => toTag(e, ix));
-    } else {
-      console.error(segment);
-      throw "unrecognized segment";
     }
   }
   function go(segment, parent) {
+    if (!segment) return;
     if (segment.above) {
       segment.above.forEach(child => {
         if (child) go(child, parent);
@@ -56,9 +55,12 @@ export const layoutToNodes = (layout, query, actions) => {
       );
       actions.add(node, parent);
     } else {
-      const node = query.createNode(toTag(segment));
-      //console.log("other", node);
-      actions.add(node, parent);
+      const tag = toTag(segment);
+      if (tag) {
+        const node = query.createNode(tag);
+        //console.log("other", node);
+        actions.add(node, parent);
+      }
     }
   }
   //const node1 = query.createNode(toTag(layout));
@@ -67,6 +69,7 @@ export const layoutToNodes = (layout, query, actions) => {
 };
 
 export const craftToSaltcorn = nodes => {
+  console.log(nodes);
   var columns = [];
   const go = node => {
     if (node.isCanvas) {
