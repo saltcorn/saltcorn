@@ -133,7 +133,7 @@ export const craftToSaltcorn = nodes => {
     }
   };
   const layout = go(nodes["canvas-ROOT"]);
-  console.log("nodes", nodes);
+  console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));
   return { columns, layout };
