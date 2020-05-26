@@ -11,3 +11,7 @@ pre.wsprewrap {
   min-height: 50px;
   border: 1px dotted black;
 }
+
+#footer {
+  margin: 5em 0;
+}

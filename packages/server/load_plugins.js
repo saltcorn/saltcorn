@@ -2,7 +2,12 @@ const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
 
-const manager = new PluginManager();
+const manager = new PluginManager({
+  staticDependencies: {
+    '@saltcorn/markup': require("@saltcorn/markup"),
+    '@saltcorn/data/db': require("@saltcorn/data/db"),
+  }
+});
 
 const loadPlugin = async plugin => {
   const plugin_module = await requirePlugin(plugin);
