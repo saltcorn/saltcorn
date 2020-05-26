@@ -96,16 +96,16 @@ const get_state_fields = async (
   viewname,
   { list_view, show_view }
 ) => {
-  const lview = await View.findOne({ name: list_view });
-  const lview_sfs = await lview.get_state_fields();
-  return [
-    {
-      name: "id",
-      type: "Integer",
-      required: false
-    },
-    ...lview_sfs
-  ];
+  const id = {
+    name: "id",
+    type: "Integer",
+    required: false
+  };
+  if (list_view) {
+    const lview = await View.findOne({ name: list_view });
+    const lview_sfs = await lview.get_state_fields();
+    return [id, ...lview_sfs];
+  } else return [id];
 };
 
 const run = async (
