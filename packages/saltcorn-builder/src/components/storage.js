@@ -1,8 +1,8 @@
 import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
-import { JoinField } from "./elements/JoinField";
 import { TwoSplit } from "./elements/TwoSplit";
+import { JoinField } from "./elements/JoinField";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
@@ -69,7 +69,7 @@ export const layoutToNodes = (layout, query, actions) => {
 };
 
 export const craftToSaltcorn = nodes => {
-  console.log(nodes);
+  //console.log(nodes);
   var columns = [];
   const go = node => {
     if (node.isCanvas) {
@@ -77,10 +77,10 @@ export const craftToSaltcorn = nodes => {
       else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
       else return { above: node.nodes.map(nm => go(nodes[nm])) };
     }
-    if (node.displayName === "Text") {
+    if (node.displayName === Text.name) {
       return { type: "blank", contents: node.props.text };
     }
-    if (node.displayName === "TwoSplit") {
+    if (node.displayName === TwoSplit.name) {
       return {
         besides: [
           go(nodes[node._childCanvas.Left]),
@@ -89,7 +89,7 @@ export const craftToSaltcorn = nodes => {
         widths: [node.props.leftCols, 12 - node.props.leftCols]
       };
     }
-    if (node.displayName === "Field") {
+    if (node.displayName === Field.name) {
       columns.push({
         type: "Field",
         field_name: node.props.name,
@@ -101,7 +101,7 @@ export const craftToSaltcorn = nodes => {
         fieldview: node.props.fieldview
       };
     }
-    if (node.displayName === "JoinField") {
+    if (node.displayName === JoinField.name) {
       columns.push({
         type: "JoinField",
         join_field: node.props.name
@@ -111,7 +111,7 @@ export const craftToSaltcorn = nodes => {
         join_field: node.props.name
       };
     }
-    if (node.displayName === "ViewLink") {
+    if (node.displayName === ViewLink.name) {
       columns.push({
         type: "ViewLink",
         view: node.props.name
@@ -121,7 +121,7 @@ export const craftToSaltcorn = nodes => {
         view: node.props.name
       };
     }
-    if (node.displayName === "Action") {
+    if (node.displayName === Action.name) {
       columns.push({
         type: "Action",
         action_name: node.props.name
@@ -133,8 +133,8 @@ export const craftToSaltcorn = nodes => {
     }
   };
   const layout = go(nodes["canvas-ROOT"]);
-  console.log("nodes", JSON.stringify(nodes));
+  /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
-  console.log("layout", JSON.stringify(layout));
+  console.log("layout", JSON.stringify(layout));*/
   return { columns, layout };
 };
