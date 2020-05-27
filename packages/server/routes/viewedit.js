@@ -55,7 +55,7 @@ const viewForm = (tableOptions, values) =>
     action: "/viewedit/save",
     blurb: "First, please give some basic information about your new view.",
     fields: [
-      new Field({ label: "Name", name: "name", input_type: "text", required:true }),
+      new Field({ label: "Name", name: "name", type: "String" }),
       new Field({
         label: "Template",
         name: "viewtemplate",
@@ -114,23 +114,40 @@ router.post("/save", setTenant, isAdmin, async (req, res) => {
   const result = form.validate(req.body);
 
   if (result.success) {
-    var v = result.success;
-
-    const table = await Table.findOne({ name: v.table_name });
-
-    v.table_id = table.id;
-
-    delete v.table_name;
-
-    if (typeof req.body.id !== "undefined") {
-      await View.update(v, req.body.id);
+    if (result.success.name.replace(" ", "") === "") {
+      form.errors.name = "Name required";
+      form.hasErrors = true;
+      res.sendWrap(`Edit view`, renderForm(form));
     } else {
-      const vt = getState().viewtemplates[v.viewtemplate];
-      if (vt.initial_config) v.configuration = await vt.initial_config(v);
-      else v.configuration = {};
-      await View.create(v);
+      if (typeof req.body.id === "undefined") {
+        const existing_views = await View.find();
+        const view_names = existing_views.map(v => v.name);
+        if (view_names.includes(result.success.name)) {
+          form.errors.name = "A view with this name already exists";
+          form.hasErrors = true;
+          res.sendWrap(`Edit view`, renderForm(form));
+          return;
+        }
+      }
+
+      var v = result.success;
+
+      const table = await Table.findOne({ name: v.table_name });
+
+      v.table_id = table.id;
+
+      delete v.table_name;
+
+      if (typeof req.body.id !== "undefined") {
+        await View.update(v, req.body.id);
+      } else {
+        const vt = getState().viewtemplates[v.viewtemplate];
+        if (vt.initial_config) v.configuration = await vt.initial_config(v);
+        else v.configuration = {};
+        await View.create(v);
+      }
+      res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
     }
-    res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
   } else {
     res.sendWrap(`Edit view`, renderForm(form));
   }

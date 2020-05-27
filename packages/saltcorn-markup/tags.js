@@ -1,23 +1,21 @@
 const xss = require("xss");
 
- const ppClasses = cs =>
-    typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
+const ppClasses = cs =>
+  typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
 
-  const ppAttrib = ([k, v]) =>
-    typeof v === "boolean"
-      ? v
-        ? k
-        : ""
-      : typeof v === "undefined"
-      ? ""
-      : k === "class"
-      ? `class="${ppClasses(v)}"`
-      : `${k}="${v}"`;
+const ppAttrib = ([k, v]) =>
+  typeof v === "boolean"
+    ? v
+      ? k
+      : ""
+    : typeof v === "undefined"
+    ? ""
+    : k === "class"
+    ? `class="${ppClasses(v)}"`
+    : `${k}="${v}"`;
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
-
- 
 
   const argIter = arg => {
     if (typeof arg === "undefined" || arg === null || arg === false) {
