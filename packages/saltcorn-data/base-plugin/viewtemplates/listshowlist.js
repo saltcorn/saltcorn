@@ -168,7 +168,7 @@ const run = async (
   }
   const relTblResp =
     Object.keys(reltbls).length === 1
-      ? [h5(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
+      ? [h6(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
       : tabs(reltbls);
   if (lresp) {
     return div(
