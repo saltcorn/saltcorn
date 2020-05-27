@@ -170,9 +170,9 @@ class Field {
     const schema = db.getTenantSchema();
 
     await db.query(
-      `alter table ${schema}.${sqlsanitize(
+      `alter table "${schema}"."${sqlsanitize(
         table.name
-      )} drop column "${sqlsanitize(this.name)}"`
+      )}" drop column "${sqlsanitize(this.name)}"`
     );
   }
 

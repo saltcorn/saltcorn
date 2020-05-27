@@ -26,7 +26,7 @@ class Table {
   static async create(name, options = {}) {
     const schema = db.getTenantSchema();
     await db.query(
-      `create table ${schema}."${sqlsanitize(name)}" (id serial primary key)`
+      `create table "${schema}"."${sqlsanitize(name)}" (id serial primary key)`
     );
     const tblrow = {
       name,
@@ -40,6 +40,7 @@ class Table {
   }
   async delete() {
     const schema = db.getTenantSchema();
+    await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
     await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [
       this.id
     ]);
@@ -47,7 +48,6 @@ class Table {
     await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [
       this.id
     ]);
-    await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
   }
 
   async deleteRows(where) {
@@ -178,9 +178,9 @@ class Table {
     };
     const schema = db.getTenantSchema();
 
-    const sql = `SELECT ${fldNms.join()} FROM ${sqlsanitize(
+    const sql = `SELECT ${fldNms.join()} FROM "${sqlsanitize(
       schema
-    )}."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
+    )}"."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
       selectopts
     )}`;
     //console.log(sql);
