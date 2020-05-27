@@ -1,7 +1,7 @@
 const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
-const { fieldlike } = require("../contracts");
+const { fieldlike, is_viewtemplate } = require("../contracts");
 
 const removeEmptyStrings = obj => {
   var o = {};
@@ -162,7 +162,12 @@ class View {
     else res.json({ success: "ok" });
   }
   async get_state_form(query) {
-    if (this.viewtemplateObj.display_state_form) {
+    const vt_display_state_form = this.viewtemplateObj.display_state_form;
+    const display_state_form =
+      typeof vt_display_state_form === "function"
+        ? vt_display_state_form(this.configuration)
+        : vt_display_state_form;
+    if (display_state_form) {
       const fields = await this.get_state_fields();
 
       fields.forEach(f => {
@@ -202,9 +207,7 @@ View.contract = {
     name: is.str,
     id: is.posint,
     viewtemplate: is.str,
-    viewtemplateObj: is.maybe(
-      is.obj({ name: is.str, display_state_form: is.bool })
-    )
+    viewtemplateObj: is.maybe(is_viewtemplate)
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),

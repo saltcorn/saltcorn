@@ -98,7 +98,7 @@ const is_plugin_type = is.obj({
 const is_viewtemplate = is.obj({
   name: is.str,
   get_state_fields: is.fun([is.posint, is.str, is.any], is.promise(fieldlike)),
-  display_state_form: is.maybe(is.bool),
+  display_state_form: is.maybe(is.or(is.bool, is.fun(is.any, is.bool))),
   configuration_workflow: is.fun([], is.class("Workflow")),
   view_quantity: is.maybe(is.one_of("Many", "ZeroOrOne", "One")),
   run: is.fun(
