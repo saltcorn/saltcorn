@@ -27,6 +27,14 @@ describe("tags", () => {
     expect(div({ class: ["foo", "bar"] }, 5)).toBe(
       '<div class="foo bar">5</div>'
     );
+
+    expect(div({ class: ["foo", " "] }, 5)).toBe(
+      '<div class="foo  ">5</div>'
+    );
+    expect(input({ class: ["foo", " "] })).toBe(
+      '<input class="foo  ">'
+    );
+    
     expect(
       div({ class: ["foo bar", "", undefined, null, false, "baz"] }, 5)
     ).toBe('<div class="foo bar baz">5</div>');
