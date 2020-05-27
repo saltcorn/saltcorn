@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Builder for Saltcorn",
   "main": "index.js",
   "scripts": {
