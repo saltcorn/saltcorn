@@ -41,7 +41,7 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
         {
           label: "Delete",
           key: r =>
-            post_btn(`/viewedit/delete/${encodeURIComponent(r.name)}`, "Delete")
+            post_btn(`/viewedit/delete/${encodeURIComponent(r.id)}`, "Delete")
         }
       ],
       views
@@ -55,7 +55,7 @@ const viewForm = (tableOptions, values) =>
     action: "/viewedit/save",
     blurb: "First, please give some basic information about your new view.",
     fields: [
-      new Field({ label: "Name", name: "name", input_type: "text" }),
+      new Field({ label: "Name", name: "name", input_type: "text", required:true }),
       new Field({
         label: "Template",
         name: "viewtemplate",
@@ -167,8 +167,8 @@ router.post("/config/:name", setTenant, isAdmin, async (req, res) => {
   }
 });
 
-router.post("/delete/:name", setTenant, isAdmin, async (req, res) => {
-  const { name } = req.params;
-  await View.delete({ name });
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  await View.delete({ id });
   res.redirect(`/viewedit/list`);
 });
