@@ -242,15 +242,19 @@ const runPost = async (
     } else {
       await table.updateRow(row, parseInt(id));
     }
-    const nxview = await View.findOne({ name: view_when_done });
-    //console.log()
-    const state_fields = await nxview.get_state_fields();
-    if (
-      nxview.table_id === table_id &&
-      state_fields.some(sf => sf.name === "id")
-    )
-      res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
-    else res.redirect(`/view/${text(view_when_done)}`);
+    if (!view_when_done) {
+      res.redirect(`/`);
+    } else {
+      const nxview = await View.findOne({ name: view_when_done });
+      //console.log()
+      const state_fields = await nxview.get_state_fields();
+      if (
+        nxview.table_id === table_id &&
+        state_fields.some(sf => sf.name === "id")
+      )
+        res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
+      else res.redirect(`/view/${text(view_when_done)}`);
+    }
   }
 };
 
