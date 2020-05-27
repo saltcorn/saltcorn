@@ -1,22 +1,21 @@
 const xss = require("xss");
 
+const ppClasses = cs =>
+  typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
+
+const ppAttrib = ([k, v]) =>
+  typeof v === "boolean"
+    ? v
+      ? k
+      : ""
+    : typeof v === "undefined"
+    ? ""
+    : k === "class"
+    ? `class="${ppClasses(v)}"`
+    : `${k}="${v}"`;
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
-
-  const ppClasses = cs =>
-    typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
-
-  const ppAttrib = ([k, v]) =>
-    typeof v === "boolean"
-      ? v
-        ? k
-        : ""
-      : typeof v === "undefined"
-      ? ""
-      : k === "class"
-      ? `class="${ppClasses(v)}"`
-      : `${k}="${v}"`;
 
   const argIter = arg => {
     if (typeof arg === "undefined" || arg === null || arg === false) {
@@ -41,7 +40,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
 };
 const input = kvs => {
   const attribs = Object.entries(kvs)
-    .map(([k, v]) => `${k}="${v}"`)
+    .map(ppAttrib)
     .join(" ");
   return `<input ${attribs}>`;
 };

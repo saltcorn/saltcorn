@@ -93,7 +93,7 @@ describe("Field Endpoints", () => {
       .send("type=String")
       .send("contextEnc=" + ctx)
       .set("Cookie", loginCookie)
-      .expect(toInclude("match"));
+      .expect(toInclude("options"));
   });
 
   it("should post new fkey field", async () => {
