@@ -184,7 +184,7 @@ class Field {
     if (!f.table && f.table_id)
       f.table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
-      const q = `alter table ${schema}."${sqlsanitize(
+      const q = `alter table "${schema}"."${sqlsanitize(
         f.table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
@@ -196,9 +196,9 @@ class Field {
         f.sql_bare_type
       }) RETURNS void AS $$
       BEGIN
-      EXECUTE format('alter table ${schema}.${sqlsanitize(
+      EXECUTE format('alter table "${schema}"."${sqlsanitize(
         f.table.name
-      )} add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);
       END;
