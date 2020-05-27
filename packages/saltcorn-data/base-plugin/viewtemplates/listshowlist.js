@@ -4,7 +4,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4 } = require("@saltcorn/markup/tags");
+const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
@@ -168,7 +168,7 @@ const run = async (
   }
   const relTblResp =
     Object.keys(reltbls).length === 1
-      ? reltbls[Object.keys(reltbls)[0]]
+      ? [h5(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
       : tabs(reltbls);
   if (lresp) {
     return div(
