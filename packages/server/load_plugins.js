@@ -4,8 +4,8 @@ const { getState } = require("@saltcorn/data/db/state");
 
 const manager = new PluginManager({
   staticDependencies: {
-    '@saltcorn/markup': require("@saltcorn/markup"),
-    '@saltcorn/data/db': require("@saltcorn/data/db"),
+    "@saltcorn/markup": require("@saltcorn/markup"),
+    "@saltcorn/data/db": require("@saltcorn/data/db")
   }
 });
 
