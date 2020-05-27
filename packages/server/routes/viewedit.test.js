@@ -9,6 +9,7 @@ const {
   toNotInclude
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const View = require("@saltcorn/data/models/view");
 
 afterAll(db.close);
 
@@ -94,9 +95,10 @@ describe("viewedit new List", () => {
 
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const id = (await View.findOne({ name: "mybooklist" })).id;
     const app = await getApp();
     await request(app)
-      .post("/viewedit/delete/mybooklist")
+      .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
   });
@@ -146,9 +148,11 @@ describe("viewedit new List with one field", () => {
 
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const id = (await View.findOne({ name: "mybooklist1" })).id;
+
     const app = await getApp();
     await request(app)
-      .post("/viewedit/delete/mybooklist1")
+      .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
   });
@@ -212,8 +216,10 @@ describe("viewedit new Show", () => {
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
+    const id = (await View.findOne({ name: "mybook" })).id;
+
     await request(app)
-      .post("/viewedit/delete/mybook")
+      .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/list"));
   });
