@@ -13,6 +13,7 @@ const { Provider } = optionsCtx;
 const Toolbox = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
+  const { fields, field_view_options } = options;
   return (
     <table>
       <tbody>
@@ -47,9 +48,11 @@ const Toolbox = () => {
                 connectors.create(
                   ref,
                   <Field
-                    name={options.fields[0].name}
+                    name={fields[0].name}
                     fieldview={
-                      options.field_view_options[options.fields[0].name][0]
+                      fields[0].is_fkey
+                        ? ""
+                        : field_view_options[fields[0].name][0]
                     }
                   />
                 )
