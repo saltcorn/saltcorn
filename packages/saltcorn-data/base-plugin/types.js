@@ -26,10 +26,10 @@ const string = {
   name: "String",
   sql_name: "text",
   attributes: [
-    { name: "match", type: "String", required: false },
+    //{ name: "match", type: "String", required: false },
     { name: "options", type: "String", required: false }
   ],
-  contract: ({ match, options }) =>
+  contract: ({ options }) =>
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
@@ -98,7 +98,7 @@ const string = {
         return undefined;
     }
   },
-  validate: ({ match }) => x => true
+  validate: () => x => true
 };
 
 const int = {
