@@ -35,7 +35,7 @@ class User {
     return new User(u);
   }
   static async nonEmpty() {
-    const res = await db.count("users")
+    const res = await db.count("users");
     return res > 0;
   }
   async delete() {

@@ -2,10 +2,16 @@ const Router = require("express-promise-router");
 
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  post_delete_btn
+} = require("@saltcorn/markup");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
-const { span, h5, h4, nbsp, a } = require("@saltcorn/markup/tags");
+const { span, h5, h4, nbsp, p, a } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -78,41 +84,49 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const table = await Table.findOne({ id });
 
   const fields = await Field.find({ table_id: id }, { orderBy: "name" });
-  var fieldCard
-  if(fields.length===0) {
-    fieldCard=[
+  var fieldCard;
+  if (fields.length === 0) {
+    fieldCard = [
       h4("No fields found"),
-      a({href:`/field/new/${table.id}`, class:"btn btn-primary"}, "Add field to table")
-    ]
-
+      p("Fields define the columns in your table."),
+      a(
+        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        "Add field to table"
+      )
+    ];
   } else {
-  const tableHtml = mkTable(
-    [
-      { label: "Label", key: "label" },
-      { label: "Required", key: r => (r.required ? "true" : "false") },
-      {
-        label: "Type",
-        key: r => (r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name)
-      },
-      { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
-      {
-        label: "Delete",
-        key: r => post_btn(`/field/delete/${r.id}`, "Delete")
-      }
-    ],
-    fields
-  ); 
-  fieldCard=[
-          tableHtml,          
-          a({href:`/field/new/${table.id}`, class:"btn btn-primary"}, "Add field")
-        ]
+    const tableHtml = mkTable(
+      [
+        { label: "Label", key: "label" },
+        { label: "Required", key: r => (r.required ? "true" : "false") },
+        {
+          label: "Type",
+          key: r =>
+            r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name
+        },
+        { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+        {
+          label: "Delete",
+          key: r => post_delete_btn(`/field/delete/${r.id}`)
+        }
+      ],
+      fields
+    );
+    fieldCard = [
+      tableHtml,
+      a(
+        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        "Add field"
+      )
+    ];
   }
   res.sendWrap(`${table.name} table`, {
     above: [
       {
         type: "pageHeader",
         title: `${table.name} table`,
-        blurb: fields.length> 0 ? link(`/list/${table.name}`, "See data"): null
+        blurb:
+          fields.length > 0 ? link(`/list/${table.name}`, "See data") : null
       },
       {
         type: "card",

@@ -73,11 +73,9 @@ router.get("/create_first_user", setTenant, async (req, res) => {
     const form = loginForm();
     form.action = "/auth/create_first_user";
     form.submitLabel = "Create user";
-    form.blurb= "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-    res.sendWrap(
-        `Create first user`,
-        renderForm(form)
-      );    
+    form.blurb =
+      "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
+    res.sendWrap(`Create first user`, renderForm(form));
   } else {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");
@@ -87,33 +85,39 @@ router.post("/create_first_user", setTenant, async (req, res) => {
   const hasUsers = await User.nonEmpty();
   if (!hasUsers) {
     const { email, password } = req.body;
-    const u = await User.create({ email, password, role_id:1 });
-    req.login({ email: u.email, role_id: u.role_id,tenant: db.getTenantSchema() }, function(err) {
-      if (!err) {
-        res.redirect("/");
-      } else {
-        req.flash("danger", err);
-        res.redirect("/auth/signup");
+    const u = await User.create({ email, password, role_id: 1 });
+    req.login(
+      { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
+      function(err) {
+        if (!err) {
+          res.redirect("/");
+        } else {
+          req.flash("danger", err);
+          res.redirect("/auth/signup");
+        }
       }
-    });
+    );
   } else {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");
   }
-})
+});
 router.post("/signup", setTenant, async (req, res) => {
   if (getState().getConfig("allow_signup")) {
     const { email, password } = req.body;
     const u = await User.create({ email, password });
 
-    req.login({ email: u.email, role_id: u.role_id,tenant: db.getTenantSchema() }, function(err) {
-      if (!err) {
-        res.redirect("/");
-      } else {
-        req.flash("danger", err);
-        res.redirect("/auth/signup");
+    req.login(
+      { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
+      function(err) {
+        if (!err) {
+          res.redirect("/");
+        } else {
+          req.flash("danger", err);
+          res.redirect("/auth/signup");
+        }
       }
-    });
+    );
   } else {
     req.flash("danger", "Signups not enabled");
     res.redirect("/auth/login");

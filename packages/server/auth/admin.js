@@ -77,7 +77,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   );
 });
 
-router.get("/new",setTenant, isAdmin, async (req, res) => {
+router.get("/new", setTenant, isAdmin, async (req, res) => {
   const form = await userForm();
   res.sendWrap("New user", renderForm(form));
 });
@@ -104,7 +104,7 @@ router.post("/save", setTenant, isAdmin, async (req, res) => {
   res.redirect(`/useradmin`);
 });
 
-router.post("/delete/:id",setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const u = await User.findOne({ id });
   await u.delete();

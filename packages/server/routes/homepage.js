@@ -158,11 +158,10 @@ module.exports = async (req, res) => {
   if (views.length === 0) {
     if (!isAuth) {
       const hasUsers = await User.nonEmpty();
-      if(!hasUsers) {
-        res.redirect("/auth/create_first_user")
-        return
-      } else
-      res.redirect("/auth/login");
+      if (!hasUsers) {
+        res.redirect("/auth/create_first_user");
+        return;
+      } else res.redirect("/auth/login");
     } else {
       await no_views_logged_in(req, res);
     }
