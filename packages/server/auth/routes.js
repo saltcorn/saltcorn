@@ -74,21 +74,10 @@ router.get("/create_first_user", setTenant, async (req, res) => {
     form.action = "/auth/create_first_user";
     form.submitLabel = "Create user";
     form.blurb= "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-    req.logout();
-    if(req.session) {
-      req.session.destroy(err => {
-      if (err) return next(err);
-      res.sendWrap(
+    res.sendWrap(
         `Create first user`,
         renderForm(form)
-      );
-      })} else {
-        res.sendWrap(
-          `Create first user`,
-          renderForm(form)
-        );
-      }
-    
+      );    
   } else {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");
@@ -99,7 +88,7 @@ router.post("/create_first_user", setTenant, async (req, res) => {
   if (!hasUsers) {
     const { email, password } = req.body;
     const u = await User.create({ email, password, role_id:1 });
-    req.login({ email: u.email, role_id: u.role_id }, function(err) {
+    req.login({ email: u.email, role_id: u.role_id,tenant: db.getTenantSchema() }, function(err) {
       if (!err) {
         res.redirect("/");
       } else {
@@ -117,7 +106,7 @@ router.post("/signup", setTenant, async (req, res) => {
     const { email, password } = req.body;
     const u = await User.create({ email, password });
 
-    req.login({ email: u.email, role_id: u.role_id }, function(err) {
+    req.login({ email: u.email, role_id: u.role_id,tenant: db.getTenantSchema() }, function(err) {
       if (!err) {
         res.redirect("/");
       } else {
