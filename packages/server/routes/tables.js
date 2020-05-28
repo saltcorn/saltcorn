@@ -11,7 +11,7 @@ const {
 } = require("@saltcorn/markup");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
-const { span, h5, h4, nbsp, p, a } = require("@saltcorn/markup/tags");
+const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -87,7 +87,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   var fieldCard;
   if (fields.length === 0) {
     fieldCard = [
-      h4("No fields found"),
+      h4(`No fields defined in ${table.name} table`),
       p("Fields define the columns in your table."),
       a(
         { href: `/field/new/${table.id}`, class: "btn btn-primary" },
@@ -193,17 +193,21 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
-    mkTable(
+    rows.length>0 ? mkTable(
       [
         { label: "Name", key: "name" },
         { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
         {
           label: "Delete",
-          key: r => post_btn(`/table/delete/${r.id}`, "Delete")
+          key: r => post_delete_btn(`/table/delete/${r.id}`)
         }
       ],
       rows
-    ),
-    link(`/table/new`, "Add table")
+    ) : div(h4("No tables defined"),
+    p("Tables hold collections of similar data"),),
+    a(
+      { href: `/table/new`, class: "btn btn-primary" },
+      "New table"
+    )
   );
 });
