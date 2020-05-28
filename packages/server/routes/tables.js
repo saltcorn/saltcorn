@@ -193,21 +193,22 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
-    rows.length>0 ? mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
-        {
-          label: "Delete",
-          key: r => post_delete_btn(`/table/delete/${r.id}`)
-        }
-      ],
-      rows
-    ) : div(h4("No tables defined"),
-    p("Tables hold collections of similar data"),),
-    a(
-      { href: `/table/new`, class: "btn btn-primary" },
-      "New table"
-    )
+    rows.length > 0
+      ? mkTable(
+          [
+            { label: "Name", key: "name" },
+            { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
+            {
+              label: "Delete",
+              key: r => post_delete_btn(`/table/delete/${r.id}`)
+            }
+          ],
+          rows
+        )
+      : div(
+          h4("No tables defined"),
+          p("Tables hold collections of similar data")
+        ),
+    a({ href: `/table/new`, class: "btn btn-primary" }, "New table")
   );
 });

@@ -5,8 +5,11 @@ const {
   mkTable,
   link,
   post_btn,
+  post_delete_btn,
   renderBuilder
 } = require("@saltcorn/markup");
+const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+
 const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
@@ -22,31 +25,41 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
   var views = await View.find({}, { orderBy: "name" });
   const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
+  const viewMarkup =
+    views.length > 0
+      ? mkTable(
+          [
+            { label: "Name", key: "name" },
+            { label: "Template", key: "viewtemplate" },
+            { label: "Table", key: r => getTable(r.table_id) },
+            {
+              label: "Run",
+              key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+            },
+            {
+              label: "Edit",
+              key: r =>
+                link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+            },
+            {
+              label: "Delete",
+              key: r =>
+                post_delete_btn(
+                  `/viewedit/delete/${encodeURIComponent(r.id)}`,
+                  "Delete"
+                )
+            }
+          ],
+          views
+        )
+      : div(
+          h4("No views defined"),
+          p("Views define how table rows are displayed to the user")
+        );
   res.sendWrap(
     `Views`,
-
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Template", key: "viewtemplate" },
-        { label: "Table", key: r => getTable(r.table_id) },
-        {
-          label: "Run",
-          key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
-        },
-        {
-          label: "Edit",
-          key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
-        },
-        {
-          label: "Delete",
-          key: r =>
-            post_btn(`/viewedit/delete/${encodeURIComponent(r.id)}`, "Delete")
-        }
-      ],
-      views
-    ),
-    link(`/viewedit/new`, "New view")
+    viewMarkup,
+    a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
   );
 });
 
