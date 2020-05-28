@@ -5,7 +5,7 @@ const Field = require("@saltcorn/data/models/field");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
-const { span, h5, nbsp } = require("@saltcorn/markup/tags");
+const { span, h5, h4, nbsp, a } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -78,6 +78,14 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const table = await Table.findOne({ id });
 
   const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+  var fieldCard
+  if(fields.length===0) {
+    fieldCard=[
+      h4("No fields found"),
+      a({href:`/field/new/${table.id}`, class:"btn btn-primary"}, "Add field to table")
+    ]
+
+  } else {
   const tableHtml = mkTable(
     [
       { label: "Label", key: "label" },
@@ -93,7 +101,16 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       }
     ],
     fields
-  );
+  ); 
+  fieldCard=[
+          tableHtml,
+          link(`/list/${table.name}`, "List"),
+          nbsp,
+          "|",
+          nbsp,
+          link(`/field/new/${table.id}`, "Add field")
+        ]
+  }
   res.sendWrap(`${table.name} table`, {
     above: [
       {
@@ -103,14 +120,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       {
         type: "card",
         title: "Fields",
-        contents: [
-          tableHtml,
-          link(`/list/${table.name}`, "List"),
-          nbsp,
-          "|",
-          nbsp,
-          link(`/field/new/${table.id}`, "Add field")
-        ]
+        contents: fieldCard
       },
       {
         type: "card",
