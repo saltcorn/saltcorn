@@ -10,6 +10,7 @@ class Form {
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
+    this.labelCols = o.labelCols;
     this.collapsedSummary = o.collapsedSummary;
     this.isStateForm = o.isStateForm;
     this.formStyle = o.formStyle || "horiz";

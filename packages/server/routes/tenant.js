@@ -17,14 +17,17 @@ module.exports = router;
 
 const tenant_form = () =>
   new Form({
-    action: "/tenant/create",   
+    action: "/tenant/create",
     submitLabel: "Create",
-    blurb: "Please select a name for your application, which will determine where it will be available. ", 
+    labelCols: 4,
+    blurb:
+      "Please select a name for your application, which will determine where it will be available. ",
     fields: [
       {
         name: "subdomain",
-        label: "Subdomain",
-        type: "String"
+        label: "Application name",
+        input_type: "text",
+        postText: ".saltcorn.com"
       },
       { label: "E-mail", name: "email", input_type: "text" },
       { label: "Password", name: "password", input_type: "password" }
@@ -36,7 +39,10 @@ router.get("/create", setTenant, async (req, res) => {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
-  req.flash("warning", "<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See https://github.com/saltcorn/saltcorn<p>")
+  req.flash(
+    "warning",
+    "<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See https://github.com/saltcorn/saltcorn<p>"
+  );
   res.sendWrap(`Create application`, renderForm(tenant_form()));
 });
 
@@ -110,9 +116,8 @@ router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
   }
   const { sub } = req.params;
 
-  const subdomain = domain_sanitize(sub)
+  const subdomain = domain_sanitize(sub);
   await db.query(`drop schema if exists ${subdomain} CASCADE `);
-  await db.deleteWhere("_sc_tenants",{subdomain})
+  await db.deleteWhere("_sc_tenants", { subdomain });
   res.redirect(`/tenant/list`);
-
-})
+});
