@@ -5,8 +5,11 @@ const {
   mkTable,
   link,
   post_btn,
+  post_delete_btn,
   renderBuilder
 } = require("@saltcorn/markup");
+const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+
 const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
@@ -18,35 +21,45 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const router = new Router();
 module.exports = router;
 
-router.get("/list", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   var views = await View.find({}, { orderBy: "name" });
   const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
+  const viewMarkup =
+    views.length > 0
+      ? mkTable(
+          [
+            { label: "Name", key: "name" },
+            { label: "Template", key: "viewtemplate" },
+            { label: "Table", key: r => getTable(r.table_id) },
+            {
+              label: "Run",
+              key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+            },
+            {
+              label: "Edit",
+              key: r =>
+                link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+            },
+            {
+              label: "Delete",
+              key: r =>
+                post_delete_btn(
+                  `/viewedit/delete/${encodeURIComponent(r.id)}`,
+                  "Delete"
+                )
+            }
+          ],
+          views
+        )
+      : div(
+          h4("No views defined"),
+          p("Views define how table rows are displayed to the user")
+        );
   res.sendWrap(
     `Views`,
-
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Template", key: "viewtemplate" },
-        { label: "Table", key: r => getTable(r.table_id) },
-        {
-          label: "Run",
-          key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
-        },
-        {
-          label: "Edit",
-          key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
-        },
-        {
-          label: "Delete",
-          key: r =>
-            post_btn(`/viewedit/delete/${encodeURIComponent(r.id)}`, "Delete")
-        }
-      ],
-      views
-    ),
-    link(`/viewedit/new`, "New view")
+    viewMarkup,
+    a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
   );
 });
 
@@ -55,17 +68,19 @@ const viewForm = (tableOptions, values) =>
     action: "/viewedit/save",
     blurb: "First, please give some basic information about your new view.",
     fields: [
-      new Field({ label: "Name", name: "name", type: "String" }),
+      new Field({ label: "View name", name: "name", type: "String" }),
       new Field({
         label: "Template",
         name: "viewtemplate",
         input_type: "select",
+        sublabel: "Views are based on a view template",
         options: Object.keys(getState().viewtemplates)
       }),
       new Field({
         label: "Table",
         name: "table_name",
         input_type: "select",
+        sublabel: "Display data from this table",
         options: tableOptions
       }),
       new Field({
@@ -187,5 +202,5 @@ router.post("/config/:name", setTenant, isAdmin, async (req, res) => {
 router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   await View.delete({ id });
-  res.redirect(`/viewedit/list`);
+  res.redirect(`/viewedit`);
 });

@@ -11,7 +11,7 @@ const mkShowIf = sIf =>
 
 const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
 const isHoriz = formStyle => formStyle === "horiz";
-const formRowWrap = (hdr, inner, error = "", fStyle) =>
+const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
   div(
     {
       class: ["form-group", isHoriz(fStyle) && "row"],
@@ -21,7 +21,11 @@ const formRowWrap = (hdr, inner, error = "", fStyle) =>
     },
     isCheck(hdr)
       ? div(
-          { class: isHoriz(fStyle) && "col-sm-10 offset-md-2" },
+          {
+            class:
+              isHoriz(fStyle) &&
+              `col-sm-${12 - labelCols} offset-md-${labelCols}`
+          },
           div(
             { class: "form-check" },
             inner,
@@ -36,15 +40,22 @@ const formRowWrap = (hdr, inner, error = "", fStyle) =>
           label(
             {
               for: `input${text(hdr.name)}`,
-              class: isHoriz(fStyle) && "col-sm-2 col-form-label"
+              class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`
             },
             text(hdr.label)
           ),
-          div({ class: isHoriz(fStyle) && "col-sm-10" }, inner, text(error))
+          div(
+            { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
+            inner,
+            text(error)
+          )
         ],
     hdr.sublabel &&
       div(
-        { class: isHoriz(fStyle) && "col-sm-10 offset-md-2" },
+        {
+          class:
+            isHoriz(fStyle) && `col-sm-${12 - labelCols} offset-md-${labelCols}`
+        },
         i(text(hdr.sublabel))
       )
   );
@@ -70,12 +81,12 @@ const select_options = (v, hdr) => {
     .join(""));
 };
 
-const mkFormRow = (v, errors, formStyle) => hdr =>
+const mkFormRow = (v, errors, formStyle, labelCols) => hdr =>
   hdr.isRepeat
-    ? mkFormRowForRepeat(v, errors, formStyle, hdr)
-    : mkFormRowForField(v, errors, formStyle)(hdr);
+    ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
+    : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
-const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
+const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
   const icons = div(
     { class: "float-right" },
@@ -100,7 +111,13 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
             { class: `form-repeat form-namespace repeat-${hdr.name}` },
             icons,
             hdr.fields.map(f => {
-              return mkFormRowForField(vi, errors, formStyle, "_" + ix)(f);
+              return mkFormRowForField(
+                vi,
+                errors,
+                formStyle,
+                labelCols,
+                "_" + ix
+              )(f);
             })
           );
         })
@@ -114,7 +131,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, hdr) => {
           { class: `form-repeat form-namespace repeat-${hdr.name}` },
           icons,
           hdr.fields.map(f => {
-            return mkFormRowForField(v, errors, formStyle, "_0")(f);
+            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
           })
         )
       ) + adder
@@ -141,7 +158,13 @@ const displayEdit = (hdr, name, v, extracls) => {
   );
 };
 
-const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
+const mkFormRowForField = (
+  v,
+  errors,
+  formStyle,
+  labelCols,
+  nameAdd = ""
+) => hdr => {
   const name = hdr.name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
   const errorFeedback = errors[name]
@@ -158,7 +181,8 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
           validClass
         ),
         errorFeedback,
-        formStyle
+        formStyle,
+        labelCols
       );
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
@@ -172,7 +196,8 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
           name
         )}" id="input${text(name)}">${opts}</select>`,
         errorFeedback,
-        formStyle
+        formStyle,
+        labelCols
       );
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
@@ -184,20 +209,30 @@ const mkFormRowForField = (v, errors, formStyle, nameAdd = "") => hdr => {
           name
         )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
         errorFeedback,
-        formStyle
+        formStyle,
+        labelCols
       );
 
     default:
-      return formRowWrap(
-        hdr,
-        `<input type="${hdr.input_type}" class="form-control ${
-          hdr.class
-        }" name="${name}" id="input${text(name)}" ${
-          v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
-        }>`,
-        errorFeedback,
-        formStyle
-      );
+      const the_input = `<input type="${hdr.input_type}" class="form-control ${
+        hdr.class
+      }" name="${name}" id="input${text(name)}" ${
+        v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
+      }>`;
+      const inner = hdr.postText
+        ? div(
+            { class: "input-group" },
+            the_input,
+            div(
+              { class: "input-group-append" },
+              span(
+                { class: "input-group-text", id: "basic-addon2" },
+                hdr.postText
+              )
+            )
+          )
+        : the_input;
+      return formRowWrap(hdr, inner, errorFeedback, formStyle, labelCols);
   }
 };
 
@@ -237,11 +272,11 @@ const mkForm = (form, errors = {}) => {
   } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
   //console.log(hdrs);
   const flds = form.fields
-    .map(mkFormRow(form.values, errors, form.formStyle))
+    .map(mkFormRow(form.values, errors, form.formStyle, form.labelCols || 2))
     .join("");
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
-  <div class="col-sm-10">
+  <div class="col-sm-12">
     <button type="submit" class="btn btn-primary">${text(
       form.submitLabel || "Save"
     )}</button>

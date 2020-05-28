@@ -9,11 +9,11 @@ const getAllTenants = async () => {
   return tens.map(({ subdomain }) => subdomain);
 };
 
-const createTenant = async ({ subdomain, email, password }) => {
-  const saneDomain = sqlsanitize(subdomain.replace(".", "").toLowerCase());
+const createTenant = async ({ subdomain }) => {
+  const saneDomain = domain_sanitize(subdomain);
   const id = await db.insert(
     "_sc_tenants",
-    { subdomain: saneDomain, email },
+    { subdomain: saneDomain, email: "" },
     true
   );
   //create schema
@@ -24,13 +24,13 @@ const createTenant = async ({ subdomain, email, password }) => {
   await db.runWithTenant(saneDomain, async () => {
     //reset schema
     await reset(true, saneDomain);
-
-    //create user
-    await User.create({ email, password, role_id: 1 });
   });
 };
 
+const domain_sanitize = s => sqlsanitize(s.replace(".", "").toLowerCase());
+
 module.exports = {
   getAllTenants,
-  createTenant
+  createTenant,
+  domain_sanitize
 };

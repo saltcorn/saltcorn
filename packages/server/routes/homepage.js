@@ -1,6 +1,7 @@
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
+const User = require("@saltcorn/data/models/user");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
 const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
@@ -56,7 +57,9 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: "Packs",
             contents: [
-              div("Or install a pack:"),
+              div(
+                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+              ),
               mkTable(
                 [
                   { label: "Name", key: "name" },
@@ -156,7 +159,11 @@ module.exports = async (req, res) => {
 
   if (views.length === 0) {
     if (!isAuth) {
-      res.redirect("/auth/login");
+      const hasUsers = await User.nonEmpty();
+      if (!hasUsers) {
+        res.redirect("/auth/create_first_user");
+        return;
+      } else res.redirect("/auth/login");
     } else {
       await no_views_logged_in(req, res);
     }

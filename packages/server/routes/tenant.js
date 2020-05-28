@@ -1,12 +1,16 @@
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const { getState, create_tenant } = require("@saltcorn/data/db/state");
-const { renderForm, link, post_btn } = require("@saltcorn/markup");
-const { div, nbsp } = require("@saltcorn/markup/tags");
+const {
+  getAllTenants,
+  domain_sanitize
+} = require("@saltcorn/data/models/tenant");
+const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
+const { div, nbsp, p } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
-const { setTenant } = require("../routes/utils.js");
+const { setTenant, isAdmin } = require("../routes/utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -14,25 +18,30 @@ module.exports = router;
 const tenant_form = () =>
   new Form({
     action: "/tenant/create",
+    submitLabel: "Create",
+    labelCols: 4,
     blurb:
-      "Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. Do not use for private information that needs to be secure. For that purpose, we recommend self hosting Saltcorn. See https://github.com/saltcorn/saltcorn",
+      "Please select a name for your application. The name will determine the address at which it will be available. ",
     fields: [
       {
         name: "subdomain",
-        label: "Subdomain",
-        type: "String"
-      },
-      { label: "E-mail", name: "email", input_type: "text" },
-      { label: "Password", name: "password", input_type: "password" }
+        label: "Application name",
+        input_type: "text",
+        postText: ".saltcorn.com"
+      }
     ]
   });
 //TODO only if multi ten and not already in subdomain
 router.get("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
-    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
-  res.sendWrap(`Create tenant`, renderForm(tenant_form()));
+  req.flash(
+    "warning",
+    '<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This facility is intended solely for you to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+  );
+  res.sendWrap(`Create application`, renderForm(tenant_form()));
 });
 
 const getNewURL = (req, subdomain) => {
@@ -49,21 +58,69 @@ const getNewURL = (req, subdomain) => {
 
 router.post("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
-    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
   const form = tenant_form();
   const valres = form.validate(req.body);
-  if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
+  if (valres.errors) res.sendWrap(`Create application`, renderForm(form));
   else {
-    await create_tenant(valres.success, loadAllPlugins);
-    const newurl = getNewURL(req, valres.success.subdomain);
-    res.sendWrap(
-      `Create tenant`,
-      div(
-        div("Success!"),
-        div("Visit your new site: ", nbsp, link(newurl, newurl))
-      )
-    );
+    const subdomain = domain_sanitize(valres.success.subdomain);
+    const allTens = await getAllTenants();
+    if (allTens.includes(subdomain)) {
+      form.errors.subdomain = "A site with this subdomain already exists";
+      form.hasErrors = true;
+      res.sendWrap(`Create application`, renderForm(form));
+    } else {
+      await create_tenant(valres.success, loadAllPlugins);
+      const newurl = getNewURL(req, subdomain);
+      res.sendWrap(
+        `Create application`,
+        div(
+          div("Success! Your new application is available at:"),
+
+          div(
+            { class: "my-3", style: "font-size: 22px" },
+            link(newurl, newurl)
+          ),
+          p("Please click the above link now to create the first user.")
+        )
+      );
+    }
   }
+});
+
+router.get("/list", setTenant, isAdmin, async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
+    return;
+  }
+  const tens = await db.select("_sc_tenants");
+  res.sendWrap(
+    "Tenant",
+    mkTable(
+      [
+        { label: "Subdomain", key: "subdomain" },
+        { label: "email", key: "email" },
+        {
+          label: "Delete",
+          key: r => post_btn(`/tenant/delete/${r.subdomain}`, "Delete")
+        }
+      ],
+      tens
+    )
+  );
+});
+
+router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
+    return;
+  }
+  const { sub } = req.params;
+
+  const subdomain = domain_sanitize(sub);
+  await db.query(`drop schema if exists ${subdomain} CASCADE `);
+  await db.deleteWhere("_sc_tenants", { subdomain });
+  res.redirect(`/tenant/list`);
 });

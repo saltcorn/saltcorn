@@ -27,7 +27,13 @@ const string = {
   sql_name: "text",
   attributes: [
     //{ name: "match", type: "String", required: false },
-    { name: "options", type: "String", required: false }
+    {
+      name: "options",
+      type: "String",
+      required: false,
+      sublabel:
+        'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.'
+    }
   ],
   contract: ({ options }) =>
     typeof options === "string"

@@ -6,7 +6,7 @@ const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
-const { isAdmin } = require("../routes/utils");
+const { isAdmin, setTenant } = require("../routes/utils");
 
 const router = new Router();
 module.exports = router;
@@ -48,7 +48,7 @@ const userForm = contract(
   }
 );
 
-router.get("/", isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   const users = await User.find();
   const roles = await User.get_roles();
   var roleMap = {};
@@ -77,12 +77,12 @@ router.get("/", isAdmin, async (req, res) => {
   );
 });
 
-router.get("/new", isAdmin, async (req, res) => {
+router.get("/new", setTenant, isAdmin, async (req, res) => {
   const form = await userForm();
   res.sendWrap("New user", renderForm(form));
 });
 
-router.get("/:id", isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const user = await User.findOne({ id });
   const form = await userForm(user);
@@ -90,7 +90,7 @@ router.get("/:id", isAdmin, async (req, res) => {
   res.sendWrap("Edit user", renderForm(form));
 });
 
-router.post("/save", isAdmin, async (req, res) => {
+router.post("/save", setTenant, isAdmin, async (req, res) => {
   const { email, password, role_id, id } = req.body;
   if (id) {
     await db.update("users", { email, role_id }, id);
@@ -104,7 +104,7 @@ router.post("/save", isAdmin, async (req, res) => {
   res.redirect(`/useradmin`);
 });
 
-router.post("/delete/:id", isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const u = await User.findOne({ id });
   await u.delete();

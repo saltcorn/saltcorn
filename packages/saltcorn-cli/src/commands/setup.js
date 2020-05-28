@@ -212,8 +212,8 @@ const setup_schema = async () => {
 
 const setup_users = async () => {
   const User = require("@saltcorn/data/models/user");
-  const users = await User.find({});
-  if (users.length === 0) {
+  const hasUsers = await User.nonEmpty();
+  if (!hasUsers) {
     console.log("No users found. Please create an admin user");
     const email = await cli.prompt("Email address");
     const password = await cli.prompt("Password", { type: "hide" });

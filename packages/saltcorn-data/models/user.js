@@ -34,6 +34,10 @@ class User {
     const u = await db.selectOne("users", where);
     return new User(u);
   }
+  static async nonEmpty() {
+    const res = await db.count("users");
+    return res > 0;
+  }
   async delete() {
     const schema = db.getTenantSchema();
     await db.query(`delete FROM "${schema}".users WHERE id = $1`, [this.id]);

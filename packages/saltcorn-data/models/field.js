@@ -16,6 +16,7 @@ class Field {
     this.name = o.name || labelToName(o.label);
     this.fieldview = o.fieldview;
     this.showIf = o.showIf;
+    this.postText = o.postText;
     this.class = o.class || "";
     this.id = o.id;
     this.sublabel = o.sublabel;

@@ -2,10 +2,16 @@ const Router = require("express-promise-router");
 
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  post_delete_btn
+} = require("@saltcorn/markup");
 const { setTenant, isAdmin } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
-const { span, h5, nbsp } = require("@saltcorn/markup/tags");
+const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -66,7 +72,8 @@ router.get("/new/", setTenant, isAdmin, async (req, res) => {
     renderForm(
       new Form({
         action: "/table",
-        fields: [{ label: "Name", name: "name", input_type: "text" }]
+        submitLabel: "Create",
+        fields: [{ label: "Table name", name: "name", input_type: "text" }]
       })
     )
   );
@@ -77,39 +84,54 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const table = await Table.findOne({ id });
 
   const fields = await Field.find({ table_id: id }, { orderBy: "name" });
-  const tableHtml = mkTable(
-    [
-      { label: "Label", key: "label" },
-      { label: "Required", key: r => (r.required ? "true" : "false") },
-      {
-        label: "Type",
-        key: r => (r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name)
-      },
-      { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
-      {
-        label: "Delete",
-        key: r => post_btn(`/field/delete/${r.id}`, "Delete")
-      }
-    ],
-    fields
-  );
+  var fieldCard;
+  if (fields.length === 0) {
+    fieldCard = [
+      h4(`No fields defined in ${table.name} table`),
+      p("Fields define the columns in your table."),
+      a(
+        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        "Add field to table"
+      )
+    ];
+  } else {
+    const tableHtml = mkTable(
+      [
+        { label: "Label", key: "label" },
+        { label: "Required", key: r => (r.required ? "true" : "false") },
+        {
+          label: "Type",
+          key: r =>
+            r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name
+        },
+        { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+        {
+          label: "Delete",
+          key: r => post_delete_btn(`/field/delete/${r.id}`)
+        }
+      ],
+      fields
+    );
+    fieldCard = [
+      tableHtml,
+      a(
+        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        "Add field"
+      )
+    ];
+  }
   res.sendWrap(`${table.name} table`, {
     above: [
       {
         type: "pageHeader",
-        title: `${table.name} table`
+        title: `${table.name} table`,
+        blurb:
+          fields.length > 0 ? link(`/list/${table.name}`, "See data") : null
       },
       {
         type: "card",
         title: "Fields",
-        contents: [
-          tableHtml,
-          link(`/list/${table.name}`, "List"),
-          nbsp,
-          "|",
-          nbsp,
-          link(`/field/new/${table.id}`, "Add field")
-        ]
+        contents: fieldCard
       },
       {
         type: "card",
@@ -171,17 +193,22 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
-    mkTable(
-      [
-        { label: "Name", key: "name" },
-        { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
-        {
-          label: "Delete",
-          key: r => post_btn(`/table/delete/${r.id}`, "Delete")
-        }
-      ],
-      rows
-    ),
-    link(`/table/new`, "Add table")
+    rows.length > 0
+      ? mkTable(
+          [
+            { label: "Name", key: "name" },
+            { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
+            {
+              label: "Delete",
+              key: r => post_delete_btn(`/table/delete/${r.id}`)
+            }
+          ],
+          rows
+        )
+      : div(
+          h4("No tables defined"),
+          p("Tables hold collections of similar data")
+        ),
+    a({ href: `/table/new`, class: "btn btn-primary" }, "New table")
   );
 });
