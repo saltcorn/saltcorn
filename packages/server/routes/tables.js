@@ -66,7 +66,8 @@ router.get("/new/", setTenant, isAdmin, async (req, res) => {
     renderForm(
       new Form({
         action: "/table",
-        fields: [{ label: "Name", name: "name", input_type: "text" }]
+        submitLabel: "Create",
+        fields: [{ label: "Table name", name: "name", input_type: "text" }]
       })
     )
   );

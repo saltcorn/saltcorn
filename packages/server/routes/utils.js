@@ -11,7 +11,6 @@ function loggedIn(req, res, next) {
 }
 
 function isAdmin(req, res, next) {
-  console.log(req.user.role_id,req.user.tenant )
   if (
     req.user &&
     req.user.role_id === 1 &&
