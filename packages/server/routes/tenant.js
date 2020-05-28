@@ -94,10 +94,24 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
         { label: "email", key: "email" },
         {
           label: "Delete",
-          key: r => post_btn(`/tenant/delete/${r.id}`, "Delete")
+          key: r => post_btn(`/tenant/delete/${r.subdomain}`, "Delete")
         }
       ],
       tens
     )
   );
 });
+
+router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
+    return;
+  }
+  const { sub } = req.params;
+
+  const subdomain = domain_sanitize(sub)
+  await db.query(`drop schema if exists ${subdomain} CASCADE `);
+  await db.deleteWhere("_sc_tenants",{subdomain})
+  res.redirect(`/tenant/list`);
+
+})
