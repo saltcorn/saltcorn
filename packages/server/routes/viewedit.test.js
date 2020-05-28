@@ -14,13 +14,13 @@ const View = require("@saltcorn/data/models/view");
 afterAll(db.close);
 
 describe("viewedit list endpoint", () => {
-  itShouldRedirectUnauthToLogin("/viewedit/list");
+  itShouldRedirectUnauthToLogin("/viewedit");
 
   it("show list of views", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp();
     await request(app)
-      .get("/viewedit/list")
+      .get("/viewedit")
       .set("Cookie", loginCookie)
       .expect(toInclude("authorlist"));
   });
@@ -80,7 +80,7 @@ describe("viewedit new List", () => {
       .send("type_1=Field")
       .send("field_name_1=pages")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
@@ -100,7 +100,7 @@ describe("viewedit new List", () => {
     await request(app)
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
 });
 
@@ -133,7 +133,7 @@ describe("viewedit new List with one field", () => {
       .send("type_0=Field")
       .send("field_name_0=author")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
@@ -154,7 +154,7 @@ describe("viewedit new List with one field", () => {
     await request(app)
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
 });
 
@@ -201,7 +201,7 @@ describe("viewedit new Show", () => {
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
@@ -221,6 +221,6 @@ describe("viewedit new Show", () => {
     await request(app)
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit/list"));
+      .expect(toRedirect("/viewedit"));
   });
 });

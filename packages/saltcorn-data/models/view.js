@@ -196,7 +196,7 @@ class View {
 
       await View.update({ configuration }, this.id);
 
-      return { redirect: `/viewedit/list` };
+      return { redirect: `/viewedit` };
     };
     return configFlow;
   }

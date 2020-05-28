@@ -21,7 +21,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const router = new Router();
 module.exports = router;
 
-router.get("/list", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   var views = await View.find({}, { orderBy: "name" });
   const tables = await Table.find();
   const getTable = tid => tables.find(t => t.id === tid).name;
@@ -73,14 +73,14 @@ const viewForm = (tableOptions, values) =>
         label: "Template",
         name: "viewtemplate",
         input_type: "select",
-        sublabel: "Views are based on a view template", 
+        sublabel: "Views are based on a view template",
         options: Object.keys(getState().viewtemplates)
       }),
       new Field({
         label: "Table",
         name: "table_name",
         input_type: "select",
-        sublabel: "Display data from this table", 
+        sublabel: "Display data from this table",
         options: tableOptions
       }),
       new Field({
@@ -202,5 +202,5 @@ router.post("/config/:name", setTenant, isAdmin, async (req, res) => {
 router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   await View.delete({ id });
-  res.redirect(`/viewedit/list`);
+  res.redirect(`/viewedit`);
 });

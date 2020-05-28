@@ -57,7 +57,9 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: "Packs",
             contents: [
-              div("Or install a pack:"),
+              div(
+                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+              ),
               mkTable(
                 [
                   { label: "Name", key: "name" },

@@ -116,7 +116,7 @@ const getApp = async () => {
       const isAdmin = (req.user || {}).role_id === 1;
       const adminItems = [
         { link: "/table", label: "Tables" },
-        { link: "/viewedit/list", label: "Views" },
+        { link: "/viewedit", label: "Views" },
         { link: "/plugins", label: "Plugins" },
         {
           label: "Settings",
