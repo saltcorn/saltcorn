@@ -1,12 +1,16 @@
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const { getState, create_tenant } = require("@saltcorn/data/db/state");
-const { renderForm, link, post_btn } = require("@saltcorn/markup");
+const {
+  getAllTenants,
+  domain_sanitize
+} = require("@saltcorn/data/models/tenant");
+const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
 const { div, nbsp } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
-const { setTenant } = require("../routes/utils.js");
+const { setTenant, isAdmin } = require("../routes/utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -29,10 +33,10 @@ const tenant_form = () =>
 //TODO only if multi ten and not already in subdomain
 router.get("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
-    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
-  res.sendWrap(`Create tenant`, renderForm(tenant_form()));
+  res.sendWrap(`Create application`, renderForm(tenant_form()));
 });
 
 const getNewURL = (req, subdomain) => {
@@ -49,21 +53,51 @@ const getNewURL = (req, subdomain) => {
 
 router.post("/create", setTenant, async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
-    res.sendWrap(`Create tenant`, "Multi-tenancy not enabled");
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
   const form = tenant_form();
   const valres = form.validate(req.body);
-  if (valres.errors) res.sendWrap(`Create tenant`, renderForm(form));
+  if (valres.errors) res.sendWrap(`Create application`, renderForm(form));
   else {
-    await create_tenant(valres.success, loadAllPlugins);
-    const newurl = getNewURL(req, valres.success.subdomain);
-    res.sendWrap(
-      `Create tenant`,
-      div(
-        div("Success!"),
-        div("Visit your new site: ", nbsp, link(newurl, newurl))
-      )
-    );
+    const subdomain = domain_sanitize(valres.success.subdomain);
+    const allTens = await getAllTenants();
+    if (allTens.includes(subdomain)) {
+      form.errors.subdomain = "A site with this subdomain already exists";
+      form.hasErrors = true;
+      res.sendWrap(`Create application`, renderForm(form));
+    } else {
+      await create_tenant(valres.success, loadAllPlugins);
+      const newurl = getNewURL(req, subdomain);
+      res.sendWrap(
+        `Create application`,
+        div(
+          div("Success!"),
+          div("Visit your new site: ", nbsp, link(newurl, newurl))
+        )
+      );
+    }
   }
+});
+
+router.get("/list", setTenant, isAdmin, async (req, res) => {
+  if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    res.sendWrap(`Create application`, "Multi-tenancy not enabled");
+    return;
+  }
+  const tens = await db.select("_sc_tenants");
+  res.sendWrap(
+    "Tenant",
+    mkTable(
+      [
+        { label: "Subdomain", key: "subdomain" },
+        { label: "email", key: "email" },
+        {
+          label: "Delete",
+          key: r => post_btn(`/tenant/delete/${r.id}`, "Delete")
+        }
+      ],
+      tens
+    )
+  );
 });
