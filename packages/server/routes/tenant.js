@@ -41,7 +41,7 @@ router.get("/create", setTenant, async (req, res) => {
   }
   req.flash(
     "warning",
-    "<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See https://github.com/saltcorn/saltcorn<p>"
+    "<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This facility is intended solely for you to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>"
   );
   res.sendWrap(`Create application`, renderForm(tenant_form()));
 });
