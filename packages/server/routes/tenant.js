@@ -6,7 +6,7 @@ const {
   domain_sanitize
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
-const { div, nbsp } = require("@saltcorn/markup/tags");
+const { div, nbsp, p } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
@@ -21,16 +21,14 @@ const tenant_form = () =>
     submitLabel: "Create",
     labelCols: 4,
     blurb:
-      "Please select a name for your application, which will determine where it will be available. ",
+      "Please select a name for your application. The name will determine the address at which it will be available. ",
     fields: [
       {
         name: "subdomain",
         label: "Application name",
         input_type: "text",
         postText: ".saltcorn.com"
-      },
-      { label: "E-mail", name: "email", input_type: "text" },
-      { label: "Password", name: "password", input_type: "password" }
+      }
     ]
   });
 //TODO only if multi ten and not already in subdomain
@@ -79,8 +77,10 @@ router.post("/create", setTenant, async (req, res) => {
       res.sendWrap(
         `Create application`,
         div(
-          div("Success!"),
-          div("Visit your new site: ", nbsp, link(newurl, newurl))
+          div("Success! Your new application is available at:"),
+
+          div({class: "my-3", style: "font-size: 22px"},link(newurl, newurl)),
+          p("Please click the above link now to create the first user.")
         )
       );
     }
