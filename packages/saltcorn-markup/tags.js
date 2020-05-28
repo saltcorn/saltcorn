@@ -89,5 +89,6 @@ module.exports = {
   domReady,
   input,
   text,
-  nbsp
+  nbsp,
+  mkTag
 };
