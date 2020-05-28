@@ -17,9 +17,7 @@ module.exports = router;
 
 const tenant_form = () =>
   new Form({
-    action: "/tenant/create",
-    blurb:
-      "Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. Do not use for private information that needs to be secure. For that purpose, we recommend self hosting Saltcorn. See https://github.com/saltcorn/saltcorn",
+    action: "/tenant/create",    
     fields: [
       {
         name: "subdomain",
@@ -36,6 +34,7 @@ router.get("/create", setTenant, async (req, res) => {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
   }
+  req.flash("warning", "<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This is only intended to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See https://github.com/saltcorn/saltcorn<p>")
   res.sendWrap(`Create application`, renderForm(tenant_form()));
 });
 
