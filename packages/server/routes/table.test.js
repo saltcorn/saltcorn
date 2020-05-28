@@ -46,7 +46,6 @@ describe("Table Endpoints", () => {
     await request(app)
       .get(`/table/${tbl.id}`)
       .set("Cookie", loginCookie)
-      .expect(toInclude("<table"))
       .expect(toInclude("Add field"))
       .expect(toNotInclude("[object"));
   });
