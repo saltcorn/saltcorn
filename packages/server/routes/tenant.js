@@ -17,7 +17,9 @@ module.exports = router;
 
 const tenant_form = () =>
   new Form({
-    action: "/tenant/create",    
+    action: "/tenant/create",   
+    submitLabel: "Create",
+    blurb: "Please select a name for your application, which will determine where it will be available. ", 
     fields: [
       {
         name: "subdomain",
