@@ -103,19 +103,16 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
     fields
   ); 
   fieldCard=[
-          tableHtml,
-          link(`/list/${table.name}`, "List"),
-          nbsp,
-          "|",
-          nbsp,
-          link(`/field/new/${table.id}`, "Add field")
+          tableHtml,          
+          a({href:`/field/new/${table.id}`, class:"btn btn-primary"}, "Add field")
         ]
   }
   res.sendWrap(`${table.name} table`, {
     above: [
       {
         type: "pageHeader",
-        title: `${table.name} table`
+        title: `${table.name} table`,
+        blurb: fields.length> 0 ? link(`/list/${table.name}`, "See data"): null
       },
       {
         type: "card",
