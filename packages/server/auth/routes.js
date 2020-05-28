@@ -67,6 +67,51 @@ router.get("/signup", setTenant, async (req, res) => {
   }
 });
 
+router.get("/create_first_user", setTenant, async (req, res) => {
+  const hasUsers = await User.nonEmpty();
+  if (!hasUsers) {
+    const form = loginForm();
+    form.action = "/auth/create_first_user";
+    form.submitLabel = "Create user";
+    form.blurb= "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
+    req.logout();
+    if(req.session) {
+      req.session.destroy(err => {
+      if (err) return next(err);
+      res.sendWrap(
+        `Create first user`,
+        renderForm(form)
+      );
+      })} else {
+        res.sendWrap(
+          `Create first user`,
+          renderForm(form)
+        );
+      }
+    
+  } else {
+    req.flash("danger", "Users already present");
+    res.redirect("/auth/login");
+  }
+});
+router.post("/create_first_user", setTenant, async (req, res) => {
+  const hasUsers = await User.nonEmpty();
+  if (!hasUsers) {
+    const { email, password } = req.body;
+    const u = await User.create({ email, password, role_id:1 });
+    req.login({ email: u.email, role_id: u.role_id }, function(err) {
+      if (!err) {
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/auth/signup");
+      }
+    });
+  } else {
+    req.flash("danger", "Users already present");
+    res.redirect("/auth/login");
+  }
+})
 router.post("/signup", setTenant, async (req, res) => {
   if (getState().getConfig("allow_signup")) {
     const { email, password } = req.body;
