@@ -68,17 +68,19 @@ const viewForm = (tableOptions, values) =>
     action: "/viewedit/save",
     blurb: "First, please give some basic information about your new view.",
     fields: [
-      new Field({ label: "Name", name: "name", type: "String" }),
+      new Field({ label: "View name", name: "name", type: "String" }),
       new Field({
         label: "Template",
         name: "viewtemplate",
         input_type: "select",
+        sublabel: "Views are based on a view template", 
         options: Object.keys(getState().viewtemplates)
       }),
       new Field({
         label: "Table",
         name: "table_name",
         input_type: "select",
+        sublabel: "Display data from this table", 
         options: tableOptions
       }),
       new Field({
