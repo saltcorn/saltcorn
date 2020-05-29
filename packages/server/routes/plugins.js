@@ -34,8 +34,6 @@ const pluginForm = plugin => {
   if (plugin) {
     if (plugin.id) form.hidden("id");
     form.values = plugin;
-  } else {
-    form.values.version = "latest";
   }
   return form;
 };
@@ -139,8 +137,7 @@ router.get("/:id/", setTenant, isAdmin, async (req, res) => {
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const plugin = new Plugin(req.body);
   try {
-    await load_plugins.loadPlugin(plugin);
-    await plugin.upsert();
+    await load_plugins.loadAndSaveNewPlugin(plugin);
     req.flash("success", `Plugin ${plugin.name} installed`);
 
     res.redirect(`/plugins`);
@@ -184,8 +181,7 @@ router.post("/install/:name", setTenant, isAdmin, async (req, res) => {
   const { name } = req.params;
 
   const plugin = await Plugin.store_by_name(name);
-  await load_plugins.loadPlugin(plugin);
-  await plugin.upsert();
+  await load_plugins.loadAndSaveNewPlugin(plugin);
   req.flash("success", `Plugin ${plugin.name} installed`);
   res.redirect(`/plugins`);
 });

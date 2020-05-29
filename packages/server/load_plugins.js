@@ -1,6 +1,7 @@
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
+const Plugin = require("@saltcorn/data/models/plugin");
 
 const manager = new PluginManager({
   staticDependencies: {
@@ -21,8 +22,10 @@ const requirePlugin = async (plugin, force) => {
   ) {
     return require(plugin.location);
   } else if (plugin.source === "npm") {
-    if (!force && !installed_plugins.includes(plugin.location))
-      await manager.install(plugin.location, plugin.version);
+    if (!force && !installed_plugins.includes(plugin.location)) {
+      const plinfo=await manager.install(plugin.location, plugin.version);
+      //console.log(plinfo)
+    }
     return manager.require(plugin.location);
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location, { force: true });
@@ -42,7 +45,14 @@ const loadAllPlugins = async () => {
   await getState().refresh();
 };
 
+const loadAndSaveNewPlugin = async (plugin)=>{
+  await loadPlugin(plugin);
+  await plugin.upsert();
+
+}
+
 module.exports = {
+  loadAndSaveNewPlugin,
   loadAllPlugins,
   loadPlugin,
   requirePlugin

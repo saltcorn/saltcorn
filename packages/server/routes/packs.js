@@ -29,8 +29,7 @@ const install_pack = contract(
     for (const plugin of pack.plugins) {
       if (!existingPlugins.some(ep => ep.name === plugin.name)) {
         const p = new Plugin(plugin);
-        await load_plugins.loadPlugin(p);
-        await p.upsert();
+        await load_plugins.loadAndSaveNewPlugin(p);
       }
     }
     for (const tableSpec of pack.tables) {
