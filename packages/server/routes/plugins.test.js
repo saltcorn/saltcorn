@@ -85,3 +85,48 @@ describe("Pack Endpoints", () => {
   itShouldRedirectUnauthToLogin("/plugins/create");
   itShouldRedirectUnauthToLogin("/plugins/install");
 });
+
+describe("config endpoints", () => {
+  itShouldRedirectUnauthToLogin("/config");
+  it("should show get list", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .get("/config/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Allow signups"));
+  });
+
+  it("should show get form", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .get("/config/edit/site_name")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<form"));
+  });
+  it("should show post form", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .post("/config/edit/site_name")
+      .send("site_name=FooSiteName")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect('/config/'))
+    await request(app)
+      .get("/config/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude('>FooSiteName<'));
+      await request(app)
+      .post("/config/delete/site_name")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect('/config/'))
+      await request(app)
+      .get("/config/")
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude('FooSiteName'));
+  });
+})

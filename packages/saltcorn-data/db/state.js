@@ -16,7 +16,8 @@ const { getAllTenants, createTenant } = require("../models/tenant");
 const {
   getAllConfigOrDefaults,
   setConfig,
-  deleteConfig
+  deleteConfig,
+  configTypes
 } = require("../models/config");
 
 class State {
@@ -42,7 +43,9 @@ class State {
   getConfig(key, def) {
     if (this.configs[key] && typeof this.configs[key].value !== "undefined")
       return this.configs[key].value;
-    else return def;
+    if(def)
+      return def;
+    else return configTypes[key] && configTypes[key].default
   }
 
   async setConfig(key, value) {
