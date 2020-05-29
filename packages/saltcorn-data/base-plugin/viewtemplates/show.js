@@ -70,7 +70,7 @@ const run = async (table_id, viewname, { columns, layout }, state) => {
     aggregations,
     limit: 1
   });
-  if (rows.length!==1) return "No record selected";
+  if (rows.length !== 1) return "No record selected";
   return await render(rows[0], fields, layout, viewname, tbl);
 };
 
@@ -119,10 +119,12 @@ const render = async (row, fields, layout, viewname, table) => {
         segment.action_name
       );
     } else if (segment.type === "view_link") {
-      const { key } = await view_linker(segment, fields)
-      return key(row)
+      const { key } = await view_linker(segment, fields);
+      return key(row);
     } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => div(await go(s)))).join("");
+      return (await asyncMap(segment.above, async s => div(await go(s)))).join(
+        ""
+      );
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(

@@ -9,50 +9,49 @@ const action_url = (viewname, table, column, r) => {
     return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
   }
 };
-const get_view_link_query=(fields)=> {
-  const fUnique = fields.find(f=>f.is_unique)
-  if(fUnique)
-    return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`
-  else
-    return r=> `?id=${r.id}`
-}
+const get_view_link_query = fields => {
+  const fUnique = fields.find(f => f.is_unique);
+  if (fUnique)
+    return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
+  else return r => `?id=${r.id}`;
+};
 
-const view_linker = async (column, fields)=> {
- const [vtype, vrest] = column.view.split(":");
-      switch (vtype) {
-        case "Own":
-          const vnm = vrest;
-          const get_query=get_view_link_query(fields)
-          return {
-            label: vnm,
-            key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
-          };
-        case "ChildList":
-          const [viewnm, tbl, fld] = vrest.split(".");
-          return {
-            label: viewnm,
-            key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
-          };
-        case "ParentShow":
-          const [pviewnm, ptbl, pfld] = vrest.split(".");
-          //console.log([pviewnm, ptbl, pfld])
-          return {
-            label: pviewnm,
-            key: r =>
-              r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
-          };
-        default:
-          throw new Error(column.view);
-      }
-}
-
-const asyncMap=async (xs, asyncF) => {
-  var res = []
-  for(const x of xs) {
-    res.push(await asyncF(x))
+const view_linker = async (column, fields) => {
+  const [vtype, vrest] = column.view.split(":");
+  switch (vtype) {
+    case "Own":
+      const vnm = vrest;
+      const get_query = get_view_link_query(fields);
+      return {
+        label: vnm,
+        key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
+      };
+    case "ChildList":
+      const [viewnm, tbl, fld] = vrest.split(".");
+      return {
+        label: viewnm,
+        key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
+      };
+    case "ParentShow":
+      const [pviewnm, ptbl, pfld] = vrest.split(".");
+      //console.log([pviewnm, ptbl, pfld])
+      return {
+        label: pviewnm,
+        key: r =>
+          r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
+      };
+    default:
+      throw new Error(column.view);
   }
-  return res
-}
+};
+
+const asyncMap = async (xs, asyncF) => {
+  var res = [];
+  for (const x of xs) {
+    res.push(await asyncF(x));
+  }
+  return res;
+};
 
 const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
   await asyncMap(columns, async column => {
@@ -63,7 +62,7 @@ const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
           post_btn(action_url(viewname, table, column, r), column.action_name)
       };
     else if (column.type === "ViewLink") {
-     return await view_linker(column, fields)
+      return await view_linker(column, fields);
     } else if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       return {
@@ -109,4 +108,10 @@ const stateToQueryString = state => {
   );
 };
 
-module.exports = { get_viewable_fields, action_url, stateToQueryString, asyncMap, view_linker };
+module.exports = {
+  get_viewable_fields,
+  action_url,
+  stateToQueryString,
+  asyncMap,
+  view_linker
+};
