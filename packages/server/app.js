@@ -144,7 +144,11 @@ const getApp = async () => {
       const menu = [
         views.length > 0 && {
           section: "Views",
-          items: [...views, ...extra_menu]
+          items: views
+        },
+        extra_menu.length > 0 && {
+          section: "Links",
+          items: extra_menu
         },
         isAdmin && {
           section: "Admin",
