@@ -118,10 +118,10 @@ const getApp = async () => {
       const adminItems = [
         { link: "/table", label: "Tables" },
         { link: "/viewedit", label: "Views" },
-        { link: "/plugins", label: "Plugins" },
         {
           label: "Settings",
           subitems: [
+            { link: "/plugins", label: "Plugins" },
             { link: "/useradmin", label: "Users" },
             { link: "/config", label: "Configuration" },
             { link: "/admin", label: "Admin" }
