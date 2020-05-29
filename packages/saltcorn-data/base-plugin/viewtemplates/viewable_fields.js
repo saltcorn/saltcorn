@@ -9,15 +9,23 @@ const action_url = (viewname, table, column, r) => {
     return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
   }
 };
+const get_view_link_query=(fields)=> {
+  const fUnique = fields.find(f=>f.is_unique)
+  if(fUnique)
+    return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`
+  else
+    return r=> `?id=${r.id}`
+}
 
 const view_linker = async (column, fields)=> {
  const [vtype, vrest] = column.view.split(":");
       switch (vtype) {
         case "Own":
           const vnm = vrest;
+          const get_query=get_view_link_query(fields)
           return {
             label: vnm,
-            key: r => link(`/view/${vnm}?id=${r.id}`, vnm)
+            key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
           };
         case "ChildList":
           const [viewnm, tbl, fld] = vrest.split(".");
@@ -37,6 +45,7 @@ const view_linker = async (column, fields)=> {
           throw new Error(column.view);
       }
 }
+
 const asyncMap=async (xs, asyncF) => {
   var res = []
   for(const x of xs) {
@@ -44,6 +53,7 @@ const asyncMap=async (xs, asyncF) => {
   }
   return res
 }
+
 const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
   await asyncMap(columns, async column => {
     if (column.type === "Action")
@@ -99,4 +109,4 @@ const stateToQueryString = state => {
   );
 };
 
-module.exports = { get_viewable_fields, action_url, stateToQueryString };
+module.exports = { get_viewable_fields, action_url, stateToQueryString, view_linker };
