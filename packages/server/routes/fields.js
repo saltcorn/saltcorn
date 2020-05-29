@@ -27,6 +27,11 @@ const fieldForm = fkey_opts =>
         label: "Required",
         name: "required",
         type: getState().types["Bool"]
+      }),
+      new Field({
+        label: "Unique",
+        name: "is_unique",
+        type: getState().types["Bool"]
       })
     ]
   });
@@ -48,7 +53,7 @@ const fieldFlow = new Workflow({
 
     attributes.default = context.default;
     attributes.summary_field = context.summary_field;
-    const { table_id, name, label, required } = context;
+    const { table_id, name, label, required, is_unique } = context;
     const { reftable_name, type } = calcFieldType(context.type);
     const fldRow = {
       table_id,
@@ -56,6 +61,7 @@ const fieldFlow = new Workflow({
       label,
       type,
       required,
+      is_unique,
       reftable_name,
       attributes
     };

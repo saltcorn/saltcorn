@@ -135,23 +135,36 @@ const no_views_logged_in = async (req, res) => {
     }
   }
 };
-
+const get_config_response = async (cfgKey, res) => {
+  const homeCfg = getState().getConfig(cfgKey);
+  if (homeCfg) {
+    if (homeCfg.startsWith("/page/")) {
+      const thePage = homeCfg.slice(6);
+      const page = getState().pages[thePage];
+      if (page) {
+        const contents = await page.getPage();
+        res.sendWrap(page.title || thePage, contents);
+        return true;
+      }
+    } else if (getState().pages[homeCfg]) {
+      const page = getState().pages[homeCfg];
+      const contents = await page.getPage();
+      res.sendWrap(page.title || homeCfg, contents);
+      return true;
+    } else {
+      res.redirect(homeCfg);
+      return true;
+    }
+  }
+};
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
   if (!isAuth) {
-    const page = getState().pages[getState().getConfig("public_home")];
-    if (page) {
-      const contents = await page.getPage();
-      res.sendWrap(page.title || `${pagename} page`, contents);
-      return;
-    }
+    const cfgResp = await get_config_response("public_home", res);
+    if (cfgResp) return;
   } else if (isAuth && req.user.role_id === 8) {
-    const page = getState().pages[getState().getConfig("user_home")];
-    if (page) {
-      const contents = await page.getPage();
-      res.sendWrap(page.title || `${pagename} page`, contents);
-      return;
-    }
+    const cfgResp = await get_config_response("user_home", res);
+    if (cfgResp) return;
   }
   const views = getState().views.filter(
     v => v.on_root_page && (isAuth || v.is_public)

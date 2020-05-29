@@ -165,7 +165,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
 ];
 
 const getForm = async (table, viewname, columns, id) => {
-  const fields = await Field.find({ table_id: table.id });
+  const fields = await table.getFields();
 
   const tfields = columns.map(column => {
     if (column.type === "Field") {
@@ -183,23 +183,33 @@ const getForm = async (table, viewname, columns, id) => {
 
 const initial_config = initial_config_all_fields(true);
 
+const splitUniques = (fields, state) => {
+  var uniques = [];
+  var nonUniques = [];
+  Object.entries(state).forEach(([k, v]) => {
+    const field = fields.find(f => f.name === k);
+    if (k === "id" || field.is_unique) uniques[k] = v;
+    else nonUniques[k] = v;
+  });
+  return { uniques, nonUniques };
+};
+
 const run = async (table_id, viewname, config, state) => {
   //console.log({config})
   const { columns } = config;
   const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, state.id);
-
-  if (state.id) {
-    const row = await table.getRow({ id: state.id });
+  const { uniques, nonUniques } = splitUniques(fields, state);
+  if (Object.keys(uniques).length > 0) {
+    const row = await table.getRow(uniques);
     form.values = row;
   }
-  Object.entries(state).forEach(([k, v]) => {
-    if (k !== "id") {
-      const field = form.fields.find(f => f.name === k);
-      if (field && ((field.type && field.type.read) || field.is_fkey)) {
-        form.values[k] = field.type.read ? field.type.read(v) : v;
-        field.input_type = "hidden";
-      }
+  Object.entries(nonUniques).forEach(([k, v]) => {
+    const field = form.fields.find(f => f.name === k);
+    if (field && ((field.type && field.type.read) || field.is_fkey)) {
+      form.values[k] = field.type.read ? field.type.read(v) : v;
+      field.input_type = "hidden";
     }
   });
   return renderForm(form);

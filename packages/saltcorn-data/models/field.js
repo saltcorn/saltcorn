@@ -25,6 +25,7 @@ class Field {
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
     this.options = o.options;
     this.required = o.required;
+    this.is_unique = o.is_unique;
     this.hidden = o.hidden || false;
 
     this.is_fkey =
@@ -58,6 +59,7 @@ class Field {
       table_id: this.table_id,
       name: this.name,
       label: this.label,
+      is_unique: this.is_unique,
       sublabel: this.sublabel,
       fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type.name,
@@ -209,6 +211,15 @@ class Field {
         f.attributes.default
       ]);
     }
+
+    if (f.is_unique)
+      await db.query(
+        `alter table "${schema}"."${sqlsanitize(
+          f.table.name
+        )}" add CONSTRAINT ${sqlsanitize(f.name)}_unique UNIQUE (${sqlsanitize(
+          f.name
+        )})`
+      );
 
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
