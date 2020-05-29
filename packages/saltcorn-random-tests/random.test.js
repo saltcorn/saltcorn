@@ -40,7 +40,8 @@ describe("app", () => {
     }
   );
   it(
-    "obeys the chaos guinea pig,excluding auth, when logged in with seed " + seed,
+    "obeys the chaos guinea pig,excluding auth, when logged in with seed " +
+      seed,
     async () => {
       const app = await getApp();
       const loginCookie = await getAdminLoginCookie();

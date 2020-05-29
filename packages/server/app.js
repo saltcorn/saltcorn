@@ -44,14 +44,20 @@ const getApp = async () => {
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
     })
   );
-
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());
-  app.use(express.static(__dirname + "/public"));
+  app.use(
+    express.static(__dirname + "/public", {
+      maxAge: 1000 * 60 * 60 * 24
+    })
+  );
   app.use(
     express.static(
-      path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist"
+      path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
+      {
+        maxAge: 1000 * 60 * 60 * 24
+      }
     )
   );
 
