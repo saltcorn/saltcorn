@@ -14,7 +14,7 @@ const {
   initial_config_all_fields,
   calcfldViewOptions
 } = require("../../plugin-helper");
-const { action_url } = require("./viewable_fields");
+const { action_url, view_linker, asyncMap } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -71,7 +71,7 @@ const run = async (table_id, viewname, { columns, layout }, state) => {
     limit: 1
   });
   if (rows.length!==1) return "No record selected";
-  return render(rows[0], fields, layout, viewname, tbl);
+  return await render(rows[0], fields, layout, viewname, tbl);
 };
 
 const runMany = async (
@@ -92,14 +92,14 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
-  return rows.map(row => ({
-    html: render(row, fields, layout, viewname, tbl),
+  return await asyncMap(rows, async row => ({
+    html: await render(row, fields, layout, viewname, tbl),
     row
   }));
 };
 
-const render = (row, fields, layout, viewname, table) => {
-  function go(segment) {
+const render = async (row, fields, layout, viewname, table) => {
+  async function go(segment) {
     if (!segment) return "missing layout";
     if (segment.type === "blank") {
       return segment.contents;
@@ -119,38 +119,26 @@ const render = (row, fields, layout, viewname, table) => {
         segment.action_name
       );
     } else if (segment.type === "view_link") {
-      const [vtype, vrest] = segment.view.split(":");
-      switch (vtype) {
-        case "Own":
-          const vnm = vrest;
-          return link(`/view/${vnm}?id=${row.id}`, vnm);
-        case "ChildList":
-          const [viewnm, tbl, fld] = vrest.split(".");
-          return link(`/view/${viewnm}?${fld}=${row.id}`, viewnm);
-        case "ParentShow":
-          const [pviewnm, ptbl, pfld] = vrest.split(".");
-          return row[pfld]
-            ? link(`/view/${pviewnm}?id=${row[pfld]}`, pviewnm)
-            : "";
-      }
+      const { key } = await view_linker(segment, fields)
+      return key(row)
     } else if (segment.above) {
-      return segment.above.map(s => div(go(s))).join("");
+      return (await asyncMap(segment.above, async s => div(await go(s)))).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(
         { class: "row" },
-        segment.besides.map((t, ix) =>
+        await asyncMap(segment.besides, async (t, ix) =>
           div(
             {
               class: `col-sm-${segment.widths ? segment.widths[ix] : defwidth}`
             },
-            go(t)
+            await go(t)
           )
         )
       );
     } else throw new Error("unknown layout setment" + JSON.stringify(segment));
   }
-  return go(layout);
+  return await go(layout);
 };
 
 module.exports = {

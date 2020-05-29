@@ -109,4 +109,4 @@ const stateToQueryString = state => {
   );
 };
 
-module.exports = { get_viewable_fields, action_url, stateToQueryString, view_linker };
+module.exports = { get_viewable_fields, action_url, stateToQueryString, asyncMap, view_linker };
