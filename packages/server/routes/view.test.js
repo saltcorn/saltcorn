@@ -11,14 +11,6 @@ const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
 
-describe("root endpoint", () => {
-  it("renders", async () => {
-    const app = await getApp();
-    await request(app)
-      .get("/")
-      .expect(200);
-  });
-});
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
     const app = await getApp();

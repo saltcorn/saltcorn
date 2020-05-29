@@ -2,6 +2,7 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   getStaffLoginCookie,
+  getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
   toInclude,
@@ -72,5 +73,41 @@ describe("standard edit form", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Author"))
       .expect(toNotInclude("Cervantes"));
+  });
+});
+
+describe("homepage", () => {
+  it("shows to public", async () => {
+    const app = await getApp();
+    await request(app)
+      .get("/")
+      .expect(toInclude("authorlist"));
+  });
+  it("shows to admin", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("authorlist"));
+  });
+  it("shows redirect to admin", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp();
+    await request(app)
+      .post("/config/edit/public_home")
+      .send("public_home=/view/authorlist")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/config/"));
+
+    await request(app)
+      .get("/")
+      .expect(toRedirect("/view/authorlist"));
+    await request(app)
+      .post("/config/delete/public_home")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/config/"));
   });
 });

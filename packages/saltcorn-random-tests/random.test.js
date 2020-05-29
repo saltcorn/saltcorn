@@ -32,9 +32,24 @@ describe("app", () => {
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {
+        steps: 100,
+        cookie: loginCookie,
+        stop_form_actions: ["delete", "restart"]
+      });
+      //console.log(st.log);
+    }
+  );
+  it(
+    "obeys the chaos guinea pig,excluding auth, when logged in with seed " +
+      seed,
+    async () => {
+      const app = await getApp();
+      const loginCookie = await getAdminLoginCookie();
+
+      const st = await chaos_guinea_pig(app, {
         steps: 500,
         cookie: loginCookie,
-        stop_form_actions: ["delete"]
+        stop_form_actions: ["delete", "restart", "auth"]
       });
       //console.log(st.log);
     }

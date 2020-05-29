@@ -32,8 +32,13 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/plugin_packages/"
+    ],
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/plugin_packages/"
     ]
   },
   "publishConfig": {
