@@ -46,7 +46,8 @@ const formForKey = (key, value) =>
       {
         name: key,
         label: configTypes[key].label || key,
-        type: getState().types[configTypes[key].type]
+        type: getState().types[configTypes[key].type],
+        sublabel: configTypes[key].sublabel
       }
     ],
     ...(typeof value !== "undefined" && { values: { [key]: value } })
