@@ -17,7 +17,7 @@ class TestPluginCommand extends Command {
     if (args.path[0] === "." || args.path[0] === "/") {
       const segments = args.path.split("/");
       const moduleName = lastPath(segments);
-      const plugin_module = await requirePlugin({
+      const { plugin_module } = await requirePlugin({
         source: "local",
         location: args.path,
         name: moduleName

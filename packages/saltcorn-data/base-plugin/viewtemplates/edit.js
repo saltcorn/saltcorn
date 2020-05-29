@@ -204,7 +204,7 @@ const run = async (table_id, viewname, config, state) => {
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
     form.values = row;
-    form.hidden("id")
+    form.hidden("id");
   }
   Object.entries(nonUniques).forEach(([k, v]) => {
     const field = form.fields.find(f => f.name === k);

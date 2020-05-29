@@ -1,6 +1,7 @@
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
+const Plugin = require("@saltcorn/data/models/plugin");
 
 const manager = new PluginManager({
   staticDependencies: {
@@ -10,7 +11,7 @@ const manager = new PluginManager({
 });
 
 const loadPlugin = async plugin => {
-  const plugin_module = await requirePlugin(plugin);
+  const { plugin_module } = await requirePlugin(plugin);
   getState().registerPlugin(plugin.name, plugin_module);
 };
 
@@ -19,18 +20,22 @@ const requirePlugin = async (plugin, force) => {
   if (
     ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(plugin.location)
   ) {
-    return require(plugin.location);
+    return { plugin_module: require(plugin.location) };
   } else if (plugin.source === "npm") {
-    if (!force && !installed_plugins.includes(plugin.location))
-      await manager.install(plugin.location, plugin.version);
-    return manager.require(plugin.location);
+    if (!force && !installed_plugins.includes(plugin.location)) {
+      const plinfo = await manager.install(plugin.location, plugin.version);
+      return { plugin_module: manager.require(plugin.location), ...plinfo };
+    } else {
+      const plinfo = manager.getInfo(plugin.location);
+      return { plugin_module: manager.require(plugin.location), ...plinfo };
+    }
   } else if (plugin.source === "local") {
     await manager.installFromPath(plugin.location, { force: true });
-    return manager.require(plugin.name);
+    return { plugin_module: manager.require(plugin.name) };
   } else if (plugin.source === "github") {
     if (!force && !installed_plugins.includes(plugin.location))
       await manager.installFromGithub(plugin.location, { force: true });
-    return manager.require(plugin.name);
+    return { plugin_module: manager.require(plugin.name) };
   }
 };
 
@@ -42,7 +47,15 @@ const loadAllPlugins = async () => {
   await getState().refresh();
 };
 
+const loadAndSaveNewPlugin = async plugin => {
+  const { version, plugin_module } = await requirePlugin(plugin);
+  getState().registerPlugin(plugin.name, plugin_module);
+  if (version) plugin.version = version;
+  await plugin.upsert();
+};
+
 module.exports = {
+  loadAndSaveNewPlugin,
   loadAllPlugins,
   loadPlugin,
   requirePlugin
