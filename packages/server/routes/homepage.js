@@ -146,6 +146,11 @@ const get_config_response = async (cfgKey, res) => {
         res.sendWrap(page.title || thePage, contents);
         return true;
       }
+    } else if (getState().pages[homeCfg]) {
+      const page = getState().pages[homeCfg];
+      const contents = await page.getPage();
+      res.sendWrap(page.title || homeCfg, contents);
+      return true;
     } else {
       res.redirect(homeCfg);
       return true;
