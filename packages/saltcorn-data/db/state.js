@@ -43,9 +43,8 @@ class State {
   getConfig(key, def) {
     if (this.configs[key] && typeof this.configs[key].value !== "undefined")
       return this.configs[key].value;
-    if(def)
-      return def;
-    else return configTypes[key] && configTypes[key].default
+    if (def) return def;
+    else return configTypes[key] && configTypes[key].default;
   }
 
   async setConfig(key, value) {

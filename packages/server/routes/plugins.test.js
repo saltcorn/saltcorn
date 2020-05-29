@@ -115,18 +115,18 @@ describe("config endpoints", () => {
       .post("/config/edit/site_name")
       .send("site_name=FooSiteName")
       .set("Cookie", loginCookie)
-      .expect(toRedirect('/config/'))
+      .expect(toRedirect("/config/"));
     await request(app)
       .get("/config/")
       .set("Cookie", loginCookie)
-      .expect(toInclude('>FooSiteName<'));
-      await request(app)
+      .expect(toInclude(">FooSiteName<"));
+    await request(app)
       .post("/config/delete/site_name")
       .set("Cookie", loginCookie)
-      .expect(toRedirect('/config/'))
-      await request(app)
+      .expect(toRedirect("/config/"));
+    await request(app)
       .get("/config/")
       .set("Cookie", loginCookie)
-      .expect(toNotInclude('FooSiteName'));
+      .expect(toNotInclude("FooSiteName"));
   });
-})
+});
