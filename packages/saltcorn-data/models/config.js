@@ -7,6 +7,12 @@ const configTypes = {
   user_home: { type: "String", label: "User home page", default: "" },
   allow_signup: { type: "Bool", label: "Allow signups", default: true },
   login_menu: { type: "Bool", label: "Login in menu", default: true },
+  extra_menu: {
+    type: "String",
+    label: "Extra menu items",
+    default: "",
+    sublabel: "Format: name1::URL,name2::URL"
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
