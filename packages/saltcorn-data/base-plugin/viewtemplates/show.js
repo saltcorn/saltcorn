@@ -71,7 +71,6 @@ const run = async (table_id, viewname, { columns, layout }, state) => {
     limit: 1
   });
   if (rows.length!==1) return "No record selected";
-  //const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
   return render(rows[0], fields, layout, viewname, tbl);
 };
 
@@ -93,7 +92,6 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
-  //const tfields = get_viewable_fields(viewname, tbl, fields, columns, true);
   return rows.map(row => ({
     html: render(row, fields, layout, viewname, tbl),
     row

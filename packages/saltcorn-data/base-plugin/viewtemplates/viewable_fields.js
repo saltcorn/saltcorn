@@ -10,16 +10,8 @@ const action_url = (viewname, table, column, r) => {
   }
 };
 
-const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
-  columns.map(column => {
-    if (column.type === "Action")
-      return {
-        label: column.action_name,
-        key: r =>
-          post_btn(action_url(viewname, table, column, r), column.action_name)
-      };
-    else if (column.type === "ViewLink") {
-      const [vtype, vrest] = column.view.split(":");
+const view_linker = async (column, fields)=> {
+ const [vtype, vrest] = column.view.split(":");
       switch (vtype) {
         case "Own":
           const vnm = vrest;
@@ -44,6 +36,24 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow) =>
         default:
           throw new Error(column.view);
       }
+}
+const asyncMap=async (xs, asyncF) => {
+  var res = []
+  for(const x of xs) {
+    res.push(await asyncF(x))
+  }
+  return res
+}
+const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
+  await asyncMap(columns, async column => {
+    if (column.type === "Action")
+      return {
+        label: column.action_name,
+        key: r =>
+          post_btn(action_url(viewname, table, column, r), column.action_name)
+      };
+    else if (column.type === "ViewLink") {
+     return await view_linker(column, fields)
     } else if (column.type === "JoinField") {
       const [refNm, targetNm] = column.join_field.split(".");
       return {
