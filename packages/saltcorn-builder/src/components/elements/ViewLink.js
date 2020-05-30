@@ -9,7 +9,7 @@ export const ViewLink = ({ name }) => {
   const names = name.split(":");
   const label = names.length > 1 ? names[1] : names[0];
 
-  return <div ref={dom => connect(drag(dom))}>[{label}]</div>;
+  return <span ref={dom => connect(drag(dom))}>[{label}]</span>;
 };
 
 export const ViewLinkSettings = () => {

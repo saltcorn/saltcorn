@@ -7,9 +7,9 @@ export const Field = ({ name, fieldview }) => {
     connectors: { connect, drag }
   } = useNode();
   return (
-    <div ref={dom => connect(drag(dom))}>
+    <span ref={dom => connect(drag(dom))}>
       [{fieldview} {name}]
-    </div>
+    </span>
   );
 };
 

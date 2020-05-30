@@ -6,7 +6,7 @@ export const Action = ({ name }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <div ref={dom => connect(drag(dom))}>[{name}]</div>;
+  return <button ref={dom => connect(drag(dom))}>{name}</button>;
 };
 
 export const ActionSettings = () => {

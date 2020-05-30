@@ -6,7 +6,7 @@ export const JoinField = ({ name }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <div ref={dom => connect(drag(dom))}>[{name}]</div>;
+  return <span ref={dom => connect(drag(dom))}>[{name}]</span>;
 };
 
 export const JoinFieldSettings = () => {
