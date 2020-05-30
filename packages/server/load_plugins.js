@@ -47,8 +47,8 @@ const loadAllPlugins = async () => {
   await getState().refresh();
 };
 
-const loadAndSaveNewPlugin = async plugin => {
-  const { version, plugin_module } = await requirePlugin(plugin);
+const loadAndSaveNewPlugin = async (plugin, force) => {
+  const { version, plugin_module } = await requirePlugin(plugin, force);
   getState().registerPlugin(plugin.name, plugin_module);
   if (version) plugin.version = version;
   await plugin.upsert();
