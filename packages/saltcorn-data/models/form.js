@@ -23,12 +23,13 @@ class Form {
   }
   hidden(...ks) {
     ks.forEach(k => {
-      this.fields.push(
-        new Field({
-          name: k,
-          input_type: "hidden"
-        })
-      );
+      !this.fields.map(f => f.name).includes(k) &&
+        this.fields.push(
+          new Field({
+            name: k,
+            input_type: "hidden"
+          })
+        );
     });
   }
   async fill_fkey_options(force_allow_none = false) {
