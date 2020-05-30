@@ -150,7 +150,7 @@ Type=simple
 User=saltcorn
 WorkingDirectory=/home/saltcorn
 ExecStart=/usr/bin/saltcorn serve
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
