@@ -7,7 +7,11 @@ export const JoinField = ({ name, block }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <span {...blockProps(block)} ref={dom => connect(drag(dom))}>[{name}]</span>;
+  return (
+    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+      [{name}]
+    </span>
+  );
 };
 
 export const JoinFieldSettings = () => {

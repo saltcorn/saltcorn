@@ -21,7 +21,12 @@ const Toolbox = () => {
         <tr>
           <td>
             <button
-              ref={ref => connectors.create(ref, <Text text="Hello world" />)}
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Text text="Hello world" block={false} />
+                )
+              }
             >
               Text
             </button>
@@ -50,6 +55,7 @@ const Toolbox = () => {
                   ref,
                   <Field
                     name={fields[0].name}
+                    block={false}
                     fieldview={
                       fields[0].is_fkey
                         ? ""
@@ -67,7 +73,10 @@ const Toolbox = () => {
               ref={ref =>
                 connectors.create(
                   ref,
-                  <JoinField name={options.parent_field_list[0]} />
+                  <JoinField
+                    name={options.parent_field_list[0]}
+                    block={false}
+                  />
                 )
               }
             >
@@ -81,7 +90,11 @@ const Toolbox = () => {
               ref={ref =>
                 connectors.create(
                   ref,
-                  <ViewLink name={options.link_view_opts[0].name} />
+                  <ViewLink
+                    name={options.link_view_opts[0].name}
+                    block={false}
+                    minRole={10}
+                  />
                 )
               }
             >
@@ -91,7 +104,14 @@ const Toolbox = () => {
           <td>
             <button
               ref={ref =>
-                connectors.create(ref, <Action name={options.actions[0]} />)
+                connectors.create(
+                  ref,
+                  <Action
+                    name={options.actions[0]}
+                    block={false}
+                    minRole={10}
+                  />
+                )
               }
             >
               Action
@@ -99,13 +119,11 @@ const Toolbox = () => {
           </td>
         </tr>
         <tr>
-          <td><button
-              ref={ref =>
-                connectors.create(ref, <LineBreak />)
-              }
-            >
+          <td>
+            <button ref={ref => connectors.create(ref, <LineBreak />)}>
               ↵
-            </button></td>
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>

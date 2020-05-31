@@ -1,4 +1,5 @@
 const Form = require("../../models/form");
+const User = require("../../models/user");
 const Field = require("../../models/field");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
@@ -36,13 +37,15 @@ const configuration_workflow = () =>
             table,
             context.viewname
           );
+          const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations();
           return {
             fields,
             actions,
             field_view_options,
             link_view_opts,
-            parent_field_list
+            parent_field_list,
+            roles
           };
         }
       }
@@ -58,7 +61,7 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state) => {
+const run = async (table_id, viewname, { columns, layout }, state, {req}) => {
   //console.log(columns);
   //console.log(layout);
   const tbl = await Table.findOne({ id: table_id });
@@ -70,8 +73,9 @@ const run = async (table_id, viewname, { columns, layout }, state) => {
     aggregations,
     limit: 1
   });
+  const role=req.user ? req.user.role_id : 10
   if (rows.length !== 1) return "No record selected";
-  return await render(rows[0], fields, layout, viewname, tbl);
+  return await render(rows[0], fields, layout, viewname, tbl,role  );
 };
 
 const runMany = async (
@@ -92,16 +96,20 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
+  const role=extra.req.user ? extra.req.user.role_id : 10
+
   return await asyncMap(rows, async row => ({
-    html: await render(row, fields, layout, viewname, tbl),
+    html: await render(row, fields, layout, viewname, tbl, role),
     row
   }));
 };
 const wrapBlock=(segment, inner)=> 
   segment.block ? div(inner) : span(inner);
 
-const render = async (row, fields, layout, viewname, table) => {
+const render = async (row, fields, layout, viewname, table, role) => {
   async function go(segment) {
+    if(segment.minRole && role > segment.minRole)
+      return '';
     if (!segment) return "missing layout";
     if (segment.type === "blank") {
       return wrapBlock(segment, segment.contents)

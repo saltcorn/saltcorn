@@ -25,11 +25,27 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "join_field") {
-      return <JoinField key={ix} name={segment.join_field} block={segment.block} />;
+      return (
+        <JoinField key={ix} name={segment.join_field} block={segment.block} />
+      );
     } else if (segment.type === "view_link") {
-      return <ViewLink key={ix} name={segment.view} block={segment.block} />;
+      return (
+        <ViewLink
+          key={ix}
+          name={segment.view}
+          block={segment.block}
+          minRole={segment.minRole}
+        />
+      );
     } else if (segment.type === "action") {
-      return <Action key={ix} name={segment.action_name} block={segment.block} />;
+      return (
+        <Action
+          key={ix}
+          name={segment.action_name}
+          block={segment.block}
+          minRole={segment.minRole}
+        />
+      );
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -82,7 +98,11 @@ export const craftToSaltcorn = nodes => {
       else return { above: node.nodes.map(nm => go(nodes[nm])) };
     }
     if (node.displayName === Text.name) {
-      return { type: "blank", contents: node.props.text, block: node.props.block };
+      return {
+        type: "blank",
+        contents: node.props.text,
+        block: node.props.block
+      };
     }
     if (node.displayName === LineBreak.name) {
       return { type: "line_break" };
@@ -123,23 +143,27 @@ export const craftToSaltcorn = nodes => {
     if (node.displayName === ViewLink.name) {
       columns.push({
         type: "ViewLink",
-        view: node.props.name
+        view: node.props.name,
+        minRole: node.props.minRole
       });
       return {
         type: "view_link",
         block: node.props.block,
-        view: node.props.name
+        view: node.props.name,
+        minRole: node.props.minRole
       };
     }
     if (node.displayName === Action.name) {
       columns.push({
         type: "Action",
-        action_name: node.props.name
+        action_name: node.props.name,
+        minRole: node.props.minRole
       });
       return {
         type: "action",
         block: node.props.block,
-        action_name: node.props.name
+        action_name: node.props.name,
+        minRole: node.props.minRole
       };
     }
   };

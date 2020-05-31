@@ -1,19 +1,24 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting } from "./utils";
+import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const Action = ({ name,block }) => {
+export const Action = ({ name, block }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <button {...blockProps(block)} ref={dom => connect(drag(dom))}>{name}</button>;
+  return (
+    <button {...blockProps(block)} ref={dom => connect(drag(dom))}>
+      {name}
+    </button>
+  );
 };
 
 export const ActionSettings = () => {
-  const { setProp, name, block } = useNode(node => ({
+  const { setProp, name, block, minRole } = useNode(node => ({
     name: node.data.props.name,
-    block: node.data.props.block
+    block: node.data.props.block,
+    minRole: node.data.props.minRole
   }));
   const options = useContext(optionsCtx);
   return (
@@ -31,6 +36,7 @@ export const ActionSettings = () => {
           ))}
         </select>
         <BlockSetting block={block} setProp={setProp} />
+        <MinRoleSetting minRole={minRole} setProp={setProp} />
       </div>
     </div>
   );

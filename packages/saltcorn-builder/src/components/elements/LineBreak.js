@@ -5,11 +5,10 @@ export const LineBreak = ({}) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return (<Fragment>
-    <span ref={dom => connect(drag(dom))}>
-    ↵
-    </span><br/></Fragment>
+  return (
+    <Fragment>
+      <span ref={dom => connect(drag(dom))}>↵</span>
+      <br />
+    </Fragment>
   );
 };
-
-
