@@ -6,7 +6,11 @@ export const Text = ({ text, block }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <span {...blockProps(block)} ref={dom => connect(drag(dom))}>{text}</span>;
+  return (
+    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+      {text}
+    </span>
+  );
 };
 
 export const TextSettings = () => {
@@ -22,11 +26,15 @@ export const TextSettings = () => {
         value={text}
         onChange={e => setProp(prop => (prop.text = e.target.value))}
       />
-      <input
-            name="block"
-            type="checkbox"
-            checked={block}
-            onChange={e => setProp(prop => (prop.block = e.target.checked))} />
+      <label>
+        Block
+        <input
+          name="block"
+          type="checkbox"
+          checked={block}
+          onChange={e => setProp(prop => (prop.block = e.target.checked))}
+        />
+      </label>
     </div>
   );
 };
