@@ -1,6 +1,6 @@
 import React from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps } from "./utils";
+import { blockProps, BlockSetting } from "./utils";
 
 export const Text = ({ text, block }) => {
   const {
@@ -26,15 +26,7 @@ export const TextSettings = () => {
         value={text}
         onChange={e => setProp(prop => (prop.text = e.target.value))}
       />
-      <label>
-        Block
-        <input
-          name="block"
-          type="checkbox"
-          checked={block}
-          onChange={e => setProp(prop => (prop.block = e.target.checked))}
-        />
-      </label>
+      <BlockSetting block={block} setProp={setProp} />
     </div>
   );
 };
