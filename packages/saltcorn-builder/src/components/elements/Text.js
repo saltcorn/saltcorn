@@ -1,22 +1,27 @@
 import React from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps, BlockSetting } from "./utils";
+import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
-export const Text = ({ text, block }) => {
+export const Text = ({ text, block, textStyle }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
   return (
-    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <span
+      className={textStyle}
+      {...blockProps(block)}
+      ref={dom => connect(drag(dom))}
+    >
       {text}
     </span>
   );
 };
 
 export const TextSettings = () => {
-  const { setProp, text, block } = useNode(node => ({
+  const { setProp, text, block, textStyle } = useNode(node => ({
     text: node.data.props.text,
-    block: node.data.props.block
+    block: node.data.props.block,
+    textStyle: node.data.props.textStyle
   }));
   return (
     <div>
@@ -27,6 +32,7 @@ export const TextSettings = () => {
         onChange={e => setProp(prop => (prop.text = e.target.value))}
       />
       <BlockSetting block={block} setProp={setProp} />
+      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
   );
 };

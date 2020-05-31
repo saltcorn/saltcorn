@@ -49,14 +49,14 @@ const getApp = async () => {
   app.use(flash());
   app.use(
     express.static(__dirname + "/public", {
-      maxAge: 0//1000 * 60 * 60 * 24
+      maxAge: 0 //1000 * 60 * 60 * 24
     })
   );
   app.use(
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: 0//1000 * 60 * 60 * 24
+        maxAge: 0 //1000 * 60 * 60 * 24
       }
     )
   );

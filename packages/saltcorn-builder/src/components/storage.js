@@ -12,7 +12,14 @@ export const layoutToNodes = (layout, query, actions) => {
   function toTag(segment, ix) {
     if (!segment) return;
     if (segment.type === "blank") {
-      return <Text key={ix} text={segment.contents} block={segment.block} />;
+      return (
+        <Text
+          key={ix}
+          text={segment.contents}
+          block={segment.block}
+          textStyle={segment.textStyle}
+        />
+      );
     } else if (segment.type === "line_break") {
       return <LineBreak />;
     } else if (segment.type === "field") {
@@ -101,7 +108,8 @@ export const craftToSaltcorn = nodes => {
       return {
         type: "blank",
         contents: node.props.text,
-        block: node.props.block
+        block: node.props.block,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === LineBreak.name) {

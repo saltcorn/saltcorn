@@ -24,7 +24,7 @@ const Toolbox = () => {
               ref={ref =>
                 connectors.create(
                   ref,
-                  <Text text="Hello world" block={false} />
+                  <Text text="Hello world" block={false} textStyle={""} />
                 )
               }
             >
