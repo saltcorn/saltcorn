@@ -1,4 +1,4 @@
-import React, {Fragment} from "react";
+import React from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps } from "./utils";
 
@@ -6,10 +6,7 @@ export const Text = ({ text, block }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return <Fragment>
-    <span ref={dom => connect(drag(dom))}>{text}</span>
-    {block && <br/>}
-    </Fragment>;
+  return <span {...blockProps(block)} ref={dom => connect(drag(dom))}>{text}</span>;
 };
 
 export const TextSettings = () => {
