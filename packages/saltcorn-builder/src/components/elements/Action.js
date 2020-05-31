@@ -13,7 +13,7 @@ export const Action = ({ name,block }) => {
 export const ActionSettings = () => {
   const { setProp, name, block } = useNode(node => ({
     name: node.data.props.name,
-    block
+    block: node.data.props.block
   }));
   const options = useContext(optionsCtx);
   return (

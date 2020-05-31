@@ -11,21 +11,22 @@ export const layoutToNodes = (layout, query, actions) => {
   function toTag(segment, ix) {
     if (!segment) return;
     if (segment.type === "blank") {
-      return <Text key={ix} text={segment.contents} />;
+      return <Text key={ix} text={segment.contents} block={segment.block} />;
     } else if (segment.type === "field") {
       return (
         <Field
           key={ix}
           name={segment.field_name}
           fieldview={segment.fieldview}
+          block={segment.block}
         />
       );
     } else if (segment.type === "join_field") {
-      return <JoinField key={ix} name={segment.join_field} />;
+      return <JoinField key={ix} name={segment.join_field} block={segment.block} />;
     } else if (segment.type === "view_link") {
-      return <ViewLink key={ix} name={segment.view} />;
+      return <ViewLink key={ix} name={segment.view} block={segment.block} />;
     } else if (segment.type === "action") {
-      return <Action key={ix} name={segment.action_name} />;
+      return <Action key={ix} name={segment.action_name} block={segment.block} />;
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -78,7 +79,7 @@ export const craftToSaltcorn = nodes => {
       else return { above: node.nodes.map(nm => go(nodes[nm])) };
     }
     if (node.displayName === Text.name) {
-      return { type: "blank", contents: node.props.text };
+      return { type: "blank", contents: node.props.text, block: node.props.block };
     }
     if (node.displayName === TwoSplit.name) {
       return {
@@ -97,6 +98,7 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "field",
+        block: node.props.block,
         field_name: node.props.name,
         fieldview: node.props.fieldview
       };
@@ -108,6 +110,7 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "join_field",
+        block: node.props.block,
         join_field: node.props.name
       };
     }
@@ -118,6 +121,7 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "view_link",
+        block: node.props.block,
         view: node.props.name
       };
     }
@@ -128,6 +132,7 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "action",
+        block: node.props.block,
         action_name: node.props.name
       };
     }
