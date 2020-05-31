@@ -3,6 +3,7 @@ import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
+import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
@@ -12,6 +13,8 @@ export const layoutToNodes = (layout, query, actions) => {
     if (!segment) return;
     if (segment.type === "blank") {
       return <Text key={ix} text={segment.contents} block={segment.block} />;
+    } else if (segment.type === "line_break") {
+      return <LineBreak />;
     } else if (segment.type === "field") {
       return (
         <Field
@@ -80,6 +83,9 @@ export const craftToSaltcorn = nodes => {
     }
     if (node.displayName === Text.name) {
       return { type: "blank", contents: node.props.text, block: node.props.block };
+    }
+    if (node.displayName === LineBreak.name) {
+      return { type: "line_break" };
     }
     if (node.displayName === TwoSplit.name) {
       return {

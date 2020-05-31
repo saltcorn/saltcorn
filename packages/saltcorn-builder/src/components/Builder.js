@@ -3,6 +3,7 @@ import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
+import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
@@ -96,6 +97,15 @@ const Toolbox = () => {
               Action
             </button>
           </td>
+        </tr>
+        <tr>
+          <td><button
+              ref={ref =>
+                connectors.create(ref, <LineBreak />)
+              }
+            >
+              ↵
+            </button></td>
         </tr>
       </tbody>
     </table>

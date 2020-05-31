@@ -105,7 +105,9 @@ const render = async (row, fields, layout, viewname, table) => {
     if (!segment) return "missing layout";
     if (segment.type === "blank") {
       return wrapBlock(segment, segment.contents)
-    } else if (segment.type === "field") {
+    } if (segment.type === "line_break") {
+      return '<br />'
+    }else if (segment.type === "field") {
       const val = row[segment.field_name];
       const field = fields.find(fld => fld.name === segment.field_name);
       if (segment.fieldview && field.type.fieldviews[segment.fieldview])
