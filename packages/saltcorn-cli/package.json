@@ -1,6 +1,7 @@
 {
   "name": "@saltcorn/cli",
-  "description": "Saltcorn command line interface",
+  "description": "Command-line interface for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
   "version": "0.0.6",
   "author": "Tom Nielsen @glutamate",
   "bin": {
@@ -33,7 +34,6 @@
     "/oclif.manifest.json",
     "/src"
   ],
-  "homepage": "https://github.com/saltcorn/saltcorn",
   "keywords": [
     "oclif"
   ],

@@ -1,8 +1,9 @@
 {
   "name": "@saltcorn/builder",
   "version": "0.0.6",
-  "description": "Builder for Saltcorn",
+  "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
+  "homepage": "https://saltcorn.com",
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
