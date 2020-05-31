@@ -6,7 +6,7 @@ const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
 
-const { div, text } = require("@saltcorn/markup/tags");
+const { div, text,span } = require("@saltcorn/markup/tags");
 const {
   stateFieldsToWhere,
   get_link_view_opts,
@@ -97,32 +97,34 @@ const runMany = async (
     row
   }));
 };
+const wrapBlock=(segment, inner)=> 
+  segment.block ? div(inner) : span(inner);
 
 const render = async (row, fields, layout, viewname, table) => {
   async function go(segment) {
     if (!segment) return "missing layout";
     if (segment.type === "blank") {
-      return segment.contents;
+      return wrapBlock(segment, segment.contents)
     } else if (segment.type === "field") {
       const val = row[segment.field_name];
       const field = fields.find(fld => fld.name === segment.field_name);
       if (segment.fieldview && field.type.fieldviews[segment.fieldview])
-        return field.type.fieldviews[segment.fieldview].run(val);
-      else return text(val);
+        return wrapBlock(segment, field.type.fieldviews[segment.fieldview].run(val));
+      else return wrapBlock(segment, text(val));
     } else if (segment.type === "join_field") {
       const [refNm, targetNm] = segment.join_field.split(".");
       const val = row[targetNm];
-      return text(val);
+      return wrapBlock(segment, text(val));
     } else if (segment.type === "action") {
-      return post_btn(
+      return wrapBlock(segment, post_btn(
         action_url(viewname, table, segment, row),
-        segment.action_name
+        segment.action_name)
       );
     } else if (segment.type === "view_link") {
       const { key } = await view_linker(segment, fields);
-      return key(row);
+      return wrapBlock(segment,key(row));
     } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => div(await go(s)))).join(
+      return (await asyncMap(segment.above, async s => await go(s))).join(
         ""
       );
     } else if (segment.besides) {
