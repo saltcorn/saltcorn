@@ -1,24 +1,25 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting } from "./utils";
+import { blockProps, BlockSetting,TextStyleSetting } from "./utils";
 
-export const Field = ({ name, fieldview, block }) => {
+export const Field = ({ name, fieldview, block, textStyle }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
   return (
-    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <span className={textStyle} {...blockProps(block)} ref={dom => connect(drag(dom))}>
       [{fieldview} {name}]
     </span>
   );
 };
 
 export const FieldSettings = () => {
-  const { setProp, name, fieldview, block } = useNode(node => ({
+  const { setProp, name, fieldview, block, textStyle } = useNode(node => ({
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
-    block: node.data.props.block
+    block: node.data.props.block,
+    textStyle: node.data.props.textStyle
   }));
   const options = useContext(optionsCtx);
   const fvs = options.field_view_options[name];
@@ -52,6 +53,7 @@ export const FieldSettings = () => {
         )}
       </div>
       <BlockSetting block={block} setProp={setProp} />
+      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
   );
 };

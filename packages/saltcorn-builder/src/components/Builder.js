@@ -56,6 +56,7 @@ const Toolbox = () => {
                   <Field
                     name={fields[0].name}
                     block={false}
+                    textStyle={""}
                     fieldview={
                       fields[0].is_fkey
                         ? ""

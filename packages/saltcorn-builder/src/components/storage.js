@@ -16,8 +16,8 @@ export const layoutToNodes = (layout, query, actions) => {
         <Text
           key={ix}
           text={segment.contents}
-          block={segment.block}
-          textStyle={segment.textStyle}
+          block={segment.block||false}
+          textStyle={segment.textStyle||""}
         />
       );
     } else if (segment.type === "line_break") {
@@ -28,20 +28,21 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.field_name}
           fieldview={segment.fieldview}
-          block={segment.block}
+          block={segment.block||false}
+          textStyle={segment.textStyle||""}
         />
       );
     } else if (segment.type === "join_field") {
       return (
-        <JoinField key={ix} name={segment.join_field} block={segment.block} />
+        <JoinField key={ix} name={segment.join_field} block={segment.block||false} />
       );
     } else if (segment.type === "view_link") {
       return (
         <ViewLink
           key={ix}
           name={segment.view}
-          block={segment.block}
-          minRole={segment.minRole}
+          block={segment.block||false}
+          minRole={segment.minRole||10}
         />
       );
     } else if (segment.type === "action") {
@@ -49,8 +50,8 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
-          block={segment.block}
-          minRole={segment.minRole}
+          block={segment.block||false}
+          minRole={segment.minRole||10}
         />
       );
     } else if (segment.besides) {
@@ -128,13 +129,14 @@ export const craftToSaltcorn = nodes => {
       columns.push({
         type: "Field",
         field_name: node.props.name,
-        fieldview: node.props.fieldview
+        fieldview: node.props.fieldview        
       });
       return {
         type: "field",
         block: node.props.block,
         field_name: node.props.name,
-        fieldview: node.props.fieldview
+        fieldview: node.props.fieldview,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === JoinField.name) {
