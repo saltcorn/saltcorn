@@ -163,5 +163,6 @@ module.exports = {
   get_state_fields,
   initial_config,
   display_state_form: true,
-  default_state_form: ({default_state}) => default_state && removeEmptyStrings(default_state)
+  default_state_form: ({ default_state }) =>
+    default_state && removeEmptyStrings(default_state)
 };
