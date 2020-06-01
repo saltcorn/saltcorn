@@ -80,6 +80,31 @@ describe("viewedit new List", () => {
       .send("type_1=Field")
       .send("field_name_1=pages")
       .set("Cookie", loginCookie)
+      .expect(toInclude("default"));
+  });
+  it("save new views default state", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 1,
+        columns: [
+          {
+            type: "Field",
+            field_name: "author"
+          },
+          {
+            type: "Field",
+            field_name: "pages"
+          }
+        ]
+      })
+    );
+    const app = await getApp();
+    await request(app)
+      .post("/viewedit/config/mybooklist")
+      .send("contextEnc=" + ctx)
+      .send("stepName=default_state")
+      .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
@@ -132,6 +157,27 @@ describe("viewedit new List with one field", () => {
       .send("stepName=listfields")
       .send("type_0=Field")
       .send("field_name_0=author")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("default"));
+  });
+  it("save new views default state", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: 1,
+        columns: [
+          {
+            type: "Field",
+            field_name: "author"
+          }
+        ]
+      })
+    );
+    const app = await getApp();
+    await request(app)
+      .post("/viewedit/config/mybooklist1")
+      .send("contextEnc=" + ctx)
+      .send("stepName=default_state")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
