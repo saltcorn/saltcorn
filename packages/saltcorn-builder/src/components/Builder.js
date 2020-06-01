@@ -10,7 +10,11 @@ import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
+
 const { Provider } = optionsCtx;
+
+const headOr=(xs, def)=>
+  xs && xs.length>0 ? xs[0] : def
 
 const Toolbox = () => {
   const { connectors, query } = useEditor();
@@ -76,7 +80,7 @@ const Toolbox = () => {
                 connectors.create(
                   ref,
                   <JoinField
-                    name={options.parent_field_list[0]}
+                    name={options.parent_field_list}
                     textStyle={""}
                     block={false}
                   />
@@ -134,7 +138,7 @@ const Toolbox = () => {
                   ref,
                   <Aggregation
                     agg_relation={child_field_list[0]}
-                    agg_field={agg_field_opts[child_field_list[0]][0]}
+                    agg_field={headOr(agg_field_opts[child_field_list[0]],"")}
                     stat={"Count"}
                     textStyle={""}
                     block={false}
