@@ -106,7 +106,7 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
-  const role = extra.req.user ? extra.req.user.role_id : 10;
+  const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
 
   return await asyncMap(rows, async row => ({
     html: await render(row, fields, layout, viewname, tbl, role),
