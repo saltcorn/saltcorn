@@ -39,12 +39,22 @@ const configuration_workflow = () =>
           );
           const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations();
+          const {
+            child_field_list,
+            child_relations
+          } = await table.get_child_relations();
+          var agg_field_opts = []
+          child_relations.forEach(({ table, key_field }) => {
+            agg_field_opts[`${table.name}.${key_field.name}`]=table.fields.map(f => f.name)
+          });
           return {
             fields,
             actions,
             field_view_options,
             link_view_opts,
             parent_field_list,
+            child_field_list,
+            agg_field_opts,
             roles
           };
         }
