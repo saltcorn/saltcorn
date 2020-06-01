@@ -76,6 +76,7 @@ const Toolbox = () => {
                   ref,
                   <JoinField
                     name={options.parent_field_list[0]}
+                    textStyle={""}
                     block={false}
                   />
                 )

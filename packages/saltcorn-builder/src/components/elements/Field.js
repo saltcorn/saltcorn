@@ -1,14 +1,18 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting,TextStyleSetting } from "./utils";
+import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const Field = ({ name, fieldview, block, textStyle }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
   return (
-    <span className={textStyle} {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <span
+      className={textStyle}
+      {...blockProps(block)}
+      ref={dom => connect(drag(dom))}
+    >
       [{fieldview} {name}]
     </span>
   );

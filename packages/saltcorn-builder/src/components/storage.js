@@ -16,8 +16,8 @@ export const layoutToNodes = (layout, query, actions) => {
         <Text
           key={ix}
           text={segment.contents}
-          block={segment.block||false}
-          textStyle={segment.textStyle||""}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
         />
       );
     } else if (segment.type === "line_break") {
@@ -28,21 +28,26 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.field_name}
           fieldview={segment.fieldview}
-          block={segment.block||false}
-          textStyle={segment.textStyle||""}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
         />
       );
     } else if (segment.type === "join_field") {
       return (
-        <JoinField key={ix} name={segment.join_field} block={segment.block||false} />
+        <JoinField
+          key={ix}
+          name={segment.join_field}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
       );
     } else if (segment.type === "view_link") {
       return (
         <ViewLink
           key={ix}
           name={segment.view}
-          block={segment.block||false}
-          minRole={segment.minRole||10}
+          block={segment.block || false}
+          minRole={segment.minRole || 10}
         />
       );
     } else if (segment.type === "action") {
@@ -50,8 +55,8 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
-          block={segment.block||false}
-          minRole={segment.minRole||10}
+          block={segment.block || false}
+          minRole={segment.minRole || 10}
         />
       );
     } else if (segment.besides) {
@@ -129,7 +134,7 @@ export const craftToSaltcorn = nodes => {
       columns.push({
         type: "Field",
         field_name: node.props.name,
-        fieldview: node.props.fieldview        
+        fieldview: node.props.fieldview
       });
       return {
         type: "field",
@@ -147,7 +152,8 @@ export const craftToSaltcorn = nodes => {
       return {
         type: "join_field",
         block: node.props.block,
-        join_field: node.props.name
+        join_field: node.props.name,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === ViewLink.name) {
