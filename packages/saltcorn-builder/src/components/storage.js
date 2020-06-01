@@ -3,6 +3,7 @@ import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
+import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
@@ -41,7 +42,18 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
         />
       );
-    } else if (segment.type === "view_link") {
+    } else if (segment.type === "aggregation") {
+      return (
+        <Aggregation
+          key={ix}
+          agg_relation={segment.agg_relation}
+          agg_field={segment.agg_field}
+          stat={segment.stat}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
+      );
+    }else if (segment.type === "view_link") {
       return (
         <ViewLink
           key={ix}
@@ -153,6 +165,22 @@ export const craftToSaltcorn = nodes => {
         type: "join_field",
         block: node.props.block,
         join_field: node.props.name,
+        textStyle: node.props.textStyle
+      };
+    }
+    if (node.displayName === Aggregation.name) {
+      columns.push({
+        type: "Aggregation",
+        agg_relation: node.props.agg_relation,
+        agg_field: node.props.agg_field,
+        stat: node.props.stat
+      });
+      return {
+        type: "aggregation",
+        block: node.props.block,
+        agg_relation: node.props.agg_relation,
+        agg_field: node.props.agg_field,
+        stat: node.props.stat,
         textStyle: node.props.textStyle
       };
     }
