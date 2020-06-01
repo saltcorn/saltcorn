@@ -19,7 +19,7 @@ export const Aggregation = ({ agg_relation, agg_field, stat, block, textStyle })
 };
 
 export const AggregationSettings = () => {
-  const { setProp, agg_relation, agg_field, stat, textStyle } = useNode(node => ({
+  const { setProp, agg_relation, agg_field, stat, block, textStyle } = useNode(node => ({
     agg_relation: node.data.props.agg_relation,
     agg_field: node.data.props.agg_field,
     stat: node.data.props.stat,
@@ -36,7 +36,7 @@ export const AggregationSettings = () => {
           value={agg_relation}
           onChange={e => setProp(prop => (prop.agg_relation = e.target.value))}
         >
-          {options.parent_field_list.map((f, ix) => (
+          {options.child_field_list.map((f, ix) => (
             <option key={ix} value={f}>
               {f}
             </option>

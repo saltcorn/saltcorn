@@ -15,7 +15,7 @@ const { Provider } = optionsCtx;
 const Toolbox = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options } = options;
+  const { fields, field_view_options, child_field_list, agg_field_opts } = options;
   return (
     <table>
       <tbody>
@@ -133,7 +133,9 @@ const Toolbox = () => {
                 connectors.create(
                   ref,
                   <Aggregation
-                    name={options.parent_field_list[0]}
+                    agg_relation={child_field_list[0]}
+                    agg_field={agg_field_opts[child_field_list[0]]}
+                    stat={"Count"}
                     textStyle={""}
                     block={false}
                   />

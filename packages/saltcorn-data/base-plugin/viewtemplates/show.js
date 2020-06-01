@@ -43,7 +43,7 @@ const configuration_workflow = () =>
             child_field_list,
             child_relations
           } = await table.get_child_relations();
-          var agg_field_opts = []
+          var agg_field_opts = {}
           child_relations.forEach(({ table, key_field }) => {
             agg_field_opts[`${table.name}.${key_field.name}`]=table.fields.map(f => f.name)
           });
