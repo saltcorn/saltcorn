@@ -44,7 +44,7 @@ const configuration_workflow = () =>
               {
                 name: "view_to_create",
                 label: "Use view to create",
-                sublabel: "Leave blank to have no link to create a new item",
+                sublabel: "If user has write permission. Leave blank to have no link to create a new item",
                 type: "String",
                 attributes: {
                   options: create_view_opts.join()
@@ -115,7 +115,9 @@ const run = async (
       };
     }
   }
-  const create_link = view_to_create
+  const role = extraOpts && extraOpts.req && extraOpts.req.user ? extraOpts.req.user.role_id : 10;
+
+  const create_link = view_to_create && role <= table.min_role_write
     ? link(`/view/${view_to_create}`, `Add ${pluralize(table.name, 1)}`)
     : "";
   return mkTable(tfields, rows, page_opts) + create_link;

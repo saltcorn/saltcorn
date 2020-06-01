@@ -183,7 +183,7 @@ module.exports = async (req, res) => {
   } else if (views.length === 1) {
     const view = views[0];
 
-    const resp = await view.run(req.query);
+    const resp = await view.run(req.query, { res, req });
     const state_form = await view.get_state_form(req.query);
 
     res.sendWrap(
