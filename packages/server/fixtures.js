@@ -67,7 +67,7 @@ module.exports = async () => {
         {
           type: "Aggregation",
           agg_relation: "patients.favbook",
-          agg_field_patients_favbook: "name",
+          agg_field: "name",
           stat: "Count"
         }
       ]
@@ -88,7 +88,7 @@ module.exports = async () => {
         {
           type: "Aggregation",
           agg_relation: "patients.favbook",
-          agg_field_patients_favbook: "name",
+          agg_field: "name",
           stat: "Count"
         }
       ],

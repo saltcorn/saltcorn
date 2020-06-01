@@ -55,7 +55,7 @@ const field_picker_fields = async ({ table, viewname }) => {
     child_relations
   } = await table.get_child_relations();
   const agg_field_opts = child_relations.map(({ table, key_field }) => ({
-    name: `agg_field_${table.name}_${key_field.name}`,
+    name: `agg_field`,
     label: "On Field",
     type: "String",
     required: true,
@@ -215,7 +215,7 @@ const picked_fields_to_query = columns => {
     } else if (column.type === "Aggregation") {
       //console.log(column)
       const [table, fld] = column.agg_relation.split(".");
-      const field = column[`agg_field_${table}_${fld}`];
+      const field = column.agg_field;
       const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
       aggregations[targetNm] = {
         table,

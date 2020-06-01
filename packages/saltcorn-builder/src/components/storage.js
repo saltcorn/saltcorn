@@ -3,6 +3,8 @@ import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { TwoSplit } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
+import { Aggregation } from "./elements/Aggregation";
+import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
@@ -11,21 +13,64 @@ export const layoutToNodes = (layout, query, actions) => {
   function toTag(segment, ix) {
     if (!segment) return;
     if (segment.type === "blank") {
-      return <Text key={ix} text={segment.contents} />;
+      return (
+        <Text
+          key={ix}
+          text={segment.contents}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "line_break") {
+      return <LineBreak />;
     } else if (segment.type === "field") {
       return (
         <Field
           key={ix}
           name={segment.field_name}
           fieldview={segment.fieldview}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
         />
       );
     } else if (segment.type === "join_field") {
-      return <JoinField key={ix} name={segment.join_field} />;
-    } else if (segment.type === "view_link") {
-      return <ViewLink key={ix} name={segment.view} />;
+      return (
+        <JoinField
+          key={ix}
+          name={segment.join_field}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "aggregation") {
+      return (
+        <Aggregation
+          key={ix}
+          agg_relation={segment.agg_relation}
+          agg_field={segment.agg_field}
+          stat={segment.stat}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
+      );
+    }else if (segment.type === "view_link") {
+      return (
+        <ViewLink
+          key={ix}
+          name={segment.view}
+          block={segment.block || false}
+          minRole={segment.minRole || 10}
+        />
+      );
     } else if (segment.type === "action") {
-      return <Action key={ix} name={segment.action_name} />;
+      return (
+        <Action
+          key={ix}
+          name={segment.action_name}
+          block={segment.block || false}
+          minRole={segment.minRole || 10}
+        />
+      );
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -78,7 +123,15 @@ export const craftToSaltcorn = nodes => {
       else return { above: node.nodes.map(nm => go(nodes[nm])) };
     }
     if (node.displayName === Text.name) {
-      return { type: "blank", contents: node.props.text };
+      return {
+        type: "blank",
+        contents: node.props.text,
+        block: node.props.block,
+        textStyle: node.props.textStyle
+      };
+    }
+    if (node.displayName === LineBreak.name) {
+      return { type: "line_break" };
     }
     if (node.displayName === TwoSplit.name) {
       return {
@@ -97,8 +150,10 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "field",
+        block: node.props.block,
         field_name: node.props.name,
-        fieldview: node.props.fieldview
+        fieldview: node.props.fieldview,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === JoinField.name) {
@@ -108,27 +163,51 @@ export const craftToSaltcorn = nodes => {
       });
       return {
         type: "join_field",
-        join_field: node.props.name
+        block: node.props.block,
+        join_field: node.props.name,
+        textStyle: node.props.textStyle
+      };
+    }
+    if (node.displayName === Aggregation.name) {
+      columns.push({
+        type: "Aggregation",
+        agg_relation: node.props.agg_relation,
+        agg_field: node.props.agg_field,
+        stat: node.props.stat
+      });
+      return {
+        type: "aggregation",
+        block: node.props.block,
+        agg_relation: node.props.agg_relation,
+        agg_field: node.props.agg_field,
+        stat: node.props.stat,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === ViewLink.name) {
       columns.push({
         type: "ViewLink",
-        view: node.props.name
+        view: node.props.name,
+        minRole: node.props.minRole
       });
       return {
         type: "view_link",
-        view: node.props.name
+        block: node.props.block,
+        view: node.props.name,
+        minRole: node.props.minRole
       };
     }
     if (node.displayName === Action.name) {
       columns.push({
         type: "Action",
-        action_name: node.props.name
+        action_name: node.props.name,
+        minRole: node.props.minRole
       });
       return {
         type: "action",
-        action_name: node.props.name
+        block: node.props.block,
+        action_name: node.props.name,
+        minRole: node.props.minRole
       };
     }
   };
