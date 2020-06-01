@@ -176,13 +176,10 @@ class Table {
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
-    
 
-    const sql = `SELECT ${fldNms.join()} FROM "${
-      schema
-    }"."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
-      selectopts
-    )}`;
+    const sql = `SELECT ${fldNms.join()} FROM "${schema}"."${sqlsanitize(
+      this.name
+    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql);
     const { rows } = await db.query(sql, values);
 

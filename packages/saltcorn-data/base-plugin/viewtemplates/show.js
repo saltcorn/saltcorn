@@ -43,9 +43,11 @@ const configuration_workflow = () =>
             child_field_list,
             child_relations
           } = await table.get_child_relations();
-          var agg_field_opts = {}
+          var agg_field_opts = {};
           child_relations.forEach(({ table, key_field }) => {
-            agg_field_opts[`${table.name}.${key_field.name}`]=table.fields.map(f => f.name)
+            agg_field_opts[
+              `${table.name}.${key_field.name}`
+            ] = table.fields.map(f => f.name);
           });
           return {
             fields,
@@ -143,7 +145,7 @@ const render = async (row, fields, layout, viewname, table, role) => {
     } else if (segment.type === "aggregation") {
       const [table, fld] = segment.agg_relation.split(".");
       const targetNm = (segment.stat + "_" + table + "_" + fld).toLowerCase();
-      const val = row[targetNm];      
+      const val = row[targetNm];
       return wrapBlock(segment, text(val));
     } else if (segment.type === "action") {
       return wrapBlock(

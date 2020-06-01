@@ -13,13 +13,17 @@ import { craftToSaltcorn, layoutToNodes } from "./storage";
 
 const { Provider } = optionsCtx;
 
-const headOr=(xs, def)=>
-  xs && xs.length>0 ? xs[0] : def
+const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
 const Toolbox = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options, child_field_list, agg_field_opts } = options;
+  const {
+    fields,
+    field_view_options,
+    child_field_list,
+    agg_field_opts
+  } = options;
   return (
     <table>
       <tbody>
@@ -138,7 +142,7 @@ const Toolbox = () => {
                   ref,
                   <Aggregation
                     agg_relation={child_field_list[0]}
-                    agg_field={headOr(agg_field_opts[child_field_list[0]],"")}
+                    agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
                     stat={"Count"}
                     textStyle={""}
                     block={false}

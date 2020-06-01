@@ -47,10 +47,10 @@ const view_linker = async (column, fields) => {
 
 const asyncMap = async (xs, asyncF) => {
   var res = [];
-  var ix=0
+  var ix = 0;
   for (const x of xs) {
-    res.push(await asyncF(x,ix));
-    ix+=1
+    res.push(await asyncF(x, ix));
+    ix += 1;
   }
   return res;
 };

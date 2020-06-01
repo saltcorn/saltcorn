@@ -53,7 +53,7 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
         />
       );
-    }else if (segment.type === "view_link") {
+    } else if (segment.type === "view_link") {
       return (
         <ViewLink
           key={ix}
