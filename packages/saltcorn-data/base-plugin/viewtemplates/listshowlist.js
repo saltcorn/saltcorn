@@ -118,7 +118,8 @@ const run = async (
   var lresp;
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
-    lresp = await lview.run(state, {
+    const state1 = lview.combine_state_and_default_state(state);
+    lresp = await lview.run(state1, {
       ...extraArgs,
       onRowSelect: v => `select_id(${v.id})`
     });

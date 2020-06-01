@@ -154,6 +154,20 @@ class View {
     else if (result.html) res.send(result.html);
     else res.json({ success: "ok" });
   }
+
+  combine_state_and_default_state(req_query) {
+    var state = { ...req_query };
+    const defstate = this.viewtemplateObj.default_state_form
+      ? this.viewtemplateObj.default_state_form(this.configuration)
+      : {};
+
+    Object.entries(defstate || {}).forEach(([k, v]) => {
+      if (!state[k]) {
+        state[k] = v;
+      }
+    });
+    return state;
+  }
   async get_state_form(query) {
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
     const display_state_form =

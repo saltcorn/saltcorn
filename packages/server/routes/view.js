@@ -16,17 +16,7 @@ router.get("/:viewname", setTenant, async (req, res) => {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
-    var state = { ...req.query };
-    const defstate = view.viewtemplateObj.default_state_form
-      ? view.viewtemplateObj.default_state_form(view.configuration)
-      : {};
-
-    Object.entries(defstate || {}).forEach(([k, v]) => {
-      if (!state[k]) {
-        state[k] = v;
-      }
-    });
-
+    const state = view.combine_state_and_default_state(req.query);
     const resp = await view.run(state, { res, req });
     const state_form = await view.get_state_form(state);
 
