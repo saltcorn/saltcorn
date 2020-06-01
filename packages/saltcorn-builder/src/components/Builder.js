@@ -134,7 +134,7 @@ const Toolbox = () => {
                   ref,
                   <Aggregation
                     agg_relation={child_field_list[0]}
-                    agg_field={agg_field_opts[child_field_list[0]]}
+                    agg_field={agg_field_opts[child_field_list[0]][0]}
                     stat={"Count"}
                     textStyle={""}
                     block={false}
