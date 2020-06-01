@@ -44,7 +44,8 @@ const configuration_workflow = () =>
               {
                 name: "view_to_create",
                 label: "Use view to create",
-                sublabel: "Leave blank to have no link to create a new item",
+                sublabel:
+                  "If user has write permission.  Leave blank to have no link to create a new item",
                 type: "String",
                 attributes: {
                   options: create_view_opts.join()

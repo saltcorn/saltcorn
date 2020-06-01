@@ -7,6 +7,7 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
+const { removeEmptyStrings } = require("../../utils");
 
 const {
   field_picker_fields,
@@ -34,8 +35,7 @@ const configuration_workflow = () =>
           );
           const create_view_opts = create_views.map(v => v.name);
           return new Form({
-            blurb:
-              "Finalise your list view by specifying the fields in the table",
+            blurb: "Specify the fields in the table to show",
             fields: [
               new FieldRepeat({
                 name: "columns",
@@ -52,6 +52,33 @@ const configuration_workflow = () =>
                 }
               }
             ]
+          });
+        }
+      },
+      {
+        name: "default_state",
+        contextField: "default_state",
+        form: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const table_fields = await table.getFields();
+          const formfields = context.columns
+            .filter(column => column.type === "Field" && column.state_field)
+            .map(column => {
+              const f = new Field(
+                table_fields.find(f => f.name == column.field_name)
+              );
+              return {
+                name: column.field_name,
+                label: f.label,
+                type: f.type,
+                fieldview:
+                  f.type && f.type.name === "Bool" ? "tristate" : undefined,
+                required: false
+              };
+            });
+          return new Form({
+            fields: formfields,
+            blurb: "Default search form values when first loaded"
           });
         }
       }
@@ -82,7 +109,7 @@ const run = async (
   state,
   extraOpts
 ) => {
-  //console.log({ columns, view_to_create });
+  //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
 
   const fields = await table.getFields();
@@ -135,5 +162,7 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
-  display_state_form: true
+  display_state_form: true,
+  default_state_form: ({ default_state }) =>
+    default_state && removeEmptyStrings(default_state)
 };
