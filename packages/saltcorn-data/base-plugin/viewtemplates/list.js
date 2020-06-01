@@ -7,7 +7,7 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
-const { removeEmptyStrings} = require("../../utils")
+const { removeEmptyStrings } = require("../../utils");
 
 const {
   field_picker_fields,

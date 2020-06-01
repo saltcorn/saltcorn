@@ -2,8 +2,7 @@ const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate } = require("../contracts");
-const { removeEmptyStrings} = require("../utils")
-
+const { removeEmptyStrings } = require("../utils");
 
 class View {
   constructor(o) {
