@@ -109,7 +109,7 @@ const run = async (
   state,
   extraOpts
 ) => {
-  //console.log({ columns, view_to_create });
+  //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
 
   const fields = await table.getFields();
@@ -162,5 +162,6 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
-  display_state_form: true
+  display_state_form: true,
+  default_state_form: ({default_state}) => default_state && removeEmptyStrings(default_state)
 };
