@@ -140,6 +140,11 @@ const render = async (row, fields, layout, viewname, table, role) => {
       const [refNm, targetNm] = segment.join_field.split(".");
       const val = row[targetNm];
       return wrapBlock(segment, text(val));
+    } else if (segment.type === "aggregation") {
+      const [table, fld] = segment.agg_relation.split(".");
+      const targetNm = (segment.stat + "_" + table + "_" + fld).toLowerCase();
+      const val = row[targetNm];      
+      return wrapBlock(segment, text(val));
     } else if (segment.type === "action") {
       return wrapBlock(
         segment,
@@ -163,7 +168,7 @@ const render = async (row, fields, layout, viewname, table, role) => {
           )
         )
       );
-    } else throw new Error("unknown layout setment" + JSON.stringify(segment));
+    } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   return await go(layout);
 };
