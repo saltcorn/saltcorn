@@ -136,13 +136,13 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
-
+    const schema = sqlsanitize(db.getTenantSchema());
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${sqlsanitize(
+        joinq += ` left join "${schema}"."${sqlsanitize(
           reftable
         )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
@@ -155,7 +155,7 @@ class Table {
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
           `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from "${sqlsanitize(table)}" where ${sqlsanitize(
+            "*"}) from "${schema}"."${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -176,11 +176,11 @@ class Table {
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
-    const schema = db.getTenantSchema();
+    
 
-    const sql = `SELECT ${fldNms.join()} FROM "${sqlsanitize(
+    const sql = `SELECT ${fldNms.join()} FROM "${
       schema
-    )}"."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
+    }"."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
       selectopts
     )}`;
     //console.log(sql);
