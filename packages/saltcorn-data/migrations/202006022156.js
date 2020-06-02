@@ -1,5 +1,4 @@
-
-const sql= `
+const sql = `
 create table _sc_files (
     id serial primary key,
     filename text NOT NULL,
@@ -10,5 +9,4 @@ create table _sc_files (
 );
 `;
 
-module.exports = { sql }
-    
+module.exports = { sql };

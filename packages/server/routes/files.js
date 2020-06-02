@@ -41,7 +41,11 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       rows
     ),
     form(
-      { action: "/files/upload", method: "post" },
+      {
+        action: "/files/upload",
+        method: "post",
+        encType: "multipart/form-data"
+      },
       input({ name: "file", type: "file" }),
       button({ type: "submit", class: "btn btn-primary" }, "Upload file")
     )
