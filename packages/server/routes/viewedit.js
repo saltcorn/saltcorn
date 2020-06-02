@@ -119,7 +119,11 @@ router.get("/edit/:viewname", setTenant, isAdmin, async (req, res) => {
 router.get("/new", setTenant, isAdmin, async (req, res) => {
   const tables = await Table.find();
   const tableOptions = tables.map(t => t.name);
-  res.sendWrap(`Edit view`, renderForm(viewForm(tableOptions)));
+  const form = viewForm(tableOptions);
+  if (req.query && req.query.table) {
+    form.values.table_name = req.query.table;
+  }
+  res.sendWrap(`Edit view`, renderForm(form));
 });
 
 router.post("/save", setTenant, isAdmin, async (req, res) => {

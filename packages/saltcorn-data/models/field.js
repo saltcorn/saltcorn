@@ -24,8 +24,8 @@ class Field {
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
     this.options = o.options;
-    this.required = o.required;
-    this.is_unique = o.is_unique;
+    this.required = o.required ? true : false;
+    this.is_unique = o.is_unique ? true : false;
     this.hidden = o.hidden || false;
 
     this.is_fkey =
@@ -228,6 +228,7 @@ class Field {
       type: f.is_fkey ? f.type : f.type.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
       required: f.required,
+      is_unique: f.is_unique,
       attributes: f.attributes
     });
     return f;
@@ -243,6 +244,8 @@ Field.contract = {
       is.one_of(["hidden", "select", "fromtype", "text", "password"])
     ),
     is_fkey: is.bool,
+    is_unique: is.bool,
+    required: is.bool,
     id: is.maybe(is.posint)
   },
   instance_check: is.and(
