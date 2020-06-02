@@ -3,6 +3,7 @@ const field = require("./fields");
 const list = require("./list");
 const view = require("./view");
 const page = require("./page");
+const files = require("./files");
 const admin = require("./admin");
 const tenant = require("./tenant");
 const api = require("./api");
@@ -18,6 +19,7 @@ const useradmin = require("../auth/admin");
 module.exports = app => {
   app.use("/table", table);
   app.use("/field", field);
+  app.use("/files", files);
   app.use("/list", list);
   app.use("/edit", edit);
   app.use("/config", config);
