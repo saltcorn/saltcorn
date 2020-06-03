@@ -9,6 +9,7 @@
     "builddev": "webpack --mode none",
     "test": "echo \"Error: no test specified\""
   },
+  "repository": "github:saltcorn/saltcorn",
   "author": "Tom Nielsen",
   "license": "MIT",
   "devDependencies": {

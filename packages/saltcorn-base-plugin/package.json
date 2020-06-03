@@ -3,6 +3,7 @@
   "version": "0.0.7",
   "description": "Base plugin for saltcorn",
   "main": "index.js",
+  "repository": "github:saltcorn/saltcorn",
   "scripts": {
     "test": "echo No tests"
   },

@@ -15,6 +15,7 @@
   "scripts": {
     "test": "jest --runInBand"
   },
+  "repository": "github:saltcorn/saltcorn",
   "jest": {
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
