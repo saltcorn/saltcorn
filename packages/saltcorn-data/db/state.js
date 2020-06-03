@@ -110,9 +110,13 @@ var tenants = {};
 const init_multi_tenant = async plugin_loader => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
+    try {
     tenants[domain] = new State();
     await db.runWithTenant(domain, () => migrate(domain));
     await db.runWithTenant(domain, plugin_loader);
+    } catch(err) {
+      console.error(err.message);
+    }
   }
 };
 
