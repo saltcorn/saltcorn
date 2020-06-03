@@ -18,6 +18,8 @@ const getConnectObject = (connSpec = {}) => {
     connObj.session_secret || process.env.SALTCORN_SESSION_SECRET;
   connObj.multi_tenant =
     connObj.multi_tenant || process.env.SALTCORN_MULTI_TENANT;
+  connObj.file_store = connObj.file_store || process.env.SALTCORN_FILE_STORE;
+  
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};
@@ -25,6 +27,7 @@ const getConnectObject = (connSpec = {}) => {
     connObj.password = connObj.password || cfg.password;
     connObj.host = connObj.host || cfg.host;
     connObj.port = connObj.port || cfg.port;
+    connObj.file_store = connObj.file_store || cfg.file_store;
     connObj.database = connObj.database || cfg.database;
     connObj.session_secret = connObj.session_secret || cfg.session_secret;
     connObj.multi_tenant =
@@ -32,6 +35,9 @@ const getConnectObject = (connSpec = {}) => {
         ? cfg.multi_tenant
         : connObj.multi_tenant;
   }
+
+  connObj.file_store = connObj.file_store || path.join(xdgBasedir.data, "saltcorn");
+
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
   } else {

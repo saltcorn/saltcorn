@@ -1,5 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const { v4: uuidv4 } = require('uuid');
+const path = require("path");
 
 class File {
   constructor(o) {
@@ -19,6 +21,33 @@ class File {
   static async findOne(where) {
     const db_fld = await db.selectOne("_sc_files", where);
     return new File(db_fld);
+  }
+  
+  static async from_req_files(file, user_id) {
+  const file_store = db.connectObj.file_store;
+
+    const newFnm = uuidv4()
+    const newPath=path.join(file_store,newFnm )
+    const [mime_super, mime_sub] = file.mimetype.split('/')
+    file.mv(newPath)
+    return await File.create({
+        filename: file.name,
+        location: newPath,
+        uploaded_at: new Date(),
+        size_kb:Math.round(file.size/1024),
+        user_id,
+        mime_super, 
+        mime_sub
+    })
+
+  }
+
+  static async create(f) {
+      const file=new File(f)
+      const { id, ...rest} = file
+      const fid = await db.insert("_sc_files", rest)
+      file.id=fid
+      return file
   }
 }
 

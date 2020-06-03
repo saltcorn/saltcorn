@@ -142,6 +142,7 @@ const getApp = async () => {
       const adminItems = [
         { link: "/table", label: "Tables" },
         { link: "/viewedit", label: "Views" },
+        { link: "/files", label: "Files" },
         {
           label: "Settings",
           subitems: [

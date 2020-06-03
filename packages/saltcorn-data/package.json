@@ -18,6 +18,7 @@
     "node-fetch": "^2.6.0",
     "pg": "^8.1.0",
     "pluralize": "^8.0.0",
+    "uuid": "^8.1.0",
     "xdg-basedir": "^4.0.0"
   },
   "repository": "github:saltcorn/saltcorn",
