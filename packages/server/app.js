@@ -20,7 +20,7 @@ const path = require("path");
 const getApp = async () => {
   const app = express();
   const sql_log = await getConfig("log_sql");
-  db.set_sql_logging(sql_log);
+  if (sql_log) db.set_sql_logging(); // dont override cli flag
   await migrate();
 
   await loadAllPlugins();
