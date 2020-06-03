@@ -19,7 +19,9 @@ const {
   div,
   form,
   input,
-  button, text
+  button,
+  text,
+  label
 } = require("@saltcorn/markup/tags");
 
 const router = new Router();
@@ -33,6 +35,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
     mkTable(
       [
         { label: "Filename", key: "filename" },
+        { label: "Size (KiB)", key: "size_kb" },
+        { label: "Media type", key: r => `${r.mime_super}/${r.mime_sub}` },
         {
           label: "Delete",
           key: r => post_delete_btn(`/files/delete/${r.id}`)
@@ -46,20 +50,25 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         method: "post",
         encType: "multipart/form-data"
       },
-      input({ name: "file", type: "file" }),
-      button({ type: "submit", class: "btn btn-primary" }, "Upload file")
+      label("Upload file "),
+      input({
+        name: "file",
+        class: "form-control-file",
+        type: "file",
+        onchange: "form.submit()"
+      })
     )
   );
 });
 
 router.post("/upload", setTenant, isAdmin, async (req, res) => {
-  if(!req.files && !req.files.file) {
-      req.flash("warning", "No file found")
+  if (!req.files && !req.files.file) {
+    req.flash("warning", "No file found");
   } else {
-      console.log(req.files); // the uploaded file object
-      const f = await File.from_req_files(req.files.file, req.user.id)
-      req.flash("success", `File ${text(f.filename)} uploaded`)
+    console.log(req.files); // the uploaded file object
+    const f = await File.from_req_files(req.files.file, req.user.id);
+    req.flash("success", `File ${text(f.filename)} uploaded`);
   }
-  
+
   res.redirect("/files");
 });

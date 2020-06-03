@@ -19,7 +19,6 @@ const getConnectObject = (connSpec = {}) => {
   connObj.multi_tenant =
     connObj.multi_tenant || process.env.SALTCORN_MULTI_TENANT;
   connObj.file_store = connObj.file_store || process.env.SALTCORN_FILE_STORE;
-  
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};
@@ -36,7 +35,8 @@ const getConnectObject = (connSpec = {}) => {
         : connObj.multi_tenant;
   }
 
-  connObj.file_store = connObj.file_store || path.join(xdgBasedir.data, "saltcorn");
+  connObj.file_store =
+    connObj.file_store || path.join(xdgBasedir.data, "saltcorn");
 
   if (connObj.user && connObj.password && connObj.database) {
     return connObj;
