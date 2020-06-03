@@ -36,7 +36,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       [
         { label: "Filename", key: "filename" },
         { label: "Size (KiB)", key: "size_kb" },
-        { label: "Media type", key: r => `${r.mime_super}/${r.mime_sub}` },
+        { label: "Media type", key: r => r.mimetype },
+        { label: "Download", key: r => link(`/files/download/${r.id}`, 'Download') },
         {
           label: "Delete",
           key: r => post_delete_btn(`/files/delete/${r.id}`)
@@ -61,11 +62,17 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   );
 });
 
+router.get("/download/:id", setTenant, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const file = await File.findOne({id});
+  res.type(file.mimetype)
+  res.download(file.location, file.filename,)
+});
+
 router.post("/upload", setTenant, isAdmin, async (req, res) => {
   if (!req.files && !req.files.file) {
     req.flash("warning", "No file found");
   } else {
-    console.log(req.files); // the uploaded file object
     const f = await File.from_req_files(req.files.file, req.user.id);
     req.flash("success", `File ${text(f.filename)} uploaded`);
   }

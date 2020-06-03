@@ -40,7 +40,9 @@ class File {
       mime_sub
     });
   }
-
+  get mimetype() {
+      return `${this.mime_super}/${this.mime_sub}`
+  }
   static async create(f) {
     const file = new File(f);
     const { id, ...rest } = file;
