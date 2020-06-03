@@ -139,6 +139,7 @@ module.exports = {
   deleteWhere,
   pool,
   close,
+  sql_log,
   changeConnection,
   set_sql_logging,
   getClient,
