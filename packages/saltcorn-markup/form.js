@@ -199,6 +199,16 @@ const mkFormRowForField = (
         formStyle,
         labelCols
       );
+      case "file":
+        return formRowWrap(
+          hdr,
+          `<input type="file" class="form-control-file ${validClass} ${hdr.class}" name="${text(
+            name
+          )}" id="input${text(name)}">`,
+          errorFeedback,
+          formStyle,
+          labelCols
+        );
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
       return formRowWrap(
