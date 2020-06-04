@@ -8,6 +8,6 @@ module.exports = {
   },
   "Show Image": {
     run: (file_id, file_name) =>
-      img({src:`/files/download/${file_id}`})
+      img({src:`/files/download/${file_id}`, style: "width: 100%"})
   }
 };
