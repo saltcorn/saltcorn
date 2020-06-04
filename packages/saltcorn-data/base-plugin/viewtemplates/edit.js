@@ -247,7 +247,16 @@ const runPost = async (
     res.sendWrap(`${table.name} create new`, renderForm(form));
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
-    const row = { ...use_fixed, ...form.values };
+    var row = { ...use_fixed, ...form.values };
+    
+    const file_fields =form.fields.filter(f=>f.type==="File")
+    for(const field of file_fields) {
+      if(req.files && req.files[field.name]) {
+        const file = await File.from_req_files(req.files[field.name], req.user ? req.user.id : null);
+        row[field.name]=file.id
+      }
+    }
+
     var id = body.id;
     if (typeof id === "undefined") {
       id = await table.insertRow(row);
@@ -255,13 +264,6 @@ const runPost = async (
       await table.updateRow(row, parseInt(id));
     }
 
-    const file_fields =form.fields.filter(f=>f.type==="File")
-    for(const field of file_fields) {
-      if(req.files && req.files[field.name]) {
-        await File.from_req_files(req.files[field.name], req.user ? req.user.id : null);
-      }
-    }
-    
     if (!view_when_done) {
       res.redirect(`/`);
     } else {
