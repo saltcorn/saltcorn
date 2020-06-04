@@ -6,6 +6,7 @@ const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
+const User = require("@saltcorn/data/models/user");
 
 const { setTenant, isAdmin } = require("./utils.js");
 
@@ -45,12 +46,7 @@ const fieldFlow = new Workflow({
   action: "/field",
   onDone: async context => {
     const thetype = getState().types[context.type];
-    var attributes = {};
-    if (!new Field(context).is_fkey)
-      (thetype.attributes || []).forEach(a => {
-        attributes[a.name] = context[a.name];
-      });
-
+    var attributes = context.attributes || {};
     attributes.default = context.default;
     attributes.summary_field = context.summary_field;
     const { table_id, name, label, required, is_unique } = context;
@@ -89,16 +85,24 @@ const fieldFlow = new Workflow({
     },
     {
       name: "attributes",
+      contextField: "attributes",
       onlyWhen: context => {
-        if (context.type === "File") return false;
+        if (context.type === "File") return true;
         if (new Field(context).is_fkey) return false;
         const type = getState().types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
-      form: context => {
+      form: async context => {
         if (context.type === "File") {
+          const roles = await User.get_roles();
           return new Form({
-            fields: getState().types[context.type].attributes
+            fields: [{
+              name: 'min_role_read',
+              label: 'Role required to access added files',
+              sublabel: 'The user uploading the file has access irrespective of their role',
+              input_type: "select",
+              options: roles.map(r => ({ value: r.id, label: r.role }))
+            }]
           });
         } else {
           return new Form({
