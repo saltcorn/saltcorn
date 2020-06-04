@@ -92,9 +92,16 @@ const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
           column.fieldview && f.type === "File"
             ? row =>
                 row[f.name] &&
-                getState().fileviews[column.fieldview].run(row[f.name], "file")
+                getState().fileviews[column.fieldview].run(
+                  row[f.name],
+                  row[`${f.name}__filename`]
+                )
             : column.fieldview && f.type.fieldviews[column.fieldview]
-            ? row => f.type.fieldviews[column.fieldview].run(row[f.name])
+            ? row =>
+                f.type.fieldviews[column.fieldview].run(
+                  row[f.name],
+                  row[`${f.name}__filename`]
+                )
             : isShow
             ? f.type.showAs
               ? row => f.type.showAs(row[f.name])

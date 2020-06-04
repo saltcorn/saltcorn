@@ -137,6 +137,17 @@ class Table {
     var joinTables = [];
     var joinFields = opts.joinFields || [];
     const schema = sqlsanitize(db.getTenantSchema());
+
+    fields
+      .filter(f => f.type === "File")
+      .forEach(f => {
+        joinFields[`${f.name}__filename`] = {
+          ref: f.name,
+          reftable: "_sc_files",
+          target: `filename`
+        };
+      });
+
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
