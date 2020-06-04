@@ -23,6 +23,9 @@ class File {
     const db_fld = await db.selectOne("_sc_files", where);
     return new File(db_fld);
   }
+  static async update(id, row) {
+    await db.update("_sc_files", row, id);
+  }
 
   static async from_req_files(file, user_id) {
     const file_store = db.connectObj.file_store;
@@ -43,7 +46,7 @@ class File {
     });
   }
   get mimetype() {
-      return `${this.mime_super}/${this.mime_sub}`
+    return `${this.mime_super}/${this.mime_sub}`;
   }
   static async create(f) {
     const file = new File(f);
