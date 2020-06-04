@@ -16,6 +16,7 @@ const homepage = require("./routes/homepage");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
+const fileUpload = require("express-fileupload");
 
 const getApp = async () => {
   const app = express();
@@ -27,6 +28,13 @@ const getApp = async () => {
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
+  app.use(
+    fileUpload({
+      useTempFiles: true,
+      createParentPath: true,
+      tempFileDir: "/tmp/"
+    })
+  );
   app.use(require("cookie-parser")());
 
   if (db.is_it_multi_tenant()) {
@@ -134,6 +142,7 @@ const getApp = async () => {
       const adminItems = [
         { link: "/table", label: "Tables" },
         { link: "/viewedit", label: "Views" },
+        { link: "/files", label: "Files" },
         {
           label: "Settings",
           subitems: [

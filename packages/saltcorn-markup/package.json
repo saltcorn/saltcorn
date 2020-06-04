@@ -13,6 +13,7 @@
     "contractis": "^0.0.7",
     "xss": "^1.0.6"
   },
+  "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
     "jest": "^25.1.0"
   },

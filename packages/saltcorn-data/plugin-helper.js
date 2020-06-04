@@ -6,7 +6,9 @@ const { getState } = require("./db/state");
 const calcfldViewOptions = fields => {
   var fvs = {};
   fields.forEach(f => {
-    if (f.type && f.type.fieldviews) {
+    if (f.type === "File") {
+      fvs[f.name] = Object.keys(getState().fileviews);
+    } else if (f.type && f.type.fieldviews) {
       fvs[f.name] = Object.keys(f.type.fieldviews);
     }
   });
@@ -188,7 +190,7 @@ const get_child_views = async (table, viewname) => {
 const get_parent_views = async (table, viewname) => {
   var parent_views = [];
   const parentrels = (await table.getFields()).filter(
-    f => f.is_fkey && f.reftable_name !== "users"
+    f => f.is_fkey && f.type !== "File" && f.reftable_name !== "users"
   );
   for (const relation of parentrels) {
     const related_table = await Table.findOne({

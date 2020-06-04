@@ -29,6 +29,7 @@ class State {
     this.pages = {};
     this.fields = [];
     this.configs = {};
+    this.fileviews = {};
     this.plugins = {};
     this.layout = { wrap: s => s };
     this.headers = [];
@@ -66,6 +67,9 @@ class State {
     });
     Object.entries(plugin.pages || {}).forEach(([k, v]) => {
       this.pages[k] = v;
+    });
+    Object.entries(plugin.fileviews || {}).forEach(([k, v]) => {
+      this.fileviews[k] = v;
     });
     if (plugin.layout && plugin.layout.wrap)
       this.layout.wrap = contract(is_plugin_wrap, plugin.layout.wrap);

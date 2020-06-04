@@ -30,10 +30,15 @@ class Field {
 
     this.is_fkey =
       o.type === "Key" ||
+      o.type === "File" ||
       (typeof o.type === "string" && o.type.startsWith("Key to"));
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
+    } else if (o.type === "File") {
+      this.type = "File";
+      this.input_type = "file";
+      this.reftable_name = "_sc_files";
     } else {
       this.reftable_name =
         o.reftable_name ||
@@ -69,7 +74,7 @@ class Field {
     };
   }
   async fill_fkey_options(force_allow_none = false) {
-    if (this.is_fkey) {
+    if (this.is_fkey && this.type !== "File") {
       const rows = await db.select(this.reftable_name);
       const summary_field = this.attributes.summary_field || "id";
       const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
@@ -239,9 +244,11 @@ Field.contract = {
   variables: {
     name: is.str,
     fieldview: is.maybe(is.str),
-    type: is.maybe(is.or(is.eq("Key"), is.obj({ name: is.str }))),
+    type: is.maybe(
+      is.or(is.eq("Key"), is.eq("File"), is.obj({ name: is.str }))
+    ),
     input_type: is.maybe(
-      is.one_of(["hidden", "select", "fromtype", "text", "password"])
+      is.one_of(["hidden", "file", "select", "fromtype", "text", "password"])
     ),
     is_fkey: is.bool,
     is_unique: is.bool,

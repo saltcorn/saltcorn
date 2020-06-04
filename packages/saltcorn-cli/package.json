@@ -46,7 +46,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "saltcorn/saltcorn",
+  "repository": "github:saltcorn/saltcorn",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",

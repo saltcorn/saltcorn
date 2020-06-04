@@ -1,4 +1,5 @@
 const Field = require("../../models/field");
+const File = require("../../models/file");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
@@ -204,6 +205,13 @@ const run = async (table_id, viewname, config, state) => {
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
     form.values = row;
+    const file_fields = form.fields.filter(f => f.type === "File");
+    for (const field of file_fields) {
+      if (row[field.name]) {
+        const file = await File.findOne({ id: row[field.name] });
+        form.values[field.name] = file.filename;
+      }
+    }
     form.hidden("id");
   }
   Object.entries(nonUniques).forEach(([k, v]) => {
@@ -246,13 +254,27 @@ const runPost = async (
     res.sendWrap(`${table.name} create new`, renderForm(form));
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
-    const row = { ...use_fixed, ...form.values };
+    var row = { ...use_fixed, ...form.values };
+
+    const file_fields = form.fields.filter(f => f.type === "File");
+    for (const field of file_fields) {
+      if (req.files && req.files[field.name]) {
+        const file = await File.from_req_files(
+          req.files[field.name],
+          req.user ? req.user.id : null,
+          (field.attributes && field.attributes.min_role_read) || 1
+        );
+        row[field.name] = file.id;
+      }
+    }
+
     var id = body.id;
     if (typeof id === "undefined") {
       id = await table.insertRow(row);
     } else {
       await table.updateRow(row, parseInt(id));
     }
+
     if (!view_when_done) {
       res.redirect(`/`);
     } else {

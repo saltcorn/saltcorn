@@ -15,6 +15,7 @@
   "devDependencies": {
     "jest": "^25.1.0"
   },
+  "repository": "github:saltcorn/saltcorn",
   "jest": {
     "testEnvironment": "node"
   },

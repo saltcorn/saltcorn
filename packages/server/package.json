@@ -16,6 +16,7 @@
     "contractis": "^0.0.7",
     "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
+    "express-fileupload": "^1.1.7-alpha.3",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.0",
     "live-plugin-manager": "^0.14.0",
@@ -23,6 +24,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.1.0"
   },
+  "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
     "jest": "^25.1.0",
     "supertest": "^4.0.2"
