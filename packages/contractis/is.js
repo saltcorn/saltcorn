@@ -1,7 +1,7 @@
 const gen = require("./generators");
 const check_contract = require("./check");
 
-isnum = x => typeof x === "number";
+const isnum = x => typeof x === "number";
 
 const mkContract = c => {
   function checker(x) {
