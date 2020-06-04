@@ -103,7 +103,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
         {
           label: "Type",
           key: r =>
-            r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name
+            r.type === "Key" ? `Key to ${r.reftable_name}` : (r.type.name || r.type)
         },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {

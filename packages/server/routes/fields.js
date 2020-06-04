@@ -77,7 +77,8 @@ const fieldFlow = new Workflow({
         const tables = await Table.find({});
         const fkey_opts = [
           ...tables.map(t => `Key to ${t.name}`),
-          "Key to users"
+          "Key to users",
+          "File"
         ];
         const form = fieldForm(fkey_opts);
         if (context.type === "Key" && context.reftable_name) {
@@ -89,21 +90,27 @@ const fieldFlow = new Workflow({
     {
       name: "attributes",
       onlyWhen: context => {
+        if (context.type==="File") return false;
         if (new Field(context).is_fkey) return false;
         const type = getState().types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
       form: context => {
-        const type = getState().types[context.type];
+        if(context.type==="File") {
+          return new Form({
+            fields: getState().types[context.type].attributes
+          });
+        } else {
         return new Form({
-          fields: type.attributes
+          fields: getState().types[context.type].attributes
         });
+      }
       }
     },
     {
       name: "summary",
       onlyWhen: context =>
-        context.type !== "Key to users" && new Field(context).is_fkey,
+        context.type !== "Key to users" && context.type !== "File" && new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
         const table = await Table.findOne({ name: fld.reftable_name });
