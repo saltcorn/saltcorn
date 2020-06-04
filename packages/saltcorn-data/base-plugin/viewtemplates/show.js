@@ -6,6 +6,7 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
+const { getState } = require("../../db/state");
 
 const { div, text, span } = require("@saltcorn/markup/tags");
 const {
@@ -132,7 +133,9 @@ const render = async (row, fields, layout, viewname, table, role) => {
     } else if (segment.type === "field") {
       const val = row[segment.field_name];
       const field = fields.find(fld => fld.name === segment.field_name);
-      if (segment.fieldview && field.type.fieldviews[segment.fieldview])
+      if (segment.fieldview && field.type==='File') {
+        return val ? getState().fileviews[segment.fieldview].run(val) :''
+      } else if (segment.fieldview && field.type.fieldviews[segment.fieldview])
         return wrapBlock(
           segment,
           field.type.fieldviews[segment.fieldview].run(val)
