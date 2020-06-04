@@ -62,11 +62,32 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   );
 });
 
-router.get("/download/:id", setTenant, isAdmin, async (req, res) => {
+router.get("/download/:id", setTenant, async (req, res) => {
+  const role = req.isAuthenticated() ? req.user.role_id : 10;
+  const user_id = req.user && req.user.id
   const { id } = req.params;
   const file = await File.findOne({id});
-  res.type(file.mimetype)
-  res.download(file.location, file.filename,)
+  if(role<=file.min_role_read || (user_id && user_id===file.user_id)) {
+    res.type(file.mimetype)
+    res.download(file.location, file.filename,)
+  } else {
+    req.flash("warning", "Not authorized");
+    res.redirect("/")
+  }
+});
+
+router.get("/serve/:id", setTenant, async (req, res) => {
+  const role = req.isAuthenticated() ? req.user.role_id : 10;
+  const user_id = req.user && req.user.id
+  const { id } = req.params;
+  const file = await File.findOne({id});
+  if(role<=file.min_role_read || (user_id && user_id===file.user_id)) {
+    res.type(file.mimetype)
+    res.sendFile(file.location)
+  } else {
+    req.flash("warning", "Not authorized");
+    res.redirect("/")
+  }
 });
 
 router.post("/upload", setTenant, isAdmin, async (req, res) => {

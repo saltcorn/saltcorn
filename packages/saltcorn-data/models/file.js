@@ -13,6 +13,7 @@ class File {
     this.user_id = o.user_id;
     this.mime_super = o.mime_super;
     this.mime_sub = o.mime_sub;
+    this.min_role_read = o.min_role_read;
   }
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_files", where, selectopts);
@@ -37,7 +38,8 @@ class File {
       size_kb: Math.round(file.size / 1024),
       user_id,
       mime_super,
-      mime_sub
+      mime_sub,
+      min_role_read: 1
     });
   }
   get mimetype() {
