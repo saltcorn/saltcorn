@@ -202,7 +202,7 @@ const mkFormRowForField = (
     case "file":
       return formRowWrap(
         hdr,
-        `<input type="file" class="form-control-file ${validClass} ${
+        `${v[hdr.name] ?text(v[hdr.name]) : ''}<input type="file" class="form-control-file ${validClass} ${
           hdr.class
         }" name="${text(name)}" id="input${text(name)}">`,
         errorFeedback,

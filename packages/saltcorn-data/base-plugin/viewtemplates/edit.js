@@ -205,6 +205,13 @@ const run = async (table_id, viewname, config, state) => {
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
     form.values = row;
+    const file_fields = form.fields.filter(f => f.type === "File");
+    for (const field of file_fields) {
+      if(row[field.name]) {
+        const file = await File.findOne({id:row[field.name]})
+        form.values[field.name] = file.filename
+      }
+    }
     form.hidden("id");
   }
   Object.entries(nonUniques).forEach(([k, v]) => {
