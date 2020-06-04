@@ -62,6 +62,9 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         { label: "Media type", key: r => r.mimetype },
         { label: "Role to access", key: r => editRoleForm(r, roles) },
         {
+          label: "Link",
+          key: r => link(`/files/serve/${r.id}`, "Link")
+        },{
           label: "Download",
           key: r => link(`/files/download/${r.id}`, "Download")
         },

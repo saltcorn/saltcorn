@@ -277,9 +277,10 @@ const renderForm = form => {
 };
 
 const mkForm = (form, errors = {}) => {
+  const hasFile = form.fields.some(f=>f.input_type==='file')
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
-  } ${form.class}" method="${form.methodGET ? "get" : "post"}">`;
+  } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${hasFile ? 'encType="multipart/form-data"': ''}>`;
   //console.log(hdrs);
   const flds = form.fields
     .map(mkFormRow(form.values, errors, form.formStyle, form.labelCols || 2))

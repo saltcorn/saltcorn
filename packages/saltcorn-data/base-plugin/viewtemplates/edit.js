@@ -1,4 +1,5 @@
 const Field = require("../../models/field");
+const File = require("../../models/file");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
@@ -253,6 +254,14 @@ const runPost = async (
     } else {
       await table.updateRow(row, parseInt(id));
     }
+
+    const file_fields =form.fields.filter(f=>f.type==="File")
+    for(const field of file_fields) {
+      if(req.files && req.files[field.name]) {
+        await File.from_req_files(req.files[field.name], req.user ? req.user.id : null);
+      }
+    }
+    
     if (!view_when_done) {
       res.redirect(`/`);
     } else {
