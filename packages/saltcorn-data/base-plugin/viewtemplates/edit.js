@@ -207,9 +207,9 @@ const run = async (table_id, viewname, config, state) => {
     form.values = row;
     const file_fields = form.fields.filter(f => f.type === "File");
     for (const field of file_fields) {
-      if(row[field.name]) {
-        const file = await File.findOne({id:row[field.name]})
-        form.values[field.name] = file.filename
+      if (row[field.name]) {
+        const file = await File.findOne({ id: row[field.name] });
+        form.values[field.name] = file.filename;
       }
     }
     form.hidden("id");

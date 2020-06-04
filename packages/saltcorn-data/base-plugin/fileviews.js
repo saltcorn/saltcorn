@@ -1,4 +1,4 @@
-const { text, img} = require("@saltcorn/markup/tags");
+const { text, img } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 
 module.exports = {
@@ -8,6 +8,6 @@ module.exports = {
   },
   "Show Image": {
     run: (file_id, file_name) =>
-      img({src:`/files/download/${file_id}`, style: "width: 100%"})
+      img({ src: `/files/download/${file_id}`, style: "width: 100%" })
   }
 };

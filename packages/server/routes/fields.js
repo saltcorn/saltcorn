@@ -96,13 +96,16 @@ const fieldFlow = new Workflow({
         if (context.type === "File") {
           const roles = await User.get_roles();
           return new Form({
-            fields: [{
-              name: 'min_role_read',
-              label: 'Role required to access added files',
-              sublabel: 'The user uploading the file has access irrespective of their role',
-              input_type: "select",
-              options: roles.map(r => ({ value: r.id, label: r.role }))
-            }]
+            fields: [
+              {
+                name: "min_role_read",
+                label: "Role required to access added files",
+                sublabel:
+                  "The user uploading the file has access irrespective of their role",
+                input_type: "select",
+                options: roles.map(r => ({ value: r.id, label: r.role }))
+              }
+            ]
           });
         } else {
           return new Form({
