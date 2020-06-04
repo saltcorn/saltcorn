@@ -34,7 +34,7 @@ describe("app", () => {
       const st = await chaos_guinea_pig(app, {
         steps: 100,
         cookie: loginCookie,
-        stop_form_actions: ["delete", "restart"]
+        stop_form_actions: ["delete", "upload", "restart"]
       });
       //console.log(st.log);
     }
@@ -49,7 +49,7 @@ describe("app", () => {
       const st = await chaos_guinea_pig(app, {
         steps: 500,
         cookie: loginCookie,
-        stop_form_actions: ["delete", "restart", "auth"]
+        stop_form_actions: ["delete", "restart", "upload", "auth"]
       });
       //console.log(st.log);
     }
