@@ -34,7 +34,7 @@ class Field {
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
-    } if(o.type === "File") {
+    } else if(o.type === "File") {
       this.type = "File";
       this.input_type = "select";
       this.reftable_name ="_sc_files"
@@ -243,7 +243,7 @@ Field.contract = {
   variables: {
     name: is.str,
     fieldview: is.maybe(is.str),
-    type: is.maybe(is.or(is.eq("Key"), is.eq("File"),is.obj({ name: is.str }))),
+    type: is.maybe(is.or(is.eq("Key"),is.eq("File"),is.obj({ name: is.str }))),
     input_type: is.maybe(
       is.one_of(["hidden", "select", "fromtype", "text", "password"])
     ),
