@@ -199,16 +199,16 @@ const mkFormRowForField = (
         formStyle,
         labelCols
       );
-      case "file":
-        return formRowWrap(
-          hdr,
-          `<input type="file" class="form-control-file ${validClass} ${hdr.class}" name="${text(
-            name
-          )}" id="input${text(name)}">`,
-          errorFeedback,
-          formStyle,
-          labelCols
-        );
+    case "file":
+      return formRowWrap(
+        hdr,
+        `<input type="file" class="form-control-file ${validClass} ${
+          hdr.class
+        }" name="${text(name)}" id="input${text(name)}">`,
+        errorFeedback,
+        formStyle,
+        labelCols
+      );
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
       return formRowWrap(
@@ -277,10 +277,12 @@ const renderForm = form => {
 };
 
 const mkForm = (form, errors = {}) => {
-  const hasFile = form.fields.some(f=>f.input_type==='file')
+  const hasFile = form.fields.some(f => f.input_type === "file");
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
-  } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${hasFile ? 'encType="multipart/form-data"': ''}>`;
+  } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
+    hasFile ? 'encType="multipart/form-data"' : ""
+  }>`;
   //console.log(hdrs);
   const flds = form.fields
     .map(mkFormRow(form.values, errors, form.formStyle, form.labelCols || 2))

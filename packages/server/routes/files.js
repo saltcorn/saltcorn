@@ -64,7 +64,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         {
           label: "Link",
           key: r => link(`/files/serve/${r.id}`, "Link")
-        },{
+        },
+        {
           label: "Download",
           key: r => link(`/files/download/${r.id}`, "Download")
         },

@@ -27,7 +27,7 @@ class File {
     await db.update("_sc_files", row, id);
   }
 
-  static async from_req_files(file, user_id, min_role_read=1) {
+  static async from_req_files(file, user_id, min_role_read = 1) {
     const file_store = db.connectObj.file_store;
 
     const newFnm = uuidv4();

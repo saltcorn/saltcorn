@@ -98,7 +98,7 @@ class Table {
     var parent_relations = [];
     var parent_field_list = [];
     for (const f of fields) {
-      if (f.is_fkey) {
+      if (f.is_fkey && f.type !== "File") {
         if (f.reftable_name === "users") {
           parent_field_list.push(`${f.name}.email`);
           const table = new Table({ name: "users " });

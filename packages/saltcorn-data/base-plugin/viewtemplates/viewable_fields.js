@@ -1,5 +1,6 @@
 const { post_btn, link } = require("@saltcorn/markup");
 const { text } = require("@saltcorn/markup/tags");
+const { getState } = require("../../db/state");
 
 const action_url = (viewname, table, column, r) => {
   if (column.action_name === "Delete")
@@ -88,7 +89,11 @@ const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
       return {
         label: text(f.label),
         key:
-          column.fieldview && f.type.fieldviews[column.fieldview]
+          column.fieldview && f.type === "File"
+            ? row =>
+                row[f.name] &&
+                getState().fileviews[column.fieldview].run(row[f.name], "file")
+            : column.fieldview && f.type.fieldviews[column.fieldview]
             ? row => f.type.fieldviews[column.fieldview].run(row[f.name])
             : isShow
             ? f.type.showAs

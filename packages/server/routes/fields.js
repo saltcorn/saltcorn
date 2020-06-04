@@ -90,27 +90,29 @@ const fieldFlow = new Workflow({
     {
       name: "attributes",
       onlyWhen: context => {
-        if (context.type==="File") return false;
+        if (context.type === "File") return false;
         if (new Field(context).is_fkey) return false;
         const type = getState().types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
       form: context => {
-        if(context.type==="File") {
+        if (context.type === "File") {
           return new Form({
             fields: getState().types[context.type].attributes
           });
         } else {
-        return new Form({
-          fields: getState().types[context.type].attributes
-        });
-      }
+          return new Form({
+            fields: getState().types[context.type].attributes
+          });
+        }
       }
     },
     {
       name: "summary",
       onlyWhen: context =>
-        context.type !== "Key to users" && context.type !== "File" && new Field(context).is_fkey,
+        context.type !== "Key to users" &&
+        context.type !== "File" &&
+        new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
         const table = await Table.findOne({ name: fld.reftable_name });
