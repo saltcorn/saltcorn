@@ -236,10 +236,14 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
 router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const t = await Table.findOne({ id });
+  try {
   await t.delete();
   req.flash("success", `Table ${t.name} deleted`);
-
   res.redirect(`/table`);
+  } catch(err) {
+    req.flash("error", err.message);
+  res.redirect(`/table`);
+  }
 });
 
 router.get("/", setTenant, isAdmin, async (req, res) => {
