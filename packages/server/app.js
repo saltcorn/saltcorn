@@ -195,7 +195,7 @@ const getApp = async () => {
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
-  app.use(errors)
+  app.use(errors);
   return app;
 };
 module.exports = getApp;

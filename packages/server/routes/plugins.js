@@ -16,7 +16,7 @@ const router = new Router();
 module.exports = router;
 
 const pluginForm = plugin => {
-  const schema = db.getTenantSchema()
+  const schema = db.getTenantSchema();
   const form = new Form({
     action: "/plugins",
     fields: [
@@ -29,7 +29,9 @@ const pluginForm = plugin => {
         attributes: { options: "npm,local,github" }
       }),
       new Field({ label: "Location", name: "location", input_type: "text" }),
-      ...(schema==='public'? [new Field({ label: "Version", name: "version", input_type: "text" })]: [])
+      ...(schema === "public"
+        ? [new Field({ label: "Version", name: "version", input_type: "text" })]
+        : [])
     ],
     submitLabel: plugin ? "Save" : "Create"
   });
@@ -139,9 +141,12 @@ router.get("/:id/", setTenant, isAdmin, async (req, res) => {
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const plugin = new Plugin(req.body);
   try {
-    const schema = db.getTenantSchema()
+    const schema = db.getTenantSchema();
 
-    await load_plugins.loadAndSaveNewPlugin(plugin, schema==='public' || plugin.source ==='github');
+    await load_plugins.loadAndSaveNewPlugin(
+      plugin,
+      schema === "public" || plugin.source === "github"
+    );
     req.flash("success", `Plugin ${plugin.name} installed`);
 
     res.redirect(`/plugins`);
