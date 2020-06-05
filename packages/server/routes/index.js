@@ -12,6 +12,7 @@ const packs = require("./packs");
 const edit = require("./edit");
 const config = require("./config");
 const viewedit = require("./viewedit");
+const crashlog = require("./crashlog");
 const del = require("./delete");
 const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
@@ -26,6 +27,7 @@ module.exports = app => {
   app.use("/plugins", plugins);
   app.use("/packs", packs);
   app.use("/view", view);
+  app.use("/crashlog", crashlog);
   app.use("/page", page);
   app.use("/admin", admin);
   app.use("/tenant", tenant);

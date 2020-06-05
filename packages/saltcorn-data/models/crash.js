@@ -1,11 +1,12 @@
 const db = require("../db");
+const moment = require("moment");
 
 class Crash {
   constructor(o) {
     this.id = o.id;
     this.stack = o.stack;
     this.message = o.message;
-    this.occur_at = o.time;
+    this.occur_at = o.occur_at;
     this.tenant = o.tenant;
     this.user_id = o.user_id;
     this.url = o.url;
@@ -18,6 +19,9 @@ class Crash {
   static async findOne(where) {
     const u = await db.selectOne("_sc_errors", where);
     return new Crash(u);
+  }
+  get reltime() {
+      return moment(this.occur_at).fromNow()
   }
   static async create(err, req) {
     db.runWithTenant("public", async () => {
