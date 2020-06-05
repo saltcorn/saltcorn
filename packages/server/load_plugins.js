@@ -22,7 +22,7 @@ const requirePlugin = async (plugin, force) => {
   ) {
     return { plugin_module: require(plugin.location) };
   } else if (plugin.source === "npm") {
-    if (!force && !installed_plugins.includes(plugin.location)) {
+    if (force || !installed_plugins.includes(plugin.location)) {
       const plinfo = await manager.install(plugin.location, plugin.version);
       return { plugin_module: manager.require(plugin.location), ...plinfo };
     } else {
@@ -33,7 +33,7 @@ const requirePlugin = async (plugin, force) => {
     await manager.installFromPath(plugin.location, { force: true });
     return { plugin_module: manager.require(plugin.name) };
   } else if (plugin.source === "github") {
-    if (!force && !installed_plugins.includes(plugin.location))
+    if (force || !installed_plugins.includes(plugin.location))
       await manager.installFromGithub(plugin.location, { force: true });
     return { plugin_module: manager.require(plugin.name) };
   }
@@ -47,8 +47,8 @@ const loadAllPlugins = async () => {
   await getState().refresh();
 };
 
-const loadAndSaveNewPlugin = async plugin => {
-  const { version, plugin_module } = await requirePlugin(plugin);
+const loadAndSaveNewPlugin = async (plugin, force) => {
+  const { version, plugin_module } = await requirePlugin(plugin, force);
   getState().registerPlugin(plugin.name, plugin_module);
   if (version) plugin.version = version;
   await plugin.upsert();

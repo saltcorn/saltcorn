@@ -7,6 +7,7 @@ const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
+const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
 const { h5, nbsp } = require("@saltcorn/markup/tags");
@@ -15,6 +16,7 @@ const router = new Router();
 module.exports = router;
 
 const pluginForm = plugin => {
+  const schema = db.getTenantSchema()
   const form = new Form({
     action: "/plugins",
     fields: [
@@ -27,7 +29,7 @@ const pluginForm = plugin => {
         attributes: { options: "npm,local,github" }
       }),
       new Field({ label: "Location", name: "location", input_type: "text" }),
-      new Field({ label: "Version", name: "version", input_type: "text" })
+      ...(schema==='public'? [new Field({ label: "Version", name: "version", input_type: "text" })]: [])
     ],
     submitLabel: plugin ? "Save" : "Create"
   });
@@ -137,12 +139,14 @@ router.get("/:id/", setTenant, isAdmin, async (req, res) => {
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const plugin = new Plugin(req.body);
   try {
-    await load_plugins.loadAndSaveNewPlugin(plugin);
+    const schema = db.getTenantSchema()
+
+    await load_plugins.loadAndSaveNewPlugin(plugin, schema==='public' || plugin.source ==='github');
     req.flash("success", `Plugin ${plugin.name} installed`);
 
     res.redirect(`/plugins`);
   } catch (e) {
-    req.flash("error", `${e}`);
+    req.flash("error", `${e.message}`);
     const form = pluginForm(plugin);
     res.sendWrap(`Edit Plugin`, renderForm(form));
   }
