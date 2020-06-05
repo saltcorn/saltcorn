@@ -2,7 +2,17 @@ const Router = require("express-promise-router");
 const Crash = require("@saltcorn/data/models/crash");
 const db = require("@saltcorn/data/db");
 const { link, post_btn, mkTable } = require("@saltcorn/markup");
-const { table, tbody, tr, td, text, pre } = require("@saltcorn/markup/tags");
+const {
+  table,
+  tbody,
+  tr,
+  td,
+  text,
+  pre,
+  div,
+  h3,
+  p
+} = require("@saltcorn/markup/tags");
 
 const { setTenant, isAdmin } = require("./utils.js");
 
@@ -13,14 +23,18 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const crashes = await Crash.find({});
   res.sendWrap(
     "Crash log",
-    mkTable(
-      [
-        { label: "Show", key: r => link(`/crashlog/${r.id}`, r.message) },
-        { label: "When", key: r => r.reltime },
-        ...(db.is_it_multi_tenant() ? [{ label: "Tenant", key: "tenant" }] : [])
-      ],
-      crashes
-    )
+    crashes.length === 0
+      ? div(h3("No errors reported"), p("Everything is going extremely well."))
+      : mkTable(
+          [
+            { label: "Show", key: r => link(`/crashlog/${r.id}`, r.message) },
+            { label: "When", key: r => r.reltime },
+            ...(db.is_it_multi_tenant()
+              ? [{ label: "Tenant", key: "tenant" }]
+              : [])
+          ],
+          crashes
+        )
   );
 });
 
