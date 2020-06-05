@@ -14,7 +14,7 @@ const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), nm => {
 
 const whereFTS = (v, i) => {
   const { fields, table } = v;
-  const flds = fields
+  var flds = fields
     .filter(f => f.type && f.type.sql_name === "text")
     .map(f =>
       table
@@ -22,6 +22,7 @@ const whereFTS = (v, i) => {
         : sqlsanitize(f.name)
     )
     .join(" || ' ' || ");
+  if(flds==='') flds="''"
   return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
     1})`;
 };
