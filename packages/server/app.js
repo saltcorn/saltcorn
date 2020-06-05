@@ -13,6 +13,7 @@ const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
+const errors = require("./errors");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
@@ -136,8 +137,8 @@ const getApp = async () => {
               : []),
             ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : [])
           ];
-      const tenant_list =
-        db.is_it_multi_tenant() && db.getTenantSchema() === "public";
+      const schema = db.getTenantSchema();
+      const tenant_list = db.is_it_multi_tenant() && schema === "public";
       const isAdmin = (req.user || {}).role_id === 1;
       const adminItems = [
         { link: "/table", label: "Tables" },
@@ -150,7 +151,12 @@ const getApp = async () => {
             { link: "/useradmin", label: "Users" },
             { link: "/config", label: "Configuration" },
             { link: "/admin", label: "Admin" },
-            ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : [])
+            ...(tenant_list
+              ? [{ link: "/tenant/list", label: "Tenants" }]
+              : []),
+            ...(schema === "public"
+              ? [{ link: "/crashlog", label: "Crash log" }]
+              : [])
           ]
         }
       ];
@@ -194,6 +200,7 @@ const getApp = async () => {
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
+  app.use(errors);
   return app;
 };
 module.exports = getApp;
