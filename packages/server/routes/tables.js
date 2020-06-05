@@ -2,6 +2,7 @@ const Router = require("express-promise-router");
 
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
+const View = require("@saltcorn/data/models/view");
 const {
   mkTable,
   renderForm,
@@ -102,7 +103,9 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
         {
           label: "Type",
           key: r =>
-            r.type === "Key" ? `Key to ${r.reftable_name}` : r.type.name
+            r.type === "Key"
+              ? `Key to ${r.reftable_name}`
+              : r.type.name || r.type
         },
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
@@ -120,6 +123,55 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       )
     ];
   }
+  var viewCard;
+  if (fields.length > 0) {
+    const views = await View.find({ table_id: table.id });
+    var viewCardContents;
+    if (views.length > 0) {
+      viewCardContents = mkTable(
+        [
+          { label: "Name", key: "name" },
+          { label: "Template", key: "viewtemplate" },
+          {
+            label: "Run",
+            key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+          },
+          {
+            label: "Edit",
+            key: r =>
+              link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+          },
+          {
+            label: "Delete",
+            key: r =>
+              post_delete_btn(
+                `/viewedit/delete/${encodeURIComponent(r.id)}`,
+                "Delete"
+              )
+          }
+        ],
+        views
+      );
+    } else {
+      viewCardContents = div(
+        h4("No views defined"),
+        p("Views define how table rows are displayed to the user")
+      );
+    }
+    viewCard = {
+      type: "card",
+      title: "Views of this table",
+      contents:
+        viewCardContents +
+        a(
+          {
+            href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
+            class: "btn btn-primary"
+          },
+          "Add view"
+        )
+    };
+  }
   res.sendWrap(`${table.name} table`, {
     above: [
       {
@@ -133,6 +185,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
         title: "Fields",
         contents: fieldCard
       },
+      ...(viewCard ? [viewCard] : []),
       {
         type: "card",
         title: "Edit table properties",

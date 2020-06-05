@@ -6,6 +6,7 @@ const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
+const User = require("@saltcorn/data/models/user");
 
 const { setTenant, isAdmin } = require("./utils.js");
 
@@ -45,12 +46,7 @@ const fieldFlow = new Workflow({
   action: "/field",
   onDone: async context => {
     const thetype = getState().types[context.type];
-    var attributes = {};
-    if (!new Field(context).is_fkey)
-      (thetype.attributes || []).forEach(a => {
-        attributes[a.name] = context[a.name];
-      });
-
+    var attributes = context.attributes || {};
     attributes.default = context.default;
     attributes.summary_field = context.summary_field;
     const { table_id, name, label, required, is_unique } = context;
@@ -77,7 +73,8 @@ const fieldFlow = new Workflow({
         const tables = await Table.find({});
         const fkey_opts = [
           ...tables.map(t => `Key to ${t.name}`),
-          "Key to users"
+          "Key to users",
+          "File"
         ];
         const form = fieldForm(fkey_opts);
         if (context.type === "Key" && context.reftable_name) {
@@ -88,22 +85,41 @@ const fieldFlow = new Workflow({
     },
     {
       name: "attributes",
+      contextField: "attributes",
       onlyWhen: context => {
+        if (context.type === "File") return true;
         if (new Field(context).is_fkey) return false;
         const type = getState().types[context.type];
         return type.attributes && type.attributes.length > 0;
       },
-      form: context => {
-        const type = getState().types[context.type];
-        return new Form({
-          fields: type.attributes
-        });
+      form: async context => {
+        if (context.type === "File") {
+          const roles = await User.get_roles();
+          return new Form({
+            fields: [
+              {
+                name: "min_role_read",
+                label: "Role required to access added files",
+                sublabel:
+                  "The user uploading the file has access irrespective of their role",
+                input_type: "select",
+                options: roles.map(r => ({ value: r.id, label: r.role }))
+              }
+            ]
+          });
+        } else {
+          return new Form({
+            fields: getState().types[context.type].attributes
+          });
+        }
       }
     },
     {
       name: "summary",
       onlyWhen: context =>
-        context.type !== "Key to users" && new Field(context).is_fkey,
+        context.type !== "Key to users" &&
+        context.type !== "File" &&
+        new Field(context).is_fkey,
       form: async context => {
         const fld = new Field(context);
         const table = await Table.findOne({ name: fld.reftable_name });

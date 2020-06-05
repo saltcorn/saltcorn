@@ -44,7 +44,8 @@ const configuration_workflow = () =>
               {
                 name: "view_to_create",
                 label: "Use view to create",
-                sublabel: "Leave blank to have no link to create a new item",
+                sublabel:
+                  "If user has write permission.  Leave blank to have no link to create a new item",
                 type: "String",
                 attributes: {
                   options: create_view_opts.join()
@@ -106,12 +107,17 @@ const run = async (
     orderBy: order_field,
     ...(descending && { orderDesc: true })
   });
-  const create_link = view_to_create
-    ? link(
-        `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
-      )
-    : "";
+  const role =
+    extraArgs && extraArgs.req && extraArgs.req.user
+      ? extraArgs.req.user.role_id
+      : 10;
+  const create_link =
+    view_to_create && role <= table.min_role_write
+      ? link(
+          `/view/${view_to_create}${stateToQueryString(state)}`,
+          `Add ${pluralize(table.name, 1)}`
+        )
+      : "";
   return div(
     sresp.map(r => div(r.html) + hr()),
     create_link

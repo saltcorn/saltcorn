@@ -1,5 +1,6 @@
 const { post_btn, link } = require("@saltcorn/markup");
 const { text } = require("@saltcorn/markup/tags");
+const { getState } = require("../../db/state");
 
 const action_url = (viewname, table, column, r) => {
   if (column.action_name === "Delete")
@@ -47,8 +48,10 @@ const view_linker = async (column, fields) => {
 
 const asyncMap = async (xs, asyncF) => {
   var res = [];
+  var ix = 0;
   for (const x of xs) {
-    res.push(await asyncF(x));
+    res.push(await asyncF(x, ix));
+    ix += 1;
   }
   return res;
 };
@@ -86,8 +89,19 @@ const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
       return {
         label: text(f.label),
         key:
-          column.fieldview && f.type.fieldviews[column.fieldview]
-            ? row => f.type.fieldviews[column.fieldview].run(row[f.name])
+          column.fieldview && f.type === "File"
+            ? row =>
+                row[f.name] &&
+                getState().fileviews[column.fieldview].run(
+                  row[f.name],
+                  row[`${f.name}__filename`]
+                )
+            : column.fieldview && f.type.fieldviews[column.fieldview]
+            ? row =>
+                f.type.fieldviews[column.fieldview].run(
+                  row[f.name],
+                  row[`${f.name}__filename`]
+                )
             : isShow
             ? f.type.showAs
               ? row => f.type.showAs(row[f.name])

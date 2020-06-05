@@ -7,6 +7,7 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
+const { removeEmptyStrings } = require("../../utils");
 
 const {
   field_picker_fields,
@@ -34,8 +35,7 @@ const configuration_workflow = () =>
           );
           const create_view_opts = create_views.map(v => v.name);
           return new Form({
-            blurb:
-              "Finalise your list view by specifying the fields in the table",
+            blurb: "Specify the fields in the table to show",
             fields: [
               new FieldRepeat({
                 name: "columns",
@@ -44,13 +44,41 @@ const configuration_workflow = () =>
               {
                 name: "view_to_create",
                 label: "Use view to create",
-                sublabel: "Leave blank to have no link to create a new item",
+                sublabel:
+                  "If user has write permission. Leave blank to have no link to create a new item",
                 type: "String",
                 attributes: {
                   options: create_view_opts.join()
                 }
               }
             ]
+          });
+        }
+      },
+      {
+        name: "default_state",
+        contextField: "default_state",
+        form: async context => {
+          const table = await Table.findOne({ id: context.table_id });
+          const table_fields = await table.getFields();
+          const formfields = context.columns
+            .filter(column => column.type === "Field" && column.state_field)
+            .map(column => {
+              const f = new Field(
+                table_fields.find(f => f.name == column.field_name)
+              );
+              return {
+                name: column.field_name,
+                label: f.label,
+                type: f.type,
+                fieldview:
+                  f.type && f.type.name === "Bool" ? "tristate" : undefined,
+                required: false
+              };
+            });
+          return new Form({
+            fields: formfields,
+            blurb: "Default search form values when first loaded"
           });
         }
       }
@@ -81,7 +109,7 @@ const run = async (
   state,
   extraOpts
 ) => {
-  //console.log({ columns, view_to_create });
+  //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
 
   const fields = await table.getFields();
@@ -115,9 +143,15 @@ const run = async (
       };
     }
   }
-  const create_link = view_to_create
-    ? link(`/view/${view_to_create}`, `Add ${pluralize(table.name, 1)}`)
-    : "";
+  const role =
+    extraOpts && extraOpts.req && extraOpts.req.user
+      ? extraOpts.req.user.role_id
+      : 10;
+
+  const create_link =
+    view_to_create && role <= table.min_role_write
+      ? link(`/view/${view_to_create}`, `Add ${pluralize(table.name, 1)}`)
+      : "";
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
@@ -128,5 +162,7 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
-  display_state_form: true
+  display_state_form: true,
+  default_state_form: ({ default_state }) =>
+    default_state && removeEmptyStrings(default_state)
 };

@@ -1,7 +1,8 @@
 {
   "name": "@saltcorn/markup",
-  "version": "0.0.6",
-  "description": "",
+  "version": "0.0.7",
+  "description": "Markup for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
   "main": "index.js",
   "scripts": {
     "test": "jest"
@@ -9,9 +10,10 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "contractis": "^0.0.6",
+    "contractis": "^0.0.7",
     "xss": "^1.0.6"
   },
+  "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
     "jest": "^25.1.0"
   },

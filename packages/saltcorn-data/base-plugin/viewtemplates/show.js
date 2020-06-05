@@ -1,12 +1,14 @@
 const Form = require("../../models/form");
+const User = require("../../models/user");
 const Field = require("../../models/field");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
+const { getState } = require("../../db/state");
 
-const { div, text } = require("@saltcorn/markup/tags");
+const { div, text, span } = require("@saltcorn/markup/tags");
 const {
   stateFieldsToWhere,
   get_link_view_opts,
@@ -36,13 +38,27 @@ const configuration_workflow = () =>
             table,
             context.viewname
           );
+          const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations();
+          const {
+            child_field_list,
+            child_relations
+          } = await table.get_child_relations();
+          var agg_field_opts = {};
+          child_relations.forEach(({ table, key_field }) => {
+            agg_field_opts[
+              `${table.name}.${key_field.name}`
+            ] = table.fields.map(f => f.name);
+          });
           return {
             fields,
             actions,
             field_view_options,
             link_view_opts,
-            parent_field_list
+            parent_field_list,
+            child_field_list,
+            agg_field_opts,
+            roles
           };
         }
       }
@@ -58,7 +74,7 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state) => {
+const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   //console.log(columns);
   //console.log(layout);
   const tbl = await Table.findOne({ id: table_id });
@@ -70,8 +86,9 @@ const run = async (table_id, viewname, { columns, layout }, state) => {
     aggregations,
     limit: 1
   });
+  const role = req.user ? req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  return await render(rows[0], fields, layout, viewname, tbl);
+  return await render(rows[0], fields, layout, viewname, tbl, role);
 };
 
 const runMany = async (
@@ -92,39 +109,57 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
+  const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
+
   return await asyncMap(rows, async row => ({
-    html: await render(row, fields, layout, viewname, tbl),
+    html: await render(row, fields, layout, viewname, tbl, role),
     row
   }));
 };
+const wrapBlock = (segment, inner) =>
+  segment.block
+    ? div({ class: segment.textStyle || "" }, inner)
+    : span({ class: segment.textStyle || "" }, inner);
 
-const render = async (row, fields, layout, viewname, table) => {
+const render = async (row, fields, layout, viewname, table, role) => {
   async function go(segment) {
     if (!segment) return "missing layout";
+    if (segment.minRole && role > segment.minRole) return "";
     if (segment.type === "blank") {
-      return segment.contents;
+      return wrapBlock(segment, segment.contents);
+    }
+    if (segment.type === "line_break") {
+      return "<br />";
     } else if (segment.type === "field") {
       const val = row[segment.field_name];
       const field = fields.find(fld => fld.name === segment.field_name);
-      if (segment.fieldview && field.type.fieldviews[segment.fieldview])
-        return field.type.fieldviews[segment.fieldview].run(val);
-      else return text(val);
+      if (segment.fieldview && field.type === "File") {
+        return val ? getState().fileviews[segment.fieldview].run(val) : "";
+      } else if (segment.fieldview && field.type.fieldviews[segment.fieldview])
+        return wrapBlock(
+          segment,
+          field.type.fieldviews[segment.fieldview].run(val)
+        );
+      else return wrapBlock(segment, text(val));
     } else if (segment.type === "join_field") {
       const [refNm, targetNm] = segment.join_field.split(".");
       const val = row[targetNm];
-      return text(val);
+      return wrapBlock(segment, text(val));
+    } else if (segment.type === "aggregation") {
+      const [table, fld] = segment.agg_relation.split(".");
+      const targetNm = (segment.stat + "_" + table + "_" + fld).toLowerCase();
+      const val = row[targetNm];
+      return wrapBlock(segment, text(val));
     } else if (segment.type === "action") {
-      return post_btn(
-        action_url(viewname, table, segment, row),
-        segment.action_name
+      return wrapBlock(
+        segment,
+        post_btn(action_url(viewname, table, segment, row), segment.action_name)
       );
     } else if (segment.type === "view_link") {
       const { key } = await view_linker(segment, fields);
-      return key(row);
+      return wrapBlock(segment, key(row));
     } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => div(await go(s)))).join(
-        ""
-      );
+      return (await asyncMap(segment.above, async s => await go(s))).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(
@@ -138,7 +173,7 @@ const render = async (row, fields, layout, viewname, table) => {
           )
         )
       );
-    } else throw new Error("unknown layout setment" + JSON.stringify(segment));
+    } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   return await go(layout);
 };

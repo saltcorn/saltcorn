@@ -24,16 +24,21 @@ class Field {
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
     this.options = o.options;
-    this.required = o.required;
-    this.is_unique = o.is_unique;
+    this.required = o.required ? true : false;
+    this.is_unique = o.is_unique ? true : false;
     this.hidden = o.hidden || false;
 
     this.is_fkey =
       o.type === "Key" ||
+      o.type === "File" ||
       (typeof o.type === "string" && o.type.startsWith("Key to"));
 
     if (!this.is_fkey) {
       this.input_type = o.input_type || "fromtype";
+    } else if (o.type === "File") {
+      this.type = "File";
+      this.input_type = "file";
+      this.reftable_name = "_sc_files";
     } else {
       this.reftable_name =
         o.reftable_name ||
@@ -69,7 +74,7 @@ class Field {
     };
   }
   async fill_fkey_options(force_allow_none = false) {
-    if (this.is_fkey) {
+    if (this.is_fkey && this.type !== "File") {
       const rows = await db.select(this.reftable_name);
       const summary_field = this.attributes.summary_field || "id";
       const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
@@ -228,6 +233,7 @@ class Field {
       type: f.is_fkey ? f.type : f.type.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
       required: f.required,
+      is_unique: f.is_unique,
       attributes: f.attributes
     });
     return f;
@@ -238,11 +244,15 @@ Field.contract = {
   variables: {
     name: is.str,
     fieldview: is.maybe(is.str),
-    type: is.maybe(is.or(is.eq("Key"), is.obj({ name: is.str }))),
+    type: is.maybe(
+      is.or(is.eq("Key"), is.eq("File"), is.obj({ name: is.str }))
+    ),
     input_type: is.maybe(
-      is.one_of(["hidden", "select", "fromtype", "text", "password"])
+      is.one_of(["hidden", "file", "select", "fromtype", "text", "password"])
     ),
     is_fkey: is.bool,
+    is_unique: is.bool,
+    required: is.bool,
     id: is.maybe(is.posint)
   },
   instance_check: is.and(

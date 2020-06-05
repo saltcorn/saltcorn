@@ -98,7 +98,7 @@ class Table {
     var parent_relations = [];
     var parent_field_list = [];
     for (const f of fields) {
-      if (f.is_fkey) {
+      if (f.is_fkey && f.type !== "File") {
         if (f.reftable_name === "users") {
           parent_field_list.push(`${f.name}.email`);
           const table = new Table({ name: "users " });
@@ -136,13 +136,24 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
+    const schema = sqlsanitize(db.getTenantSchema());
+
+    fields
+      .filter(f => f.type === "File")
+      .forEach(f => {
+        joinFields[`${f.name}__filename`] = {
+          ref: f.name,
+          reftable: "_sc_files",
+          target: `filename`
+        };
+      });
 
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
       const reftable = fields.find(f => f.name === ref).reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${sqlsanitize(
+        joinq += ` left join "${schema}"."${sqlsanitize(
           reftable
         )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
@@ -155,7 +166,7 @@ class Table {
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
           `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from "${sqlsanitize(table)}" where ${sqlsanitize(
+            "*"}) from "${schema}"."${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -176,13 +187,10 @@ class Table {
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
-    const schema = db.getTenantSchema();
 
-    const sql = `SELECT ${fldNms.join()} FROM "${sqlsanitize(
-      schema
-    )}"."${sqlsanitize(this.name)}" a ${joinq} ${where}  ${mkSelectOptions(
-      selectopts
-    )}`;
+    const sql = `SELECT ${fldNms.join()} FROM "${schema}"."${sqlsanitize(
+      this.name
+    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql);
     const { rows } = await db.query(sql, values);
 

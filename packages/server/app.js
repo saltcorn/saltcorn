@@ -16,17 +16,25 @@ const homepage = require("./routes/homepage");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
+const fileUpload = require("express-fileupload");
 
 const getApp = async () => {
   const app = express();
   const sql_log = await getConfig("log_sql");
-  db.set_sql_logging(sql_log);
+  if (sql_log) db.set_sql_logging(); // dont override cli flag
   await migrate();
 
   await loadAllPlugins();
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
+  app.use(
+    fileUpload({
+      useTempFiles: true,
+      createParentPath: true,
+      tempFileDir: "/tmp/"
+    })
+  );
   app.use(require("cookie-parser")());
 
   if (db.is_it_multi_tenant()) {
@@ -49,14 +57,14 @@ const getApp = async () => {
   app.use(flash());
   app.use(
     express.static(__dirname + "/public", {
-      maxAge: 1000 * 60 * 60 * 24
+      maxAge: 0 //1000 * 60 * 60 * 24
     })
   );
   app.use(
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: 1000 * 60 * 60 * 24
+        maxAge: 0 //1000 * 60 * 60 * 24
       }
     )
   );
@@ -128,17 +136,21 @@ const getApp = async () => {
               : []),
             ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : [])
           ];
+      const tenant_list =
+        db.is_it_multi_tenant() && db.getTenantSchema() === "public";
       const isAdmin = (req.user || {}).role_id === 1;
       const adminItems = [
         { link: "/table", label: "Tables" },
         { link: "/viewedit", label: "Views" },
+        { link: "/files", label: "Files" },
         {
           label: "Settings",
           subitems: [
             { link: "/plugins", label: "Plugins" },
             { link: "/useradmin", label: "Users" },
             { link: "/config", label: "Configuration" },
-            { link: "/admin", label: "Admin" }
+            { link: "/admin", label: "Admin" },
+            ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : [])
           ]
         }
       ];

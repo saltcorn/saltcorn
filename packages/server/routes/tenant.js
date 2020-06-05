@@ -67,7 +67,7 @@ router.post("/create", setTenant, async (req, res) => {
   else {
     const subdomain = domain_sanitize(valres.success.subdomain);
     const allTens = await getAllTenants();
-    if (allTens.includes(subdomain)) {
+    if (allTens.includes(subdomain) || !subdomain) {
       form.errors.subdomain = "A site with this subdomain already exists";
       form.hasErrors = true;
       res.sendWrap(`Create application`, renderForm(form));

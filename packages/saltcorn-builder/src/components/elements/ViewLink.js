@@ -1,20 +1,26 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
+import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const ViewLink = ({ name }) => {
+export const ViewLink = ({ name, block, minRole }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
   const names = name.split(":");
   const label = names.length > 1 ? names[1] : names[0];
-
-  return <div ref={dom => connect(drag(dom))}>[{label}]</div>;
+  return (
+    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+      [{label}]
+    </span>
+  );
 };
 
 export const ViewLinkSettings = () => {
-  const { setProp, name } = useNode(node => ({
-    name: node.data.props.name
+  const { setProp, name, block, minRole } = useNode(node => ({
+    name: node.data.props.name,
+    block: node.data.props.block,
+    minRole: node.data.props.minRole
   }));
   const options = useContext(optionsCtx);
   return (
@@ -32,6 +38,8 @@ export const ViewLinkSettings = () => {
           ))}
         </select>
       </div>
+      <BlockSetting block={block} setProp={setProp} />
+      <MinRoleSetting minRole={minRole} setProp={setProp} />
     </div>
   );
 };

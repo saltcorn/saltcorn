@@ -1,20 +1,22 @@
 {
   "name": "@saltcorn/server",
-  "version": "0.0.6",
-  "description": "Pluggable nocode",
+  "version": "0.0.7",
+  "description": "Server app for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/base-plugin": "^0.0.6",
-    "@saltcorn/builder": "^0.0.6",
-    "@saltcorn/data": "^0.0.6",
-    "@saltcorn/markup": "^0.0.6",
-    "@saltcorn/sbadmin2": "^0.0.6",
+    "@saltcorn/base-plugin": "^0.0.7",
+    "@saltcorn/builder": "^0.0.7",
+    "@saltcorn/data": "^0.0.7",
+    "@saltcorn/markup": "^0.0.7",
+    "@saltcorn/sbadmin2": "^0.0.7",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
-    "contractis": "^0.0.6",
+    "contractis": "^0.0.7",
     "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
+    "express-fileupload": "^1.1.7-alpha.3",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.0",
     "live-plugin-manager": "^0.14.0",
@@ -22,6 +24,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.1.0"
   },
+  "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
     "jest": "^25.1.0",
     "supertest": "^4.0.2"
