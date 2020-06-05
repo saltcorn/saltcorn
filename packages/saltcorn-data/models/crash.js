@@ -24,12 +24,13 @@ class Crash {
       return moment(this.occur_at).fromNow()
   }
   static async create(err, req) {
+      const schema = db.getTenantSchema()
     db.runWithTenant("public", async () => {
       await db.insert("_sc_errors", {
         stack: err.stack,
         message: err.message,
         occur_at: new Date(),
-        tenant: db.getTenantSchema(),
+        tenant: schema,
         user_id: req.user ? req.user.id : null,
         url: req.url,
         headers: req.headers

@@ -1,7 +1,8 @@
 const Router = require("express-promise-router");
 const Crash = require("@saltcorn/data/models/crash");
 const db = require("@saltcorn/data/db");
-const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
+const {  link, post_btn, mkTable } = require("@saltcorn/markup");
+const { table, tbody, tr, td, text , pre } = require("@saltcorn/markup/tags");
 
 const { setTenant, isAdmin } = require("./utils.js");
 
@@ -10,7 +11,6 @@ module.exports = router;
 
 router.get("/", setTenant, isAdmin, async (req, res) => {
     const crashes = await Crash.find({})
-    console.log(crashes)
     res.sendWrap(
         "Crash log",
         mkTable(
@@ -24,3 +24,12 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       );
     });
     
+    router.get("/:id", setTenant, isAdmin, async (req, res) => {
+        const { id } = req.params;
+        const crash = await Crash.findOne({ id });
+        res.sendWrap(
+            "Crash log",table({class: 'table'}, tbody(
+                Object.entries(crash).map(([k,v])=>
+                  tr(td(k), td(pre(text(k==='headers' ? JSON.stringify(v,null, 2) : v)))))
+                )))
+    })    

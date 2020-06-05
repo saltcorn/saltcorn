@@ -137,8 +137,9 @@ const getApp = async () => {
               : []),
             ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : [])
           ];
+      const schema =db.getTenantSchema() 
       const tenant_list =
-        db.is_it_multi_tenant() && db.getTenantSchema() === "public";
+        db.is_it_multi_tenant() && schema=== "public";
       const isAdmin = (req.user || {}).role_id === 1;
       const adminItems = [
         { link: "/table", label: "Tables" },
@@ -151,7 +152,8 @@ const getApp = async () => {
             { link: "/useradmin", label: "Users" },
             { link: "/config", label: "Configuration" },
             { link: "/admin", label: "Admin" },
-            ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : [])
+            ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : []),
+            ...(schema=== "public"? [{ link: "/crashlog", label: "Crash log" }] : [])
           ]
         }
       ];
