@@ -13,6 +13,7 @@ const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
+const errors = require("./errors");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
@@ -194,6 +195,7 @@ const getApp = async () => {
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
+  app.use(errors)
   return app;
 };
 module.exports = getApp;
