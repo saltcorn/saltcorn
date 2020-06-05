@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
-const { div } = require("@saltcorn/markup/tags");
+const { div, text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { setTenant } = require("../routes/utils.js");
 
@@ -12,7 +12,10 @@ router.get("/:viewname", setTenant, async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });
-  if (!req.isAuthenticated() && !view.is_public) {
+  if (!view) {
+    req.flash("danger", `No such view: ${text(viewname)}`);
+    res.redirect("/");
+  } else if (!req.isAuthenticated() && !view.is_public) {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
@@ -30,7 +33,10 @@ router.post("/:viewname/:route", setTenant, async (req, res) => {
   const { viewname, route } = req.params;
 
   const view = await View.findOne({ name: viewname });
-  if (!req.isAuthenticated() && !view.is_public) {
+  if (!view) {
+    req.flash("danger", `No such view: ${text(viewname)}`);
+    res.redirect("/");
+  } else if (!req.isAuthenticated() && !view.is_public) {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {
@@ -42,7 +48,10 @@ router.post("/:viewname", setTenant, async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });
-  if (!req.isAuthenticated() && !view.is_public) {
+  if (!view) {
+    req.flash("danger", `No such view: ${text(viewname)}`);
+    res.redirect("/");
+  } else if (!req.isAuthenticated() && !view.is_public) {
     req.flash("danger", "Login required");
     res.redirect("/auth/login");
   } else {

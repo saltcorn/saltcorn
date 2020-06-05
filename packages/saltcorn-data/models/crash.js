@@ -21,10 +21,10 @@ class Crash {
     return new Crash(u);
   }
   get reltime() {
-      return moment(this.occur_at).fromNow()
+    return moment(this.occur_at).fromNow();
   }
   static async create(err, req) {
-      const schema = db.getTenantSchema()
+    const schema = db.getTenantSchema();
     db.runWithTenant("public", async () => {
       await db.insert("_sc_errors", {
         stack: err.stack,

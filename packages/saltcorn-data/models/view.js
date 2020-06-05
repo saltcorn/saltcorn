@@ -23,8 +23,8 @@ class View {
     contract.class(this);
   }
   static async findOne(where) {
-    const v = await db.selectOne("_sc_views", where);
-    return new View(v);
+    const v = await db.selectMaybeOne("_sc_views", where);
+    return v ? new View(v) : v;
   }
   static async find(where, selectopts) {
     const views = await db.select("_sc_views", where, selectopts);
@@ -226,7 +226,7 @@ View.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("View")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.class("View"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("View")))),
     create: is.fun(is.obj(), is.promise(is.class("View"))),
     find_possible_links_to_table: is.fun(
       is.posint,
