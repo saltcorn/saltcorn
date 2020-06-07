@@ -12,10 +12,6 @@ beforeAll(async () => {
 describe("Tenant", () => {
   it("can create a new tenant", async () => {
     db.enable_multi_tenant();
-    await createTenant({
-      subdomain: "test10",
-      email: "foo@bar.com",
-      password: "secret"
-    });
+    await createTenant("test10");
   });
 });

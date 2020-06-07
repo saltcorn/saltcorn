@@ -22,7 +22,7 @@ const whereFTS = (v, i) => {
         : sqlsanitize(f.name)
     )
     .join(" || ' ' || ");
-  if(flds==='') flds="''"
+  if (flds === "") flds = "''";
   return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
     1})`;
 };

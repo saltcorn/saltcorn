@@ -222,10 +222,16 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
   if (typeof v.id === "undefined") {
     // insert
     const { name, ...rest } = v;
-
-    const table = await Table.create(name, rest);
-    req.flash("success", `Table ${name} created`);
-    res.redirect(`/table/${table.id}`);
+    const alltables = await Table.find({});
+    const existing_tables = ["users", ...alltables.map(t => t.name)];
+    if (!existing_tables.includes(name)) {
+      const table = await Table.create(name, rest);
+      req.flash("success", `Table ${name} created`);
+      res.redirect(`/table/${table.id}`);
+    } else {
+      req.flash("error", `Table ${name} already exists`);
+      res.redirect(`/table/new`);
+    }
   } else {
     const { id, ...rest } = v;
     Table.update(parseInt(id), rest);

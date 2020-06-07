@@ -35,7 +35,7 @@ describe("tenant routes", () => {
       .post("/tenant/create")
       .send("subdomain=Peashoot")
       .expect(toInclude("Success"));
-    db.set_sql_logging(false)
+    db.set_sql_logging(false);
 
     expect(1).toBe(1);
   });
