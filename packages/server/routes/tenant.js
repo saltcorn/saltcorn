@@ -72,7 +72,7 @@ router.post("/create", setTenant, async (req, res) => {
       form.hasErrors = true;
       res.sendWrap(`Create application`, renderForm(form));
     } else {
-      await create_tenant(valres.success, loadAllPlugins);
+      await create_tenant(subdomain, loadAllPlugins);
       const newurl = getNewURL(req, subdomain);
       res.sendWrap(
         `Create application`,

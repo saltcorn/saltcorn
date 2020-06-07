@@ -9,7 +9,7 @@ const getAllTenants = async () => {
   return tens.map(({ subdomain }) => subdomain);
 };
 
-const createTenant = async ({ subdomain }) => {
+const createTenant = async (subdomain) => {
   const saneDomain = domain_sanitize(subdomain);
   const id = await db.insert(
     "_sc_tenants",

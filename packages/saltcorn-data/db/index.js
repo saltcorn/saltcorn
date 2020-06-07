@@ -37,7 +37,7 @@ const enable_multi_tenant = () => {
 };
 
 const runWithTenant = (tenant, f) =>
-  tenantNamespace.run(sqlsanitize(tenant), f);
+  tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 
 if (connectObj.multi_tenant) enable_multi_tenant();
 
