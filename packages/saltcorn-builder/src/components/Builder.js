@@ -27,7 +27,7 @@ const Toolbox = () => {
   } = options;
   return (
     <Fragment>
-      <h6>Drag to add</h6>
+      <h5>Drag to add</h5>
       <table className="mb-3">
         <tbody>
           <tr>
@@ -185,7 +185,7 @@ const SettingsPanel = () => {
   });
 
   return <div className="settings-panel">
-      <h6>Settings</h6>
+      <h5>Settings</h5>
       {selected ? <Fragment>
       {selected.settings && React.createElement(selected.settings)}
       {selected.isDeletable && (
@@ -228,7 +228,7 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
-            <h6>View canvas</h6>
+            <h5>View canvas</h5>
             <Frame
               resolver={{
                 Text,
