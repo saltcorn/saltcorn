@@ -18,6 +18,7 @@ class Form {
     this.methodGET = o.methodGET;
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
+    this.hasErrors = false;
     if (o.validate) this.validate(o.validate);
     contract.class(this);
   }
@@ -51,6 +52,7 @@ class Form {
   }
 
   validate(v) {
+    this.hasErrors = false;
     this.fields.forEach(f => {
       const valres = f.validate(v);
       if (valres.error) {
