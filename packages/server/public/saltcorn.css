@@ -18,3 +18,13 @@ div.canvas {
 div.settings-panel {
   min-height: 150px;
 }
+
+table.toolbox td {
+  border: 1px solid black;
+  width: 70px;
+  height: 70px;
+  text-align: center;
+}
+table.toolbox {
+  table-layout: fixed;
+}

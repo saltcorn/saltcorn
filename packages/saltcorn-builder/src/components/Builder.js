@@ -28,133 +28,117 @@ const Toolbox = () => {
   return (
     <Fragment>
       <h5>Drag to add</h5>
-      <table className="mb-3">
+      <table className="mb-3 toolbox">
         <tbody>
           <tr>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <Text text="Hello world" block={false} textStyle={""} />
-                  )
-                }
-              >
-                Text
-              </button>
+            <td
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Text text="Hello world" block={false} textStyle={""} />
+                )
+              }
+            >
+              Text
             </td>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <TwoSplit left={<Empty />} right={<Empty />} />
-                  )
-                }
-              >
-                ||
-              </button>
+            <td
+              title="Split into columns"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <TwoSplit left={<Empty />} right={<Empty />} />
+                )
+              }
+            >
+              <i className="fas fa-columns"></i>
             </td>
           </tr>
           <tr>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <Field
-                      name={fields[0].name}
-                      block={false}
-                      textStyle={""}
-                      fieldview={
-                        fields[0].is_fkey
-                          ? ""
-                          : field_view_options[fields[0].name][0]
-                      }
-                    />
-                  )
-                }
-              >
-                Field
-              </button>
+            <td
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Field
+                    name={fields[0].name}
+                    block={false}
+                    textStyle={""}
+                    fieldview={
+                      fields[0].is_fkey
+                        ? ""
+                        : field_view_options[fields[0].name][0]
+                    }
+                  />
+                )
+              }
+            >
+              Field
             </td>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <JoinField
-                      name={options.parent_field_list}
-                      textStyle={""}
-                      block={false}
-                    />
-                  )
-                }
-              >
-                Join
-              </button>
+            <td
+              title="Join field"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <JoinField
+                    name={options.parent_field_list}
+                    textStyle={""}
+                    block={false}
+                  />
+                )
+              }
+            >
+              Join
             </td>
           </tr>
           <tr>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <ViewLink
-                      name={options.link_view_opts[0].name}
-                      block={false}
-                      minRole={10}
-                    />
-                  )
-                }
-              >
-                Link
-              </button>
+            <td
+              title="Link to a view"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <ViewLink
+                    name={options.link_view_opts[0].name}
+                    block={false}
+                    minRole={10}
+                  />
+                )
+              }
+            >
+              Link
             </td>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <Action
-                      name={options.actions[0]}
-                      block={false}
-                      minRole={10}
-                    />
-                  )
-                }
-              >
-                Action
-              </button>
+            <td
+              title="Action button"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Action
+                    name={options.actions[0]}
+                    block={false}
+                    minRole={10}
+                  />
+                )
+              }
+            >
+              Action
             </td>
           </tr>
           <tr>
-            <td>
-              <button ref={ref => connectors.create(ref, <LineBreak />)}>
-                ↵
-              </button>
-            </td>
-            <td>
-              <button
-                ref={ref =>
-                  connectors.create(
-                    ref,
-                    <Aggregation
-                      agg_relation={child_field_list[0]}
-                      agg_field={headOr(
-                        agg_field_opts[child_field_list[0]],
-                        ""
-                      )}
-                      stat={"Count"}
-                      textStyle={""}
-                      block={false}
-                    />
-                  )
-                }
-              >
-                ∑
-              </button>
+            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td
+              title="Aggregation"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Aggregation
+                    agg_relation={child_field_list[0]}
+                    agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
+                    stat={"Count"}
+                    textStyle={""}
+                    block={false}
+                  />
+                )
+              }
+            >
+              ∑
             </td>
           </tr>
         </tbody>
