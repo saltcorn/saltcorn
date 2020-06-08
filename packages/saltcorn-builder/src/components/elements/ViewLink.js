@@ -25,9 +25,8 @@ export const ViewLinkSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      
       <div>
-      <label>View to link to</label>
+        <label>View to link to</label>
         <select
           value={name}
           onChange={e => setProp(prop => (prop.name = e.target.value))}

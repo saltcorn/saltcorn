@@ -23,9 +23,8 @@ export const ActionSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      
       <div>
-      <label>Action</label>
+        <label>Action</label>
 
         <select
           value={name}
@@ -36,10 +35,10 @@ export const ActionSettings = () => {
               {f}
             </option>
           ))}
-        </select></div>
-        <BlockSetting block={block} setProp={setProp} />
-        <MinRoleSetting minRole={minRole} setProp={setProp} />
-      
+        </select>
+      </div>
+      <BlockSetting block={block} setProp={setProp} />
+      <MinRoleSetting minRole={minRole} setProp={setProp} />
     </div>
   );
 };

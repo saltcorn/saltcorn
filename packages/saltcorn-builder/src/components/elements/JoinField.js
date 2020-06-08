@@ -28,7 +28,7 @@ export const JoinFieldSettings = () => {
   return (
     <div>
       <div>
-      <label>Join field</label>
+        <label>Join field</label>
 
         <select
           value={name}

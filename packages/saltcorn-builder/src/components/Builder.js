@@ -184,20 +184,27 @@ const SettingsPanel = () => {
     };
   });
 
-  return <div className="settings-panel">
+  return (
+    <div className="settings-panel">
       <h5>Settings</h5>
-      {selected ? <Fragment>
-      {selected.settings && React.createElement(selected.settings)}
-      {selected.isDeletable && (
-        <button
-          onClick={() => {
-            actions.delete(selected.id);
-          }}
-        >
-          Delete
-        </button>
-      )}</Fragment> : "No element selected" }
-    </div>;
+      {selected ? (
+        <Fragment>
+          {selected.settings && React.createElement(selected.settings)}
+          {selected.isDeletable && (
+            <button
+              onClick={() => {
+                actions.delete(selected.id);
+              }}
+            >
+              Delete
+            </button>
+          )}
+        </Fragment>
+      ) : (
+        "No element selected"
+      )}
+    </div>
+  );
 };
 
 const SaveButton = ({ layout }) => {

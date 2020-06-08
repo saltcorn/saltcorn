@@ -27,7 +27,7 @@ export const TwoSplitSettings = () => {
     leftCols: node.data.props.leftCols
   }));
   return (
-    <div>      
+    <div>
       <label>Left columns (out of 12)</label>
       <input
         type="number"

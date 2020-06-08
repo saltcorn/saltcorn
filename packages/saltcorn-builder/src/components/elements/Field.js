@@ -43,19 +43,21 @@ export const FieldSettings = () => {
         </select>
       </div>
       <div>
-        {fvs && (<Fragment>
-        <label>Field view</label>
+        {fvs && (
+          <Fragment>
+            <label>Field view</label>
 
-          <select
-            value={fieldview}
-            onChange={e => setProp(prop => (prop.fieldview = e.target.value))}
-          >
-            {(fvs || []).map((fvnm, ix) => (
-              <option key={ix} value={fvnm}>
-                {fvnm}
-              </option>
-            ))}
-          </select></Fragment>
+            <select
+              value={fieldview}
+              onChange={e => setProp(prop => (prop.fieldview = e.target.value))}
+            >
+              {(fvs || []).map((fvnm, ix) => (
+                <option key={ix} value={fvnm}>
+                  {fvnm}
+                </option>
+              ))}
+            </select>
+          </Fragment>
         )}
       </div>
       <BlockSetting block={block} setProp={setProp} />
