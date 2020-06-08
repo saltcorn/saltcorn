@@ -123,7 +123,7 @@ const wrapBlock = (segment, inner) =>
 
 const render = async (row, fields, layout, viewname, table, role) => {
   async function go(segment) {
-    if (!segment) return "missing layout";
+    if (!segment) return '';
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type === "blank") {
       return wrapBlock(segment, segment.contents);

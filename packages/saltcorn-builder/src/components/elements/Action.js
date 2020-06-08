@@ -23,8 +23,9 @@ export const ActionSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      <h6>Action settings</h6>
       <div>
+        <label>Action</label>
+
         <select
           value={name}
           onChange={e => setProp(prop => (prop.name = e.target.value))}
@@ -35,9 +36,9 @@ export const ActionSettings = () => {
             </option>
           ))}
         </select>
-        <BlockSetting block={block} setProp={setProp} />
-        <MinRoleSetting minRole={minRole} setProp={setProp} />
       </div>
+      <BlockSetting block={block} setProp={setProp} />
+      <MinRoleSetting minRole={minRole} setProp={setProp} />
     </div>
   );
 };

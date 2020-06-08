@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, Fragment } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
@@ -8,6 +8,7 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
+import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -25,11 +26,12 @@ const Toolbox = () => {
     agg_field_opts
   } = options;
   return (
-    <table>
-      <tbody>
-        <tr>
-          <td>
-            <button
+    <Fragment>
+      <h5>Drag to add</h5>
+      <table className="mb-3 toolbox">
+        <tbody>
+          <tr>
+            <td
               ref={ref =>
                 connectors.create(
                   ref,
@@ -38,27 +40,21 @@ const Toolbox = () => {
               }
             >
               Text
-            </button>
-          </td>
-          <td>
-            <button
+            </td>
+            <td
+              title="Split into columns"
               ref={ref =>
                 connectors.create(
                   ref,
-                  <TwoSplit
-                    left={<Text text="Left" />}
-                    right={<Text text="Right" />}
-                  />
+                  <TwoSplit left={<Empty />} right={<Empty />} />
                 )
               }
             >
-              ||
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <button
+              <i className="fas fa-columns"></i>
+            </td>
+          </tr>
+          <tr>
+            <td
               ref={ref =>
                 connectors.create(
                   ref,
@@ -76,10 +72,9 @@ const Toolbox = () => {
               }
             >
               Field
-            </button>
-          </td>
-          <td>
-            <button
+            </td>
+            <td
+              title="Join field"
               ref={ref =>
                 connectors.create(
                   ref,
@@ -92,12 +87,11 @@ const Toolbox = () => {
               }
             >
               Join
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <button
+            </td>
+          </tr>
+          <tr>
+            <td
+              title="Link to a view"
               ref={ref =>
                 connectors.create(
                   ref,
@@ -110,10 +104,9 @@ const Toolbox = () => {
               }
             >
               Link
-            </button>
-          </td>
-          <td>
-            <button
+            </td>
+            <td
+              title="Action button"
               ref={ref =>
                 connectors.create(
                   ref,
@@ -126,17 +119,12 @@ const Toolbox = () => {
               }
             >
               Action
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <button ref={ref => connectors.create(ref, <LineBreak />)}>
-              ↵
-            </button>
-          </td>
-          <td>
-            <button
+            </td>
+          </tr>
+          <tr>
+            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td
+              title="Aggregation"
               ref={ref =>
                 connectors.create(
                   ref,
@@ -151,11 +139,11 @@ const Toolbox = () => {
               }
             >
               ∑
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </Fragment>
   );
 };
 
@@ -180,21 +168,26 @@ const SettingsPanel = () => {
     };
   });
 
-  return selected ? (
-    <div>
-      {selected.settings && React.createElement(selected.settings)}
-      {selected.isDeletable && (
-        <button
-          onClick={() => {
-            actions.delete(selected.id);
-          }}
-        >
-          Delete
-        </button>
+  return (
+    <div className="settings-panel">
+      <h5>Settings</h5>
+      {selected ? (
+        <Fragment>
+          {selected.settings && React.createElement(selected.settings)}
+          {selected.isDeletable && (
+            <button
+              onClick={() => {
+                actions.delete(selected.id);
+              }}
+            >
+              Delete
+            </button>
+          )}
+        </Fragment>
+      ) : (
+        "No element selected"
       )}
     </div>
-  ) : (
-    ""
   );
 };
 
@@ -226,12 +219,19 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
+            <h5>View canvas</h5>
             <Frame
-              resolver={(Text, TwoSplit, JoinField, Field, ViewLink, Action)}
+              resolver={{
+                Text,
+                Empty,
+                TwoSplit,
+                JoinField,
+                Field,
+                ViewLink,
+                Action
+              }}
             >
-              <Canvas>
-                <Text text="I was already rendered here" />
-              </Canvas>
+              <Canvas className="canvas"></Canvas>
             </Frame>
           </div>
           <div className="col-sm-3">

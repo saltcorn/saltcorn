@@ -37,7 +37,6 @@ export const AggregationSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      <h6>Aggregation settings</h6>
       <div>
         <label>Relation</label>
         <select

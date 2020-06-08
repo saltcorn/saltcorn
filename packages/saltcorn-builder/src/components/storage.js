@@ -1,6 +1,7 @@
 import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
+import { Empty } from "./elements/Empty";
 import { TwoSplit } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
@@ -11,7 +12,7 @@ import { Action } from "./elements/Action";
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
-    if (!segment) return;
+    if (!segment) return <Empty />;
     if (segment.type === "blank") {
       return (
         <Text

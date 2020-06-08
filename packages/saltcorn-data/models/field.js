@@ -15,7 +15,7 @@ class Field {
     this.label = o.label || o.name;
     this.name = o.name || labelToName(o.label);
     this.fieldview = o.fieldview;
-    this.validator = o.validator || (()=>true);
+    this.validator = o.validator || (() => true);
     this.showIf = o.showIf;
     this.postText = o.postText;
     this.class = o.class || "";
@@ -142,12 +142,10 @@ class Field {
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
-    const fvalres=this.validator(readval)
-    if(typeof fvalres==='string')
-        return {error:fvalres}
-    if(typeof fvalres==='undefined' || fvalres)
-        return { success: readval }
-    else return {error:"Not accepted"}
+    const fvalres = this.validator(readval);
+    if (typeof fvalres === "string") return { error: fvalres };
+    if (typeof fvalres === "undefined" || fvalres) return { success: readval };
+    else return { error: "Not accepted" };
   }
 
   static async find(where, selectopts) {

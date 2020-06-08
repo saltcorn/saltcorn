@@ -7,11 +7,24 @@ pre.wsprewrap {
   white-space: pre-wrap;
 }
 
-.split-col {
-  min-height: 50px;
-  border: 1px dotted black;
-}
-
 #footer {
   margin: 5em 0;
+}
+
+div.canvas {
+  min-height: 30px;
+  border: 1px dashed #111111;
+}
+div.settings-panel {
+  min-height: 150px;
+}
+
+table.toolbox td {
+  border: 1px solid black;
+  width: 70px;
+  height: 70px;
+  text-align: center;
+}
+table.toolbox {
+  table-layout: fixed;
 }

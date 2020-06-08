@@ -114,17 +114,18 @@ describe("String form with validator failure ", () => {
         name: "name",
         label: "Name",
         type: "String",
-        validator(s) { if(s.length<3) return "Too short"}
+        validator(s) {
+          if (s.length < 3) return "Too short";
+        }
       })
     ]
   });
   const html = renderForm(form);
   expect(html.includes("<form")).toBe(true);
   form.validate({ name: "Si" });
-  expect(form.errors).toStrictEqual({name: "Too short"});
-  expect(form.values).toStrictEqual({name: "Si"});
+  expect(form.errors).toStrictEqual({ name: "Too short" });
+  expect(form.values).toStrictEqual({ name: "Si" });
   expect(form.hasErrors).toBe(true);
-
 });
 
 describe("String form with validator success", () => {
@@ -134,16 +135,17 @@ describe("String form with validator success", () => {
         name: "name",
         label: "Name",
         type: "String",
-        validator(s) { if(s.length<3) return "Too short"}
+        validator(s) {
+          if (s.length < 3) return "Too short";
+        }
       })
     ]
   });
   const html = renderForm(form);
   expect(html.includes("<form")).toBe(true);
 
-  form.validate({  name: "Simon" });
+  form.validate({ name: "Simon" });
   expect(form.values.name).toBe("Simon");
   expect(form.errors).toStrictEqual({});
   expect(form.hasErrors).toBe(false);
-
 });
