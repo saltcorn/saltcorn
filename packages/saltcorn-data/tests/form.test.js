@@ -106,3 +106,44 @@ describe("Bool Form", () => {
   form.validate({ done: "on" });
   expect(form.values.done).toBe(true);
 });
+
+describe("String form with validator failure ", () => {
+  const form = new Form({
+    fields: [
+      new Field({
+        name: "name",
+        label: "Name",
+        type: "String",
+        validator(s) { if(s.length<3) return "Too short"}
+      })
+    ]
+  });
+  const html = renderForm(form);
+  expect(html.includes("<form")).toBe(true);
+  form.validate({ name: "Si" });
+  expect(form.errors).toStrictEqual({name: "Too short"});
+  expect(form.values).toStrictEqual({name: "Si"});
+  expect(form.hasErrors).toBe(true);
+
+});
+
+describe("String form with validator success", () => {
+  const form = new Form({
+    fields: [
+      new Field({
+        name: "name",
+        label: "Name",
+        type: "String",
+        validator(s) { if(s.length<3) return "Too short"}
+      })
+    ]
+  });
+  const html = renderForm(form);
+  expect(html.includes("<form")).toBe(true);
+
+  form.validate({  name: "Simon" });
+  expect(form.values.name).toBe("Simon");
+  expect(form.errors).toStrictEqual({});
+  expect(form.hasErrors).toBe(false);
+
+});
