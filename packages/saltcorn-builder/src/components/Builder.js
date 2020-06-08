@@ -47,8 +47,8 @@ const Toolbox = () => {
                 connectors.create(
                   ref,
                   <TwoSplit
-                    left={<Text text="Left" />}
-                    right={<Text text="Right" />}
+                    left={""}
+                    right={""}
                   />
                 )
               }

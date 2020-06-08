@@ -9,7 +9,6 @@ pre.wsprewrap {
 
 .split-col {
   min-height: 50px;
-  border: 1px dotted black;
 }
 
 #footer {
@@ -17,6 +16,7 @@ pre.wsprewrap {
 }
 
 div.canvas {
-  padding: 15px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   border: 1px dashed #111111;
 }
