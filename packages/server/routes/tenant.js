@@ -120,7 +120,7 @@ router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
   const { sub } = req.params;
 
   const subdomain = domain_sanitize(sub);
-  await db.query(`drop schema if exists ${subdomain} CASCADE `);
+  await db.query(`drop schema if exists "${subdomain}" CASCADE `);
   await db.deleteWhere("_sc_tenants", { subdomain });
   res.redirect(`/tenant/list`);
 });
