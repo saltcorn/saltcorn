@@ -25,6 +25,7 @@ export const TextSettings = () => {
   }));
   return (
     <div>
+      <label>Text to display</label>
       <input
         type="text"
         value={text}
