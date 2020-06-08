@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, Fragment } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
@@ -24,7 +24,8 @@ const Toolbox = () => {
     child_field_list,
     agg_field_opts
   } = options;
-  return (
+  return (<Fragment>
+    <h6>Elements</h6>
     <table>
       <tbody>
         <tr>
@@ -155,7 +156,7 @@ const Toolbox = () => {
           </td>
         </tr>
       </tbody>
-    </table>
+    </table></Fragment>
   );
 };
 
@@ -226,11 +227,11 @@ const Builder = ({ options, layout }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-9">
+            <h6>View canvas</h6>
             <Frame
               resolver={(Text, TwoSplit, JoinField, Field, ViewLink, Action)}
             >
-              <Canvas>
-                <Text text="I was already rendered here" />
+              <Canvas className="canvas">
               </Canvas>
             </Frame>
           </div>

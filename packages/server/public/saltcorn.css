@@ -15,3 +15,8 @@ pre.wsprewrap {
 #footer {
   margin: 5em 0;
 }
+
+div.canvas {
+  padding: 15px;
+  border: 1px dashed #111111;
+}
