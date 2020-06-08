@@ -27,8 +27,9 @@ export const JoinFieldSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      <h6>Join Field settings</h6>
       <div>
+      <label>Join field</label>
+
         <select
           value={name}
           onChange={e => setProp(prop => (prop.name = e.target.value))}

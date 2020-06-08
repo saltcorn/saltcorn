@@ -27,8 +27,8 @@ const Toolbox = () => {
   } = options;
   return (
     <Fragment>
-      <h6>Elements</h6>
-      <table>
+      <h6>Drag to add</h6>
+      <table className="mb-3">
         <tbody>
           <tr>
             <td>
@@ -184,8 +184,9 @@ const SettingsPanel = () => {
     };
   });
 
-  return selected ? (
-    <div>
+  return <div className="settings-panel">
+      <h6>Settings</h6>
+      {selected ? <Fragment>
       {selected.settings && React.createElement(selected.settings)}
       {selected.isDeletable && (
         <button
@@ -195,11 +196,8 @@ const SettingsPanel = () => {
         >
           Delete
         </button>
-      )}
-    </div>
-  ) : (
-    ""
-  );
+      )}</Fragment> : "No element selected" }
+    </div>;
 };
 
 const SaveButton = ({ layout }) => {

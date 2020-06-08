@@ -25,7 +25,6 @@ export const TextSettings = () => {
   }));
   return (
     <div>
-      <h6>Text settings</h6>
       <input
         type="text"
         value={text}

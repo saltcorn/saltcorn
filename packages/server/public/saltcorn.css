@@ -15,3 +15,6 @@ div.canvas {
   min-height: 30px;
   border: 1px dashed #111111;
 }
+div.settings-panel {
+  min-height: 150px;
+}

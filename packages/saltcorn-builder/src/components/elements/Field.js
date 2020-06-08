@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
@@ -29,8 +29,8 @@ export const FieldSettings = () => {
   const fvs = options.field_view_options[name];
   return (
     <div>
-      <h6>Field settings</h6>
       <div>
+        <label>Field</label>
         <select
           value={name}
           onChange={e => setProp(prop => (prop.name = e.target.value))}
@@ -43,7 +43,9 @@ export const FieldSettings = () => {
         </select>
       </div>
       <div>
-        {fvs && (
+        {fvs && (<Fragment>
+        <label>Field view</label>
+
           <select
             value={fieldview}
             onChange={e => setProp(prop => (prop.fieldview = e.target.value))}
@@ -53,7 +55,7 @@ export const FieldSettings = () => {
                 {fvnm}
               </option>
             ))}
-          </select>
+          </select></Fragment>
         )}
       </div>
       <BlockSetting block={block} setProp={setProp} />
