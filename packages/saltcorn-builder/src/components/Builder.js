@@ -8,6 +8,7 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
+import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -47,8 +48,8 @@ const Toolbox = () => {
                 connectors.create(
                   ref,
                   <TwoSplit
-                    left={<Text text="Left" />}
-                    right={<Text text="Right" />}
+                    left={<Empty />}
+                    right={<Empty />}
                   />
                 )
               }
@@ -229,7 +230,7 @@ const Builder = ({ options, layout }) => {
           <div className="col-sm-9">
             <h6>View canvas</h6>
             <Frame
-              resolver={(Text, TwoSplit, JoinField, Field, ViewLink, Action)}
+              resolver={{Text, Empty, TwoSplit, JoinField, Field, ViewLink, Action}}
             >
               <Canvas className="canvas">
               </Canvas>
