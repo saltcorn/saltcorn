@@ -49,11 +49,12 @@ const plugin_pack = async name => {
 const is_stale = date => {
   const oneday = 60 * 60 * 24 * 1000;
   const now = new Date();
-  return date < now - oneday;
+  return new Date(date) < now - oneday;
 };
 const fetch_available_packs = async () => {
   const stored = getState().getConfig("available_packs", false);
   const stored_at = getState().getConfig("available_packs_fetched_at", false);
+  //console.log(stored_at, typeof(stored_at))
   if (!stored || !stored_at || is_stale(stored_at)) {
     const from_api = await fetch_available_packs_from_store();
     await getState().setConfig("available_packs", from_api);

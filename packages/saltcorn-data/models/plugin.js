@@ -61,7 +61,7 @@ class Plugin {
     } else return stored;
   }
   static async store_plugins_available_from_store() {
-    console.log("fetch plugins");
+    //console.log("fetch plugins");
     const response = await fetch("http://store.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map(p => new Plugin(p));
