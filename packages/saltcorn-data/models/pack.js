@@ -64,7 +64,7 @@ const fetch_available_packs = async () => {
 };
 
 const fetch_available_packs_from_store = async () => {
-  console.log("fetch packs");
+  //console.log("fetch packs");
   const response = await fetch(
     "http://store.saltcorn.com/api/packs?fields=name"
   );

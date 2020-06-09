@@ -46,6 +46,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
+  const schema = db.getTenantSchema();
   res.sendWrap("Plugins", {
     above: [
       {
@@ -89,7 +90,9 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
                 ],
                 instore
               ),
-              link(`/plugins/new`, "Add another plugin")
+              schema === "public"
+                ? link(`/plugins/new`, "Add another plugin")
+                : ""
             ]
           },
           {
@@ -140,20 +143,26 @@ router.get("/:id/", setTenant, isAdmin, async (req, res) => {
 
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const plugin = new Plugin(req.body);
-  try {
-    const schema = db.getTenantSchema();
-
-    await load_plugins.loadAndSaveNewPlugin(
-      plugin,
-      schema === "public" || plugin.source === "github"
+  const schema = db.getTenantSchema();
+  if (schema !== "public") {
+    req.flash(
+      "error",
+      `Only store plugins can be installed on tenant instances`
     );
-    req.flash("success", `Plugin ${plugin.name} installed`);
-
     res.redirect(`/plugins`);
-  } catch (e) {
-    req.flash("error", `${e.message}`);
-    const form = pluginForm(plugin);
-    res.sendWrap(`Edit Plugin`, renderForm(form));
+  } else {
+    try {
+      await load_plugins.loadAndSaveNewPlugin(
+        plugin,
+        schema === "public" || plugin.source === "github"
+      );
+      req.flash("success", `Plugin ${plugin.name} installed`);
+      res.redirect(`/plugins`);
+    } catch (e) {
+      req.flash("error", `${e.message}`);
+      const form = pluginForm(plugin);
+      res.sendWrap(`Edit Plugin`, renderForm(form));
+    }
   }
 });
 
