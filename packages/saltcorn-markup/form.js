@@ -177,7 +177,7 @@ const mkFormRowForField = (
         displayEdit(
           hdr,
           name,
-          v && isdef(v[hdr.name]) ? v[hdr.name] : undefined,
+          v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
           validClass
         ),
         errorFeedback,
