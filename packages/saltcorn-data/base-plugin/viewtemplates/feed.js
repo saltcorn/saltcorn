@@ -76,6 +76,50 @@ const configuration_workflow = () =>
                 label: "Descending",
                 type: "Bool",
                 required: true
+              },
+              {
+                name: "cols_sm",
+                label: "Columns small screen",
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4
+                },
+                required: true,
+                default: 1
+              },              
+              {
+                name: "cols_md",
+                label: "Columns medium screen",
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4
+                },
+                required: true,
+                default: 1
+              },              
+              {
+                name: "cols_lg",
+                label: "Columns large screen",
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4
+                },
+                required: true,
+                default: 1
+              },              
+              {
+                name: "cols_xl",
+                label: "Columns extra-large screen",
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4
+                },
+                required: true,
+                default: 1
               }
             ]
           });
@@ -95,7 +139,7 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 const run = async (
   table_id,
   viewname,
-  { show_view, order_field, descending, view_to_create },
+  { show_view, order_field, descending, view_to_create, ...cols },
   state,
   extraArgs
 ) => {
@@ -118,8 +162,9 @@ const run = async (
           `Add ${pluralize(table.name, 1)}`
         )
       : "";
-  return div(
-    sresp.map(r => div(r.html) + hr()),
+  const setCols=(sz)=>`col-${sz}-${Math.round(12/cols[`cols_${sz}`])}`
+  return div(div({class:"row"},
+    sresp.map(r => div({class:[setCols('sm'),setCols('md'),setCols('lg'),setCols('xl')]}, r.html))),
     create_link
   );
 };
