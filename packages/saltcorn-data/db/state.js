@@ -50,7 +50,7 @@ class State {
 
   async setConfig(key, value) {
     await setConfig(key, value);
-    this.configs[key] = {value};
+    this.configs[key] = { value };
   }
   async deleteConfig(key) {
     await deleteConfig(key);

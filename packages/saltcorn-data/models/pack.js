@@ -46,25 +46,27 @@ const plugin_pack = async name => {
     location: plugin.location
   };
 };
-const is_stale=(date) => {
-  const oneday = 60 * 60 * 24 * 1000
-  const now = new Date()
-  return date < now - oneday
-}
+const is_stale = date => {
+  const oneday = 60 * 60 * 24 * 1000;
+  const now = new Date();
+  return date < now - oneday;
+};
 const fetch_available_packs = async () => {
-  const stored=getState().getConfig("available_packs", false)
-  const stored_at=getState().getConfig("available_packs_fetched_at", false)
-  if(!stored || !stored_at || is_stale(stored_at)) {
-    const from_api=await fetch_available_packs_from_store()
-    await getState().setConfig("available_packs", from_api)
-    await getState().setConfig("available_packs_fetched_at", new Date())
-    return from_api
-  } else return stored
-}
+  const stored = getState().getConfig("available_packs", false);
+  const stored_at = getState().getConfig("available_packs_fetched_at", false);
+  if (!stored || !stored_at || is_stale(stored_at)) {
+    const from_api = await fetch_available_packs_from_store();
+    await getState().setConfig("available_packs", from_api);
+    await getState().setConfig("available_packs_fetched_at", new Date());
+    return from_api;
+  } else return stored;
+};
 
 const fetch_available_packs_from_store = async () => {
-  console.log("fetch packs")
-  const response = await fetch("http://store.saltcorn.com/api/packs?fields=name");
+  console.log("fetch packs");
+  const response = await fetch(
+    "http://store.saltcorn.com/api/packs?fields=name"
+  );
   const json = await response.json();
   return json.success;
 };
@@ -83,5 +85,6 @@ module.exports = {
   view_pack,
   plugin_pack,
   fetch_available_packs,
-  fetch_pack_by_name
+  fetch_pack_by_name,
+  is_stale
 };

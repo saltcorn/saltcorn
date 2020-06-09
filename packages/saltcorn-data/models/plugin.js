@@ -1,6 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
+const { is_stale } = require("./pack");
 const fetch = require("node-fetch");
 
 class Plugin {
@@ -46,7 +47,21 @@ class Plugin {
   }
 
   static async store_plugins_available() {
-    console.log("fetch plugins")
+    const { getState } = require("../db/state");
+    const stored = getState().getConfig("available_plugins", false);
+    const stored_at = getState().getConfig(
+      "available_plugins_fetched_at",
+      false
+    );
+    if (!stored || !stored_at || is_stale(stored_at)) {
+      const from_api = await Plugin.store_plugins_available_from_store();
+      await getState().setConfig("available_plugins", from_api);
+      await getState().setConfig("available_plugins_fetched_at", new Date());
+      return from_api;
+    } else return stored;
+  }
+  static async store_plugins_available_from_store() {
+    console.log("fetch plugins");
     const response = await fetch("http://store.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map(p => new Plugin(p));
