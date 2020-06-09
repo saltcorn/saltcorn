@@ -87,7 +87,7 @@ const configuration_workflow = () =>
                 },
                 required: true,
                 default: 1
-              },              
+              },
               {
                 name: "cols_md",
                 label: "Columns medium screen",
@@ -98,7 +98,7 @@ const configuration_workflow = () =>
                 },
                 required: true,
                 default: 1
-              },              
+              },
               {
                 name: "cols_lg",
                 label: "Columns large screen",
@@ -109,7 +109,7 @@ const configuration_workflow = () =>
                 },
                 required: true,
                 default: 1
-              },              
+              },
               {
                 name: "cols_xl",
                 label: "Columns extra-large screen",
@@ -120,6 +120,12 @@ const configuration_workflow = () =>
                 },
                 required: true,
                 default: 1
+              },
+              {
+                name: "in_card",
+                label: "Each in card?",
+                type: "Bool",
+                required: true
               }
             ]
           });
@@ -139,7 +145,7 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 const run = async (
   table_id,
   viewname,
-  { show_view, order_field, descending, view_to_create, ...cols },
+  { show_view, order_field, descending, view_to_create, in_card, ...cols },
   state,
   extraArgs
 ) => {
@@ -162,11 +168,24 @@ const run = async (
           `Add ${pluralize(table.name, 1)}`
         )
       : "";
-  const setCols=(sz)=>`col-${sz}-${Math.round(12/cols[`cols_${sz}`])}`
-  return div(div({class:"row"},
-    sresp.map(r => div({class:[setCols('sm'),setCols('md'),setCols('lg'),setCols('xl')]}, r.html))),
-    create_link
-  );
+  const setCols = sz => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
+
+  const showRowInner = r =>
+    in_card
+      ? div({ class: "card shadow mt-4" }, div({ class: "card-body" }, r.html))
+      : r.html;
+
+  const showRow = r =>
+    div(
+      {
+        class: [setCols("sm"), setCols("md"), setCols("lg"), setCols("xl")]
+      },
+      showRowInner(r)
+    );
+
+  const inner = div(div({ class: "row" }, sresp.map(showRow)), create_link);
+
+  return inner;
 };
 
 module.exports = {
