@@ -21,10 +21,15 @@ module.exports = router;
 router.get("/", setTenant, isAdmin, async (req, res) => {
   const cfgs = await getAllConfigOrDefaults();
   const canEdit = key => getState().types[configTypes[key].type];
+  const hideValue = key =>
+    configTypes[key] ? configTypes[key].type === "hidden" : true;
   const configTable = mkTable(
     [
       { label: "Key", key: r => r.label || r.key },
-      { label: "Value", key: r => JSON.stringify(r.value) },
+      {
+        label: "Value",
+        key: r => (hideValue(r.key) ? "..." : JSON.stringify(r.value))
+      },
       {
         label: "Edit",
         key: r => (canEdit(r.key) ? link(`/config/edit/${r.key}`, "Edit") : "")
