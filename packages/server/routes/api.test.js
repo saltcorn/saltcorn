@@ -36,7 +36,59 @@ describe("API Endpoints", () => {
     const app = await getApp();
     await request(app)
       .get("/api/books/")
-      .expect(succeedJsonWith(rows => rows.length == 2));
+      .expect(
+        succeedJsonWith(
+          rows =>
+            rows.length == 2 &&
+            rows[0].author === "Herman Melville" &&
+            rows[0].pages === 967
+        )
+      );
+
+    //expect(res.statusCode).toEqual(302);
+  });
+  it("should get books for public with only some fields", async () => {
+    const app = await getApp();
+    await request(app)
+      .get("/api/books/?fields=author")
+      .expect(
+        succeedJsonWith(
+          rows =>
+            rows.length == 2 &&
+            rows[0].author === "Herman Melville" &&
+            !rows[0].pages
+        )
+      );
+
+    //expect(res.statusCode).toEqual(302);
+  });
+  it("should get books for public with search", async () => {
+    const app = await getApp();
+    await request(app)
+      .get("/api/books/?pages=967")
+      .expect(
+        succeedJsonWith(
+          rows =>
+            rows.length == 1 &&
+            rows[0].author === "Herman Melville" &&
+            rows[0].pages === 967
+        )
+      );
+
+    //expect(res.statusCode).toEqual(302);
+  });
+  it("should get books for public with search and one field", async () => {
+    const app = await getApp();
+    await request(app)
+      .get("/api/books/?fields=author&pages=967")
+      .expect(
+        succeedJsonWith(
+          rows =>
+            rows.length == 1 &&
+            rows[0].author === "Herman Melville" &&
+            !rows[0].pages
+        )
+      );
 
     //expect(res.statusCode).toEqual(302);
   });

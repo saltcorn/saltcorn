@@ -10,21 +10,30 @@ const { stateFieldsToWhere } = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
-const noId = r => {
-  const { id, ...rest } = r;
-  return rest;
+const limitFields = fields => r => {
+  if (fields) {
+    var res = {};
+    fields.split().forEach(f => {
+      res[f] = r[f];
+    });
+    return res;
+  } else {
+    const { id, ...rest } = r;
+    return rest;
+  }
 };
 
 router.get("/:tableName/", setTenant, async (req, res) => {
   const { tableName } = req.params;
+  const { fields, ...req_query } = req.query;
   const table = await Table.findOne({ name: tableName });
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (table.expose_api_read && role <= table.min_role_read) {
     var rows;
-    if (req.query && req.query !== {}) {
-      const fields = await table.getFields();
+    if (req_query && req_query !== {}) {
+      const tbl_fields = await table.getFields();
       const qstate = await stateFieldsToWhere({
-        fields,
+        fields: tbl_fields,
         approximate: false,
         state: req.query
       });
@@ -32,7 +41,7 @@ router.get("/:tableName/", setTenant, async (req, res) => {
     } else {
       rows = await table.getRows();
     }
-    res.json({ success: rows.map(noId) });
+    res.json({ success: rows.map(limitFields(fields)) });
   } else {
     res.status(401).json({ error: "Not authorized" });
   }
