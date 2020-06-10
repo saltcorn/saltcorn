@@ -2,7 +2,7 @@ import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
-import { TwoSplit, ntimes } from "./elements/TwoSplit";
+import { TwoSplit, ntimes, sum } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -85,6 +85,7 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <TwoSplit
           key={ix}
+          ncols={segment.besides.length}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
@@ -103,6 +104,7 @@ export const layoutToNodes = (layout, query, actions) => {
       const node = query.createNode(
         <TwoSplit
           widths={getColWidths(segment)}
+          ncols={segment.besides.length}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -142,12 +144,10 @@ export const craftToSaltcorn = nodes => {
       return { type: "line_break" };
     }
     if (node.displayName === TwoSplit.name) {
+      const widths = [...node.props.widths, 12-sum(node.props.widths)]
       return {
-        besides: [
-          go(nodes[node._childCanvas.Left]),
-          go(nodes[node._childCanvas.Right])
-        ],
-        widths: [node.props.leftCols, 12 - node.props.leftCols]
+        besides: widths.map((w, ix)=>go(nodes[node._childCanvas['Col'+ix]])),
+        widths
       };
     }
     if (node.displayName === Field.name) {

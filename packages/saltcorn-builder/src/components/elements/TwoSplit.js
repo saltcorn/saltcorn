@@ -11,7 +11,7 @@ export const ntimes = (n,f)=>{
   return res
 }
 
-const sum = xs=>{
+export const sum = xs=>{
   var res=0
   for (const x of xs) 
     res+=x;
