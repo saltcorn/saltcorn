@@ -167,7 +167,7 @@ const render = async (row, fields, layout, viewname, table, role) => {
         await asyncMap(segment.besides, async (t, ix) =>
           div(
             {
-              class: `col-sm-${segment.widths ? segment.widths[ix] : defwidth}`
+              class: `col-sm-${segment.widths ? segment.widths[ix] : defwidth} text-${segment.aligns? segment.aligns[ix]:''}`
             },
             await go(t)
           )
