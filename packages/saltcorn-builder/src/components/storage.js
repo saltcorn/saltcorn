@@ -9,14 +9,17 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
-const getColWidths=(segment)=>{
-  if(!segment.widths) 
-    return ntimes(segment.besides.length -1, ()=>12/segment.besides.length)
-  
-  var widths = [...segment.widths]
-  widths.pop()
-  return widths
-}
+const getColWidths = segment => {
+  if (!segment.widths)
+    return ntimes(
+      segment.besides.length - 1,
+      () => 12 / segment.besides.length
+    );
+
+  var widths = [...segment.widths];
+  widths.pop();
+  return widths;
+};
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
@@ -32,7 +35,7 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "line_break") {
-      return <LineBreak  key={ix}/>;
+      return <LineBreak key={ix} />;
     } else if (segment.type === "field") {
       return (
         <Field
@@ -86,7 +89,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <TwoSplit
           key={ix}
           ncols={segment.besides.length}
-          aligns={segment.aligns||segment.besides.map(()=>'left')}
+          aligns={segment.aligns || segment.besides.map(() => "left")}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
@@ -106,7 +109,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <TwoSplit
           widths={getColWidths(segment)}
           ncols={segment.besides.length}
-          aligns={segment.aligns||segment.besides.map(()=>'left')}
+          aligns={segment.aligns || segment.besides.map(() => "left")}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -146,9 +149,11 @@ export const craftToSaltcorn = nodes => {
       return { type: "line_break" };
     }
     if (node.displayName === TwoSplit.name) {
-      const widths = [...node.props.widths, 12-sum(node.props.widths)]
+      const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
-        besides: widths.map((w, ix)=>go(nodes[node._childCanvas['Col'+ix]])),
+        besides: widths.map((w, ix) =>
+          go(nodes[node._childCanvas["Col" + ix]])
+        ),
         aligns: node.props.aligns,
         widths
       };
