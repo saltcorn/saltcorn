@@ -254,7 +254,7 @@ const renderForm = form => {
     form.formStyle = "vert";
     var collapsedSummary = "";
     Object.entries(form.values).forEach(([k, v]) => {
-      if (k[0] !== "_") collapsedSummary += `${k}:${v} `;
+      if (k[0] !== "_") collapsedSummary += `${text(k)}:${text(v)} `;
     });
     return div(
       { class: "dropdown" },
