@@ -6,7 +6,8 @@ const {
   text,
   h3,
   button,
-  textarea
+  textarea,
+  text_attr
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 
@@ -16,7 +17,7 @@ const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
         .split(",")
-        .map(o => text(o.trim()))
+        .map(o => text_attr(o.trim()))
         .map(o => option({ value: o, ...(v === o && { selected: true }) }, o))
     : optsStr.map(({ name, label }) =>
         option({ value: name, ...(v === name && { selected: true }) }, label)
@@ -51,8 +52,8 @@ const string = {
           ? select(
               {
                 class: ["form-control", cls],
-                name: text(nm),
-                id: `input${text(nm)}`
+                name: text_attr(nm),
+                id: `input${text_attr(nm)}`
               },
               required
                 ? getStrOptions(v, attrs.options)
@@ -65,8 +66,8 @@ const string = {
           ? select(
               {
                 class: ["form-control", cls],
-                name: text(nm),
-                id: `input${text(nm)}`,
+                name: text_attr(nm),
+                id: `input${text_attr(nm)}`,
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
                   JSON.stringify(attrs.calcOptions)
@@ -77,9 +78,9 @@ const string = {
           : input({
               type: "text",
               class: ["form-control", cls],
-              name: text(nm),
-              id: `input${text(nm)}`,
-              ...(isdef(v) && { value: text(v) })
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              ...(isdef(v) && { value: text_attr(v) })
             })
     },
     textarea: {
@@ -88,8 +89,8 @@ const string = {
         textarea(
           {
             class: ["form-control", cls],
-            name: text(nm),
-            id: `input${text(nm)}`,
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
             rows: 10
           },
           text(v) || ""
@@ -119,12 +120,12 @@ const int = {
         input({
           type: "number",
           class: ["form-control", cls],
-          name: text(nm),
-          id: `input${text(nm)}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
           step: "1",
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
-          ...(isdef(v) && { value: text(v) })
+          ...(isdef(v) && { value: text_attr(v) })
         })
     }
   },
@@ -162,11 +163,11 @@ const float = {
         input({
           type: "number",
           class: ["form-control", cls],
-          name: text(nm),
-          id: `input${text(nm)}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
-          ...(isdef(v) && { value: text(v) })
+          ...(isdef(v) && { value: text_attr(v) })
         })
     }
   },
@@ -199,7 +200,7 @@ const date = {
   contract: () => is.date,
   attributes: [],
   fieldviews: {
-    show: { isEdit: false, run: d => text(d.toISOString()) },
+    show: { isEdit: false, run: d => text(typeof d ==='string' ? text(d) :d.toISOString()) },
     relative: { isEdit: false, run: d => text(moment(d).fromNow()) },
     edit: {
       isEdit: true,
@@ -207,9 +208,9 @@ const date = {
         input({
           type: "text",
           class: ["form-control", cls],
-          name: text(nm),
-          id: `input${text(nm)}`,
-          ...(isdef(v) && { value: text(v.toISOString()) })
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && { value: text_attr(typeof v ==='string' ?v : v.toISOString()) })
         })
     }
   },
@@ -243,8 +244,8 @@ const bool = {
         input({
           class: ["form-check-input", cls],
           type: "checkbox",
-          name: text(nm),
-          id: `input${text(nm)}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
           ...(v && { checked: true })
         })
     },
@@ -253,15 +254,15 @@ const bool = {
       run: (nm, v, attrs, cls) =>
         input({
           type: "hidden",
-          name: text(nm),
-          id: `input${text(nm)}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
           value: !isdef(v) ? "" : v ? "T" : "F"
         }) +
         button(
           {
-            onClick: `tristateClick('${text(nm)}')`,
+            onClick: `tristateClick('${text_attr(nm)}')`,
             type: "button",
-            id: `trib${text(nm)}`
+            id: `trib${text_attr(nm)}`
           },
           !isdef(v) ? "?" : v ? "T" : "F"
         )

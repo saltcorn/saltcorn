@@ -187,14 +187,14 @@ const mkFormRowForField = (
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
         hdr.class
-      }" name="${text(name)}" ${v ? `value="${text(v[hdr.name])}"` : ""}>`;
+      }" name="${text_attr(name)}" ${v ? `value="${text_attr(v[hdr.name])}"` : ""}>`;
     case "select":
       const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass} ${hdr.class}" name="${text(
+        `<select class="form-control ${validClass} ${hdr.class}" name="${text_attr(
           name
-        )}" id="input${text(name)}">${opts}</select>`,
+        )}" id="input${text_attr(name)}">${opts}</select>`,
         errorFeedback,
         formStyle,
         labelCols
@@ -206,7 +206,7 @@ const mkFormRowForField = (
           v[hdr.name] ? text(v[hdr.name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class
-        }" name="${text(name)}" id="input${text(name)}">`,
+        }" name="${text_attr(name)}" id="input${text_attr(name)}">`,
         errorFeedback,
         formStyle,
         labelCols
@@ -217,7 +217,7 @@ const mkFormRowForField = (
         hdr,
         `<select class="form-control ${validClass} ${
           hdr.class
-        }" class="chosen-select" multiple name="${text(name)}" id="input${text(
+        }" class="chosen-select" multiple name="${text_attr(name)}" id="input${text_attr(
           name
         )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
         errorFeedback,
@@ -228,8 +228,8 @@ const mkFormRowForField = (
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
-      }" name="${name}" id="input${text(name)}" ${
-        v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
+      }" name="${name}" id="input${text_attr(name)}" ${
+        v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
       }>`;
       const inner = hdr.postText
         ? div(
