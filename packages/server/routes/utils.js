@@ -1,5 +1,6 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
 
 function loggedIn(req, res, next) {
   if (req.user && req.user.tenant === db.getTenantSchema()) {
@@ -36,10 +37,25 @@ const setTenant = (req, res, next) => {
     next();
   }
 };
+const ensure_final_slash=(s)=> s.endsWith("/") ? s : s+"/"
+
+const get_base_url=(req)=>{
+  const cfg=getState().getConfig('base_url', '')
+  if(cfg) return ensure_final_slash(cfg);
+
+  var ports = "";
+  const host = req.get("host");
+  if (typeof host === "string") {
+    const hosts = host.split(":");
+    if (hosts.length > 1) ports = `:${hosts[1]}`;
+  }
+  return `${req.protocol}://${req.hostname}${ports}/`;
+}
 
 module.exports = {
   sqlsanitize,
   loggedIn,
   isAdmin,
-  setTenant
+  setTenant,
+  get_base_url
 };

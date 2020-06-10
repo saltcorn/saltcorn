@@ -1,6 +1,5 @@
 const express = require("express");
 const mountRoutes = require("./routes");
-const { ul, li, div, small } = require("@saltcorn/markup/tags");
 
 const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
@@ -15,7 +14,7 @@ const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
 const errors = require("./errors");
 const { getConfig } = require("@saltcorn/data/models/config");
-const { setTenant } = require("./routes/utils.js");
+const { setTenant, get_base_url } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require('helmet')
@@ -111,6 +110,28 @@ const getApp = async () => {
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
+
+  app.get("/robots.txt", setTenant, async (req,res)=>{
+    const base = get_base_url(req)
+    res.set('Content-Type', 'text/plain')
+    res.send(`User-agent: * 
+Allow: /
+Sitemap: ${base}sitemap.xml
+`)
+  });
+  app.get("/sitemap.xml", setTenant, async (req,res)=>{
+    const base = get_base_url(req)
+    res.set('Content-Type', 'text/xml')
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+    <urlset
+          xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+      <loc>${base}</loc>
+      <lastmod>${new Date().toISOString()}</lastmod>
+      <priority>1.00</priority>
+    </url>
+    </urlset>`)
+  });
   app.use(errors);
   return app;
 };
