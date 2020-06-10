@@ -11,14 +11,25 @@ const ntimes = (n,f)=>{
   return res
 }
 
-export const TwoSplit = ({ leftCols, contents, ncols }) => {
+const sum = xs=>{
+  var res=0
+  for (const x of xs) 
+    res+=x;
+  return res
+}
+
+const resetWidths=ncols=>ntimes(ncols-1, ()=>12/ncols)
+
+const getWidth=(widths, colix)=>colix<widths.length-1 ? widths : 12-sum(widths)
+
+export const TwoSplit = ({ widths, contents, ncols }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
   return (
     <div className="row" ref={dom => connect(drag(dom))}>
       {ntimes(ncols, ix=>
-      <div key={ix} className={`split-col col-sm-${12/ncols}`}>
+      <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
         <Canvas id={`Col${ix}`} is="div" className="canvas">
           {contents[ix]}
         </Canvas>
@@ -28,9 +39,10 @@ export const TwoSplit = ({ leftCols, contents, ncols }) => {
     </div>
   );
 };
+
 export const TwoSplitSettings = () => {
   const { setProp, leftCols, ncols } = useNode(node => ({
-    leftCols: node.data.props.leftCols,
+    widths: node.data.props.widths,
     ncols: node.data.props.ncols,
   }));
   return (
@@ -43,20 +55,26 @@ export const TwoSplitSettings = () => {
         step="1"
         min="1"
         max="4"
-        onChange={e => setProp(prop => (prop.ncols = e.target.value))}
+        onChange={e => setProp(prop => {
+          prop.ncols = e.target.value;
+          prop.widths =resetWidths(e.target.value)
+        })}
       />
     </div>
+    {ntimes(ncols, ix=>
+
     <div>
-      <label>Left columns (out of 12)</label>
+      <label>Column {ix} width (out of 12)</label>
       <input
         type="number"
-        value={leftCols}
+        value={widths[ix]}
         step="1"
         min="1"
         max="11"
-        onChange={e => setProp(prop => (prop.leftCols = e.target.value))}
+        onChange={e => setProp(prop => (prop.widths[ix] = e.target.value))}
       />
     </div>
+    )}
     
     
     </div>
@@ -64,7 +82,7 @@ export const TwoSplitSettings = () => {
 };
 TwoSplit.craft = {
   defaultProps: {
-    leftCols: 6,
+    widths: [6],
     ncols: 2
   },
   related: {

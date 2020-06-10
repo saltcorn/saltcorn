@@ -9,6 +9,12 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
+const getColWidths=(segment)=>{
+  if(!segment.widths) {
+    
+  }
+}
+
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
@@ -76,7 +82,7 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <TwoSplit
           key={ix}
-          leftCols={segment.widths ? segment.widths[0] : 6}
+          widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -93,7 +99,7 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.besides) {
       const node = query.createNode(
         <TwoSplit
-          leftCols={segment.widths ? segment.widths[0] : 6}
+          widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
       );
