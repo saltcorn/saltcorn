@@ -10,7 +10,7 @@ const { div, nbsp, p } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
-const { setTenant, isAdmin } = require("../routes/utils.js");
+const { setTenant, isAdmin } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;

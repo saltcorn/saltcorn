@@ -1,4 +1,4 @@
-const { a, input, div, ul, text } = require("./tags");
+const { a, input, div, ul, text, text_attr } = require("./tags");
 
 describe("tags", () => {
   it("renders", () => {
@@ -35,6 +35,7 @@ describe("tags", () => {
       div({ class: ["foo bar", "", undefined, null, false, "baz"] }, 5)
     ).toBe('<div class="foo bar baz">5</div>');
     expect(text("foo")).toBe("foo");
+    expect(text_attr('" onMouseOver="alert(1);')).toBe("&quot; onMouseOver=&quot;alert(1);");
     expect(text(1)).toBe("1");
     expect(text(0)).toBe("0");
   });

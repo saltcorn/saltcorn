@@ -3,6 +3,7 @@ const { contract, is } = require("contractis");
 
 const configTypes = {
   site_name: { type: "String", label: "Site name", default: "Saltcorn" },
+  base_url: { type: "String", label: "Base URL", default: "" },
   available_packs: { type: "hidden", label: "Available packs" },
   available_packs_fetched_at: {
     type: "Date",

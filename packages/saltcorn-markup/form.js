@@ -1,4 +1,4 @@
-const { p, div, i, label, text, button, a, span } = require("./tags");
+const { p, div, i, label, text, text_attr, button, a, span } = require("./tags");
 const { contract, is } = require("contractis");
 
 const mkShowIf = sIf =>
@@ -30,7 +30,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             { class: "form-check" },
             inner,
             label(
-              { for: `input${text(hdr.name)}`, class: "form-check-label" },
+              { for: `input${text_attr(hdr.name)}`, class: "form-check-label" },
               text(hdr.label)
             ),
             text(error)
@@ -39,7 +39,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       : [
           label(
             {
-              for: `input${text(hdr.name)}`,
+              for: `input${text_attr(hdr.name)}`,
               class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`
             },
             text(hdr.label)
@@ -74,7 +74,7 @@ const select_options = (v, hdr) => {
     .map(o => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
-      return `<option value="${text(value)}" ${
+      return `<option value="${text_attr(value)}" ${
         isSelected(value) ? "selected" : ""
       }>${text(label)}</option>`;
     })
@@ -187,14 +187,14 @@ const mkFormRowForField = (
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
         hdr.class
-      }" name="${text(name)}" ${v ? `value="${text(v[hdr.name])}"` : ""}>`;
+      }" name="${text_attr(name)}" ${v ? `value="${text_attr(v[hdr.name])}"` : ""}>`;
     case "select":
       const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass} ${hdr.class}" name="${text(
+        `<select class="form-control ${validClass} ${hdr.class}" name="${text_attr(
           name
-        )}" id="input${text(name)}">${opts}</select>`,
+        )}" id="input${text_attr(name)}">${opts}</select>`,
         errorFeedback,
         formStyle,
         labelCols
@@ -206,7 +206,7 @@ const mkFormRowForField = (
           v[hdr.name] ? text(v[hdr.name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class
-        }" name="${text(name)}" id="input${text(name)}">`,
+        }" name="${text_attr(name)}" id="input${text_attr(name)}">`,
         errorFeedback,
         formStyle,
         labelCols
@@ -217,7 +217,7 @@ const mkFormRowForField = (
         hdr,
         `<select class="form-control ${validClass} ${
           hdr.class
-        }" class="chosen-select" multiple name="${text(name)}" id="input${text(
+        }" class="chosen-select" multiple name="${text_attr(name)}" id="input${text_attr(
           name
         )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
         errorFeedback,
@@ -228,8 +228,8 @@ const mkFormRowForField = (
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
-      }" name="${name}" id="input${text(name)}" ${
-        v && isdef(v[hdr.name]) ? `value="${text(v[hdr.name])}"` : ""
+      }" name="${name}" id="input${text_attr(name)}" ${
+        v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
       }>`;
       const inner = hdr.postText
         ? div(
@@ -254,7 +254,7 @@ const renderForm = form => {
     form.formStyle = "vert";
     var collapsedSummary = "";
     Object.entries(form.values).forEach(([k, v]) => {
-      if (k[0] !== "_") collapsedSummary += `${k}:${v} `;
+      if (k[0] !== "_") collapsedSummary += `${text(k)}:${text_attr(v)} `;
     });
     return div(
       { class: "dropdown" },

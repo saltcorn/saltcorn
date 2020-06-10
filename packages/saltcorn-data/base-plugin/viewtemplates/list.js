@@ -125,7 +125,7 @@ const run = async (
     aggregations,
     limit: rows_per_page,
     offset: (current_page - 1) * rows_per_page,
-    ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
+    ...(state._sortby && state._sortby !=='undefined' ? { orderBy: state._sortby } : { orderBy: "id" })
   });
 
   var page_opts =
@@ -133,9 +133,9 @@ const run = async (
       ? { onRowSelect: extraOpts.onRowSelect }
       : {};
 
-  if (rows.length === rows_per_page) {
+  if (rows.length === rows_per_page || current_page>1) {
     const nrows = await table.countRows(qstate);
-    if (nrows > rows_per_page) {
+    if (nrows > rows_per_page|| current_page>1) {
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
