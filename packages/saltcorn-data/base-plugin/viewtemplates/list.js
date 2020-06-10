@@ -125,7 +125,7 @@ const run = async (
     aggregations,
     limit: rows_per_page,
     offset: (current_page - 1) * rows_per_page,
-    ...(state._sortby ? { orderBy: state._sortby } : { orderBy: "id" })
+    ...(state._sortby && state._sortby !=='undefined' ? { orderBy: state._sortby } : { orderBy: "id" })
   });
 
   var page_opts =
