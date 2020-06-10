@@ -16,7 +16,7 @@ const getFlashes = req =>
     return items.map(item => {
       const [nm, url] = item.split("::");
       return { link: url, label: nm };
-    });
+    }).filter(item=>item.link || item.label);
   };
 
 module.exports = function(req, res, next) {
