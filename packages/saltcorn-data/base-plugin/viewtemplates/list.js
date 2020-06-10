@@ -133,9 +133,9 @@ const run = async (
       ? { onRowSelect: extraOpts.onRowSelect }
       : {};
 
-  if (rows.length === rows_per_page) {
+  if (rows.length === rows_per_page || current_page>1) {
     const nrows = await table.countRows(qstate);
-    if (nrows > rows_per_page) {
+    if (nrows > rows_per_page|| current_page>1) {
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
