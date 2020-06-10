@@ -3,7 +3,7 @@ import { Text } from "./Text";
 
 import { Canvas, useNode } from "@craftjs/core";
 
-const ntimes = (n,f)=>{
+export const ntimes = (n,f)=>{
   var res=[]
   for (let index = 0; index < n; index++) {
     res.push(f(index))    
@@ -20,12 +20,13 @@ const sum = xs=>{
 
 const resetWidths=ncols=>ntimes(ncols-1, ()=>12/ncols)
 
-const getWidth=(widths, colix)=>colix<widths.length-1 ? widths : 12-sum(widths)
+const getWidth=(widths, colix)=>colix<widths.length ? widths[colix] : 12-sum(widths)
 
 export const TwoSplit = ({ widths, contents, ncols }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
+  
   return (
     <div className="row" ref={dom => connect(drag(dom))}>
       {ntimes(ncols, ix=>
@@ -41,7 +42,7 @@ export const TwoSplit = ({ widths, contents, ncols }) => {
 };
 
 export const TwoSplitSettings = () => {
-  const { setProp, leftCols, ncols } = useNode(node => ({
+  const { setProp, widths, ncols } = useNode(node => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
   }));
@@ -61,17 +62,16 @@ export const TwoSplitSettings = () => {
         })}
       />
     </div>
-    {ntimes(ncols, ix=>
-
-    <div>
-      <label>Column {ix} width (out of 12)</label>
+    {ntimes(ncols-1, ix=>
+    <div key={ix}>
+      <label>Column {ix+1} width (out of 12)</label>
       <input
         type="number"
         value={widths[ix]}
         step="1"
         min="1"
         max="11"
-        onChange={e => setProp(prop => (prop.widths[ix] = e.target.value))}
+        onChange={e => setProp(prop => (prop.widths[ix] = +e.target.value))}
       />
     </div>
     )}

@@ -2,7 +2,7 @@ import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
-import { TwoSplit } from "./elements/TwoSplit";
+import { TwoSplit, ntimes } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -10,15 +10,18 @@ import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
 const getColWidths=(segment)=>{
-  if(!segment.widths) {
-    
-  }
+  if(!segment.widths) 
+    return ntimes(segment.besides.length -1, ()=>12/segment.besides.length)
+  
+  var widths = [...segment.widths]
+  widths.pop()
+  return widths
 }
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
-    if (!segment) return <Empty />;
+    if (!segment) return <Empty key={ix} />;
     if (segment.type === "blank") {
       return (
         <Text
@@ -29,7 +32,7 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "line_break") {
-      return <LineBreak />;
+      return <LineBreak  key={ix}/>;
     } else if (segment.type === "field") {
       return (
         <Field
