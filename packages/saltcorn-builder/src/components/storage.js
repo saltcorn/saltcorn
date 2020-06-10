@@ -2,17 +2,29 @@ import React, { Fragment } from "react";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
-import { TwoSplit } from "./elements/TwoSplit";
+import { TwoSplit, ntimes, sum } from "./elements/TwoSplit";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 
+const getColWidths = segment => {
+  if (!segment.widths)
+    return ntimes(
+      segment.besides.length - 1,
+      () => 12 / segment.besides.length
+    );
+
+  var widths = [...segment.widths];
+  widths.pop();
+  return widths;
+};
+
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
-    if (!segment) return <Empty />;
+    if (!segment) return <Empty key={ix} />;
     if (segment.type === "blank") {
       return (
         <Text
@@ -23,7 +35,7 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "line_break") {
-      return <LineBreak />;
+      return <LineBreak key={ix} />;
     } else if (segment.type === "field") {
       return (
         <Field
@@ -76,9 +88,10 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <TwoSplit
           key={ix}
-          leftCols={segment.widths ? segment.widths[0] : 6}
-          left={toTag(segment.besides[0])}
-          right={toTag(segment.besides[1])}
+          ncols={segment.besides.length}
+          aligns={segment.aligns || segment.besides.map(() => "left")}
+          widths={getColWidths(segment)}
+          contents={segment.besides.map(toTag)}
         />
       );
     } else if (segment.above) {
@@ -94,9 +107,10 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.besides) {
       const node = query.createNode(
         <TwoSplit
-          leftCols={segment.widths ? segment.widths[0] : 6}
-          left={toTag(segment.besides[0])}
-          right={toTag(segment.besides[1])}
+          widths={getColWidths(segment)}
+          ncols={segment.besides.length}
+          aligns={segment.aligns || segment.besides.map(() => "left")}
+          contents={segment.besides.map(toTag)}
         />
       );
       actions.add(node, parent);
@@ -135,12 +149,13 @@ export const craftToSaltcorn = nodes => {
       return { type: "line_break" };
     }
     if (node.displayName === TwoSplit.name) {
+      const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
-        besides: [
-          go(nodes[node._childCanvas.Left]),
-          go(nodes[node._childCanvas.Right])
-        ],
-        widths: [node.props.leftCols, 12 - node.props.leftCols]
+        besides: widths.map((w, ix) =>
+          go(nodes[node._childCanvas["Col" + ix]])
+        ),
+        aligns: node.props.aligns,
+        widths
       };
     }
     if (node.displayName === Field.name) {
