@@ -18,6 +18,7 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
+const helmet = require('helmet')
 
 const getApp = async () => {
   const app = express();
@@ -26,6 +27,8 @@ const getApp = async () => {
   await migrate();
 
   await loadAllPlugins();
+
+  app.use(helmet())
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
