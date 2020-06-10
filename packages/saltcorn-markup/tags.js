@@ -1,4 +1,5 @@
 const xss = require("xss");
+const escape = require('escape-html');
 
 const ppClasses = cs =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
@@ -49,6 +50,8 @@ const domReady = js =>
   `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
 const text = t => (t === 0 ? "0" : xss(t));
+const text_attr = t => (t === 0 ? "0" : escape(t));
+
 const nbsp = "&nbsp;";
 module.exports = {
   a: mkTag("a"),
@@ -91,6 +94,7 @@ module.exports = {
   domReady,
   input,
   text,
+  text_attr,
   nbsp,
   mkTag
 };

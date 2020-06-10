@@ -1,4 +1,4 @@
-const { p, div, i, label, text, button, a, span } = require("./tags");
+const { p, div, i, label, text, text_attr, button, a, span } = require("./tags");
 const { contract, is } = require("contractis");
 
 const mkShowIf = sIf =>
@@ -30,7 +30,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             { class: "form-check" },
             inner,
             label(
-              { for: `input${text(hdr.name)}`, class: "form-check-label" },
+              { for: `input${text_attr(hdr.name)}`, class: "form-check-label" },
               text(hdr.label)
             ),
             text(error)
@@ -39,7 +39,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       : [
           label(
             {
-              for: `input${text(hdr.name)}`,
+              for: `input${text_attr(hdr.name)}`,
               class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`
             },
             text(hdr.label)
@@ -74,7 +74,7 @@ const select_options = (v, hdr) => {
     .map(o => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
-      return `<option value="${text(value)}" ${
+      return `<option value="${text_attr(value)}" ${
         isSelected(value) ? "selected" : ""
       }>${text(label)}</option>`;
     })
