@@ -1,6 +1,7 @@
 
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
+const { ul, li, div, small } = require("@saltcorn/markup/tags");
 
 const getFlashes = req =>
   ["error", "success", "danger", "warning"]
