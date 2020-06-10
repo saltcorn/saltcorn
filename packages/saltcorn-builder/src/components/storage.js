@@ -77,8 +77,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <TwoSplit
           key={ix}
           leftCols={segment.widths ? segment.widths[0] : 6}
-          left={toTag(segment.besides[0])}
-          right={toTag(segment.besides[1])}
+          contents={segment.besides.map(toTag)}
         />
       );
     } else if (segment.above) {
@@ -95,8 +94,7 @@ export const layoutToNodes = (layout, query, actions) => {
       const node = query.createNode(
         <TwoSplit
           leftCols={segment.widths ? segment.widths[0] : 6}
-          left={toTag(segment.besides[0])}
-          right={toTag(segment.besides[1])}
+          contents={segment.besides.map(toTag)}
         />
       );
       actions.add(node, parent);

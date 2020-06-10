@@ -46,7 +46,7 @@ const Toolbox = () => {
               ref={ref =>
                 connectors.create(
                   ref,
-                  <TwoSplit left={<Empty />} right={<Empty />} />
+                  <TwoSplit contents={[<Empty />,<Empty />]}  />
                 )
               }
             >
