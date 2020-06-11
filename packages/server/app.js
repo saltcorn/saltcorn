@@ -19,8 +19,9 @@ const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require('helmet')
 const wrapper = require('./wrapper')
+const csrf = require('csurf')
 
-const getApp = async () => {
+const getApp = async (opts={}) => {
   const app = express();
   const sql_log = await getConfig("log_sql");
   if (sql_log) db.set_sql_logging(); // dont override cli flag
@@ -107,6 +108,13 @@ const getApp = async () => {
   });
 
   app.use(wrapper);
+  if(!opts.disableCsrf) app.use(csrf());
+  else 
+  app.use((req, res, next)=> {
+    req.csrfToken=()=>'';
+    next();
+  })
+
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
@@ -132,6 +140,7 @@ Sitemap: ${base}sitemap.xml
     </url>
     </urlset>`)
   });
+  if(!opts.disableCatch)
   app.use(errors);
   return app;
 };

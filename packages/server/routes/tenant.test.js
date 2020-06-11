@@ -21,7 +21,7 @@ beforeAll(async () => {
 describe("tenant routes", () => {
   it("creates tenant", async () => {
     db.enable_multi_tenant();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/tenant/create")
       .send("subdomain=test2")
@@ -30,7 +30,7 @@ describe("tenant routes", () => {
   });
   it("creates tenant with capital letter", async () => {
     db.enable_multi_tenant();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/tenant/create")
       .send("subdomain=Peashoot")

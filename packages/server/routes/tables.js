@@ -75,7 +75,7 @@ router.get("/new/", setTenant, isAdmin, async (req, res) => {
         action: "/table",
         submitLabel: "Create",
         fields: [{ label: "Table name", name: "name", input_type: "text" }]
-      })
+      }), req.csrfToken()
     )
   );
 });
@@ -189,7 +189,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       {
         type: "card",
         title: "Edit table properties",
-        contents: renderForm(tableForm(table))
+        contents: renderForm(tableForm(table), req.csrfToken())
       }
     ]
   });

@@ -188,7 +188,7 @@ module.exports = async (req, res) => {
 
     res.sendWrap(
       `${view.name} view`,
-      div(state_form ? renderForm(state_form) : "", resp)
+      div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
     );
   } else {
     const viewlis = views.map(v => li(link(`/view/${v.name}`, v.name)));

@@ -165,12 +165,12 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const field = await Field.findOne({ id });
   const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
-  res.sendWrap(`Edit field`, renderForm(wfres.renderForm));
+  res.sendWrap(`Edit field`, renderForm(wfres.renderForm, req.csrfToken()));
 });
 
 router.get("/new/:table_id", setTenant, isAdmin, async (req, res) => {
   const wfres = await fieldFlow.run(req.params);
-  res.sendWrap(`New field`, renderForm(wfres.renderForm));
+  res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
 });
 
 router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
@@ -186,6 +186,6 @@ router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const wfres = await fieldFlow.run(req.body);
   if (wfres.renderForm)
-    res.sendWrap(`Field attributes`, renderForm(wfres.renderForm));
+    res.sendWrap(`Field attributes`, renderForm(wfres.renderForm, req.csrfToken()));
   else res.redirect(wfres.redirect);
 });

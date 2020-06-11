@@ -1,5 +1,5 @@
 const db = require("@saltcorn/data/db");
-const { pre, p, text } = require("@saltcorn/markup/tags");
+const { pre, p, text,h3 } = require("@saltcorn/markup/tags");
 const Crash = require("@saltcorn/data/models/crash");
 
 module.exports = async function(err, req, res, next) {
@@ -7,7 +7,7 @@ module.exports = async function(err, req, res, next) {
   await Crash.create(err, req);
   res.status(500).sendWrap(
     "Internal Error",
-    pre(text(err.stack)) +
+    h3("An error occurred" ) +
       p(`A report has been logged and a team of bug-squashing squirrels 
     has been dispatched to deal with the situation.`)
   );

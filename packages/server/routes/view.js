@@ -25,7 +25,7 @@ router.get("/:viewname", setTenant, async (req, res) => {
 
     res.sendWrap(
       `${view.name} view`,
-      div(state_form ? renderForm(state_form) : "", resp)
+      div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
     );
   }
 });

@@ -195,7 +195,7 @@ const splitUniques = (fields, state) => {
   return { uniques, nonUniques };
 };
 
-const run = async (table_id, viewname, config, state) => {
+const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log({config})
   const { columns } = config;
   const table = await Table.findOne({ id: table_id });
@@ -221,7 +221,7 @@ const run = async (table_id, viewname, config, state) => {
       field.input_type = "hidden";
     }
   });
-  return renderForm(form);
+  return renderForm(form, req.csrfToken());
 };
 
 const fill_presets = async (table, req, fixed) => {
@@ -251,7 +251,7 @@ const runPost = async (
   const form = await getForm(table, viewname, columns, body.id);
   form.validate(body);
   if (form.hasErrors) {
-    res.sendWrap(`${table.name} create new`, renderForm(form));
+    res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken()));
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
     var row = { ...use_fixed, ...form.values };

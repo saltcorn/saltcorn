@@ -35,7 +35,7 @@ router.get("/login", setTenant, async (req, res) => {
   const allow_signup = getState().getConfig("allow_signup");
   res.sendWrap(
     `Login`,
-    renderForm(loginForm()),
+    renderForm(loginForm(), req.csrfToken()),
     ...(allow_signup
       ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
       : [])
@@ -58,7 +58,7 @@ router.get("/signup", setTenant, async (req, res) => {
     form.submitLabel = "Sign up";
     res.sendWrap(
       `Sign up`,
-      renderForm(form),
+      renderForm(form, req.csrfToken()),
       "Already have an account? ",
       link("/auth/login", "Login »")
     );
@@ -76,7 +76,7 @@ router.get("/create_first_user", setTenant, async (req, res) => {
     form.submitLabel = "Create user";
     form.blurb =
       "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-    res.sendWrap(`Create first user`, renderForm(form));
+    res.sendWrap(`Create first user`, renderForm(form, req.csrfToken()));
   } else {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");

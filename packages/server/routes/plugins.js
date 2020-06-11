@@ -131,14 +131,14 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
 });
 
 router.get("/new/", setTenant, isAdmin, async (req, res) => {
-  res.sendWrap(`New Plugin`, renderForm(pluginForm()));
+  res.sendWrap(`New Plugin`, renderForm(pluginForm(), req.csrfToken()));
 });
 
 router.get("/:id/", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const plugin = await Plugin.findOne({ id });
 
-  res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin)));
+  res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin), req.csrfToken()));
 });
 
 router.post("/", setTenant, isAdmin, async (req, res) => {
@@ -161,7 +161,7 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
     } catch (e) {
       req.flash("error", `${e.message}`);
       const form = pluginForm(plugin);
-      res.sendWrap(`Edit Plugin`, renderForm(form));
+      res.sendWrap(`Edit Plugin`, renderForm(form, req.csrfToken()));
     }
   }
 });

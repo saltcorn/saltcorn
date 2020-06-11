@@ -15,21 +15,21 @@ afterAll(db.close);
 
 describe("Public auth Endpoints", () => {
   it("should show login", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/auth/login/")
       .expect(toSucceed());
   });
 
   it("should show signup", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/auth/signup/")
       .expect(toSucceed());
   });
 
   it("should allow logout for unauth user", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app).get("/auth/logout/");
     expect(toRedirect("/"));
   });
@@ -37,13 +37,13 @@ describe("Public auth Endpoints", () => {
 
 describe("login process", () => {
   it("should say Login when not logged in", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app).get("/");
     expect(toInclude("Login"));
   });
 
   it("should say Logout when logged in", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/")
@@ -55,7 +55,7 @@ describe("login process", () => {
 
 describe("signup process", () => {
   it("should sign up", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
@@ -66,7 +66,7 @@ describe("signup process", () => {
 
 describe("user admin", () => {
   it("should list tables", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/")
@@ -75,7 +75,7 @@ describe("user admin", () => {
       .expect(toInclude("staff@foo.com"));
   });
   it("shows new user form", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get("/useradmin/new")
@@ -83,7 +83,7 @@ describe("user admin", () => {
       .expect(toSucceed());
   });
   it("creates new user", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/useradmin/save")
@@ -95,7 +95,7 @@ describe("user admin", () => {
   });
 
   it("can login with new user", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/auth/login/")
       .send("email=staff2@foo.com")
@@ -104,7 +104,7 @@ describe("user admin", () => {
   });
 
   it("shows edit user form", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     expect(user.role_id).toBe(8);
@@ -115,7 +115,7 @@ describe("user admin", () => {
   });
 
   it("edits user", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     await request(app)
@@ -129,7 +129,7 @@ describe("user admin", () => {
     expect(edituser.role_id).toBe(4);
   });
   it("deletes user", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
     await request(app)

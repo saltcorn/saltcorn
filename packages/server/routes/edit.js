@@ -17,7 +17,7 @@ router.get("/:tname", setTenant, loggedIn, async (req, res) => {
   const fields = await Field.find({ table_id: table.id });
   const form = new Form({ action: `/edit/${tname}`, fields });
   await form.fill_fkey_options();
-  res.sendWrap(`New ${table.name}`, renderForm(form));
+  res.sendWrap(`New ${table.name}`, renderForm(form, req.csrfToken()));
 });
 
 router.get("/:tname/:id", setTenant, loggedIn, async (req, res) => {
@@ -30,7 +30,7 @@ router.get("/:tname/:id", setTenant, loggedIn, async (req, res) => {
   form.hidden("id");
   await form.fill_fkey_options();
 
-  res.sendWrap(`Edit ${table.name}`, renderForm(form));
+  res.sendWrap(`Edit ${table.name}`, renderForm(form, req.csrfToken()));
 });
 
 router.post("/:tname", setTenant, loggedIn, async (req, res) => {
@@ -42,7 +42,7 @@ router.post("/:tname", setTenant, loggedIn, async (req, res) => {
 
   const form = new Form({ action: `/edit/${tname}`, fields, validate: v });
   if (form.hasErrors) {
-    res.sendWrap(`${table.name} create new`, renderForm(form)); // vres.errors.join("\n"));
+    res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken())); // vres.errors.join("\n"));
   } else {
     if (typeof v.id === "undefined") {
       await table.insertRow(form.values);
