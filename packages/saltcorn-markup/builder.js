@@ -14,7 +14,7 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 
-module.exports = ({ options, context, action, stepName, layout }) =>
+module.exports = ({ options, context, action, stepName, layout }, csrfToken) =>
   div(
     script({ src: "/builder_bundle.js" }),
     div({ id: "saltcorn-builder" }),
@@ -27,7 +27,8 @@ module.exports = ({ options, context, action, stepName, layout }) =>
       }),
       input({ type: "hidden", name: "stepName", value: stepName }),
       input({ type: "hidden", name: "columns", value: "" }),
-      input({ type: "hidden", name: "layout", value: "" })
+      input({ type: "hidden", name: "layout", value: "" }),
+      input({ type: "hidden", name: "_csrf", value: csrfToken })
     ),
     script(`builder.renderBuilder(
       "saltcorn-builder", 
