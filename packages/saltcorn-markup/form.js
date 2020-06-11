@@ -302,4 +302,4 @@ const mkForm = (form, csrfToken, errors = {}) => {
   return blurbp + top + csrfField+flds + bot;
 };
 
-module.exports = contract(is.fun([is.class("Form"), is.maybe(is.str)], is.str), renderForm);
+module.exports = contract(is.fun([is.class("Form"), is.str], is.str), renderForm);

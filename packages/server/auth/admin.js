@@ -79,7 +79,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
 
 router.get("/new", setTenant, isAdmin, async (req, res) => {
   const form = await userForm();
-  res.sendWrap("New user", renderForm(form));
+  res.sendWrap("New user", renderForm(form, req.csrfToken()));
 });
 
 router.get("/:id", setTenant, isAdmin, async (req, res) => {
@@ -87,7 +87,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
   const user = await User.findOne({ id });
   const form = await userForm(user);
 
-  res.sendWrap("Edit user", renderForm(form));
+  res.sendWrap("Edit user", renderForm(form, req.csrfToken()));
 });
 
 router.post("/save", setTenant, isAdmin, async (req, res) => {

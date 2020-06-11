@@ -251,7 +251,7 @@ const runPost = async (
   const form = await getForm(table, viewname, columns, body.id);
   form.validate(body);
   if (form.hasErrors) {
-    res.sendWrap(`${table.name} create new`, renderForm(form));
+    res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken()));
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
     var row = { ...use_fixed, ...form.values };
