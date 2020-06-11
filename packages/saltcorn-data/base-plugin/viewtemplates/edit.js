@@ -195,7 +195,7 @@ const splitUniques = (fields, state) => {
   return { uniques, nonUniques };
 };
 
-const run = async (table_id, viewname, config, state) => {
+const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log({config})
   const { columns } = config;
   const table = await Table.findOne({ id: table_id });
@@ -221,7 +221,7 @@ const run = async (table_id, viewname, config, state) => {
       field.input_type = "hidden";
     }
   });
-  return renderForm(form);
+  return renderForm(form, req.csrfToken());
 };
 
 const fill_presets = async (table, req, fixed) => {

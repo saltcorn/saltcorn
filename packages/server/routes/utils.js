@@ -1,6 +1,9 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
+const csrf = require('csurf')
+
+const csrfProtection = csrf()
 
 function loggedIn(req, res, next) {
   if (req.user && req.user.tenant === db.getTenantSchema()) {
@@ -31,10 +34,14 @@ const setTenant = (req, res, next) => {
         ? req.subdomains[0]
         : "public";
     db.runWithTenant(ten, () => {
-      next();
+      csrfProtection(req, res, ()=>{
+        next();
+      })
     });
   } else {
-    next();
+    csrfProtection(req, res, ()=>{
+      next();
+    })
   }
 };
 const ensure_final_slash=(s)=> s.endsWith("/") ? s : s+"/"
@@ -57,5 +64,6 @@ module.exports = {
   loggedIn,
   isAdmin,
   setTenant,
-  get_base_url
+  get_base_url,
+  csrfProtection
 };

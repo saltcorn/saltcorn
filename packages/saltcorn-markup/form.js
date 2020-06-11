@@ -248,7 +248,7 @@ const mkFormRowForField = (
   }
 };
 
-const renderForm = form => {
+const renderForm = (form, csrfToken) => {
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -272,14 +272,15 @@ const renderForm = form => {
 
       div(
         { class: "dropdown-menu", "aria-labelledby": "dropdownMenuButton" },
-        mkForm(form, form.errors)
+        mkForm(form,csrfToken, form.errors)
       )
     );
-  } else return mkForm(form, form.errors);
+  } else return mkForm(form, csrfToken, form.errors);
 };
 
-const mkForm = (form, errors = {}) => {
+const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
+  const csrfField=`<input type="hidden" name="_csrf" value="${csrfToken}">`
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
@@ -298,7 +299,7 @@ const mkForm = (form, errors = {}) => {
   </div>
 </div>
 </form>`;
-  return blurbp + top + flds + bot;
+  return blurbp + top + csrfField+flds + bot;
 };
 
-module.exports = contract(is.fun(is.class("Form"), is.str), renderForm);
+module.exports = contract(is.fun([is.class("Form"), is.maybe(is.str)], is.str), renderForm);
