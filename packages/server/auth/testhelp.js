@@ -46,7 +46,7 @@ const toNotInclude = (txt, expCode = 200) => res => {
   }
 };
 const getStaffLoginCookie = async () => {
-  const app = await getApp();
+  const app = await getApp({disableCsrf: true});
   const res = await request(app)
     .post("/auth/login/")
     .send("email=staff@foo.com")
@@ -56,7 +56,7 @@ const getStaffLoginCookie = async () => {
 };
 
 const getAdminLoginCookie = async () => {
-  const app = await getApp();
+  const app = await getApp({disableCsrf: true});
   const res = await request(app)
     .post("/auth/login/")
     .send("email=admin@foo.com")
@@ -68,7 +68,7 @@ const getAdminLoginCookie = async () => {
 
 const itShouldRedirectUnauthToLogin = path => {
   it(`should redirect unauth ${path} to login`, async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const res = await request(app)
       .get(path)
       .expect("Location", "/auth/login");

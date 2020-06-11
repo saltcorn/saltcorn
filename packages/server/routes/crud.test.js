@@ -15,7 +15,7 @@ afterAll(db.close);
 describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/edit/books");
   it("show form for new entry", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/edit/books")
@@ -25,7 +25,7 @@ describe("standard edit form", () => {
 
   it("show form for existing entry", async () => {
     const loginCookie = await getStaffLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/edit/books/1")
       .set("Cookie", loginCookie)
@@ -35,7 +35,7 @@ describe("standard edit form", () => {
 
   it("post form for new entry", async () => {
     const loginCookie = await getStaffLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/edit/books")
       .send("author=Cervantes")
@@ -52,7 +52,7 @@ describe("standard edit form", () => {
   itShouldRedirectUnauthToLogin("/list/books");
   it("show list", async () => {
     const loginCookie = await getStaffLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/list/books")
       .set("Cookie", loginCookie)
@@ -62,7 +62,7 @@ describe("standard edit form", () => {
 
   it("should delete", async () => {
     const loginCookie = await getStaffLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/delete/books/3")
       .set("Cookie", loginCookie)
@@ -74,11 +74,12 @@ describe("standard edit form", () => {
       .expect(toInclude("Author"))
       .expect(toNotInclude("Cervantes"));
   });
+  
 });
 
 describe("homepage", () => {
   it("shows to public", async () => {
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/")
       .expect(toInclude("authorlist"));
@@ -86,7 +87,7 @@ describe("homepage", () => {
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/")
       .set("Cookie", loginCookie)
@@ -95,7 +96,7 @@ describe("homepage", () => {
   it("shows redirect to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/config/edit/public_home")
       .send("public_home=/view/authorlist")

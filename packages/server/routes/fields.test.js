@@ -18,7 +18,7 @@ describe("Field Endpoints", () => {
 
   it("should show existing", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/field/1")
       .set("Cookie", loginCookie)
@@ -27,7 +27,7 @@ describe("Field Endpoints", () => {
 
   it("should new form", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/field/new/1")
       .set("Cookie", loginCookie)
@@ -37,7 +37,7 @@ describe("Field Endpoints", () => {
   it("should post new int field", async () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=field")
@@ -61,7 +61,7 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=attributes")
@@ -74,7 +74,7 @@ describe("Field Endpoints", () => {
   it("should delete new field", async () => {
     const loginCookie = await getAdminLoginCookie();
     const fld = await Field.findOne({ name: "AgeRating" });
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post(`/field/delete/${fld.id}`)
       .set("Cookie", loginCookie)
@@ -84,7 +84,7 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=field")
@@ -99,7 +99,7 @@ describe("Field Endpoints", () => {
   it("should post new fkey field", async () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=field")
@@ -123,7 +123,7 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=summary")
@@ -146,7 +146,7 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=default")
@@ -169,7 +169,7 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=default")
@@ -190,7 +190,7 @@ describe("Field Endpoints", () => {
       })
     );
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/field/")
       .send("stepName=default")
@@ -203,7 +203,7 @@ describe("Field Endpoints", () => {
   it("should show field in table", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get(`/table/2`)
       .set("Cookie", loginCookie)

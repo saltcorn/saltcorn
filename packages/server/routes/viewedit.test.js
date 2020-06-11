@@ -18,7 +18,7 @@ describe("viewedit list endpoint", () => {
 
   it("show list of views", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/viewedit")
       .set("Cookie", loginCookie)
@@ -31,7 +31,7 @@ describe("viewedit edit endpoint", () => {
 
   it("show list of views", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/viewedit/edit/authorlist")
       .set("Cookie", loginCookie)
@@ -44,7 +44,7 @@ describe("viewedit new List", () => {
 
   it("show new view", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/viewedit/new")
       .set("Cookie", loginCookie)
@@ -53,7 +53,7 @@ describe("viewedit new List", () => {
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=List")
@@ -70,7 +70,7 @@ describe("viewedit new List", () => {
         table_id: 1
       })
     );
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
@@ -99,7 +99,7 @@ describe("viewedit new List", () => {
         ]
       })
     );
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
@@ -110,7 +110,7 @@ describe("viewedit new List", () => {
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/view/mybooklist")
       .set("Cookie", loginCookie)
@@ -121,7 +121,7 @@ describe("viewedit new List", () => {
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const id = (await View.findOne({ name: "mybooklist" })).id;
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
@@ -133,7 +133,7 @@ describe("viewedit new List with one field", () => {
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=List")
@@ -150,7 +150,7 @@ describe("viewedit new List with one field", () => {
         table_id: 1
       })
     );
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
@@ -173,7 +173,7 @@ describe("viewedit new List with one field", () => {
         ]
       })
     );
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
@@ -184,7 +184,7 @@ describe("viewedit new List with one field", () => {
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/view/mybooklist1")
       .set("Cookie", loginCookie)
@@ -196,7 +196,7 @@ describe("viewedit new List with one field", () => {
     const loginCookie = await getAdminLoginCookie();
     const id = (await View.findOne({ name: "mybooklist1" })).id;
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
@@ -208,7 +208,7 @@ describe("viewedit new Show", () => {
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/save")
       .send("viewtemplate=Show")
@@ -239,7 +239,7 @@ describe("viewedit new Show", () => {
     const layout = {
       above: [{ type: "field", fieldview: "show", field_name: "author" }]
     };
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .post("/viewedit/config/mybook")
       .send("contextEnc=" + ctx)
@@ -252,7 +252,7 @@ describe("viewedit new Show", () => {
   it("should show new view", async () => {
     const loginCookie = await getStaffLoginCookie();
 
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     await request(app)
       .get("/view/mybook?id=1")
       .set("Cookie", loginCookie)
@@ -261,7 +261,7 @@ describe("viewedit new Show", () => {
 
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp();
+    const app = await getApp({disableCsrf: true});
     const id = (await View.findOne({ name: "mybook" })).id;
 
     await request(app)

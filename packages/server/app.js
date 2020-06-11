@@ -109,6 +109,11 @@ const getApp = async (opts={}) => {
 
   app.use(wrapper);
   if(!opts.disableCsrf) app.use(csrf());
+  else 
+  app.use((req, res, next)=> {
+    req.csrfToken=()=>'';
+    next();
+  })
 
   mountRoutes(app);
 
