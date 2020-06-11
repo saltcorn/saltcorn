@@ -16,7 +16,7 @@ describe("Table Endpoints", () => {
   it("should create tables", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/table/")
       .send("name=mypostedtable")
@@ -29,7 +29,7 @@ describe("Table Endpoints", () => {
 
   it("should list tables", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/table/")
       .set("Cookie", loginCookie)
@@ -42,7 +42,7 @@ describe("Table Endpoints", () => {
 
     const tbl = await Table.findOne({ name: "mypostedtable" });
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get(`/table/${tbl.id}`)
       .set("Cookie", loginCookie)
@@ -52,7 +52,7 @@ describe("Table Endpoints", () => {
 
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     const tbl = await Table.findOne({ name: "mypostedtable" });
     const delres = await request(app)
       .post(`/table/delete/${tbl.id}`)

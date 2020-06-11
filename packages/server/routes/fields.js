@@ -186,6 +186,9 @@ router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
 router.post("/", setTenant, isAdmin, async (req, res) => {
   const wfres = await fieldFlow.run(req.body);
   if (wfres.renderForm)
-    res.sendWrap(`Field attributes`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(
+      `Field attributes`,
+      renderForm(wfres.renderForm, req.csrfToken())
+    );
   else res.redirect(wfres.redirect);
 });

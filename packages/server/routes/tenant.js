@@ -41,7 +41,10 @@ router.get("/create", setTenant, async (req, res) => {
     "warning",
     '<h4>Warning</h4><p>Hosting on this site is provided for free and with no guarantee of availability or security of your application. This facility is intended solely for you to evaluate the suitability of Saltcorn. If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
   );
-  res.sendWrap(`Create application`, renderForm(tenant_form(), req.csrfToken()));
+  res.sendWrap(
+    `Create application`,
+    renderForm(tenant_form(), req.csrfToken())
+  );
 });
 
 const getNewURL = (req, subdomain) => {
@@ -63,7 +66,8 @@ router.post("/create", setTenant, async (req, res) => {
   }
   const form = tenant_form();
   const valres = form.validate(req.body);
-  if (valres.errors) res.sendWrap(`Create application`, renderForm(form, req.csrfToken()));
+  if (valres.errors)
+    res.sendWrap(`Create application`, renderForm(form, req.csrfToken()));
   else {
     const subdomain = domain_sanitize(valres.success.subdomain);
     const allTens = await getAllTenants();

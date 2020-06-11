@@ -74,7 +74,10 @@ router.post("/edit/:key", setTenant, isAdmin, async (req, res) => {
   const form = formForKey(key);
   const valres = form.validate(req.body);
   if (valres.errors)
-    res.sendWrap(`Edit configuration key ${key}`, renderForm(form, req.csrfToken()));
+    res.sendWrap(
+      `Edit configuration key ${key}`,
+      renderForm(form, req.csrfToken())
+    );
   else {
     await getState().setConfig(key, valres.success[key]);
     req.flash("success", `Configuration key ${key} saved`);

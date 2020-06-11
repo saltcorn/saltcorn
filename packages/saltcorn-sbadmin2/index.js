@@ -237,7 +237,14 @@ const wrap = ({
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js" integrity="sha256-tCfY819ixSSCdfJ1UH/P8fV9/PdD2aldEgg6Te0HaOU=" crossorigin="anonymous"></script>
     ${headers
       .filter(h => h.script)
-      .map(h => `<script src="${h.script}" ${h.integrity? `integrity="${h.integrity}" crossorigin="anonymous"`:''}></script>`)
+      .map(
+        h =>
+          `<script src="${h.script}" ${
+            h.integrity
+              ? `integrity="${h.integrity}" crossorigin="anonymous"`
+              : ""
+          }></script>`
+      )
       .join("")}
   </body>
 </html>`;

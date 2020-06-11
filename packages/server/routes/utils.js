@@ -37,11 +37,11 @@ const setTenant = (req, res, next) => {
     next();
   }
 };
-const ensure_final_slash=(s)=> s.endsWith("/") ? s : s+"/"
+const ensure_final_slash = s => (s.endsWith("/") ? s : s + "/");
 
-const get_base_url=(req)=>{
-  const cfg=getState().getConfig('base_url', '')
-  if(cfg) return ensure_final_slash(cfg);
+const get_base_url = req => {
+  const cfg = getState().getConfig("base_url", "");
+  if (cfg) return ensure_final_slash(cfg);
 
   var ports = "";
   const host = req.get("host");
@@ -50,7 +50,7 @@ const get_base_url=(req)=>{
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
   return `${req.protocol}://${req.hostname}${ports}/`;
-}
+};
 
 module.exports = {
   sqlsanitize,

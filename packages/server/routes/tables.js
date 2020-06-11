@@ -75,7 +75,8 @@ router.get("/new/", setTenant, isAdmin, async (req, res) => {
         action: "/table",
         submitLabel: "Create",
         fields: [{ label: "Table name", name: "name", input_type: "text" }]
-      }), req.csrfToken()
+      }),
+      req.csrfToken()
     )
   );
 });

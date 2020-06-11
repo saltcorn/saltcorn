@@ -17,11 +17,11 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const { setTenant, get_base_url } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
-const helmet = require('helmet')
-const wrapper = require('./wrapper')
-const csrf = require('csurf')
+const helmet = require("helmet");
+const wrapper = require("./wrapper");
+const csrf = require("csurf");
 
-const getApp = async (opts={}) => {
+const getApp = async (opts = {}) => {
   const app = express();
   const sql_log = await getConfig("log_sql");
   if (sql_log) db.set_sql_logging(); // dont override cli flag
@@ -29,7 +29,7 @@ const getApp = async (opts={}) => {
 
   await loadAllPlugins();
 
-  app.use(helmet())
+  app.use(helmet());
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
@@ -54,7 +54,7 @@ const getApp = async (opts={}) => {
       secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'strict' } // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
     })
   );
   app.use(passport.initialize());
@@ -108,28 +108,28 @@ const getApp = async (opts={}) => {
   });
 
   app.use(wrapper);
-  if(!opts.disableCsrf) app.use(csrf());
-  else 
-  app.use((req, res, next)=> {
-    req.csrfToken=()=>'';
-    next();
-  })
+  if (!opts.disableCsrf) app.use(csrf());
+  else
+    app.use((req, res, next) => {
+      req.csrfToken = () => "";
+      next();
+    });
 
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
 
-  app.get("/robots.txt", setTenant, async (req,res)=>{
-    const base = get_base_url(req)
-    res.set('Content-Type', 'text/plain')
+  app.get("/robots.txt", setTenant, async (req, res) => {
+    const base = get_base_url(req);
+    res.set("Content-Type", "text/plain");
     res.send(`User-agent: * 
 Allow: /
 Sitemap: ${base}sitemap.xml
-`)
+`);
   });
-  app.get("/sitemap.xml", setTenant, async (req,res)=>{
-    const base = get_base_url(req)
-    res.set('Content-Type', 'text/xml')
+  app.get("/sitemap.xml", setTenant, async (req, res) => {
+    const base = get_base_url(req);
+    res.set("Content-Type", "text/xml");
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
     <urlset
           xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -138,10 +138,9 @@ Sitemap: ${base}sitemap.xml
       <lastmod>${new Date().toISOString()}</lastmod>
       <priority>1.00</priority>
     </url>
-    </urlset>`)
+    </urlset>`);
   });
-  if(!opts.disableCatch)
-  app.use(errors);
+  if (!opts.disableCatch) app.use(errors);
   return app;
 };
 module.exports = getApp;

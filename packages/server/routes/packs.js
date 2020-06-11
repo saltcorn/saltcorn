@@ -77,7 +77,8 @@ router.get("/create/", setTenant, isAdmin, async (req, res) => {
       new Form({
         action: "/packs/create",
         fields: [...tableFields, ...viewFields, ...pluginFields]
-      }), req.csrfToken()
+      }),
+      req.csrfToken()
     )
   );
 });
@@ -117,7 +118,10 @@ const install_pack_form = () =>
   });
 
 router.get("/install", setTenant, isAdmin, async (req, res) => {
-  res.sendWrap(`Install Pack`, renderForm(install_pack_form(), req.csrfToken()));
+  res.sendWrap(
+    `Install Pack`,
+    renderForm(install_pack_form(), req.csrfToken())
+  );
 });
 
 router.post("/install", setTenant, isAdmin, async (req, res) => {

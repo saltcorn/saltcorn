@@ -46,7 +46,7 @@ describe("Form", () => {
         })
       ]
     });
-    const html = renderForm(form, '');
+    const html = renderForm(form, "");
     form.validate({ age: 32 });
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('min="16"')).toBe(true);
@@ -55,7 +55,7 @@ describe("Form", () => {
 
   it("should render with repeats", async () => {
     const form = mkRepForm();
-    const html = renderForm(form, '');
+    const html = renderForm(form, "");
     form.validate({
       subject: "Maths",
       age_0: 18,
@@ -80,7 +80,7 @@ describe("Form", () => {
         { name: "George", age: 19 }
       ]
     };
-    const html = renderForm(form, '');
+    const html = renderForm(form, "");
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('name="age_0"')).toBe(true);
     expect(html.includes('name="name_1"')).toBe(true);
@@ -120,7 +120,7 @@ describe("String form with validator failure ", () => {
       })
     ]
   });
-  const html = renderForm(form, '');
+  const html = renderForm(form, "");
   expect(html.includes("<form")).toBe(true);
   form.validate({ name: "Si" });
   expect(form.errors).toStrictEqual({ name: "Too short" });
@@ -141,7 +141,7 @@ describe("String form with validator success", () => {
       })
     ]
   });
-  const html = renderForm(form, '');
+  const html = renderForm(form, "");
   expect(html.includes("<form")).toBe(true);
 
   form.validate({ name: "Simon" });

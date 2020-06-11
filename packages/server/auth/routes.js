@@ -23,8 +23,12 @@ module.exports = router;
 const loginForm = () =>
   new Form({
     fields: [
-      new Field({ label: "E-mail", name: "email", input_type: "text", 
-      validator: (s)=> s.length<128}),
+      new Field({
+        label: "E-mail",
+        name: "email",
+        input_type: "text",
+        validator: s => s.length < 128
+      }),
       new Field({ label: "Password", name: "password", input_type: "password" })
     ],
     action: "/auth/login",
@@ -106,17 +110,17 @@ router.post("/create_first_user", setTenant, async (req, res) => {
 router.post("/signup", setTenant, async (req, res) => {
   if (getState().getConfig("allow_signup")) {
     const { email, password } = req.body;
-    if(email.length>127) {
+    if (email.length > 127) {
       req.flash("danger", "E-mail too long");
       res.redirect("/auth/signup");
-      return
+      return;
     }
 
-    const us = await User.find({email})
-    if(us.length>0) {
+    const us = await User.find({ email });
+    if (us.length > 0) {
       req.flash("danger", "Account already exists");
       res.redirect("/auth/signup");
-      return
+      return;
     }
 
     const u = await User.create({ email, password });

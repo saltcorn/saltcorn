@@ -1,5 +1,5 @@
 const xss = require("xss");
-const escape = require('escape-html');
+const escape = require("escape-html");
 
 const ppClasses = cs =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");

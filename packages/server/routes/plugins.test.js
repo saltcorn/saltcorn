@@ -20,7 +20,7 @@ describe("Plugin Endpoints", () => {
   it("should show list", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
@@ -30,7 +30,7 @@ describe("Plugin Endpoints", () => {
   it("should show new", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/plugins/new")
       .set("Cookie", loginCookie)
@@ -40,7 +40,7 @@ describe("Plugin Endpoints", () => {
   it("should show edit existing", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/plugins/1")
       .set("Cookie", loginCookie)
@@ -56,7 +56,7 @@ describe("Pack Endpoints", () => {
   it("should show get create", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/packs/create/")
       .set("Cookie", loginCookie)
@@ -66,7 +66,7 @@ describe("Pack Endpoints", () => {
   it("should show get install", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/packs/install/")
       .set("Cookie", loginCookie)
@@ -75,7 +75,7 @@ describe("Pack Endpoints", () => {
   it("should install named", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/packs/install-named/Project%20management")
       .set("Cookie", loginCookie)
@@ -91,7 +91,7 @@ describe("config endpoints", () => {
   it("should show get list", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/config/")
       .set("Cookie", loginCookie)
@@ -101,7 +101,7 @@ describe("config endpoints", () => {
   it("should show get form", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/config/edit/site_name")
       .set("Cookie", loginCookie)
@@ -110,7 +110,7 @@ describe("config endpoints", () => {
   it("should show post form", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/config/edit/site_name")
       .send("site_name=FooSiteName")

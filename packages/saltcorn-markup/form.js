@@ -1,4 +1,14 @@
-const { p, div, i, label, text, text_attr, button, a, span } = require("./tags");
+const {
+  p,
+  div,
+  i,
+  label,
+  text,
+  text_attr,
+  button,
+  a,
+  span
+} = require("./tags");
 const { contract, is } = require("contractis");
 
 const mkShowIf = sIf =>
@@ -187,14 +197,18 @@ const mkFormRowForField = (
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
         hdr.class
-      }" name="${text_attr(name)}" ${v ? `value="${text_attr(v[hdr.name])}"` : ""}>`;
+      }" name="${text_attr(name)}" ${
+        v ? `value="${text_attr(v[hdr.name])}"` : ""
+      }>`;
     case "select":
       const opts = select_options(v, hdr);
       return formRowWrap(
         hdr,
-        `<select class="form-control ${validClass} ${hdr.class}" name="${text_attr(
+        `<select class="form-control ${validClass} ${
+          hdr.class
+        }" name="${text_attr(name)}" id="input${text_attr(
           name
-        )}" id="input${text_attr(name)}">${opts}</select>`,
+        )}">${opts}</select>`,
         errorFeedback,
         formStyle,
         labelCols
@@ -217,7 +231,9 @@ const mkFormRowForField = (
         hdr,
         `<select class="form-control ${validClass} ${
           hdr.class
-        }" class="chosen-select" multiple name="${text_attr(name)}" id="input${text_attr(
+        }" class="chosen-select" multiple name="${text_attr(
+          name
+        )}" id="input${text_attr(
           name
         )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
         errorFeedback,
@@ -272,7 +288,7 @@ const renderForm = (form, csrfToken) => {
 
       div(
         { class: "dropdown-menu", "aria-labelledby": "dropdownMenuButton" },
-        mkForm(form,csrfToken, form.errors)
+        mkForm(form, csrfToken, form.errors)
       )
     );
   } else return mkForm(form, csrfToken, form.errors);
@@ -280,7 +296,7 @@ const renderForm = (form, csrfToken) => {
 
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
-  const csrfField=`<input type="hidden" name="_csrf" value="${csrfToken}">`
+  const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
@@ -299,7 +315,10 @@ const mkForm = (form, csrfToken, errors = {}) => {
   </div>
 </div>
 </form>`;
-  return blurbp + top + csrfField+flds + bot;
+  return blurbp + top + csrfField + flds + bot;
 };
 
-module.exports = contract(is.fun([is.class("Form"), is.str], is.str), renderForm);
+module.exports = contract(
+  is.fun([is.class("Form"), is.str], is.str),
+  renderForm
+);

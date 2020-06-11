@@ -19,7 +19,7 @@ const seed = set_seed();
 
 describe("app", () => {
   it("obeys the chaos guinea pig with seed " + seed, async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await chaos_guinea_pig(app);
   });
 });
@@ -28,7 +28,7 @@ describe("app", () => {
   it(
     "obeys the chaos guinea pig when logged in with seed " + seed,
     async () => {
-      const app = await getApp({disableCsrf: true});
+      const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {
@@ -43,7 +43,7 @@ describe("app", () => {
     "obeys the chaos guinea pig,excluding auth, when logged in with seed " +
       seed,
     async () => {
-      const app = await getApp({disableCsrf: true});
+      const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
 
       const st = await chaos_guinea_pig(app, {

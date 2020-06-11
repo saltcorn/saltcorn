@@ -200,7 +200,10 @@ const date = {
   contract: () => is.date,
   attributes: [],
   fieldviews: {
-    show: { isEdit: false, run: d => text(typeof d ==='string' ? text(d) :d.toISOString()) },
+    show: {
+      isEdit: false,
+      run: d => text(typeof d === "string" ? text(d) : d.toISOString())
+    },
     relative: { isEdit: false, run: d => text(moment(d).fromNow()) },
     edit: {
       isEdit: true,
@@ -210,7 +213,9 @@ const date = {
           class: ["form-control", cls],
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
-          ...(isdef(v) && { value: text_attr(typeof v ==='string' ?v : v.toISOString()) })
+          ...(isdef(v) && {
+            value: text_attr(typeof v === "string" ? v : v.toISOString())
+          })
         })
     }
   },

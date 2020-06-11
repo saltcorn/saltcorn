@@ -33,7 +33,7 @@ const notAuthorized = res => {
 
 describe("API Endpoints", () => {
   it("should get books for public", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/")
       .expect(
@@ -48,7 +48,7 @@ describe("API Endpoints", () => {
     //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with only some fields", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/?fields=author")
       .expect(
@@ -63,7 +63,7 @@ describe("API Endpoints", () => {
     //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with search", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/?pages=967")
       .expect(
@@ -78,7 +78,7 @@ describe("API Endpoints", () => {
     //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with search and one field", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/?fields=author&pages=967")
       .expect(
@@ -93,7 +93,7 @@ describe("API Endpoints", () => {
     //expect(res.statusCode).toEqual(302);
   });
   it("should not allow public access to patients", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/patients/")
       .expect(notAuthorized);
@@ -103,7 +103,7 @@ describe("API Endpoints", () => {
   it("should allow staff access to patients", async () => {
     const loginCookie = await getStaffLoginCookie();
 
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/patients/")
       .set("Cookie", loginCookie)

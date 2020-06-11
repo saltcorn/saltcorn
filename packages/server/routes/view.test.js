@@ -13,7 +13,7 @@ afterAll(db.close);
 
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorlist")
       .expect(toInclude("Tolstoy"))
@@ -25,7 +25,7 @@ describe("view patients list endpoint", () => {
 
   it("should show view to staff", async () => {
     const loginCookie = await getStaffLoginCookie();
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/patientlist")
       .set("Cookie", loginCookie)
@@ -34,7 +34,7 @@ describe("view patients list endpoint", () => {
 });
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorlist?pages=967")
       .expect(toInclude("Melville"))
@@ -43,7 +43,7 @@ describe("view list endpoint", () => {
 });
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorlist?author=Tol")
       .expect(toNotInclude("Melville"))
@@ -52,7 +52,7 @@ describe("view list endpoint", () => {
 });
 describe("view show endpoint", () => {
   it("should show view to unauth", async () => {
-    const app = await getApp({disableCsrf: true});
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorshow?id=1")
       .expect(toInclude("Herman Melville"));

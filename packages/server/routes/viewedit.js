@@ -183,9 +183,15 @@ router.get("/config/:name", setTenant, isAdmin, async (req, res) => {
     ...view.configuration
   });
   if (wfres.renderForm)
-    res.sendWrap(`View configuration`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(
+      `View configuration`,
+      renderForm(wfres.renderForm, req.csrfToken())
+    );
   else if (wfres.renderBuilder)
-    res.sendWrap(`View configuration`, renderBuilder(wfres.renderBuilder, req.csrfToken()));
+    res.sendWrap(
+      `View configuration`,
+      renderBuilder(wfres.renderBuilder, req.csrfToken())
+    );
   else res.redirect(wfres.redirect);
 });
 
@@ -197,7 +203,10 @@ router.post("/config/:name", setTenant, isAdmin, async (req, res) => {
   const wfres = await configFlow.run(req.body);
 
   if (wfres.renderForm)
-    res.sendWrap(`View configuration`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(
+      `View configuration`,
+      renderForm(wfres.renderForm, req.csrfToken())
+    );
   else {
     res.redirect(wfres.redirect);
   }

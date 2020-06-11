@@ -62,7 +62,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
     const res = await wf.run(ctx);
 
     if (res.renderForm) {
-      is.str(renderForm(res.renderForm,''));
+      is.str(renderForm(res.renderForm, ""));
 
       const vs = await res.renderForm.generate();
       return await step(wf, vs);
@@ -71,7 +71,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
   return await step(wf, initialCtx);
 };
 
-const mockReqRes = { req: {csrfToken: ()=>''} }
+const mockReqRes = { req: { csrfToken: () => "" } };
 
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
@@ -85,7 +85,7 @@ const auto_test_viewtemplate = async vt => {
     const res = await vt.run(1, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
     if (sfs.some(sf => (sf.name = "id"))) {
-      const resid = await vt.run(1, "newview", cfg, { id: 1 },mockReqRes);
+      const resid = await vt.run(1, "newview", cfg, { id: 1 }, mockReqRes);
       is.or(is.str, is.array(is.str))(resid);
     }
   }
