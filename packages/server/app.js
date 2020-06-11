@@ -19,6 +19,7 @@ const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require('helmet')
 const wrapper = require('./wrapper')
+const csrf = require('csurf')
 
 const getApp = async () => {
   const app = express();
@@ -107,6 +108,8 @@ const getApp = async () => {
   });
 
   app.use(wrapper);
+  app.use(csrf());
+
   mountRoutes(app);
 
   app.get("/", setTenant, homepage);
