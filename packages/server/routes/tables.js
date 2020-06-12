@@ -234,8 +234,8 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
       res.redirect(`/table/new`);
     }
   } else {
-    const { id, ...rest } = v;
-    Table.update(parseInt(id), rest);
+    const { id, _csrf, ...rest } = v;
+    await Table.update(parseInt(id), rest);
     res.redirect(`/table/${id}`);
   }
 });
