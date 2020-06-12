@@ -21,7 +21,7 @@ const get_extra_menu = () => {
 };
 
 module.exports =function(req, res, next) {
-  res.sendWrap = function(title, ...html) {
+  res.sendWrap = function(opts, ...html) {
     const isAuth = req.isAuthenticated();
     const state =  getState()
     const allow_signup = state.getConfig("allow_signup");
@@ -66,6 +66,7 @@ module.exports =function(req, res, next) {
     const iconHeader = favicon ? [{headerTag: 
     `<link rel="icon" type="image/png" 
     href="/files/serve/${favicon.id}">`}]: []
+    const meta_description = opts.description?[{headerTag: `<meta name="description" content="${opts.description}">`}] :[]
     const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
     const brand = {
       name: getState().getConfig("site_name")
@@ -88,6 +89,7 @@ module.exports =function(req, res, next) {
         items: authItems
       }
     ].filter(s => s);
+    const title=typeof opts ==='string' ? opts : opts.title
     res.send(
       getState().layout.wrap({
         title,
@@ -96,7 +98,7 @@ module.exports =function(req, res, next) {
         currentUrl,
         alerts: getFlashes(req),
         body: html.length === 1 ? html[0] : html.join(""),
-        headers: [...stdHeaders, ...iconHeader, ...getState().headers]
+        headers: [...stdHeaders, ...iconHeader, ...meta_description, ...getState().headers]
       })
     );
   };
