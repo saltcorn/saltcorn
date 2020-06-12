@@ -46,7 +46,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
               key: r =>
                 post_delete_btn(
                   `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                  "Delete"
+                  req.csrfToken()
                 )
             }
           ],

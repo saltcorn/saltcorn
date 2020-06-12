@@ -8,27 +8,29 @@ getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
 
+const mockReqRes = { req: { csrfToken: () => "" } };
+
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.run({});
+    const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
   it("should run with string query", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.run({ author: "Mel" });
+    const res = await v.run({ author: "Mel" }, mockReqRes);
 
     expect(res.length > 0).toBe(true);
   });
   it("should run with integer query as int", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.run({ pages: 967 });
+    const res = await v.run({ pages: 967 }, mockReqRes);
 
     expect(res.length > 0).toBe(true);
   });
   it("should run with integer query as string", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.run({ pages: "967" });
+    const res = await v.run({ pages: "967" }, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
   it("should find", async () => {

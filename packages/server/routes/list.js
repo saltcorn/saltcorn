@@ -21,7 +21,8 @@ router.get("/:tname", setTenant, loggedIn, async (req, res) => {
   });
   tfields.push({
     label: "Delete",
-    key: r => post_btn(`/delete/${table.name}/${r.id}`, "Delete")
+    key: r =>
+      post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken())
   });
   const rows = await table.getJoinedRows();
   res.sendWrap(

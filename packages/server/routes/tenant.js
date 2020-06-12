@@ -108,7 +108,8 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
         { label: "email", key: "email" },
         {
           label: "Delete",
-          key: r => post_btn(`/tenant/delete/${r.subdomain}`, "Delete")
+          key: r =>
+            post_btn(`/tenant/delete/${r.subdomain}`, "Delete", req.csrfToken())
         }
       ],
       tens

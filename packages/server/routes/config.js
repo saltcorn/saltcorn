@@ -36,7 +36,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       },
       {
         label: "Delete",
-        key: r => post_btn(`/config/delete/${r.key}`, "Delete")
+        key: r => post_btn(`/config/delete/${r.key}`, "Delete", req.csrfToken())
       }
     ],
     Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))

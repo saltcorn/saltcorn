@@ -1,6 +1,7 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
+const { input } = require("@saltcorn/markup/tags");
 
 function loggedIn(req, res, next) {
   if (req.user && req.user.tenant === db.getTenantSchema()) {
@@ -52,8 +53,16 @@ const get_base_url = req => {
   return `${req.protocol}://${req.hostname}${ports}/`;
 };
 
+const csrfField = req =>
+  input({
+    type: "hidden",
+    name: "_csrf",
+    value: req.csrfToken ? req.csrfToken() : req
+  });
+
 module.exports = {
   sqlsanitize,
+  csrfField,
   loggedIn,
   isAdmin,
   setTenant,

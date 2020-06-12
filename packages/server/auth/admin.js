@@ -67,7 +67,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
           label: "Delete",
           key: r =>
             r.id !== req.user.id
-              ? post_btn(`/useradmin/delete/${r.id}`, "Delete")
+              ? post_btn(`/useradmin/delete/${r.id}`, "Delete", req.csrfToken())
               : ""
         }
       ],

@@ -88,7 +88,7 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   });
   const role = req.user ? req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  return await render(rows[0], fields, layout, viewname, tbl, role);
+  return await render(rows[0], fields, layout, viewname, tbl, role, req);
 };
 
 const runMany = async (
@@ -112,7 +112,7 @@ const runMany = async (
   const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
 
   return await asyncMap(rows, async row => ({
-    html: await render(row, fields, layout, viewname, tbl, role),
+    html: await render(row, fields, layout, viewname, tbl, role, extra.req),
     row
   }));
 };
@@ -121,7 +121,7 @@ const wrapBlock = (segment, inner) =>
     ? div({ class: segment.textStyle || "" }, inner)
     : span({ class: segment.textStyle || "" }, inner);
 
-const render = async (row, fields, layout, viewname, table, role) => {
+const render = async (row, fields, layout, viewname, table, role, req) => {
   async function go(segment) {
     if (!segment) return "";
     if (segment.minRole && role > segment.minRole) return "";
@@ -153,7 +153,10 @@ const render = async (row, fields, layout, viewname, table, role) => {
     } else if (segment.type === "action") {
       return wrapBlock(
         segment,
-        post_btn(action_url(viewname, table, segment, row), segment.action_name)
+        post_btn(
+          action_url(viewname, table, segment, row),
+          segment.action_name.req.csrfToken()
+        )
       );
     } else if (segment.type === "view_link") {
       const { key } = await view_linker(segment, fields);

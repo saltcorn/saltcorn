@@ -113,9 +113,14 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await table.getFields();
-
   const { joinFields, aggregations } = picked_fields_to_query(columns);
-  const tfields = await get_viewable_fields(viewname, table, fields, columns);
+  const tfields = await get_viewable_fields(
+    viewname,
+    table,
+    fields,
+    columns,
+    extraOpts.req.csrfToken()
+  );
   const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;

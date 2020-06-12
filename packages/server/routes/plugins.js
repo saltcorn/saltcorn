@@ -60,11 +60,13 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
             { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
             {
               label: "Reload",
-              key: r => post_btn(`/plugins/reload/${r.id}`, "Reload")
+              key: r =>
+                post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken())
             },
             {
               label: "Delete",
-              key: r => post_btn(`/plugins/delete/${r.id}`, "Remove")
+              key: r =>
+                post_btn(`/plugins/delete/${r.id}`, "Remove", req.csrfToken())
             }
           ],
           rows
@@ -84,7 +86,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
                     key: r =>
                       post_btn(
                         `/plugins/install/${encodeURIComponent(r.name)}`,
-                        "Install"
+                        "Install",
+                        req.csrfToken()
                       )
                   }
                 ],
@@ -111,7 +114,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
                             `/packs/install-named/${encodeURIComponent(
                               r.name
                             )}`,
-                            "Install"
+                            "Install",
+                            req.csrfToken()
                           )
                   }
                 ],

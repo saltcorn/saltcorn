@@ -26,16 +26,18 @@ const {
   text,
   label
 } = require("@saltcorn/markup/tags");
+const { csrfField } = require("./utils");
 
 const router = new Router();
 module.exports = router;
 
-const editRoleForm = (file, roles) =>
+const editRoleForm = (file, roles, req) =>
   form(
     {
       action: `/files/setrole/${file.id}`,
       method: "post"
     },
+    csrfField(req),
     select(
       { name: "role", onchange: "form.submit()" },
       roles.map(role =>
@@ -60,7 +62,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         { label: "Filename", key: "filename" },
         { label: "Size (KiB)", key: "size_kb" },
         { label: "Media type", key: r => r.mimetype },
-        { label: "Role to access", key: r => editRoleForm(r, roles) },
+        { label: "Role to access", key: r => editRoleForm(r, roles, req) },
         {
           label: "Link",
           key: r => link(`/files/serve/${r.id}`, "Link")
@@ -71,7 +73,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/files/delete/${r.id}`)
+          key: r => post_delete_btn(`/files/delete/${r.id}`, req.csrfToken())
         }
       ],
       rows
@@ -82,6 +84,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         method: "post",
         encType: "multipart/form-data"
       },
+      csrfField(req),
       label("Upload file "),
       input({
         name: "file",

@@ -72,7 +72,8 @@ const no_views_logged_in = async (req, res) => {
                             `/packs/install-named/${encodeURIComponent(
                               r.name
                             )}`,
-                            "Install"
+                            "Install",
+                            req.csrfToken()
                           )
                   }
                 ],

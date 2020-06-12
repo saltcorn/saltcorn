@@ -16,7 +16,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
     `Admin`,
     div(
       "Restart server. Try reloading the page after a few seconds after pressing this button.",
-      post_btn("/admin/restart", "Restart")
+      post_btn("/admin/restart", "Restart", req.csrfToken())
     )
   );
 });

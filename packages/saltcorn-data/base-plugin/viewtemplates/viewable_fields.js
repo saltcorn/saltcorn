@@ -56,13 +56,24 @@ const asyncMap = async (xs, asyncF) => {
   return res;
 };
 
-const get_viewable_fields = async (viewname, table, fields, columns, isShow) =>
+const get_viewable_fields = async (
+  viewname,
+  table,
+  fields,
+  columns,
+  isShow,
+  csrfToken
+) =>
   await asyncMap(columns, async column => {
     if (column.type === "Action")
       return {
         label: column.action_name,
         key: r =>
-          post_btn(action_url(viewname, table, column, r), column.action_name)
+          post_btn(
+            action_url(viewname, table, column, r),
+            column.action_name,
+            csrfToken
+          )
       };
     else if (column.type === "ViewLink") {
       return await view_linker(column, fields);

@@ -111,7 +111,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
         { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/field/delete/${r.id}`)
+          key: r => post_delete_btn(`/field/delete/${r.id}`, req.csrfToken())
         }
       ],
       fields
@@ -147,7 +147,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
             key: r =>
               post_delete_btn(
                 `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                "Delete"
+                req.csrfToken()
               )
           }
         ],
@@ -264,7 +264,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
             { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
             {
               label: "Delete",
-              key: r => post_delete_btn(`/table/delete/${r.id}`)
+              key: r =>
+                post_delete_btn(`/table/delete/${r.id}`, req.csrfToken())
             }
           ],
           rows
