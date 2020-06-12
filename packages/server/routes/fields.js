@@ -151,6 +151,7 @@ const fieldFlow = new Workflow({
           name: "default",
           label: "Default",
           type: context.type,
+          required: true,
           attributes: { summary_field: context.summary_field }
         });
         await formfield.fill_fkey_options();
