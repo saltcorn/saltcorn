@@ -41,9 +41,8 @@ class State {
   async refresh() {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
-    const favicons = await File.find({filename: "favicon.png"})
-    if(favicons && favicons.length>0)
-      this.favicon=favicons[0]
+    const favicons = await File.find({ filename: "favicon.png" });
+    if (favicons && favicons.length > 0) this.favicon = favicons[0];
   }
 
   getConfig(key, def) {
