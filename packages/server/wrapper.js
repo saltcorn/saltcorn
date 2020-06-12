@@ -21,13 +21,14 @@ const get_extra_menu = () => {
 };
 
 module.exports = function(req, res, next) {
-  res.sendWrap = function(title, ...html) {
+  res.sendWrap = function(opts, ...html) {
     const isAuth = req.isAuthenticated();
-    const allow_signup = getState().getConfig("allow_signup");
-    const login_menu = getState().getConfig("login_menu");
+    const state = getState();
+    const allow_signup = state.getConfig("allow_signup");
+    const login_menu = state.getConfig("login_menu");
     const extra_menu = get_extra_menu();
-    const views = getState()
-      .views.filter(v => v.on_menu && (isAuth || v.is_public))
+    const views = state.views
+      .filter(v => v.on_menu && (isAuth || v.is_public))
       .map(v => ({ link: `/view/${v.name}`, label: v.name }));
     const authItems = isAuth
       ? [
@@ -60,6 +61,22 @@ module.exports = function(req, res, next) {
       }
     ];
     const currentUrl = req.originalUrl.split("?")[0];
+    const favicon = state.favicon;
+
+    const iconHeader = favicon
+      ? [
+          {
+            headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon.id}">`
+          }
+        ]
+      : [];
+    const meta_description = opts.description
+      ? [
+          {
+            headerTag: `<meta name="description" content="${opts.description}">`
+          }
+        ]
+      : [];
     const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
     const brand = {
       name: getState().getConfig("site_name")
@@ -82,6 +99,7 @@ module.exports = function(req, res, next) {
         items: authItems
       }
     ].filter(s => s);
+    const title = typeof opts === "string" ? opts : opts.title;
     res.send(
       getState().layout.wrap({
         title,
@@ -90,7 +108,12 @@ module.exports = function(req, res, next) {
         currentUrl,
         alerts: getFlashes(req),
         body: html.length === 1 ? html[0] : html.join(""),
-        headers: [...stdHeaders, ...getState().headers]
+        headers: [
+          ...stdHeaders,
+          ...iconHeader,
+          ...meta_description,
+          ...getState().headers
+        ]
       })
     );
   };

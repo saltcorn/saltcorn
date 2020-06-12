@@ -14,7 +14,11 @@ router.get("/:pagename", setTenant, async (req, res) => {
   const page = getState().pages[pagename];
   if (page) {
     const contents = await page.getPage();
-    res.sendWrap(page.title || `${pagename} page`, contents);
+    res.sendWrap(
+      { title: page.title, description: page.description } ||
+        `${pagename} page`,
+      contents
+    );
   } else {
     res.status(404).sendWrap(`${pagename} page`, `Page ${pagename} not found`);
   }

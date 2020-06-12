@@ -208,6 +208,10 @@ const wrap = ({
       .filter(h => h.css)
       .map(h => `<link href="${h.css}" rel="stylesheet">`)
       .join("")}
+    ${headers
+      .filter(h => h.headerTag)
+      .map(h => h.headerTag)
+      .join("")}
     <title>${text(title)}</title>
   </head>
   <body id="page-top">
