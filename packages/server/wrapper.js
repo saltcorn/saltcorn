@@ -64,8 +64,7 @@ module.exports =function(req, res, next) {
     const favicon=state.favicon
 
     const iconHeader = favicon ? [{headerTag: 
-    `<link rel="icon" type="image/png" 
-    href="/files/serve/${favicon.id}">`}]: []
+    `<link rel="icon" type="image/png" href="/files/serve/${favicon.id}">`}]: []
     const meta_description = opts.description?[{headerTag: `<meta name="description" content="${opts.description}">`}] :[]
     const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
     const brand = {
