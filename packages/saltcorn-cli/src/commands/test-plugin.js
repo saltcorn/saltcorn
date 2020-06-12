@@ -36,7 +36,7 @@ TestPluginCommand.args = [
   { name: "path", description: "path to plugin package", required: true }
 ];
 
-TestPluginCommand.description = `Describe the command here
+TestPluginCommand.description = `Test a plugin
 ...
 Extra documentation goes here
 `;
