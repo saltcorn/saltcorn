@@ -10,6 +10,7 @@ const {
 const db = require(".");
 const { migrate } = require("../migrate");
 const Table = require("../models/table");
+const File = require("../models/file");
 const Field = require("../models/field");
 const View = require("../models/view");
 const { getAllTenants, createTenant } = require("../models/tenant");
@@ -30,6 +31,7 @@ class State {
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
+    this.favicon = null;
     this.plugins = {};
     this.layout = { wrap: s => s };
     this.headers = [];
@@ -39,6 +41,9 @@ class State {
   async refresh() {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
+    const favicons = await File.find({filename: "favicon.png"})
+    if(favicons && favicons.length>0)
+      this.favicon=favicons[0]
   }
 
   getConfig(key, def) {
