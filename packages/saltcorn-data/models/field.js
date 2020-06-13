@@ -91,7 +91,9 @@ class Field {
   get sql_type() {
     if (this.is_fkey) {
       const schema = db.getTenantSchema();
-      return `int references "${schema}"."${sqlsanitize(this.reftable_name)}" (id)`;
+      return `int references "${schema}"."${sqlsanitize(
+        this.reftable_name
+      )}" (id)`;
     } else {
       return this.type.sql_name;
     }

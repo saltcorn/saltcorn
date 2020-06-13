@@ -126,6 +126,7 @@ const get_viewable_fields = async (
       }
     })
   ).filter(v => !!v);
+
 const stateToQueryString = state => {
   if (!state || Object.keys(state).length === 0) return "";
 
@@ -137,10 +138,22 @@ const stateToQueryString = state => {
   );
 };
 
+const splitUniques = (fields, state) => {
+  var uniques = [];
+  var nonUniques = [];
+  Object.entries(state).forEach(([k, v]) => {
+    const field = fields.find(f => f.name === k);
+    if (k === "id" || field.is_unique) uniques[k] = v;
+    else nonUniques[k] = v;
+  });
+  return { uniques, nonUniques };
+};
+
 module.exports = {
   get_viewable_fields,
   action_url,
   stateToQueryString,
   asyncMap,
-  view_linker
+  view_linker,
+  splitUniques
 };

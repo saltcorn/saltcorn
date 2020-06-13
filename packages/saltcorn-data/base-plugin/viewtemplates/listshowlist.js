@@ -8,6 +8,7 @@ const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
+const { splitUniques } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -115,6 +116,9 @@ const run = async (
   state,
   extraArgs
 ) => {
+  const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
+
   var lresp;
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
@@ -132,7 +136,9 @@ const run = async (
   }
   var reltbls = {};
   var myrow;
-  if (state.id) {
+  const { uniques } = splitUniques(fields, state);
+
+  if (Object.keys(uniques).length > 0) {
     const id = state.id;
     for (const relspec of Object.keys(subtables || {})) {
       if (subtables[relspec]) {
@@ -149,10 +155,8 @@ const run = async (
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
             const psubview = await View.findOne({ name: pvname });
-            if (!myrow) {
-              const mytable = await Table.findOne({ id: table_id });
-              myrow = await mytable.getRow({ id });
-            }
+            if (!myrow) myrow = await table.getRow({ id });
+
             const psubresp = await psubview.run(
               { id: myrow[prelfld] },
               extraArgs

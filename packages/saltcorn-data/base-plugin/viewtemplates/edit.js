@@ -8,7 +8,7 @@ const Workflow = require("../../models/workflow");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { initial_config_all_fields } = require("../../plugin-helper");
-
+const { splitUniques } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -184,17 +184,6 @@ const getForm = async (table, viewname, columns, id) => {
 
 const initial_config = initial_config_all_fields(true);
 
-const splitUniques = (fields, state) => {
-  var uniques = [];
-  var nonUniques = [];
-  Object.entries(state).forEach(([k, v]) => {
-    const field = fields.find(f => f.name === k);
-    if (k === "id" || field.is_unique) uniques[k] = v;
-    else nonUniques[k] = v;
-  });
-  return { uniques, nonUniques };
-};
-
 const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log({config})
   const { columns } = config;
@@ -280,8 +269,11 @@ const runPost = async (
     } else {
       const nxview = await View.findOne({ name: view_when_done });
       //console.log()
-      if(!nxview) {
-        req.flash("warning", `View "${view_when_done}" not found - change "View when done" in "${viewname}" view`);
+      if (!nxview) {
+        req.flash(
+          "warning",
+          `View "${view_when_done}" not found - change "View when done" in "${viewname}" view`
+        );
         res.redirect(`/`);
       } else {
         const state_fields = await nxview.get_state_fields();
