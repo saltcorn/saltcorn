@@ -119,6 +119,7 @@ const run = async (
     table,
     fields,
     columns,
+    false,
     extraOpts.req.csrfToken()
   );
   const qstate = await stateFieldsToWhere({ fields, state });
