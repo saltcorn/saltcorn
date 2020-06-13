@@ -280,13 +280,18 @@ const runPost = async (
     } else {
       const nxview = await View.findOne({ name: view_when_done });
       //console.log()
-      const state_fields = await nxview.get_state_fields();
-      if (
-        nxview.table_id === table_id &&
-        state_fields.some(sf => sf.name === "id")
-      )
-        res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
-      else res.redirect(`/view/${text(view_when_done)}`);
+      if(!nxview) {
+        req.flash("warning", `View "${view_when_done}" not found - change "View when done" in "${viewname}" view`);
+        res.redirect(`/`);
+      } else {
+        const state_fields = await nxview.get_state_fields();
+        if (
+          nxview.table_id === table_id &&
+          state_fields.some(sf => sf.name === "id")
+        )
+          res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
+        else res.redirect(`/view/${text(view_when_done)}`);
+      }
     }
   }
 };
