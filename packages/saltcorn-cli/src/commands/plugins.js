@@ -18,7 +18,10 @@ class PluginsCommand extends Command {
       await db.runWithTenant(domain, async () => {
         const myplugins = await Plugin.find({});
         myplugins.forEach(plugin => {
-          if (plugin.source === "npm" && !plugins.includes(plugin.location)) {
+          if (
+            plugin.source === "npm" &&
+            !plugins.map(p => p.location).includes(plugin.location)
+          ) {
             plugins.push(plugin);
             console.log(plugin.location);
           }
