@@ -1,6 +1,6 @@
 {
   "name": "contractis",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Design by Contract for JavaScript",
   "repository": "github:saltcorn/saltcorn",
   "main": "index.js",
