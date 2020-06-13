@@ -139,7 +139,12 @@ const run = async (
   const { uniques } = splitUniques(fields, state);
 
   if (Object.keys(uniques).length > 0) {
-    const id = state.id;
+    var id;
+    if (state.id) id = state.id;
+    else {
+      myrow = await table.getRow(uniques);
+      id = myrow.id;
+    }
     for (const relspec of Object.keys(subtables || {})) {
       if (subtables[relspec]) {
         const [reltype, rel] = relspec.split(":");
