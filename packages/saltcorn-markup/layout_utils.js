@@ -118,7 +118,7 @@ const alert = (type, s) => {
 };
 const navbarSolidOnScroll = script(
   domReady(`$(window).scroll(function () {
-    if ($(window).scrollTop() >= 50) {
+    if ($(window).scrollTop() >= 10) {
     $('.navbar').css('background','white');
     } else {
     $('.navbar').css('background','transparent');

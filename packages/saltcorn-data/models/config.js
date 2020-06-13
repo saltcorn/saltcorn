@@ -32,7 +32,8 @@ const configTypes = {
     onChange(val) {
       db.set_sql_logging(val);
     }
-  }
+  },
+  development_mode: { type: "Bool", label: "Development mode", default: false }
 };
 
 const getConfig = async (key, def) => {

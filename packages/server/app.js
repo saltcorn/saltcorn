@@ -24,6 +24,7 @@ const csrf = require("csurf");
 const getApp = async (opts = {}) => {
   const app = express();
   const sql_log = await getConfig("log_sql");
+  const development_mode = await getConfig("development_mode", false);
   if (sql_log) db.set_sql_logging(); // dont override cli flag
   await migrate();
 
@@ -62,14 +63,14 @@ const getApp = async (opts = {}) => {
   app.use(flash());
   app.use(
     express.static(__dirname + "/public", {
-      maxAge: 0 //1000 * 60 * 60 * 24
+      maxAge: development_mode ? 0 : 1000 * 60 * 15
     })
   );
   app.use(
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: 0 //1000 * 60 * 60 * 24
+        maxAge: development_mode ? 0 : 1000 * 60 * 30
       }
     )
   );
