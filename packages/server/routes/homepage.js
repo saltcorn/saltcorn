@@ -50,7 +50,12 @@ const no_views_logged_in = async (req, res) => {
             title: "Tables",
             contents: div(
               div("You have no tables and no views!"),
-              div(a({ href: `/table/new`, class: "btn btn-primary" }, "Create a table »"))
+              div(
+                a(
+                  { href: `/table/new`, class: "btn btn-primary" },
+                  "Create a table »"
+                )
+              )
             )
           },
           {
@@ -95,7 +100,12 @@ const no_views_logged_in = async (req, res) => {
             title: "Tables",
             contents: div(
               tableTable(tables),
-              div(a({ href: `/table/new`, class: "btn btn-primary" }, "Create a table"))
+              div(
+                a(
+                  { href: `/table/new`, class: "btn btn-primary" },
+                  "Create a table"
+                )
+              )
             )
           },
           {
@@ -103,7 +113,12 @@ const no_views_logged_in = async (req, res) => {
             title: "Views",
             contents: [
               div("You have no views!"),
-              div(a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Create a view »"))
+              div(
+                a(
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  "Create a view »"
+                )
+              )
             ]
           }
         ]
@@ -120,7 +135,12 @@ const no_views_logged_in = async (req, res) => {
             title: "Tables",
             contents: div(
               tableTable(tables),
-              div(a({ href: `/table/new`, class: "btn btn-primary" }, "Create a table"))
+              div(
+                a(
+                  { href: `/table/new`, class: "btn btn-primary" },
+                  "Create a table"
+                )
+              )
             )
           },
           {
@@ -128,7 +148,12 @@ const no_views_logged_in = async (req, res) => {
             title: "Views",
             contents: [
               viewTable(views),
-              div(a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Create a view »"))
+              div(
+                a(
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  "Create a view »"
+                )
+              )
             ]
           }
         ]
