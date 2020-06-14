@@ -151,7 +151,7 @@ const no_views_logged_in = async (req, res) => {
               div(
                 a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
-                  "Create a view »"
+                  "Create a view"
                 )
               )
             ]

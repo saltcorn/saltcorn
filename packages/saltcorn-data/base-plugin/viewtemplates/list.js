@@ -79,15 +79,19 @@ const configuration_workflow = () =>
                 name: column.field_name,
                 label: f.label,
                 type: f.type,
+                reftable_name: f.reftable_name,
+                attributes: f.attributes,
                 fieldview:
                   f.type && f.type.name === "Bool" ? "tristate" : undefined,
                 required: false
               };
             });
-          return new Form({
+          const form = new Form({
             fields: formfields,
             blurb: "Default search form values when first loaded"
           });
+          await form.fill_fkey_options(true)
+          return form
         }
       }
     ]
