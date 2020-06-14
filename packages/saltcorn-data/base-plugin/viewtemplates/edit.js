@@ -132,6 +132,15 @@ const configuration_workflow = () =>
       },
       {
         name: "editoptions",
+        onlyWhen: async context => {
+          const done_views = await View.find_all_views_where(
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              (viewrow.table_id === context.table_id ||
+                state_fields.every(sf => !sf.required))
+          );
+          return done_views.length > 0;
+        },
         form: async context => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>

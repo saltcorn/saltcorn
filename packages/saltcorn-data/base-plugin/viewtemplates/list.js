@@ -41,16 +41,20 @@ const configuration_workflow = () =>
                 name: "columns",
                 fields: field_picker_repeat
               }),
-              {
-                name: "view_to_create",
-                label: "Use view to create",
-                sublabel:
-                  "If user has write permission. Leave blank to have no link to create a new item",
-                type: "String",
-                attributes: {
-                  options: create_view_opts.join()
-                }
-              }
+              ...(create_view_opts.length > 0
+                ? [
+                    {
+                      name: "view_to_create",
+                      label: "Use view to create",
+                      sublabel:
+                        "If user has write permission. Leave blank to have no link to create a new item",
+                      type: "String",
+                      attributes: {
+                        options: create_view_opts.join()
+                      }
+                    }
+                  ]
+                : [])
             ]
           });
         }
@@ -58,6 +62,10 @@ const configuration_workflow = () =>
       {
         name: "default_state",
         contextField: "default_state",
+        onlyWhen: async context =>
+          context.columns.filter(
+            column => column.type === "Field" && column.state_field
+          ).length > 0,
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const table_fields = await table.getFields();
