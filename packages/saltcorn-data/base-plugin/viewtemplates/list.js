@@ -41,7 +41,8 @@ const configuration_workflow = () =>
                 name: "columns",
                 fields: field_picker_repeat
               }),
-              {
+              ...(create_view_opts.length>0 ? 
+              [{
                 name: "view_to_create",
                 label: "Use view to create",
                 sublabel:
@@ -50,7 +51,7 @@ const configuration_workflow = () =>
                 attributes: {
                   options: create_view_opts.join()
                 }
-              }
+              }] : [])
             ]
           });
         }
