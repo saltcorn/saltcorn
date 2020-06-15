@@ -98,7 +98,9 @@ const obj = (o, alsoCheckThat) =>
     options: o,
     get_error_message: x => {
       if (typeof x !== "object")
-        return `Expected object with fields ${o}, got type ${typeof x}`;
+        return `Expected object with fields ${JSON.stringify(
+          o
+        )}, got type ${typeof x}`;
       const failing = Object.entries(o || {}).find(([k, v]) => !v.check(x[k]));
       if (failing) {
         if (o[failing[0]].get_error_message)

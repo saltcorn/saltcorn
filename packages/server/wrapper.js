@@ -77,7 +77,13 @@ module.exports = function(req, res, next) {
           }
         ]
       : [];
-    const stdHeaders = [{ css: "/saltcorn.css" }, { script: "/saltcorn.js" }];
+    const stdHeaders = [
+      {
+        headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"</script>`
+      },
+      { css: "/saltcorn.css" },
+      { script: "/saltcorn.js" }
+    ];
     const brand = {
       name: getState().getConfig("site_name")
     };

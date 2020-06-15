@@ -5,6 +5,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 
 const manager = new PluginManager({
   staticDependencies: {
+    contractis: require("contractis"),
     "@saltcorn/markup": require("@saltcorn/markup"),
     "@saltcorn/data/db": require("@saltcorn/data/db")
   }

@@ -157,6 +157,9 @@ function view_post(viewname, route, data) {
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
     type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf
+    },
     contentType: "application/json",
     data: JSON.stringify(data)
   });
