@@ -15,7 +15,7 @@ const {
   stateFieldsToWhere,
   initial_config_all_fields
 } = require("../../plugin-helper");
-const { get_viewable_fields } = require("./viewable_fields");
+const { get_viewable_fields, stateToQueryString } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -170,7 +170,7 @@ const run = async (
 
   const create_link =
     view_to_create && role <= table.min_role_write
-      ? link(`/view/${view_to_create}`, `Add ${pluralize(table.name, 1)}`)
+      ? link(`/view/${view_to_create}${stateToQueryString(state)}`, `Add ${pluralize(table.name, 1)}`)
       : "";
   return mkTable(tfields, rows, page_opts) + create_link;
 };
