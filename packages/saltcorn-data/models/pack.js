@@ -1,7 +1,6 @@
 const Table = require("./table");
 const View = require("./view");
 const Field = require("./field");
-const Plugin = require("./plugin");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
 
@@ -38,6 +37,7 @@ const view_pack = async name => {
 };
 
 const plugin_pack = async name => {
+  const Plugin = require("./plugin");
   const plugin = await Plugin.findOne({ name });
 
   return {
