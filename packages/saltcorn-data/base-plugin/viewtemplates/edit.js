@@ -174,7 +174,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   }
 ];
 
-const getForm = async (table, viewname, columns, id) => {
+const getForm = async (table, viewname, columns, layout, id) => {
   const fields = await table.getFields();
 
   const tfields = columns.map(column => {
@@ -185,7 +185,7 @@ const getForm = async (table, viewname, columns, id) => {
     }
   });
 
-  const form = new Form({ action: `/view/${viewname}`, fields: tfields });
+  const form = new Form({ action: `/view/${viewname}`, fields: tfields, layout });
   await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
@@ -195,10 +195,10 @@ const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log({config})
-  const { columns } = config;
+  const { columns, layout } = config;
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, state.id);
+  const form = await getForm(table, viewname, columns, layout, state.id);
   const { uniques, nonUniques } = splitUniques(fields, state);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
@@ -240,13 +240,13 @@ const fill_presets = async (table, req, fixed) => {
 const runPost = async (
   table_id,
   viewname,
-  { columns, fixed, view_when_done },
+  { columns, layout, fixed, view_when_done },
   state,
   body,
   { res, req }
 ) => {
   const table = await Table.findOne({ id: table_id });
-  const form = await getForm(table, viewname, columns, body.id);
+  const form = await getForm(table, viewname, columns, layout, body.id);
   form.validate(body);
   if (form.hasErrors) {
     res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken()));

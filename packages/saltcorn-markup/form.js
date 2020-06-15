@@ -264,6 +264,21 @@ const mkFormRowForField = (
   }
 };
 
+const renderLayout=(form)=>{
+  async function go(segment) {
+    if (!segment) return "";
+    if (segment.minRole && role > segment.minRole) return "";
+    if (segment.type === "blank") {
+      return wrapBlock(segment, segment.contents);
+    }
+    if (segment.type === "line_break") {
+      return "<br />";
+    }
+  }
+  return await go(form.layout);
+
+}
+
 const renderForm = (form, csrfToken) => {
   if (form.isStateForm) {
     form.class += " px-4 py-3";
@@ -291,8 +306,21 @@ const renderForm = (form, csrfToken) => {
         mkForm(form, csrfToken, form.errors)
       )
     );
-  } else return mkForm(form, csrfToken, form.errors);
+  } else if(form.layout) mkFormWithLayout(form, csrfToken);
+  else return mkForm(form, csrfToken, form.errors);
 };
+
+const mkFormWithLayout = (form, csrfToken) => {
+  const hasFile = form.fields.some(f => f.input_type === "file");
+  const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const top = `<form action="${form.action}" class="form-namespace ${
+    form.class
+  }" method="${form.methodGET ? "get" : "post"}" ${
+    hasFile ? 'encType="multipart/form-data"' : ""
+  }>`;
+  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  return blurbp + top + csrfField + renderLayout(form)+'</form>';
+}
 
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
