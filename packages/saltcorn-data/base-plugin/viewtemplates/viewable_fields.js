@@ -133,7 +133,10 @@ const stateToQueryString = state => {
   return (
     "?" +
     Object.entries(state)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .map(([k, v]) =>
+        k === "id" ? null : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+      )
+      .filter(s => !!s)
       .join("&")
   );
 };
