@@ -275,7 +275,7 @@ const wrapBlock = (segment, inner) =>
     : span({ class: segment.textStyle || "" }, inner);
 
 const renderLayout=(form)=>{
-  async function go(segment) {
+  function go(segment) {
     if (!segment) return "";
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type === "blank") {
@@ -288,28 +288,33 @@ const renderLayout=(form)=>{
       const val = form.values[segment.field_name];
 
 
-      
-      return wrapBlock(segment, text(val));
+      return wrapBlock(segment, 
+        innerField( 
+        val,
+        form.errors[segment.field_name]        
+      )(field)
+      );
+        
     } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => await go(s))).join("");
+      return (segment.above.map(s => go(s))).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(
         { class: "row" },
-        await asyncMap(segment.besides, async (t, ix) =>
+         segment.besides.map((t, ix) =>
           div(
             {
               class: `col-sm-${
                 segment.widths ? segment.widths[ix] : defwidth
               } text-${segment.aligns ? segment.aligns[ix] : ""}`
             },
-            await go(t)
+             go(t)
           )
         )
       );
     }
   }
-  return await go(form.layout);
+  return go(form.layout);
 
 }
 
