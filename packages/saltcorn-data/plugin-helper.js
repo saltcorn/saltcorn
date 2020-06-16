@@ -3,13 +3,16 @@ const Field = require("./models/field");
 const Table = require("./models/table");
 const { getState } = require("./db/state");
 
-const calcfldViewOptions = fields => {
+const calcfldViewOptions = (fields, isEdit) => {
   var fvs = {};
   fields.forEach(f => {
     if (f.type === "File") {
-      fvs[f.name] = Object.keys(getState().fileviews);
+      if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
     } else if (f.type && f.type.fieldviews) {
-      fvs[f.name] = Object.keys(f.type.fieldviews);
+      const tfvs = Object.entries(f.type.fieldviews).filter(
+        ([k, fv]) => !fv.isEdit === !isEdit
+      );
+      fvs[f.name] = tfvs.map(([k, fv]) => k);
     }
   });
   return fvs;

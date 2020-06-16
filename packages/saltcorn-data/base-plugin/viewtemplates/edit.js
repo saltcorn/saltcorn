@@ -8,7 +8,9 @@ const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
-const { initial_config_all_fields,  calcfldViewOptions
+const {
+  initial_config_all_fields,
+  calcfldViewOptions
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 const configuration_workflow = () =>
@@ -20,10 +22,10 @@ const configuration_workflow = () =>
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
 
-          const field_view_options = calcfldViewOptions(fields);
-          
+          const field_view_options = calcfldViewOptions(fields, true);
+
           const roles = await User.get_roles();
-          
+
           return {
             fields,
             field_view_options,
