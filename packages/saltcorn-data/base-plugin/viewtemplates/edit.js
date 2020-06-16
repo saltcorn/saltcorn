@@ -147,8 +147,8 @@ const getForm = async (table, viewname, columns, layout, id) => {
 const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state, { res, req }) => {
-  //console.log({config})
   const { columns, layout } = config;
+  //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, state.id);

@@ -259,6 +259,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
 
   const fields = await table.getFields();
   var cfg = { columns: [] };
+  var aboves=[]
   fields.forEach(f => {
     const fvNm = f.type.fieldviews
       ? Object.entries(f.type.fieldviews).find(
@@ -270,7 +271,41 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
       type: "Field",
       fieldview: fvNm
     });
+    aboves.push({widths:[2,10],
+      besides: [
+        {
+          "above": [
+            null,
+            {
+              "type": "blank",
+              "block": false,
+              "contents": f.label,
+              "textStyle": ""
+            }
+          ]
+        },
+        {
+          "above": [
+            null,
+            {
+              "type": "field",
+              "block": false,
+              "fieldview": fvNm,
+              "textStyle": "",
+              "field_name": f.name
+            }
+          ]
+        }
+      ]})
   });
+  aboves.push({
+    "type": "action",
+    "block": false,
+    "minRole": 10,
+    "action_name": "Save"
+  }
+)
+  cfg.layout = {above: aboves}
   return cfg;
 };
 
