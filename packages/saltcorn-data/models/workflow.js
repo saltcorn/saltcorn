@@ -100,7 +100,8 @@ class Workflow {
           context,
           layout: context.layout,
           action: this.action,
-          stepName: step.name
+          stepName: step.name,
+          mode: "show"
         }
       };
     }

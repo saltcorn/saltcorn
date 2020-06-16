@@ -14,7 +14,10 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 
-module.exports = ({ options, context, action, stepName, layout }, csrfToken) =>
+module.exports = (
+  { options, context, action, stepName, layout, mode = "show" },
+  csrfToken
+) =>
   div(
     script({ src: "/builder_bundle.js" }),
     div({ id: "saltcorn-builder" }),
@@ -33,6 +36,7 @@ module.exports = ({ options, context, action, stepName, layout }, csrfToken) =>
     script(`builder.renderBuilder(
       "saltcorn-builder", 
       ${JSON.stringify(options)}, 
-      ${JSON.stringify(layout || {})}
+      ${JSON.stringify(layout || {})},
+      ${JSON.stringify(mode)}
     )`)
   );
