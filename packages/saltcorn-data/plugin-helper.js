@@ -261,15 +261,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
   var cfg = { columns: [] };
   var aboves = [null];
   fields.forEach(f => {
-    if (f.is_fkey) {
-      cfg.columns.push({
-        type: "JoinField",
-        join_field: `${f.name}.${f.attributes.summary_field}`
-      });
-      aboves.push({
-        widths: [2, 10],
-        besides: [
-          {
+    const flabel=  {
             above: [
               null,
               {
@@ -279,7 +271,16 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
                 textStyle: ""
               }
             ]
-          },
+          }
+    if (f.is_fkey &&  f.type !== "File" && f.reftable_name !== "users") {
+      cfg.columns.push({
+        type: "JoinField",
+        join_field: `${f.name}.${f.attributes.summary_field}`
+      });
+      aboves.push({
+        widths: [2, 10],
+        besides: [
+          flabel,
           {
             above: [
               null,
@@ -293,12 +294,13 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
           }
         ]
       });
-    } else {
+    } else if (f.reftable_name !== "users") {
       const fvNm = f.type.fieldviews
         ? Object.entries(f.type.fieldviews).find(
             ([nm, fv]) => fv.isEdit === isEdit
           )[0]
-        : undefined;
+        : f.type==="File" &&!isEdit
+        ? Object.keys(getState().fileviews)[0] : undefined;
       cfg.columns.push({
         field_name: f.name,
         type: "Field",
@@ -307,17 +309,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
       aboves.push({
         widths: [2, 10],
         besides: [
-          {
-            above: [
-              null,
-              {
-                type: "blank",
-                block: false,
-                contents: f.label,
-                textStyle: ""
-              }
-            ]
-          },
+          flabel,
           {
             above: [
               null,
