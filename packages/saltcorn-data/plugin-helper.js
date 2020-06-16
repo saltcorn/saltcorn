@@ -333,6 +333,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
         ]
       });
     }
+    aboves.push({type: "line_break"})
   });
   if (isEdit)
     aboves.push({
