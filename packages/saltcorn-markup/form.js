@@ -270,7 +270,7 @@ const renderLayout = form => {
     if (segment.type === "line_break") {
       return "<br />";
     } else if (segment.type === "field") {
-      const field = form.fields.find(f => (f.name = segment.field_name));
+      const field = form.fields.find(f => (f.name === segment.field_name));
       
       return wrapBlock(segment, innerField(form.values, form.errors)(field));
     } else if (segment.type === "action" && segment.action_name === "Save") {
