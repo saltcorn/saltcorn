@@ -263,7 +263,7 @@ const wrapBlock = (segment, inner) =>
 const renderLayout = form => {
   function go(segment) {
     if (!segment) return "";
-    if (segment.minRole && role > segment.minRole) return "";
+    //if (segment.minRole && role > segment.minRole) return "";
     if (segment.type === "blank") {
       return wrapBlock(segment, segment.contents);
     }
@@ -274,6 +274,10 @@ const renderLayout = form => {
       const val = form.values[segment.field_name];
 
       return wrapBlock(segment, innerField(val, form.errors)(field));
+    } else if (segment.type === "action" && segment.action_name==='Save') {
+      return `<button type="submit" class="btn btn-primary">${text(
+        form.submitLabel || "Save"
+      )}</button>`
     } else if (segment.above) {
       return segment.above.map(s => go(s)).join("");
     } else if (segment.besides) {

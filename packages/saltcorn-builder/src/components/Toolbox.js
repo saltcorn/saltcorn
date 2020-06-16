@@ -201,6 +201,23 @@ export const ToolboxEdit = () => {
             </td>
             <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
           </tr>
+          <tr>
+          <td
+              title="Action button"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Action
+                    name={options.actions[0]}
+                    block={false}
+                    minRole={10}
+                  />
+                )
+              }
+            >
+              Action
+            </td>
+          </tr>
         </tbody>
       </table>
     </Fragment>

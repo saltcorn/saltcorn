@@ -25,11 +25,15 @@ const configuration_workflow = () =>
           const field_view_options = calcfldViewOptions(fields, true);
 
           const roles = await User.get_roles();
-
+          const actions = [
+            "Save",
+            //"Delete"
+          ]
           return {
             fields,
             field_view_options,
             roles,
+            actions,
             mode: "edit"
           };
         }
@@ -128,7 +132,7 @@ const getForm = async (table, viewname, columns, layout, id) => {
       f.fieldview = column.fieldview;
       return f;
     }
-  });
+  }).filter(tf=>!!tf);
 
   const form = new Form({
     action: `/view/${viewname}`,
