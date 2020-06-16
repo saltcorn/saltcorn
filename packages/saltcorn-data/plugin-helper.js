@@ -8,6 +8,9 @@ const calcfldViewOptions = (fields, isEdit) => {
   fields.forEach(f => {
     if (f.type === "File") {
       if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
+      else fvs[f.name] = ["upload"];
+    } else if (f.type === "Key") {
+      fvs[f.name] = ["select"];
     } else if (f.type && f.type.fieldviews) {
       const tfvs = Object.entries(f.type.fieldviews).filter(
         ([k, fv]) => !fv.isEdit === !isEdit
@@ -261,18 +264,23 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
   var cfg = { columns: [] };
   var aboves = [null];
   fields.forEach(f => {
-    const flabel=  {
-            above: [
-              null,
-              {
-                type: "blank",
-                block: false,
-                contents: f.label,
-                textStyle: ""
-              }
-            ]
-          }
-    if (f.is_fkey &&  f.type !== "File" && f.reftable_name !== "users") {
+    const flabel = {
+      above: [
+        null,
+        {
+          type: "blank",
+          block: false,
+          contents: f.label,
+          textStyle: ""
+        }
+      ]
+    };
+    if (
+      f.is_fkey &&
+      f.type !== "File" &&
+      f.reftable_name !== "users" &&
+      !isEdit
+    ) {
       cfg.columns.push({
         type: "JoinField",
         join_field: `${f.name}.${f.attributes.summary_field}`
@@ -299,8 +307,13 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
         ? Object.entries(f.type.fieldviews).find(
             ([nm, fv]) => fv.isEdit === isEdit
           )[0]
-        : f.type==="File" &&!isEdit
-        ? Object.keys(getState().fileviews)[0] : undefined;
+        : f.type === "File" && !isEdit
+        ? Object.keys(getState().fileviews)[0]
+        : f.type === "File" && isEdit
+        ? "upload"
+        : f.type === "Key"
+        ? "select"
+        : undefined;
       cfg.columns.push({
         field_name: f.name,
         type: "Field",
@@ -325,7 +338,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
         ]
       });
     }
-    aboves.push({type: "line_break"})
+    aboves.push({ type: "line_break" });
   });
   if (isEdit)
     aboves.push({
