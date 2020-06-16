@@ -185,7 +185,11 @@ const getForm = async (table, viewname, columns, layout, id) => {
     }
   });
 
-  const form = new Form({ action: `/view/${viewname}`, fields: tfields, layout });
+  const form = new Form({
+    action: `/view/${viewname}`,
+    fields: tfields,
+    layout
+  });
   await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
