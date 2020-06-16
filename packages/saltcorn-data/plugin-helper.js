@@ -259,54 +259,89 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
 
   const fields = await table.getFields();
   var cfg = { columns: [] };
-  var aboves=[]
+  var aboves = [null];
   fields.forEach(f => {
-    const fvNm = f.type.fieldviews
-      ? Object.entries(f.type.fieldviews).find(
-          ([nm, fv]) => fv.isEdit === isEdit
-        )[0]
-      : undefined;
-    cfg.columns.push({
-      field_name: f.name,
-      type: "Field",
-      fieldview: fvNm
-    });
-    aboves.push({widths:[2,10],
-      besides: [
-        {
-          "above": [
-            null,
-            {
-              "type": "blank",
-              "block": false,
-              "contents": f.label,
-              "textStyle": ""
-            }
-          ]
-        },
-        {
-          "above": [
-            null,
-            {
-              "type": "field",
-              "block": false,
-              "fieldview": fvNm,
-              "textStyle": "",
-              "field_name": f.name
-            }
-          ]
-        }
-      ]})
+    if (f.is_fkey) {
+      cfg.columns.push({
+        type: "JoinField",
+        join_field: `${f.name}.${f.attributes.summary_field}`
+      });
+      aboves.push({
+        widths: [2, 10],
+        besides: [
+          {
+            above: [
+              null,
+              {
+                type: "blank",
+                block: false,
+                contents: f.label,
+                textStyle: ""
+              }
+            ]
+          },
+          {
+            above: [
+              null,
+              {
+                type: "join_field",
+                block: false,
+                textStyle: "",
+                join_field: `${f.name}.${f.attributes.summary_field}`
+              }
+            ]
+          }
+        ]
+      });
+    } else {
+      const fvNm = f.type.fieldviews
+        ? Object.entries(f.type.fieldviews).find(
+            ([nm, fv]) => fv.isEdit === isEdit
+          )[0]
+        : undefined;
+      cfg.columns.push({
+        field_name: f.name,
+        type: "Field",
+        fieldview: fvNm
+      });
+      aboves.push({
+        widths: [2, 10],
+        besides: [
+          {
+            above: [
+              null,
+              {
+                type: "blank",
+                block: false,
+                contents: f.label,
+                textStyle: ""
+              }
+            ]
+          },
+          {
+            above: [
+              null,
+              {
+                type: "field",
+                block: false,
+                fieldview: fvNm,
+                textStyle: "",
+                field_name: f.name
+              }
+            ]
+          }
+        ]
+      });
+    }
   });
-  if(isEdit)
-  aboves.push({
-    "type": "action",
-    "block": false,
-    "minRole": 10,
-    "action_name": "Save"
-  }
-)
-  cfg.layout = {above: aboves}
+  if (isEdit)
+    aboves.push({
+      type: "action",
+      block: false,
+      minRole: 10,
+      action_name: "Save"
+    });
+  cfg.layout = { above: aboves };
   return cfg;
 };
 

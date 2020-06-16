@@ -26,9 +26,9 @@ const configuration_workflow = () =>
 
           const roles = await User.get_roles();
           const actions = [
-            "Save",
+            "Save"
             //"Delete"
-          ]
+          ];
           return {
             fields,
             field_view_options,
@@ -126,13 +126,15 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
 const getForm = async (table, viewname, columns, layout, id) => {
   const fields = await table.getFields();
 
-  const tfields = columns.map(column => {
-    if (column.type === "Field") {
-      const f = fields.find(fld => fld.name === column.field_name);
-      f.fieldview = column.fieldview;
-      return f;
-    }
-  }).filter(tf=>!!tf);
+  const tfields = columns
+    .map(column => {
+      if (column.type === "Field") {
+        const f = fields.find(fld => fld.name === column.field_name);
+        f.fieldview = column.fieldview;
+        return f;
+      }
+    })
+    .filter(tf => !!tf);
 
   const form = new Form({
     action: `/view/${viewname}`,

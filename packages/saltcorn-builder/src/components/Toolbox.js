@@ -202,7 +202,7 @@ export const ToolboxEdit = () => {
             <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
           </tr>
           <tr>
-          <td
+            <td
               title="Action button"
               ref={ref =>
                 connectors.create(
