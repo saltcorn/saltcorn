@@ -101,7 +101,7 @@ class Workflow {
           layout: context.layout,
           action: this.action,
           stepName: step.name,
-          mode: "show"
+          mode: options.mode
         }
       };
     }

@@ -2,91 +2,34 @@ const Field = require("../../models/field");
 const File = require("../../models/file");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
+const User = require("../../models/user");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
-const { initial_config_all_fields } = require("../../plugin-helper");
+const { initial_config_all_fields,  calcfldViewOptions
+} = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
         name: "editfields",
-        form: async context => {
-          const table_id = context.table_id;
-          const table = await Table.findOne({ id: table_id });
+        builder: async context => {
+          const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          const fldOptions = fields.map(f => text(f.name));
-          var fldViewOptions = {};
-          fields.forEach(f => {
-            if (f.type && f.type.fieldviews) {
-              fldViewOptions[f.name] = [];
-              Object.entries(f.type.fieldviews).forEach(([nm, fv]) => {
-                if (fv.isEdit) fldViewOptions[f.name].push(nm);
-              });
-            }
-          });
-          return new Form({
-            blurb:
-              "Finalise your edit view by specifying the fields in the table",
-            fields: [
-              new FieldRepeat({
-                name: "columns",
-                fields: [
-                  {
-                    name: "type",
-                    label: "Type",
-                    type: "String",
-                    class: "coltype",
-                    required: true,
-                    attributes: {
-                      //TODO omit when no options
-                      options: [
-                        {
-                          name: "Field",
-                          label: `Field in ${table.name} table`
-                        },
-                        { name: "Static", label: "Fixed content" }
-                      ]
-                    }
-                  },
-                  {
-                    name: "field_name",
-                    label: "Field",
-                    type: "String",
-                    class: "field_name",
-                    required: true,
-                    attributes: {
-                      options: fldOptions.join()
-                    },
-                    showIf: { ".coltype": "Field" }
-                  },
-                  {
-                    name: "fieldview",
-                    label: "Field view",
-                    type: "String",
-                    required: false,
-                    attributes: {
-                      calcOptions: [".field_name", fldViewOptions]
-                    },
-                    showIf: { ".coltype": "Field" }
-                  },
-                  {
-                    name: "static_type",
-                    label: "Field",
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: "Section header, Paragraph"
-                    },
-                    showIf: { ".coltype": "Static" }
-                  }
-                ]
-              })
-            ]
-          });
+
+          const field_view_options = calcfldViewOptions(fields);
+          
+          const roles = await User.get_roles();
+          
+          return {
+            fields,
+            field_view_options,
+            roles,
+            mode: "edit"
+          };
         }
       },
       {
