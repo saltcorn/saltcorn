@@ -298,6 +298,7 @@ const initial_config_all_fields = isEdit => async ({ table_id }) => {
         }
       ]})
   });
+  if(isEdit)
   aboves.push({
     "type": "action",
     "block": false,
