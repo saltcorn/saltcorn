@@ -177,7 +177,7 @@ const innerField = (
   const validClass = errors[name] ? "is-invalid" : "";
   switch (hdr.input_type) {
     case "fromtype":
-      return isplayEdit(
+      return displayEdit(
           hdr,
           name,
           v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
@@ -291,7 +291,7 @@ const renderLayout=(form)=>{
       return wrapBlock(segment, 
         innerField( 
         val,
-        form.errors[segment.field_name]        
+        form.errors
       )(field)
       );
         
@@ -345,7 +345,7 @@ const renderForm = (form, csrfToken) => {
         mkForm(form, csrfToken, form.errors)
       )
     );
-  } else if(form.layout) mkFormWithLayout(form, csrfToken);
+  } else if(form.layout) return mkFormWithLayout(form, csrfToken);
   else return mkForm(form, csrfToken, form.errors);
 };
 
