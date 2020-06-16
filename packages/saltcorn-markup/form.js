@@ -339,7 +339,11 @@ const mkFormWithLayout = (form, csrfToken) => {
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
-  return blurbp + top + csrfField + renderLayout(form) + "</form>";
+  const hiddens = form.fields
+          .filter(f=>f.input_type==='hidden')
+          .map(f=>innerField(form.values, form.errors)(f))
+          .join('')
+  return blurbp + top + csrfField + hiddens+renderLayout(form) + "</form>";
 };
 
 const mkForm = (form, csrfToken, errors = {}) => {

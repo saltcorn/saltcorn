@@ -126,7 +126,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
 const getForm = async (table, viewname, columns, layout, id) => {
   const fields = await table.getFields();
 
-  const tfields = columns
+  const tfields = (columns||[])
     .map(column => {
       if (column.type === "Field") {
         const f = fields.find(fld => fld.name === column.field_name);
