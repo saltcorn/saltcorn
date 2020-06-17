@@ -79,6 +79,7 @@ const get_password = async for_who => {
 
 const install_db = async () => {
   await asyncSudo(["apt", "install", "-y", "postgresql", "postgresql-client"]);
+  await asyncSudo(["service", "postgresql", "start"]);
   const user = process.env.USER;
   //const pgpass=await get_password("postgres")
   //await asyncSudo(['sudo', '-u', 'postgres', 'psql', '-U', 'postgres', '-d', 'postgres', '-c', `"alter user postgres with password '${pgpass}';"`])
