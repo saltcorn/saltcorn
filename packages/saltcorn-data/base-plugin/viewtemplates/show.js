@@ -58,7 +58,8 @@ const configuration_workflow = () =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
-            roles
+            roles,
+            mode: "show"
           };
         }
       }

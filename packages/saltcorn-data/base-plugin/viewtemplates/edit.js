@@ -2,91 +2,40 @@ const Field = require("../../models/field");
 const File = require("../../models/file");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
+const User = require("../../models/user");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
-const { initial_config_all_fields } = require("../../plugin-helper");
+const {
+  initial_config_all_fields,
+  calcfldViewOptions
+} = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
         name: "editfields",
-        form: async context => {
-          const table_id = context.table_id;
-          const table = await Table.findOne({ id: table_id });
+        builder: async context => {
+          const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          const fldOptions = fields.map(f => text(f.name));
-          var fldViewOptions = {};
-          fields.forEach(f => {
-            if (f.type && f.type.fieldviews) {
-              fldViewOptions[f.name] = [];
-              Object.entries(f.type.fieldviews).forEach(([nm, fv]) => {
-                if (fv.isEdit) fldViewOptions[f.name].push(nm);
-              });
-            }
-          });
-          return new Form({
-            blurb:
-              "Finalise your edit view by specifying the fields in the table",
-            fields: [
-              new FieldRepeat({
-                name: "columns",
-                fields: [
-                  {
-                    name: "type",
-                    label: "Type",
-                    type: "String",
-                    class: "coltype",
-                    required: true,
-                    attributes: {
-                      //TODO omit when no options
-                      options: [
-                        {
-                          name: "Field",
-                          label: `Field in ${table.name} table`
-                        },
-                        { name: "Static", label: "Fixed content" }
-                      ]
-                    }
-                  },
-                  {
-                    name: "field_name",
-                    label: "Field",
-                    type: "String",
-                    class: "field_name",
-                    required: true,
-                    attributes: {
-                      options: fldOptions.join()
-                    },
-                    showIf: { ".coltype": "Field" }
-                  },
-                  {
-                    name: "fieldview",
-                    label: "Field view",
-                    type: "String",
-                    required: false,
-                    attributes: {
-                      calcOptions: [".field_name", fldViewOptions]
-                    },
-                    showIf: { ".coltype": "Field" }
-                  },
-                  {
-                    name: "static_type",
-                    label: "Field",
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: "Section header, Paragraph"
-                    },
-                    showIf: { ".coltype": "Static" }
-                  }
-                ]
-              })
-            ]
-          });
+
+          const field_view_options = calcfldViewOptions(fields, true);
+
+          const roles = await User.get_roles();
+          const actions = [
+            "Save"
+            //"Delete"
+          ];
+          return {
+            fields,
+            field_view_options,
+            roles,
+            actions,
+            mode: "edit"
+          };
         }
       },
       {
@@ -174,18 +123,24 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   }
 ];
 
-const getForm = async (table, viewname, columns, id) => {
+const getForm = async (table, viewname, columns, layout, id) => {
   const fields = await table.getFields();
 
-  const tfields = columns.map(column => {
-    if (column.type === "Field") {
-      const f = fields.find(fld => fld.name === column.field_name);
-      f.fieldview = column.fieldview;
-      return f;
-    }
-  });
+  const tfields = (columns||[])
+    .map(column => {
+      if (column.type === "Field") {
+        const f = fields.find(fld => fld.name === column.field_name);
+        f.fieldview = column.fieldview;
+        return f;
+      }
+    })
+    .filter(tf => !!tf);
 
-  const form = new Form({ action: `/view/${viewname}`, fields: tfields });
+  const form = new Form({
+    action: `/view/${viewname}`,
+    fields: tfields,
+    layout
+  });
   await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
@@ -194,11 +149,11 @@ const getForm = async (table, viewname, columns, id) => {
 const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state, { res, req }) => {
-  //console.log({config})
-  const { columns } = config;
+  const { columns, layout } = config;
+  //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, state.id);
+  const form = await getForm(table, viewname, columns, layout, state.id);
   const { uniques, nonUniques } = splitUniques(fields, state);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
@@ -240,13 +195,13 @@ const fill_presets = async (table, req, fixed) => {
 const runPost = async (
   table_id,
   viewname,
-  { columns, fixed, view_when_done },
+  { columns, layout, fixed, view_when_done },
   state,
   body,
   { res, req }
 ) => {
   const table = await Table.findOne({ id: table_id });
-  const form = await getForm(table, viewname, columns, body.id);
+  const form = await getForm(table, viewname, columns, layout, body.id);
   form.validate(body);
   if (form.hasErrors) {
     res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken()));

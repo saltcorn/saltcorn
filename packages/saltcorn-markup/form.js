@@ -168,31 +168,16 @@ const displayEdit = (hdr, name, v, extracls) => {
   );
 };
 
-const mkFormRowForField = (
-  v,
-  errors,
-  formStyle,
-  labelCols,
-  nameAdd = ""
-) => hdr => {
+const innerField = (v, errors, nameAdd = "") => hdr => {
   const name = hdr.name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
-  const errorFeedback = errors[name]
-    ? `<div class="invalid-feedback">${text(errors[name])}</div>`
-    : "";
   switch (hdr.input_type) {
     case "fromtype":
-      return formRowWrap(
+      return displayEdit(
         hdr,
-        displayEdit(
-          hdr,
-          name,
-          v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
-          validClass
-        ),
-        errorFeedback,
-        formStyle,
-        labelCols
+        name,
+        v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
+        validClass
       );
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
@@ -202,44 +187,27 @@ const mkFormRowForField = (
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return formRowWrap(
-        hdr,
-        `<select class="form-control ${validClass} ${
-          hdr.class
-        }" name="${text_attr(name)}" id="input${text_attr(
-          name
-        )}">${opts}</select>`,
-        errorFeedback,
-        formStyle,
-        labelCols
-      );
+      return `<select class="form-control ${validClass} ${
+        hdr.class
+      }" name="${text_attr(name)}" id="input${text_attr(
+        name
+      )}">${opts}</select>`;
     case "file":
-      return formRowWrap(
-        hdr,
-        `${
-          v[hdr.name] ? text(v[hdr.name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${
-          hdr.class
-        }" name="${text_attr(name)}" id="input${text_attr(name)}">`,
-        errorFeedback,
-        formStyle,
-        labelCols
-      );
+      return `${
+        v[hdr.name] ? text(v[hdr.name]) : ""
+      }<input type="file" class="form-control-file ${validClass} ${
+        hdr.class
+      }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
+
     case "ordered_multi_select":
       const mopts = select_options(v, hdr);
-      return formRowWrap(
-        hdr,
-        `<select class="form-control ${validClass} ${
-          hdr.class
-        }" class="chosen-select" multiple name="${text_attr(
-          name
-        )}" id="input${text_attr(
-          name
-        )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`,
-        errorFeedback,
-        formStyle,
-        labelCols
-      );
+      return `<select class="form-control ${validClass} ${
+        hdr.class
+      }" class="chosen-select" multiple name="${text_attr(
+        name
+      )}" id="input${text_attr(
+        name
+      )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`;
 
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
@@ -260,8 +228,75 @@ const mkFormRowForField = (
             )
           )
         : the_input;
-      return formRowWrap(hdr, inner, errorFeedback, formStyle, labelCols);
+      return inner;
   }
+};
+
+const mkFormRowForField = (
+  v,
+  errors,
+  formStyle,
+  labelCols,
+  nameAdd = ""
+) => hdr => {
+  const name = hdr.name + nameAdd;
+  const errorFeedback = errors[name]
+    ? `<div class="invalid-feedback">${text(errors[name])}</div>`
+    : "";
+  if (hdr.input_type === "hidden") {
+    return innerField(v, errors, nameAdd)(hdr);
+  } else
+    return formRowWrap(
+      hdr,
+      innerField(v, errors, nameAdd)(hdr),
+      errorFeedback,
+      formStyle,
+      labelCols
+    );
+};
+
+const wrapBlock = (segment, inner) =>
+  segment.block
+    ? div({ class: segment.textStyle || "" }, inner)
+    : span({ class: segment.textStyle || "" }, inner);
+
+const renderLayout = form => {
+  function go(segment) {
+    if (!segment) return "";
+    //if (segment.minRole && role > segment.minRole) return "";
+    if (segment.type === "blank") {
+      return wrapBlock(segment, segment.contents);
+    }
+    if (segment.type === "line_break") {
+      return "<br />";
+    } else if (segment.type === "field") {
+      const field = form.fields.find(f => f.name === segment.field_name);
+
+      return wrapBlock(segment, innerField(form.values, form.errors)(field));
+    } else if (segment.type === "action" && segment.action_name === "Save") {
+      return `<button type="submit" class="btn btn-primary">${text(
+        form.submitLabel || "Save"
+      )}</button>`;
+    } else if (segment.above) {
+      return segment.above.map(s => go(s)).join("");
+    } else if (segment.besides) {
+      const defwidth = Math.round(12 / segment.besides.length);
+      return div(
+        { class: "row" },
+        segment.besides.map((t, ix) =>
+          div(
+            {
+              class: `col-sm-${
+                segment.widths ? segment.widths[ix] : defwidth
+              } text-${segment.aligns ? segment.aligns[ix] : ""}`
+            },
+            go(t)
+          )
+        )
+      );
+    }
+  }
+  return go(form.layout);
 };
 
 const renderForm = (form, csrfToken) => {
@@ -291,7 +326,24 @@ const renderForm = (form, csrfToken) => {
         mkForm(form, csrfToken, form.errors)
       )
     );
-  } else return mkForm(form, csrfToken, form.errors);
+  } else if (form.layout) return mkFormWithLayout(form, csrfToken);
+  else return mkForm(form, csrfToken, form.errors);
+};
+
+const mkFormWithLayout = (form, csrfToken) => {
+  const hasFile = form.fields.some(f => f.input_type === "file");
+  const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const top = `<form action="${form.action}" class="form-namespace ${
+    form.class
+  }" method="${form.methodGET ? "get" : "post"}" ${
+    hasFile ? 'encType="multipart/form-data"' : ""
+  }>`;
+  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const hiddens = form.fields
+          .filter(f=>f.input_type==='hidden')
+          .map(f=>innerField(form.values, form.errors)(f))
+          .join('')
+  return blurbp + top + csrfField + hiddens+renderLayout(form) + "</form>";
 };
 
 const mkForm = (form, csrfToken, errors = {}) => {

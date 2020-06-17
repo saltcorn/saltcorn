@@ -113,7 +113,8 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
         }
       ],
       tens
-    )
+    ),
+    div(`Found ${tens.length} tenants`)
   );
 });
 
