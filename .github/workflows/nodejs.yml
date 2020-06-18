@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ubuntu:latest
+      #container: ubuntu:latest
     services:
       # Label used to access the service container
       postgres:
@@ -29,6 +29,9 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v2
+      - run: find / | grep chrome
+      - run: env
+
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -50,10 +53,7 @@ jobs:
           PGHOST: postgres
           PGUSER: postgres
           PGPASSWORD: postgres
-      - name: Run headful puppeteer tests
-        uses: djp3/puppeteer-headful@master
-        with:
-          args: packages/saltcorn-cli/bin/saltcorn run-tests
+      - run: packages/saltcorn-cli/bin/saltcorn run-tests
         env:
           CI: true
           PGHOST: postgres
