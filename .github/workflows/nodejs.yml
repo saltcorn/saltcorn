@@ -36,10 +36,11 @@ jobs:
       - name: Install postgres libraries
         run: |
           apt-get update
-          apt-get install -y postgresql-client libpq-dev chromium-browser
+          apt-get install -y postgresql-client libpq-dev
         env:
           DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
+      - run: echo `which google-chrome`
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
