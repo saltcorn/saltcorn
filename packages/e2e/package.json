@@ -10,7 +10,8 @@
     "@saltcorn/data": "^0.0.8"
   },
   "scripts": {
-    "test": "jest --runInBand"
+    "test": "echo run gotest instead",
+    "gotest": "jest --runInBand"
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
