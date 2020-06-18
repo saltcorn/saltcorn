@@ -5,7 +5,7 @@ class Browser {
   static async init(o) {
     const b = new Browser();
     b.browser = await puppeteer.launch({
-      headless: o || false
+      headless: o || process.env.CI==='true'
     });
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
