@@ -13,15 +13,14 @@ class Browser {
   }
   async goto(url) {
     await Promise.all([
-        this.page.waitForNavigation(),
-        this.page.goto(`http://${this.tenant ? this.tenant + "." : ""}example.com:3000${url}`)
-        ]);
+      this.page.waitForNavigation(),
+      this.page.goto(
+        `http://${this.tenant ? this.tenant + "." : ""}example.com:3000${url}`
+      )
+    ]);
   }
   async clickNav(sel) {
-    await Promise.all([
-        this.page.waitForNavigation(),
-        this.page.click(sel)
-    ]);
+    await Promise.all([this.page.waitForNavigation(), this.page.click(sel)]);
   }
 
   async delete_tenant(nm) {
@@ -29,8 +28,8 @@ class Browser {
     await deleteTenant(nm);
   }
   async create_tenant(nm) {
-    if(typeof this.tenant !=="undefined")
-        throw new Error("tenant not deleted")
+    if (typeof this.tenant !== "undefined")
+      throw new Error("tenant not deleted");
     await this.goto("/tenant/create");
 
     const page = this.page;
@@ -51,14 +50,18 @@ class Browser {
 
   async install_pack(pack) {
     await this.goto("/plugins");
-    await this.clickNav(`form[action="/packs/install-named/${encodeURIComponent(pack)}"] button[type=submit]`);
+    await this.clickNav(
+      `form[action="/packs/install-named/${encodeURIComponent(
+        pack
+      )}"] button[type=submit]`
+    );
 
     //await this.page.$eval(`form[action="/packs/install-named/${encodeURIComponent(pack)}"]`, form => form.submit());
     //await page.waitForNavigation();
   }
 
   async close() {
-    //await this.browser.close();
+    await this.browser.close();
     await db.close();
   }
 }
