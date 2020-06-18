@@ -29,7 +29,8 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v2
-      - run: find / | grep chrome
+      - run: echo `which google-chrome`
+        #- run: find / | grep chrome
       - run: env
 
       - name: Use Node.js
