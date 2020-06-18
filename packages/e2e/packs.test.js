@@ -29,7 +29,7 @@ describe("Packs", () => {
     await browser.clickNav(".nav-item:nth-child(6) span");
     const page = await browser.page.content()
     expect(page).toContain('Maths')
-    expect(page).toContain('todokanban')
+    expect(page).toContain('todoanban')
 
 
   });
