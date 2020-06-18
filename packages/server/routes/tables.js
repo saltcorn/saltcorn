@@ -92,7 +92,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       h4(`No fields defined in ${table.name} table`),
       p("Fields define the columns in your table."),
       a(
-        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        { href: `/field/new/${table.id}`, class: "btn btn-primary add-field" },
         "Add field to table"
       )
     ];

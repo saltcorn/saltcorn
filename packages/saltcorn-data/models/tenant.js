@@ -27,10 +27,18 @@ const createTenant = async subdomain => {
   });
 };
 
+const deleteTenant = async sub => {
+  const subdomain = domain_sanitize(sub);
+  await db.query(`drop schema if exists "${subdomain}" CASCADE `);
+  await db.deleteWhere("_sc_tenants", { subdomain });
+  return null
+};
+
 const domain_sanitize = s => sqlsanitize(s.replace(".", "").toLowerCase());
 
 module.exports = {
   getAllTenants,
   createTenant,
-  domain_sanitize
+  domain_sanitize,
+  deleteTenant
 };
