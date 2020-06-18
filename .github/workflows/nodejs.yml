@@ -42,8 +42,8 @@ jobs:
       - run: npm install -g lerna
       - run: echo `which google-chrome`
       - run: echo `which chrome`
-      - run: echo `apt-get chrome`
-      - run: compgen -c
+      - run: echo `which apt-get`
+      - run: google-chrome --version
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
