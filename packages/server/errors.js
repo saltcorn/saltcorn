@@ -10,7 +10,7 @@ module.exports = async function(err, req, res, next) {
 
   res.status(500).sendWrap(
     "Internal Error",
-    devmode? pre(text(err.stack)) : h3("An error occurred"),
+    devmode ? pre(text(err.stack)) : h3("An error occurred"),
     p(`A report has been logged and a team of bug-squashing squirrels 
     has been dispatched to deal with the situation.`)
   );

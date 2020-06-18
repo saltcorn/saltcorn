@@ -1,12 +1,10 @@
 const { Command, flags } = require("@oclif/command");
-const {
-    deleteTenant
-  } = require("@saltcorn/data/models/tenant");
+const { deleteTenant } = require("@saltcorn/data/models/tenant");
 
 class RmTenantCommand extends Command {
   async run() {
     const { args } = this.parse(RmTenantCommand);
-    await deleteTenant(args.tenant)
+    await deleteTenant(args.tenant);
     this.exit(0);
   }
 }

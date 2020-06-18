@@ -31,7 +31,7 @@ const deleteTenant = async sub => {
   const subdomain = domain_sanitize(sub);
   await db.query(`drop schema if exists "${subdomain}" CASCADE `);
   await db.deleteWhere("_sc_tenants", { subdomain });
-  return null
+  return null;
 };
 
 const domain_sanitize = s => sqlsanitize(s.replace(".", "").toLowerCase());
