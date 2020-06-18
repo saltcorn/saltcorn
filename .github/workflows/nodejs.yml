@@ -37,6 +37,8 @@ jobs:
         run: |
           apt-get update
           apt-get install -y postgresql-client libpq-dev chromium-browser
+        env:
+          DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
       - run: lerna bootstrap
         env:
