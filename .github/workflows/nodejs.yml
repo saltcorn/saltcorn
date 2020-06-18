@@ -29,6 +29,9 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v2
+      - run: find / | grep chrome
+      - run: find / | grep ghc
+
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
