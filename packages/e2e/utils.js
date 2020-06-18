@@ -12,37 +12,53 @@ class Browser {
     return b;
   }
   async goto(url) {
-    await this.page.goto(
-      `http://${this.tenant ? this.tenant + "." : ""}example.com:3000${url}`
-    );
-    //await this.page.goto(`http://localhost:3000${url}`);
+    await Promise.all([
+        this.page.waitForNavigation(),
+        this.page.goto(`http://${this.tenant ? this.tenant + "." : ""}example.com:3000${url}`)
+        ]);
   }
+  async clickNav(sel) {
+    await Promise.all([
+        this.page.waitForNavigation(),
+        this.page.click(sel)
+    ]);
+  }
+
   async delete_tenant(nm) {
+    this.tenant = undefined;
     await deleteTenant(nm);
   }
   async create_tenant(nm) {
-    this.tenant = undefined;
-    this.goto("/tenant/create");
+    if(typeof this.tenant !=="undefined")
+        throw new Error("tenant not deleted")
+    await this.goto("/tenant/create");
 
     const page = this.page;
-    await page.waitForNavigation();
     await page.waitForSelector("form #inputsubdomain");
     await page.click("form #inputsubdomain");
     await page.type("form #inputsubdomain", nm);
-    await page.click("button[type=submit]");
+    await this.clickNav("button[type=submit]");
     await page.waitForSelector("a.new-tenant-link");
     this.tenant = nm;
-    this.goto("/");
-    await page.waitForNavigation();
+    await this.goto("/");
     await page.type("#inputemail", "tom@foo.bar");
     await page.type("#inputpassword", "secret");
-    await page.click("button[type=submit]");
+    await this.clickNav("button[type=submit]");
     await page.waitForSelector('a[href="/table/new"]');
 
     //console.log(await page.content())
   }
+
+  async install_pack(pack) {
+    await this.goto("/plugins");
+    await this.clickNav(`form[action="/packs/install-named/${encodeURIComponent(pack)}"] button[type=submit]`);
+
+    //await this.page.$eval(`form[action="/packs/install-named/${encodeURIComponent(pack)}"]`, form => form.submit());
+    //await page.waitForNavigation();
+  }
+
   async close() {
-    await this.browser.close();
+    //await this.browser.close();
     await db.close();
   }
 }
