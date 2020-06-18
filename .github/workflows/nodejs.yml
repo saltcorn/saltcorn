@@ -29,9 +29,6 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v2
-      - run: find / | grep chrome
-      - run: env
-
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -43,10 +40,6 @@ jobs:
         env:
           DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
-      - run: echo `which google-chrome`
-      - run: echo `which chrome`
-      - run: echo `which apt-get`
-      - run: find / | grep chrome
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
@@ -57,7 +50,10 @@ jobs:
           PGHOST: postgres
           PGUSER: postgres
           PGPASSWORD: postgres
-      - run: packages/saltcorn-cli/bin/saltcorn run-tests
+      - name: Run headful puppeteer tests
+        uses: djp3/puppeteer-headful@master
+        with:
+          args: packages/saltcorn-cli/bin/saltcorn run-tests
         env:
           CI: true
           PGHOST: postgres
