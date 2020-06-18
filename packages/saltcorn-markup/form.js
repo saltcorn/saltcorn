@@ -340,10 +340,10 @@ const mkFormWithLayout = (form, csrfToken) => {
   }>`;
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const hiddens = form.fields
-          .filter(f=>f.input_type==='hidden')
-          .map(f=>innerField(form.values, form.errors)(f))
-          .join('')
-  return blurbp + top + csrfField + hiddens+renderLayout(form) + "</form>";
+    .filter(f => f.input_type === "hidden")
+    .map(f => innerField(form.values, form.errors)(f))
+    .join("");
+  return blurbp + top + csrfField + hiddens + renderLayout(form) + "</form>";
 };
 
 const mkForm = (form, csrfToken, errors = {}) => {

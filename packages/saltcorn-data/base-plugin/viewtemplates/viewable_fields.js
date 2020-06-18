@@ -146,7 +146,7 @@ const splitUniques = (fields, state) => {
   var nonUniques = [];
   Object.entries(state).forEach(([k, v]) => {
     const field = fields.find(f => f.name === k);
-    if (k === "id" || field.is_unique) uniques[k] = v;
+    if (k === "id" || field && field.is_unique) uniques[k] = v;
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };

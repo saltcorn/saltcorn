@@ -3,7 +3,8 @@ const Form = require("@saltcorn/data/models/form");
 const { getState, create_tenant } = require("@saltcorn/data/db/state");
 const {
   getAllTenants,
-  domain_sanitize
+  domain_sanitize,
+  deleteTenant
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
 const { div, nbsp, p } = require("@saltcorn/markup/tags");
@@ -125,8 +126,6 @@ router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
   }
   const { sub } = req.params;
 
-  const subdomain = domain_sanitize(sub);
-  await db.query(`drop schema if exists "${subdomain}" CASCADE `);
-  await db.deleteWhere("_sc_tenants", { subdomain });
+  await deleteTenant(sub);
   res.redirect(`/tenant/list`);
 });
