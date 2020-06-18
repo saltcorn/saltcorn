@@ -6,7 +6,8 @@
   "dependencies": {},
   "devDependencies": {
     "jest": "^25.1.0",
-    "puppeteer": "^4.0.0"
+    "puppeteer": "^4.0.0",
+    "@saltcorn/data": "^0.0.8"
   },
   "scripts": {
     "test": "jest --runInBand"
