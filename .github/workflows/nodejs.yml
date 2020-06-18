@@ -37,12 +37,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "14.x"
-      - name: Install postgres libraries
-        run: |
-          apt-get update
-          apt-get install -y postgresql-client libpq-dev
-        env:
-          DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
       - run: lerna bootstrap
         env:
