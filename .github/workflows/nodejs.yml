@@ -21,6 +21,7 @@ jobs:
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltcorn_test
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -28,15 +29,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+        - 5432:5432
     steps:
       - uses: actions/checkout@v2
-      - run: createdb saltcorn && createdb saltcorn_test
-        env:
-          CI: true
-          PGHOST: postgres
-          PGUSER: postgres
-          PGPASSWORD: postgres
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -51,7 +46,7 @@ jobs:
           CI: true
           PGHOST: postgres
           PGUSER: postgres
-          PGDATABASE: saltcorn
+          PGDATABASE: saltcorn_test
           PGPASSWORD:
             postgres
             # The default PostgreSQL port
