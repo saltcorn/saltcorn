@@ -41,6 +41,8 @@ jobs:
           DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
       - run: echo `which google-chrome`
+      - run: echo `which chrome`
+      - run: echo `apt-get chrome`
       - run: compgen -c
       - run: lerna bootstrap
         env:
