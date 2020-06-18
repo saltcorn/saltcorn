@@ -17,6 +17,18 @@ describe("Packs", () => {
   it("Installs PM pack", async () => {
     await browser.create_tenant("sub3");
     await browser.install_pack("Project management");
+    await browser.clickNav(".col-sm-6 > a");
+    await browser.page.type("#inputname", "Homework");
+    await browser.clickNav("button[type=submit]");
+    await browser.clickNav("#todos > a");
+    await browser.page.type("#inputdescription", "Maths");
+    await browser.clickNav("button[type=submit]");
+    await browser.clickNav(".nav-item:nth-child(6) span");
+    const page = await browser.page.content()
+    expect(page).toContain('Maths')
+    expect(page).toContain('todokanban')
+
+
   });
   it("Installs issue tracker pack", async () => {
     await browser.create_tenant("sub1");

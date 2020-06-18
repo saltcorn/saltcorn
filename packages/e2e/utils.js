@@ -44,8 +44,6 @@ class Browser {
     await page.type("#inputpassword", "secret");
     await this.clickNav("button[type=submit]");
     await page.waitForSelector('a[href="/table/new"]');
-
-    //console.log(await page.content())
   }
 
   async install_pack(pack) {
@@ -55,9 +53,6 @@ class Browser {
         pack
       )}"] button[type=submit]`
     );
-
-    //await this.page.$eval(`form[action="/packs/install-named/${encodeURIComponent(pack)}"]`, form => form.submit());
-    //await page.waitForNavigation();
   }
 
   async close() {
