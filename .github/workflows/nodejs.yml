@@ -43,7 +43,7 @@ jobs:
       - run: echo `which google-chrome`
       - run: echo `which chrome`
       - run: echo `which apt-get`
-      - run: google-chrome --version
+      - run: find / | grep chrome
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
