@@ -29,10 +29,6 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v2
-      - run: echo `which google-chrome`
-        #- run: find / | grep chrome
-      - run: env
-
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -41,7 +37,7 @@ jobs:
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
-      - run: echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' >> /etc/hosts
+      - run: echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
       - run: createdb saltcorn && createdb saltcorn_test
         env:
           CI: true
