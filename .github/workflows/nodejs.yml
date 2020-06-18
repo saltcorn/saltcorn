@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: find / | grep chrome
-      - run: find / | grep ghc
+      - run: env
 
       - name: Use Node.js
         uses: actions/setup-node@v1
