@@ -41,6 +41,7 @@ jobs:
           DEBIAN_FRONTEND: 'noninteractive'
       - run: npm install -g lerna
       - run: echo `which google-chrome`
+      - run: compgen -c
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
