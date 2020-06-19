@@ -4,6 +4,7 @@ const db = require("@saltcorn/data/db");
 class Browser {
   static async init(o) {
     const b = new Browser();
+    console.log("start browser init")
     b.browser = await puppeteer.launch({
       headless: true,//o || process.env.CI==='true',
       executablePath: '/usr/bin/google-chrome',
@@ -12,6 +13,8 @@ class Browser {
     });
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
+    console.log("done browser init")
+
     return b;
   }
   async goto(url) {
