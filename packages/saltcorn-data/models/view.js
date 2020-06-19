@@ -219,7 +219,30 @@ View.contract = {
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
     get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
-    get_config_flow: is.fun([], is.promise(is.class("Workflow")))
+    get_config_flow: is.fun([], is.promise(is.class("Workflow"))),
+    delete: is.fun([], is.promise(is.undefined)),
+    run: is.fun(
+      [is.obj(), is.obj({ req: is.defined, res: is.defined })],
+      is.promise(is.any)
+    ),
+    runPost: is.fun(
+      [is.obj(), is.obj(), is.obj({ req: is.defined, res: is.defined })],
+      is.promise(is.any)
+    ),
+    runRoute: is.fun(
+      [
+        is.str,
+        is.obj(),
+        is.obj(),
+        is.obj({ req: is.defined, res: is.defined })
+      ],
+      is.promise(is.any)
+    ),
+    runMany: is.fun(
+      [is.obj(), is.obj({ req: is.defined, res: is.defined })],
+      is.promise(is.array(is.obj({ html: is.defined, row: is.obj() })))
+    ),
+    combine_state_and_default_state: is.fun(is.obj(), is.obj())
   },
   static_methods: {
     find: is.fun(
@@ -228,6 +251,7 @@ View.contract = {
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("View")))),
     create: is.fun(is.obj(), is.promise(is.class("View"))),
+    update: is.fun([is.obj(), is.posint], is.promise(is.undefined)),
     find_possible_links_to_table: is.fun(
       is.posint,
       is.promise(is.array(is.class("View")))

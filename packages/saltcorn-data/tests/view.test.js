@@ -8,7 +8,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
 
-const mockReqRes = { req: { csrfToken: () => "" } };
+const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
 describe("View", () => {
   it("should run with no query", async () => {

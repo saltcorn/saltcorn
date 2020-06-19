@@ -71,7 +71,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
   return await step(wf, initialCtx);
 };
 
-const mockReqRes = { req: { csrfToken: () => "" } };
+const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
 const auto_test_viewtemplate = async vt => {
   const wf = vt.configuration_workflow();
