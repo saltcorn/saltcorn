@@ -19,7 +19,7 @@ const migrate = async (schema = "public") => {
   for (const file of files) {
     const name = file.replace(".js", "");
     if (!dbmigrations.includes(name)) {
-      console.log("Running migration", name);
+      //console.log("Running migration", name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
         await client.query(contents.sql);
