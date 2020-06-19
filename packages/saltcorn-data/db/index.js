@@ -26,9 +26,10 @@ const changeConnection = async (connObj = {}) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
 };
-var is_multi_tenant = false;
 
+var is_multi_tenant = false;
 const is_it_multi_tenant = () => is_multi_tenant;
+
 var tenantNamespace;
 
 const enable_multi_tenant = () => {
@@ -36,8 +37,12 @@ const enable_multi_tenant = () => {
   tenantNamespace = new AsyncLocalStorage();
 };
 
-const runWithTenant = (tenant, f) =>
-  tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
+const runWithTenant = (tenant, f) => {
+  if(!is_multi_tenant)
+    f();
+  else
+    tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
+}
 
 if (connectObj.multi_tenant) enable_multi_tenant();
 
