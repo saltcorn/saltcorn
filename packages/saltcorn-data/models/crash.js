@@ -27,7 +27,7 @@ class Crash {
   }
   static async create(err, req) {
     const schema = db.getTenantSchema();
-    db.runWithTenant("public", async () => {
+    await db.runWithTenant("public", async () => {
       await db.insert("_sc_errors", {
         stack: err.stack,
         message: err.message,
