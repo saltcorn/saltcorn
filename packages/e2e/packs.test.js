@@ -3,10 +3,9 @@ const { Browser } = require("./utils");
 
 let browser;
 jest.setTimeout(60 * 1000);
-// 2
+
 beforeAll(async () => {
   browser = await Browser.init();
-  //await browser.page.goto("http://localhost:3000/");
 });
 
 describe("Packs", () => {
@@ -15,6 +14,7 @@ describe("Packs", () => {
     await browser.create_tenant("sub2");
     await browser.install_pack("Blog");
   });
+  
   it("Installs PM pack", async () => {
     await browser.delete_tenant("sub3");
     await browser.create_tenant("sub3");
@@ -30,9 +30,9 @@ describe("Packs", () => {
     expect(page).toContain("Maths");
     expect(page).toContain("todokanban");
   });
+  
   it("Installs issue tracker pack", async () => {
     await browser.delete_tenant("sub1");
-
     await browser.create_tenant("sub1");
     await browser.install_pack("Issue  tracker");
     await browser.clickNav(".card-body > div > a");
