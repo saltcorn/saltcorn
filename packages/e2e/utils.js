@@ -7,7 +7,8 @@ class Browser {
     b.browser = await puppeteer.launch({
       headless: true,//o || process.env.CI==='true',
       executablePath: '/usr/bin/google-chrome',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      dumpio: true
     });
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
