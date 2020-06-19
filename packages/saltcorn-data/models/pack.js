@@ -3,8 +3,11 @@ const View = require("./view");
 const Field = require("./field");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
+const { contract, is } = require("contractis");
 
-const table_pack = async name => {
+const pack_fun = is.fun(is.str, is.promise(is.obj()));
+
+const table_pack = contract(pack_fun, async name => {
   const table = await Table.findOne({ name });
   const fields = await table.getFields();
   const strip_ids = o => {
@@ -20,8 +23,9 @@ const table_pack = async name => {
     min_role_write: table.min_role_write,
     fields: fields.map(f => strip_ids(f.toJson))
   };
-};
-const view_pack = async name => {
+});
+
+const view_pack = contract(pack_fun, async name => {
   const view = await View.findOne({ name });
   const table = await Table.findOne({ id: view.table_id });
 
@@ -34,9 +38,9 @@ const view_pack = async name => {
     on_menu: view.on_menu,
     table: table.name
   };
-};
+});
 
-const plugin_pack = async name => {
+const plugin_pack = contract(pack_fun, async name => {
   const Plugin = require("./plugin");
   const plugin = await Plugin.findOne({ name });
 
@@ -45,41 +49,55 @@ const plugin_pack = async name => {
     source: plugin.source,
     location: plugin.location
   };
-};
-const is_stale = date => {
+});
+
+const is_stale = contract(is.fun(is.class("Date"), is.bool), date => {
   const oneday = 60 * 60 * 24 * 1000;
   const now = new Date();
   return new Date(date) < now - oneday;
-};
-const fetch_available_packs = async () => {
-  const stored = getState().getConfig("available_packs", false);
-  const stored_at = getState().getConfig("available_packs_fetched_at", false);
-  //console.log(stored_at, typeof(stored_at))
-  if (!stored || !stored_at || is_stale(stored_at)) {
-    const from_api = await fetch_available_packs_from_store();
-    await getState().setConfig("available_packs", from_api);
-    await getState().setConfig("available_packs_fetched_at", new Date());
-    return from_api;
-  } else return stored;
-};
+});
 
-const fetch_available_packs_from_store = async () => {
-  //console.log("fetch packs");
-  const response = await fetch(
-    "http://store.saltcorn.com/api/packs?fields=name"
-  );
-  const json = await response.json();
-  return json.success;
-};
+const fetch_available_packs = contract(
+  is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
+  async () => {
+    const stored = getState().getConfig("available_packs", false);
+    const stored_at = getState().getConfig("available_packs_fetched_at", false);
+    //console.log(stored_at, typeof(stored_at))
+    if (!stored || !stored_at || is_stale(stored_at)) {
+      const from_api = await fetch_available_packs_from_store();
+      await getState().setConfig("available_packs", from_api);
+      await getState().setConfig("available_packs_fetched_at", new Date());
+      return from_api;
+    } else return stored;
+  }
+);
 
-const fetch_pack_by_name = async name => {
-  const response = await fetch(
-    "http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
-  );
-  const json = await response.json();
-  if (json.success.length == 1) return json.success[0];
-  else return null;
-};
+const fetch_available_packs_from_store = contract(
+  is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
+  async () => {
+    //console.log("fetch packs");
+    const response = await fetch(
+      "http://store.saltcorn.com/api/packs?fields=name"
+    );
+    const json = await response.json();
+    return json.success;
+  }
+);
+
+const fetch_pack_by_name = contract(
+  is.fun(
+    is.str,
+    is.promise(is.maybe(is.obj({ name: is.str, pack: is.obj() })))
+  ),
+  async name => {
+    const response = await fetch(
+      "http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
+    );
+    const json = await response.json();
+    if (json.success.length == 1) return json.success[0];
+    else return null;
+  }
+);
 
 module.exports = {
   table_pack,

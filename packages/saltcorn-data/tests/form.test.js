@@ -93,8 +93,8 @@ describe("Form", () => {
 
 describe("Bool Form", () => {
   const form = new Form({
-      action: "/",
-      fields: [
+    action: "/",
+    fields: [
       new Field({
         name: "done",
         label: "Done",
@@ -112,8 +112,8 @@ describe("Bool Form", () => {
 
 describe("String form with validator failure ", () => {
   const form = new Form({
-      action: "/",
-      fields: [
+    action: "/",
+    fields: [
       new Field({
         name: "name",
         label: "Name",
@@ -134,8 +134,8 @@ describe("String form with validator failure ", () => {
 
 describe("String form with validator success", () => {
   const form = new Form({
-      action: "/",
-      fields: [
+    action: "/",
+    fields: [
       new Field({
         name: "name",
         label: "Name",
