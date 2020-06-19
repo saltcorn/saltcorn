@@ -5,8 +5,9 @@ class Browser {
   static async init(o) {
     const b = new Browser();
     b.browser = await puppeteer.launch({
-      headless: o || process.env.CI==='true',
-      executablePath: '/usr/bin/google-chrome'
+      headless: true,//o || process.env.CI==='true',
+      executablePath: '/usr/bin/google-chrome',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
