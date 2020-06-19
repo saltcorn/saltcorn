@@ -26,6 +26,7 @@ class RunTestsCommand extends Command {
     const server=spawn("saltcorn", ['serve'], 
     {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
     await sleep(5000);
+    console.log(server)
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
