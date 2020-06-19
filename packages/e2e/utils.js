@@ -38,7 +38,6 @@ class Browser {
     await this.goto("/tenant/create");
 
     const page = this.page;
-    console.log(await page.content())
     await page.waitForSelector("form #inputsubdomain");
     await page.click("form #inputsubdomain");
     await page.type("form #inputsubdomain", nm);
