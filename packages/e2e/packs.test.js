@@ -5,18 +5,25 @@ let browser;
 
 // 2
 beforeAll(async () => {
+  console.log("start beforeall")
+
   browser = await Browser.init();
   //await browser.page.goto("http://localhost:3000/");
+  console.log("done beforeall")
+
 });
 
 describe("Packs", () => {
   it("Installs blog pack", async () => {
+  console.log("start blog")
     
     await browser.delete_tenant("sub2");
     await browser.create_tenant("sub2");
     await browser.install_pack("Blog");
   });
   it("Installs PM pack", async () => {
+  console.log("start pm")
+
     await browser.delete_tenant("sub3");
     await browser.create_tenant("sub3");
     await browser.install_pack("Project management");
@@ -34,6 +41,8 @@ describe("Packs", () => {
 
   });
   it("Installs issue tracker pack", async () => {
+  console.log("start issue")
+
   await browser.delete_tenant("sub1");
 
     await browser.create_tenant("sub1");

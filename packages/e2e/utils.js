@@ -11,6 +11,8 @@ class Browser {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       dumpio: true
     });
+    console.log(b.browser)
+
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
     console.log("done browser init")
