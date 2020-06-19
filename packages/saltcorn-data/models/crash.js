@@ -43,8 +43,8 @@ class Crash {
 
 Crash.contract = {
   variables: {
-    id: is.maybe(posint),
-    user_id: is.maybe(posint),
+    id: is.maybe(is.posint),
+    user_id: is.maybe(is.posint),
     stack: is.str,
     message: is.str,
     tenant: is.str,
