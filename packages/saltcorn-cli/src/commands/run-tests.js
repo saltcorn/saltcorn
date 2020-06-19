@@ -26,7 +26,7 @@ class RunTestsCommand extends Command {
       stdio: "inherit",
       env: { ...process.env, PGDATABASE: "saltcorn_test" }
     });
-    await sleep(3000);
+    await sleep(2000);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
