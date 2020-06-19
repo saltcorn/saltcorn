@@ -5,9 +5,9 @@ class Browser {
   static async init(o) {
     const b = new Browser();
     b.browser = await puppeteer.launch({
-      headless: true,//o || process.env.CI==='true',
-      executablePath: '/usr/bin/google-chrome',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true, //o || process.env.CI==='true',
+      executablePath: "/usr/bin/google-chrome",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
       dumpio: true
     });
 
@@ -17,15 +17,20 @@ class Browser {
     return b;
   }
   async goto(url) {
-    await Promise.all([
+    const [response] = await Promise.all([
       this.page.waitForNavigation(),
       this.page.goto(
         `http://${this.tenant ? this.tenant + "." : ""}example.com:3000${url}`
       )
     ]);
+    expect(response.status()).toBe(200);
   }
   async clickNav(sel) {
-    await Promise.all([this.page.waitForNavigation(), this.page.click(sel)]);
+    const [response] = await Promise.all([
+      this.page.waitForNavigation(),
+      this.page.click(sel)
+    ]);
+    expect(response.status()).toBeLessThanOrEqual(399);
   }
 
   async delete_tenant(nm) {
@@ -58,6 +63,8 @@ class Browser {
         pack
       )}"] button[type=submit]`
     );
+    const url = await this.page.url();
+    expect(url).toBe(`http://${this.tenant}.example.com:3000/`);
   }
 
   async close() {

@@ -11,7 +11,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on:
+      ubuntu-latest
       #container: ubuntu:latest
     services:
       # Label used to access the service container
@@ -29,7 +30,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-        - 5432:5432
+          - 5432:5432
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js
@@ -40,7 +41,7 @@ jobs:
       - run: echo `which google-chrome`
       - run: lerna bootstrap
         env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
       - run: echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
       - run: packages/saltcorn-cli/bin/saltcorn run-tests
         env:

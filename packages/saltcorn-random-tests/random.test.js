@@ -24,9 +24,9 @@ const seed = set_seed();
 describe("app", () => {
   it("obeys the chaos guinea pig with seed " + seed, async () => {
     const packs_available = await fetch_available_packs();
-    console.log(packs_available)
-    
-    for(const {name} of packs_available) {
+    console.log(packs_available);
+
+    for (const { name } of packs_available) {
       await resetToFixtures();
       const loginCookie = await getAdminLoginCookie();
       const app = await getApp({ disableCsrf: true });
@@ -36,8 +36,6 @@ describe("app", () => {
         .expect(toRedirect("/"));
       await chaos_guinea_pig(app);
     }
-    
-
   });
 });
 
