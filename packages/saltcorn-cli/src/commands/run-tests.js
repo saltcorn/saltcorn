@@ -4,6 +4,10 @@ const reset = require("@saltcorn/data/db/reset_schema");
 const db = require("@saltcorn/data/db");
 const { spawnSync, spawn } = require("child_process");
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 class RunTestsCommand extends Command {
   async do_test(cmd, args, forever, cwd, keepalive) {
     const env = { ...process.env, PGDATABASE: "saltcorn_test" };
@@ -21,6 +25,7 @@ class RunTestsCommand extends Command {
   async e2etest() {
     const server=spawn("saltcorn", ['serve'], 
     {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
+    await sleep(5000);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
