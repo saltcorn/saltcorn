@@ -250,7 +250,13 @@ class Field {
 Field.contract = {
   variables: {
     name: is.str,
+    label: is.str,
+    class: is.str,
+    postText: is.maybe(is.str),
+    sublabel: is.maybe(is.str),
     fieldview: is.maybe(is.str),
+    reftable_name: is.maybe(is.str),
+    validator: is.fun(is.any, is.bool),
     type: is.maybe(
       is.or(is.eq("Key"), is.eq("File"), is.obj({ name: is.str }))
     ),
@@ -260,7 +266,9 @@ Field.contract = {
     is_fkey: is.bool,
     is_unique: is.bool,
     required: is.bool,
-    id: is.maybe(is.posint)
+    id: is.maybe(is.posint),
+    attributes: is.obj(),
+    table_id: is.maybe(is.posint)
   },
   instance_check: is.and(
     is.or(is.obj({ type: is.defined }), is.obj({ input_type: is.defined })),
@@ -278,6 +286,7 @@ Field.contract = {
     sql_type: is.getter(is.str),
     sql_bare_type: is.getter(is.str),
     listKey: is.getter(is.any), // todo why not str?
+    presets: is.getter(is.maybe(is.objVals(is.fun(is.obj(), is.any)))),
     delete: is.fun([], is.promise(is.eq(undefined))),
     generate: is.fun([], is.promise(is.any)),
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
@@ -288,7 +297,8 @@ Field.contract = {
       is.promise(is.array(is.class("Field")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
-    create: is.fun(is.obj(), is.promise(is.class("Field")))
+    create: is.fun(is.obj(), is.promise(is.class("Field"))),
+    update: is.fun([is.obj(), is.posint], is.promise(is.undefined))
   }
 };
 module.exports = Field;
