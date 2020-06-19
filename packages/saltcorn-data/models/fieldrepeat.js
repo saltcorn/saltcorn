@@ -47,7 +47,8 @@ FieldRepeat.contract = {
   variables: {
     name: is.str,
     label: is.str,
-    fields: is.array(is.class("Field"))
+    fields: is.array(is.class("Field")),
+    isRepeat: is.eq(true)
   },
   methods: {
     validate: is.fun(
