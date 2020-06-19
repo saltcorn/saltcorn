@@ -2,27 +2,23 @@ const puppeteer = require("puppeteer");
 const { Browser } = require("./utils");
 
 let browser;
-jest.setTimeout(3 * 60 * 1000);
+jest.setTimeout(60 * 1000);
 // 2
 beforeAll(async () => {
-  console.log("start beforeall")
 
   browser = await Browser.init();
   //await browser.page.goto("http://localhost:3000/");
-  console.log("done beforeall")
 
 });
 
 describe("Packs", () => {
   it("Installs blog pack", async () => {
-  console.log("start blog")
     
     await browser.delete_tenant("sub2");
     await browser.create_tenant("sub2");
     await browser.install_pack("Blog");
   });
   it("Installs PM pack", async () => {
-  console.log("start pm")
 
     await browser.delete_tenant("sub3");
     await browser.create_tenant("sub3");
@@ -36,12 +32,11 @@ describe("Packs", () => {
     await browser.clickNav(".nav-item:nth-child(6) span");
     const page = await browser.page.content()
     expect(page).toContain('Maths')
-    expect(page).toContain('todoanban')
+    expect(page).toContain('todokanban')
 
 
   });
   it("Installs issue tracker pack", async () => {
-  console.log("start issue")
 
   await browser.delete_tenant("sub1");
 

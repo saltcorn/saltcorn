@@ -25,8 +25,7 @@ class RunTestsCommand extends Command {
   async e2etest() {
     const server=spawn("packages/saltcorn-cli/bin/saltcorn", ['serve'], 
     {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
-    await sleep(5000);
-    console.log(server)
+    await sleep(3000);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
