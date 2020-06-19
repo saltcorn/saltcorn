@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const { Browser } = require("./utils");
 
 let browser;
-
+jest.setTimeout(3 * 60 * 1000);
 // 2
 beforeAll(async () => {
   console.log("start beforeall")
