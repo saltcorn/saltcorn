@@ -13,10 +13,10 @@ class Form {
     this.layout = o.layout;
     this.labelCols = o.labelCols;
     this.collapsedSummary = o.collapsedSummary;
-    this.isStateForm = o.isStateForm;
+    this.isStateForm = !!o.isStateForm;
     this.formStyle = o.formStyle || "horiz";
     this.class = o.class;
-    this.methodGET = o.methodGET;
+    this.methodGET = !!o.methodGET;
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
     this.hasErrors = false;
@@ -77,7 +77,16 @@ Form.contract = {
   variables: {
     fields: is.array(is.or(is.class("Field"), is.class("FieldRepeat"))),
     values: is.obj(),
-    errors: is.obj()
+    errors: is.obj(),
+    action: is.str,
+    labelCols: is.maybe(is.posint),
+    hasErrors: is.bool,
+    submitLabel: is.maybe(is.str),
+    blurb: is.maybe(is.str),
+    class: is.maybe(is.str),
+    isStateForm: is.bool,
+    formStyle: is.str,
+    methodGET: is.bool
   },
   methods: {
     validate: is.fun(
