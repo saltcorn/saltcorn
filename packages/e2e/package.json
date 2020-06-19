@@ -1,0 +1,31 @@
+{
+  "name": "@saltcorn/e2e",
+  "version": "0.0.8",
+  "description": "Pluggable nocode",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^25.1.0",
+    "puppeteer": "^4.0.0",
+    "@saltcorn/data": "^0.0.8"
+  },
+  "scripts": {
+    "test": "echo run gotest instead",
+    "gotest": "jest --runInBand"
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "jest": {
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/plugin_packages/"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/plugin_packages/"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

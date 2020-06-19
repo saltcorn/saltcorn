@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ubuntu:latest
+      #container: ubuntu:latest
     services:
       # Label used to access the service container
       postgres:
@@ -21,36 +21,33 @@ jobs:
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltcorn_test
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+        - 5432:5432
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
           node-version: "14.x"
-      - name: Install postgres libraries
-        run: |
-          apt-get update
-          apt-get install -y postgresql-client libpq-dev
       - run: npm install -g lerna
+      - run: echo `which google-chrome`
       - run: lerna bootstrap
-      - run: createdb saltcorn && createdb saltcorn_test
         env:
-          CI: true
-          PGHOST: postgres
-          PGUSER: postgres
-          PGPASSWORD: postgres
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+      - run: echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
       - run: packages/saltcorn-cli/bin/saltcorn run-tests
         env:
           CI: true
-          PGHOST: postgres
+          PGHOST: localhost
           PGUSER: postgres
-          PGDATABASE: saltcorn
+          PGDATABASE: saltcorn_test
           PGPASSWORD:
             postgres
             # The default PostgreSQL port

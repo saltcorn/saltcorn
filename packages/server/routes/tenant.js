@@ -7,7 +7,7 @@ const {
   deleteTenant
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
-const { div, nbsp, p } = require("@saltcorn/markup/tags");
+const { div, nbsp, p, a } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
@@ -86,7 +86,7 @@ router.post("/create", setTenant, async (req, res) => {
 
           div(
             { class: "my-3", style: "font-size: 22px" },
-            link(newurl, newurl)
+            a({ href: newurl, class: "new-tenant-link" }, newurl)
           ),
           p("Please click the above link now to create the first user.")
         )
