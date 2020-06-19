@@ -1,5 +1,6 @@
 const db = require("../db");
 const moment = require("moment");
+const { contract, is } = require("contractis");
 
 class Crash {
   constructor(o) {
@@ -11,6 +12,7 @@ class Crash {
     this.user_id = o.user_id;
     this.url = o.url;
     this.headers = o.headers;
+    contract.class(this);
   }
   static async find(where) {
     const us = await db.select("_sc_errors", where);
@@ -38,5 +40,26 @@ class Crash {
     });
   }
 }
+
+Crash.contract = {
+  variables: {
+    id: is.maybe(posint),
+    user_id: is.maybe(posint),
+    stack: is.str,
+    message: is.str,
+    tenant: is.str,
+    url: is.str,
+    occur_at: is.class("Date"),
+    headers: is.obj()
+  },
+  methods: {
+    reltime: is.getter(is.str)
+  },
+  static_methods: {
+    find: is.fun(is.obj(), is.promise(is.array(is.class("Crash")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("Crash"))),
+    create: is.fun([is.obj(), is.obj()], is.promise(is.any))
+  }
+};
 
 module.exports = Crash;
