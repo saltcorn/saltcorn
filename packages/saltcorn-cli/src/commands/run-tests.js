@@ -23,7 +23,7 @@ class RunTestsCommand extends Command {
     return res;
   }
   async e2etest() {
-    const server=spawn("packages/saltcorn-cli/bin/saltcorn", ['serve'], 
+    const server=spawn("packages/saltcorn-cli/bin/saltcorn", ['serve', '-v'], 
     {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
     await sleep(3000);
     const res = await this.do_test(
@@ -59,8 +59,8 @@ class RunTestsCommand extends Command {
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(lerna, ["run", "test", ...covargs], flags.forever);
-      if(process.env.CI !== 'true')
-        await this.e2etest()
+      //if(process.env.CI !== 'true')
+      await this.e2etest()
     }
     this.exit(0);
 
