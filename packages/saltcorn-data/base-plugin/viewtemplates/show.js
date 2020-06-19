@@ -33,7 +33,7 @@ const configuration_workflow = () =>
             "Delete",
             ...boolfields.map(f => `Toggle ${f.name}`)
           ];
-          const field_view_options = calcfldViewOptions(fields);
+          const field_view_options = calcfldViewOptions(fields,false);
           const link_view_opts = await get_link_view_opts(
             table,
             context.viewname

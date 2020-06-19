@@ -2,8 +2,13 @@ const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
 const { getState } = require("./db/state");
+const { contract, is } = require("contractis");
 
-const calcfldViewOptions = (fields, isEdit) => {
+const calcfldViewOptions = contract(
+  is.fun([is.array(is.class("Field")), is.bool],
+  is.objVals(is.array(is.str))
+  ),
+  (fields, isEdit) => {
   var fvs = {};
   fields.forEach(f => {
     if (f.type === "File") {
@@ -19,9 +24,12 @@ const calcfldViewOptions = (fields, isEdit) => {
     }
   });
   return fvs;
-};
+});
 
-const get_link_view_opts = async (table, viewname) => {
+const get_link_view_opts = contract(
+  is.fun([is.class("Table"), is.str],
+  is.promise(is.array(is.obj({label:is.str, name:is.str})))
+  ),async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table.id);
   const link_view_opts = own_link_views.map(v => ({
     label: v.name,
@@ -47,13 +55,13 @@ const get_link_view_opts = async (table, viewname) => {
     }
   }
   return link_view_opts;
-};
+});
 const field_picker_fields = async ({ table, viewname }) => {
   const fields = await table.getFields();
   const boolfields = fields.filter(f => f.type && f.type.name === "Bool");
   const actions = ["Delete", ...boolfields.map(f => `Toggle ${f.name}`)];
   const fldOptions = fields.map(f => f.name);
-  const fldViewOptions = calcfldViewOptions(fields);
+  const fldViewOptions = calcfldViewOptions(fields, false);
 
   const link_view_opts = await get_link_view_opts(table, viewname);
 
