@@ -14,7 +14,7 @@ describe("Packs", () => {
     await browser.create_tenant("sub2");
     await browser.install_pack("Blog");
   });
-  
+
   it("Installs PM pack", async () => {
     await browser.delete_tenant("sub3");
     await browser.create_tenant("sub3");
@@ -30,7 +30,7 @@ describe("Packs", () => {
     expect(page).toContain("Maths");
     expect(page).toContain("todokanban");
   });
-  
+
   it("Installs issue tracker pack", async () => {
     await browser.delete_tenant("sub1");
     await browser.create_tenant("sub1");

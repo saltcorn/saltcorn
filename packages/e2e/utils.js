@@ -18,14 +18,12 @@ class Browser {
   }
 
   get baseURL() {
-    return `http://${this.tenant ? this.tenant + "." : ""}example.com:3000`
+    return `http://${this.tenant ? this.tenant + "." : ""}example.com:3000`;
   }
   async goto(url) {
     const [response] = await Promise.all([
       this.page.waitForNavigation(),
-      this.page.goto(
-        this.baseURL+url
-      )
+      this.page.goto(this.baseURL + url)
     ]);
     expect(response.status()).toBe(200);
   }
@@ -68,7 +66,7 @@ class Browser {
       )}"] button[type=submit]`
     );
     const url = await this.page.url();
-    expect(url).toBe(this.baseURL+'/');
+    expect(url).toBe(this.baseURL + "/");
   }
 
   async close() {
