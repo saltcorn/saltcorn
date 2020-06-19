@@ -207,7 +207,8 @@ Table.contract = {
     getRow: is.fun(is.obj(), is.promise(is.obj())),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
-    updateRow: is.fun([is.obj(), is.positive], is.promise(is.eq(undefined))),
+    updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
+    toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.posint)),
     getFields: is.fun([], is.promise(is.array(is.class("Field")))),
     get_parent_relations: is.fun(
