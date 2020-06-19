@@ -59,7 +59,8 @@ class RunTestsCommand extends Command {
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(lerna, ["run", "test", ...covargs], flags.forever);
-      await this.e2etest()
+      if(process.env.CI !== 'true')
+        await this.e2etest()
     }
     this.exit(0);
 
