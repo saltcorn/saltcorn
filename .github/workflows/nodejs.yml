@@ -11,9 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on:
-      ubuntu-latest
-      #container: ubuntu:latest
+    runs-on: ubuntu-latest
     services:
       # Label used to access the service container
       postgres:
