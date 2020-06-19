@@ -20,7 +20,7 @@ class RunTestsCommand extends Command {
   }
   async e2etest() {
     const server=spawn("saltcorn", ['serve'], 
-    {env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
+    {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
