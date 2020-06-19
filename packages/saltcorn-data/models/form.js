@@ -78,7 +78,7 @@ Form.contract = {
     fields: is.array(is.or(is.class("Field"), is.class("FieldRepeat"))),
     values: is.obj(),
     errors: is.obj(),
-    action: is.str,
+    action: is.maybe(is.str),
     labelCols: is.maybe(is.posint),
     hasErrors: is.bool,
     submitLabel: is.maybe(is.str),

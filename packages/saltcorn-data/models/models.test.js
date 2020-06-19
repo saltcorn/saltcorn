@@ -19,6 +19,7 @@ describe("Table create", () => {
 describe("Form new", () => {
   it("should retain field class", () => {
     const form = new Form({
+      action: "/",
       fields: [
         new Field({
           name: "summary_field",
@@ -31,6 +32,7 @@ describe("Form new", () => {
   });
   it("should add field class", () => {
     const form = new Form({
+      action: "/",
       fields: [
         {
           name: "summary_field",

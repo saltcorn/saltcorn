@@ -9,6 +9,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 
 const mkRepForm = () =>
   new Form({
+    action: "/",
     fields: [
       new Field({
         name: "subject",
@@ -37,6 +38,7 @@ const mkRepForm = () =>
 describe("Form", () => {
   it("should render", async () => {
     const form = new Form({
+      action: "/",
       fields: [
         new Field({
           name: "age",
@@ -91,7 +93,8 @@ describe("Form", () => {
 
 describe("Bool Form", () => {
   const form = new Form({
-    fields: [
+      action: "/",
+      fields: [
       new Field({
         name: "done",
         label: "Done",
@@ -109,7 +112,8 @@ describe("Bool Form", () => {
 
 describe("String form with validator failure ", () => {
   const form = new Form({
-    fields: [
+      action: "/",
+      fields: [
       new Field({
         name: "name",
         label: "Name",
@@ -130,7 +134,8 @@ describe("String form with validator failure ", () => {
 
 describe("String form with validator success", () => {
   const form = new Form({
-    fields: [
+      action: "/",
+      fields: [
       new Field({
         name: "name",
         label: "Name",
