@@ -253,25 +253,34 @@ const picked_fields_to_query = columns => {
   return { joinFields, aggregations };
 };
 
-const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
-  var qstate = {};
-  Object.entries(state).forEach(([k, v]) => {
-    if (k === "_fts") {
-      qstate[k] = { searchTerm: v, fields };
-      return;
-    }
-    const field = fields.find(fld => fld.name == k);
-    if (
-      field &&
-      field.type.name === "String" &&
-      !(field.attributes && field.attributes.options) &&
-      approximate
-    ) {
-      qstate[k] = { ilike: v };
-    } else if (field) qstate[k] = v;
-  });
-  return qstate;
-};
+const stateFieldsToWhere = contract(
+  is.fun(
+    is.obj({
+      fields: is.array(is.class("Field")),
+      approximate: is.maybe(is.bool)
+    }),
+    is.obj()
+  ),
+  ({ fields, state, approximate = true }) => {
+    var qstate = {};
+    Object.entries(state).forEach(([k, v]) => {
+      if (k === "_fts") {
+        qstate[k] = { searchTerm: v, fields };
+        return;
+      }
+      const field = fields.find(fld => fld.name == k);
+      if (
+        field &&
+        field.type.name === "String" &&
+        !(field.attributes && field.attributes.options) &&
+        approximate
+      ) {
+        qstate[k] = { ilike: v };
+      } else if (field) qstate[k] = v;
+    });
+    return qstate;
+  }
+);
 
 const initial_config_all_fields = isEdit => async ({ table_id }) => {
   const table = await Table.findOne({ id: table_id });
