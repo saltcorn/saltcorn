@@ -25,11 +25,11 @@ const get_view_link_query = contract(
   }
 );
 
-const view_linker /*contract(
+const view_linker = contract(
   is.fun(
     [is_column, is.array(is.class("Field"))],
-    is.promise(is.fun(is.obj(), is.str))
-  ),*/ = async (
+    is.promise(is.obj({key: is.fun(is.obj(), is.str), label: is.str}))
+  ), async (
   column,
   fields
 ) => {
@@ -59,7 +59,7 @@ const view_linker /*contract(
     default:
       throw new Error(column.view);
   }
-};
+});
 
 const asyncMap = async (xs, asyncF) => {
   var res = [];
