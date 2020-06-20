@@ -10,9 +10,8 @@ class View {
     this.id = o.id;
     this.viewtemplate = o.viewtemplate;
     if (o.table_id) this.table_id = o.table_id;
-    if (o.table) {
-      this.table = o.table;
-      if (o.table.id && !o.table_id) this.table_id = o.table.id;
+    if (o.table && !o.table_id) {
+      this.table_id = o.table.id;
     }
     this.configuration = o.configuration;
     this.is_public = o.is_public;
@@ -212,7 +211,8 @@ class View {
 View.contract = {
   variables: {
     name: is.str,
-    id: is.posint,
+    id: is.maybe(is.posint),
+    table_id: is.maybe(is.posint),
     viewtemplate: is.str,
     viewtemplateObj: is.maybe(is_viewtemplate)
   },
