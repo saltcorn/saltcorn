@@ -67,7 +67,8 @@ describe("viewedit new List", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1
+        table_id: 1,
+        viewname: "mybooklist"
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -87,6 +88,7 @@ describe("viewedit new List", () => {
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 1,
+        viewname: "mybooklist",
         columns: [
           {
             type: "Field",
@@ -147,7 +149,8 @@ describe("viewedit new List with one field", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1
+        table_id: 1,
+        viewname: "mybooklist1"
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -165,6 +168,7 @@ describe("viewedit new List with one field", () => {
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 1,
+        viewname: "mybooklist1",
         columns: [
           {
             type: "Field",
@@ -222,7 +226,8 @@ describe("viewedit new Show", () => {
     const loginCookie = await getAdminLoginCookie();
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1
+        table_id: 1,
+        viewname: "mybook"
       })
     );
     const columns = [
