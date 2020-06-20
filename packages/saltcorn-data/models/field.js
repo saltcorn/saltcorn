@@ -196,11 +196,10 @@ class Field {
     const schema = db.getTenantSchema();
 
     const Table = require("./table");
-    if (!f.table && f.table_id)
-      f.table = await Table.findOne({ id: f.table_id });
+    const table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
       const q = `alter table "${schema}"."${sqlsanitize(
-        f.table.name
+        table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       }`;
@@ -212,7 +211,7 @@ class Field {
       }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table "${schema}"."${sqlsanitize(
-        f.table.name
+        table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);

@@ -170,7 +170,8 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
 });
 
 router.get("/new/:table_id", setTenant, isAdmin, async (req, res) => {
-  const wfres = await fieldFlow.run(req.params);
+  const {table_id}=req.params
+  const wfres = await fieldFlow.run({table_id: +table_id});
   res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
 });
 
