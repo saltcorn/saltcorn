@@ -7,7 +7,7 @@ jest.setTimeout(60 * 1000);
 beforeAll(async () => {
   browser = await Browser.init();
 });
-/*
+
 describe("Packs", () => {
   it("Installs blog pack", async () => {
     await browser.delete_tenant("sub2");
@@ -43,8 +43,6 @@ describe("Packs", () => {
   });
 });
 
-
-*/
 describe("Table create", () => {
   it("creates tenant", async () => {
     await browser.delete_tenant("sub4");
@@ -111,6 +109,8 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonList");
+    await browser.goto("/view/PersonList");
+    expect(await browser.content()).toContain("PersonList view");
   });
   it("edits view", async () => {
     await browser.goto("/viewedit/edit/PersonList");
@@ -120,6 +120,8 @@ describe("Table create", () => {
       "Specify the fields in the table to show"
     );
     await browser.clickNav("button[type=submit]");
+    await browser.goto("/view/PersonList");
+    expect(await browser.content()).toContain("PersonList view");
   });
 });
 afterAll(async () => {
