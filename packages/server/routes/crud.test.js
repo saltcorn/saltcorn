@@ -6,10 +6,14 @@ const {
   toRedirect,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
+beforeAll(async () => {
+  await resetToFixtures();
+});
 afterAll(db.close);
 
 describe("standard edit form", () => {
