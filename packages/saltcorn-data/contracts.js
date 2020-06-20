@@ -95,6 +95,25 @@ const is_plugin_type = is.obj({
   presets: is.maybe(is.objVals(is.fun([], is.any)))
 });
 
+const is_table_query = is.obj({
+  joinFields: is.maybe(is.objVals(is.obj({ ref: is.str, target: is.str }))),
+  aggregations: is.maybe(
+    is.objVals(
+      is.obj({
+        ref: is.str,
+        table: is.str,
+        field: is.str,
+        aggregate: is.str
+      })
+    )
+  ),
+  where: is.maybe(is.obj()),
+  limit: is.maybe(is.positive),
+  offset: is.maybe(is.positive),
+  orderBy: is.maybe(is.str),
+  orderDesc: is.maybe(is.bool)
+});
+
 const is_viewtemplate = is.obj({
   name: is.str,
   get_state_fields: is.fun([is.posint, is.str, is.any], is.promise(fieldlike)),
@@ -134,6 +153,7 @@ const is_pack = is.obj({
 });
 
 module.exports = {
+  is_table_query,
   is_plugin_wrap,
   is_plugin_wrap_arg,
   is_plugin_type,

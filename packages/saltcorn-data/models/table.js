@@ -2,6 +2,7 @@ const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 const { contract, is } = require("contractis");
+const { is_table_query } = require("../contracts");
 
 class Table {
   constructor(o) {
@@ -240,28 +241,7 @@ Table.contract = {
       )
     ),
     getJoinedRows: is.fun(
-      is.maybe(
-        is.obj({
-          joinFields: is.maybe(
-            is.objVals(is.obj({ ref: is.str, target: is.str }))
-          ),
-          aggregations: is.maybe(
-            is.objVals(
-              is.obj({
-                ref: is.str,
-                table: is.str,
-                field: is.str,
-                aggregate: is.str
-              })
-            )
-          ),
-          where: is.maybe(is.obj()),
-          limit: is.maybe(is.positive),
-          offset: is.maybe(is.positive),
-          orderBy: is.maybe(is.str),
-          orderDesc: is.maybe(is.bool)
-        })
-      ),
+      is.maybe(is_table_query),
       is.promise(is.array(is.obj({})))
     )
   },
