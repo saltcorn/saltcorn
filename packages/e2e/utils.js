@@ -18,7 +18,7 @@ class Browser {
   }
 
   get baseURL() {
-    return `http://${this.tenant ? this.tenant + "." : ""}example.com:3000`;
+    return `http://${this.tenant ? this.tenant + "." : ""}example.com:2987`;
   }
   async goto(url) {
     const [response] = await Promise.all([
@@ -34,7 +34,9 @@ class Browser {
     ]);
     expect(response.status()).toBeLessThanOrEqual(399);
   }
-
+  content() {
+    return this.page.content();
+  }
   async delete_tenant(nm) {
     this.tenant = undefined;
     await deleteTenant(nm);

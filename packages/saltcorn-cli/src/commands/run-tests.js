@@ -22,7 +22,7 @@ class RunTestsCommand extends Command {
     return res;
   }
   async e2etest() {
-    const server = spawn("packages/saltcorn-cli/bin/saltcorn", ["serve"], {
+    const server = spawn("packages/saltcorn-cli/bin/saltcorn", ["serve", "-p", "2987"], {
       stdio: "inherit",
       env: { ...process.env, PGDATABASE: "saltcorn_test" }
     });

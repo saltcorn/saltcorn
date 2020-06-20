@@ -7,7 +7,7 @@ jest.setTimeout(60 * 1000);
 beforeAll(async () => {
   browser = await Browser.init();
 });
-
+/*
 describe("Packs", () => {
   it("Installs blog pack", async () => {
     await browser.delete_tenant("sub2");
@@ -43,11 +43,33 @@ describe("Packs", () => {
   });
 });
 
-/*test("renders body", async () => {
-  //await browser.page.waitForSelector("body");
-  await browser.create_tenant("sub4");
-});*/
 
+*/
+describe("Table create", () => {
+  it("creates tenant", async () => {
+    await browser.delete_tenant("sub4");
+    await browser.create_tenant("sub4");
+    await browser.goto("/");
+    const page = await browser.page.content();
+    expect(page).toContain("You have no tables and no views!");
+  })
+  it("creates table", async () => {
+    await browser.goto("/table/new");
+    await browser.page.type("#inputname", "Persons");
+    await browser.clickNav("button[type=submit]");
+    const page = await browser.page.content();
+    expect(page).toContain("No fields defined in Persons table")
+  })
+  it("creates string field", async () => {
+    await browser.clickNav(".btn.add-field");
+    await browser.page.type("#inputlabel", "Full name");
+    await browser.page.select('#inputtype', 'String')
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Field attributes")
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Persons table")
+  })
+})
 afterAll(async () => {
   await browser.delete_tenant("sub2");
   await browser.delete_tenant("sub3");
