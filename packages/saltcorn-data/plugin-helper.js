@@ -3,11 +3,7 @@ const Field = require("./models/field");
 const Table = require("./models/table");
 const { getState } = require("./db/state");
 const { contract, is } = require("contractis");
-const { fieldlike, is_table_query } = require("./contracts");
-
-const is_column = is.obj({
-  type: is.str //is.one_of("Action", "ViewLink", "JoinField", "Aggregation", "Field")
-});
+const { fieldlike, is_table_query, is_column } = require("./contracts");
 
 const calcfldViewOptions = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
@@ -429,5 +425,6 @@ module.exports = {
   stateFieldsToWhere,
   initial_config_all_fields,
   calcfldViewOptions,
-  get_link_view_opts
+  get_link_view_opts,
+  is_column
 };

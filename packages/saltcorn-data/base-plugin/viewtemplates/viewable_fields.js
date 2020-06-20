@@ -1,23 +1,38 @@
 const { post_btn, link } = require("@saltcorn/markup");
 const { text } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
+const { contract, is } = require("contractis");
+const { is_column } = require("../../contracts");
 
-const action_url = (viewname, table, column, r) => {
-  if (column.action_name === "Delete")
-    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
-  else if (column.action_name.startsWith("Toggle")) {
-    const field_name = column.action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+const action_url = contract(
+  is.fun([is.str, is.class("Table"), is_column, is.obj()], is.any),
+  (viewname, table, column, r) => {
+    if (column.action_name === "Delete")
+      return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    else if (column.action_name.startsWith("Toggle")) {
+      const field_name = column.action_name.replace("Toggle ", "");
+      return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    }
   }
-};
-const get_view_link_query = fields => {
-  const fUnique = fields.find(f => f.is_unique);
-  if (fUnique)
-    return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
-  else return r => `?id=${r.id}`;
-};
+);
+const get_view_link_query = contract(
+  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
+  fields => {
+    const fUnique = fields.find(f => f.is_unique);
+    if (fUnique)
+      return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
+    else return r => `?id=${r.id}`;
+  }
+);
 
-const view_linker = async (column, fields) => {
+const view_linker /*contract(
+  is.fun(
+    [is_column, is.array(is.class("Field"))],
+    is.promise(is.fun(is.obj(), is.str))
+  ),*/ = async (
+  column,
+  fields
+) => {
   const [vtype, vrest] = column.view.split(":");
   switch (vtype) {
     case "Own":
@@ -127,30 +142,41 @@ const get_viewable_fields = async (
     })
   ).filter(v => !!v);
 
-const stateToQueryString = state => {
-  if (!state || Object.keys(state).length === 0) return "";
+const stateToQueryString = contract(
+  is.fun(is.maybe(is.obj()), is.str),
+  state => {
+    if (!state || Object.keys(state).length === 0) return "";
 
-  return (
-    "?" +
-    Object.entries(state)
-      .map(([k, v]) =>
-        k === "id" ? null : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
-      )
-      .filter(s => !!s)
-      .join("&")
-  );
-};
+    return (
+      "?" +
+      Object.entries(state)
+        .map(([k, v]) =>
+          k === "id"
+            ? null
+            : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        )
+        .filter(s => !!s)
+        .join("&")
+    );
+  }
+);
 
-const splitUniques = (fields, state) => {
-  var uniques = [];
-  var nonUniques = [];
-  Object.entries(state).forEach(([k, v]) => {
-    const field = fields.find(f => f.name === k);
-    if (k === "id" || (field && field.is_unique)) uniques[k] = v;
-    else nonUniques[k] = v;
-  });
-  return { uniques, nonUniques };
-};
+const splitUniques = contract(
+  is.fun(
+    [is.array(is.class("Field")), is.obj()],
+    is.obj({ uniques: is.obj(), nonUniques: is.obj() })
+  ),
+  (fields, state) => {
+    var uniques = [];
+    var nonUniques = [];
+    Object.entries(state).forEach(([k, v]) => {
+      const field = fields.find(f => f.name === k);
+      if (k === "id" || (field && field.is_unique)) uniques[k] = v;
+      else nonUniques[k] = v;
+    });
+    return { uniques, nonUniques };
+  }
+);
 
 module.exports = {
   get_viewable_fields,
