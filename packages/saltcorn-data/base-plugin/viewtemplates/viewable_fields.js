@@ -28,38 +28,37 @@ const get_view_link_query = contract(
 const view_linker = contract(
   is.fun(
     [is_column, is.array(is.class("Field"))],
-    is.promise(is.obj({key: is.fun(is.obj(), is.str), label: is.str}))
-  ), async (
-  column,
-  fields
-) => {
-  const [vtype, vrest] = column.view.split(":");
-  switch (vtype) {
-    case "Own":
-      const vnm = vrest;
-      const get_query = get_view_link_query(fields);
-      return {
-        label: vnm,
-        key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
-      };
-    case "ChildList":
-      const [viewnm, tbl, fld] = vrest.split(".");
-      return {
-        label: viewnm,
-        key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      //console.log([pviewnm, ptbl, pfld])
-      return {
-        label: pviewnm,
-        key: r =>
-          r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
-      };
-    default:
-      throw new Error(column.view);
+    is.promise(is.obj({ key: is.fun(is.obj(), is.str), label: is.str }))
+  ),
+  async (column, fields) => {
+    const [vtype, vrest] = column.view.split(":");
+    switch (vtype) {
+      case "Own":
+        const vnm = vrest;
+        const get_query = get_view_link_query(fields);
+        return {
+          label: vnm,
+          key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
+        };
+      case "ChildList":
+        const [viewnm, tbl, fld] = vrest.split(".");
+        return {
+          label: viewnm,
+          key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        //console.log([pviewnm, ptbl, pfld])
+        return {
+          label: pviewnm,
+          key: r =>
+            r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
+        };
+      default:
+        throw new Error(column.view);
+    }
   }
-});
+);
 
 const asyncMap = async (xs, asyncF) => {
   var res = [];
@@ -71,76 +70,95 @@ const asyncMap = async (xs, asyncF) => {
   return res;
 };
 
-const get_viewable_fields = async (
-  viewname,
-  table,
-  fields,
-  columns,
-  isShow,
-  csrfToken
-) =>
-  (
-    await asyncMap(columns, async column => {
-      if (column.type === "Action")
-        return {
-          label: column.action_name,
-          key: r =>
-            post_btn(
-              action_url(viewname, table, column, r),
-              column.action_name,
-              csrfToken
-            )
-        };
-      else if (column.type === "ViewLink") {
-        return await view_linker(column, fields);
-      } else if (column.type === "JoinField") {
-        const [refNm, targetNm] = column.join_field.split(".");
-        return {
-          label: text(targetNm),
-          key: text(targetNm)
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
-        };
-      } else if (column.type === "Aggregation") {
-        //console.log(column)
-        const [table, fld] = column.agg_relation.split(".");
-        const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
+const get_viewable_fields = contract(
+  is.fun(
+    [
+      is.str,
+      is.class("Table"),
+      is.array(is.class("Field")),
+      is.array(is_column),
+      is.bool,
+      is.str
+    ],
+    is.promise(
+      is.array(
+        is.obj({
+          key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
+          label: is.str
+        })
+      )
+    )
+  ),
+  async (viewname, table, fields, columns, isShow, csrfToken) =>
+    (
+      await asyncMap(columns, async column => {
+        if (column.type === "Action")
+          return {
+            label: column.action_name,
+            key: r =>
+              post_btn(
+                action_url(viewname, table, column, r),
+                column.action_name,
+                csrfToken
+              )
+          };
+        else if (column.type === "ViewLink") {
+          return await view_linker(column, fields);
+        } else if (column.type === "JoinField") {
+          const [refNm, targetNm] = column.join_field.split(".");
+          return {
+            label: text(targetNm),
+            key: text(targetNm)
+            // sortlink: `javascript:sortby('${text(targetNm)}')`
+          };
+        } else if (column.type === "Aggregation") {
+          //console.log(column)
+          const [table, fld] = column.agg_relation.split(".");
+          const targetNm = (
+            column.stat +
+            "_" +
+            table +
+            "_" +
+            fld
+          ).toLowerCase();
 
-        return {
-          label: text(column.stat + " " + table),
-          key: text(targetNm)
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
-        };
-      } else if (column.type === "Field") {
-        const f = fields.find(fld => fld.name === column.field_name);
+          return {
+            label: text(column.stat + " " + table),
+            key: text(targetNm)
+            // sortlink: `javascript:sortby('${text(targetNm)}')`
+          };
+        } else if (column.type === "Field") {
+          const f = fields.find(fld => fld.name === column.field_name);
 
-        return (
-          f && {
-            label: text(f.label),
-            key:
-              column.fieldview && f.type === "File"
-                ? row =>
-                    row[f.name] &&
-                    getState().fileviews[column.fieldview].run(
-                      row[f.name],
-                      row[`${f.name}__filename`]
-                    )
-                : column.fieldview && f.type.fieldviews[column.fieldview]
-                ? row =>
-                    f.type.fieldviews[column.fieldview].run(
-                      row[f.name],
-                      row[`${f.name}__filename`]
-                    )
-                : isShow
-                ? f.type.showAs
-                  ? row => f.type.showAs(row[f.name])
-                  : row => text(row[f.name])
-                : f.listKey,
-            sortlink: `javascript:sortby('${text(f.name)}')`
-          }
-        );
-      }
-    })
-  ).filter(v => !!v);
+          return (
+            f && {
+              label: text(f.label),
+              key:
+                column.fieldview && f.type === "File"
+                  ? row =>
+                      row[f.name] &&
+                      getState().fileviews[column.fieldview].run(
+                        row[f.name],
+                        row[`${f.name}__filename`]
+                      )
+                  : column.fieldview && f.type.fieldviews[column.fieldview]
+                  ? row =>
+                      f.type.fieldviews[column.fieldview].run(
+                        row[f.name],
+                        row[`${f.name}__filename`]
+                      )
+                  : isShow
+                  ? f.type.showAs
+                    ? row => f.type.showAs(row[f.name])
+                    : row => text(row[f.name])
+                  : f.listKey,
+              sortlink: `javascript:sortby('${text(f.name)}')`
+            }
+          );
+        }
+      })
+    ).filter(v => !!v)
+);
 
 const stateToQueryString = contract(
   is.fun(is.maybe(is.obj()), is.str),
