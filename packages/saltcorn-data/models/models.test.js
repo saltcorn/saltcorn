@@ -2,6 +2,7 @@ const db = require("../db/index.js");
 const Table = require("./table");
 const Form = require("./form");
 const Field = require("./field");
+const Crash = require("./crash");
 const View = require("./view");
 
 afterAll(db.close);
@@ -13,6 +14,15 @@ describe("Table create", () => {
     const tf = await Table.findOne({ id: tc.id });
 
     expect(tf.name).toStrictEqual("mytable");
+  });
+});
+
+describe("Crash", () => {
+  it("should create", async () => {
+    await Crash.create(new Error("my error"), {url:"/", headers:{}});
+    const cs = await Crash.find();
+
+    expect(cs[0].reltime.length>0).toBe(true);
   });
 });
 
