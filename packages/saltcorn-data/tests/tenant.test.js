@@ -1,7 +1,7 @@
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const { createTenant,deleteTenant } = require("../models/tenant");
+const { createTenant, deleteTenant } = require("../models/tenant");
 
 afterAll(db.close);
 
