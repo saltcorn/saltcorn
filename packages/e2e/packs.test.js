@@ -69,6 +69,55 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Persons table")
   })
+  it("creates int field", async () => {
+    await browser.clickNav(".btn.add-field");
+    expect(await browser.content()).toContain("New field")
+    await browser.page.type("#inputlabel", "Age");
+    await browser.page.select('#inputtype', 'Integer')
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Field attributes")
+    await browser.page.type('#inputmin', '0')
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Persons table")
+  })
+  
+  it("creates and deletes field", async () => {
+    await browser.clickNav(".btn.add-field");
+    await browser.page.type("#inputlabel", "Useless");
+    await browser.page.select('#inputtype', 'String')
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Field attributes")
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Persons table")
+    expect(await browser.content()).toContain("Useless")
+    await browser.clickNav("tr:nth-child(3) button");
+    expect(await browser.content()).toContain("Persons table")
+    expect(await browser.content()).not.toContain("Useless")
+
+  })
+  it("shows data", async () => {
+    await browser.goto("/list/Persons");
+  })
+  it("creates view", async () => {
+    await browser.goto("/viewedit");
+    expect(await browser.content()).toContain("Add view")
+    await browser.goto("/viewedit/new");
+    await browser.page.type("#inputname", "PersonList");
+    await browser.page.select('#inputviewtemplate', 'List')
+    await browser.page.select('#inputtable_name', 'Persons')
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Specify the fields in the table to show")
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Add view")
+    expect(await browser.content()).toContain("PersonList")
+  })
+  it("edits view", async () => {
+    await browser.goto("/viewedit/edit/PersonList");
+    expect(await browser.content()).toContain("PersonList")
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Specify the fields in the table to show")
+    await browser.clickNav("button[type=submit]");
+  })
 })
 afterAll(async () => {
   await browser.delete_tenant("sub2");

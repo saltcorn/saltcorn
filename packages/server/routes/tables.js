@@ -119,7 +119,7 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
     fieldCard = [
       tableHtml,
       a(
-        { href: `/field/new/${table.id}`, class: "btn btn-primary" },
+        { href: `/field/new/${table.id}`, class: "btn btn-primary add-field" },
         "Add field"
       )
     ];

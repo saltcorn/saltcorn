@@ -158,7 +158,7 @@ router.post("/save", setTenant, isAdmin, async (req, res) => {
       delete v.table_name;
 
       if (typeof req.body.id !== "undefined") {
-        await View.update(v, req.body.id);
+        await View.update(v, +req.body.id);
       } else {
         const vt = getState().viewtemplates[v.viewtemplate];
         if (vt.initial_config) v.configuration = await vt.initial_config(v);
