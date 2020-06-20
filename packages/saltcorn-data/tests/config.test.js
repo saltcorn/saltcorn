@@ -3,7 +3,7 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const { getConfig, getAllConfig, setConfig } = require("../models/config");
+const { getConfig, getAllConfig, setConfig,getAllConfigOrDefaults } = require("../models/config");
 afterAll(db.close);
 
 describe("Config", () => {
@@ -32,5 +32,10 @@ describe("Config", () => {
   it("should get all value", async () => {
     const d = await getAllConfig();
     expect(d.cfg1).toBe(9);
+  });
+  it("should get all value", async () => {
+    const d = await getAllConfigOrDefaults();
+    expect(d.cfg1).toBe(undefined);
+    expect(d.log_sql.value).toBe(false);
   });
 });
