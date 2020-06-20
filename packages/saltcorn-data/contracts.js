@@ -101,6 +101,9 @@ const is_viewtemplate = is.obj({
   display_state_form: is.maybe(is.or(is.bool, is.fun(is.any, is.bool))),
   configuration_workflow: is.fun([], is.class("Workflow")),
   view_quantity: is.maybe(is.one_of("Many", "ZeroOrOne", "One")),
+  initial_config: is.maybe(
+    is.fun(is.obj({ table_id: is.posint }), is.promise(is.obj()))
+  ),
   run: is.fun(
     [is.posint, is.str, is.any, is.obj(), is.obj()],
     is.promise(is.str)
