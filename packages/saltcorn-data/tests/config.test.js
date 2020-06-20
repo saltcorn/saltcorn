@@ -3,7 +3,12 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const { getConfig, getAllConfig, setConfig,getAllConfigOrDefaults } = require("../models/config");
+const {
+  getConfig,
+  getAllConfig,
+  setConfig,
+  getAllConfigOrDefaults
+} = require("../models/config");
 afterAll(db.close);
 
 describe("Config", () => {
