@@ -6,7 +6,7 @@ const { contract, is } = require("contractis");
 const { fieldlike, is_table_query } = require("./contracts");
 
 const is_column = is.obj({
-  type: is.one_of("Action", "Viewlink", "JoinField", "Aggregation", "Field")
+  type: is.str //is.one_of("Action", "ViewLink", "JoinField", "Aggregation", "Field")
 });
 
 const calcfldViewOptions = contract(
@@ -199,40 +199,68 @@ const field_picker_fields = contract(
   }
 );
 
-const get_child_views = async (table, viewname) => {
-  const rels = await Field.find({ reftable_name: table.name });
-  var child_views = [];
-  for (const relation of rels) {
-    const related_table = await Table.findOne({ id: relation.table_id });
-    const views = await View.find_table_views_where(
-      relation.table_id,
-      ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname && state_fields.every(sf => !sf.required)
-    );
-    child_views.push({ relation, related_table, views });
+const get_child_views = contract(
+  is.fun(
+    [is.class("Table"), is.str],
+    is.promise(
+      is.array(
+        is.obj({
+          relation: is.class("Field"),
+          related_table: is.class("Table"),
+          views: is.array(is.class("View"))
+        })
+      )
+    )
+  ),
+  async (table, viewname) => {
+    const rels = await Field.find({ reftable_name: table.name });
+    var child_views = [];
+    for (const relation of rels) {
+      const related_table = await Table.findOne({ id: relation.table_id });
+      const views = await View.find_table_views_where(
+        relation.table_id,
+        ({ state_fields, viewrow }) =>
+          viewrow.name !== viewname && state_fields.every(sf => !sf.required)
+      );
+      child_views.push({ relation, related_table, views });
+    }
+    return child_views;
   }
-  return child_views;
-};
+);
 
-const get_parent_views = async (table, viewname) => {
-  var parent_views = [];
-  const parentrels = (await table.getFields()).filter(
-    f => f.is_fkey && f.type !== "File" && f.reftable_name !== "users"
-  );
-  for (const relation of parentrels) {
-    const related_table = await Table.findOne({
-      name: relation.reftable_name
-    });
-    const views = await View.find_table_views_where(
-      related_table.id,
-      ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname && state_fields.some(sf => sf.name === "id")
+const get_parent_views = contract(
+  is.fun(
+    [is.class("Table"), is.str],
+    is.promise(
+      is.array(
+        is.obj({
+          relation: is.class("Field"),
+          related_table: is.class("Table"),
+          views: is.array(is.class("View"))
+        })
+      )
+    )
+  ),
+  async (table, viewname) => {
+    var parent_views = [];
+    const parentrels = (await table.getFields()).filter(
+      f => f.is_fkey && f.type !== "File" && f.reftable_name !== "users"
     );
+    for (const relation of parentrels) {
+      const related_table = await Table.findOne({
+        name: relation.reftable_name
+      });
+      const views = await View.find_table_views_where(
+        related_table.id,
+        ({ state_fields, viewrow }) =>
+          viewrow.name !== viewname && state_fields.some(sf => sf.name === "id")
+      );
 
-    parent_views.push({ relation, related_table, views });
+      parent_views.push({ relation, related_table, views });
+    }
+    return parent_views;
   }
-  return parent_views;
-};
+);
 
 const picked_fields_to_query = contract(
   is.fun(is.array(is_column), is_table_query),
