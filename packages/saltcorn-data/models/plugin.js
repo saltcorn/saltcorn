@@ -85,7 +85,7 @@ Plugin.contract = {
     location: is.str,
     name: is.str,
     version: is.maybe(is.str),
-    source: is.one_of("npm", "github", "local")
+    source: is.one_of(["npm", "github", "local"])
   },
   methods: {
     upsert: is.fun([], is.promise(is.eq(undefined))),
