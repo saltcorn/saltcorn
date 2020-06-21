@@ -1,10 +1,11 @@
 const { contract, is } = require("contractis");
-const { div, text } = require("./tags");
+const { div, span } = require("./tags");
 
 const render = blockDispatch => (layout, role) => {
-  function wrap(segment, s) {
-    if (blockDispatch.wrapAll) return blockDispatch.wrapAll(s, segment);
-    else return s;
+  function wrap(segment, inner) {
+    return segment.block
+      ? div({ class: segment.textStyle || "" }, inner)
+      : span({ class: segment.textStyle || "" }, inner);
   }
   function go(segment) {
     if (!segment) return "";

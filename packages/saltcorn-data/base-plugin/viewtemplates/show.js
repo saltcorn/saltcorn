@@ -123,11 +123,6 @@ const runMany = async (
 
 const render = (row, fields, layout, viewname, table, role, req) => {
   const blockDispatch = {
-    wrapAll(inner, segment) {
-      return segment.block
-        ? div({ class: segment.textStyle || "" }, inner)
-        : span({ class: segment.textStyle || "" }, inner);
-    },
     field({ field_name, fieldview }) {
       const val = row[field_name];
       const field = fields.find(fld => fld.name === field_name);

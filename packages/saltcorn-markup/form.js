@@ -10,6 +10,7 @@ const {
   span
 } = require("./tags");
 const { contract, is } = require("contractis");
+const renderLayout = require("./layout");
 
 const mkShowIf = sIf =>
   Object.entries(sIf)
@@ -255,48 +256,19 @@ const mkFormRowForField = (
     );
 };
 
-const wrapBlock = (segment, inner) =>
-  segment.block
-    ? div({ class: segment.textStyle || "" }, inner)
-    : span({ class: segment.textStyle || "" }, inner);
-
-const renderLayout = form => {
-  function go(segment) {
-    if (!segment) return "";
-    //if (segment.minRole && role > segment.minRole) return "";
-    if (segment.type === "blank") {
-      return wrapBlock(segment, segment.contents);
-    }
-    if (segment.type === "line_break") {
-      return "<br />";
-    } else if (segment.type === "field") {
+const renderFormLayout = form => {
+  const blockDispatch = {
+    field(segment) {
       const field = form.fields.find(f => f.name === segment.field_name);
-
-      return wrapBlock(segment, innerField(form.values, form.errors)(field));
-    } else if (segment.type === "action" && segment.action_name === "Save") {
+      return innerField(form.values, form.errors)(field);
+    },
+    action({ action_name }) {
       return `<button type="submit" class="btn btn-primary">${text(
         form.submitLabel || "Save"
       )}</button>`;
-    } else if (segment.above) {
-      return segment.above.map(s => go(s)).join("");
-    } else if (segment.besides) {
-      const defwidth = Math.round(12 / segment.besides.length);
-      return div(
-        { class: "row" },
-        segment.besides.map((t, ix) =>
-          div(
-            {
-              class: `col-sm-${
-                segment.widths ? segment.widths[ix] : defwidth
-              } text-${segment.aligns ? segment.aligns[ix] : ""}`
-            },
-            go(t)
-          )
-        )
-      );
     }
-  }
-  return go(form.layout);
+  };
+  return renderLayout(blockDispatch)(form.layout);
 };
 
 const renderForm = (form, csrfToken) => {
@@ -343,7 +315,9 @@ const mkFormWithLayout = (form, csrfToken) => {
     .filter(f => f.input_type === "hidden")
     .map(f => innerField(form.values, form.errors)(f))
     .join("");
-  return blurbp + top + csrfField + hiddens + renderLayout(form) + "</form>";
+  return (
+    blurbp + top + csrfField + hiddens + renderFormLayout(form) + "</form>"
+  );
 };
 
 const mkForm = (form, csrfToken, errors = {}) => {
