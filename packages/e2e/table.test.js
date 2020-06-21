@@ -159,6 +159,17 @@ describe("Table create", () => {
     );
     expect(await browser.content()).toContain("TomNook");
   });
+  it("edits row with edit view", async () => {
+    await browser.goto("/view/PersonEdit?id=1");
+    expect(await browser.content()).toContain("PersonEdit view");
+    expect(await browser.content()).toContain("TomNook");
+    await browser.erase_input("#inputfull_name");
+    await browser.page.type("#inputfull_name", "TerryTheBeaver");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("PersonList view");
+    expect(await browser.content()).toContain("TerryTheBeaver");
+    expect(await browser.content()).not.toContain("TomNook");
+  });
   // tie views together
   // see data in list and show and edit
   // add required field
