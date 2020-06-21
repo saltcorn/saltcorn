@@ -10,7 +10,8 @@ const {
   h6,
   h1,
   p,
-  header
+  header,
+  footer
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -112,6 +113,10 @@ const blockDispatch = {
       ),
       div({ class: "card-body" }, Array.isArray(contents) ? contents.join("") : contents)
     ),
+  footer: ({contents})=>
+    div({class:"container"}, footer({id:"footer"}, div({class:"row"},
+     div({class:"col-sm-12"}, contents)
+    ))),
   hero: ({caption, blurb}) =>
     header(
       { class: "masthead" },
