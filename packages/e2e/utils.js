@@ -60,6 +60,16 @@ class Browser {
     }
     await this.page.waitFor(20);
   }
+  async slowly_type(selector, text) {
+    await this.page.click(selector);
+    await this.page.waitFor(50);
+    for (let i = 0; i < text.length; i++) {
+      await this.page.waitFor(20);
+      await this.page.keyboard.press(text[i]);
+    }
+    await this.page.waitFor(50);
+  }
+
   async create_tenant(nm) {
     if (typeof this.tenant !== "undefined")
       throw new Error("tenant not deleted");

@@ -155,8 +155,8 @@ describe("Table create", () => {
     await browser.page.waitForSelector("input.text-to-display");
     await browser.page.waitFor(100);
     await browser.erase_input("input.text-to-display");
-    await browser.page.type("input.text-to-display", "MyOtherInput");
-
+    await browser.slowly_type("input.text-to-display", "MyOtherInput");
+    await browser.page.waitFor(100);
     await browser.clickNav("button.btn-primary");
 
     expect(await browser.content()).toContain("Add view");
