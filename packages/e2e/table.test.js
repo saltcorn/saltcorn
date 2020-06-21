@@ -202,6 +202,13 @@ describe("Table create", () => {
     await browser.goto("/");
     expect(await browser.content()).toContain("MyFabSite");
   });
+  it("has admin links", async () => {
+    const page = await browser.content();
+    expect(page).toContain('href="/table"');
+    expect(page).toContain('href="/viewedit"');
+    expect(page).toContain('href="/config"');
+    expect(page).toContain('href="/plugins"');
+  });
   it("Logs out", async () => {
     //expect(await browser.content()).toContain("tomtheuser");
     expect(await browser.content()).toContain("Logout");
@@ -214,6 +221,7 @@ describe("Table create", () => {
     expect(page).toContain("Sign up");
     expect(page).toContain("PersonList view");
     expect(page).toContain("TerryTheBeaver");
+    expect(page).not.toContain('href="/table"');
   });
   it("Signs up", async () => {
     await browser.goto("/auth/signup");
@@ -222,6 +230,8 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Logout");
     expect(await browser.content()).not.toContain("Sign up");
+    expect(await browser.content()).not.toContain('href="/table"');
+
     await browser.goto("/auth/logout");
   });
   it("Login", async () => {
@@ -231,6 +241,7 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Logout");
     expect(await browser.content()).not.toContain("Sign up");
+    expect(await browser.content()).not.toContain('href="/table"');
   });
 });
 afterAll(async () => {
