@@ -156,6 +156,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("View canvas");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
+    await sleep(100)
     await browser.erase_input("input.text-to-display");
     await browser.page.type("input.text-to-display", "MyOtherInput");
 
