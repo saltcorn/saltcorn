@@ -52,10 +52,13 @@ class Browser {
   // https://stackoverflow.com/a/52633235
   async erase_input(selector) {
     await this.page.click(selector);
+    await this.page.waitFor(50);
     const inputValue = await this.page.$eval(selector, el => el.value);
     for (let i = 0; i < inputValue.length; i++) {
+      await this.page.waitFor(10);
       await this.page.keyboard.press("Backspace");
     }
+    await this.page.waitFor(20);
   }
   async create_tenant(nm) {
     if (typeof this.tenant !== "undefined")
