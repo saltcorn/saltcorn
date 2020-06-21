@@ -133,6 +133,17 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("PersonList view");
     expect(await browser.content()).toContain("TomNook");
   });
+  it("edits row with edit view", async () => {
+    await browser.goto("/view/PersonEdit?id=1");
+    expect(await browser.content()).toContain("PersonEdit view");
+    expect(await browser.content()).toContain("TomNook");
+    await browser.erase_input("#inputfull_name");
+    await browser.page.type("#inputfull_name", "TerryTheBeaver");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("PersonList view");
+    expect(await browser.content()).toContain("TerryTheBeaver");
+    expect(await browser.content()).not.toContain("TomNook");
+  });
   it("creates show view", async () => {
     await browser.goto("/viewedit");
     expect(await browser.content()).toContain("Add view");
@@ -148,7 +159,6 @@ describe("Table create", () => {
     await browser.page.type("input.text-to-display", "MyOtherInput");
 
     await browser.clickNav("button.btn-primary");
-    await browser.clickNav("button[type=submit]");
 
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonShow");
@@ -157,19 +167,15 @@ describe("Table create", () => {
     expect(await browser.content()).toContain(
       '<span class="">MyOtherInput</span>'
     );
-    expect(await browser.content()).toContain("TomNook");
-  });
-  it("edits row with edit view", async () => {
-    await browser.goto("/view/PersonEdit?id=1");
-    expect(await browser.content()).toContain("PersonEdit view");
-    expect(await browser.content()).toContain("TomNook");
-    await browser.erase_input("#inputfull_name");
-    await browser.page.type("#inputfull_name", "TerryTheBeaver");
-    await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("PersonList view");
     expect(await browser.content()).toContain("TerryTheBeaver");
-    expect(await browser.content()).not.toContain("TomNook");
   });
+  it("goto edit after show", async () => {
+    await browser.goto("/view/PersonEdit?id=1");
+
+    await browser.goto("/view/PersonEdit");
+    expect(await browser.content()).toContain("PersonEdit view");
+  })
+
   // tie views together
   // see data in list and show and edit
   // add required field
