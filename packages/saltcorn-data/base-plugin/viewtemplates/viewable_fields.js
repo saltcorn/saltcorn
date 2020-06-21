@@ -28,9 +28,9 @@ const get_view_link_query = contract(
 const view_linker = contract(
   is.fun(
     [is_column, is.array(is.class("Field"))],
-    is.promise(is.obj({ key: is.fun(is.obj(), is.str), label: is.str }))
+    is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  async (column, fields) => {
+  (column, fields) => {
     const [vtype, vrest] = column.view.split(":");
     switch (vtype) {
       case "Own":
@@ -80,18 +80,17 @@ const get_viewable_fields = contract(
       is.bool,
       is.str
     ],
-    is.promise(
+    
       is.array(
         is.obj({
           key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
           label: is.str
         })
       )
-    )
+    
   ),
-  async (viewname, table, fields, columns, isShow, csrfToken) =>
-    (
-      await asyncMap(columns, async column => {
+  (viewname, table, fields, columns, isShow, csrfToken) =>
+      columns.map(column => {
         if (column.type === "Action")
           return {
             label: column.action_name,
@@ -103,7 +102,7 @@ const get_viewable_fields = contract(
               )
           };
         else if (column.type === "ViewLink") {
-          return await view_linker(column, fields);
+          return view_linker(column, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {
@@ -157,8 +156,7 @@ const get_viewable_fields = contract(
           );
         }
       })
-    ).filter(v => !!v)
-);
+    .filter(v => !!v));
 
 const stateToQueryString = contract(
   is.fun(is.maybe(is.obj()), is.str),

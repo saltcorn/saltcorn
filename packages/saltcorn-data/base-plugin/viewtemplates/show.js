@@ -161,7 +161,7 @@ const render = async (row, fields, layout, viewname, table, role, req) => {
         )
       );
     } else if (segment.type === "view_link") {
-      const { key } = await view_linker(segment, fields);
+      const { key } = view_linker(segment, fields);
       return wrapBlock(segment, key(row));
     } else if (segment.above) {
       return (await asyncMap(segment.above, async s => await go(s))).join("");
