@@ -80,17 +80,17 @@ const get_viewable_fields = contract(
       is.bool,
       is.str
     ],
-    
-      is.array(
-        is.obj({
-          key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
-          label: is.str
-        })
-      )
-    
+
+    is.array(
+      is.obj({
+        key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
+        label: is.str
+      })
+    )
   ),
   (viewname, table, fields, columns, isShow, csrfToken) =>
-      columns.map(column => {
+    columns
+      .map(column => {
         if (column.type === "Action")
           return {
             label: column.action_name,
@@ -156,7 +156,8 @@ const get_viewable_fields = contract(
           );
         }
       })
-    .filter(v => !!v));
+      .filter(v => !!v)
+);
 
 const stateToQueryString = contract(
   is.fun(is.maybe(is.obj()), is.str),
