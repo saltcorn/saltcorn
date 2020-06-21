@@ -70,7 +70,7 @@ describe("Table create", () => {
   it("shows data", async () => {
     await browser.goto("/list/Persons");
   });
-  it("creates view", async () => {
+  it("creates list view", async () => {
     await browser.goto("/viewedit");
     expect(await browser.content()).toContain("Add view");
     await browser.goto("/viewedit/new");
@@ -87,7 +87,7 @@ describe("Table create", () => {
     await browser.goto("/view/PersonList");
     expect(await browser.content()).toContain("PersonList view");
   });
-  it("edits view", async () => {
+  it("edits list view", async () => {
     await browser.goto("/viewedit/edit/PersonList");
     expect(await browser.content()).toContain("PersonList");
     await browser.clickNav("button[type=submit]");
@@ -98,6 +98,37 @@ describe("Table create", () => {
     await browser.goto("/view/PersonList");
     expect(await browser.content()).toContain("PersonList view");
   });
+  it("creates edit view", async () => {
+    await browser.goto("/viewedit");
+    expect(await browser.content()).toContain("Add view");
+    await browser.goto("/viewedit/new");
+    await browser.page.type("#inputname", "PersonEdit");
+    await browser.page.select("#inputviewtemplate", "Edit");
+    await browser.page.select("#inputtable_name", "Persons");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain(
+      "View canvas"
+    );
+    await browser.page.click("span.is-text");
+    await browser.page.waitForSelector("input.text-to-display");
+    await browser.erase_input("input.text-to-display")
+    await browser.page.type("input.text-to-display", "MyOwnInput");
+
+    await browser.clickNav("button.btn-primary");
+    await browser.clickNav("button[type=submit]");
+
+    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("PersonEdit");
+    await browser.goto("/view/PersonEdit");
+    expect(await browser.content()).toContain("PersonEdit view");
+    expect(await browser.content()).toContain('<span class="">MyOwnInput</span>');
+  });
+  // show views
+  // tie views together
+  // enter data
+  // see data in list and show and edit 
+  // add required field
+  // files?
   it("installs plugins", async () => {
     await browser.goto("/plugins");
     //second time should be cached
@@ -119,6 +150,9 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("MyFabSite");
 
   })
+  //logout, see list
+  //sign up
+  //logout, login
 });
 afterAll(async () => {
   await browser.delete_tenant("sub4");

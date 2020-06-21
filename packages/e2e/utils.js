@@ -41,6 +41,15 @@ class Browser {
     this.tenant = undefined;
     await deleteTenant(nm);
   }
+
+  // https://stackoverflow.com/a/52633235
+  async erase_input(selector) {
+    await this.page.click(selector)
+    const inputValue = await this.page.$eval(selector, el => el.value);
+    for (let i = 0; i < inputValue.length; i++) {
+      await this.page.keyboard.press('Backspace');
+    }
+  }
   async create_tenant(nm) {
     if (typeof this.tenant !== "undefined")
       throw new Error("tenant not deleted");
