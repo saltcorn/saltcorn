@@ -12,6 +12,7 @@ const {
   p,
   header
 } = require("@saltcorn/markup/tags");
+const renderLayout = require("@saltcorn/markup/layout");
 
 const subItem = currentUrl => item =>
   item.link
@@ -144,7 +145,7 @@ const blockDispatch = {
 const renderBody = (title, body) =>
  renderLayout(blockDispatch)(
     typeof body === "string"
-      ? {card: title, contents: body}
+      ? {type: "card", title, contents: body}
       : body)
 
 const wrap = ({
