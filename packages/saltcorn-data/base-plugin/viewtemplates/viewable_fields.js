@@ -5,12 +5,12 @@ const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
 
 const action_url = contract(
-  is.fun([is.str, is.class("Table"), is_column, is.obj()], is.any),
-  (viewname, table, column, r) => {
-    if (column.action_name === "Delete")
+  is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
+  (viewname, table, action_name, r) => {
+    if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
-    else if (column.action_name.startsWith("Toggle")) {
-      const field_name = column.action_name.replace("Toggle ", "");
+    else if (action_name.startsWith("Toggle")) {
+      const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
     }
   }
@@ -27,11 +27,11 @@ const get_view_link_query = contract(
 
 const view_linker = contract(
   is.fun(
-    [is_column, is.array(is.class("Field"))],
+    [is.str, is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  (column, fields) => {
-    const [vtype, vrest] = column.view.split(":");
+  (view, fields) => {
+    const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
         const vnm = vrest;
@@ -55,7 +55,7 @@ const view_linker = contract(
             r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
         };
       default:
-        throw new Error(column.view);
+        throw new Error(view);
     }
   }
 );
@@ -96,13 +96,13 @@ const get_viewable_fields = contract(
             label: column.action_name,
             key: r =>
               post_btn(
-                action_url(viewname, table, column, r),
+                action_url(viewname, table, column.action_name, r),
                 column.action_name,
                 csrfToken
               )
           };
         else if (column.type === "ViewLink") {
-          return view_linker(column, fields);
+          return view_linker(column.view, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {
