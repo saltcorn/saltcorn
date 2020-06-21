@@ -152,7 +152,7 @@ const is_pack = is.obj({
   plugins: is.array(is.obj({ name: is.str, source: is.str, location: is.str }))
 });
 const is_column = is.obj({
-  type: is.str //is.one_of("Action", "ViewLink", "JoinField", "Aggregation", "Field")
+  type: is.one_of(["Action", "ViewLink", "JoinField", "Aggregation", "Field"])
 });
 module.exports = {
   is_table_query,
