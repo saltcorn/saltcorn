@@ -107,7 +107,16 @@ describe("Table create", () => {
     expect(await browser.content()).toContain('startbootstrap-sb-admin-2');
     await browser.clickNav('form[action="/plugins/install/plain-bootstrap-theme"] button');
     expect(await browser.content()).not.toContain('startbootstrap-sb-admin-2');
-
+  })
+  it("Changes site name", async () => {
+    await browser.goto("/config");
+    expect(await browser.content()).toContain('Site name');
+    expect(await browser.content()).toContain('"Saltcorn"');
+    await browser.goto("/config/edit/site_name");
+    await browser.page.type("#inputsite_name", "MyFabSite");
+    await browser.clickNav("button[type=submit]");
+    await browser.goto("/");
+    expect(await browser.content()).toContain("MyFabSite");
 
   })
 });
