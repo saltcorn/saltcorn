@@ -152,12 +152,14 @@ describe("Table create", () => {
 
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonShow");
-    //await browser.goto("/view/PersonEdit");
-    //expect(await browser.content()).toContain("PersonEdit view");
-    //expect(await browser.content()).toContain('<span class="">MyOwnInput</span>');
+    await browser.goto("/view/PersonShow?id=1");
+    expect(await browser.content()).toContain("PersonShow view");
+    expect(await browser.content()).toContain(
+      '<span class="">MyOtherInput</span>'
+    );
+    expect(await browser.content()).toContain("TomNook");
   });
   // tie views together
-  // enter data
   // see data in list and show and edit
   // add required field
   // files?
