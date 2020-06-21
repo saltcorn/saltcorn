@@ -8,7 +8,7 @@ export const Text = ({ text, block, textStyle }) => {
   } = useNode();
   return (
     <span
-      className={textStyle}
+      className={`${textStyle} is-text`}
       {...blockProps(block)}
       ref={dom => connect(drag(dom))}
     >
@@ -28,6 +28,7 @@ export const TextSettings = () => {
       <label>Text to display</label>
       <input
         type="text"
+        className="text-to-display"
         value={text}
         onChange={e => setProp(prop => (prop.text = e.target.value))}
       />

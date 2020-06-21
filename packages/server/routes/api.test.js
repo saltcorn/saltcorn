@@ -6,10 +6,14 @@ const {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
+beforeAll(async () => {
+  await resetToFixtures();
+});
 afterAll(db.close);
 
 const succeedJsonWith = pred => res => {

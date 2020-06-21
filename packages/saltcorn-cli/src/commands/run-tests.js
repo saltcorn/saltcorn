@@ -18,14 +18,19 @@ class RunTestsCommand extends Command {
     });
     if (forever && res.status === 0)
       await this.do_test(cmd, args, forever, cwd);
-    else if(res.status !== 0 && !keepalive)
-      this.exit(res.status);
+    else if (res.status !== 0 && !keepalive) this.exit(res.status);
     return res;
   }
   async e2etest() {
-    const server=spawn("packages/saltcorn-cli/bin/saltcorn", ['serve'], 
-    {stdio: "inherit",env:{ ...process.env, PGDATABASE: "saltcorn_test" }})
-    await sleep(3000);
+    const server = spawn(
+      "packages/saltcorn-cli/bin/saltcorn",
+      ["serve", "-p", "2987"],
+      {
+        stdio: "inherit",
+        env: { ...process.env, PGDATABASE: "saltcorn_test" }
+      }
+    );
+    await sleep(2000);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
@@ -33,9 +38,8 @@ class RunTestsCommand extends Command {
       "packages/e2e",
       true
     );
-    server.kill()
-    if(res.status !== 0)
-      this.exit(res.status);
+    server.kill();
+    if (res.status !== 0) this.exit(res.status);
   }
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
@@ -46,8 +50,8 @@ class RunTestsCommand extends Command {
     const covargs = flags.coverage ? ["--", "--coverage"] : [];
     if (args.package === "core") {
       await this.do_test("npm", ["run", "test", ...covargs], flags.forever);
-    } else if (args.package==="e2e") {
-      await this.e2etest()
+    } else if (args.package === "e2e") {
+      await this.e2etest();
     } else if (args.package) {
       const cwd = "packages/" + args.package;
       await this.do_test(
@@ -59,10 +63,9 @@ class RunTestsCommand extends Command {
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(lerna, ["run", "test", ...covargs], flags.forever);
-      await this.e2etest()
+      await this.e2etest();
     }
     this.exit(0);
-
   }
 }
 

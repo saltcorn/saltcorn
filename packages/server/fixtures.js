@@ -101,6 +101,23 @@ module.exports = async () => {
     on_menu: true
   });
   await View.create({
+    table_id: table.id,
+    name: "authoredit",
+    viewtemplate: "Edit",
+    configuration: {
+      columns: [{ type: "Field", field_name: "author" }],
+      layout: {
+        above: [{ type: "field", fieldview: "edit", field_name: "author" }]
+      },
+      fixed: {
+        pages: 678
+      }
+    },
+    is_public: true,
+    on_root_page: true,
+    on_menu: true
+  });
+  await View.create({
     table_id: patients.id,
     name: "patientlist",
     viewtemplate: "List",

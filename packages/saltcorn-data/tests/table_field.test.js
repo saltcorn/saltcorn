@@ -174,7 +174,7 @@ describe("Field", () => {
     });
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
-
+    expect(f.toJson.name).toBe("Height1");
     await f.delete();
     const fs = await Field.find({ name: "Height1" });
     expect(fs.length).toBe(0);

@@ -14,15 +14,19 @@ class File {
     this.mime_super = o.mime_super;
     this.mime_sub = o.mime_sub;
     this.min_role_read = o.min_role_read;
+    contract.class(this);
   }
+
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_files", where, selectopts);
     return db_flds.map(dbf => new File(dbf));
   }
+
   static async findOne(where) {
     const db_fld = await db.selectOne("_sc_files", where);
     return new File(db_fld);
   }
+
   static async update(id, row) {
     await db.update("_sc_files", row, id);
   }
@@ -56,5 +60,32 @@ class File {
     return file;
   }
 }
+
+File.contract = {
+  variables: {
+    filename: is.str,
+    location: is.str,
+    mime_super: is.str,
+    mime_sub: is.str,
+    uploaded_at: is.class("Date"),
+    size_kb: is.posint,
+    id: is.maybe(is.posint),
+    user_id: is.posint,
+    min_role_read: is.posint
+  },
+  static_methods: {
+    find: is.fun(
+      [is.maybe(is.obj()), is.maybe(is.obj())],
+      is.promise(is.array(is.class("File")))
+    ),
+    findOne: is.fun(is.obj(), is.promise(is.class("File"))),
+    create: is.fun(is.obj(), is.promise(is.class("File"))),
+    from_req_files: is.fun(
+      [is.obj(), is.posint, is.maybe(is.posint)],
+      is.promise(is.class("File"))
+    ),
+    update: is.fun([is.posint, is.obj()], is.promise(is.undefined))
+  }
+};
 
 module.exports = File;

@@ -115,7 +115,11 @@ Workflow.contract = {
     action: is.maybe(is.str)
   },
   methods: {
-    run: is.fun(is.obj(), is.obj({ renderForm: is.maybe(is.class("Form")) }))
+    run: is.fun(
+      is.obj(),
+      is.promise(is.obj({ renderForm: is.maybe(is.class("Form")) }))
+    ),
+    runStep: is.fun([is.obj(), is.posint], is.promise(is.obj()))
   }
 };
 

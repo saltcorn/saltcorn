@@ -11,6 +11,7 @@ class Plugin {
     this.source = o.source;
     this.location = o.location;
     this.version = o.version;
+    contract.class(this);
   }
   static async findOne(where) {
     return new Plugin(await db.selectOne("_sc_plugins", where));
@@ -58,7 +59,7 @@ class Plugin {
       await getState().setConfig("available_plugins", from_api);
       await getState().setConfig("available_plugins_fetched_at", new Date());
       return from_api;
-    } else return stored;
+    } else return stored.map(p => new Plugin(p));
   }
   static async store_plugins_available_from_store() {
     //console.log("fetch plugins");
@@ -78,5 +79,32 @@ class Plugin {
     else return null;
   }
 }
+Plugin.contract = {
+  variables: {
+    id: is.maybe(is.posint),
+    location: is.str,
+    name: is.str,
+    version: is.maybe(is.str),
+    source: is.one_of("npm", "github", "local")
+  },
+  methods: {
+    upsert: is.fun([], is.promise(is.eq(undefined))),
+    delete: is.fun([], is.promise(is.eq(undefined))),
+    dependant_views: is.fun([], is.promise(is.array(is.class("View"))))
+  },
+  static_methods: {
+    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("Plugin"))),
+    store_by_name: is.fun(is.str, is.promise(is.maybe(is.class("Plugin")))),
+    store_plugins_available_from_store: is.fun(
+      [],
+      is.promise(is.array(is.class("Plugin")))
+    ),
+    store_plugins_available: is.fun(
+      [],
+      is.promise(is.array(is.class("Plugin")))
+    )
+  }
+};
 
 module.exports = Plugin;

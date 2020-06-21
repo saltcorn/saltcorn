@@ -97,7 +97,7 @@ router.post("/save", setTenant, isAdmin, async (req, res) => {
 
     req.flash("success", `User ${email} saved`);
   } else {
-    const u = await User.create({ email, password, role_id });
+    const u = await User.create({ email, password, role_id: +role_id });
 
     req.flash("success", `User ${email} created`);
   }
