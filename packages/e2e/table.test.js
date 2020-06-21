@@ -98,6 +98,18 @@ describe("Table create", () => {
     await browser.goto("/view/PersonList");
     expect(await browser.content()).toContain("PersonList view");
   });
+  it("installs plugins", async () => {
+    await browser.goto("/plugins");
+    //second time should be cached
+    await browser.goto("/plugins");
+    expect(await browser.content()).toContain('action="/plugins/install/markdown"');
+    await browser.clickNav('form[action="/plugins/install/markdown"] button');
+    expect(await browser.content()).toContain('startbootstrap-sb-admin-2');
+    await browser.clickNav('form[action="/plugins/install/plain-bootstrap-theme"] button');
+    expect(await browser.content()).not.toContain('startbootstrap-sb-admin-2');
+
+
+  })
 });
 afterAll(async () => {
   await browser.delete_tenant("sub4");

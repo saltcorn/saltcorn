@@ -51,7 +51,7 @@ const plugin_pack = contract(pack_fun, async name => {
   };
 });
 
-const is_stale = contract(is.fun(is.class("Date"), is.bool), date => {
+const is_stale = contract(is.fun(is.or(is.class("Date"), is.str), is.bool), date => {
   const oneday = 60 * 60 * 24 * 1000;
   const now = new Date();
   return new Date(date) < now - oneday;

@@ -95,7 +95,7 @@ Plugin.contract = {
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
     findOne: is.fun(is.obj(), is.promise(is.class("Plugin"))),
-    store_by_name: is.fun(is.obj(), is.promise(is.maybe(is.class("Plugin")))),
+    store_by_name: is.fun(is.str, is.promise(is.maybe(is.class("Plugin")))),
     store_plugins_available_from_store: is.fun(
       [],
       is.promise(is.array(is.class("Plugin")))
