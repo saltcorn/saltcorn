@@ -3,7 +3,7 @@ const { div, text } = require("./tags");
 
 const render = blockDispatch => (layout, role) => {
   function wrap(segment, s) {
-    if (blockDispatch.wrapall) return blockDispatch.wrapAll(s, segment);
+    if (blockDispatch.wrapAll) return blockDispatch.wrapAll(s, segment);
     else return s;
   }
   function go(segment) {

@@ -123,7 +123,7 @@ const runMany = async (
 
 const render = (row, fields, layout, viewname, table, role, req) => {
   const blockDispatch = {
-    wrapAll(s, segment) {
+    wrapAll(inner, segment) {
       return segment.block
         ? div({ class: segment.textStyle || "" }, inner)
         : span({ class: segment.textStyle || "" }, inner);
