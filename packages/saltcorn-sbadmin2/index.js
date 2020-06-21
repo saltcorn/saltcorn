@@ -100,24 +100,32 @@ const sidebar = (brand, sections, currentUrl) =>
   );
 
 const blockDispatch = {
-  pageHeader: ({title, blurb}) =>
+  pageHeader: ({ title, blurb }) =>
     div(
-    h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
-    blurb && p({ class: "mb-0 text-gray-800" }, blurb)),
-  card: ({title, contents}) =>
+      h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
+      blurb && p({ class: "mb-0 text-gray-800" }, blurb)
+    ),
+  card: ({ title, contents }) =>
     div(
       { class: "card shadow mt-4" },
       div(
         { class: "card-header py-3" },
         h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
       ),
-      div({ class: "card-body" }, Array.isArray(contents) ? contents.join("") : contents)
+      div(
+        { class: "card-body" },
+        Array.isArray(contents) ? contents.join("") : contents
+      )
     ),
-  footer: ({contents})=>
-    div({class:"container"}, footer({id:"footer"}, div({class:"row"},
-     div({class:"col-sm-12"}, contents)
-    ))),
-  hero: ({caption, blurb}) =>
+  footer: ({ contents }) =>
+    div(
+      { class: "container" },
+      footer(
+        { id: "footer" },
+        div({ class: "row" }, div({ class: "col-sm-12" }, contents))
+      )
+    ),
+  hero: ({ caption, blurb }) =>
     header(
       { class: "masthead" },
       div(
@@ -146,12 +154,11 @@ const blockDispatch = {
         )
       )
     )
-}
+};
 const renderBody = (title, body) =>
- renderLayout(blockDispatch)(
-    typeof body === "string"
-      ? {type: "card", title, contents: body}
-      : body)
+  renderLayout(blockDispatch)(
+    typeof body === "string" ? { type: "card", title, contents: body } : body
+  );
 
 const wrap = ({
   title,
