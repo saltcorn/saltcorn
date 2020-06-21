@@ -8,9 +8,6 @@ beforeAll(async () => {
   browser = await Browser.init();
 });
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 describe("Table create", () => {
   it("creates tenant", async () => {
     await browser.delete_tenant("sub4");
@@ -156,7 +153,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("View canvas");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
-    await sleep(100)
+    await browser.page.waitFor(100);
     await browser.erase_input("input.text-to-display");
     await browser.page.type("input.text-to-display", "MyOtherInput");
 
