@@ -13,7 +13,14 @@ class Browser {
 
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
-
+    b.page.on("pageerror", function(err) {
+      theTempValue = err.toString();
+      throw new Error("Page error: " + theTempValue);
+    });
+    b.page.on("error", function(err) {
+      theTempValue = err.toString();
+      throw new Error("Error: " + theTempValue);
+    });
     return b;
   }
 
@@ -44,10 +51,10 @@ class Browser {
 
   // https://stackoverflow.com/a/52633235
   async erase_input(selector) {
-    await this.page.click(selector)
+    await this.page.click(selector);
     const inputValue = await this.page.$eval(selector, el => el.value);
     for (let i = 0; i < inputValue.length; i++) {
-      await this.page.keyboard.press('Backspace');
+      await this.page.keyboard.press("Backspace");
     }
   }
   async create_tenant(nm) {

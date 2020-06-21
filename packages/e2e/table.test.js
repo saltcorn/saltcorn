@@ -8,7 +8,9 @@ beforeAll(async () => {
   browser = await Browser.init();
 });
 
-
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 describe("Table create", () => {
   it("creates tenant", async () => {
     await browser.delete_tenant("sub4");
@@ -48,11 +50,11 @@ describe("Table create", () => {
     await browser.goto("/field/2");
     expect(await browser.content()).toContain("Edit field");
     await browser.clickNav("button[type=submit]");
+    await browser.erase_input("#inputmin");
     await browser.page.type("#inputmin", "3");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Persons table");
-
-  })
+  });
 
   it("creates and deletes field", async () => {
     await browser.clickNav(".btn.add-field");
@@ -106,12 +108,10 @@ describe("Table create", () => {
     await browser.page.select("#inputviewtemplate", "Edit");
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain(
-      "View canvas"
-    );
+    expect(await browser.content()).toContain("View canvas");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
-    await browser.erase_input("input.text-to-display")
+    await browser.erase_input("input.text-to-display");
     await browser.page.type("input.text-to-display", "MyOwnInput");
 
     await browser.clickNav("button.btn-primary");
@@ -119,37 +119,72 @@ describe("Table create", () => {
 
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonEdit");
+  });
+
+  it("creates row with edit view", async () => {
     await browser.goto("/view/PersonEdit");
     expect(await browser.content()).toContain("PersonEdit view");
-    expect(await browser.content()).toContain('<span class="">MyOwnInput</span>');
+    expect(await browser.content()).toContain(
+      '<span class="">MyOwnInput</span>'
+    );
+    await browser.page.type("#inputfull_name", "TomNook");
+    await browser.page.type("#inputage", "19");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("PersonList view");
+    expect(await browser.content()).toContain("TomNook");
   });
-  // show views
+  it("creates show view", async () => {
+    await browser.goto("/viewedit");
+    expect(await browser.content()).toContain("Add view");
+    await browser.goto("/viewedit/new");
+    await browser.page.type("#inputname", "PersonShow");
+    await browser.page.select("#inputviewtemplate", "Show");
+    await browser.page.select("#inputtable_name", "Persons");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("View canvas");
+    await browser.page.click("span.is-text");
+    await browser.page.waitForSelector("input.text-to-display");
+    await browser.erase_input("input.text-to-display");
+    await browser.page.type("input.text-to-display", "MyOtherInput");
+
+    await browser.clickNav("button.btn-primary");
+    await browser.clickNav("button[type=submit]");
+
+    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("PersonShow");
+    //await browser.goto("/view/PersonEdit");
+    //expect(await browser.content()).toContain("PersonEdit view");
+    //expect(await browser.content()).toContain('<span class="">MyOwnInput</span>');
+  });
   // tie views together
   // enter data
-  // see data in list and show and edit 
+  // see data in list and show and edit
   // add required field
   // files?
   it("installs plugins", async () => {
     await browser.goto("/plugins");
     //second time should be cached
     await browser.goto("/plugins");
-    expect(await browser.content()).toContain('action="/plugins/install/markdown"');
+    expect(await browser.content()).toContain(
+      'action="/plugins/install/markdown"'
+    );
     await browser.clickNav('form[action="/plugins/install/markdown"] button');
-    expect(await browser.content()).toContain('startbootstrap-sb-admin-2');
-    await browser.clickNav('form[action="/plugins/install/plain-bootstrap-theme"] button');
-    expect(await browser.content()).not.toContain('startbootstrap-sb-admin-2');
-  })
+    expect(await browser.content()).toContain("startbootstrap-sb-admin-2");
+    await browser.clickNav(
+      'form[action="/plugins/install/plain-bootstrap-theme"] button'
+    );
+    expect(await browser.content()).not.toContain("startbootstrap-sb-admin-2");
+  });
   it("Changes site name", async () => {
     await browser.goto("/config");
-    expect(await browser.content()).toContain('Site name');
+    expect(await browser.content()).toContain("Site name");
     expect(await browser.content()).toContain('"Saltcorn"');
     await browser.goto("/config/edit/site_name");
     await browser.page.type("#inputsite_name", "MyFabSite");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     expect(await browser.content()).toContain("MyFabSite");
-
-  })
+  });
   //logout, see list
   //sign up
   //logout, login

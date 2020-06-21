@@ -51,11 +51,14 @@ const plugin_pack = contract(pack_fun, async name => {
   };
 });
 
-const is_stale = contract(is.fun(is.or(is.class("Date"), is.str), is.bool), date => {
-  const oneday = 60 * 60 * 24 * 1000;
-  const now = new Date();
-  return new Date(date) < now - oneday;
-});
+const is_stale = contract(
+  is.fun(is.or(is.class("Date"), is.str), is.bool),
+  date => {
+    const oneday = 60 * 60 * 24 * 1000;
+    const now = new Date();
+    return new Date(date) < now - oneday;
+  }
+);
 
 const fetch_available_packs = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
