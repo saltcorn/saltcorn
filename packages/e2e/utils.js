@@ -70,7 +70,7 @@ class Browser {
     await page.waitForSelector("a.new-tenant-link");
     this.tenant = nm;
     await this.goto("/");
-    await page.type("#inputemail", "tom@foo.bar");
+    await page.type("#inputemail", "tomtheuser@foo.bar");
     await page.type("#inputpassword", "secret");
     await this.clickNav("button[type=submit]");
     await page.waitForSelector('a[href="/table/new"]');

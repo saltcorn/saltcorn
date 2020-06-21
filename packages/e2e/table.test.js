@@ -89,17 +89,7 @@ describe("Table create", () => {
     await browser.goto("/view/PersonList");
     expect(await browser.content()).toContain("PersonList view");
   });
-  it("edits list view", async () => {
-    await browser.goto("/viewedit/edit/PersonList");
-    expect(await browser.content()).toContain("PersonList");
-    await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain(
-      "Specify the fields in the table to show"
-    );
-    await browser.clickNav("button[type=submit]");
-    await browser.goto("/view/PersonList");
-    expect(await browser.content()).toContain("PersonList view");
-  });
+
   it("creates edit view", async () => {
     await browser.goto("/viewedit");
     expect(await browser.content()).toContain("Add view");
@@ -120,7 +110,18 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonEdit");
   });
-
+  it("edits list view", async () => {
+    await browser.goto("/viewedit/edit/PersonList");
+    expect(await browser.content()).toContain("PersonList");
+    await browser.page.click("#inputis_public");
+    await browser.page.click("#inputon_root_page");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Use view to create");
+    await browser.page.select("#inputview_to_create", "PersonEdit");
+    await browser.clickNav("button[type=submit]");
+    await browser.goto("/view/PersonList");
+    expect(await browser.content()).toContain("PersonList view");
+  });
   it("creates row with edit view", async () => {
     await browser.goto("/view/PersonEdit");
     expect(await browser.content()).toContain("PersonEdit view");
@@ -170,15 +171,12 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("TerryTheBeaver");
   });
   it("goto edit after show", async () => {
-    await browser.goto("/view/PersonEdit?id=1");
-
     await browser.goto("/view/PersonEdit");
     expect(await browser.content()).toContain("PersonEdit view");
-  })
-
+  });
   // tie views together
-  // see data in list and show and edit
   // add required field
+  // add key
   // files?
   it("installs plugins", async () => {
     await browser.goto("/plugins");
@@ -204,9 +202,36 @@ describe("Table create", () => {
     await browser.goto("/");
     expect(await browser.content()).toContain("MyFabSite");
   });
-  //logout, see list
-  //sign up
-  //logout, login
+  it("Logs out", async () => {
+    //expect(await browser.content()).toContain("tomtheuser");
+    expect(await browser.content()).toContain("Logout");
+    await browser.goto("/auth/logout");
+    //expect(await browser.content()).not.toContain("tomtheuser");
+    await browser.goto("/");
+    const page = await browser.content();
+    expect(page).toContain("Login");
+    expect(page).not.toContain("Logout");
+    expect(page).toContain("Sign up");
+    expect(page).toContain("PersonList view");
+    expect(page).toContain("TerryTheBeaver");
+  });
+  it("Signs up", async () => {
+    await browser.goto("/auth/signup");
+    await browser.page.type("#inputemail", "fredthedragon@foo.fi");
+    await browser.page.type("#inputpassword", "fidelio");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Logout");
+    expect(await browser.content()).not.toContain("Sign up");
+    await browser.goto("/auth/logout");
+  });
+  it("Login", async () => {
+    await browser.goto("/auth/login");
+    await browser.page.type("#inputemail", "fredthedragon@foo.fi");
+    await browser.page.type("#inputpassword", "fidelio");
+    await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Logout");
+    expect(await browser.content()).not.toContain("Sign up");
+  });
 });
 afterAll(async () => {
   await browser.delete_tenant("sub4");
