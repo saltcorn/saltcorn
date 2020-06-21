@@ -90,7 +90,7 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   });
   const role = req.user ? req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  return await render(rows[0], fields, layout, viewname, tbl, role, req);
+  return render(rows[0], fields, layout, viewname, tbl, role, req);
 };
 
 const runMany = async (
@@ -113,8 +113,8 @@ const runMany = async (
   });
   const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
 
-  return await asyncMap(rows, async row => ({
-    html: await render(row, fields, layout, viewname, tbl, role, extra.req),
+  return rows.map(row => ({
+    html: render(row, fields, layout, viewname, tbl, role, extra.req),
     row
   }));
 };
@@ -123,8 +123,8 @@ const wrapBlock = (segment, inner) =>
     ? div({ class: segment.textStyle || "" }, inner)
     : span({ class: segment.textStyle || "" }, inner);
 
-const render = async (row, fields, layout, viewname, table, role, req) => {
-  async function go(segment) {
+const render = (row, fields, layout, viewname, table, role, req) => {
+  function go(segment) {
     if (!segment) return "";
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type === "blank") {
@@ -164,25 +164,25 @@ const render = async (row, fields, layout, viewname, table, role, req) => {
       const { key } = view_linker(segment, fields);
       return wrapBlock(segment, key(row));
     } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => await go(s))).join("");
+      return segment.above.map(s => go(s)).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(
         { class: "row" },
-        await asyncMap(segment.besides, async (t, ix) =>
+        segment.besides.map((t, ix) =>
           div(
             {
               class: `col-sm-${
                 segment.widths ? segment.widths[ix] : defwidth
               } text-${segment.aligns ? segment.aligns[ix] : ""}`
             },
-            await go(t)
+            go(t)
           )
         )
       );
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  return await go(layout);
+  return go(layout);
 };
 
 module.exports = {
