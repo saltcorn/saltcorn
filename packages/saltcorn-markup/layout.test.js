@@ -15,6 +15,6 @@ describe("layout", () => {
       }
     };
     const markup = { above: [{ type: "reverseIt", theString: "foobar" }] };
-    expect(render(blocks)({layout: markup})).toBe("<p>raboof</p>");
+    expect(render(blocks)({ layout: markup })).toBe("<p>raboof</p>");
   });
 });

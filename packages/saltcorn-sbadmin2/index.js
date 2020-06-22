@@ -108,10 +108,11 @@ const blockDispatch = {
   card: ({ title, contents }) =>
     div(
       { class: "card shadow mt-4" },
-      title && div(
-        { class: "card-header py-3" },
-        h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
-      ),
+      title &&
+        div(
+          { class: "card-header py-3" },
+          h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
+        ),
       div(
         { class: "card-body" },
         Array.isArray(contents) ? contents.join("") : contents
@@ -157,7 +158,8 @@ const blockDispatch = {
 };
 const renderBody = (title, body) =>
   renderLayout(blockDispatch)({
-    layout: typeof body === "string" ? { type: "card", title, contents: body } : body
+    layout:
+      typeof body === "string" ? { type: "card", title, contents: body } : body
   });
 
 const wrap = ({
