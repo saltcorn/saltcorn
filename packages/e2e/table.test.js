@@ -99,8 +99,7 @@ describe("Table create", () => {
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
     await browser.erase_input("input.text-to-display");
-    await browser.page.type("input.text-to-display", "MyOwnInput");
-
+    await browser.slowly_type("input.text-to-display", "MyOwnInput");
     await browser.clickNav("button.btn-primary");
     await browser.clickNav("button[type=submit]");
 
