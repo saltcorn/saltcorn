@@ -27,7 +27,7 @@ const get_view_link_query = contract(
 
 const view_linker = contract(
   is.fun(
-    [is_column, is.array(is.class("Field"))],
+    [is.obj(), is.array(is.class("Field"))],
     is.promise(is.obj({ key: is.fun(is.obj(), is.str), label: is.str }))
   ),
   async (column, fields) => {
