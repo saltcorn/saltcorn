@@ -44,7 +44,8 @@ const view_linker = contract(
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
-          key: r => link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
+          key: r =>
+            link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -52,7 +53,12 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: r =>
-            r[pfld] ? link(`/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`, pviewnm) : ""
+            r[pfld]
+              ? link(
+                  `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
+                  pviewnm
+                )
+              : ""
         };
       default:
         throw new Error(view);
@@ -189,7 +195,14 @@ const splitUniques = contract(
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find(f => f.name === k);
       if (k === "id") uniques[k] = v;
-      else if (field && field.is_unique && fuzzyStrings && field.type && field.type.name==='String') uniques[k] = {ilike: v};
+      else if (
+        field &&
+        field.is_unique &&
+        fuzzyStrings &&
+        field.type &&
+        field.type.name === "String"
+      )
+        uniques[k] = { ilike: v };
       else if (field && field.is_unique) uniques[k] = v;
       else nonUniques[k] = v;
     });

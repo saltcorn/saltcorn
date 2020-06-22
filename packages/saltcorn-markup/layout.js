@@ -2,25 +2,29 @@ const { contract, is } = require("contractis");
 const { div, span } = require("./tags");
 
 const render = blockDispatch => (layout, role) => {
-  function wrap(segment, inner) {
-    return segment.block
-      ? div({ class: segment.textStyle || "" }, inner)
-      : span({ class: segment.textStyle || "" }, inner);
+  //console.log(layout);
+  function wrap(segment, isTop, ix, inner) {
+    if (isTop && blockDispatch.wrapTop)
+      return blockDispatch.wrapTop(segment, ix, inner);
+    else
+      return segment.block
+        ? div({ class: segment.textStyle || "" }, inner)
+        : span({ class: segment.textStyle || "" }, inner);
   }
-  function go(segment) {
+  function go(segment, isTop, ix) {
     if (!segment) return "";
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch[segment.type]) {
-      return wrap(segment, blockDispatch[segment.type](segment));
+      return wrap(segment, isTop, ix, blockDispatch[segment.type](segment));
     }
     if (segment.type === "blank") {
-      return wrap(segment, segment.contents);
+      return wrap(segment, isTop, ix, segment.contents);
     }
     if (segment.type === "line_break") {
       return "<br />";
     }
     if (segment.above) {
-      return segment.above.map(s => go(s)).join("");
+      return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       return div(
@@ -32,13 +36,13 @@ const render = blockDispatch => (layout, role) => {
                 segment.widths ? segment.widths[ix] : defwidth
               } text-${segment.aligns ? segment.aligns[ix] : ""}`
             },
-            go(t)
+            go(t, false, ix)
           )
         )
       );
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  return go(layout);
+  return go(layout, true, 0);
 };
 
 const is_segment = is.obj({ type: is.maybe(is.str) });

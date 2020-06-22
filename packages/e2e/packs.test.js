@@ -26,7 +26,9 @@ describe("Packs", () => {
     await browser.goto("/");
     expect(await browser.content()).not.toContain("Add Post");
     expect(await browser.content()).toContain("A wonderful post");
-    expect(await browser.content()).toContain('<a href="/view/Full%20Post?title=My%20First%20Post">Full Post</a>');
+    expect(await browser.content()).toContain(
+      '<a href="/view/Full%20Post?title=My%20First%20Post">Full Post</a>'
+    );
     await browser.goto("/view/Full%20Post?title=My%20First%20Post");
     expect(await browser.content()).not.toContain("A wonderful post");
     expect(await browser.content()).toContain("Lorem ipsum");
@@ -36,7 +38,9 @@ describe("Packs", () => {
     await browser.page.type("#inputcomment", "I'm a fraud");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
-    expect(await browser.content()).toContain('<span class="small">1</span><span class="small"> comment');
+    expect(await browser.content()).toContain(
+      '<span class="small">1</span><span class="small"> comment'
+    );
     await browser.goto("/view/Full%20Post?title=My%20First%20Post");
     expect(await browser.content()).toContain("Donald Trump");
     expect(await browser.content()).toContain("I'm a fraud");
