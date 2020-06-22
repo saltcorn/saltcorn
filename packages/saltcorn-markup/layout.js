@@ -24,7 +24,7 @@ const makeSegments = (body, alerts) => {
 const render = ({ blockDispatch, layout, role, alerts }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
-    if (isTop && blockDispatch.wrapTop)
+    if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.block
@@ -44,7 +44,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         segment.map((s, jx) => go(s, isTop, jx + ix)).join("")
       );
     if (segment.minRole && role > segment.minRole) return "";
-    if (segment.type && blockDispatch[segment.type]) {
+    if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
     }
     if (segment.type === "blank") {
@@ -100,8 +100,8 @@ const is_segment = is.obj({ type: is.maybe(is.str) });
 module.exports = contract(
   is.fun(
     is.obj({
-      blockDispatch: is.objVals(is.fun(is_segment, is.str)),
-      layout: is_segment,
+      blockDispatch: is.maybe(is.objVals(is.fun(is_segment, is.str))),
+      layout: is.or(is_segment, is.str),
       role: is.maybe(is.posint),
       alerts: is.maybe(is.array(is.obj({ type: is.str, message: is.str })))
     }),
