@@ -38,13 +38,13 @@ const view_linker = contract(
         const get_query = get_view_link_query(fields);
         return {
           label: vnm,
-          key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
+          key: r => link(`/view/${encodeURIComponent(vnm)}${get_query(r)}`, vnm)
         };
       case "ChildList":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
-          key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
+          key: r => link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -52,7 +52,7 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: r =>
-            r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
+            r[pfld] ? link(`/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`, pviewnm) : ""
         };
       default:
         throw new Error(column.view);
