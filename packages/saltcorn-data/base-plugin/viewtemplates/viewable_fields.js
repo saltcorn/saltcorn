@@ -5,12 +5,12 @@ const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
 
 const action_url = contract(
-  is.fun([is.str, is.class("Table"), is_column, is.obj()], is.any),
-  (viewname, table, column, r) => {
-    if (column.action_name === "Delete")
+  is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
+  (viewname, table, action_name, r) => {
+    if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
-    else if (column.action_name.startsWith("Toggle")) {
-      const field_name = column.action_name.replace("Toggle ", "");
+    else if (action_name.startsWith("Toggle")) {
+      const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
     }
   }
@@ -27,11 +27,11 @@ const get_view_link_query = contract(
 
 const view_linker = contract(
   is.fun(
-    [is.obj(), is.array(is.class("Field"))],
-    is.promise(is.obj({ key: is.fun(is.obj(), is.str), label: is.str }))
+    [is.str, is.array(is.class("Field"))],
+    is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  async (column, fields) => {
-    const [vtype, vrest] = column.view.split(":");
+  (view, fields) => {
+    const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
         const vnm = vrest;
@@ -44,7 +44,8 @@ const view_linker = contract(
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
-          key: r => link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
+          key: r =>
+            link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -52,10 +53,15 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: r =>
-            r[pfld] ? link(`/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`, pviewnm) : ""
+            r[pfld]
+              ? link(
+                  `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
+                  pviewnm
+                )
+              : ""
         };
       default:
-        throw new Error(column.view);
+        throw new Error(view);
     }
   }
 );
@@ -80,30 +86,29 @@ const get_viewable_fields = contract(
       is.bool,
       is.str
     ],
-    is.promise(
-      is.array(
-        is.obj({
-          key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
-          label: is.str
-        })
-      )
+
+    is.array(
+      is.obj({
+        key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
+        label: is.str
+      })
     )
   ),
-  async (viewname, table, fields, columns, isShow, csrfToken) =>
-    (
-      await asyncMap(columns, async column => {
+  (viewname, table, fields, columns, isShow, csrfToken) =>
+    columns
+      .map(column => {
         if (column.type === "Action")
           return {
             label: column.action_name,
             key: r =>
               post_btn(
-                action_url(viewname, table, column, r),
+                action_url(viewname, table, column.action_name, r),
                 column.action_name,
                 csrfToken
               )
           };
         else if (column.type === "ViewLink") {
-          return await view_linker(column, fields);
+          return view_linker(column.view, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {
@@ -157,7 +162,7 @@ const get_viewable_fields = contract(
           );
         }
       })
-    ).filter(v => !!v)
+      .filter(v => !!v)
 );
 
 const stateToQueryString = contract(
@@ -190,7 +195,14 @@ const splitUniques = contract(
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find(f => f.name === k);
       if (k === "id") uniques[k] = v;
-      else if (field && field.is_unique && fuzzyStrings && field.type && field.type.name==='String') uniques[k] = {ilike: v};
+      else if (
+        field &&
+        field.is_unique &&
+        fuzzyStrings &&
+        field.type &&
+        field.type.name === "String"
+      )
+        uniques[k] = { ilike: v };
       else if (field && field.is_unique) uniques[k] = v;
       else nonUniques[k] = v;
     });

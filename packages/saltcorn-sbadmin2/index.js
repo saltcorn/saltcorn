@@ -10,8 +10,10 @@ const {
   h6,
   h1,
   p,
-  header
+  header,
+  footer
 } = require("@saltcorn/markup/tags");
+const renderLayout = require("@saltcorn/markup/layout");
 
 const subItem = currentUrl => item =>
   item.link
@@ -97,91 +99,69 @@ const sidebar = (brand, sections, currentUrl) =>
     sections.map(sideBarSection(currentUrl))
   );
 
-const renderCard = (title, body) =>
-  div(
-    { class: "card shadow mt-4" },
+const blockDispatch = {
+  pageHeader: ({ title, blurb }) =>
     div(
-      { class: "card-header py-3" },
-      h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
+      h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
+      blurb && p({ class: "mb-0 text-gray-800" }, blurb)
     ),
-    div({ class: "card-body" }, Array.isArray(body) ? body.join("") : body)
-  );
-
-const renderHero = (caption, blurb) =>
-  header(
-    { class: "masthead" },
+  card: ({ title, contents }) =>
     div(
-      { class: "container h-100" },
-      div(
-        {
-          class:
-            "row h-100 align-items-center justify-content-center text-center"
-        },
+      { class: "card shadow mt-4" },
+      title &&
         div(
-          { class: "col-lg-10 align-self-end" },
-          h1({ class: "text-uppercase font-weight-bold" }, caption),
-          hr({ class: "divider my-4" })
+          { class: "card-header py-3" },
+          h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
         ),
+      div(
+        { class: "card-body" },
+        Array.isArray(contents) ? contents.join("") : contents
+      )
+    ),
+  footer: ({ contents }) =>
+    div(
+      { class: "container" },
+      footer(
+        { id: "footer" },
+        div({ class: "row" }, div({ class: "col-sm-12" }, contents))
+      )
+    ),
+  hero: ({ caption, blurb }) =>
+    header(
+      { class: "masthead" },
+      div(
+        { class: "container h-100" },
         div(
-          { class: "col-lg-8 align-self-baseline" },
-          p({ class: "font-weight-light mb-5" }, blurb)
-          /*a(
-            {
-              class: "btn btn-primary btn-xl",
-              href: "#about"
-            },
-            "Find Out More"
-          )*/
+          {
+            class:
+              "row h-100 align-items-center justify-content-center text-center"
+          },
+          div(
+            { class: "col-lg-10 align-self-end" },
+            h1({ class: "text-uppercase font-weight-bold" }, caption),
+            hr({ class: "divider my-4" })
+          ),
+          div(
+            { class: "col-lg-8 align-self-baseline" },
+            p({ class: "font-weight-light mb-5" }, blurb)
+            /*a(
+              {
+                class: "btn btn-primary btn-xl",
+                href: "#about"
+              },
+              "Find Out More"
+            )*/
+          )
         )
       )
     )
-  );
-
-const renderTitle = ({ title, blurb }) =>
-  div(
-    h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
-    blurb && p({ class: "mb-0 text-gray-800" }, blurb)
-  );
-
-const renderContainer = ({ type, ...rest }) =>
-  type === "card"
-    ? renderCard(rest.title, rest.contents)
-    : type === "hero"
-    ? renderHero(rest.caption, rest.blurb)
-    : type === "blank"
-    ? rest.contents
-    : type === "pageHeader"
-    ? renderTitle(rest)
-    : "";
-
-const renderBesides = elems => {
-  const w = Math.round(12 / elems.length);
-  const row = elems.map(e =>
-    div(
-      { class: `col-sm-${w}` },
-      e.above ? renderAbove(e.above) : renderContainer(e)
-    )
-  );
-  return div({ class: "row" }, row);
 };
-
-const renderAbove = elems =>
-  elems
-    .map(e => (e.besides ? renderBesides(e.besides) : renderContainer(e)))
-    .join("");
-
 const renderBody = (title, body) =>
-  [
-    body.pageHeader
-      ? h1({ class: "h3 mb-0 mt-2 text-gray-800" }, body.pageHeader)
-      : "",
-    body.pageBlurb ? p({ class: "mb-0 text-gray-800" }, body.pageBlurb) : "",
-    typeof body === "string"
-      ? renderCard(title, body)
-      : body.above
-      ? renderAbove(body.above)
-      : renderBesides(body.besides)
-  ].join("");
+  renderLayout({
+    blockDispatch,
+    layout:
+      typeof body === "string" ? { type: "card", title, contents: body } : body
+  });
 
 const wrap = ({
   title,

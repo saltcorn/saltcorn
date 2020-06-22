@@ -130,7 +130,7 @@ const run = async (
 
   const fields = await table.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(columns);
-  const tfields = await get_viewable_fields(
+  const tfields = get_viewable_fields(
     viewname,
     table,
     fields,

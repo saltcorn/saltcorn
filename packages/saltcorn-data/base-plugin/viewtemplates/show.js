@@ -9,6 +9,8 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 
 const { div, text, span } = require("@saltcorn/markup/tags");
+const renderLayout = require("@saltcorn/markup/layout");
+
 const {
   stateFieldsToWhere,
   get_link_view_opts,
@@ -91,7 +93,7 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   });
   const role = req.user ? req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  return await render(rows[0], fields, layout, viewname, tbl, role, req);
+  return render(rows[0], fields, layout, viewname, tbl, role, req);
 };
 
 const runMany = async (
@@ -114,76 +116,47 @@ const runMany = async (
   });
   const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
 
-  return await asyncMap(rows, async row => ({
-    html: await render(row, fields, layout, viewname, tbl, role, extra.req),
+  return rows.map(row => ({
+    html: render(row, fields, layout, viewname, tbl, role, extra.req),
     row
   }));
 };
-const wrapBlock = (segment, inner) =>
-  segment.block
-    ? div({ class: segment.textStyle || "" }, inner)
-    : span({ class: segment.textStyle || "" }, inner);
 
-const render = async (row, fields, layout, viewname, table, role, req) => {
-  async function go(segment) {
-    if (!segment) return "";
-    if (segment.minRole && role > segment.minRole) return "";
-    if (segment.type === "blank") {
-      return wrapBlock(segment, segment.contents);
+const render = (row, fields, layout, viewname, table, role, req) => {
+  const blockDispatch = {
+    field({ field_name, fieldview }) {
+      const val = row[field_name];
+      const field = fields.find(fld => fld.name === field_name);
+      if (fieldview && field.type === "File") {
+        return val ? getState().fileviews[fieldview].run(val) : "";
+      } else if (fieldview && field.type.fieldviews[fieldview])
+        return field.type.fieldviews[fieldview].run(val);
+      else return text(val);
+    },
+    join_field({ join_field }) {
+      const [refNm, targetNm] = join_field.split(".");
+      const val = row[targetNm];
+      return text(val);
+    },
+    aggregation({ agg_relation, stat }) {
+      const [table, fld] = agg_relation.split(".");
+      const targetNm = (stat + "_" + table + "_" + fld).toLowerCase();
+      const val = row[targetNm];
+      return text(val);
+    },
+    action({ action_name }) {
+      return post_btn(
+        action_url(viewname, table, action_name, row),
+        action_name,
+        req.csrfToken()
+      );
+    },
+    view_link({ view }) {
+      const { key } = view_linker(view, fields);
+      return key(row);
     }
-    if (segment.type === "line_break") {
-      return "<br />";
-    } else if (segment.type === "field") {
-      const val = row[segment.field_name];
-      const field = fields.find(fld => fld.name === segment.field_name);
-      if (segment.fieldview && field.type === "File") {
-        return val ? getState().fileviews[segment.fieldview].run(val) : "";
-      } else if (segment.fieldview && field.type.fieldviews[segment.fieldview])
-        return wrapBlock(
-          segment,
-          field.type.fieldviews[segment.fieldview].run(val)
-        );
-      else return wrapBlock(segment, text(val));
-    } else if (segment.type === "join_field") {
-      const [refNm, targetNm] = segment.join_field.split(".");
-      const val = row[targetNm];
-      return wrapBlock(segment, text(val));
-    } else if (segment.type === "aggregation") {
-      const [table, fld] = segment.agg_relation.split(".");
-      const targetNm = (segment.stat + "_" + table + "_" + fld).toLowerCase();
-      const val = row[targetNm];
-      return wrapBlock(segment, text(val));
-    } else if (segment.type === "action") {
-      return wrapBlock(
-        segment,
-        post_btn(
-          action_url(viewname, table, segment, row),
-          segment.action_name.req.csrfToken()
-        )
-      );
-    } else if (segment.type === "view_link") {
-      const { key } = await view_linker(segment, fields);
-      return wrapBlock(segment, key(row));
-    } else if (segment.above) {
-      return (await asyncMap(segment.above, async s => await go(s))).join("");
-    } else if (segment.besides) {
-      const defwidth = Math.round(12 / segment.besides.length);
-      return div(
-        { class: "row" },
-        await asyncMap(segment.besides, async (t, ix) =>
-          div(
-            {
-              class: `col-sm-${
-                segment.widths ? segment.widths[ix] : defwidth
-              } text-${segment.aligns ? segment.aligns[ix] : ""}`
-            },
-            await go(t)
-          )
-        )
-      );
-    } else throw new Error("unknown layout segment" + JSON.stringify(segment));
-  }
-  return await go(layout);
+  };
+  return renderLayout({ blockDispatch, layout, role });
 };
 
 module.exports = {
