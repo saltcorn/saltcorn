@@ -84,8 +84,9 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
   const { joinFields, aggregations } = picked_fields_to_query(columns);
+  const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   const rows = await tbl.getJoinedRows({
-    where: state,
+    where: qstate,
     joinFields,
     aggregations,
     limit: 1

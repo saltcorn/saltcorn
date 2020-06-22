@@ -38,13 +38,13 @@ const view_linker = contract(
         const get_query = get_view_link_query(fields);
         return {
           label: vnm,
-          key: r => link(`/view/${vnm}${get_query(r)}`, vnm)
+          key: r => link(`/view/${encodeURIComponent(vnm)}${get_query(r)}`, vnm)
         };
       case "ChildList":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
-          key: r => link(`/view/${viewnm}?${fld}=${r.id}`, viewnm)
+          key: r => link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -52,7 +52,7 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: r =>
-            r[pfld] ? link(`/view/${pviewnm}?id=${r[pfld]}`, pviewnm) : ""
+            r[pfld] ? link(`/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`, pviewnm) : ""
         };
       default:
         throw new Error(view);
@@ -180,15 +180,17 @@ const stateToQueryString = contract(
 
 const splitUniques = contract(
   is.fun(
-    [is.array(is.class("Field")), is.obj()],
+    [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
     is.obj({ uniques: is.obj(), nonUniques: is.obj() })
   ),
-  (fields, state) => {
+  (fields, state, fuzzyStrings) => {
     var uniques = [];
     var nonUniques = [];
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find(f => f.name === k);
-      if (k === "id" || (field && field.is_unique)) uniques[k] = v;
+      if (k === "id") uniques[k] = v;
+      else if (field && field.is_unique && fuzzyStrings && field.type && field.type.name==='String') uniques[k] = {ilike: v};
+      else if (field && field.is_unique) uniques[k] = v;
       else nonUniques[k] = v;
     });
     return { uniques, nonUniques };
