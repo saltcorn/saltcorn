@@ -156,9 +156,9 @@ const blockDispatch = {
     )
 };
 const renderBody = (title, body) =>
-  renderLayout(blockDispatch)(
-    typeof body === "string" ? { type: "card", title, contents: body } : body
-  );
+  renderLayout(blockDispatch)({
+    layout: typeof body === "string" ? { type: "card", title, contents: body } : body
+  });
 
 const wrap = ({
   title,
