@@ -7,47 +7,44 @@ Saltcorn command line interface
 [![License](https://img.shields.io/npm/l/@saltcorn/cli.svg)](https://github.com/saltcorn/saltcorn/blob/master/package.json)
 
 <!-- toc -->
-
-- [@saltcorn/cli](#saltcorncli)
-- [Usage](#usage)
-- [Commands](#commands)
-  <!-- tocstop -->
+* [@saltcorn/cli](#saltcorncli)
+* [Usage](#usage)
+* [Commands](#commands)
+<!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.0.8 linux-x64 node-v14.3.0
+@saltcorn/cli/0.0.9 linux-x64 node-v14.4.0
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-
-- [`saltcorn backup`](#saltcorn-backup)
-- [`saltcorn create-user`](#saltcorn-create-user)
-- [`saltcorn fixtures`](#saltcorn-fixtures)
-- [`saltcorn help [COMMAND]`](#saltcorn-help-command)
-- [`saltcorn make-migration`](#saltcorn-make-migration)
-- [`saltcorn migrate`](#saltcorn-migrate)
-- [`saltcorn plugins`](#saltcorn-plugins)
-- [`saltcorn reset-schema`](#saltcorn-reset-schema)
-- [`saltcorn restore FILE`](#saltcorn-restore-file)
-- [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
-- [`saltcorn serve`](#saltcorn-serve)
-- [`saltcorn setup`](#saltcorn-setup)
-- [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
+* [`saltcorn backup`](#saltcorn-backup)
+* [`saltcorn create-user`](#saltcorn-create-user)
+* [`saltcorn fixtures`](#saltcorn-fixtures)
+* [`saltcorn help [COMMAND]`](#saltcorn-help-command)
+* [`saltcorn make-migration`](#saltcorn-make-migration)
+* [`saltcorn migrate`](#saltcorn-migrate)
+* [`saltcorn plugins`](#saltcorn-plugins)
+* [`saltcorn reset-schema`](#saltcorn-reset-schema)
+* [`saltcorn restore FILE`](#saltcorn-restore-file)
+* [`saltcorn rm-tenant TENANT`](#saltcorn-rm-tenant-tenant)
+* [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
+* [`saltcorn serve`](#saltcorn-serve)
+* [`saltcorn setup`](#saltcorn-setup)
+* [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
 
 ## `saltcorn backup`
 
@@ -58,10 +55,10 @@ USAGE
   $ saltcorn backup
 
 OPTIONS
-  -o, --output=output  [default: 20200613-saltcorn-tomn-VirtualBox.sqlc] output filename
+  -o, --output=output  [default: 20200622-saltcorn-LAPTOP-3VET16LK.sqlc] output filename
 ```
 
-_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/backup.js)_
+_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/backup.js)_
 
 ## `saltcorn create-user`
 
@@ -75,7 +72,7 @@ OPTIONS
   -a, --admin  Admin user
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/create-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -93,7 +90,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/fixtures.js)_
 
 ## `saltcorn help [COMMAND]`
 
@@ -126,7 +123,7 @@ DESCRIPTION
   normally need to run this unless you are a developer.
 ```
 
-_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/make-migration.js)_
+_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/make-migration.js)_
 
 ## `saltcorn migrate`
 
@@ -138,12 +135,12 @@ USAGE
 
 DESCRIPTION
   ...
-  This is not normally required as migrations will be run when the server starts.
-  However, this command may be useful if you are running multiple application
+  This is not normally required as migrations will be run when the server starts. 
+  However, this command may be useful if you are running multiple application 
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/migrate.js)_
 
 ## `saltcorn plugins`
 
@@ -162,7 +159,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/plugins.js)_
+_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/plugins.js)_
 
 ## `saltcorn reset-schema`
 
@@ -180,7 +177,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -194,7 +191,21 @@ ARGUMENTS
   FILE  backup file to restore
 ```
 
-_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/restore.js)_
+
+## `saltcorn rm-tenant TENANT`
+
+Remove a tenant
+
+```
+USAGE
+  $ saltcorn rm-tenant TENANT
+
+ARGUMENTS
+  TENANT  Tenant to remove
+```
+
+_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/rm-tenant.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -212,7 +223,7 @@ OPTIONS
   -f, --forever   Run forever till failure
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/run-tests.js)_
 
 ## `saltcorn serve`
 
@@ -227,7 +238,7 @@ OPTIONS
   -v, --verbose    Verbose
 ```
 
-_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/serve.js)_
 
 ## `saltcorn setup`
 
@@ -242,11 +253,11 @@ OPTIONS
 
 DESCRIPTION
   ...
-  This will attempt to install or connect a database, and set up a
+  This will attempt to install or connect a database, and set up a 
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/setup.js)_
 
 ## `saltcorn test-plugin PATH`
 
@@ -264,6 +275,5 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.0.8/src/commands/test-plugin.js)_
-
+_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.0.9/src/commands/test-plugin.js)_
 <!-- commandsstop -->
