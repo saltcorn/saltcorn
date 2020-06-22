@@ -108,7 +108,7 @@ const blockDispatch = {
   card: ({ title, contents }) =>
     div(
       { class: "card shadow mt-4" },
-      div(
+      title && div(
         { class: "card-header py-3" },
         h6({ class: "m-0 font-weight-bold text-primary" }, text(title))
       ),
