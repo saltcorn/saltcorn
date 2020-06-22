@@ -27,19 +27,20 @@ const render = blockDispatch => (layout, role) => {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      return div(
+      const markup= div(
         { class: "row" },
-        segment.besides.map((t, ix) =>
+        segment.besides.map((t, ixb) =>
           div(
             {
               class: `col-sm-${
-                segment.widths ? segment.widths[ix] : defwidth
-              } text-${segment.aligns ? segment.aligns[ix] : ""}`
+                segment.widths ? segment.widths[ixb] : defwidth
+              } text-${segment.aligns ? segment.aligns[ixb] : ""}`
             },
-            go(t, false, ix)
+            go(t, false, ixb)
           )
         )
       );
+      return isTop? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   return go(layout, true, 0);
