@@ -122,7 +122,7 @@ describe("Table create", () => {
     await browser.goto("/view/PersonEdit");
     expect(await browser.content()).toContain("PersonEdit view");
     expect(await browser.content()).toContain(
-      '<span class="">MyOwnInput</span>'
+      '>MyOwnInput<'
     );
     await browser.page.type("#inputfull_name", "TomNook");
     await browser.page.type("#inputage", "19");
@@ -163,7 +163,7 @@ describe("Table create", () => {
     await browser.goto("/view/PersonShow?id=1");
     expect(await browser.content()).toContain("PersonShow view");
     expect(await browser.content()).toContain(
-      '<span class="">MyOtherInput</span>'
+      '>MyOtherInput<'
     );
     expect(await browser.content()).toContain("TerryTheBeaver");
   });
