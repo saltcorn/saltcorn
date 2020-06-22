@@ -7,7 +7,13 @@ const manager = new PluginManager({
   staticDependencies: {
     contractis: require("contractis"),
     "@saltcorn/markup": require("@saltcorn/markup"),
-    "@saltcorn/data/db": require("@saltcorn/data/db")
+    "@saltcorn/markup/layout": require("@saltcorn/markup/layout"),
+    "@saltcorn/data/db": require("@saltcorn/data/db"),
+    "@saltcorn/data/models/field": require("@saltcorn/data/models/field"),
+    "@saltcorn/data/models/table": require("@saltcorn/data/models/table"),
+    "@saltcorn/data/models/form": require("@saltcorn/data/models/form"),
+    "@saltcorn/data/models/view": require("@saltcorn/data/models/view"),
+    "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow")
   }
 });
 
