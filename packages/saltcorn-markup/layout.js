@@ -21,7 +21,7 @@ const makeSegments = (body, alerts) => {
   }
 };
 
-const render = blockDispatch => ({ layout, role, alerts }) => {
+const render = ({ blockDispatch, layout, role, alerts }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
     if (isTop && blockDispatch.wrapTop)
@@ -99,15 +99,13 @@ const is_segment = is.obj({ type: is.maybe(is.str) });
 
 module.exports = contract(
   is.fun(
-    is.objVals(is.fun(is_segment, is.str)),
-    is.fun(
-      is.obj({
-        layout: is_segment,
-        role: is.maybe(is.posint),
-        alerts: is.maybe(is.array(is.obj({ type: is.str, message: is.str })))
-      }),
-      is.str
-    )
+    is.obj({
+      blockDispatch: is.objVals(is.fun(is_segment, is.str)),
+      layout: is_segment,
+      role: is.maybe(is.posint),
+      alerts: is.maybe(is.array(is.obj({ type: is.str, message: is.str })))
+    }),
+    is.str
   ),
   render
 );

@@ -268,7 +268,7 @@ const renderFormLayout = form => {
       )}</button>`;
     }
   };
-  return renderLayout(blockDispatch)({ layout: form.layout });
+  return renderLayout({ blockDispatch, layout: form.layout });
 };
 
 const renderForm = (form, csrfToken) => {
