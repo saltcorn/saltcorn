@@ -129,7 +129,7 @@ router.get("/serve/:id", setTenant, async (req, res) => {
 router.post("/setrole/:id", setTenant, isAdmin, async (req, res) => {
   const { id } = req.params;
   const role = req.body.role;
-  await File.update(id, { min_role_read: role });
+  await File.update(+id, { min_role_read: role });
   res.redirect("/files");
 });
 
