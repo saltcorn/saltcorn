@@ -136,7 +136,7 @@ const run = async (
   }
   var reltbls = {};
   var myrow;
-  const { uniques } = splitUniques(fields, state);
+  const { uniques } = splitUniques(fields, state, true);
 
   if (Object.keys(uniques).length > 0) {
     var id;

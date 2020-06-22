@@ -181,15 +181,17 @@ const stateToQueryString = contract(
 
 const splitUniques = contract(
   is.fun(
-    [is.array(is.class("Field")), is.obj()],
+    [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
     is.obj({ uniques: is.obj(), nonUniques: is.obj() })
   ),
-  (fields, state) => {
+  (fields, state, fuzzyStrings) => {
     var uniques = [];
     var nonUniques = [];
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find(f => f.name === k);
-      if (k === "id" || (field && field.is_unique)) uniques[k] = v;
+      if (k === "id") uniques[k] = v;
+      else if (field && field.is_unique && fuzzyStrings && field.type && field.type.name==='String') uniques[k] = {ilike: v};
+      else if (field && field.is_unique) uniques[k] = v;
       else nonUniques[k] = v;
     });
     return { uniques, nonUniques };
