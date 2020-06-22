@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/markup",
-  "version": "0.0.9",
+  "version": "0.0.8",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "index.js",
