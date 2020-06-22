@@ -100,7 +100,14 @@ const is_segment = is.obj({ type: is.maybe(is.str) });
 module.exports = contract(
   is.fun(
     is.objVals(is.fun(is_segment, is.str)),
-    is.fun([is_segment, is.posint], is.str)
+    is.fun(
+      is.obj({
+        layout: is_segment,
+        role: is.maybe(is.posint),
+        alerts: is.maybe(is.array(is.obj({ type: is.str, message: is.str })))
+      }),
+      is.str
+    )
   ),
   render
 );
