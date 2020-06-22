@@ -4,7 +4,7 @@ const { p } = require("./tags");
 describe("layout", () => {
   it("renders a simple layout", () => {
     const blocks = {
-      wrapAll(s, segment) {
+      wrapTop(segment, ix, s) {
         return p(s);
       },
       reverseIt({ theString }) {
@@ -15,6 +15,6 @@ describe("layout", () => {
       }
     };
     const markup = { above: [{ type: "reverseIt", theString: "foobar" }] };
-    expect(render(blocks)(markup)).toBe("<p>raboof</p>");
+    expect(render(blocks)({layout: markup})).toBe("<p>raboof</p>");
   });
 });

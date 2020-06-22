@@ -156,7 +156,7 @@ const render = (row, fields, layout, viewname, table, role, req) => {
       return key(row);
     }
   };
-  return renderLayout(blockDispatch)(layout, role);
+  return renderLayout(blockDispatch)({layout, role});
 };
 
 module.exports = {
