@@ -103,7 +103,9 @@ module.exports = contract(
       blockDispatch: is.maybe(is.objVals(is.fun(is_segment, is.str))),
       layout: is.or(is_segment, is.str),
       role: is.maybe(is.posint),
-      alerts: is.maybe(is.array(is.obj({ type: is.str, msg: is.or(is.str, is.array(is.str)) })))
+      alerts: is.maybe(
+        is.array(is.obj({ type: is.str, msg: is.or(is.str, is.array(is.str)) }))
+      )
     }),
     is.str
   ),

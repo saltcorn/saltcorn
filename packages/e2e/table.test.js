@@ -121,9 +121,7 @@ describe("Table create", () => {
   it("creates row with edit view", async () => {
     await browser.goto("/view/PersonEdit");
     expect(await browser.content()).toContain("PersonEdit view");
-    expect(await browser.content()).toContain(
-      '>MyOwnInput<'
-    );
+    expect(await browser.content()).toContain(">MyOwnInput<");
     await browser.page.type("#inputfull_name", "TomNook");
     await browser.page.type("#inputage", "19");
     await browser.clickNav("button[type=submit]");
@@ -162,9 +160,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("PersonShow");
     await browser.goto("/view/PersonShow?id=1");
     expect(await browser.content()).toContain("PersonShow view");
-    expect(await browser.content()).toContain(
-      '>MyOtherInput<'
-    );
+    expect(await browser.content()).toContain(">MyOtherInput<");
     expect(await browser.content()).toContain("TerryTheBeaver");
   });
   it("goto edit after show", async () => {
