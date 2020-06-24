@@ -98,7 +98,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
 
         {
           label: "Run",
-          key: r => link(`/page/${r.id}`, "Run")
+          key: r => link(`/page/${r.name}`, "Run")
         },
         {
           label: "Edit",

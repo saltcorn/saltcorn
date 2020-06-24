@@ -6,18 +6,12 @@ export const HTMLCode = ({ text }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  return (
-    <span
-      ref={dom => connect(drag(dom))}
-    >
-      {text}
-    </span>
-  );
+  return <span ref={dom => connect(drag(dom))}>{text}</span>;
 };
 
 export const HTMLCodeSettings = () => {
   const { setProp, text } = useNode(node => ({
-    text: node.data.props.text,
+    text: node.data.props.text
   }));
   return (
     <div>
@@ -26,7 +20,9 @@ export const HTMLCodeSettings = () => {
         type="text"
         className="text-to-display"
         onChange={e => setProp(prop => (prop.text = e.target.value))}
-      >{text}</textarea>
+      >
+        {text}
+      </textarea>
     </div>
   );
 };

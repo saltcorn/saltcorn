@@ -18,8 +18,8 @@ class Page {
   }
 
   static async findOne(where) {
-    const db_fld = await db.selectOne("_sc_pages", where);
-    return new Page(db_fld);
+    const p = await db.selectMaybeOne("_sc_pages", where);
+    return p ? new Page(p) : null;
   }
 
   static async update(id, row) {

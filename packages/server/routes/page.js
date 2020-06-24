@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 
-const View = require("@saltcorn/data/models/view");
+const Page = require("@saltcorn/data/models/page");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
@@ -23,9 +23,17 @@ router.get(
         contents
       );
     } else {
-      res
-        .status(404)
-        .sendWrap(`${pagename} page`, `Page ${pagename} not found`);
+      const db_page = await Page.findOne({ name: pagename });
+      if (db_page) {
+        res.sendWrap(
+          { title: db_page.title, description: db_page.description } ||
+            `${pagename} page`,
+          db_page.layout
+        );
+      } else
+        res
+          .status(404)
+          .sendWrap(`${pagename} page`, `Page ${pagename} not found`);
     }
   })
 );
