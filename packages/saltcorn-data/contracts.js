@@ -50,7 +50,7 @@ const is_layout = is.obj(
 
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
-  body: is.or(is.str, is_layout),
+  body: is.any,//is.or(is.str, is_layout),
   currentUrl: is.str,
   brand: is.obj({ name: is.str }),
   menu: is.array(
