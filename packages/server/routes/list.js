@@ -9,25 +9,30 @@ const router = new Router();
 // export our router to be mounted by the parent application
 module.exports = router;
 
-router.get("/:tname", setTenant, loggedIn, error_catcher(async (req, res) => {
-  const { tname } = req.params;
-  const table = await Table.findOne({ name: tname });
+router.get(
+  "/:tname",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { tname } = req.params;
+    const table = await Table.findOne({ name: tname });
 
-  const fields = await table.getFields();
-  var tfields = fields.map(f => ({ label: f.label, key: f.listKey }));
-  tfields.push({
-    label: "Edit",
-    key: r => link(`/edit/${table.name}/${r.id}`, "Edit")
-  });
-  tfields.push({
-    label: "Delete",
-    key: r =>
-      post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken())
-  });
-  const rows = await table.getJoinedRows();
-  res.sendWrap(
-    `${table.name} data table`,
-    mkTable(tfields, rows),
-    link(`/edit/${table.name}`, "Add row")
-  );
-}));
+    const fields = await table.getFields();
+    var tfields = fields.map(f => ({ label: f.label, key: f.listKey }));
+    tfields.push({
+      label: "Edit",
+      key: r => link(`/edit/${table.name}/${r.id}`, "Edit")
+    });
+    tfields.push({
+      label: "Delete",
+      key: r =>
+        post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken())
+    });
+    const rows = await table.getJoinedRows();
+    res.sendWrap(
+      `${table.name} data table`,
+      mkTable(tfields, rows),
+      link(`/edit/${table.name}`, "Add row")
+    );
+  })
+);

@@ -10,7 +10,7 @@ import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
-import { ToolboxShow, ToolboxEdit } from "./Toolbox";
+import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
 const { Provider } = optionsCtx;
@@ -107,6 +107,8 @@ const Builder = ({ options, layout, mode }) => {
               <ToolboxShow />
             ) : mode === "edit" ? (
               <ToolboxEdit />
+            ) : mode === "page" ? (
+              <ToolboxPage />
             ) : (
               <div>Missing mode</div>
             )}

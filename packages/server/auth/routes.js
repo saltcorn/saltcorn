@@ -35,16 +35,20 @@ const loginForm = () =>
     submitLabel: "Login"
   });
 
-router.get("/login", setTenant, error_catcher(async (req, res) => {
-  const allow_signup = getState().getConfig("allow_signup");
-  res.sendWrap(
-    `Login`,
-    renderForm(loginForm(), req.csrfToken()),
-    ...(allow_signup
-      ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
-      : [])
-  );
-}));
+router.get(
+  "/login",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const allow_signup = getState().getConfig("allow_signup");
+    res.sendWrap(
+      `Login`,
+      renderForm(loginForm(), req.csrfToken()),
+      ...(allow_signup
+        ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
+        : [])
+    );
+  })
+);
 
 router.get("/logout", setTenant, (req, res) => {
   req.logout();
@@ -55,92 +59,108 @@ router.get("/logout", setTenant, (req, res) => {
   });
 });
 
-router.get("/signup", setTenant, error_catcher(async (req, res) => {
-  if (getState().getConfig("allow_signup")) {
-    const form = loginForm();
-    form.action = "/auth/signup";
-    form.submitLabel = "Sign up";
-    res.sendWrap(
-      `Sign up`,
-      renderForm(form, req.csrfToken()),
-      "Already have an account? ",
-      link("/auth/login", "Login »")
-    );
-  } else {
-    req.flash("danger", "Signups not enabled");
-    res.redirect("/auth/login");
-  }
-}));
-
-router.get("/create_first_user", setTenant, error_catcher(async (req, res) => {
-  const hasUsers = await User.nonEmpty();
-  if (!hasUsers) {
-    const form = loginForm();
-    form.action = "/auth/create_first_user";
-    form.submitLabel = "Create user";
-    form.blurb =
-      "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-    res.sendWrap(`Create first user`, renderForm(form, req.csrfToken()));
-  } else {
-    req.flash("danger", "Users already present");
-    res.redirect("/auth/login");
-  }
-}));
-router.post("/create_first_user", setTenant, error_catcher(async (req, res) => {
-  const hasUsers = await User.nonEmpty();
-  if (!hasUsers) {
-    const { email, password } = req.body;
-    const u = await User.create({ email, password, role_id: 1 });
-    req.login(
-      { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
-      function(err) {
-        if (!err) {
-          res.redirect("/");
-        } else {
-          req.flash("danger", err);
-          res.redirect("/auth/signup");
-        }
-      }
-    );
-  } else {
-    req.flash("danger", "Users already present");
-    res.redirect("/auth/login");
-  }
-}));
-router.post("/signup", setTenant, error_catcher(async (req, res) => {
-  if (getState().getConfig("allow_signup")) {
-    const { email, password } = req.body;
-    if (email.length > 127) {
-      req.flash("danger", "E-mail too long");
-      res.redirect("/auth/signup");
-      return;
+router.get(
+  "/signup",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_signup")) {
+      const form = loginForm();
+      form.action = "/auth/signup";
+      form.submitLabel = "Sign up";
+      res.sendWrap(
+        `Sign up`,
+        renderForm(form, req.csrfToken()),
+        "Already have an account? ",
+        link("/auth/login", "Login »")
+      );
+    } else {
+      req.flash("danger", "Signups not enabled");
+      res.redirect("/auth/login");
     }
+  })
+);
 
-    const us = await User.find({ email });
-    if (us.length > 0) {
-      req.flash("danger", "Account already exists");
-      res.redirect("/auth/signup");
-      return;
+router.get(
+  "/create_first_user",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      const form = loginForm();
+      form.action = "/auth/create_first_user";
+      form.submitLabel = "Create user";
+      form.blurb =
+        "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
+      res.sendWrap(`Create first user`, renderForm(form, req.csrfToken()));
+    } else {
+      req.flash("danger", "Users already present");
+      res.redirect("/auth/login");
     }
-
-    const u = await User.create({ email, password });
-
-    req.login(
-      { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
-      function(err) {
-        if (!err) {
-          res.redirect("/");
-        } else {
-          req.flash("danger", err);
-          res.redirect("/auth/signup");
+  })
+);
+router.post(
+  "/create_first_user",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      const { email, password } = req.body;
+      const u = await User.create({ email, password, role_id: 1 });
+      req.login(
+        { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
+        function(err) {
+          if (!err) {
+            res.redirect("/");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/auth/signup");
+          }
         }
+      );
+    } else {
+      req.flash("danger", "Users already present");
+      res.redirect("/auth/login");
+    }
+  })
+);
+router.post(
+  "/signup",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_signup")) {
+      const { email, password } = req.body;
+      if (email.length > 127) {
+        req.flash("danger", "E-mail too long");
+        res.redirect("/auth/signup");
+        return;
       }
-    );
-  } else {
-    req.flash("danger", "Signups not enabled");
-    res.redirect("/auth/login");
-  }
-}));
+
+      const us = await User.find({ email });
+      if (us.length > 0) {
+        req.flash("danger", "Account already exists");
+        res.redirect("/auth/signup");
+        return;
+      }
+
+      const u = await User.create({ email, password });
+
+      req.login(
+        { email: u.email, role_id: u.role_id, tenant: db.getTenantSchema() },
+        function(err) {
+          if (!err) {
+            res.redirect("/");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/auth/signup");
+          }
+        }
+      );
+    } else {
+      req.flash("danger", "Signups not enabled");
+      res.redirect("/auth/login");
+    }
+  })
+);
 
 router.post(
   "/login",
@@ -158,5 +178,5 @@ router.post(
     }
     req.flash("success", "Login sucessful");
     res.redirect("/");
-  }
-));
+  })
+);

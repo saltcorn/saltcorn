@@ -39,7 +39,7 @@ Page.contract = {
   variables: {
     name: is.str,
     title: is.str,
-    description: is.description,
+    description: is.str,
     id: is.maybe(is.posint),
     min_role: is.posint,
     layout: is.obj(),

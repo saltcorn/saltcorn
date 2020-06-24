@@ -1,6 +1,7 @@
 import React, { useEffect, useContext, Fragment } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
+import { HTMLCode } from "./elements/HTMLCode";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
@@ -223,3 +224,53 @@ export const ToolboxEdit = () => {
     </Fragment>
   );
 };
+
+export const ToolboxPage = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const { fields, field_view_options } = options;
+  return (
+    <Fragment>
+      <h5>Drag to add</h5>
+      <table className="mb-3 toolbox">
+        <tbody>
+          <tr>
+            <td
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Text text="Hello world" block={false} textStyle={""} />
+                )
+              }
+            >
+              Text
+            </td>
+            <td
+              title="Split into columns"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <TwoSplit contents={[<Empty />, <Empty />]} />
+                )
+              }
+            >
+              <i className="fas fa-columns"></i>
+            </td>
+          </tr>
+          <tr>
+            <td
+              title="HTML code"
+              ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
+            >
+              <i className="fas fa-code"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </Fragment>
+  );
+};
+//card
+//footer
+//hero
+//image

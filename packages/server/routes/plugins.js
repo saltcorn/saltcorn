@@ -41,169 +41,207 @@ const pluginForm = plugin => {
   }
   return form;
 };
-router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const rows = await Plugin.find({});
-  const instore = await Plugin.store_plugins_available();
-  const packs_available = await fetch_available_packs();
-  const packs_installed = getState().getConfig("installed_packs", []);
-  const schema = db.getTenantSchema();
-  res.sendWrap("Plugins", {
-    above: [
-      {
-        type: "card",
-        title: "Installed plugins",
-        contents: mkTable(
-          [
-            { label: "Name", key: "name" },
-            { label: "Source", key: "source" },
-            { label: "Location", key: "location" },
-            { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+router.get(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const rows = await Plugin.find({});
+    const instore = await Plugin.store_plugins_available();
+    const packs_available = await fetch_available_packs();
+    const packs_installed = getState().getConfig("installed_packs", []);
+    const schema = db.getTenantSchema();
+    res.sendWrap("Plugins", {
+      above: [
+        {
+          type: "card",
+          title: "Installed plugins",
+          contents: mkTable(
+            [
+              { label: "Name", key: "name" },
+              { label: "Source", key: "source" },
+              { label: "Location", key: "location" },
+              { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+              {
+                label: "Reload",
+                key: r =>
+                  post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken())
+              },
+              {
+                label: "Delete",
+                key: r =>
+                  post_btn(`/plugins/delete/${r.id}`, "Remove", req.csrfToken())
+              }
+            ],
+            rows
+          )
+        },
+        {
+          besides: [
             {
-              label: "Reload",
-              key: r =>
-                post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken())
+              type: "card",
+              title: "Available plugins",
+              contents: [
+                mkTable(
+                  [
+                    { label: "Name", key: "name" },
+                    {
+                      label: "Install",
+                      key: r =>
+                        post_btn(
+                          `/plugins/install/${encodeURIComponent(r.name)}`,
+                          "Install",
+                          req.csrfToken()
+                        )
+                    }
+                  ],
+                  instore
+                ),
+                schema === "public"
+                  ? link(`/plugins/new`, "Add another plugin")
+                  : ""
+              ]
             },
             {
-              label: "Delete",
-              key: r =>
-                post_btn(`/plugins/delete/${r.id}`, "Remove", req.csrfToken())
+              type: "card",
+              title: "Available packs",
+              contents: [
+                mkTable(
+                  [
+                    { label: "Name", key: "name" },
+                    {
+                      label: "Install",
+                      key: r =>
+                        packs_installed.includes(r.name)
+                          ? "Installed"
+                          : post_btn(
+                              `/packs/install-named/${encodeURIComponent(
+                                r.name
+                              )}`,
+                              "Install",
+                              req.csrfToken()
+                            )
+                    }
+                  ],
+                  packs_available
+                ),
+                link(`/packs/install`, "Install another pack"),
+                nbsp,
+                "|",
+                nbsp,
+                link(`/packs/create`, "Create pack")
+              ]
             }
-          ],
-          rows
-        )
-      },
-      {
-        besides: [
-          {
-            type: "card",
-            title: "Available plugins",
-            contents: [
-              mkTable(
-                [
-                  { label: "Name", key: "name" },
-                  {
-                    label: "Install",
-                    key: r =>
-                      post_btn(
-                        `/plugins/install/${encodeURIComponent(r.name)}`,
-                        "Install",
-                        req.csrfToken()
-                      )
-                  }
-                ],
-                instore
-              ),
-              schema === "public"
-                ? link(`/plugins/new`, "Add another plugin")
-                : ""
-            ]
-          },
-          {
-            type: "card",
-            title: "Available packs",
-            contents: [
-              mkTable(
-                [
-                  { label: "Name", key: "name" },
-                  {
-                    label: "Install",
-                    key: r =>
-                      packs_installed.includes(r.name)
-                        ? "Installed"
-                        : post_btn(
-                            `/packs/install-named/${encodeURIComponent(
-                              r.name
-                            )}`,
-                            "Install",
-                            req.csrfToken()
-                          )
-                  }
-                ],
-                packs_available
-              ),
-              link(`/packs/install`, "Install another pack"),
-              nbsp,
-              "|",
-              nbsp,
-              link(`/packs/create`, "Create pack")
-            ]
-          }
-        ]
-      }
-    ]
-  });
-}));
+          ]
+        }
+      ]
+    });
+  })
+);
 
-router.get("/new/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  res.sendWrap(`New Plugin`, renderForm(pluginForm(), req.csrfToken()));
-}));
+router.get(
+  "/new/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(`New Plugin`, renderForm(pluginForm(), req.csrfToken()));
+  })
+);
 
-router.get("/:id/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
-  const plugin = await Plugin.findOne({ id });
+router.get(
+  "/:id/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const plugin = await Plugin.findOne({ id });
 
-  res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin), req.csrfToken()));
-}));
-
-router.post("/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const plugin = new Plugin(req.body);
-  const schema = db.getTenantSchema();
-  if (schema !== "public") {
-    req.flash(
-      "error",
-      `Only store plugins can be installed on tenant instances`
+    res.sendWrap(
+      `Edit Plugin`,
+      renderForm(pluginForm(plugin), req.csrfToken())
     );
-    res.redirect(`/plugins`);
-  } else {
-    try {
-      await load_plugins.loadAndSaveNewPlugin(
-        plugin,
-        schema === "public" || plugin.source === "github"
+  })
+);
+
+router.post(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const plugin = new Plugin(req.body);
+    const schema = db.getTenantSchema();
+    if (schema !== "public") {
+      req.flash(
+        "error",
+        `Only store plugins can be installed on tenant instances`
       );
-      req.flash("success", `Plugin ${plugin.name} installed`);
       res.redirect(`/plugins`);
-    } catch (e) {
-      req.flash("error", `${e.message}`);
-      const form = pluginForm(plugin);
-      res.sendWrap(`Edit Plugin`, renderForm(form, req.csrfToken()));
+    } else {
+      try {
+        await load_plugins.loadAndSaveNewPlugin(
+          plugin,
+          schema === "public" || plugin.source === "github"
+        );
+        req.flash("success", `Plugin ${plugin.name} installed`);
+        res.redirect(`/plugins`);
+      } catch (e) {
+        req.flash("error", `${e.message}`);
+        const form = pluginForm(plugin);
+        res.sendWrap(`Edit Plugin`, renderForm(form, req.csrfToken()));
+      }
     }
-  }
-}));
+  })
+);
 
-router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
 
-  const plugin = await Plugin.findOne({ id });
-  const depviews = await plugin.dependant_views();
-  if (depviews.length === 0) {
-    await plugin.delete();
-    req.flash(
-      "success",
-      "Plugin removed. You may need to restart the server (Settings » Admin) for changes to take effect."
-    );
-  } else {
-    req.flash(
-      "error",
-      `Cannot remove plugin: views ${depviews.join()} depend on it`
-    );
-  }
-  res.redirect(`/plugins`);
-}));
+    const plugin = await Plugin.findOne({ id });
+    const depviews = await plugin.dependant_views();
+    if (depviews.length === 0) {
+      await plugin.delete();
+      req.flash(
+        "success",
+        "Plugin removed. You may need to restart the server (Settings » Admin) for changes to take effect."
+      );
+    } else {
+      req.flash(
+        "error",
+        `Cannot remove plugin: views ${depviews.join()} depend on it`
+      );
+    }
+    res.redirect(`/plugins`);
+  })
+);
 
-router.post("/reload/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
+router.post(
+  "/reload/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
 
-  const plugin = await Plugin.findOne({ id });
-  await load_plugins.loadPlugin(plugin);
+    const plugin = await Plugin.findOne({ id });
+    await load_plugins.loadPlugin(plugin);
 
-  res.redirect(`/plugins`);
-}));
+    res.redirect(`/plugins`);
+  })
+);
 
-router.post("/install/:name", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { name } = req.params;
+router.post(
+  "/install/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
 
-  const plugin = await Plugin.store_by_name(name);
-  await load_plugins.loadAndSaveNewPlugin(plugin);
-  req.flash("success", `Plugin ${plugin.name} installed`);
-  res.redirect(`/plugins`);
-}));
+    const plugin = await Plugin.store_by_name(name);
+    await load_plugins.loadAndSaveNewPlugin(plugin);
+    req.flash("success", `Plugin ${plugin.name} installed`);
+    res.redirect(`/plugins`);
+  })
+);

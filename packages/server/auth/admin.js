@@ -48,67 +48,96 @@ const userForm = contract(
   }
 );
 
-router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const users = await User.find();
-  const roles = await User.get_roles();
-  var roleMap = {};
-  roles.forEach(r => {
-    roleMap[r.id] = r.role;
-  });
-  res.sendWrap(
-    "Users",
-    mkTable(
-      [
-        { label: "ID", key: "id" },
-        { label: "Email", key: "email" },
-        { label: "Role", key: r => roleMap[r.role_id] },
-        { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
-        {
-          label: "Delete",
-          key: r =>
-            r.id !== req.user.id
-              ? post_btn(`/useradmin/delete/${r.id}`, "Delete", req.csrfToken())
-              : ""
-        }
-      ],
-      users
-    ),
-    link(`/useradmin/new`, "Add user")
-  );
-}));
+router.get(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const users = await User.find();
+    const roles = await User.get_roles();
+    var roleMap = {};
+    roles.forEach(r => {
+      roleMap[r.id] = r.role;
+    });
+    res.sendWrap(
+      "Users",
+      mkTable(
+        [
+          { label: "ID", key: "id" },
+          { label: "Email", key: "email" },
+          { label: "Role", key: r => roleMap[r.role_id] },
+          { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
+          {
+            label: "Delete",
+            key: r =>
+              r.id !== req.user.id
+                ? post_btn(
+                    `/useradmin/delete/${r.id}`,
+                    "Delete",
+                    req.csrfToken()
+                  )
+                : ""
+          }
+        ],
+        users
+      ),
+      link(`/useradmin/new`, "Add user")
+    );
+  })
+);
 
-router.get("/new", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const form = await userForm();
-  res.sendWrap("New user", renderForm(form, req.csrfToken()));
-}));
+router.get(
+  "/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await userForm();
+    res.sendWrap("New user", renderForm(form, req.csrfToken()));
+  })
+);
 
-router.get("/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
-  const user = await User.findOne({ id });
-  const form = await userForm(user);
+router.get(
+  "/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findOne({ id });
+    const form = await userForm(user);
 
-  res.sendWrap("Edit user", renderForm(form, req.csrfToken()));
-}));
+    res.sendWrap("Edit user", renderForm(form, req.csrfToken()));
+  })
+);
 
-router.post("/save", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { email, password, role_id, id } = req.body;
-  if (id) {
-    await db.update("users", { email, role_id }, id);
+router.post(
+  "/save",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { email, password, role_id, id } = req.body;
+    if (id) {
+      await db.update("users", { email, role_id }, id);
 
-    req.flash("success", `User ${email} saved`);
-  } else {
-    const u = await User.create({ email, password, role_id: +role_id });
+      req.flash("success", `User ${email} saved`);
+    } else {
+      const u = await User.create({ email, password, role_id: +role_id });
 
-    req.flash("success", `User ${email} created`);
-  }
-  res.redirect(`/useradmin`);
-}));
+      req.flash("success", `User ${email} created`);
+    }
+    res.redirect(`/useradmin`);
+  })
+);
 
-router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
-  const u = await User.findOne({ id });
-  await u.delete();
-  req.flash("success", `User ${u.email} deleted`);
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.delete();
+    req.flash("success", `User ${u.email} deleted`);
 
-  res.redirect(`/useradmin`);
-}));
+    res.redirect(`/useradmin`);
+  })
+);

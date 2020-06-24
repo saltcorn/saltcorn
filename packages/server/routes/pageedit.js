@@ -5,22 +5,32 @@ const Field = require("@saltcorn/data/models/field");
 const Page = require("@saltcorn/data/models/page");
 const { div, a } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant } = require("../routes/utils.js");
 const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
   link,
   post_btn,
-  post_delete_btn
+  post_delete_btn,
+  renderBuilder
 } = require("@saltcorn/markup");
 const router = new Router();
 module.exports = router;
 
 const pageFlow = new Workflow({
   action: "/pageedit/edit/",
+  onDone: async context => {
+    const { id, columns, ...pageRow } = context;
+    pageRow.min_role = +pageRow.min_role;
+    if (!pageRow.fixed_states) pageRow.fixed_states = {};
+    if (id) {
+      await Page.update(id, pageRow);
+    } else await Page.create(pageRow);
+    return { redirect: `/pageedit` };
+  },
   steps: [
     {
       name: "page",
@@ -70,7 +80,7 @@ const pageFlow = new Workflow({
   ]
 });
 
-router.get("/", setTenant, async (req, res) => {
+router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Page.find({}, { orderBy: "name" });
   const roles = await User.get_roles();
   res.sendWrap(
@@ -92,7 +102,7 @@ router.get("/", setTenant, async (req, res) => {
         },
         {
           label: "Edit",
-          key: r => link(`/pageedit/edit/${r.id}`, "Edit")
+          key: r => link(`/pageedit/edit/${r.name}`, "Edit")
         },
         {
           label: "Delete",
@@ -111,11 +121,46 @@ router.get("/", setTenant, async (req, res) => {
   );
 });
 
-router.get("/edit/:pagename", setTenant, async (req, res) => {
-  const { pagename } = req.params;
-});
+router.get(
+  "/edit/:pagename",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { pagename } = req.params;
+    const page = await Page.findOne({ name: pagename });
+    const wfres = await pageFlow.run(page);
 
-router.get("/new", setTenant, async (req, res) => {
-  const wfres = await pageFlow.run({});
-  res.sendWrap(`New page`, renderForm(wfres.renderForm, req.csrfToken()));
-});
+    res.sendWrap(`Edit page`, renderForm(wfres.renderForm, req.csrfToken()));
+  })
+);
+
+router.get(
+  "/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const wfres = await pageFlow.run({});
+    res.sendWrap(`New page`, renderForm(wfres.renderForm, req.csrfToken()));
+  })
+);
+
+router.post(
+  "/edit",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const wfres = await pageFlow.run(req.body);
+    console.log(wfres);
+    if (wfres.renderForm)
+      res.sendWrap(
+        `Page attributes`,
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
+    else if (wfres.renderBuilder)
+      res.sendWrap(
+        `Page configuration`,
+        renderBuilder(wfres.renderBuilder, req.csrfToken())
+      );
+    else res.redirect(wfres.redirect);
+  })
+);

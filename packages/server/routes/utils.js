@@ -60,11 +60,8 @@ const csrfField = req =>
     value: req.csrfToken ? req.csrfToken() : req
   });
 
-const error_catcher = fn =>
-  (request, response, next) => {
-    Promise
-      .resolve(fn(request, response, next))
-      .catch(next);
+const error_catcher = fn => (request, response, next) => {
+  Promise.resolve(fn(request, response, next)).catch(next);
 };
 
 module.exports = {

@@ -162,35 +162,55 @@ const fieldFlow = new Workflow({
     }
   ]
 });
-router.get("/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
-  const field = await Field.findOne({ id });
-  const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
-  res.sendWrap(`Edit field`, renderForm(wfres.renderForm, req.csrfToken()));
-}));
+router.get(
+  "/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const field = await Field.findOne({ id });
+    const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
+    res.sendWrap(`Edit field`, renderForm(wfres.renderForm, req.csrfToken()));
+  })
+);
 
-router.get("/new/:table_id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { table_id } = req.params;
-  const wfres = await fieldFlow.run({ table_id: +table_id });
-  res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
-}));
+router.get(
+  "/new/:table_id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { table_id } = req.params;
+    const wfres = await fieldFlow.run({ table_id: +table_id });
+    res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
+  })
+);
 
-router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { id } = req.params;
-  const f = await Field.findOne({ id });
-  const table_id = f.table_id;
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const f = await Field.findOne({ id });
+    const table_id = f.table_id;
 
-  await f.delete();
+    await f.delete();
 
-  res.redirect(`/table/${table_id}`);
-}));
+    res.redirect(`/table/${table_id}`);
+  })
+);
 
-router.post("/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const wfres = await fieldFlow.run(req.body);
-  if (wfres.renderForm)
-    res.sendWrap(
-      `Field attributes`,
-      renderForm(wfres.renderForm, req.csrfToken())
-    );
-  else res.redirect(wfres.redirect);
-}));
+router.post(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const wfres = await fieldFlow.run(req.body);
+    if (wfres.renderForm)
+      res.sendWrap(
+        `Field attributes`,
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
+    else res.redirect(wfres.redirect);
+  })
+);

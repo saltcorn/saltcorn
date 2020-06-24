@@ -6,6 +6,7 @@ const Crash = require("./crash");
 const File = require("./file");
 const View = require("./view");
 const User = require("./user");
+const Page = require("./page");
 
 afterAll(db.close);
 
@@ -25,6 +26,23 @@ describe("Crash", () => {
     const cs = await Crash.find();
 
     expect(cs[0].reltime.length > 0).toBe(true);
+  });
+});
+
+describe("Page", () => {
+  it("should create", async () => {
+    await Page.create({
+      name: "foo",
+      title: "foo",
+      description: "foo",
+      min_role: 4,
+      layout: {},
+      fixed_states: {}
+    });
+
+    const cs = await Page.find();
+
+    expect(cs[0].name).toBe("foo");
   });
 });
 
