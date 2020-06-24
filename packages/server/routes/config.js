@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { isAdmin, setTenant } = require("./utils.js");
+const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
@@ -18,7 +18,7 @@ const router = new Router();
 module.exports = router;
 
 //create -- new
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const cfgs = await getAllConfigOrDefaults();
   const canEdit = key => getState().types[configTypes[key].type];
   const hideValue = key =>
@@ -42,7 +42,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
     Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))
   );
   res.sendWrap(`Configuration`, configTable);
-});
+}));
 
 const formForKey = (key, value) =>
   new Form({
@@ -58,7 +58,7 @@ const formForKey = (key, value) =>
     ...(typeof value !== "undefined" && { values: { [key]: value } })
   });
 
-router.get("/edit/:key", setTenant, isAdmin, async (req, res) => {
+router.get("/edit/:key", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { key } = req.params;
 
   const value = await getConfig(key);
@@ -66,9 +66,9 @@ router.get("/edit/:key", setTenant, isAdmin, async (req, res) => {
     `Edit configuration key ${key}`,
     renderForm(formForKey(key, value), req.csrfToken())
   );
-});
+}));
 
-router.post("/edit/:key", setTenant, isAdmin, async (req, res) => {
+router.post("/edit/:key", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { key } = req.params;
 
   const form = formForKey(key);
@@ -84,11 +84,11 @@ router.post("/edit/:key", setTenant, isAdmin, async (req, res) => {
 
     res.redirect(`/config/`);
   }
-});
+}));
 
-router.post("/delete/:key", setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:key", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { key } = req.params;
   await getState().deleteConfig(key);
   req.flash("success", `Configuration key ${key} deleted`);
   res.redirect(`/config/`);
-});
+}));

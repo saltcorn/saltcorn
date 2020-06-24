@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant, loggedIn } = require("./utils.js");
+const { setTenant, loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 const { renderForm } = require("@saltcorn/markup");
@@ -11,16 +11,16 @@ const router = new Router();
 module.exports = router;
 
 //create -- new
-router.get("/:tname", setTenant, loggedIn, async (req, res) => {
+router.get("/:tname", setTenant, loggedIn, error_catcher(async (req, res) => {
   const { tname } = req.params;
   const table = await Table.findOne({ name: tname });
   const fields = await Field.find({ table_id: table.id });
   const form = new Form({ action: `/edit/${tname}`, fields });
   await form.fill_fkey_options();
   res.sendWrap(`New ${table.name}`, renderForm(form, req.csrfToken()));
-});
+}));
 
-router.get("/:tname/:id", setTenant, loggedIn, async (req, res) => {
+router.get("/:tname/:id", setTenant, loggedIn, error_catcher(async (req, res) => {
   const { tname, id } = req.params;
   const table = await Table.findOne({ name: tname });
 
@@ -31,9 +31,9 @@ router.get("/:tname/:id", setTenant, loggedIn, async (req, res) => {
   await form.fill_fkey_options();
 
   res.sendWrap(`Edit ${table.name}`, renderForm(form, req.csrfToken()));
-});
+}));
 
-router.post("/:tname", setTenant, loggedIn, async (req, res) => {
+router.post("/:tname", setTenant, loggedIn, error_catcher(async (req, res) => {
   const { tname } = req.params;
   const table = await Table.findOne({ name: tname });
 
@@ -52,13 +52,13 @@ router.post("/:tname", setTenant, loggedIn, async (req, res) => {
     }
     res.redirect(`/list/${table.name}`);
   }
-});
+}));
 
 router.post(
   "/toggle/:name/:id/:field_name",
   setTenant,
   loggedIn,
-  async (req, res) => {
+  error_catcher(async (req, res) => {
     const { name, id, field_name } = req.params;
     const { redirect } = req.query;
     const table = await Table.findOne({ name });
@@ -66,4 +66,4 @@ router.post(
 
     res.redirect(redirect || `/list/${table.name}`);
   }
-);
+));

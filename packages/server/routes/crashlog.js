@@ -14,12 +14,12 @@ const {
   p
 } = require("@saltcorn/markup/tags");
 
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const crashes = await Crash.find({});
   res.sendWrap(
     "Crash log",
@@ -27,7 +27,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       ? div(h3("No errors reported"), p("Everything is going extremely well."))
       : mkTable(
           [
-            { label: "Show", key: r => link(`/crashlog/${r.id}`, r.message) },
+            { label: "Show", key: r => link(`/crashlog/${r.id}`, text(r.msg_short)) },
             { label: "When", key: r => r.reltime },
             ...(db.is_it_multi_tenant()
               ? [{ label: "Tenant", key: "tenant" }]
@@ -36,9 +36,9 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
           crashes
         )
   );
-});
+}));
 
-router.get("/:id", setTenant, isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const crash = await Crash.findOne({ id });
   res.sendWrap(
@@ -55,4 +55,4 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       )
     )
   );
-});
+}));

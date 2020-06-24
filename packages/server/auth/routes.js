@@ -4,7 +4,7 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant } = require("../routes/utils.js");
+const { setTenant, error_catcher } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 
 const {
@@ -35,7 +35,7 @@ const loginForm = () =>
     submitLabel: "Login"
   });
 
-router.get("/login", setTenant, async (req, res) => {
+router.get("/login", setTenant, error_catcher(async (req, res) => {
   const allow_signup = getState().getConfig("allow_signup");
   res.sendWrap(
     `Login`,
@@ -44,7 +44,7 @@ router.get("/login", setTenant, async (req, res) => {
       ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
       : [])
   );
-});
+}));
 
 router.get("/logout", setTenant, (req, res) => {
   req.logout();
@@ -55,7 +55,7 @@ router.get("/logout", setTenant, (req, res) => {
   });
 });
 
-router.get("/signup", setTenant, async (req, res) => {
+router.get("/signup", setTenant, error_catcher(async (req, res) => {
   if (getState().getConfig("allow_signup")) {
     const form = loginForm();
     form.action = "/auth/signup";
@@ -70,9 +70,9 @@ router.get("/signup", setTenant, async (req, res) => {
     req.flash("danger", "Signups not enabled");
     res.redirect("/auth/login");
   }
-});
+}));
 
-router.get("/create_first_user", setTenant, async (req, res) => {
+router.get("/create_first_user", setTenant, error_catcher(async (req, res) => {
   const hasUsers = await User.nonEmpty();
   if (!hasUsers) {
     const form = loginForm();
@@ -85,8 +85,8 @@ router.get("/create_first_user", setTenant, async (req, res) => {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");
   }
-});
-router.post("/create_first_user", setTenant, async (req, res) => {
+}));
+router.post("/create_first_user", setTenant, error_catcher(async (req, res) => {
   const hasUsers = await User.nonEmpty();
   if (!hasUsers) {
     const { email, password } = req.body;
@@ -106,8 +106,8 @@ router.post("/create_first_user", setTenant, async (req, res) => {
     req.flash("danger", "Users already present");
     res.redirect("/auth/login");
   }
-});
-router.post("/signup", setTenant, async (req, res) => {
+}));
+router.post("/signup", setTenant, error_catcher(async (req, res) => {
   if (getState().getConfig("allow_signup")) {
     const { email, password } = req.body;
     if (email.length > 127) {
@@ -140,7 +140,7 @@ router.post("/signup", setTenant, async (req, res) => {
     req.flash("danger", "Signups not enabled");
     res.redirect("/auth/login");
   }
-});
+}));
 
 router.post(
   "/login",
@@ -150,7 +150,7 @@ router.post(
     failureRedirect: "/auth/login",
     failureFlash: true
   }),
-  async (req, res) => {
+  error_catcher(async (req, res) => {
     if (req.body.remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
     } else {
@@ -159,4 +159,4 @@ router.post(
     req.flash("success", "Login sucessful");
     res.redirect("/");
   }
-);
+));

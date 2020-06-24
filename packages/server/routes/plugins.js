@@ -1,5 +1,5 @@
 const Router = require("express-promise-router");
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
@@ -41,7 +41,7 @@ const pluginForm = plugin => {
   }
   return form;
 };
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const rows = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
@@ -132,20 +132,20 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       }
     ]
   });
-});
+}));
 
-router.get("/new/", setTenant, isAdmin, async (req, res) => {
+router.get("/new/", setTenant, isAdmin, error_catcher(async (req, res) => {
   res.sendWrap(`New Plugin`, renderForm(pluginForm(), req.csrfToken()));
-});
+}));
 
-router.get("/:id/", setTenant, isAdmin, async (req, res) => {
+router.get("/:id/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const plugin = await Plugin.findOne({ id });
 
   res.sendWrap(`Edit Plugin`, renderForm(pluginForm(plugin), req.csrfToken()));
-});
+}));
 
-router.post("/", setTenant, isAdmin, async (req, res) => {
+router.post("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const plugin = new Plugin(req.body);
   const schema = db.getTenantSchema();
   if (schema !== "public") {
@@ -168,9 +168,9 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
       res.sendWrap(`Edit Plugin`, renderForm(form, req.csrfToken()));
     }
   }
-});
+}));
 
-router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
 
   const plugin = await Plugin.findOne({ id });
@@ -188,22 +188,22 @@ router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
     );
   }
   res.redirect(`/plugins`);
-});
+}));
 
-router.post("/reload/:id", setTenant, isAdmin, async (req, res) => {
+router.post("/reload/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
 
   const plugin = await Plugin.findOne({ id });
   await load_plugins.loadPlugin(plugin);
 
   res.redirect(`/plugins`);
-});
+}));
 
-router.post("/install/:name", setTenant, isAdmin, async (req, res) => {
+router.post("/install/:name", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { name } = req.params;
 
   const plugin = await Plugin.store_by_name(name);
   await load_plugins.loadAndSaveNewPlugin(plugin);
   req.flash("success", `Plugin ${plugin.name} installed`);
   res.redirect(`/plugins`);
-});
+}));

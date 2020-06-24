@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const { post_btn } = require("@saltcorn/markup");
 const { div } = require("@saltcorn/markup/tags");
@@ -11,7 +11,7 @@ const { loadAllPlugins } = require("../load_plugins");
 const router = new Router();
 module.exports = router;
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   res.sendWrap(
     `Admin`,
     div(
@@ -19,9 +19,9 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       post_btn("/admin/restart", "Restart", req.csrfToken())
     )
   );
-});
+}));
 
-router.post("/restart", setTenant, isAdmin, async (req, res) => {
+router.post("/restart", setTenant, isAdmin, error_catcher(async (req, res) => {
   if (db.getTenantSchema() === "public") {
     process.exit(0);
   } else {
@@ -29,4 +29,4 @@ router.post("/restart", setTenant, isAdmin, async (req, res) => {
     req.flash("success", "Restart complete");
     res.redirect("/admin");
   }
-});
+}));

@@ -10,7 +10,7 @@ const {
   post_btn,
   post_delete_btn
 } = require("@saltcorn/markup");
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
@@ -67,7 +67,7 @@ const tableForm = table => {
   return form;
 };
 
-router.get("/new/", setTenant, isAdmin, async (req, res) => {
+router.get("/new/", setTenant, isAdmin, error_catcher(async (req, res) => {
   res.sendWrap(
     `New table`,
     renderForm(
@@ -79,9 +79,9 @@ router.get("/new/", setTenant, isAdmin, async (req, res) => {
       req.csrfToken()
     )
   );
-});
+}));
 
-router.get("/:id", setTenant, isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const table = await Table.findOne({ id });
 
@@ -194,9 +194,9 @@ router.get("/:id", setTenant, isAdmin, async (req, res) => {
       }
     ]
   });
-});
+}));
 
-router.post("/", setTenant, isAdmin, async (req, res) => {
+router.post("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const set_api_access = v => {
     switch (v.api_access) {
       case "No API":
@@ -238,9 +238,9 @@ router.post("/", setTenant, isAdmin, async (req, res) => {
     await Table.update(parseInt(id), rest);
     res.redirect(`/table/${id}`);
   }
-});
+}));
 
-router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const t = await Table.findOne({ id });
   try {
@@ -251,9 +251,9 @@ router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
     req.flash("error", err.message);
     res.redirect(`/table`);
   }
-});
+}));
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const rows = await Table.find({}, { orderBy: "name" });
   res.sendWrap(
     "Tables",
@@ -276,4 +276,4 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         ),
     a({ href: `/table/new`, class: "btn btn-primary" }, "New table")
   );
-});
+}));
