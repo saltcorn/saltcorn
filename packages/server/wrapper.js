@@ -45,6 +45,7 @@ module.exports = function(req, res, next) {
     const adminItems = [
       { link: "/table", label: "Tables" },
       { link: "/viewedit", label: "Views" },
+      { link: "/pageedit", label: "Pages" },
       { link: "/files", label: "Files" },
       {
         label: "Settings",
