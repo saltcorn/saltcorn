@@ -9,6 +9,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
+import { Image } from "./elements/Image";
 import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
 import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
@@ -102,7 +103,8 @@ const Builder = ({ options, layout, mode }) => {
                 HTMLCode,
                 LineBreak,
                 Aggregation,
-                Card
+                Card,
+                Image
               }}
             >
               <Canvas className="canvas"></Canvas>

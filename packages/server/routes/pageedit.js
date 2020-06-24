@@ -8,6 +8,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
+const File = require("@saltcorn/data/models/file");
+
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
@@ -71,8 +73,11 @@ const pageFlow = new Workflow({
       name: "layout",
       builder: async context => {
         const views = await View.find();
+        const images = await File.find({mime_super: 'image'});
+
         return {
           views,
+          images,
           mode: "page"
         };
       }

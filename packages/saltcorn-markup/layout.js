@@ -1,5 +1,5 @@
 const { contract, is } = require("contractis");
-const { div, span, h6, text } = require("./tags");
+const { div, span, h6, text, img } = require("./tags");
 const { alert } = require("./layout_utils");
 
 const makeSegments = (body, alerts) => {
@@ -49,6 +49,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents);
+    }
+    if (segment.type === "image") {
+      return wrap(segment, isTop, ix, img({class: 'w-100', alt: segment.alt, src: `/files/serve/${segment.fileid}`}));
     }
     if (segment.type === "card")
       return wrap(

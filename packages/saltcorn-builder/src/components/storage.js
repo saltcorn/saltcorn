@@ -10,6 +10,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Card } from "./elements/Card";
+import { Image } from "./elements/Image";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -36,6 +37,15 @@ export const layoutToNodes = (layout, query, actions) => {
           text={segment.contents}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "image") {
+      return (
+        <Image
+          key={ix}
+          alt={segment.alt}
+          block={segment.block || false}
+          fileid={segment.fileid || 0}
         />
       );
     } else if (segment.type === "line_break") {
@@ -183,6 +193,14 @@ export const craftToSaltcorn = nodes => {
           go(nodes[node._childCanvas.cardContents]),
           type: "card",
           title: node.props.title
+      };
+    }
+    if (node.displayName === Image.name) {
+      return {
+          type: "image",
+          alt: node.props.alt,
+          fileid: node.props.fileid,
+          block: node.props.block
       };
     }
     if (node.displayName === Field.name) {

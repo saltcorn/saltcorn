@@ -11,6 +11,7 @@ import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
+import { Image } from "./elements/Image";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -229,7 +230,7 @@ export const ToolboxEdit = () => {
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options } = options;
+  const { fields, field_view_options,images } = options;
   return (
     <Fragment>
       <h5>Drag to add</h5>
@@ -274,14 +275,20 @@ export const ToolboxPage = () => {
             >
               Card
             </td>
+            <td
+              title="Image"
+              ref={ref => connectors.create(ref, <Image fileid={images.length>0?images[0].id:0} />)}
+            >
+              <i className="fas fa-image"></i>
+            </td>
           </tr>
         </tbody>
       </table>
     </Fragment>
   );
 };
-//card
 //footer
 //hero
 //image
 //link (button or a)
+//section
