@@ -258,6 +258,7 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
+            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
             <td
               title="HTML code"
               ref={ref => connectors.create(ref, <HTMLCode text={""} />)}

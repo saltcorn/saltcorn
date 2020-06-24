@@ -8,6 +8,7 @@ import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
+import { HTMLCode } from "./elements/HTMLCode";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -25,7 +26,9 @@ export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
-    if (segment.type === "blank") {
+    if (segment.type === "blank" && segment.isHTML) {
+      return <HTMLCode text={segment.contents} />;
+    } else if (segment.type === "blank") {
       return (
         <Text
           key={ix}
@@ -143,6 +146,13 @@ export const craftToSaltcorn = nodes => {
         contents: node.props.text,
         block: node.props.block,
         textStyle: node.props.textStyle
+      };
+    }
+    if (node.displayName === HTMLCode.name) {
+      return {
+        type: "blank",
+        isHTML: true,
+        contents: node.props.text
       };
     }
     if (node.displayName === LineBreak.name) {

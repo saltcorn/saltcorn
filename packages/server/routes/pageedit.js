@@ -150,7 +150,6 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const wfres = await pageFlow.run(req.body);
-    console.log(wfres);
     if (wfres.renderForm)
       res.sendWrap(
         `Page attributes`,
