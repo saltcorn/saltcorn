@@ -1,5 +1,5 @@
 const Router = require("express-promise-router");
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -52,7 +52,7 @@ const install_pack = contract(
   }
 );
 
-router.get("/create/", setTenant, isAdmin, async (req, res) => {
+router.get("/create/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const tables = await Table.find({});
   const tableFields = tables.map(t => ({
     label: `${t.name} table`,
@@ -81,9 +81,9 @@ router.get("/create/", setTenant, isAdmin, async (req, res) => {
       req.csrfToken()
     )
   );
-});
+}));
 
-router.post("/create", setTenant, isAdmin, async (req, res) => {
+router.post("/create", setTenant, isAdmin, error_catcher(async (req, res) => {
   var pack = { tables: [], views: [], plugins: [] };
   for (const k of Object.keys(req.body)) {
     const [type, name] = k.split(".");
@@ -103,7 +103,7 @@ router.post("/create", setTenant, isAdmin, async (req, res) => {
     }
   }
   res.sendWrap(`Pack`, pre({ class: "wsprewrap" }, code(JSON.stringify(pack))));
-});
+}));
 
 const install_pack_form = () =>
   new Form({
@@ -117,14 +117,14 @@ const install_pack_form = () =>
     ]
   });
 
-router.get("/install", setTenant, isAdmin, async (req, res) => {
+router.get("/install", setTenant, isAdmin, error_catcher(async (req, res) => {
   res.sendWrap(
     `Install Pack`,
     renderForm(install_pack_form(), req.csrfToken())
   );
-});
+}));
 
-router.post("/install", setTenant, isAdmin, async (req, res) => {
+router.post("/install", setTenant, isAdmin, error_catcher(async (req, res) => {
   var pack, error;
   try {
     pack = JSON.parse(req.body.pack);
@@ -144,9 +144,9 @@ router.post("/install", setTenant, isAdmin, async (req, res) => {
 
     res.redirect(`/`);
   }
-});
+}));
 
-router.post("/install-named/:name", setTenant, isAdmin, async (req, res) => {
+router.post("/install-named/:name", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { name } = req.params;
 
   const pack = await fetch_pack_by_name(name);
@@ -154,4 +154,4 @@ router.post("/install-named/:name", setTenant, isAdmin, async (req, res) => {
   await install_pack(pack.pack, name);
 
   res.redirect(`/`);
-});
+}));

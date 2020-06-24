@@ -60,11 +60,19 @@ const csrfField = req =>
     value: req.csrfToken ? req.csrfToken() : req
   });
 
+const error_catcher = fn =>
+  (request, response, next) => {
+    Promise
+      .resolve(fn(request, response, next))
+      .catch(next);
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
   loggedIn,
   isAdmin,
   setTenant,
-  get_base_url
+  get_base_url,
+  error_catcher
 };

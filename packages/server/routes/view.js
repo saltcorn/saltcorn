@@ -3,12 +3,12 @@ const Router = require("express-promise-router");
 const View = require("@saltcorn/data/models/view");
 const { div, text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
-const { setTenant } = require("../routes/utils.js");
+const { setTenant, error_catcher } = require("../routes/utils.js");
 
 const router = new Router();
 module.exports = router;
 
-router.get("/:viewname", setTenant, async (req, res) => {
+router.get("/:viewname", setTenant, error_catcher(async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });
@@ -28,8 +28,8 @@ router.get("/:viewname", setTenant, async (req, res) => {
       div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
     );
   }
-});
-router.post("/:viewname/:route", setTenant, async (req, res) => {
+}));
+router.post("/:viewname/:route", setTenant, error_catcher(async (req, res) => {
   const { viewname, route } = req.params;
 
   const view = await View.findOne({ name: viewname });
@@ -42,9 +42,9 @@ router.post("/:viewname/:route", setTenant, async (req, res) => {
   } else {
     await view.runRoute(route, req.body, res, { res, req });
   }
-});
+}));
 
-router.post("/:viewname", setTenant, async (req, res) => {
+router.post("/:viewname", setTenant, error_catcher(async (req, res) => {
   const { viewname } = req.params;
 
   const view = await View.findOne({ name: viewname });
@@ -57,4 +57,4 @@ router.post("/:viewname", setTenant, async (req, res) => {
   } else {
     await view.runPost(req.query, req.body, { res, req });
   }
-});
+}));

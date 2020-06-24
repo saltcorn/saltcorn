@@ -9,7 +9,7 @@ const {
   post_btn,
   post_delete_btn
 } = require("@saltcorn/markup");
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
   span,
   h5,
@@ -52,7 +52,7 @@ const editRoleForm = (file, roles, req) =>
     )
   );
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const rows = await File.find({}, { orderBy: "filename" });
   const roles = await User.get_roles();
   res.sendWrap(
@@ -94,9 +94,9 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       })
     )
   );
-});
+}));
 
-router.get("/download/:id", setTenant, async (req, res) => {
+router.get("/download/:id", setTenant, error_catcher(async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   const user_id = req.user && req.user.id;
   const { id } = req.params;
@@ -108,9 +108,9 @@ router.get("/download/:id", setTenant, async (req, res) => {
     req.flash("warning", "Not authorized");
     res.redirect("/");
   }
-});
+}));
 
-router.get("/serve/:id", setTenant, async (req, res) => {
+router.get("/serve/:id", setTenant, error_catcher(async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   const user_id = req.user && req.user.id;
   const { id } = req.params;
@@ -124,16 +124,16 @@ router.get("/serve/:id", setTenant, async (req, res) => {
     req.flash("warning", "Not authorized");
     res.redirect("/");
   }
-});
+}));
 
-router.post("/setrole/:id", setTenant, isAdmin, async (req, res) => {
+router.post("/setrole/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const role = req.body.role;
   await File.update(+id, { min_role_read: role });
   res.redirect("/files");
-});
+}));
 
-router.post("/upload", setTenant, isAdmin, async (req, res) => {
+router.post("/upload", setTenant, isAdmin, error_catcher(async (req, res) => {
   if (!req.files && !req.files.file) {
     req.flash("warning", "No file found");
   } else {
@@ -142,4 +142,4 @@ router.post("/upload", setTenant, isAdmin, async (req, res) => {
   }
 
   res.redirect("/files");
-});
+}));
