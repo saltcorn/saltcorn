@@ -26,7 +26,7 @@ export const CardSettings = () => {
   }));
   return (
     <div>
-      <label>Title</label>
+      <label>Card title</label>
       <input
         type="text"
         value={title}

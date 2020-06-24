@@ -9,6 +9,7 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
 import { HTMLCode } from "./elements/HTMLCode";
+import { Card } from "./elements/Card";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -85,6 +86,14 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.action_name}
           block={segment.block || false}
           minRole={segment.minRole || 10}
+        />
+      );
+    } else if (segment.type === "card") {
+      return (
+        <Card
+          key={ix}
+          contents={toTag(segment.contents)}
+          title={segment.title}
         />
       );
     } else if (segment.besides) {
@@ -166,6 +175,14 @@ export const craftToSaltcorn = nodes => {
         ),
         aligns: node.props.aligns,
         widths
+      };
+    }
+    if (node.displayName === Card.name) {
+      return {
+        contents: 
+          go(nodes[node._childCanvas.cardContents]),
+          type: "card",
+          title: node.props.title
       };
     }
     if (node.displayName === Field.name) {
