@@ -7,11 +7,13 @@ import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
+import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
 import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
+import { Card } from "./elements/Card";
 
 const { Provider } = optionsCtx;
 
@@ -96,7 +98,11 @@ const Builder = ({ options, layout, mode }) => {
                 JoinField,
                 Field,
                 ViewLink,
-                Action
+                Action,
+                HTMLCode,
+                LineBreak,
+                Aggregation,
+                Card
               }}
             >
               <Canvas className="canvas"></Canvas>

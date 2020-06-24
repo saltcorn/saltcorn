@@ -25,6 +25,10 @@ div.settings-panel {
   min-height: 150px;
 }
 
+div.card.builder {
+  border: 1px solid #111111;
+}
+
 table.toolbox td {
   border: 1px solid black;
   width: 70px;

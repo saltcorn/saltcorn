@@ -10,6 +10,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
+import { Card } from "./elements/Card";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -266,6 +267,14 @@ export const ToolboxPage = () => {
               <i className="fas fa-code"></i>
             </td>
           </tr>
+          <tr>
+            <td
+              title="Card"
+              ref={ref => connectors.create(ref, <Card contents={<Empty />} />)}
+            >
+              Card
+            </td>
+          </tr>
         </tbody>
       </table>
     </Fragment>
@@ -275,3 +284,4 @@ export const ToolboxPage = () => {
 //footer
 //hero
 //image
+//link (button or a)
