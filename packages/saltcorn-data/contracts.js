@@ -24,7 +24,7 @@ const is_menu_item = is.obj({
   )
 });
 
-const is_layout_container = is.obj({ type: is.one_of("blank card pageHeader".split(' ')) });
+const is_layout_container = is.obj({ type: is.one_of("blank card hero pageHeader footer".split(' ')) });
 
 const is_layout = is.obj(
   {
@@ -50,7 +50,7 @@ const is_layout = is.obj(
 
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
-  body: is.any,//is.or(is.str, is_layout),
+  body: is.or(is.str, is_layout),
   currentUrl: is.str,
   brand: is.obj({ name: is.str }),
   menu: is.array(
