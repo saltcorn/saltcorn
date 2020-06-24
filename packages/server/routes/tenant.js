@@ -11,7 +11,7 @@ const { div, nbsp, p, a } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
-const { setTenant, isAdmin } = require("./utils.js");
+const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
@@ -33,7 +33,7 @@ const tenant_form = () =>
     ]
   });
 //TODO only if multi ten and not already in subdomain
-router.get("/create", setTenant, async (req, res) => {
+router.get("/create", setTenant, error_catcher(async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
@@ -46,7 +46,7 @@ router.get("/create", setTenant, async (req, res) => {
     `Create application`,
     renderForm(tenant_form(), req.csrfToken())
   );
-});
+}));
 
 const getNewURL = (req, subdomain) => {
   var ports = "";
@@ -60,7 +60,7 @@ const getNewURL = (req, subdomain) => {
   return newurl;
 };
 
-router.post("/create", setTenant, async (req, res) => {
+router.post("/create", setTenant, error_catcher(async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
@@ -93,9 +93,9 @@ router.post("/create", setTenant, async (req, res) => {
       );
     }
   }
-});
+}));
 
-router.get("/list", setTenant, isAdmin, async (req, res) => {
+router.get("/list", setTenant, isAdmin, error_catcher(async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
@@ -117,9 +117,9 @@ router.get("/list", setTenant, isAdmin, async (req, res) => {
     ),
     div(`Found ${tens.length} tenants`)
   );
-});
+}));
 
-router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:sub", setTenant, isAdmin, error_catcher(async (req, res) => {
   if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
     res.sendWrap(`Create application`, "Multi-tenancy not enabled");
     return;
@@ -128,4 +128,4 @@ router.post("/delete/:sub", setTenant, isAdmin, async (req, res) => {
 
   await deleteTenant(sub);
   res.redirect(`/tenant/list`);
-});
+}));

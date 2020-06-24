@@ -4,12 +4,12 @@ const View = require("@saltcorn/data/models/view");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant } = require("../routes/utils.js");
+const { setTenant, error_catcher } = require("../routes/utils.js");
 
 const router = new Router();
 module.exports = router;
 
-router.get("/:pagename", setTenant, async (req, res) => {
+router.get("/:pagename", setTenant, error_catcher(async (req, res) => {
   const { pagename } = req.params;
   const page = getState().pages[pagename];
   if (page) {
@@ -22,4 +22,4 @@ router.get("/:pagename", setTenant, async (req, res) => {
   } else {
     res.status(404).sendWrap(`${pagename} page`, `Page ${pagename} not found`);
   }
-});
+}));

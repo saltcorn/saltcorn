@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
-const { isAdmin, setTenant } = require("./utils.js");
+const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -23,7 +23,7 @@ const limitFields = fields => r => {
   }
 };
 
-router.get("/:tableName/", setTenant, async (req, res) => {
+router.get("/:tableName/", setTenant, error_catcher(async (req, res) => {
   const { tableName } = req.params;
   const { fields, ...req_query } = req.query;
   const table = await Table.findOne({ name: tableName });
@@ -45,4 +45,4 @@ router.get("/:tableName/", setTenant, async (req, res) => {
   } else {
     res.status(401).json({ error: "Not authorized" });
   }
-});
+}));

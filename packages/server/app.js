@@ -14,7 +14,7 @@ const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
 const errors = require("./errors");
 const { getConfig } = require("@saltcorn/data/models/config");
-const { setTenant, get_base_url } = require("./routes/utils.js");
+const { setTenant, get_base_url, error_catcher } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
@@ -118,17 +118,17 @@ const getApp = async (opts = {}) => {
 
   mountRoutes(app);
 
-  app.get("/", setTenant, homepage);
+  app.get("/", setTenant, error_catcher(homepage));
 
-  app.get("/robots.txt", setTenant, async (req, res) => {
+  app.get("/robots.txt", setTenant, error_catcher(async (req, res) => {
     const base = get_base_url(req);
     res.set("Content-Type", "text/plain");
     res.send(`User-agent: * 
 Allow: /
 Sitemap: ${base}sitemap.xml
 `);
-  });
-  app.get("/sitemap.xml", setTenant, async (req, res) => {
+  }));
+  app.get("/sitemap.xml", setTenant, error_catcher(async (req, res) => {
     const base = get_base_url(req);
     res.set("Content-Type", "text/xml");
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -140,7 +140,7 @@ Sitemap: ${base}sitemap.xml
       <priority>1.00</priority>
     </url>
     </urlset>`);
-  });
+  }));
   if (!opts.disableCatch) app.use(errors);
   return app;
 };

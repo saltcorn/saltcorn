@@ -6,7 +6,7 @@ const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
-const { isAdmin, setTenant } = require("../routes/utils");
+const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 
 const router = new Router();
 module.exports = router;
@@ -48,7 +48,7 @@ const userForm = contract(
   }
 );
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+router.get("/", setTenant, isAdmin, error_catcher(async (req, res) => {
   const users = await User.find();
   const roles = await User.get_roles();
   var roleMap = {};
@@ -75,22 +75,22 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
     ),
     link(`/useradmin/new`, "Add user")
   );
-});
+}));
 
-router.get("/new", setTenant, isAdmin, async (req, res) => {
+router.get("/new", setTenant, isAdmin, error_catcher(async (req, res) => {
   const form = await userForm();
   res.sendWrap("New user", renderForm(form, req.csrfToken()));
-});
+}));
 
-router.get("/:id", setTenant, isAdmin, async (req, res) => {
+router.get("/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const user = await User.findOne({ id });
   const form = await userForm(user);
 
   res.sendWrap("Edit user", renderForm(form, req.csrfToken()));
-});
+}));
 
-router.post("/save", setTenant, isAdmin, async (req, res) => {
+router.post("/save", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { email, password, role_id, id } = req.body;
   if (id) {
     await db.update("users", { email, role_id }, id);
@@ -102,13 +102,13 @@ router.post("/save", setTenant, isAdmin, async (req, res) => {
     req.flash("success", `User ${email} created`);
   }
   res.redirect(`/useradmin`);
-});
+}));
 
-router.post("/delete/:id", setTenant, isAdmin, async (req, res) => {
+router.post("/delete/:id", setTenant, isAdmin, error_catcher(async (req, res) => {
   const { id } = req.params;
   const u = await User.findOne({ id });
   await u.delete();
   req.flash("success", `User ${u.email} deleted`);
 
   res.redirect(`/useradmin`);
-});
+}));
