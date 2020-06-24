@@ -9,6 +9,7 @@ class Page {
     this.min_role = o.min_role;
     this.id = o.id;
     this.layout = o.layout;
+    this.fixed_states = o.fixed_states;
     contract.class(this);
   }
   static async find(where, selectopts) {
@@ -41,7 +42,8 @@ Page.contract = {
     description: is.description,
     id: is.maybe(is.posint),
     min_role: is.posint,
-    layout: is.obj()
+    layout: is.obj(),
+    fixed_states: is.obj()
   },
   static_methods: {
     find: is.fun(

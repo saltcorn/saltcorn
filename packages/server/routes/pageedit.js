@@ -17,7 +17,7 @@ const pageFlow = new Workflow({
   action: "/pageedit/edit/",
   steps: [
     {
-      name: "field",
+      name: "page",
       form: async context => {
         const roles = await User.get_roles();
 
@@ -49,6 +49,16 @@ const pageFlow = new Workflow({
             }
           ]
         });
+      }
+    },
+    {
+      name: "layout",
+      builder: async context => {
+        const views = await View.find();
+        return {
+          views,
+          mode: "page"
+        };
       }
     }
   ]
@@ -84,10 +94,22 @@ router.get("/", setTenant, async (req, res) => {
         }
       ],
       rows
+    ),
+    a(
+      {
+        href: `/pageedit/new`,
+        class: "btn btn-primary"
+      },
+      "Add page"
     )
   );
 });
 
 router.get("/edit/:pagename", setTenant, async (req, res) => {
   const { pagename } = req.params;
+});
+
+router.get("/new", setTenant, async (req, res) => {
+  const wfres = await pageFlow.run({});
+  res.sendWrap(`New page`, renderForm(wfres.renderForm, req.csrfToken()));
 });
