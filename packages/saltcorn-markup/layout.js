@@ -48,7 +48,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, segment.contents);
+      return wrap(segment, isTop, ix, segment.contents||'');
     }
     if (segment.type === "image") {
       return wrap(
