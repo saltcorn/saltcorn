@@ -163,7 +163,6 @@ const no_views_logged_in = async (req, res) => {
   }
 };
 
-
 const get_config_response = async (cfgKey, res) => {
   const homeCfg = getState().getConfig(cfgKey);
   if (homeCfg) {

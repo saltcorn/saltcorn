@@ -122,5 +122,5 @@ describe("db page", () => {
     await request(app)
       .get("/page/a_page")
       .expect(toInclude(">Bye bye<"));
-  })
-})
+  });
+});

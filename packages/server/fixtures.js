@@ -239,5 +239,5 @@ module.exports = async () => {
       ]
     },
     fixed_states: {}
-  })
+  });
 };
