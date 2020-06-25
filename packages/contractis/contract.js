@@ -69,7 +69,7 @@ const contract_function = (
       check_contract(
         get_return_contract(opts.returns, args),
         rv,
-        "return value " + (fname || "")+'; input arguments were '+JSON.stringify(args),
+        "return value " + (fname || ""),//+'; input arguments were '+JSON.stringify(args),
         contrDefinition,
         newf
       );
