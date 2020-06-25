@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const View = ({ name, view }) => {
+export const View = ({ name, view, state }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
@@ -15,9 +15,10 @@ export const View = ({ name, view }) => {
 };
 
 export const ViewSettings = () => {
-  const { setProp, name, view } = useNode(node => ({
+  const { setProp, name, view, state } = useNode(node => ({
     name: node.data.props.name,
-    view: node.data.props.block
+    view: node.data.props.view,
+    state: node.data.props.state
   }));
   const options = useContext(optionsCtx);
   return (
@@ -36,7 +37,15 @@ export const ViewSettings = () => {
         </select>
       </div>
       <div>
-          
+        <label>State</label>
+        <select
+          value={state}
+          onChange={e => setProp(prop => (prop.state = e.target.value))}
+        >
+          <option value="shared">Shared</option>
+          <option value="isolated">Isolated</option>
+          <option value="fixed">Fixed</option>
+        </select>
       </div>
     </div>
   );
