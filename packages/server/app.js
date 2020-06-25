@@ -120,18 +120,25 @@ const getApp = async (opts = {}) => {
 
   app.get("/", setTenant, error_catcher(homepage));
 
-  app.get("/robots.txt", setTenant, error_catcher(async (req, res) => {
-    const base = get_base_url(req);
-    res.set("Content-Type", "text/plain");
-    res.send(`User-agent: * 
+  app.get(
+    "/robots.txt",
+    setTenant,
+    error_catcher(async (req, res) => {
+      const base = get_base_url(req);
+      res.set("Content-Type", "text/plain");
+      res.send(`User-agent: * 
 Allow: /
 Sitemap: ${base}sitemap.xml
 `);
-  }));
-  app.get("/sitemap.xml", setTenant, error_catcher(async (req, res) => {
-    const base = get_base_url(req);
-    res.set("Content-Type", "text/xml");
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+    })
+  );
+  app.get(
+    "/sitemap.xml",
+    setTenant,
+    error_catcher(async (req, res) => {
+      const base = get_base_url(req);
+      res.set("Content-Type", "text/xml");
+      res.send(`<?xml version="1.0" encoding="UTF-8"?>
     <urlset
           xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
@@ -140,7 +147,8 @@ Sitemap: ${base}sitemap.xml
       <priority>1.00</priority>
     </url>
     </urlset>`);
-  }));
+    })
+  );
   if (!opts.disableCatch) app.use(errors);
   return app;
 };

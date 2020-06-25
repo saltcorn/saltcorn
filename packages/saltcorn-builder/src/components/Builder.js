@@ -7,11 +7,15 @@ import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
+import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
+import { Image } from "./elements/Image";
 import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
-import { ToolboxShow, ToolboxEdit } from "./Toolbox";
+import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
+import { Card } from "./elements/Card";
+import { Link } from "./elements/Link";
 
 const { Provider } = optionsCtx;
 
@@ -96,7 +100,13 @@ const Builder = ({ options, layout, mode }) => {
                 JoinField,
                 Field,
                 ViewLink,
-                Action
+                Action,
+                HTMLCode,
+                LineBreak,
+                Aggregation,
+                Card,
+                Image,
+                Link
               }}
             >
               <Canvas className="canvas"></Canvas>
@@ -107,6 +117,8 @@ const Builder = ({ options, layout, mode }) => {
               <ToolboxShow />
             ) : mode === "edit" ? (
               <ToolboxEdit />
+            ) : mode === "page" ? (
+              <ToolboxPage />
             ) : (
               <div>Missing mode</div>
             )}

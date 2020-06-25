@@ -115,3 +115,12 @@ describe("homepage", () => {
       .expect(toRedirect("/config/"));
   });
 });
+
+describe("db page", () => {
+  it("shows to public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/page/a_page")
+      .expect(toInclude(">Bye bye<"));
+  });
+});

@@ -250,11 +250,14 @@ View.contract = {
       is.promise(is.array(is.class("View")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("View")))),
-    create: is.fun(is.obj({
-      name: is.str,
-      table_id: is.posint,
-      viewtemplate: is.str
-    }), is.promise(is.class("View"))),
+    create: is.fun(
+      is.obj({
+        name: is.str,
+        table_id: is.posint,
+        viewtemplate: is.str
+      }),
+      is.promise(is.class("View"))
+    ),
     update: is.fun([is.obj(), is.posint], is.promise(is.undefined)),
     find_possible_links_to_table: is.fun(
       is.posint,

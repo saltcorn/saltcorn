@@ -52,58 +52,71 @@ const install_pack = contract(
   }
 );
 
-router.get("/create/", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const tables = await Table.find({});
-  const tableFields = tables.map(t => ({
-    label: `${t.name} table`,
-    name: `table.${t.name}`,
-    type: "Bool"
-  }));
-  const views = await View.find({});
-  const viewFields = views.map(t => ({
-    label: `${t.name} view`,
-    name: `view.${t.name}`,
-    type: "Bool"
-  }));
-  const plugins = await Plugin.find({});
-  const pluginFields = plugins.map(t => ({
-    label: `${t.name} plugin`,
-    name: `plugin.${t.name}`,
-    type: "Bool"
-  }));
-  res.sendWrap(
-    `Create Pack`,
-    renderForm(
-      new Form({
-        action: "/packs/create",
-        fields: [...tableFields, ...viewFields, ...pluginFields]
-      }),
-      req.csrfToken()
-    )
-  );
-}));
+router.get(
+  "/create/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tables = await Table.find({});
+    const tableFields = tables.map(t => ({
+      label: `${t.name} table`,
+      name: `table.${t.name}`,
+      type: "Bool"
+    }));
+    const views = await View.find({});
+    const viewFields = views.map(t => ({
+      label: `${t.name} view`,
+      name: `view.${t.name}`,
+      type: "Bool"
+    }));
+    const plugins = await Plugin.find({});
+    const pluginFields = plugins.map(t => ({
+      label: `${t.name} plugin`,
+      name: `plugin.${t.name}`,
+      type: "Bool"
+    }));
+    res.sendWrap(
+      `Create Pack`,
+      renderForm(
+        new Form({
+          action: "/packs/create",
+          fields: [...tableFields, ...viewFields, ...pluginFields]
+        }),
+        req.csrfToken()
+      )
+    );
+  })
+);
 
-router.post("/create", setTenant, isAdmin, error_catcher(async (req, res) => {
-  var pack = { tables: [], views: [], plugins: [] };
-  for (const k of Object.keys(req.body)) {
-    const [type, name] = k.split(".");
-    switch (type) {
-      case "table":
-        pack.tables.push(await table_pack(name));
-        break;
-      case "view":
-        pack.views.push(await view_pack(name));
-        break;
-      case "plugin":
-        pack.plugins.push(await plugin_pack(name));
-        break;
+router.post(
+  "/create",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    var pack = { tables: [], views: [], plugins: [] };
+    for (const k of Object.keys(req.body)) {
+      const [type, name] = k.split(".");
+      switch (type) {
+        case "table":
+          pack.tables.push(await table_pack(name));
+          break;
+        case "view":
+          pack.views.push(await view_pack(name));
+          break;
+        case "plugin":
+          pack.plugins.push(await plugin_pack(name));
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
     }
-  }
-  res.sendWrap(`Pack`, pre({ class: "wsprewrap" }, code(JSON.stringify(pack))));
-}));
+    res.sendWrap(
+      `Pack`,
+      pre({ class: "wsprewrap" }, code(JSON.stringify(pack)))
+    );
+  })
+);
 
 const install_pack_form = () =>
   new Form({
@@ -117,41 +130,56 @@ const install_pack_form = () =>
     ]
   });
 
-router.get("/install", setTenant, isAdmin, error_catcher(async (req, res) => {
-  res.sendWrap(
-    `Install Pack`,
-    renderForm(install_pack_form(), req.csrfToken())
-  );
-}));
+router.get(
+  "/install",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      `Install Pack`,
+      renderForm(install_pack_form(), req.csrfToken())
+    );
+  })
+);
 
-router.post("/install", setTenant, isAdmin, error_catcher(async (req, res) => {
-  var pack, error;
-  try {
-    pack = JSON.parse(req.body.pack);
-  } catch (e) {
-    error = e.message;
-  }
-  if (!error && !is_pack.check(pack)) {
-    error = "Not a valid pack";
-  }
-  if (error) {
-    const form = install_pack_form();
-    form.values = { pack: req.body.pack };
-    req.flash("error", error);
-    res.sendWrap(`Install Pack`, renderForm(form, req.csrfToken()));
-  } else {
-    await install_pack(pack);
+router.post(
+  "/install",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    var pack, error;
+    try {
+      pack = JSON.parse(req.body.pack);
+    } catch (e) {
+      error = e.message;
+    }
+    if (!error && !is_pack.check(pack)) {
+      error = "Not a valid pack";
+    }
+    if (error) {
+      const form = install_pack_form();
+      form.values = { pack: req.body.pack };
+      req.flash("error", error);
+      res.sendWrap(`Install Pack`, renderForm(form, req.csrfToken()));
+    } else {
+      await install_pack(pack);
+
+      res.redirect(`/`);
+    }
+  })
+);
+
+router.post(
+  "/install-named/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+
+    const pack = await fetch_pack_by_name(name);
+    //console.log(pack)
+    await install_pack(pack.pack, name);
 
     res.redirect(`/`);
-  }
-}));
-
-router.post("/install-named/:name", setTenant, isAdmin, error_catcher(async (req, res) => {
-  const { name } = req.params;
-
-  const pack = await fetch_pack_by_name(name);
-  //console.log(pack)
-  await install_pack(pack.pack, name);
-
-  res.redirect(`/`);
-}));
+  })
+);

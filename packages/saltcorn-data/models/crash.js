@@ -27,7 +27,9 @@ class Crash {
   }
 
   get msg_short() {
-    return this.message.length > 90 ? this.message.substring(0, 90) : this.message
+    return this.message.length > 90
+      ? this.message.substring(0, 90)
+      : this.message;
   }
   static async create(err, req) {
     const schema = db.getTenantSchema();

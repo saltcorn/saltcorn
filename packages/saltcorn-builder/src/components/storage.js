@@ -8,6 +8,10 @@ import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Action } from "./elements/Action";
+import { HTMLCode } from "./elements/HTMLCode";
+import { Card } from "./elements/Card";
+import { Image } from "./elements/Image";
+import { Link } from "./elements/Link";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -25,11 +29,32 @@ export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
-    if (segment.type === "blank") {
+    if (segment.type === "blank" && segment.isHTML) {
+      return <HTMLCode text={segment.contents} />;
+    } else if (segment.type === "blank") {
       return (
         <Text
           key={ix}
           text={segment.contents}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "image") {
+      return (
+        <Image
+          key={ix}
+          alt={segment.alt}
+          block={segment.block || false}
+          fileid={segment.fileid || 0}
+        />
+      );
+    } else if (segment.type === "link") {
+      return (
+        <Link
+          key={ix}
+          url={segment.url}
+          text={segment.text}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
         />
@@ -82,6 +107,14 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.action_name}
           block={segment.block || false}
           minRole={segment.minRole || 10}
+        />
+      );
+    } else if (segment.type === "card") {
+      return (
+        <Card
+          key={ix}
+          contents={toTag(segment.contents)}
+          title={segment.title}
         />
       );
     } else if (segment.besides) {
@@ -145,6 +178,13 @@ export const craftToSaltcorn = nodes => {
         textStyle: node.props.textStyle
       };
     }
+    if (node.displayName === HTMLCode.name) {
+      return {
+        type: "blank",
+        isHTML: true,
+        contents: node.props.text
+      };
+    }
     if (node.displayName === LineBreak.name) {
       return { type: "line_break" };
     }
@@ -156,6 +196,30 @@ export const craftToSaltcorn = nodes => {
         ),
         aligns: node.props.aligns,
         widths
+      };
+    }
+    if (node.displayName === Card.name) {
+      return {
+        contents: go(nodes[node._childCanvas.cardContents]),
+        type: "card",
+        title: node.props.title
+      };
+    }
+    if (node.displayName === Image.name) {
+      return {
+        type: "image",
+        alt: node.props.alt,
+        fileid: node.props.fileid,
+        block: node.props.block
+      };
+    }
+    if (node.displayName === Link.name) {
+      return {
+        type: "link",
+        text: node.props.text,
+        url: node.props.url,
+        block: node.props.block,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === Field.name) {

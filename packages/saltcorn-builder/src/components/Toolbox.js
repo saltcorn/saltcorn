@@ -1,6 +1,7 @@
 import React, { useEffect, useContext, Fragment } from "react";
 import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
+import { HTMLCode } from "./elements/HTMLCode";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
@@ -9,6 +10,9 @@ import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
+import { Card } from "./elements/Card";
+import { Image } from "./elements/Image";
+import { Link } from "./elements/Link";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -216,6 +220,77 @@ export const ToolboxEdit = () => {
               }
             >
               Action
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </Fragment>
+  );
+};
+
+export const ToolboxPage = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const { fields, field_view_options, images } = options;
+  return (
+    <Fragment>
+      <h5>Drag to add</h5>
+      <table className="mb-3 toolbox">
+        <tbody>
+          <tr>
+            <td
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Text text="Hello world" block={false} textStyle={""} />
+                )
+              }
+            >
+              Text
+            </td>
+            <td
+              title="Split into columns"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <TwoSplit contents={[<Empty />, <Empty />]} />
+                )
+              }
+            >
+              <i className="fas fa-columns"></i>
+            </td>
+          </tr>
+          <tr>
+            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td
+              title="HTML code"
+              ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
+            >
+              <i className="fas fa-code"></i>
+            </td>
+          </tr>
+          <tr>
+            <td
+              title="Card"
+              ref={ref => connectors.create(ref, <Card contents={<Empty />} />)}
+            >
+              Card
+            </td>
+            <td
+              title="Image"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Image fileid={images.length > 0 ? images[0].id : 0} />
+                )
+              }
+            >
+              <i className="fas fa-image"></i>
+            </td>
+          </tr>
+          <tr>
+            <td title=":ink" ref={ref => connectors.create(ref, <Link />)}>
+              <i className="fas fa-link"></i>
             </td>
           </tr>
         </tbody>

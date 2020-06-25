@@ -23,26 +23,30 @@ const limitFields = fields => r => {
   }
 };
 
-router.get("/:tableName/", setTenant, error_catcher(async (req, res) => {
-  const { tableName } = req.params;
-  const { fields, ...req_query } = req.query;
-  const table = await Table.findOne({ name: tableName });
-  const role = req.isAuthenticated() ? req.user.role_id : 10;
-  if (table.expose_api_read && role <= table.min_role_read) {
-    var rows;
-    if (req_query && req_query !== {}) {
-      const tbl_fields = await table.getFields();
-      const qstate = await stateFieldsToWhere({
-        fields: tbl_fields,
-        approximate: false,
-        state: req.query
-      });
-      rows = await table.getRows(qstate);
+router.get(
+  "/:tableName/",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName } = req.params;
+    const { fields, ...req_query } = req.query;
+    const table = await Table.findOne({ name: tableName });
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (table.expose_api_read && role <= table.min_role_read) {
+      var rows;
+      if (req_query && req_query !== {}) {
+        const tbl_fields = await table.getFields();
+        const qstate = await stateFieldsToWhere({
+          fields: tbl_fields,
+          approximate: false,
+          state: req.query
+        });
+        rows = await table.getRows(qstate);
+      } else {
+        rows = await table.getRows();
+      }
+      res.json({ success: rows.map(limitFields(fields)) });
     } else {
-      rows = await table.getRows();
+      res.status(401).json({ error: "Not authorized" });
     }
-    res.json({ success: rows.map(limitFields(fields)) });
-  } else {
-    res.status(401).json({ error: "Not authorized" });
-  }
-}));
+  })
+);

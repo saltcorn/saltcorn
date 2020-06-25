@@ -1,4 +1,5 @@
 const db = require("../db/index.js");
+const renderLayout = require("@saltcorn/markup/layout");
 const Table = require("./table");
 const Form = require("./form");
 const Field = require("./field");
@@ -6,6 +7,7 @@ const Crash = require("./crash");
 const File = require("./file");
 const View = require("./view");
 const User = require("./user");
+const Page = require("./page");
 
 afterAll(db.close);
 
@@ -25,6 +27,79 @@ describe("Crash", () => {
     const cs = await Crash.find();
 
     expect(cs[0].reltime.length > 0).toBe(true);
+  });
+});
+
+describe("Page", () => {
+  it("should create", async () => {
+    await Page.create({
+      name: "foo",
+      title: "grgw",
+      description: "rgerg",
+      min_role: 1,
+      layout: {
+        above: [
+          {
+            type: "blank",
+            block: false,
+            contents: "Hello world",
+            textStyle: ""
+          },
+          { type: "line_break" },
+          { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
+          {
+            url: "https://saltcorn.com/",
+            text: "Click here",
+            type: "link",
+            block: false,
+            textStyle: ""
+          },
+          {
+            type: "card",
+            title: "header",
+            contents: {
+              above: [
+                null,
+                {
+                  aligns: ["left", "left"],
+                  widths: [6, 6],
+                  besides: [
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          block: false,
+                          contents: "Hello world",
+                          textStyle: ""
+                        }
+                      ]
+                    },
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          block: false,
+                          contents: "Bye bye",
+                          textStyle: ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      fixed_states: {}
+    });
+
+    const cs = await Page.find();
+
+    expect(cs[1].name).toBe("foo");
+    expect(renderLayout({ layout: cs[0].layout })).toContain(">Bye bye<");
   });
 });
 

@@ -15,8 +15,23 @@ div.canvas {
   min-height: 30px;
   border: 1px dashed #111111;
 }
+span.is-html-block {
+  min-height: 30px;
+  min-width: 50px;
+  display: inline-block;
+  border: 1px dashed #111111;
+}
 div.settings-panel {
   min-height: 150px;
+}
+
+span.is-builder-link {
+  color: blue;
+  text-decoration: underline;
+}
+
+div.card.builder {
+  border: 1px solid #111111;
 }
 
 table.toolbox td {

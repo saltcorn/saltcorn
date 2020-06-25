@@ -24,28 +24,35 @@ const is_menu_item = is.obj({
   )
 });
 
-const is_layout_container = is.obj({ type: is.one_of("blank card hero pageHeader footer".split(' ')) });
+const is_layout_container = is.obj({
+  type: is.one_of(
+    "blank card hero pageHeader footer image link line_break".split(" ")
+  )
+});
 
-const is_layout = is.obj(
-  {
-    above: is.maybe(
-      is.array(
-        is.or(
-          is_layout_container,
-          is.obj({ besides: is.array(is_layout_container) })
+const is_layout = is.or(
+  is.obj(
+    {
+      above: is.maybe(
+        is.array(
+          is.or(
+            is_layout_container,
+            is.obj({ besides: is.array(is_layout_container) })
+          )
+        )
+      ),
+      besides: is.maybe(
+        is.array(
+          is.or(
+            is_layout_container,
+            is.obj({ above: is.array(is_layout_container) })
+          )
         )
       )
-    ),
-    besides: is.maybe(
-      is.array(
-        is.or(
-          is_layout_container,
-          is.obj({ above: is.array(is_layout_container) })
-        )
-      )
-    )
-  },
-  l => (l.above && !l.besides) || (!l.above && l.besides)
+    },
+    l => (l.above && !l.besides) || (!l.above && l.besides)
+  ),
+  is_layout_container
 );
 
 const is_plugin_wrap_arg = is.obj({

@@ -5,6 +5,7 @@
   "license": "MIT",
   "devDependencies": {
     "@saltcorn/data": "^0.0.9",
+    "@saltcorn/server": "^0.0.9",
     "jest": "^25.1.0",
     "puppeteer": "^4.0.0"
   },
