@@ -1,5 +1,5 @@
 const { contract, is } = require("contractis");
-const { div, span, h6, text, img } = require("./tags");
+const { div, a, span, h6, text, img } = require("./tags");
 const { alert } = require("./layout_utils");
 
 const makeSegments = (body, alerts) => {
@@ -51,7 +51,19 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       return wrap(segment, isTop, ix, segment.contents);
     }
     if (segment.type === "image") {
-      return wrap(segment, isTop, ix, img({class: 'w-100', alt: segment.alt, src: `/files/serve/${segment.fileid}`}));
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        img({
+          class: "w-100",
+          alt: segment.alt,
+          src: `/files/serve/${segment.fileid}`
+        })
+      );
+    }
+    if (segment.type === "link") {
+      return wrap(segment, isTop, ix, a({ href: segment.url }, segment.text));
     }
     if (segment.type === "card")
       return wrap(

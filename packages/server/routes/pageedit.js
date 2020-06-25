@@ -73,7 +73,7 @@ const pageFlow = new Workflow({
       name: "layout",
       builder: async context => {
         const views = await View.find();
-        const images = await File.find({mime_super: 'image'});
+        const images = await File.find({ mime_super: "image" });
 
         return {
           views,

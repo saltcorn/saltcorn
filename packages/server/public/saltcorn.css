@@ -25,6 +25,11 @@ div.settings-panel {
   min-height: 150px;
 }
 
+span.is-builder-link {
+  color: blue;
+  text-decoration: underline;
+}
+
 div.card.builder {
   border: 1px solid #111111;
 }

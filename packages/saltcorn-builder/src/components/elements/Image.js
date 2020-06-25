@@ -8,11 +8,12 @@ export const Image = ({ fileid, block, alt }) => {
     connectors: { connect, drag }
   } = useNode();
   return (
-    <span
-      {...blockProps(block)}
-      ref={dom => connect(drag(dom))}
-    >
-      {fileid===0 ? 'No images Available':<img className="w-100" src={`/files/serve/${fileid}`} alt={alt} ></img>}
+    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+      {fileid === 0 ? (
+        "No images Available"
+      ) : (
+        <img className="w-100" src={`/files/serve/${fileid}`} alt={alt}></img>
+      )}
     </span>
   );
 };
@@ -52,7 +53,7 @@ export const ImageSettings = () => {
 
 Image.craft = {
   defaultProps: {
-    alt: '',
+    alt: "",
     block: false
   },
   related: {

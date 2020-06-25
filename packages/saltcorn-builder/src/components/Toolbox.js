@@ -12,6 +12,7 @@ import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
+import { Link } from "./elements/Link";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 
@@ -230,7 +231,7 @@ export const ToolboxEdit = () => {
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options,images } = options;
+  const { fields, field_view_options, images } = options;
   return (
     <Fragment>
       <h5>Drag to add</h5>
@@ -277,9 +278,19 @@ export const ToolboxPage = () => {
             </td>
             <td
               title="Image"
-              ref={ref => connectors.create(ref, <Image fileid={images.length>0?images[0].id:0} />)}
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <Image fileid={images.length > 0 ? images[0].id : 0} />
+                )
+              }
             >
               <i className="fas fa-image"></i>
+            </td>
+          </tr>
+          <tr>
+            <td title=":ink" ref={ref => connectors.create(ref, <Link />)}>
+              <i className="fas fa-link"></i>
             </td>
           </tr>
         </tbody>
@@ -289,6 +300,5 @@ export const ToolboxPage = () => {
 };
 //footer
 //hero
-//image
 //link (button or a)
 //section

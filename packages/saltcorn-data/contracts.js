@@ -25,7 +25,9 @@ const is_menu_item = is.obj({
 });
 
 const is_layout_container = is.obj({
-  type: is.one_of("blank card hero pageHeader footer image line_break".split(" "))
+  type: is.one_of(
+    "blank card hero pageHeader footer image link line_break".split(" ")
+  )
 });
 
 const is_layout = is.or(

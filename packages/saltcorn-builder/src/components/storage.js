@@ -11,6 +11,7 @@ import { Action } from "./elements/Action";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
+import { Link } from "./elements/Link";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -46,6 +47,16 @@ export const layoutToNodes = (layout, query, actions) => {
           alt={segment.alt}
           block={segment.block || false}
           fileid={segment.fileid || 0}
+        />
+      );
+    } else if (segment.type === "link") {
+      return (
+        <Link
+          key={ix}
+          url={segment.url}
+          text={segment.text}
+          block={segment.block || false}
+          textStyle={segment.textStyle || ""}
         />
       );
     } else if (segment.type === "line_break") {
@@ -189,18 +200,26 @@ export const craftToSaltcorn = nodes => {
     }
     if (node.displayName === Card.name) {
       return {
-        contents: 
-          go(nodes[node._childCanvas.cardContents]),
-          type: "card",
-          title: node.props.title
+        contents: go(nodes[node._childCanvas.cardContents]),
+        type: "card",
+        title: node.props.title
       };
     }
     if (node.displayName === Image.name) {
       return {
-          type: "image",
-          alt: node.props.alt,
-          fileid: node.props.fileid,
-          block: node.props.block
+        type: "image",
+        alt: node.props.alt,
+        fileid: node.props.fileid,
+        block: node.props.block
+      };
+    }
+    if (node.displayName === Link.name) {
+      return {
+        type: "link",
+        text: node.props.text,
+        url: node.props.url,
+        block: node.props.block,
+        textStyle: node.props.textStyle
       };
     }
     if (node.displayName === Field.name) {
