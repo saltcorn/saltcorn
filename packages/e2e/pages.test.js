@@ -8,13 +8,44 @@ beforeAll(async () => {
   browser = await Browser.init();
 });
 
-describe("Dotcom page", () => {
-  it("creates tenant", async () => {
+describe("Dotcom and db page page", () => {
+  it("logs in", async () => {
     await browser.delete_tenant("sub4");
-    await browser.create_tenant("sub4");
+    await browser.goto("/auth/login");
+    await browser.page.type("#inputemail", "admin@foo.com");
+    await browser.page.type("#inputpassword", "secret");
+    await browser.clickNav("button[type=submit]");
+
     await browser.goto("/");
     const page = await browser.page.content();
-    expect(page).toContain("You have no tables and no views!");
+    expect(page).toContain("Logout");
+  });
+  it("sets home page", async () => {
+    await browser.goto("/config");
+    await browser.goto("/config/edit/public_home");
+    expect(await browser.content()).toContain(
+        "Public home page"
+      );
+    await browser.page.type("#inputpublic_home", "a_page");
+    await browser.clickNav("button[type=submit]");
+  });
+  it("Logs out 1", async () => {
+    await browser.goto("/auth/logout");
+  })
+  it("shows db page", async () => {
+    await browser.goto("/");
+    const page = await browser.content();
+    expect(page).toContain(">Bye bye<");
+  });
+  it("logs back in", async () => {
+    await browser.goto("/auth/login");
+    await browser.page.type("#inputemail", "admin@foo.com");
+    await browser.page.type("#inputpassword", "secret");
+    await browser.clickNav("button[type=submit]");
+
+    await browser.goto("/");
+    const page = await browser.page.content();
+    expect(page).toContain("Logout");
   });
   it("activates plugins", async () => {
     await browser.goto("/plugins");
@@ -39,9 +70,14 @@ describe("Dotcom page", () => {
   it("sets home page", async () => {
     await browser.goto("/config");
     await browser.goto("/config/edit/public_home");
+    expect(await browser.content()).toContain(
+        "Public home page"
+      );
     await browser.page.type("#inputpublic_home", "root");
+    await browser.clickNav("button[type=submit]");
+
   });
-  it("Logs out", async () => {
+  it("Logs out 2", async () => {
     await browser.goto("/auth/logout");
     await browser.goto("/");
     const page = await browser.content();
@@ -50,27 +86,7 @@ describe("Dotcom page", () => {
     );
   });
 });
-describe("database page", () => {
-  it("creates tenant", async () => {
-    await browser.delete_tenant("sub4");
-    await browser.create_tenant("sub4");
-    await browser.goto("/");
-    const page = await browser.page.content();
-    expect(page).toContain("You have no tables and no views!");
-  });
 
-  it("sets home page", async () => {
-    await browser.goto("/config");
-    await browser.goto("/config/edit/public_home");
-    await browser.page.type("#inputpublic_home", "a_page");
-  });
-  it("Logs out", async () => {
-    await browser.goto("/auth/logout");
-    await browser.goto("/");
-    const page = await browser.content();
-    expect(page).toContain(">Bye bye<");
-  });
-});
 afterAll(async () => {
   await browser.close();
 });

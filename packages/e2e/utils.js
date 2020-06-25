@@ -1,8 +1,12 @@
 const puppeteer = require("puppeteer");
 const { deleteTenant } = require("@saltcorn/data/models/tenant");
 const db = require("@saltcorn/data/db");
+const {
+  resetToFixtures,
+} = require("@saltcorn/server/auth/testhelp");
 class Browser {
   static async init(o) {
+    await resetToFixtures();
     const b = new Browser();
     b.browser = await puppeteer.launch({
       headless: true, //o || process.env.CI==='true',
