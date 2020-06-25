@@ -2,6 +2,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
 const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
@@ -161,23 +162,12 @@ const no_views_logged_in = async (req, res) => {
     }
   }
 };
+
+
 const get_config_response = async (cfgKey, res) => {
   const homeCfg = getState().getConfig(cfgKey);
   if (homeCfg) {
-    if (homeCfg.startsWith("/page/")) {
-      const thePage = homeCfg.slice(6);
-      const page = getState().pages[thePage];
-      if (page) {
-        const contents = await page.getPage();
-        res.sendWrap(
-          page.title
-            ? { title: page.title, description: page.description }
-            : thePage,
-          contents
-        );
-        return true;
-      }
-    } else if (getState().pages[homeCfg]) {
+    if (getState().pages[homeCfg]) {
       const page = getState().pages[homeCfg];
       const contents = await page.getPage();
       res.sendWrap(
@@ -188,7 +178,14 @@ const get_config_response = async (cfgKey, res) => {
       );
       return true;
     } else {
-      res.redirect(homeCfg);
+      const db_page = await Page.findOne({ name: homeCfg });
+      if (db_page) {
+        res.sendWrap(
+          { title: db_page.title, description: db_page.description } ||
+            `${pagename} page`,
+          db_page.layout
+        );
+      } else res.redirect(homeCfg);
       return true;
     }
   }
