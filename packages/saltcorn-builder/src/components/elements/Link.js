@@ -46,12 +46,12 @@ export const LinkSettings = () => {
 };
 
 Link.craft = {
-    defaultProps: {
-        text: 'Click here',
-        url: 'https://saltcorn.com/',
-        block: false,
-        textStyle: ""
-      },
+  defaultProps: {
+    text: "Click here",
+    url: "https://saltcorn.com/",
+    block: false,
+    textStyle: ""
+  },
   related: {
     settings: LinkSettings
   }
