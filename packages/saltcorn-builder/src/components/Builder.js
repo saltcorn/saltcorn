@@ -16,6 +16,7 @@ import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
+import { View } from "./elements/View";
 
 const { Provider } = optionsCtx;
 
@@ -106,7 +107,8 @@ const Builder = ({ options, layout, mode }) => {
                 Aggregation,
                 Card,
                 Image,
-                Link
+                Link,
+                View
               }}
             >
               <Canvas className="canvas"></Canvas>
