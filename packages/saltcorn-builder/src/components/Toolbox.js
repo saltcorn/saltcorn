@@ -298,7 +298,3 @@ export const ToolboxPage = () => {
     </Fragment>
   );
 };
-//footer
-//hero
-//link (button or a)
-//section

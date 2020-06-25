@@ -4,6 +4,7 @@ const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Page = require("@saltcorn/data/models/page");
 const basePlugin = require("@saltcorn/base-plugin");
 
 module.exports = async () => {
@@ -176,4 +177,67 @@ module.exports = async () => {
     password: "secret",
     role_id: 8
   });
+  await Page.create({
+    name: "a_page",
+    title: "grgw",
+    description: "rgerg",
+    min_role: 10,
+    layout: {
+      above: [
+        {
+          type: "blank",
+          block: false,
+          contents: "Hello world",
+          textStyle: ""
+        },
+        { type: "line_break" },
+        { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
+        {
+          url: "https://saltcorn.com/",
+          text: "Click here",
+          type: "link",
+          block: false,
+          textStyle: ""
+        },
+        {
+          type: "card",
+          title: "header",
+          contents: {
+            above: [
+              null,
+              {
+                aligns: ["left", "left"],
+                widths: [6, 6],
+                besides: [
+                  {
+                    above: [
+                      null,
+                      {
+                        type: "blank",
+                        block: false,
+                        contents: "Hello world",
+                        textStyle: ""
+                      }
+                    ]
+                  },
+                  {
+                    above: [
+                      null,
+                      {
+                        type: "blank",
+                        block: false,
+                        contents: "Bye bye",
+                        textStyle: ""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    fixed_states: {}
+  })
 };
