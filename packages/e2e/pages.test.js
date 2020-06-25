@@ -73,12 +73,15 @@ describe("Dotcom and db page page", () => {
     expect(await browser.content()).toContain(
         "Public home page"
       );
+    await browser.erase_input("#inputpublic_home")
     await browser.page.type("#inputpublic_home", "root");
     await browser.clickNav("button[type=submit]");
 
   });
   it("Logs out 2", async () => {
     await browser.goto("/auth/logout");
+});
+it("displays root page", async () => {
     await browser.goto("/");
     const page = await browser.content();
     expect(page).toContain(
