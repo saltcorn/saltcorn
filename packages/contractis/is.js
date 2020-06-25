@@ -74,7 +74,7 @@ const klass = cls =>
     name: "class",
     options: cls,
     check: x =>
-      x.constructor.name === (typeof cls === "string" ? cls : cls.name),
+      x && x.constructor && x.constructor.name === (typeof cls === "string" ? cls : cls.name),
     generate: cls.contract && gen.generate_class(cls)
   });
 

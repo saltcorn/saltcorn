@@ -50,7 +50,7 @@ Page.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("Page")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.class("Page"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Page")))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined))
   }
 };
