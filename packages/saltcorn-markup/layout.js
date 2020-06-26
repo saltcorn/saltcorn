@@ -50,6 +50,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
+    if (segment.type === "view") {
+      return wrap(segment, isTop, ix, segment.contents || "");
+    }
     if (segment.type === "image") {
       return wrap(
         segment,

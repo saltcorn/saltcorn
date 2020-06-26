@@ -1,5 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const View = require("./view");
 
 class Page {
   constructor(o) {
@@ -32,6 +33,32 @@ class Page {
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
     return page;
+  }
+
+  async run(querystate, extraArgs) {
+    const go = async segment => {
+      if (!segment) return;
+      if (segment.type === "view") {
+        const view = await View.findOne({ name: segment.view });
+        const mystate = view.combine_state_and_default_state(querystate);
+        segment.contents = await view.run(mystate, extraArgs);
+        return;
+      }
+      if (segment.contents) {
+        if (typeof contents !== "string") await go(segment.contents);
+        return;
+      }
+      if (segment.above) {
+        for (const seg of segment.above) await go(seg);
+        return;
+      }
+      if (segment.besides) {
+        for (const seg of segment.besides) await go(seg);
+        return;
+      }
+    };
+    await go(this.layout);
+    return this.layout;
   }
 }
 

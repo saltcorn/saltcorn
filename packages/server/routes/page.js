@@ -24,11 +24,12 @@ router.get(
       );
     } else {
       const db_page = await Page.findOne({ name: pagename });
+      const contents = await db_page.run(req.query, { res, req });
       if (db_page) {
         res.sendWrap(
           { title: db_page.title, description: db_page.description } ||
             `${pagename} page`,
-          db_page.layout
+          contents
         );
       } else
         res
