@@ -229,7 +229,7 @@ export const ToolboxEdit = () => {
   );
 };
 
-const rand_ident = ()=>Math.floor(Math.random()*16777215).toString(16);
+const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
@@ -295,10 +295,22 @@ export const ToolboxPage = () => {
             <td title="Link" ref={ref => connectors.create(ref, <Link />)}>
               <i className="fas fa-link"></i>
             </td>
-            <td title="View" ref={ref => connectors.create(ref, <View name={rand_ident()} state={'shared'} view={views.length >0 ? views[0].name: "view"}/>)}>
+            <td
+              title="View"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <View
+                    name={rand_ident()}
+                    state={"shared"}
+                    view={views.length > 0 ? views[0].name : "view"}
+                  />
+                )
+              }
+            >
               <i className="fas fa-eye"></i>
             </td>
-          </tr>          
+          </tr>
         </tbody>
       </table>
     </Fragment>

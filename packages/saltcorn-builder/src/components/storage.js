@@ -12,6 +12,7 @@ import { HTMLCode } from "./elements/HTMLCode";
 import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
+import { View } from "./elements/View";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -57,6 +58,15 @@ export const layoutToNodes = (layout, query, actions) => {
           text={segment.text}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "view") {
+      return (
+        <View
+          key={ix}
+          view={segment.view}
+          name={segment.name}
+          state={segment.state}
         />
       );
     } else if (segment.type === "line_break") {
@@ -220,6 +230,14 @@ export const craftToSaltcorn = nodes => {
         url: node.props.url,
         block: node.props.block,
         textStyle: node.props.textStyle
+      };
+    }
+    if (node.displayName === View.name) {
+      return {
+        type: "view",
+        view: node.props.view,
+        name: node.props.name,
+        state: node.props.state
       };
     }
     if (node.displayName === Field.name) {
