@@ -39,7 +39,6 @@ export const ViewSettings = () => {
           onChange={e => setProp(prop => (prop.state = e.target.value))}
         >
           <option value="shared">Shared</option>
-          <option value="isolated">Isolated</option>
           <option value="fixed">Fixed</option>
         </select>
       </div>
