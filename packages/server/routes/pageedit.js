@@ -86,32 +86,32 @@ const pageFlow = new Workflow({
       name: "fixed_states",
       contextField: "fixed_states",
       onlyWhen: async context => {
-        const p=new Page(context)
-        const vs = await p.getViews()
-        return vs.filter(v=>v.state==='fixed').length>0
+        const p = new Page(context);
+        const vs = await p.getViews();
+        return vs.filter(v => v.state === "fixed").length > 0;
       },
       form: async context => {
-        const p=new Page(context)
-        const vs = await p.getViews()
-        const fixedvs=vs.filter(vseg=>vseg.state==='fixed')
-        const fields=[]
-        for(const vseg of fixedvs) {
-          const v = await View.findOne({name:vseg.view})
-          const fs = await v.get_state_fields()
-          for(const frec of fs) {
-            const f = new Field(frec)
+        const p = new Page(context);
+        const vs = await p.getViews();
+        const fixedvs = vs.filter(vseg => vseg.state === "fixed");
+        const fields = [];
+        for (const vseg of fixedvs) {
+          const v = await View.findOne({ name: vseg.view });
+          const fs = await v.get_state_fields();
+          for (const frec of fs) {
+            const f = new Field(frec);
             f.required = false;
             if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-            f.parent_field=vseg.name
+            f.parent_field = vseg.name;
 
             await f.fill_fkey_options(true);
-            fields.push(f)
-          };
+            fields.push(f);
+          }
         }
         return new Form({
           blurb: "Set fixed states for views",
           fields
-        })
+        });
       }
     }
   ]

@@ -39,7 +39,7 @@ class Page {
     const go = async segment => {
       if (!segment) return;
       if (segment.type === "view") {
-        await f(segment)
+        await f(segment);
         return;
       }
       if (segment.contents) {
@@ -55,29 +55,29 @@ class Page {
         return;
       }
     };
-    await go(this.layout);    
+    await go(this.layout);
   }
 
   async getViews() {
-    const views=[];
-    await this.eachView(segment=>{
-      views.push(segment)
-    })
-    return views
+    const views = [];
+    await this.eachView(segment => {
+      views.push(segment);
+    });
+    return views;
   }
 
   async run(querystate, extraArgs) {
-    await this.eachView(async segment=>{
-        const view = await View.findOne({ name: segment.view });
-        if(segment.state==='shared'){
-          const mystate = view.combine_state_and_default_state(querystate);
-          segment.contents = await view.run(mystate, extraArgs);
-        } else {
-          const state=this.fixed_states[segment.name]
-          const mystate = view.combine_state_and_default_state(state);
-          segment.contents = await view.run(mystate, extraArgs);
-        }
-    })
+    await this.eachView(async segment => {
+      const view = await View.findOne({ name: segment.view });
+      if (segment.state === "shared") {
+        const mystate = view.combine_state_and_default_state(querystate);
+        segment.contents = await view.run(mystate, extraArgs);
+      } else {
+        const state = this.fixed_states[segment.name];
+        const mystate = view.combine_state_and_default_state(state);
+        segment.contents = await view.run(mystate, extraArgs);
+      }
+    });
     return this.layout;
   }
 }
