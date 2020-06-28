@@ -10,7 +10,7 @@ class Page {
     this.min_role = +o.min_role;
     this.id = o.id;
     this.layout = o.layout;
-    this.fixed_states = o.fixed_states;
+    this.fixed_states = o.fixed_states || {};
     contract.class(this);
   }
   static async find(where, selectopts) {
