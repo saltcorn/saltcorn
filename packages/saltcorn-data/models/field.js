@@ -17,6 +17,7 @@ class Field {
     this.fieldview = o.fieldview;
     this.validator = o.validator || (() => true);
     this.showIf = o.showIf;
+    this.parent_field = o.parent_field;
     this.postText = o.postText;
     this.class = o.class || "";
     this.id = o.id;
@@ -254,6 +255,7 @@ Field.contract = {
     postText: is.maybe(is.str),
     sublabel: is.maybe(is.str),
     fieldview: is.maybe(is.str),
+    parent_field: is.maybe(is.str),
     reftable_name: is.maybe(is.str),
     validator: is.fun(is.any, is.bool),
     type: is.maybe(

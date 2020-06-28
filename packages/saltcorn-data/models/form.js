@@ -61,7 +61,11 @@ class Form {
         this.values[f.name] = v[f.name];
         this.hasErrors = true;
       } else {
-        this.values[f.name] = valres.success;
+        if(f.parent_field) {
+          if(!this.values[f.parent_field])
+            this.values[f.parent_field]={}
+          this.values[f.parent_field][f.name]=valres.success;
+        } else this.values[f.name] = valres.success;
       }
     });
 
