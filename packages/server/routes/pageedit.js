@@ -104,7 +104,7 @@ const pageFlow = new Workflow({
           });
         }
         return new Form({
-          blurb: "...",
+          blurb: "Set fixed states for views",
           fields
         })
       }
