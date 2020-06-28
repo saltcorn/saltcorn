@@ -12,6 +12,7 @@ import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
+import { View } from "./elements/View";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
@@ -228,10 +229,12 @@ export const ToolboxEdit = () => {
   );
 };
 
+const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
+
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options, images } = options;
+  const { views, images } = options;
   return (
     <Fragment>
       <h5>Drag to add</h5>
@@ -289,8 +292,23 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
-            <td title=":ink" ref={ref => connectors.create(ref, <Link />)}>
+            <td title="Link" ref={ref => connectors.create(ref, <Link />)}>
               <i className="fas fa-link"></i>
+            </td>
+            <td
+              title="View"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <View
+                    name={rand_ident()}
+                    state={"shared"}
+                    view={views.length > 0 ? views[0].name : "view"}
+                  />
+                )
+              }
+            >
+              <i className="fas fa-eye"></i>
             </td>
           </tr>
         </tbody>

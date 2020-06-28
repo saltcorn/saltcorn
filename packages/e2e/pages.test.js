@@ -23,15 +23,13 @@ describe("Dotcom and db page page", () => {
   it("sets home page", async () => {
     await browser.goto("/config");
     await browser.goto("/config/edit/public_home");
-    expect(await browser.content()).toContain(
-        "Public home page"
-      );
+    expect(await browser.content()).toContain("Public home page");
     await browser.page.type("#inputpublic_home", "a_page");
     await browser.clickNav("button[type=submit]");
   });
   it("Logs out 1", async () => {
     await browser.goto("/auth/logout");
-  })
+  });
   it("shows db page", async () => {
     await browser.goto("/");
     const page = await browser.content();
@@ -70,18 +68,15 @@ describe("Dotcom and db page page", () => {
   it("sets home page", async () => {
     await browser.goto("/config");
     await browser.goto("/config/edit/public_home");
-    expect(await browser.content()).toContain(
-        "Public home page"
-      );
-    await browser.erase_input("#inputpublic_home")
+    expect(await browser.content()).toContain("Public home page");
+    await browser.erase_input("#inputpublic_home");
     await browser.page.type("#inputpublic_home", "root");
     await browser.clickNav("button[type=submit]");
-
   });
   it("Logs out 2", async () => {
     await browser.goto("/auth/logout");
-});
-it("displays root page", async () => {
+  });
+  it("displays root page", async () => {
     await browser.goto("/");
     const page = await browser.content();
     expect(page).toContain(

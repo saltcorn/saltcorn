@@ -26,7 +26,7 @@ const is_menu_item = is.obj({
 
 const is_layout_container = is.obj({
   type: is.one_of(
-    "blank card hero pageHeader footer image link line_break".split(" ")
+    "blank card hero pageHeader footer image link line_break view".split(" ")
   )
 });
 

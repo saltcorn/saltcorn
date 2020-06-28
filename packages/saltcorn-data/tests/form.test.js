@@ -110,6 +110,23 @@ describe("Bool Form", () => {
   expect(form.values.done).toBe(true);
 });
 
+describe("parent field", () => {
+  const form = new Form({
+    action: "/",
+    fields: [
+      new Field({
+        name: "age",
+        label: "Age",
+        parent_field: "person",
+        type: "Integer"
+      })
+    ]
+  });
+  form.validate({ age: 16 });
+  expect(form.values.age).toBe(undefined);
+  expect(form.values.person.age).toBe(16);
+});
+
 describe("String form with validator failure ", () => {
   const form = new Form({
     action: "/",

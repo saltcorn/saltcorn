@@ -1,12 +1,13 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const View = require("./view");
 
 class Page {
   constructor(o) {
     this.name = o.name;
     this.title = o.title;
     this.description = o.description;
-    this.min_role = o.min_role;
+    this.min_role = +o.min_role;
     this.id = o.id;
     this.layout = o.layout;
     this.fixed_states = o.fixed_states;
@@ -32,6 +33,52 @@ class Page {
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
     return page;
+  }
+
+  async eachView(f) {
+    const go = async segment => {
+      if (!segment) return;
+      if (segment.type === "view") {
+        await f(segment);
+        return;
+      }
+      if (segment.contents) {
+        if (typeof contents !== "string") await go(segment.contents);
+        return;
+      }
+      if (segment.above) {
+        for (const seg of segment.above) await go(seg);
+        return;
+      }
+      if (segment.besides) {
+        for (const seg of segment.besides) await go(seg);
+        return;
+      }
+    };
+    await go(this.layout);
+  }
+
+  async getViews() {
+    const views = [];
+    await this.eachView(segment => {
+      views.push(segment);
+    });
+    return views;
+  }
+
+  async run(querystate, extraArgs) {
+    await this.eachView(async segment => {
+      const view = await View.findOne({ name: segment.view });
+      if (segment.state === "shared") {
+        const mystate = view.combine_state_and_default_state(querystate);
+        segment.contents = await view.run(mystate, extraArgs);
+      } else {
+        const state = this.fixed_states[segment.name];
+        const mystate = view.combine_state_and_default_state(state);
+        segment.contents = await view.run(mystate, extraArgs);
+      }
+    });
+    return this.layout;
   }
 }
 
