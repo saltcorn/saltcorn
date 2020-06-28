@@ -67,7 +67,7 @@ class Page {
   }
 
   async run(querystate, extraArgs) {
-    await this.eachView(segment=>{
+    await this.eachView(async segment=>{
         const view = await View.findOne({ name: segment.view });
         const mystate = view.combine_state_and_default_state(querystate);
         segment.contents = await view.run(mystate, extraArgs);
