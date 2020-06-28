@@ -35,13 +35,11 @@ class Page {
     return page;
   }
 
-  async run(querystate, extraArgs) {
+  async eachView(f) {
     const go = async segment => {
       if (!segment) return;
       if (segment.type === "view") {
-        const view = await View.findOne({ name: segment.view });
-        const mystate = view.combine_state_and_default_state(querystate);
-        segment.contents = await view.run(mystate, extraArgs);
+        await f(segment)
         return;
       }
       if (segment.contents) {
@@ -57,7 +55,23 @@ class Page {
         return;
       }
     };
-    await go(this.layout);
+    await go(this.layout);    
+  }
+
+  async getViews() {
+    const views=[];
+    await this.eachView(segment=>{
+      views.push(segment)
+    })
+    return views
+  }
+
+  async run(querystate, extraArgs) {
+    await this.eachView(segment=>{
+        const view = await View.findOne({ name: segment.view });
+        const mystate = view.combine_state_and_default_state(querystate);
+        segment.contents = await view.run(mystate, extraArgs);
+    })
     return this.layout;
   }
 }
