@@ -7,7 +7,7 @@ class Page {
     this.name = o.name;
     this.title = o.title;
     this.description = o.description;
-    this.min_role = o.min_role;
+    this.min_role = +o.min_role;
     this.id = o.id;
     this.layout = o.layout;
     this.fixed_states = o.fixed_states;
@@ -69,8 +69,14 @@ class Page {
   async run(querystate, extraArgs) {
     await this.eachView(async segment=>{
         const view = await View.findOne({ name: segment.view });
-        const mystate = view.combine_state_and_default_state(querystate);
-        segment.contents = await view.run(mystate, extraArgs);
+        if(segment.state==='shared'){
+          const mystate = view.combine_state_and_default_state(querystate);
+          segment.contents = await view.run(mystate, extraArgs);
+        } else {
+          const state=this.fixed_states[segment.name]
+          const mystate = view.combine_state_and_default_state(state);
+          segment.contents = await view.run(mystate, extraArgs);
+        }
     })
     return this.layout;
   }

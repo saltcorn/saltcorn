@@ -98,10 +98,15 @@ const pageFlow = new Workflow({
         for(const vseg of fixedvs) {
           const v = await View.findOne({name:vseg.view})
           const fs = await v.get_state_fields()
-          fs.forEach(f => {
+          for(const frec of fs) {
+            const f = new Field(frec)
+            f.required = false;
+            if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
             f.parent_field=vseg.name
+
+            await f.fill_fkey_options(true);
             fields.push(f)
-          });
+          };
         }
         return new Form({
           blurb: "Set fixed states for views",
