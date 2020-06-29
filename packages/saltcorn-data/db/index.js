@@ -150,5 +150,7 @@ module.exports = {
   enable_multi_tenant,
   runWithTenant,
   is_it_multi_tenant,
-  connectObj
+  sqlsanitize,
+  connectObj,
+  mkWhere
 };

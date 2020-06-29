@@ -131,6 +131,13 @@ function select_id(id) {
   );
 }
 
+function set_state_field(key, value) {
+  window.location.href = updateQueryStringParameter(
+    window.location.href,
+    key,
+    value
+  );
+}
 function href_to(href) {
   window.location.href = href;
 }

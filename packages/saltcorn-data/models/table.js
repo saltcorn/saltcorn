@@ -50,7 +50,9 @@ class Table {
       this.id
     ]);
   }
-
+  get sql_name() {
+    return `"${db.getTenantSchema()}"."${sqlsanitize(this.name)}"`;
+  }
   async deleteRows(where) {
     await db.deleteWhere(this.name, where);
   }

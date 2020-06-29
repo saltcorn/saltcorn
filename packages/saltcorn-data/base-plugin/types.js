@@ -164,6 +164,9 @@ const float = {
           type: "number",
           class: ["form-control", cls],
           name: text_attr(nm),
+          step: attrs.decimal_places
+            ? Math.pow(10, -attrs.decimal_places)
+            : "0.01",
           id: `input${text_attr(nm)}`,
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
@@ -174,7 +177,8 @@ const float = {
   attributes: [
     { name: "max", type: "Float", required: false },
     { name: "min", type: "Float", required: false },
-    { name: "units", type: "String", required: false }
+    { name: "units", type: "String", required: false },
+    { name: "decimal_places", type: "Integer", required: false }
   ],
   read: v => {
     switch (typeof v) {
