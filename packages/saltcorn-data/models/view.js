@@ -7,7 +7,7 @@ const { removeEmptyStrings } = require("../utils");
 class View {
   constructor(o) {
     this.name = o.name;
-    this.id = o.id;
+    this.id = +o.id;
     this.viewtemplate = o.viewtemplate;
     if (o.table_id) this.table_id = o.table_id;
     if (o.table && !o.table_id) {

@@ -4,7 +4,7 @@ const { contract, is } = require("contractis");
 
 class Crash {
   constructor(o) {
-    this.id = o.id;
+    this.id = +o.id;
     this.stack = o.stack;
     this.message = o.message;
     this.occur_at = o.occur_at;

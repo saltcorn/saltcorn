@@ -8,7 +8,7 @@ class Page {
     this.title = o.title;
     this.description = o.description;
     this.min_role = +o.min_role;
-    this.id = o.id;
+    this.id = +o.id;
     this.layout = o.layout;
     this.fixed_states = o.fixed_states || {};
     contract.class(this);

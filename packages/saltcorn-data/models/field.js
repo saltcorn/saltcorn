@@ -20,7 +20,7 @@ class Field {
     this.parent_field = o.parent_field;
     this.postText = o.postText;
     this.class = o.class || "";
-    this.id = o.id;
+    this.id = +o.id;
     this.default = o.default;
     this.sublabel = o.sublabel;
     const { getState } = require("../db/state");

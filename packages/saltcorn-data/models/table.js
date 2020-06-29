@@ -7,7 +7,7 @@ const { is_table_query } = require("../contracts");
 class Table {
   constructor(o) {
     this.name = o.name;
-    this.id = o.id;
+    this.id = +o.id;
     this.expose_api_read = o.expose_api_read;
     this.expose_api_write = o.expose_api_write;
     this.min_role_read = o.min_role_read;
