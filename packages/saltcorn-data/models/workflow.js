@@ -48,6 +48,7 @@ class Workflow {
 
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     } else if (step.builder) {
+      console.log(body)
       const toCtx0 = {
         columns: JSON.parse(decodeURIComponent(body.columns)),
         layout: JSON.parse(decodeURIComponent(body.layout))

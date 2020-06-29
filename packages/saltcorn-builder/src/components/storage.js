@@ -309,7 +309,7 @@ export const craftToSaltcorn = nodes => {
       };
     }
   };
-  const layout = go(nodes["canvas-ROOT"]);
+  const layout = go(nodes["canvas-ROOT"]) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
