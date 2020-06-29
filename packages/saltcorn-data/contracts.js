@@ -24,11 +24,14 @@ const is_menu_item = is.obj({
   )
 });
 
-const is_layout_container = is.obj({
-  type: is.one_of(
-    "blank card hero pageHeader footer image link line_break view".split(" ")
-  )
-});
+const is_layout_container = is.or(
+  is.eq(null),
+  is.obj({
+    type: is.one_of(
+      "blank card hero pageHeader footer image link line_break view".split(" ")
+    )
+  })
+);
 
 const is_layout = is.or(
   is.obj(

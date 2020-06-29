@@ -128,7 +128,7 @@ function removeQueryStringParameter(uri, key) {
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
     return uri.replace(re, "$1" + "$2");
-  } 
+  }
 }
 
 function select_id(id) {
@@ -147,10 +147,7 @@ function set_state_field(key, value) {
   );
 }
 function unset_state_field(key) {
-  window.location.href = removeQueryStringParameter(
-    window.location.href,
-    key
-  );
+  window.location.href = removeQueryStringParameter(window.location.href, key);
 }
 function href_to(href) {
   window.location.href = href;

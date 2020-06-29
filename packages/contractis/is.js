@@ -116,7 +116,7 @@ const obj = (o, alsoCheckThat) =>
     },
     check: x =>
       typeof x === "object" &&
-      !(x.constructor && x.constructor.name === Promise.name) &&
+      !(x && x.constructor && x.constructor.name === Promise.name) &&
       (typeof alsoCheckThat === "undefined" || alsoCheckThat(x)) &&
       Object.entries(o || {}).every(([k, v]) => v.check(x[k])),
     generate:
