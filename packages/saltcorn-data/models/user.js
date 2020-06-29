@@ -6,7 +6,7 @@ class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
-    this.id = +o.id;
+    this.id = o.id;
     this.role_id = o.role_id || 8;
     contract.class(this);
   }

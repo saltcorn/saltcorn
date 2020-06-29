@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 
 class Plugin {
   constructor(o) {
-    this.id = +o.id;
+    this.id = o.id;
     this.name = o.name;
     this.source = o.source;
     this.location = o.location;
