@@ -123,6 +123,14 @@ function updateQueryStringParameter(uri, key, value) {
   }
 }
 
+function removeQueryStringParameter(uri, key) {
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
+  if (uri.match(re)) {
+    return uri.replace(re, "$1" + "$2");
+  } 
+}
+
 function select_id(id) {
   window.location.href = updateQueryStringParameter(
     window.location.href,
@@ -136,6 +144,12 @@ function set_state_field(key, value) {
     window.location.href,
     key,
     value
+  );
+}
+function unset_state_field(key) {
+  window.location.href = removeQueryStringParameter(
+    window.location.href,
+    key
   );
 }
 function href_to(href) {
