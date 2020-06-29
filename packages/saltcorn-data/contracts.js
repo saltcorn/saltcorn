@@ -55,7 +55,7 @@ const is_layout = is.or(
     },
     l => (l.above && !l.besides) || (!l.above && l.besides)
   ),
-  is_layout_container
+  is.and(is_layout_container, is.obj({}) )
 );
 
 const is_plugin_wrap_arg = is.obj({
