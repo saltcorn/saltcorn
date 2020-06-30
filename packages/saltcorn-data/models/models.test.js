@@ -89,7 +89,7 @@ describe("Page", () => {
                           textStyle: ""
                         },
                         {
-                          type:"view",
+                          type: "view",
                           view: "authorlist",
                           name: "v46747",
                           state: "shared"
@@ -106,10 +106,10 @@ describe("Page", () => {
       fixed_states: {}
     });
 
-    const cs = await Page.findOne({name:"foo"});
+    const cs = await Page.findOne({ name: "foo" });
     expect(cs.name).toBe("foo");
-    const layout=await cs.run({},mockReqRes)
-    const html=renderLayout({ layout })
+    const layout = await cs.run({}, mockReqRes);
+    const html = renderLayout({ layout });
     expect(html).toContain(">Bye bye<");
     expect(html).toContain("Tolstoy");
   });
