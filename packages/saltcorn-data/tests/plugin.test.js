@@ -13,6 +13,9 @@ describe("plugin", () => {
     expect(ps.length).toBe(2);
     const p = await Plugin.findOne({ name: "base" });
     expect(p.name).toBe("base");
+    const depviews = await p.dependant_views();
+    expect(ps.length > 0).toBe(true);
+
     const oldv = p.version;
     p.version = 9.9;
     await p.upsert();

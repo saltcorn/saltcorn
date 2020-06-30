@@ -90,7 +90,7 @@ Plugin.contract = {
   methods: {
     upsert: is.fun([], is.promise(is.eq(undefined))),
     delete: is.fun([], is.promise(is.eq(undefined))),
-    dependant_views: is.fun([], is.promise(is.array(is.class("View"))))
+    dependant_views: is.fun([], is.promise(is.array(is.str)))
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
