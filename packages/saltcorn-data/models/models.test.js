@@ -8,6 +8,8 @@ const File = require("./file");
 const View = require("./view");
 const User = require("./user");
 const Page = require("./page");
+const { getState } = require("../db/state");
+getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
 
@@ -29,6 +31,8 @@ describe("Crash", () => {
     expect(cs[0].reltime.length > 0).toBe(true);
   });
 });
+
+const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
 describe("Page", () => {
   it("should create", async () => {
@@ -83,6 +87,12 @@ describe("Page", () => {
                           block: false,
                           contents: "Bye bye",
                           textStyle: ""
+                        },
+                        {
+                          type:"view",
+                          view: "authorlist",
+                          name: "v46747",
+                          state: "shared"
                         }
                       ]
                     }
@@ -96,10 +106,12 @@ describe("Page", () => {
       fixed_states: {}
     });
 
-    const cs = await Page.find();
-
-    expect(cs[1].name).toBe("foo");
-    expect(renderLayout({ layout: cs[0].layout })).toContain(">Bye bye<");
+    const cs = await Page.findOne({name:"foo"});
+    expect(cs.name).toBe("foo");
+    const layout=await cs.run({},mockReqRes)
+    const html=renderLayout({ layout })
+    expect(html).toContain(">Bye bye<");
+    expect(html).toContain("Tolstoy");
   });
 });
 
