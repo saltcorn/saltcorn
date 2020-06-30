@@ -10,7 +10,7 @@ const {
   is_stale
 } = require("../models/pack");
 const { getState } = require("../db/state");
-const { is_table_query } = require("../contracts");
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -97,30 +97,29 @@ describe("pack create", () => {
 
 describe("pack store", () => {
   it("reset the pack store cache", async () => {
-    getState().deleteConfig("available_packs")
-    getState().deleteConfig("available_packs_fetched_at")
-  })
+    getState().deleteConfig("available_packs");
+    getState().deleteConfig("available_packs_fetched_at");
+  });
   it("fetches the pack store", async () => {
-    const packs = await fetch_available_packs()
-    expect(packs.length>0).toBe(true)
+    const packs = await fetch_available_packs();
+    expect(packs.length > 0).toBe(true);
     const cache = getState().getConfig("available_packs", false);
-    expect(packs).toStrictEqual(cache)
+    expect(packs).toStrictEqual(cache);
 
     const stored_at = getState().getConfig("available_packs_fetched_at", false);
-    expect(is_stale(stored_at)).toBe(false)
+    expect(is_stale(stored_at)).toBe(false);
 
-    const pack = await fetch_pack_by_name(packs[0].name)
-    const nopack = await fetch_pack_by_name("nosuchpack")
-    expect(nopack).toBe(null)
+    const pack = await fetch_pack_by_name(packs[0].name);
+    const nopack = await fetch_pack_by_name("nosuchpack");
+    expect(nopack).toBe(null);
 
     await getState().setConfig("available_packs", []);
-    const packs1 = await fetch_available_packs()
-    expect(packs1).toStrictEqual([])
-  })
+    const packs1 = await fetch_available_packs();
+    expect(packs1).toStrictEqual([]);
+  });
+  it("reset the pack store cache", async () => {});
   it("reset the pack store cache", async () => {
-  })
-  it("reset the pack store cache", async () => {
-    getState().deleteConfig("available_packs")
-    getState().deleteConfig("available_packs_fetched_at")
-  })
-})
+    getState().deleteConfig("available_packs");
+    getState().deleteConfig("available_packs_fetched_at");
+  });
+});
