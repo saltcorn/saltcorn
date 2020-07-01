@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
 
 describe("Plugin Endpoints", () => {
   it("should show list", async () => {
