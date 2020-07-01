@@ -8,10 +8,13 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  toRedirect
+  toRedirect,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-
+beforeAll(async () => {
+  await resetToFixtures();
+});
 afterAll(db.close);
 
 jest.setTimeout(10000);
