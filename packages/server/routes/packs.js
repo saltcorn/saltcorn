@@ -47,7 +47,7 @@ const install_pack = contract(
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
     }
-    for (const pageSpec of pack.pages) {
+    for (const pageSpec of pack.pages||[]) {
       await Page.create(pageSpec);
     }
     if (name) {
