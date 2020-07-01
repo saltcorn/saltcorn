@@ -121,7 +121,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   const rows = await Page.find({}, { orderBy: "name" });
   const roles = await User.get_roles();
   res.sendWrap(
-    "Files",
+    "Pages",
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -208,6 +208,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     await Page.delete({ id });
+    req.flash("success", `Page deleted`);
     res.redirect(`/pageedit`);
   })
 );
