@@ -65,7 +65,7 @@ const fetch_available_packs = contract(
   async () => {
     const stored = getState().getConfig("available_packs", false);
     const stored_at = getState().getConfig("available_packs_fetched_at", false);
-    //console.log(stored_at, typeof(stored_at))
+    //console.log("in fetch", stored_at, stored)
     if (!stored || !stored_at || is_stale(stored_at)) {
       const from_api = await fetch_available_packs_from_store();
       await getState().setConfig("available_packs", from_api);

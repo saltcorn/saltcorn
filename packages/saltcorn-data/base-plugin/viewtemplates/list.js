@@ -8,7 +8,6 @@ const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
 const { removeEmptyStrings } = require("../../utils");
-
 const {
   field_picker_fields,
   picked_fields_to_query,
@@ -19,6 +18,7 @@ const {
   get_viewable_fields,
   stateToQueryString
 } = require("./viewable_fields");
+
 const configuration_workflow = () =>
   new Workflow({
     steps: [

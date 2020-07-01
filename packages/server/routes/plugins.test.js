@@ -8,13 +8,16 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  toRedirect
+  toRedirect,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-
+beforeAll(async () => {
+  await resetToFixtures();
+});
 afterAll(db.close);
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
 
 describe("Plugin Endpoints", () => {
   it("should show list", async () => {
