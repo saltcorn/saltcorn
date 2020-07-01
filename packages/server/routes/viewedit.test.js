@@ -6,11 +6,14 @@ const {
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
-
+beforeAll(async () => {
+  await resetToFixtures();
+});
 afterAll(db.close);
 
 describe("viewedit list endpoint", () => {
