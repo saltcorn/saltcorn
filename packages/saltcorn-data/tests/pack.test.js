@@ -14,6 +14,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
+jest.setTimeout(10000);
 
 describe("pack create", () => {
   it("creates table pack", async () => {

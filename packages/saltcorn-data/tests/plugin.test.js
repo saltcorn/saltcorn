@@ -4,6 +4,7 @@ const db = require("../db/index.js");
 const { getState } = require("../db/state");
 
 getState().registerPlugin("base", require("../base-plugin"));
+jest.setTimeout(10000);
 
 afterAll(db.close);
 
