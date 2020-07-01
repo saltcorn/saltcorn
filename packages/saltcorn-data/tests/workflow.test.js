@@ -23,6 +23,7 @@ const wf = new Workflow({
     },
     {
       name: "step2",
+      contextField: "substep",
       form: async context => {
         return new Form({
           blurb: "Specify the fields in the table to show",
@@ -56,6 +57,10 @@ describe("Workflow", () => {
       submit1[f] = v1.renderForm.values[f];
     });
     const v2 = await wf.run(submit1);
-    expect(v2).toStrictEqual({ colour: "Blue", foo: "bar", age: 67 });
+    expect(v2).toStrictEqual({
+      colour: "Blue",
+      foo: "bar",
+      substep: { age: 67 }
+    });
   });
 });
