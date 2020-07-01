@@ -112,6 +112,7 @@ describe("Page", () => {
     const html = renderLayout({ layout });
     expect(html).toContain(">Bye bye<");
     expect(html).toContain("Tolstoy");
+    await cs.delete();
   });
 });
 

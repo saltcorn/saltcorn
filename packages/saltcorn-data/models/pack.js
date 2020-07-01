@@ -4,6 +4,7 @@ const Field = require("./field");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
 const { contract, is } = require("contractis");
+const Page = require("./page");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -50,7 +51,18 @@ const plugin_pack = contract(pack_fun, async name => {
     location: plugin.location
   };
 });
+const page_pack = contract(pack_fun, async name => {
+  const page = await Page.findOne({ name });
 
+  return {
+    name: page.name,
+    title: page.title,
+    description: page.description,
+    min_role: page.min_role,
+    layout: page.layout,
+    fixed_states: page.fixed_states
+  };
+});
 const is_stale = contract(
   is.fun(is.or(is.class("Date"), is.str), is.bool),
   date => {
@@ -106,6 +118,7 @@ module.exports = {
   table_pack,
   view_pack,
   plugin_pack,
+  page_pack,
   fetch_available_packs,
   fetch_pack_by_name,
   is_stale

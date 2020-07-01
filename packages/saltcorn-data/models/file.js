@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+const fs = require("fs").promises;
 
 class File {
   constructor(o) {
@@ -48,6 +49,10 @@ class File {
       mime_sub,
       min_role_read
     });
+  }
+  async delete() {
+    await fs.unlink(this.location);
+    await db.deleteWhere("_sc_files", { id: this.id });
   }
   get mimetype() {
     return `${this.mime_super}/${this.mime_sub}`;

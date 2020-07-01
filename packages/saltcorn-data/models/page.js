@@ -34,6 +34,12 @@ class Page {
     page.id = fid;
     return page;
   }
+  async delete() {
+    await Page.delete({ id: this.id });
+  }
+  static async delete(where) {
+    await db.deleteWhere("_sc_pages", where);
+  }
 
   async eachView(f) {
     const go = async segment => {

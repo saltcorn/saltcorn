@@ -166,3 +166,16 @@ router.post(
     res.redirect("/files");
   })
 );
+
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const f = await File.findOne({ id });
+    await f.delete();
+    req.flash("success", `File ${text(f.filename)} deleted`);
+    res.redirect(`/files`);
+  })
+);
