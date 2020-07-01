@@ -7,6 +7,7 @@ const Form = require("@saltcorn/data/models/form");
 const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
+const Page = require("@saltcorn/data/models/page");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("@saltcorn/data/contracts");
@@ -15,6 +16,7 @@ const {
   table_pack,
   view_pack,
   plugin_pack,
+  page_pack,
   fetch_pack_by_name
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code } = require("@saltcorn/markup/tags");
@@ -44,6 +46,9 @@ const install_pack = contract(
       const { table, ...viewNoTable } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
+    }
+    for (const pageSpec of pack.pages) {
+      await Page.create(pageSpec);
     }
     if (name) {
       const existPacks = getState().getConfig("installed_packs", []);
@@ -75,12 +80,23 @@ router.get(
       name: `plugin.${t.name}`,
       type: "Bool"
     }));
+    const pages = await Page.find({});
+    const pageFields = pages.map(t => ({
+      label: `${t.name} page`,
+      name: `page.${t.name}`,
+      type: "Bool"
+    }));
     res.sendWrap(
       `Create Pack`,
       renderForm(
         new Form({
           action: "/packs/create",
-          fields: [...tableFields, ...viewFields, ...pluginFields]
+          fields: [
+            ...tableFields,
+            ...viewFields,
+            ...pluginFields,
+            ...pageFields
+          ]
         }),
         req.csrfToken()
       )
@@ -93,7 +109,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    var pack = { tables: [], views: [], plugins: [] };
+    var pack = { tables: [], views: [], plugins: [], pages: [] };
     for (const k of Object.keys(req.body)) {
       const [type, name] = k.split(".");
       switch (type) {
@@ -105,6 +121,9 @@ router.post(
           break;
         case "plugin":
           pack.plugins.push(await plugin_pack(name));
+          break;
+        case "page":
+          pack.pages.push(await page_pack(name));
           break;
 
         default:
