@@ -57,28 +57,31 @@ describe("pack create", () => {
 });
 
 describe("pack store", () => {
+  var packs;
   it("reset the pack store cache", async () => {
     getState().deleteConfig("available_packs");
     getState().deleteConfig("available_packs_fetched_at");
   });
   it("fetches the pack store", async () => {
-    const packs = await fetch_available_packs();
+    packs = await fetch_available_packs();
     expect(packs.length > 0).toBe(true);
     const cache = getState().getConfig("available_packs", false);
     expect(packs).toStrictEqual(cache);
-
-    const stored_at = getState().getConfig("available_packs_fetched_at", false);
-    expect(is_stale(stored_at)).toBe(false);
-
+  });
+  it("fetches packs from the pack store", async () => {
     const pack = await fetch_pack_by_name(packs[0].name);
+  });
+  it("tries to fetch dummy pack from the pack store", async () => {
     const nopack = await fetch_pack_by_name("nosuchpack");
     expect(nopack).toBe(null);
-
+  });
+  it("caches the pack store", async () => {
+    const stored_at = getState().getConfig("available_packs_fetched_at", false);
+    expect(is_stale(stored_at)).toBe(false);
     await getState().setConfig("available_packs", []);
     const packs1 = await fetch_available_packs();
     expect(packs1).toStrictEqual([]);
   });
-  it("reset the pack store cache", async () => {});
   it("reset the pack store cache", async () => {
     getState().deleteConfig("available_packs");
     getState().deleteConfig("available_packs_fetched_at");
