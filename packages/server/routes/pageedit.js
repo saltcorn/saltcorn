@@ -200,3 +200,14 @@ router.post(
     else res.redirect(wfres.redirect);
   })
 );
+
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    await Page.delete({ id });
+    res.redirect(`/pageedit`);
+  })
+);

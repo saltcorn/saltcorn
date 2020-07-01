@@ -97,18 +97,19 @@ class View {
   async delete() {
     await View.delete({ id: this.id });
   }
-  static async update(v, id) {
-    await db.update("_sc_views", v, id);
-    await require("../db/state")
-      .getState()
-      .refresh();
-  }
   static async delete(where) {
     await db.deleteWhere("_sc_views", where);
     await require("../db/state")
       .getState()
       .refresh();
   }
+  static async update(v, id) {
+    await db.update("_sc_views", v, id);
+    await require("../db/state")
+      .getState()
+      .refresh();
+  }
+
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,
