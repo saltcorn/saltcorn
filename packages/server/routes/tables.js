@@ -362,10 +362,11 @@ router.get(
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
 
-    stringify(rows, { header: true, cast: {
-      date: (value) =>
-        value.toISOString()
-      
-    } }).pipe(res);
+    stringify(rows, {
+      header: true,
+      cast: {
+        date: value => value.toISOString()
+      }
+    }).pipe(res);
   })
 );
