@@ -23,6 +23,7 @@ const {
   div,
   i
 } = require("@saltcorn/markup/tags");
+const stringify = require("csv-stringify");
 
 const router = new Router();
 module.exports = router;
@@ -200,7 +201,7 @@ router.get(
     }
     const dataCard = div(
       { class: "d-flex text-center" },
-      div({ class: "mx-auto" }, h3(`${nrows}`), "Rows"),
+      div({ class: "mx-auto" }, h4(`${nrows}`), "Rows"),
       div(
         { class: "mx-auto" },
         a(
@@ -208,6 +209,15 @@ router.get(
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
           "Edit"
+        )
+      ),
+      div(
+        { class: "mx-auto" },
+        a(
+          { href: `/table/download/${table.name}` },
+          i({ class: "fas fa-2x fa-download" }),
+          "<br/>",
+          "Download"
         )
       )
     );
@@ -336,5 +346,22 @@ router.get(
           ),
       a({ href: `/table/new`, class: "btn btn-primary" }, "New table")
     );
+  })
+);
+
+router.get(
+  "/download/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+    const rows = await table.getRows();
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Pragma", "no-cache");
+
+    stringify(rows, { header: true }).pipe(res);
   })
 );
