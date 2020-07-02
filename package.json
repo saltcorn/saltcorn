@@ -17,5 +17,11 @@
       "packages/saltcorn-data",
       "packages/saltcorn-sbadmin2"
     ]
+  },
+  "nodemonConfig": {
+    "verbose": true,
+    "ignore": [
+      "plugin_packages/"
+    ]
   }
 }
