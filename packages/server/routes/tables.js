@@ -12,7 +12,17 @@ const {
 } = require("@saltcorn/markup");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
-const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+const {
+  span,
+  h5,
+  h4,
+  h3,
+  nbsp,
+  p,
+  a,
+  div,
+  i
+} = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -93,7 +103,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
-
+    const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
     var fieldCard;
     if (fields.length === 0) {
@@ -188,19 +198,39 @@ router.get(
           )
       };
     }
+    const dataCard = div(
+      { class: "d-flex text-center" },
+      div({ class: "mx-auto" }, h3(`${nrows}`), "Rows"),
+      div(
+        { class: "mx-auto" },
+        a(
+          { href: `/list/${table.name}` },
+          i({ class: "fas fa-2x fa-edit" }),
+          "<br/>",
+          "Edit"
+        )
+      )
+    );
     res.sendWrap(`${table.name} table`, {
       above: [
         {
           type: "pageHeader",
-          title: `${table.name} table`,
-          blurb:
-            fields.length > 0 ? link(`/list/${table.name}`, "See data") : null
+          title: `${table.name} table`
         },
         {
           type: "card",
           title: "Fields",
           contents: fieldCard
         },
+        ...(fields.length > 0
+          ? [
+              {
+                type: "card",
+                title: "Table data",
+                contents: dataCard
+              }
+            ]
+          : []),
         ...(viewCard ? [viewCard] : []),
         {
           type: "card",
