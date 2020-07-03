@@ -30,7 +30,8 @@ const is_layout_container = is.or(
     type: is.one_of(
       "blank card hero pageHeader footer image link line_break view".split(" ")
     )
-  })
+  }),
+  is.obj()
 );
 
 const is_layout = is.or(
@@ -40,7 +41,8 @@ const is_layout = is.or(
         is.array(
           is.or(
             is_layout_container,
-            is.obj({ besides: is.array(is_layout_container) })
+            is.obj({ besides: is.array(is_layout_container) }),
+            is.obj({ above: is.array(is_layout_container) })
           )
         )
       ),
@@ -48,7 +50,8 @@ const is_layout = is.or(
         is.array(
           is.or(
             is_layout_container,
-            is.obj({ above: is.array(is_layout_container) })
+            is.obj({ above: is.array(is_layout_container) }),
+            is.obj({ besides: is.array(is_layout_container) })
           )
         )
       )
