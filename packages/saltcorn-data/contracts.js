@@ -31,7 +31,7 @@ const is_layout_container = is.or(
       "blank card hero pageHeader footer image link line_break view".split(" ")
     )
   }),
-  is.obj()
+  is.obj({})
 );
 
 const is_layout = is.or(
