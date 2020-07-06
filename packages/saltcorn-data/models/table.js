@@ -4,7 +4,6 @@ const Field = require("./field");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson=require('csvtojson')
-const csv = require('@fast-csv/parse');
 
 class Table {
   constructor(o) {
@@ -122,6 +121,7 @@ class Table {
       i+=1;
       await this.insertRow(rec)
     }
+    return {success: `Imported ${file_rows.length} rows into table ${this.name}`}
   }
 
   async get_parent_relations() {
