@@ -39,8 +39,7 @@ class File {
     return path.join(file_store, newFnm);
   }
   static async from_req_files(file, user_id, min_role_read = 1) {
-    
-    const newPath = File.get_new_path()
+    const newPath = File.get_new_path();
     const [mime_super, mime_sub] = file.mimetype.split("/");
     await file.mv(newPath);
     return await File.create({

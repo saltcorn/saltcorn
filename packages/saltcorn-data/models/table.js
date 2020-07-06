@@ -3,7 +3,7 @@ const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
-const csvtojson=require('csvtojson')
+const csvtojson = require("csvtojson");
 
 class Table {
   constructor(o) {
@@ -98,30 +98,32 @@ class Table {
   }
 
   async import_csv_file(filePath) {
-    const [headers]=await csvtojson({output:"csv", noheader:true}).fromFile(filePath);
+    const [headers] = await csvtojson({
+      output: "csv",
+      noheader: true
+    }).fromFile(filePath);
     const fields = await this.getFields();
-    const okHeaders={}
-    for(const f of fields) {
-      if(headers.includes(f.name)) 
-        okHeaders[f.name] = f
-      else if(headers.includes(f.label)) 
-        okHeaders[f.label] = f
-      else if(f.required)
-        return {error: `Required field missing: ${f.label}`}
+    const okHeaders = {};
+    for (const f of fields) {
+      if (headers.includes(f.name)) okHeaders[f.name] = f;
+      else if (headers.includes(f.label)) okHeaders[f.label] = f;
+      else if (f.required)
+        return { error: `Required field missing: ${f.label}` };
     }
     // also id
-    if(headers.includes(`id`)) 
-        okHeaders.id = {type: "Integer"};
-    const colRe=new RegExp(`(${Object.keys(okHeaders).join('|')})`)
-    const file_rows=await csvtojson({
-      includeColumns:colRe
-      }).fromFile(filePath);
-    var i=0;
-    for(const rec of file_rows) {
-      i+=1;
-      await this.insertRow(rec)
+    if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
+    const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
+    const file_rows = await csvtojson({
+      includeColumns: colRe
+    }).fromFile(filePath);
+    var i = 0;
+    for (const rec of file_rows) {
+      i += 1;
+      await this.insertRow(rec);
     }
-    return {success: `Imported ${file_rows.length} rows into table ${this.name}`}
+    return {
+      success: `Imported ${file_rows.length} rows into table ${this.name}`
+    };
   }
 
   async get_parent_relations() {

@@ -246,8 +246,7 @@ router.get(
             type: "file",
             accept: "text/csv,.csv",
             onchange: "this.form.submit();"
-          }),
-          
+          })
         )
       )
     );
@@ -408,18 +407,15 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = await Table.findOne({ name });
-    const newPath = File.get_new_path()
+    const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
-    try{
-    const parse_res = await table.import_csv_file(newPath)
-    if(parse_res.error)
-      req.flash("error", parse_res.error);
-    else
-    req.flash("success", parse_res.success);
-    } catch(e){
+    try {
+      const parse_res = await table.import_csv_file(newPath);
+      if (parse_res.error) req.flash("error", parse_res.error);
+      else req.flash("success", parse_res.success);
+    } catch (e) {
       req.flash("error", e.message);
-
     }
 
     await fs.unlink(newPath);
