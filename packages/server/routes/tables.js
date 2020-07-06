@@ -21,7 +21,10 @@ const {
   p,
   a,
   div,
-  i
+  i,
+  form,
+  label,
+  input
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 
@@ -217,7 +220,29 @@ router.get(
           { href: `/table/download/${table.name}` },
           i({ class: "fas fa-2x fa-download" }),
           "<br/>",
-          "Download"
+          "Download CSV"
+        )
+      ),
+      div(
+        { class: "mx-auto" },
+        form(
+          {
+            method: "post",
+            class: "btn-link",
+            action: `/table/upload_to_table/${table.name}`
+          },
+          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+          label(
+            { class: "", for: "upload_to_table" },
+            i({ class: "fas fa-2x fa-upload" })
+          ),
+          input({
+            id: "upload_to_table",
+            type: "file",
+            onchange: "this.form.submit();"
+          }),
+          "<br/>",
+          "Upload CSV"
         )
       )
     );
@@ -368,5 +393,16 @@ router.get(
         date: value => value.toISOString()
       }
     }).pipe(res);
+  })
+);
+
+router.post(
+  "/upload_to_table/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+    res.redirect(`/table/${table.id}`);
   })
 );

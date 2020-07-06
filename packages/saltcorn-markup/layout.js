@@ -35,7 +35,12 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
-    if (typeof segment==="object" && Object.keys(segment).length === 0 && segment.constructor === Object) return "";
+    if (
+      typeof segment === "object" &&
+      Object.keys(segment).length === 0 &&
+      segment.constructor === Object
+    )
+      return "";
     if (typeof segment === "string") return wrap(segment, isTop, ix, segment);
     if (Array.isArray(segment))
       return wrap(
