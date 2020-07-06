@@ -116,11 +116,24 @@ class Table {
     const file_rows = await csvtojson({
       includeColumns: colRe
     }).fromFile(filePath);
-    var i = 0;
+    var i = 1;
+    const client = await db.getClient();
+    await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
-      await this.insertRow(rec);
+      try {
+        await db.insert(this.name, rec, true, client);
+      } catch (e) {
+        await client.query("ROLLBACK");
+
+        await client.release(true);
+        return { error: `${e.message} in row ${i}` };
+      }
     }
+    await client.query("COMMIT");
+
+    await client.release(true);
+
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`
     };

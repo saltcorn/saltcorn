@@ -84,7 +84,7 @@ const deleteWhere = async (tbl, whereObj) => {
   return tq.rows;
 };
 
-const insert = async (tbl, obj, noid = false) => {
+const insert = async (tbl, obj, noid = false, client) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
@@ -93,7 +93,7 @@ const insert = async (tbl, obj, noid = false) => {
     tbl
   )}"(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
   sql_log(sql, valList);
-  const { rows } = await pool.query(sql, valList);
+  const { rows } = await (client || pool).query(sql, valList);
   if (noid) return;
   else return rows[0].id;
 };
