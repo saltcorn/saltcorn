@@ -4,7 +4,9 @@
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
@@ -20,7 +22,8 @@
     "pg": "^8.1.0",
     "pluralize": "^8.0.0",
     "uuid": "^8.1.0",
-    "xdg-basedir": "^4.0.0"
+    "xdg-basedir": "^4.0.0",
+    "snyk": "^1.360.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
@@ -31,5 +34,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "snyk": true
 }
