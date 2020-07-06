@@ -2,6 +2,7 @@ const Router = require("express-promise-router");
 
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
+const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const {
   mkTable,
@@ -27,6 +28,7 @@ const {
   input
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
+const fs = require("fs").promises;
 
 const router = new Router();
 module.exports = router;
@@ -228,21 +230,23 @@ router.get(
         form(
           {
             method: "post",
-            class: "btn-link",
-            action: `/table/upload_to_table/${table.name}`
+            action: `/table/upload_to_table/${table.name}`,
+            encType: "multipart/form-data"
           },
           input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
           label(
-            { class: "", for: "upload_to_table" },
-            i({ class: "fas fa-2x fa-upload" })
+            { class: "btn-link", for: "upload_to_table" },
+            i({ class: "fas fa-2x fa-upload" }),
+            "<br/>",
+            "Upload CSV"
           ),
           input({
             id: "upload_to_table",
+            name: "file",
             type: "file",
             onchange: "this.form.submit();"
           }),
-          "<br/>",
-          "Upload CSV"
+          
         )
       )
     );
@@ -403,6 +407,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = await Table.findOne({ name });
+    const newPath = File.get_new_path()
+    await req.files.file.mv(newPath);
+    await fs.unlink(newPath);
+
     res.redirect(`/table/${table.id}`);
   })
 );
