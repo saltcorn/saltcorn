@@ -2,6 +2,7 @@ const Router = require("express-promise-router");
 
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
+const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const {
   mkTable,
@@ -21,9 +22,13 @@ const {
   p,
   a,
   div,
-  i
+  i,
+  form,
+  label,
+  input
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
+const fs = require("fs").promises;
 
 const router = new Router();
 module.exports = router;
@@ -217,7 +222,31 @@ router.get(
           { href: `/table/download/${table.name}` },
           i({ class: "fas fa-2x fa-download" }),
           "<br/>",
-          "Download"
+          "Download CSV"
+        )
+      ),
+      div(
+        { class: "mx-auto" },
+        form(
+          {
+            method: "post",
+            action: `/table/upload_to_table/${table.name}`,
+            encType: "multipart/form-data"
+          },
+          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+          label(
+            { class: "btn-link", for: "upload_to_table" },
+            i({ class: "fas fa-2x fa-upload" }),
+            "<br/>",
+            "Upload CSV"
+          ),
+          input({
+            id: "upload_to_table",
+            name: "file",
+            type: "file",
+            accept: "text/csv,.csv",
+            onchange: "this.form.submit();"
+          })
         )
       )
     );
@@ -368,5 +397,28 @@ router.get(
         date: value => value.toISOString()
       }
     }).pipe(res);
+  })
+);
+
+router.post(
+  "/upload_to_table/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+    const newPath = File.get_new_path();
+    await req.files.file.mv(newPath);
+    //console.log(req.files.file.data)
+    try {
+      const parse_res = await table.import_csv_file(newPath);
+      if (parse_res.error) req.flash("error", parse_res.error);
+      else req.flash("success", parse_res.success);
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
+    await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
   })
 );

@@ -3,6 +3,7 @@ const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
+const csvtojson = require("csvtojson");
 
 class Table {
   constructor(o) {
@@ -94,6 +95,48 @@ class Table {
   static async update(id, new_table) {
     //TODO RENAME TABLE
     await db.update("_sc_tables", new_table, id);
+  }
+
+  async import_csv_file(filePath) {
+    const [headers] = await csvtojson({
+      output: "csv",
+      noheader: true
+    }).fromFile(filePath);
+    const fields = await this.getFields();
+    const okHeaders = {};
+    for (const f of fields) {
+      if (headers.includes(f.name)) okHeaders[f.name] = f;
+      else if (headers.includes(f.label)) okHeaders[f.label] = f;
+      else if (f.required)
+        return { error: `Required field missing: ${f.label}` };
+    }
+    // also id
+    if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
+    const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
+    const file_rows = await csvtojson({
+      includeColumns: colRe
+    }).fromFile(filePath);
+    var i = 1;
+    const client = await db.getClient();
+    await client.query("BEGIN");
+    for (const rec of file_rows) {
+      i += 1;
+      try {
+        await db.insert(this.name, rec, true, client);
+      } catch (e) {
+        await client.query("ROLLBACK");
+
+        await client.release(true);
+        return { error: `${e.message} in row ${i}` };
+      }
+    }
+    await client.query("COMMIT");
+
+    await client.release(true);
+
+    return {
+      success: `Imported ${file_rows.length} rows into table ${this.name}`
+    };
   }
 
   async get_parent_relations() {

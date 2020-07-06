@@ -32,13 +32,16 @@ class File {
     await db.update("_sc_files", row, id);
   }
 
-  static async from_req_files(file, user_id, min_role_read = 1) {
+  static get_new_path() {
     const file_store = db.connectObj.file_store;
 
     const newFnm = uuidv4();
-    const newPath = path.join(file_store, newFnm);
+    return path.join(file_store, newFnm);
+  }
+  static async from_req_files(file, user_id, min_role_read = 1) {
+    const newPath = File.get_new_path();
     const [mime_super, mime_sub] = file.mimetype.split("/");
-    file.mv(newPath);
+    await file.mv(newPath);
     return await File.create({
       filename: file.name,
       location: newPath,
