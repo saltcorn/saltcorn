@@ -244,6 +244,7 @@ router.get(
             id: "upload_to_table",
             name: "file",
             type: "file",
+            accept: "text/csv,.csv",
             onchange: "this.form.submit();"
           }),
           
@@ -409,8 +410,9 @@ router.post(
     const table = await Table.findOne({ name });
     const newPath = File.get_new_path()
     await req.files.file.mv(newPath);
+    //console.log(req.files.file.data)
+    const parse_res = await table.import_csv_file(newPath)
     await fs.unlink(newPath);
-
     res.redirect(`/table/${table.id}`);
   })
 );

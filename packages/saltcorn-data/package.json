@@ -13,6 +13,7 @@
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.10",
+    "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
