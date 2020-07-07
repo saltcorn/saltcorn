@@ -5,6 +5,23 @@ const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 
+const transposeObjects = objs=>{
+  const keys = new Set()
+  for(const o of objs) {
+    Object.keys(o.forEach(k=>keys.add(k)))
+  }
+  const res = {}
+  keys.forEach(k=>{
+    res[k]= []
+  })
+  for(const o of objs) {
+    keys.forEach(k=>{
+      res[k].push(o[k])
+    })
+  }
+  return res
+}
+
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -95,6 +112,14 @@ class Table {
   static async update(id, new_table) {
     //TODO RENAME TABLE
     await db.update("_sc_tables", new_table, id);
+  }
+
+  static async create_from_csv(name, filePath) {
+    const rows = await csvtojson().fromFile(filePath);
+    const rowsTr = transposeObjects(rows)
+    var fields = []
+
+    return { name: 'foo', id: 1}
   }
 
   async import_csv_file(filePath) {

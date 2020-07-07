@@ -422,3 +422,44 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
+router.get(
+  "/create-from-csv",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      `Create table from CSV file`,
+      renderForm(
+        new Form({
+          action: "/table/create-from-csv",
+          submitLabel: "Create",
+          fields: [
+            { label: "Table name", name: "name", input_type: "text" },
+            { label: "File", name: "file", input_type: "file" },
+          ]
+        }),
+        req.csrfToken()
+      )
+    );
+  })
+);
+
+router.post(
+  "/create-from-csv",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if(req.body.name && RegExp.files.file) {
+      const newPath = File.get_new_path();
+      await req.files.file.mv(newPath);
+      const table=await Table.create_from_csv(req.body.name, newPath)
+      await fs.unlink(newPath);
+      req.flash("success", `Created table ${table.name}`);
+      res.redirect(`/table/${table.id}`);
+    } else {
+      req.flash("error", "Error: missing name or file");
+      res.redirect(`/table`);
+    }
+  })
+)
