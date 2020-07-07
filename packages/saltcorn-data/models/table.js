@@ -16,9 +16,9 @@ class Table {
     contract.class(this);
   }
   static async findOne(where) {
-    const tbl = await db.selectOne("_sc_tables", where);
+    const tbl = await db.selectMaybeOne("_sc_tables", where);
 
-    return new Table(tbl);
+    return tbl ? new Table(tbl) : tbl;
   }
   static async find(where, selectopts) {
     const tbls = await db.select("_sc_tables", where, selectopts);
@@ -295,7 +295,7 @@ Table.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("Table")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.class("Table"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
