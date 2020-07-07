@@ -115,6 +115,8 @@ const getState = contract(is.fun([], is.class("State")), () => {
 
 var tenants = {};
 
+const getTenant = ten => tenants[ten];
+
 const init_multi_tenant = async plugin_loader => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
@@ -140,4 +142,10 @@ const restart_tenant = async plugin_loader => {
   await plugin_loader();
 };
 
-module.exports = { getState, init_multi_tenant, create_tenant, restart_tenant };
+module.exports = {
+  getState,
+  getTenant,
+  init_multi_tenant,
+  create_tenant,
+  restart_tenant
+};

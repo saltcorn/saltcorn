@@ -1,6 +1,6 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, getTenant } = require("@saltcorn/data/db/state");
 const { input } = require("@saltcorn/markup/tags");
 
 function loggedIn(req, res, next) {
@@ -27,13 +27,20 @@ function isAdmin(req, res, next) {
 
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
-    const ten =
-      req.subdomains.length > 0 && req.subdomains[0] !== "www"
-        ? req.subdomains[0]
-        : "public";
-    db.runWithTenant(ten, () => {
-      next();
-    });
+    if (req.subdomains.length === 0 || req.subdomains[0] === "www")
+      db.runWithTenant("public", () => {
+        next();
+      });
+    else {
+      const ten = req.subdomains[0];
+      const state = getTenant(ten);
+      if (!state) res.status(404).send("Subdomain not found");
+      else {
+        db.runWithTenant(ten, () => {
+          next();
+        });
+      }
+    }
   } else {
     next();
   }
