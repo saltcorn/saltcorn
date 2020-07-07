@@ -4,6 +4,30 @@ const Field = require("./field");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
+const moment = require("moment");
+
+const transposeObjects = objs => {
+  const keys = new Set();
+  for (const o of objs) {
+    Object.keys(o).forEach(k => keys.add(k));
+  }
+  const res = {};
+  keys.forEach(k => {
+    res[k] = [];
+  });
+  for (const o of objs) {
+    keys.forEach(k => {
+      res[k].push(o[k]);
+    });
+  }
+  return res;
+};
+
+const dateFormats = [moment.ISO_8601];
+
+const isDate = function(date) {
+  return moment(date, dateFormats, true).isValid();
+};
 
 class Table {
   constructor(o) {
@@ -95,6 +119,44 @@ class Table {
   static async update(id, new_table) {
     //TODO RENAME TABLE
     await db.update("_sc_tables", new_table, id);
+  }
+
+  static async create_from_csv(name, filePath) {
+    const rows = await csvtojson().fromFile(filePath);
+    const rowsTr = transposeObjects(rows);
+    const table = await Table.create(name);
+
+    for (const [k, vs] of Object.entries(rowsTr)) {
+      if (k === "id") continue;
+      const required = vs.every(v => v !== "");
+      const nonEmpties = vs.filter(v => v !== "");
+      var type;
+      if (
+        nonEmpties.every(v =>
+          //https://www.postgresql.org/docs/11/datatype-boolean.html
+          "true false yes no on off y n t f"
+            .split(" ")
+            .includes(v.toLowerCase())
+        )
+      )
+        type = "Bool";
+      else if (nonEmpties.every(v => !isNaN(v)))
+        if (nonEmpties.every(v => Number.isSafeInteger(+v))) type = "Integer";
+        else type = "Float";
+      else if (nonEmpties.every(v => isDate(v))) type = "Date";
+      else type = "String";
+      const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
+      await Field.create({
+        name: k,
+        required,
+        type,
+        table,
+        label
+      });
+    }
+    const parse_res = await table.import_csv_file(filePath);
+    parse_res.table = table;
+    return parse_res;
   }
 
   async import_csv_file(filePath) {

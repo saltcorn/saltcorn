@@ -103,6 +103,52 @@ router.get(
 );
 
 router.get(
+  "/create-from-csv",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      `Create table from CSV file`,
+      renderForm(
+        new Form({
+          action: "/table/create-from-csv",
+          submitLabel: "Create",
+          fields: [
+            { label: "Table name", name: "name", input_type: "text" },
+            { label: "File", name: "file", input_type: "file" }
+          ]
+        }),
+        req.csrfToken()
+      )
+    );
+  })
+);
+
+router.post(
+  "/create-from-csv",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (req.body.name && req.files.file) {
+      const newPath = File.get_new_path();
+      await req.files.file.mv(newPath);
+      const parse_res = await Table.create_from_csv(req.body.name, newPath);
+      await fs.unlink(newPath);
+      if (parse_res.error) req.flash("error", parse_res.error);
+      else
+        req.flash(
+          "success",
+          `Created table ${parse_res.table.name}. ${parse_res.success}`
+        );
+      res.redirect(`/table/${parse_res.table.id}`);
+    } else {
+      req.flash("error", "Error: missing name or file");
+      res.redirect(`/table`);
+    }
+  })
+);
+
+router.get(
   "/:id",
   setTenant,
   isAdmin,
@@ -354,8 +400,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await Table.find({}, { orderBy: "name" });
-    res.sendWrap(
-      "Tables",
+    const mainCard =
       rows.length > 0
         ? mkTable(
             [
@@ -372,9 +417,32 @@ router.get(
         : div(
             h4("No tables defined"),
             p("Tables hold collections of similar data")
-          ),
-      a({ href: `/table/new`, class: "btn btn-primary" }, "New table")
+          );
+    const createCard = div(
+      a({ href: `/table/new`, class: "btn btn-primary" }, "New table"),
+      a(
+        { href: `/table/create-from-csv`, class: "btn btn-secondary mx-3" },
+        "Create from CSV upload"
+      )
     );
+    res.sendWrap("Tables", {
+      above: [
+        {
+          type: "pageHeader",
+          title: `Tables`
+        },
+        {
+          type: "card",
+          title: "Tables",
+          contents: mainCard
+        },
+        {
+          type: "card",
+          title: "Create table",
+          contents: createCard
+        }
+      ]
+    });
   })
 );
 
