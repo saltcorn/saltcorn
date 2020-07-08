@@ -130,8 +130,10 @@ const getForm = async (table, viewname, columns, layout, id) => {
     .map(column => {
       if (column.type === "Field") {
         const f = fields.find(fld => fld.name === column.field_name);
-        f.fieldview = column.fieldview;
-        return f;
+        if (f) {
+          f.fieldview = column.fieldview;
+          return f;
+        }
       }
     })
     .filter(tf => !!tf);
