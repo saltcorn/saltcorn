@@ -171,7 +171,7 @@ function tristateClick(nm) {
   }
 }
 
-function view_post(viewname, route, data) {
+function view_post(viewname, route, data, onDone) {
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
     type: "POST",
@@ -180,5 +180,5 @@ function view_post(viewname, route, data) {
     },
     contentType: "application/json",
     data: JSON.stringify(data)
-  });
+  }).done(onDone);
 }
