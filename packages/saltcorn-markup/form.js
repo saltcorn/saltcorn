@@ -260,7 +260,9 @@ const renderFormLayout = form => {
   const blockDispatch = {
     field(segment) {
       const field = form.fields.find(f => f.name === segment.field_name);
-      return innerField(form.values, form.errors)(field);
+      if(field && field.input_type!=='hidden' )
+        return innerField(form.values, form.errors)(field);
+      else return '';
     },
     action({ action_name }) {
       return `<button type="submit" class="btn btn-primary">${text(
