@@ -37,7 +37,6 @@ jobs:
         with:
           node-version: "14.x"
       - run: npm install -g lerna
-      - run: echo `which google-chrome`
       - run: lerna bootstrap
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
