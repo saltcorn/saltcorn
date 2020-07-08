@@ -80,7 +80,7 @@ router.post(
     const { name, id, field_name } = req.params;
     const { redirect } = req.query;
     const table = await Table.findOne({ name });
-    await table.toggleBool(id, field_name);
+    await table.toggleBool(+id, field_name);
 
     res.redirect(redirect || `/list/${table.name}`);
   })
