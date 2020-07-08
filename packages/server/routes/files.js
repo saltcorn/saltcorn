@@ -156,7 +156,6 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    console.log("req.user", req.user)
     if (!req.files && !req.files.file) {
       req.flash("warning", "No file found");
     } else {
