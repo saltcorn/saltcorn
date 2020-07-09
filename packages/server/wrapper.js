@@ -90,8 +90,10 @@ module.exports = function(req, res, next) {
       { css: "/saltcorn.css" },
       { script: "/saltcorn.js" }
     ];
+    const logo_id = getState().getConfig("site_logo_id",'')
     const brand = {
-      name: getState().getConfig("site_name")
+      name: getState().getConfig("site_name"),
+      logo: logo_id && logo_id !=='0'? `/files/serve/${logo_id}`: undefined
     };
     const menu = [
       extra_menu.length > 0 && {
