@@ -43,7 +43,7 @@ const install_pack = contract(
         await Field.create({ table, ...field });
     }
     for (const viewSpec of pack.views) {
-      const { table, ...viewNoTable } = viewSpec;
+      const { table, on_menu, ...viewNoTable } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
     }

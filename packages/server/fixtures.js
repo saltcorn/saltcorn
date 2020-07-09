@@ -74,8 +74,7 @@ module.exports = async () => {
       ]
     },
     is_public: true,
-    on_root_page: true,
-    on_menu: true
+    on_root_page: true
   });
   await View.create({
     table_id: table.id,
@@ -98,8 +97,7 @@ module.exports = async () => {
       }
     },
     is_public: true,
-    on_root_page: true,
-    on_menu: true
+    on_root_page: true
   });
   await View.create({
     table_id: table.id,
@@ -115,8 +113,7 @@ module.exports = async () => {
       }
     },
     is_public: true,
-    on_root_page: true,
-    on_menu: true
+    on_root_page: true
   });
   await View.create({
     table_id: patients.id,
@@ -133,8 +130,7 @@ module.exports = async () => {
       ]
     },
     is_public: false,
-    on_root_page: true,
-    on_menu: true
+    on_root_page: true
   });
   const readings = await Table.create("readings");
   await Field.create({

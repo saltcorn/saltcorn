@@ -36,7 +36,6 @@ const view_pack = contract(pack_fun, async name => {
     configuration: view.configuration,
     is_public: view.is_public,
     on_root_page: view.on_root_page,
-    on_menu: view.on_menu,
     table: table.name
   };
 });

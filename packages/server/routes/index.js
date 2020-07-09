@@ -5,6 +5,7 @@ const view = require("./view");
 const page = require("./page");
 const pageedit = require("./pageedit");
 const files = require("./files");
+const menu = require("./menu");
 const admin = require("./admin");
 const tenant = require("./tenant");
 const api = require("./api");
@@ -27,6 +28,7 @@ module.exports = app => {
   app.use("/config", config);
   app.use("/plugins", plugins);
   app.use("/packs", packs);
+  app.use("/menu", menu);
   app.use("/view", view);
   app.use("/crashlog", crashlog);
   app.use("/page", page);

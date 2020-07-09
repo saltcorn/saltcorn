@@ -107,7 +107,12 @@ router.post(
       const { email, password } = req.body;
       const u = await User.create({ email, password, role_id: 1 });
       req.login(
-        { email: u.email, id: u.id, role_id: u.role_id, tenant: db.getTenantSchema() },
+        {
+          email: u.email,
+          id: u.id,
+          role_id: u.role_id,
+          tenant: db.getTenantSchema()
+        },
         function(err) {
           if (!err) {
             res.redirect("/");
@@ -145,7 +150,12 @@ router.post(
       const u = await User.create({ email, password });
 
       req.login(
-        { email: u.email, id: u.id, role_id: u.role_id, tenant: db.getTenantSchema() },
+        {
+          email: u.email,
+          id: u.id,
+          role_id: u.role_id,
+          tenant: db.getTenantSchema()
+        },
         function(err) {
           if (!err) {
             res.redirect("/");

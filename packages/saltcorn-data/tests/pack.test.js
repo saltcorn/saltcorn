@@ -40,7 +40,6 @@ describe("pack create", () => {
       },
       is_public: true,
       name: "authorlist",
-      on_menu: true,
       on_root_page: true,
       table: "books",
       viewtemplate: "List"

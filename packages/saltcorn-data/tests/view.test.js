@@ -75,8 +75,7 @@ describe("View", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       is_public: true,
-      on_root_page: true,
-      on_menu: true
+      on_root_page: true
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
