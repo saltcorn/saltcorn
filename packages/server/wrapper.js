@@ -51,6 +51,7 @@ module.exports = function(req, res, next) {
         label: "Settings",
         subitems: [
           { link: "/plugins", label: "Plugins" },
+          { link: "/menu", label: "Menu" },
           { link: "/useradmin", label: "Users" },
           { link: "/config", label: "Configuration" },
           { link: "/admin", label: "Admin" },
