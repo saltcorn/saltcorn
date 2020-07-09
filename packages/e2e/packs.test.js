@@ -56,7 +56,7 @@ describe("Packs", () => {
     await browser.clickNav("#todos > a");
     await browser.page.type("#inputdescription", "Maths");
     await browser.clickNav("button[type=submit]");
-    await browser.clickNav(".nav-item:nth-child(6) span");
+    await browser.goto("/view/todokanban");
     const page = await browser.page.content();
     expect(page).toContain("Maths");
     expect(page).toContain("todokanban");
