@@ -10,7 +10,7 @@ const getFlashes = req =>
     .filter(a => a.msg && a.msg.length && a.msg.length > 0);
 
 const get_extra_menu = role => {
-  const cfg = getState().getConfig("menu_items");
+  const cfg = getState().getConfig("menu_items", []);
 
   const items = cfg
     .filter(item => role <= +item.min_role)
