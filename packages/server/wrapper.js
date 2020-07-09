@@ -9,27 +9,31 @@ const getFlashes = req =>
     })
     .filter(a => a.msg && a.msg.length && a.msg.length > 0);
 
-const get_extra_menu = () => {
-  const cfg = getState().getConfig("extra_menu");
-  const items = cfg.split(",");
-  return items
-    .map(item => {
-      const [nm, url] = item.split("::");
-      return { link: url, label: nm };
-    })
-    .filter(item => item.link || item.label);
+const get_extra_menu = role => {
+  const cfg = getState().getConfig("menu_items");
+
+  const items = cfg
+    .filter(item => role <= +item.min_role)
+    .map(item => ({
+      label: item.label,
+      link:
+        item.type === "Link"
+          ? item.url
+          : item.type === "View"
+          ? `/view/${item.viewname}`
+          : `/page/${item.pagename}`
+    }));
+  return items;
 };
 
 module.exports = function(req, res, next) {
   res.sendWrap = function(opts, ...html) {
     const isAuth = req.isAuthenticated();
     const state = getState();
+    const role = (req.user || {}).role_id || 10;
     const allow_signup = state.getConfig("allow_signup");
     const login_menu = state.getConfig("login_menu");
-    const extra_menu = get_extra_menu();
-    const views = state.views
-      .filter(v => v.on_menu && (isAuth || v.is_public))
-      .map(v => ({ link: `/view/${v.name}`, label: v.name }));
+    const extra_menu = get_extra_menu(role);
     const authItems = isAuth
       ? [
           { label: small(req.user.email.split("@")[0]) },
@@ -41,7 +45,7 @@ module.exports = function(req, res, next) {
         ];
     const schema = db.getTenantSchema();
     const tenant_list = db.is_it_multi_tenant() && schema === "public";
-    const isAdmin = (req.user || {}).role_id === 1;
+    const isAdmin = role === 1;
     const adminItems = [
       { link: "/table", label: "Tables" },
       { link: "/viewedit", label: "Views" },
@@ -90,12 +94,8 @@ module.exports = function(req, res, next) {
       name: getState().getConfig("site_name")
     };
     const menu = [
-      views.length > 0 && {
-        section: "Views",
-        items: views
-      },
       extra_menu.length > 0 && {
-        section: "Links",
+        section: "Menu",
         items: extra_menu
       },
       isAdmin && {

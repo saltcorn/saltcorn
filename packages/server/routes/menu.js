@@ -70,7 +70,7 @@ const menuForm = async () => {
             name: "min_role",
             label: "Minimum role",
             input_type: "select",
-            options: roles.map(r => r.role)
+            options: roles.map(r => ({ label: r.role, value: r.id }))
           },
           {
             name: "url",
@@ -122,12 +122,8 @@ router.post(
 
     const valres = form.validate(req.body);
     if (valres.errors)
-      res.sendWrap(
-        `Menu editor`,
-        renderForm(form, req.csrfToken())
-      );
+      res.sendWrap(`Menu editor`, renderForm(form, req.csrfToken()));
     else {
-    
       await getState().setConfig("site_name", valres.success.site_name);
       await getState().setConfig("site_logo_id", valres.success.site_logo_id);
       await getState().setConfig("menu_items", valres.success.menu_items);
