@@ -97,11 +97,6 @@ const viewForm = (tableOptions, values) =>
         label: "On root page",
         name: "on_root_page",
         type: "Bool"
-      }),
-      new Field({
-        label: "On menu",
-        name: "on_menu",
-        type: "Bool"
       })
     ],
     values
