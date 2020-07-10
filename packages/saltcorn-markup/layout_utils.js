@@ -6,7 +6,7 @@ const {
   hr,
   div,
   text,
-
+  img,
   button,
   nav,
   script,
@@ -75,8 +75,20 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
-const leftNavBar = ({ name }) => [
-  a({ class: "navbar-brand js-scroll-trigger", href: "/" }, name),
+const leftNavBar = ({ name, logo }) => [
+  a(
+    { class: "navbar-brand js-scroll-trigger", href: "/" },
+    logo &&
+      img({
+        src: logo,
+        width: "30",
+        height: "30",
+        class: "mx-1 d-inline-block align-top",
+        alt: "Logo",
+        loading: "lazy"
+      }),
+    name
+  ),
   button(
     {
       class: "navbar-toggler navbar-toggler-right",

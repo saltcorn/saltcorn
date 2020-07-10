@@ -10,7 +10,8 @@ const {
   h6,
   h1,
   p,
-  header,img,
+  header,
+  img,
   footer
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -92,8 +93,11 @@ const sidebar = (brand, sections, currentUrl) =>
         class: "sidebar-brand d-flex align-items-center justify-content-center",
         href: "/"
       },
-      brand.logo && div({class:"sidebar-brand-icon"},
-      img({src:brand.logo, alt:"logo"})),
+      brand.logo &&
+        div(
+          { class: "sidebar-brand-icon" },
+          img({ src: brand.logo, width: "35", height: "35", alt: "Logo" })
+        ),
       div({ class: "sidebar-brand-text mx-3" }, brand.name)
     ),
     sections.map(sideBarSection(currentUrl))
