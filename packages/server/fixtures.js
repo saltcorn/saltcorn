@@ -73,8 +73,7 @@ module.exports = async () => {
         }
       ]
     },
-    is_public: true,
-    on_root_page: true
+    is_public: true
   });
   await View.create({
     table_id: table.id,
@@ -96,8 +95,7 @@ module.exports = async () => {
         above: [{ type: "field", fieldview: "show", field_name: "author" }]
       }
     },
-    is_public: true,
-    on_root_page: true
+    is_public: true
   });
   await View.create({
     table_id: table.id,
@@ -112,8 +110,7 @@ module.exports = async () => {
         pages: 678
       }
     },
-    is_public: true,
-    on_root_page: true
+    is_public: true
   });
   await View.create({
     table_id: patients.id,
@@ -129,8 +126,7 @@ module.exports = async () => {
         { type: "JoinField", join_field: "favbook.pages" }
       ]
     },
-    is_public: false,
-    on_root_page: true
+    is_public: false
   });
   const readings = await Table.create("readings");
   await Field.create({
