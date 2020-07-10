@@ -15,7 +15,6 @@ class View {
     }
     this.configuration = o.configuration;
     this.is_public = o.is_public;
-    this.on_root_page = o.on_root_page;
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     contract.class(this);

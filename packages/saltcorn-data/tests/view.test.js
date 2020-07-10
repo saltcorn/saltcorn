@@ -74,15 +74,13 @@ describe("View", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
-      is_public: true,
-      on_root_page: true
+      is_public: true
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
 
     const st = v.combine_state_and_default_state({ baz: 3 });
     expect(st).toStrictEqual({ baz: 3, foo: "bar" });
-    await View.update({ on_root_page: false }, v.id);
     await v.delete();
   });
 });

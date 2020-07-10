@@ -92,11 +92,6 @@ const viewForm = (tableOptions, values) =>
         label: "Publicly viewable",
         name: "is_public",
         type: "Bool"
-      }),
-      new Field({
-        label: "On root page",
-        name: "on_root_page",
-        type: "Bool"
       })
     ],
     values
