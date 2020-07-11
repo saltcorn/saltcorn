@@ -81,11 +81,11 @@ describe("standard edit form", () => {
 });
 
 describe("homepage", () => {
-  it("shows to public", async () => {
+  it("redirects public to login", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/")
-      .expect(toInclude("authorlist"));
+      .expect(toRedirect("/auth/login"));
   });
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
