@@ -4,7 +4,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
-const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
+const { ul, li, div, small, a, h5, h2, h3 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 
@@ -29,10 +29,25 @@ const viewTable = views =>
     views
   );
 
+const no_views_logged_in_user = async (role, req, res) => {
+  const views = await View.find({});
+  const show_views =
+    views.length === 0
+      ? ""
+      : h3("Views") + ul(views.map(v => li(link(`/view/${v.name}`, v.name))));
+  const all_pages = await Page.find({})
+  const pages = all_pages.filter(p => role <= p.min_role);
+  const show_pages =
+    pages.length === 0
+      ? ""
+      : h3("Pages") + ul(pages.map(v => li(link(`/page/${v.name}`, v.name))));
+  res.sendWrap("Hello", h2("Welcome to saltcorn!") + show_pages + show_views);
+};
+
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
-    res.sendWrap("Hello", "Welcome to saltcorn!");
+    await no_views_logged_in_user(role, req, res);
   else {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
