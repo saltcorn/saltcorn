@@ -64,7 +64,15 @@ router.get(
           Object.entries(crash).map(([k, v]) =>
             tr(
               td(k),
-              td(pre(text(k === "headers" ? JSON.stringify(v, null, 2) : v)))
+              td(
+                pre(
+                  text(
+                    ["headers", "body"].includes(k)
+                      ? JSON.stringify(v, null, 2)
+                      : v
+                  )
+                )
+              )
             )
           )
         )

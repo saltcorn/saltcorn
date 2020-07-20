@@ -152,7 +152,7 @@ router.post(
         form.hasErrors = true;
         res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
       } else {
-        if (typeof req.body.id === "undefined") {
+        if (!req.body.id) {
           const existing_views = await View.find();
           const view_names = existing_views.map(v => v.name);
           if (view_names.includes(result.success.name)) {
@@ -171,7 +171,7 @@ router.post(
 
         delete v.table_name;
 
-        if (typeof req.body.id !== "undefined") {
+        if (req.body.id) {
           await View.update(v, +req.body.id);
         } else {
           const vt = getState().viewtemplates[v.viewtemplate];

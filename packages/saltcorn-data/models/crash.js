@@ -10,6 +10,7 @@ class Crash {
     this.occur_at = o.occur_at;
     this.tenant = o.tenant;
     this.user_id = o.user_id;
+    this.body = o.body;
     this.url = o.url;
     this.headers = o.headers;
     contract.class(this);
@@ -40,6 +41,7 @@ class Crash {
         occur_at: new Date(),
         tenant: schema,
         user_id: req.user ? req.user.id : null,
+        body: req.body ? { body: req.body } : null,
         url: req.url,
         headers: req.headers
       });
