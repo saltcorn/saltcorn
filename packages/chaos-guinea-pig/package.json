@@ -15,7 +15,7 @@
     "jest": "^25.1.0",
     "seedrandom": "^3.0.5",
     "stack-trace": "^0.0.10",
-    "superagent": "^5.2.2",
+    "superagent": "^5.3.1",
     "supertest": "^4.0.2"
   },
   "jest": {
