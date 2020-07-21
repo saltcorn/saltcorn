@@ -63,7 +63,9 @@ router.get(
     res.sendWrap(
       `Views`,
       viewMarkup,
-      a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
+      tables.length > 0
+        ? a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
+        : p("You must create at least one table before you can create views.")
     );
   })
 );
