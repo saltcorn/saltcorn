@@ -9,7 +9,7 @@
   },
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
-    "@oclif/command": "^1.5.19",
+    "@oclif/command": "^1.7.0",
     "@oclif/config": "^1.15.1",
     "@oclif/plugin-help": "^2.2.3",
     "@saltcorn/data": "^0.1.0",
