@@ -25,7 +25,7 @@
     "live-plugin-manager": "^0.14.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
-    "pg": "^8.1.0"
+    "pg": "^8.2.1"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
