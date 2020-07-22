@@ -21,7 +21,7 @@
     "express-fileupload": "^1.1.7-alpha.3",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.0",
-    "helmet": "^3.22.0",
+    "helmet": "^3.23.3",
     "live-plugin-manager": "^0.14.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
