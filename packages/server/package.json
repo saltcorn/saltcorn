@@ -22,7 +22,7 @@
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.1",
     "helmet": "^3.23.3",
-    "live-plugin-manager": "^0.14.1",
+    "live-plugin-manager": "^0.14.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "pg": "^8.2.1"
