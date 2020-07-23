@@ -127,11 +127,7 @@ class Field {
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval =
-      this.input_type === "ordered_multi_select"
-        ? Array.isArray(whole_rec[this.name])
-          ? whole_rec[this.name]
-          : [whole_rec[this.name]]
-        : this.is_fkey
+      this.is_fkey
         ? readKey(whole_rec[this.name])
         : !type || !type.read
         ? whole_rec[this.name]

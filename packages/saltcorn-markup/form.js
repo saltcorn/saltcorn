@@ -200,16 +200,6 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         hdr.class
       }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
 
-    case "ordered_multi_select":
-      const mopts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
-        hdr.class
-      }" class="chosen-select" multiple name="${text_attr(
-        name
-      )}" id="input${text_attr(
-        name
-      )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`;
-
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
