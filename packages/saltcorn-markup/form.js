@@ -200,8 +200,8 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         hdr.class
       }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
     case "search":
-      return `<div class="input-group mb-3">
-      <input type="text" class="form-control" placeholder="Search..." 
+      return `<div class="input-group">
+      <input type="text" class="form-control bg-light" placeholder="Search for..." 
              id="input${text_attr(name)}" name="${name}" 
              aria-label="Search" aria-describedby="button-search-submit" ${
                v && isdef(v[hdr.name])
@@ -209,7 +209,7 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
                  : ""
              }>
       <div class="input-group-append">
-        <button class="btn btn-outline-secondary" type="submit" id="button-search-submit">
+        <button class="btn btn-primary" type="submit" id="button-search-submit">
         <i class="fas fa-search"></i>
         </button>
       </div>

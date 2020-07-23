@@ -93,7 +93,10 @@ router.get(
   "/",
   setTenant,
   error_catcher(async (req, res) => {
-    res.sendWrap(`Search`, renderForm(searchForm(), req.csrfToken()));
+    const form = searchForm()
+    form.noSubmitButton=false
+    form.submitLabel="Search"
+    res.sendWrap(`Search all tables`, renderForm(form, req.csrfToken()));
   })
 );
 
@@ -104,22 +107,30 @@ router.post(
     const role = (req.user || {}).role_id || 10;
     const cfg = getState().getConfig("globalSearch");
     console.log(cfg);
-    var resp = "";
+    var resp = [];
     for (const [tableName, viewName] of Object.entries(cfg)) {
       if (!viewName || viewName === "") continue;
       const view = await View.findOne({ name: viewName });
       const vresps = await view.runMany({ _fts: req.body.term }, { res, req });
       if (vresps.length > 0)
-        resp += div(
-          h4(tableName),
-          vresps.map(vr => vr.html)
-        );
+        resp.push({
+          type: "card",
+          title: tableName,
+          contents: vresps.map(vr => vr.html).join("")
+        });
     }
 
     const form = searchForm();
     form.validate(req.body);
 
-    const searchResult = resp === "" ? "No match" : resp;
-    res.sendWrap(`Search`, renderForm(form, req.csrfToken()), searchResult);
+    const searchResult = resp.length===0 ? [{type: "card", contents: "Not found"}] : resp;
+    res.sendWrap(`Search all tables`, {above:[
+      {
+        type: "card",
+        contents: renderForm(form, req.csrfToken())
+      },
+      ...searchResult
+    ]
+    });
   })
 );
