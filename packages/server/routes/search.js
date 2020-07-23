@@ -30,13 +30,13 @@ const searchConfigForm = (tables, views) => {
       });
   }
   const blurb1 =
-    "Set views for search results. Blank to omit table from global search. ";
+    `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`;
   return new Form({
     action: "/search/config",
     blurb:
       blurb1 +
       (tbls_noviews.length > 0
-        ? `These tables had no suitable views: ${tbls_noviews.join()}.`
+        ? `<br/><br/>These tables lack suitable views: ${tbls_noviews.join(", ")}.`
         : ""),
     fields
   });
