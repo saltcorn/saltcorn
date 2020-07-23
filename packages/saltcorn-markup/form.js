@@ -199,7 +199,21 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
       }<input type="file" class="form-control-file ${validClass} ${
         hdr.class
       }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
-
+    case "search":
+      return `<div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="Search..." 
+             id="input${text_attr(name)}" name="${name}" 
+             aria-label="Search" aria-describedby="button-search-submit" ${
+               v && isdef(v[hdr.name])
+                 ? `value="${text_attr(v[hdr.name])}"`
+                 : ""
+             }>
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" type="submit" id="button-search-submit">
+        <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </div>`;
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
@@ -322,18 +336,30 @@ const mkForm = (form, csrfToken, errors = {}) => {
   }>`;
   //console.log(hdrs);
   const flds = form.fields
-    .map(mkFormRow(form.values, errors, form.formStyle, form.labelCols || 2))
+    .map(
+      mkFormRow(
+        form.values,
+        errors,
+        form.formStyle,
+        typeof form.labelCols === "undefined" ? 2 : form.labelCols
+      )
+    )
     .join("");
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn btn-primary">${text(
-      form.submitLabel || "Save"
-    )}</button>
+    <button type="submit" class="btn ${form.submitButtonClass ||
+      "btn-primary"}">${text(form.submitLabel || "Save")}</button>
   </div>
-</div>
-</form>`;
-  return blurbp + top + csrfField + flds + bot;
+</div>`;
+  return (
+    blurbp +
+    top +
+    csrfField +
+    flds +
+    (form.noSubmitButton ? "" : bot) +
+    "</form>"
+  );
 };
 
 module.exports = contract(

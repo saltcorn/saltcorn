@@ -29,14 +29,15 @@ const searchConfigForm = (tables, views) => {
         attributes: { options: ok_views.map(v => v.name).join() }
       });
   }
-  const blurb1 =
-    `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`;
+  const blurb1 = `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`;
   return new Form({
     action: "/search/config",
     blurb:
       blurb1 +
       (tbls_noviews.length > 0
-        ? `<br/><br/>These tables lack suitable views: ${tbls_noviews.join(", ")}.`
+        ? `<br/><br/>These tables lack suitable views: ${tbls_noviews.join(
+            ", "
+          )}.`
         : ""),
     fields
   });
@@ -77,11 +78,13 @@ router.post(
 const searchForm = () =>
   new Form({
     action: "/search",
+    noSubmitButton: true,
+    labelCols: 0,
     fields: [
       {
         name: "term",
-        label: "Search term",
-        input_type: "text"
+        label: " ",
+        input_type: "search"
       }
     ]
   });
