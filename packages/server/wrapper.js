@@ -57,6 +57,7 @@ module.exports = function(req, res, next) {
           { link: "/plugins", label: "Plugins" },
           { link: "/menu", label: "Menu" },
           { link: "/useradmin", label: "Users" },
+          { link: "/search/config", label: "Search" },
           { link: "/config", label: "Configuration" },
           { link: "/admin", label: "Admin" },
           ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : []),
