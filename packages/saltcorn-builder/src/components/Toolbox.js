@@ -55,7 +55,7 @@ export const ToolboxShow = () => {
                 )
               }
             >
-              <i className="fas fa-columns"></i>
+              <i className="fas fa-lg fa-columns"></i>
             </td>
           </tr>
           <tr>
@@ -181,7 +181,7 @@ export const ToolboxEdit = () => {
                 )
               }
             >
-              <i className="fas fa-columns"></i>
+              <i className="fas fa-lg fa-columns"></i>
             </td>
           </tr>
           <tr>
@@ -260,16 +260,16 @@ export const ToolboxPage = () => {
                 )
               }
             >
-              <i className="fas fa-columns"></i>
+              <i className="fas fa-lg fa-columns"></i>
             </td>
           </tr>
           <tr>
-            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td ref={ref => connectors.create(ref, <LineBreak />)} style={{fontSize:"26px"}}>↵</td>
             <td
               title="HTML code"
               ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
             >
-              <i className="fas fa-code"></i>
+              <i className="fas fa-lg fa-code"></i>
             </td>
           </tr>
           <tr>
@@ -288,12 +288,12 @@ export const ToolboxPage = () => {
                 )
               }
             >
-              <i className="fas fa-image"></i>
+              <i className="fas fa-lg fa-image"></i>
             </td>
           </tr>
           <tr>
             <td title="Link" ref={ref => connectors.create(ref, <Link />)}>
-              <i className="fas fa-link"></i>
+              <i className="fas fa-lg fa-link"></i>
             </td>
             <td
               title="View"
@@ -308,7 +308,7 @@ export const ToolboxPage = () => {
                 )
               }
             >
-              <i className="fas fa-eye"></i>
+              <i className="fas fa-lg fa-eye"></i>
             </td>
           </tr>
         </tbody>
