@@ -94,7 +94,7 @@ const runSearch = async (q, req, res) => {
   const cfg = getState().getConfig("globalSearch");
   console.log(cfg);
   var resp = [];
-  for (const [tableName, viewName] of Object.entries(cfg)) {
+  for (const [tableName, viewName] of Object.entries(cfg || {})) {
     if (!viewName || viewName === "") continue;
     const view = await View.findOne({ name: viewName });
     const vresps = await view.runMany({ _fts: q }, { res, req });
