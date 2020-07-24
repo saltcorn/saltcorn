@@ -93,6 +93,24 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           div({ class: "card-body" }, go(segment.contents))
         )
       );
+    if (segment.type === "container") {
+      const {bgFileId, vAlign, minHeight, borderWidth,borderStyle}=segment
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        div(
+          { class: [vAlign === "middle" && "d-flex align-items-center"],
+          style: `min-height: ${minHeight}px; 
+          border: ${borderWidth}px ${borderStyle} black; 
+          ${bgFileId && +bgFileId ? `background-image: url('/files/serve/${bgFileId}');
+          background-size: contain;
+          background-repeat: no-repeat`: ''}`},
+          go(segment.contents)
+        )
+      );
+
+    }
 
     if (segment.type === "line_break") {
       return "<br />";
