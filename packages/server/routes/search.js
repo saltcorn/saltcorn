@@ -83,7 +83,7 @@ const searchForm = () =>
     methodGET: true,
     fields: [
       {
-        name: "term",
+        name: "q",
         label: " ",
         input_type: "search"
       }
@@ -108,7 +108,7 @@ const runSearch = async (q, req, res)=> {
     }
 
     const form = searchForm();
-    form.validate({term: q});
+    form.validate({q});
 
     const searchResult =
       resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
@@ -127,22 +127,13 @@ router.get(
   "/",
   setTenant,
   error_catcher(async (req, res) => {
-    if(req.query && req.query.term) {
-      await runSearch(req.query.term, req, res)
+    if(req.query && req.query.q) {
+      await runSearch(req.query.q, req, res)
     } else {
     const form = searchForm();
     form.noSubmitButton = false;
     form.submitLabel = "Search";
     res.sendWrap(`Search all tables`, renderForm(form, false));
     }
-  })
-);
-
-
-router.post(
-  "/",
-  setTenant,
-  error_catcher(async (req, res) => {
-   await runSearch(req.body.term, req, res)
   })
 );

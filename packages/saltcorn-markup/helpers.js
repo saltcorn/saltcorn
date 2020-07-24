@@ -37,6 +37,6 @@ const search_bar = (name, v)=> `<div class="input-group">
 </div>`
 
 const search_bar_form = () => `<form action="/search" method="get">
-${search_bar("term")}
+${search_bar("q")}
 </form>`
 module.exports = {isdef, select_options, search_bar, search_bar_form}
