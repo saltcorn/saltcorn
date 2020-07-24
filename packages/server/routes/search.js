@@ -92,9 +92,15 @@ const searchForm = () =>
 const runSearch = async (q, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
-  console.log(cfg);
+
+  if (!cfg) {
+    req.flash("warning", "Search not configured");
+    res.redirect("/");
+    return;
+  }
+
   var resp = [];
-  for (const [tableName, viewName] of Object.entries(cfg || {})) {
+  for (const [tableName, viewName] of Object.entries(cfg)) {
     if (!viewName || viewName === "") continue;
     const view = await View.findOne({ name: viewName });
     const vresps = await view.runMany({ _fts: q }, { res, req });
@@ -129,6 +135,16 @@ router.get(
     if (req.query && req.query.q) {
       await runSearch(req.query.q, req, res);
     } else {
+      const cfg = getState().getConfig("globalSearch");
+
+      if (!cfg) {
+        const role = (req.user || {}).role_id || 10;
+
+        req.flash("warning", "Search not configured");
+        res.redirect(role === 1 ? "/search/config" : "/");
+        return;
+      }
+
       const form = searchForm();
       form.noSubmitButton = false;
       form.submitLabel = "Search";
