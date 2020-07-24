@@ -7,7 +7,6 @@ const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
-const form = require("@saltcorn/markup/form");
 
 const router = new Router();
 module.exports = router;
