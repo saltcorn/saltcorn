@@ -7,6 +7,7 @@ import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { TwoSplit } from "./elements/TwoSplit";
+import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
@@ -108,7 +109,8 @@ const Builder = ({ options, layout, mode }) => {
                 Card,
                 Image,
                 Link,
-                View
+                View,
+                SearchBar
               }}
             >
               <Canvas className="canvas"></Canvas>

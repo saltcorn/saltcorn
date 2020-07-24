@@ -13,6 +13,7 @@ import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
+import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
@@ -264,7 +265,7 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
-            <td ref={ref => connectors.create(ref, <LineBreak />)} style={{fontSize:"26px"}}>↵</td>
+            <td title="Line break" ref={ref => connectors.create(ref, <LineBreak />)} style={{fontSize:"26px"}}>↵</td>
             <td
               title="HTML code"
               ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
@@ -310,6 +311,12 @@ export const ToolboxPage = () => {
             >
               <i className="fas fa-lg fa-eye"></i>
             </td>
+          </tr>
+          <tr>
+          <td title="Search bar" ref={ref => connectors.create(ref, <SearchBar />)}>
+          <i className="fas fa-lg fa-search"></i>
+          </td>
+
           </tr>
         </tbody>
       </table>

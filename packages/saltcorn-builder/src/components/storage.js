@@ -13,6 +13,7 @@ import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
+import { SearchBar } from "./elements/SearchBar";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -71,6 +72,8 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "line_break") {
       return <LineBreak key={ix} />;
+    } else if (segment.type === "search_bar") {
+      return <SearchBar key={ix} />;
     } else if (segment.type === "field") {
       return (
         <Field
@@ -197,6 +200,9 @@ export const craftToSaltcorn = nodes => {
     }
     if (node.displayName === LineBreak.name) {
       return { type: "line_break" };
+    }
+    if (node.displayName === SearchBar.name) {
+      return { type: "search_bar" };
     }
     if (node.displayName === TwoSplit.name) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
