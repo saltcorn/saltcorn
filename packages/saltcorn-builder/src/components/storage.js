@@ -131,6 +131,19 @@ export const layoutToNodes = (layout, query, actions) => {
           title={segment.title}
         />
       );
+    } else if (segment.type === "container") {
+      return (
+        <Container
+          key={ix}
+          contents={toTag(segment.contents)}
+          title={segment.title}
+          borderWidth={segment.borderWidth}
+          borderStyle={segment.borderStyle}
+          minHeight={segment.minHeight}
+          vAlign={segment.vAlign}
+          bgFileId={segment.bgFileId}
+        />
+      );
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -220,6 +233,17 @@ export const craftToSaltcorn = nodes => {
         contents: go(nodes[node._childCanvas.cardContents]),
         type: "card",
         title: node.props.title
+      };
+    }
+    if (node.displayName === Container.name) {
+      return {
+        contents: go(nodes[node._childCanvas.containerContents]),
+        type: "container",
+        borderWidth: node.props.borderWidth,
+        borderStyle: node.props.borderStyle,
+        minHeight: node.props.minHeight,
+        vAlign: node.props.vAlign,
+        bgFileId: node.props.bgFileId
       };
     }
     if (node.displayName === Image.name) {
