@@ -132,12 +132,10 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "container") {
-      console.log(segment)
       return (
         <Container
           key={ix}
           contents={toTag(segment.contents)}
-          title={segment.title}
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
