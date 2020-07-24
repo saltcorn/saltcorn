@@ -116,7 +116,7 @@ const runSearch = async (q, req, res)=> {
       above: [
         {
           type: "card",
-          contents: renderForm(form, req.csrfToken())
+          contents: renderForm(form, false)
         },
         ...searchResult
       ]
@@ -133,7 +133,7 @@ router.get(
     const form = searchForm();
     form.noSubmitButton = false;
     form.submitLabel = "Search";
-    res.sendWrap(`Search all tables`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Search all tables`, renderForm(form, false));
     }
   })
 );

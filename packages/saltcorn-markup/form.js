@@ -296,7 +296,7 @@ const mkFormWithLayout = (form, csrfToken) => {
 
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
-  const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const csrfField = csrfToken===false ? '' : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
@@ -331,6 +331,6 @@ const mkForm = (form, csrfToken, errors = {}) => {
 };
 
 module.exports = contract(
-  is.fun([is.class("Form"), is.str], is.str),
+  is.fun([is.class("Form"), is.or(is.str, is.eq(false))], is.str),
   renderForm
 );
