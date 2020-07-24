@@ -132,6 +132,7 @@ export const layoutToNodes = (layout, query, actions) => {
         />
       );
     } else if (segment.type === "container") {
+      console.log(segment)
       return (
         <Container
           key={ix}
@@ -141,6 +142,7 @@ export const layoutToNodes = (layout, query, actions) => {
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
           vAlign={segment.vAlign}
+          hAlign={segment.hAlign}
           bgFileId={segment.bgFileId}
         />
       );
@@ -243,6 +245,7 @@ export const craftToSaltcorn = nodes => {
         borderStyle: node.props.borderStyle,
         minHeight: node.props.minHeight,
         vAlign: node.props.vAlign,
+        hAlign: node.props.hAlign,
         bgFileId: node.props.bgFileId
       };
     }

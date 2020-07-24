@@ -94,22 +94,37 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         )
       );
     if (segment.type === "container") {
-      const {bgFileId, vAlign, minHeight, borderWidth,borderStyle}=segment
+      const {
+        bgFileId,
+        vAlign,
+        hAlign,
+        minHeight,
+        borderWidth,
+        borderStyle
+      } = segment;
       return wrap(
         segment,
         isTop,
         ix,
         div(
-          { class: [vAlign === "middle" && "d-flex align-items-center"],
-          style: `min-height: ${minHeight}px; 
+          {
+            class: [
+              `text-${hAlign}`,
+              vAlign === "middle" && "d-flex align-items-center"
+            ],
+            style: `min-height: ${minHeight}px; 
           border: ${borderWidth}px ${borderStyle} black; 
-          ${bgFileId && +bgFileId ? `background-image: url('/files/serve/${bgFileId}');
+          ${
+            bgFileId && +bgFileId
+              ? `background-image: url('/files/serve/${bgFileId}');
           background-size: contain;
-          background-repeat: no-repeat`: ''}`},
+          background-repeat: no-repeat`
+              : ""
+          }`
+          },
           go(segment.contents)
         )
       );
-
     }
 
     if (segment.type === "line_break") {

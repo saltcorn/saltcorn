@@ -9,12 +9,12 @@ export const Container = ({
   borderStyle,
   minHeight,
   vAlign,
+  hAlign,
   bgFileId
 }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
-  console.log({ bgFileId });
   return (
     <div
       ref={dom => connect(drag(dom))}
@@ -36,7 +36,7 @@ export const Container = ({
               }
             : {})
         }}
-        className={`canvas ${
+        className={`canvas text-${hAlign} ${
           vAlign === "middle" ? "d-flex align-items-center" : ""
         }`}
       >
@@ -53,13 +53,15 @@ export const ContainerSettings = () => {
     borderStyle,
     minHeight,
     vAlign,
+    hAlign,
     bgFileId
   } = useNode(node => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
     bgFileId: node.data.props.bgFileId,
-    vAlign: node.data.props.vAlign
+    vAlign: node.data.props.vAlign,
+    hAlign: node.data.props.hAlign
   }));
   const options = useContext(optionsCtx);
   return (
@@ -111,8 +113,8 @@ export const ContainerSettings = () => {
           })
         }
       />
-      <br />
-      <label>Align</label>
+      <h6>Align</h6>
+      <label>Vert</label>
       <select
         value={vAlign}
         onChange={e =>
@@ -124,6 +126,22 @@ export const ContainerSettings = () => {
         <option>top</option>
         <option>middle</option>
       </select>
+      <br />
+      <label>Horiz</label>
+      <select
+        value={hAlign}
+        onChange={e =>
+          setProp(prop => {
+            prop.hAlign = e.target.value;
+          })
+        }
+      >
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="justify">Justify</option>
+        <option value="right">Right</option>
+      </select>
+      <br />
       <label>Background Image</label>
       <select
         value={bgFileId}
@@ -145,6 +163,7 @@ Container.craft = {
     borderStyle: "solid",
     minHeight: 0,
     vAlign: "top",
+    hAlign: "left",
     bgFileId: 0
   },
   related: {
