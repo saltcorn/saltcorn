@@ -14,14 +14,19 @@ export const Container = ({
   const {
     connectors: { connect, drag }
   } = useNode();
-  console.log({bgFileId})
+  console.log({ bgFileId });
   return (
-    <div ref={dom => connect(drag(dom))} style={{ padding: "4px", border: `${borderWidth}px ${borderStyle} black` }}>
+    <div
+      ref={dom => connect(drag(dom))}
+      style={{
+        padding: "4px",
+        border: `${borderWidth}px ${borderStyle} black`
+      }}
+    >
       <Canvas
         id={`containerContents`}
         is="div"
         style={{
-          
           minHeight: `${Math.max(minHeight, 15)}px`,
           ...(bgFileId && +bgFileId
             ? {
