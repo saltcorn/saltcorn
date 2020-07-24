@@ -18,6 +18,7 @@ import { craftToSaltcorn, layoutToNodes } from "./storage";
 import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
+import { Container } from "./elements/Container";
 
 const { Provider } = optionsCtx;
 
@@ -110,7 +111,8 @@ const Builder = ({ options, layout, mode }) => {
                 Image,
                 Link,
                 View,
-                SearchBar
+                SearchBar,
+                Container
               }}
             >
               <Canvas className="canvas"></Canvas>

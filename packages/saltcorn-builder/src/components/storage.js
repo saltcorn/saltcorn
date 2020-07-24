@@ -14,6 +14,7 @@ import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
+import { Container } from "./elements/Container";
 
 const getColWidths = segment => {
   if (!segment.widths)
