@@ -11,7 +11,7 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
-
+const {isdef,select_options , search_bar} = require("./helpers")
 const mkShowIf = sIf =>
   Object.entries(sIf)
     .map(
@@ -71,26 +71,60 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       )
   );
 
-const isdef = x => typeof x !== "undefined";
-
-const select_options = (v, hdr) => {
-  const selected = v ? v[hdr.name] : undefined;
-  const isSelected = value =>
-    !selected
-      ? false
-      : selected.length
-      ? selected.includes(value)
-      : value === selected;
-  return (opts = hdr.options
-    .map(o => {
-      const label = typeof o === "string" ? o : o.label;
-      const value = typeof o === "string" ? o : o.value;
-      return `<option value="${text_attr(value)}" ${
-        isSelected(value) ? "selected" : ""
-      }>${text(label)}</option>`;
-    })
-    .join(""));
-};
+  const innerField = (v, errors, nameAdd = "") => hdr => {
+    const name = hdr.name + nameAdd;
+    const validClass = errors[name] ? "is-invalid" : "";
+    switch (hdr.input_type) {
+      case "fromtype":
+        return displayEdit(
+          hdr,
+          name,
+          v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
+          validClass
+        );
+      case "hidden":
+        return `<input type="hidden" class="form-control ${validClass} ${
+          hdr.class
+        }" name="${text_attr(name)}" ${
+          v ? `value="${text_attr(v[hdr.name])}"` : ""
+        }>`;
+      case "select":
+        const opts = select_options(v, hdr);
+        return `<select class="form-control ${validClass} ${
+          hdr.class
+        }" name="${text_attr(name)}" id="input${text_attr(
+          name
+        )}">${opts}</select>`;
+      case "file":
+        return `${
+          v[hdr.name] ? text(v[hdr.name]) : ""
+        }<input type="file" class="form-control-file ${validClass} ${
+          hdr.class
+        }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
+      case "search":
+        return search_bar(name, v && v[hdr.name]);
+      default:
+        const the_input = `<input type="${hdr.input_type}" class="form-control ${
+          hdr.class
+        }" name="${name}" id="input${text_attr(name)}" ${
+          v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
+        }>`;
+        const inner = hdr.postText
+          ? div(
+              { class: "input-group" },
+              the_input,
+              div(
+                { class: "input-group-append" },
+                span(
+                  { class: "input-group-text", id: "basic-addon2" },
+                  hdr.postText
+                )
+              )
+            )
+          : the_input;
+        return inner;
+    }
+  };
 
 const mkFormRow = (v, errors, formStyle, labelCols) => hdr =>
   hdr.isRepeat
@@ -169,69 +203,7 @@ const displayEdit = (hdr, name, v, extracls) => {
   );
 };
 
-const innerField = (v, errors, nameAdd = "") => hdr => {
-  const name = hdr.name + nameAdd;
-  const validClass = errors[name] ? "is-invalid" : "";
-  switch (hdr.input_type) {
-    case "fromtype":
-      return displayEdit(
-        hdr,
-        name,
-        v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
-        validClass
-      );
-    case "hidden":
-      return `<input type="hidden" class="form-control ${validClass} ${
-        hdr.class
-      }" name="${text_attr(name)}" ${
-        v ? `value="${text_attr(v[hdr.name])}"` : ""
-      }>`;
-    case "select":
-      const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
-        hdr.class
-      }" name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}">${opts}</select>`;
-    case "file":
-      return `${
-        v[hdr.name] ? text(v[hdr.name]) : ""
-      }<input type="file" class="form-control-file ${validClass} ${
-        hdr.class
-      }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
 
-    case "ordered_multi_select":
-      const mopts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
-        hdr.class
-      }" class="chosen-select" multiple name="${text_attr(
-        name
-      )}" id="input${text_attr(
-        name
-      )}">${mopts}</select><script>$(function(){$("#input${name}").chosen()})</script>`;
-
-    default:
-      const the_input = `<input type="${hdr.input_type}" class="form-control ${
-        hdr.class
-      }" name="${name}" id="input${text_attr(name)}" ${
-        v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
-      }>`;
-      const inner = hdr.postText
-        ? div(
-            { class: "input-group" },
-            the_input,
-            div(
-              { class: "input-group-append" },
-              span(
-                { class: "input-group-text", id: "basic-addon2" },
-                hdr.postText
-              )
-            )
-          )
-        : the_input;
-      return inner;
-  }
-};
 
 const mkFormRowForField = (
   v,
@@ -324,7 +296,7 @@ const mkFormWithLayout = (form, csrfToken) => {
 
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
-  const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const csrfField = csrfToken===false ? '' : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
@@ -332,21 +304,33 @@ const mkForm = (form, csrfToken, errors = {}) => {
   }>`;
   //console.log(hdrs);
   const flds = form.fields
-    .map(mkFormRow(form.values, errors, form.formStyle, form.labelCols || 2))
+    .map(
+      mkFormRow(
+        form.values,
+        errors,
+        form.formStyle,
+        typeof form.labelCols === "undefined" ? 2 : form.labelCols
+      )
+    )
     .join("");
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn btn-primary">${text(
-      form.submitLabel || "Save"
-    )}</button>
+    <button type="submit" class="btn ${form.submitButtonClass ||
+      "btn-primary"}">${text(form.submitLabel || "Save")}</button>
   </div>
-</div>
-</form>`;
-  return blurbp + top + csrfField + flds + bot;
+</div>`;
+  return (
+    blurbp +
+    top +
+    csrfField +
+    flds +
+    (form.noSubmitButton ? "" : bot) +
+    "</form>"
+  );
 };
 
 module.exports = contract(
-  is.fun([is.class("Form"), is.str], is.str),
+  is.fun([is.class("Form"), is.or(is.str, is.eq(false))], is.str),
   renderForm
 );

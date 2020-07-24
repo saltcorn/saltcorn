@@ -6,6 +6,7 @@ const configTypes = {
   site_logo_id: { type: "Integer", label: "Site logo", default: 0 },
   base_url: { type: "String", label: "Base URL", default: "" },
   menu_items: { type: "hidden", label: "Menu items" },
+  globalSearch: { type: "hidden", label: "Global search" },
   available_packs: { type: "hidden", label: "Available packs" },
   available_packs_fetched_at: {
     type: "Date",

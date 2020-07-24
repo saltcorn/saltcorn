@@ -4,6 +4,7 @@ const list = require("./list");
 const view = require("./view");
 const page = require("./page");
 const pageedit = require("./pageedit");
+const search = require("./search");
 const files = require("./files");
 const menu = require("./menu");
 const admin = require("./admin");
@@ -33,6 +34,7 @@ module.exports = app => {
   app.use("/crashlog", crashlog);
   app.use("/page", page);
   app.use("/pageedit", pageedit);
+  app.use("/search", search);
   app.use("/admin", admin);
   app.use("/tenant", tenant);
   app.use("/api", api);

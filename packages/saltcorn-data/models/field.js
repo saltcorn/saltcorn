@@ -126,18 +126,13 @@ class Field {
 
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
-    const readval =
-      this.input_type === "ordered_multi_select"
-        ? Array.isArray(whole_rec[this.name])
-          ? whole_rec[this.name]
-          : [whole_rec[this.name]]
-        : this.is_fkey
-        ? readKey(whole_rec[this.name])
-        : !type || !type.read
-        ? whole_rec[this.name]
-        : type.readFromFormRecord
-        ? type.readFromFormRecord(whole_rec, this.name)
-        : type.read(whole_rec[this.name]);
+    const readval = this.is_fkey
+      ? readKey(whole_rec[this.name])
+      : !type || !type.read
+      ? whole_rec[this.name]
+      : type.readFromFormRecord
+      ? type.readFromFormRecord(whole_rec, this.name)
+      : type.read(whole_rec[this.name]);
     if (typeof readval === "undefined" || readval === null)
       if (this.required) return { error: "Unable to read " + type.name };
       else return { success: null };
@@ -262,7 +257,15 @@ Field.contract = {
       is.or(is.eq("Key"), is.eq("File"), is.obj({ name: is.str }))
     ),
     input_type: is.maybe(
-      is.one_of(["hidden", "file", "select", "fromtype", "text", "password"])
+      is.one_of([
+        "hidden",
+        "file",
+        "select",
+        "fromtype",
+        "search",
+        "text",
+        "password"
+      ])
     ),
     is_fkey: is.bool,
     is_unique: is.bool,

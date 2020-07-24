@@ -19,6 +19,8 @@ class Form {
     this.methodGET = !!o.methodGET;
     this.blurb = o.blurb;
     this.submitLabel = o.submitLabel;
+    this.submitButtonClass = o.submitButtonClass;
+    this.noSubmitButton = o.noSubmitButton;
     this.hasErrors = false;
     if (o.validate) this.validate(o.validate);
     contract.class(this);
