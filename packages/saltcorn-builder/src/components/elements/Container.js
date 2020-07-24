@@ -3,29 +3,43 @@ import { Text } from "./Text";
 
 import { Canvas, useNode } from "@craftjs/core";
 
-export const Container = ({ contents, borderWidth, borderStyle }) => {
+export const Container = ({
+  contents,
+  borderWidth,
+  borderStyle,
+  minHeight,
+  vAlign
+}) => {
   const {
     connectors: { connect, drag }
   } = useNode();
 
   return (
     <div ref={dom => connect(drag(dom))} style={{ padding: "4px" }}>
-      <div style={{ border: `${borderWidth}px ${borderStyle} black` }}>
-        <Canvas id={`containerContents`} is="div" className={`canvas`}>
-          {contents}
-        </Canvas>
-      </div>
+      <Canvas
+        id={`containerContents`}
+        is="div"
+        style={{
+          border: `${borderWidth}px ${borderStyle} black`,
+          minHeight: `${minHeight}px`
+        }}
+        className={`canvas ${
+          vAlign === "middle" ? "d-flex align-items-center" : ""
+        }`}
+      >
+        {contents}
+      </Canvas>
     </div>
   );
 };
 
 export const ContainerSettings = () => {
-  const { setProp, borderWidth, borderStyle, minHeight, vCenter } = useNode(
+  const { setProp, borderWidth, borderStyle, minHeight, vAlign } = useNode(
     node => ({
       borderWidth: node.data.props.borderWidth,
       borderStyle: node.data.props.borderStyle,
       minHeight: node.data.props.minHeight,
-      vCenter: node.data.props.vCenter
+      vAlign: node.data.props.vAlign
     })
   );
   return (
@@ -44,6 +58,7 @@ export const ContainerSettings = () => {
           })
         }
       />
+      <br />
       <label>Style</label>
       <select
         value={borderStyle}
@@ -62,13 +77,43 @@ export const ContainerSettings = () => {
         <option>inset</option>
         <option>outset</option>
       </select>
+      <h6>Height</h6>
+      <label>Min</label>
+      <input
+        type="number"
+        value={minHeight}
+        step="1"
+        min="0"
+        max="999"
+        onChange={e =>
+          setProp(prop => {
+            prop.minHeight = e.target.value;
+          })
+        }
+      />
+      <br />
+      <label>Align</label>
+
+      <select
+        value={vAlign}
+        onChange={e =>
+          setProp(prop => {
+            prop.vAlign = e.target.value;
+          })
+        }
+      >
+        <option>top</option>
+        <option>middle</option>
+      </select>
     </div>
   );
 };
 Container.craft = {
   defaultProps: {
     borderWidth: 0,
-    borderStyle: "solid"
+    borderStyle: "solid",
+    minHeight: 0,
+    vAlign: "top"
   },
   related: {
     settings: ContainerSettings
