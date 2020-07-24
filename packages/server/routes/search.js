@@ -89,50 +89,50 @@ const searchForm = () =>
     ]
   });
 
-const runSearch = async (q, req, res)=> {
- const role = (req.user || {}).role_id || 10;
-    const cfg = getState().getConfig("globalSearch");
-    console.log(cfg);
-    var resp = [];
-    for (const [tableName, viewName] of Object.entries(cfg)) {
-      if (!viewName || viewName === "") continue;
-      const view = await View.findOne({ name: viewName });
-      const vresps = await view.runMany({ _fts: q }, { res, req });
-      if (vresps.length > 0)
-        resp.push({
-          type: "card",
-          title: tableName,
-          contents: vresps.map(vr => vr.html).join("")
-        });
-    }
+const runSearch = async (q, req, res) => {
+  const role = (req.user || {}).role_id || 10;
+  const cfg = getState().getConfig("globalSearch");
+  console.log(cfg);
+  var resp = [];
+  for (const [tableName, viewName] of Object.entries(cfg)) {
+    if (!viewName || viewName === "") continue;
+    const view = await View.findOne({ name: viewName });
+    const vresps = await view.runMany({ _fts: q }, { res, req });
+    if (vresps.length > 0)
+      resp.push({
+        type: "card",
+        title: tableName,
+        contents: vresps.map(vr => vr.html).join("")
+      });
+  }
 
-    const form = searchForm();
-    form.validate({q});
+  const form = searchForm();
+  form.validate({ q });
 
-    const searchResult =
-      resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
-    res.sendWrap(`Search all tables`, {
-      above: [
-        {
-          type: "card",
-          contents: renderForm(form, false)
-        },
-        ...searchResult
-      ]
-    });
-}
+  const searchResult =
+    resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
+  res.sendWrap(`Search all tables`, {
+    above: [
+      {
+        type: "card",
+        contents: renderForm(form, false)
+      },
+      ...searchResult
+    ]
+  });
+};
 
 router.get(
   "/",
   setTenant,
   error_catcher(async (req, res) => {
-    if(req.query && req.query.q) {
-      await runSearch(req.query.q, req, res)
+    if (req.query && req.query.q) {
+      await runSearch(req.query.q, req, res);
     } else {
-    const form = searchForm();
-    form.noSubmitButton = false;
-    form.submitLabel = "Search";
-    res.sendWrap(`Search all tables`, renderForm(form, false));
+      const form = searchForm();
+      form.noSubmitButton = false;
+      form.submitLabel = "Search";
+      res.sendWrap(`Search all tables`, renderForm(form, false));
     }
   })
 );

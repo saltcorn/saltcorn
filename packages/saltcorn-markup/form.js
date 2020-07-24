@@ -11,7 +11,7 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
-const {isdef,select_options , search_bar} = require("./helpers")
+const { isdef, select_options, search_bar } = require("./helpers");
 const mkShowIf = sIf =>
   Object.entries(sIf)
     .map(
@@ -71,60 +71,60 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       )
   );
 
-  const innerField = (v, errors, nameAdd = "") => hdr => {
-    const name = hdr.name + nameAdd;
-    const validClass = errors[name] ? "is-invalid" : "";
-    switch (hdr.input_type) {
-      case "fromtype":
-        return displayEdit(
-          hdr,
-          name,
-          v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
-          validClass
-        );
-      case "hidden":
-        return `<input type="hidden" class="form-control ${validClass} ${
-          hdr.class
-        }" name="${text_attr(name)}" ${
-          v ? `value="${text_attr(v[hdr.name])}"` : ""
-        }>`;
-      case "select":
-        const opts = select_options(v, hdr);
-        return `<select class="form-control ${validClass} ${
-          hdr.class
-        }" name="${text_attr(name)}" id="input${text_attr(
-          name
-        )}">${opts}</select>`;
-      case "file":
-        return `${
-          v[hdr.name] ? text(v[hdr.name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${
-          hdr.class
-        }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
-      case "search":
-        return search_bar(name, v && v[hdr.name]);
-      default:
-        const the_input = `<input type="${hdr.input_type}" class="form-control ${
-          hdr.class
-        }" name="${name}" id="input${text_attr(name)}" ${
-          v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
-        }>`;
-        const inner = hdr.postText
-          ? div(
-              { class: "input-group" },
-              the_input,
-              div(
-                { class: "input-group-append" },
-                span(
-                  { class: "input-group-text", id: "basic-addon2" },
-                  hdr.postText
-                )
+const innerField = (v, errors, nameAdd = "") => hdr => {
+  const name = hdr.name + nameAdd;
+  const validClass = errors[name] ? "is-invalid" : "";
+  switch (hdr.input_type) {
+    case "fromtype":
+      return displayEdit(
+        hdr,
+        name,
+        v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
+        validClass
+      );
+    case "hidden":
+      return `<input type="hidden" class="form-control ${validClass} ${
+        hdr.class
+      }" name="${text_attr(name)}" ${
+        v ? `value="${text_attr(v[hdr.name])}"` : ""
+      }>`;
+    case "select":
+      const opts = select_options(v, hdr);
+      return `<select class="form-control ${validClass} ${
+        hdr.class
+      }" name="${text_attr(name)}" id="input${text_attr(
+        name
+      )}">${opts}</select>`;
+    case "file":
+      return `${
+        v[hdr.name] ? text(v[hdr.name]) : ""
+      }<input type="file" class="form-control-file ${validClass} ${
+        hdr.class
+      }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
+    case "search":
+      return search_bar(name, v && v[hdr.name]);
+    default:
+      const the_input = `<input type="${hdr.input_type}" class="form-control ${
+        hdr.class
+      }" name="${name}" id="input${text_attr(name)}" ${
+        v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
+      }>`;
+      const inner = hdr.postText
+        ? div(
+            { class: "input-group" },
+            the_input,
+            div(
+              { class: "input-group-append" },
+              span(
+                { class: "input-group-text", id: "basic-addon2" },
+                hdr.postText
               )
             )
-          : the_input;
-        return inner;
-    }
-  };
+          )
+        : the_input;
+      return inner;
+  }
+};
 
 const mkFormRow = (v, errors, formStyle, labelCols) => hdr =>
   hdr.isRepeat
@@ -202,8 +202,6 @@ const displayEdit = (hdr, name, v, extracls) => {
     hdr.required
   );
 };
-
-
 
 const mkFormRowForField = (
   v,
@@ -296,7 +294,10 @@ const mkFormWithLayout = (form, csrfToken) => {
 
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
-  const csrfField = csrfToken===false ? '' : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const csrfField =
+    csrfToken === false
+      ? ""
+      : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
