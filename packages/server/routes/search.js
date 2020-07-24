@@ -93,9 +93,9 @@ router.get(
   "/",
   setTenant,
   error_catcher(async (req, res) => {
-    const form = searchForm()
-    form.noSubmitButton=false
-    form.submitLabel="Search"
+    const form = searchForm();
+    form.noSubmitButton = false;
+    form.submitLabel = "Search";
     res.sendWrap(`Search all tables`, renderForm(form, req.csrfToken()));
   })
 );
@@ -123,14 +123,16 @@ router.post(
     const form = searchForm();
     form.validate(req.body);
 
-    const searchResult = resp.length===0 ? [{type: "card", contents: "Not found"}] : resp;
-    res.sendWrap(`Search all tables`, {above:[
-      {
-        type: "card",
-        contents: renderForm(form, req.csrfToken())
-      },
-      ...searchResult
-    ]
+    const searchResult =
+      resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
+    res.sendWrap(`Search all tables`, {
+      above: [
+        {
+          type: "card",
+          contents: renderForm(form, req.csrfToken())
+        },
+        ...searchResult
+      ]
     });
   })
 );

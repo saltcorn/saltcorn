@@ -265,7 +265,13 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
-            <td title="Line break" ref={ref => connectors.create(ref, <LineBreak />)} style={{fontSize:"26px"}}>↵</td>
+            <td
+              title="Line break"
+              ref={ref => connectors.create(ref, <LineBreak />)}
+              style={{ fontSize: "26px" }}
+            >
+              ↵
+            </td>
             <td
               title="HTML code"
               ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
@@ -313,10 +319,12 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
-          <td title="Search bar" ref={ref => connectors.create(ref, <SearchBar />)}>
-          <i className="fas fa-lg fa-search"></i>
-          </td>
-
+            <td
+              title="Search bar"
+              ref={ref => connectors.create(ref, <SearchBar />)}
+            >
+              <i className="fas fa-lg fa-search"></i>
+            </td>
           </tr>
         </tbody>
       </table>
