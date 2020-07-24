@@ -11,6 +11,7 @@ import { TwoSplit } from "./elements/TwoSplit";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
+import { Container } from "./elements/Container";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
@@ -324,6 +325,14 @@ export const ToolboxPage = () => {
               ref={ref => connectors.create(ref, <SearchBar />)}
             >
               <i className="fas fa-lg fa-search"></i>
+            </td>
+            <td
+              title="Container"
+              ref={ref =>
+                connectors.create(ref, <Container contents={<Empty />} />)
+              }
+            >
+              <i className="fas fa-lg fa-box-open"></i>
             </td>
           </tr>
         </tbody>

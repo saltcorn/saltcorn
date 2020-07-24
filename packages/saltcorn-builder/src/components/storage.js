@@ -14,6 +14,7 @@ import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
+import { Container } from "./elements/Container";
 
 const getColWidths = segment => {
   if (!segment.widths)
@@ -130,6 +131,19 @@ export const layoutToNodes = (layout, query, actions) => {
           title={segment.title}
         />
       );
+    } else if (segment.type === "container") {
+      return (
+        <Container
+          key={ix}
+          contents={toTag(segment.contents)}
+          borderWidth={segment.borderWidth}
+          borderStyle={segment.borderStyle}
+          minHeight={segment.minHeight}
+          vAlign={segment.vAlign}
+          hAlign={segment.hAlign}
+          bgFileId={segment.bgFileId}
+        />
+      );
     } else if (segment.besides) {
       return (
         <TwoSplit
@@ -219,6 +233,18 @@ export const craftToSaltcorn = nodes => {
         contents: go(nodes[node._childCanvas.cardContents]),
         type: "card",
         title: node.props.title
+      };
+    }
+    if (node.displayName === Container.name) {
+      return {
+        contents: go(nodes[node._childCanvas.containerContents]),
+        type: "container",
+        borderWidth: node.props.borderWidth,
+        borderStyle: node.props.borderStyle,
+        minHeight: node.props.minHeight,
+        vAlign: node.props.vAlign,
+        hAlign: node.props.hAlign,
+        bgFileId: node.props.bgFileId
       };
     }
     if (node.displayName === Image.name) {
