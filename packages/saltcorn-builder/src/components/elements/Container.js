@@ -23,7 +23,7 @@ export const Container = ({
         style={{
           
           minHeight: `${Math.max(minHeight, 15)}px`,
-          ...(bgFileId
+          ...(bgFileId && +bgFileId
             ? {
                 backgroundImage: `url('/files/serve/${bgFileId}')`,
                 backgroundSize: "contain",
@@ -146,11 +146,3 @@ Container.craft = {
     settings: ContainerSettings
   }
 };
-
-/*
-border colour and 
-min-height
-background
-v-centre
-
-*/
