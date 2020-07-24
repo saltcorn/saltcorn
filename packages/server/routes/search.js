@@ -80,6 +80,7 @@ const searchForm = () =>
     action: "/search",
     noSubmitButton: true,
     labelCols: 0,
+    methodGET: true,
     fields: [
       {
         name: "term",
@@ -89,29 +90,15 @@ const searchForm = () =>
     ]
   });
 
-router.get(
-  "/",
-  setTenant,
-  error_catcher(async (req, res) => {
-    const form = searchForm();
-    form.noSubmitButton = false;
-    form.submitLabel = "Search";
-    res.sendWrap(`Search all tables`, renderForm(form, req.csrfToken()));
-  })
-);
-
-router.post(
-  "/",
-  setTenant,
-  error_catcher(async (req, res) => {
-    const role = (req.user || {}).role_id || 10;
+const runSearch = async (q, req, res)=> {
+ const role = (req.user || {}).role_id || 10;
     const cfg = getState().getConfig("globalSearch");
     console.log(cfg);
     var resp = [];
     for (const [tableName, viewName] of Object.entries(cfg)) {
       if (!viewName || viewName === "") continue;
       const view = await View.findOne({ name: viewName });
-      const vresps = await view.runMany({ _fts: req.body.term }, { res, req });
+      const vresps = await view.runMany({ _fts: q }, { res, req });
       if (vresps.length > 0)
         resp.push({
           type: "card",
@@ -121,7 +108,7 @@ router.post(
     }
 
     const form = searchForm();
-    form.validate(req.body);
+    form.validate({term: q});
 
     const searchResult =
       resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
@@ -134,5 +121,28 @@ router.post(
         ...searchResult
       ]
     });
+}
+
+router.get(
+  "/",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if(req.query && req.query.term) {
+      await runSearch(req.query.term, req, res)
+    } else {
+    const form = searchForm();
+    form.noSubmitButton = false;
+    form.submitLabel = "Search";
+    res.sendWrap(`Search all tables`, renderForm(form, req.csrfToken()));
+    }
+  })
+);
+
+
+router.post(
+  "/",
+  setTenant,
+  error_catcher(async (req, res) => {
+   await runSearch(req.body.term, req, res)
   })
 );
