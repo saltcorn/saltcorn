@@ -1,6 +1,7 @@
 const { contract, is } = require("contractis");
 const { div, a, span, h6, text, img } = require("./tags");
 const { alert } = require("./layout_utils");
+const { search_bar } = require("./helpers");
 
 const makeSegments = (body, alerts) => {
   const alertsSegments =
@@ -95,6 +96,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
 
     if (segment.type === "line_break") {
       return "<br />";
+    }
+    if (segment.type === "search_bar") {
+      return search_bar("term");
     }
     if (segment.above) {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
