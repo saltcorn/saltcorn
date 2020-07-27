@@ -8,6 +8,7 @@ const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const Page = require("@saltcorn/data/models/page");
+const {install_pack} = require("@saltcorn/data/models/backup");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("@saltcorn/data/contracts");
@@ -24,38 +25,6 @@ const { h5, pre, code } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
-const install_pack = contract(
-  is.fun([is_pack, is.maybe(is.str)], is.promise(is.undefined)),
-  async (pack, name) => {
-    const existingPlugins = await Plugin.find({});
-    for (const plugin of pack.plugins) {
-      if (!existingPlugins.some(ep => ep.name === plugin.name)) {
-        const p = new Plugin(plugin);
-        await load_plugins.loadAndSaveNewPlugin(p);
-      }
-    }
-    for (const tableSpec of pack.tables) {
-      await Table.create(tableSpec.name, tableSpec);
-    }
-    for (const tableSpec of pack.tables) {
-      const table = await Table.findOne({ name: tableSpec.name });
-      for (const field of tableSpec.fields)
-        await Field.create({ table, ...field });
-    }
-    for (const viewSpec of pack.views) {
-      const { table, on_menu, ...viewNoTable } = viewSpec;
-      const vtable = await Table.findOne({ name: table });
-      await View.create({ ...viewNoTable, table_id: vtable.id });
-    }
-    for (const pageSpec of pack.pages || []) {
-      await Page.create(pageSpec);
-    }
-    if (name) {
-      const existPacks = getState().getConfig("installed_packs", []);
-      await getState().setConfig("installed_packs", [...existPacks, name]);
-    }
-  }
-);
 
 router.get(
   "/create/",
@@ -181,7 +150,7 @@ router.post(
       req.flash("error", error);
       res.sendWrap(`Install Pack`, renderForm(form, req.csrfToken()));
     } else {
-      await install_pack(pack);
+      await install_pack(pack, undefined, p=>load_plugins.loadAndSaveNewPlugin(p));
 
       res.redirect(`/`);
     }
@@ -197,7 +166,7 @@ router.post(
 
     const pack = await fetch_pack_by_name(name);
     //console.log(pack)
-    await install_pack(pack.pack, name);
+    await install_pack(pack.pack, name, p=>load_plugins.loadAndSaveNewPlugin(p));
 
     res.redirect(`/`);
   })
