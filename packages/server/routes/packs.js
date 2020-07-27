@@ -8,7 +8,6 @@ const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const Page = require("@saltcorn/data/models/page");
-const {install_pack} = require("@saltcorn/data/models/backup");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("@saltcorn/data/contracts");
@@ -18,6 +17,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  install_pack,
   fetch_pack_by_name
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code } = require("@saltcorn/markup/tags");
