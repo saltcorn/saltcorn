@@ -8,4 +8,14 @@ const removeEmptyStrings = obj => {
 
 const isEmpty = o => Object.keys(o).length === 0;
 
-module.exports = { removeEmptyStrings, isEmpty };
+const asyncMap = async (xs, asyncF) => {
+  var res = [];
+  var ix = 0;
+  for (const x of xs) {
+    res.push(await asyncF(x, ix));
+    ix += 1;
+  }
+  return res;
+};
+
+module.exports = { removeEmptyStrings, isEmpty, asyncMap };
