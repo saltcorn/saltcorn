@@ -50,9 +50,9 @@ class Table {
     return tbls.map(t => new Table(t));
   }
   static async create(name, options = {}) {
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `create table "${schema}"."${sqlsanitize(name)}" (id serial primary key)`
+      `create table ${schema}"${sqlsanitize(name)}" (id serial primary key)`
     );
     const tblrow = {
       name,
@@ -65,18 +65,18 @@ class Table {
     return new Table({ ...tblrow, id });
   }
   async delete() {
-    const schema = db.getTenantSchema();
-    await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
-    await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
+    await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
       this.id
     ]);
 
-    await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [
+    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
       this.id
     ]);
   }
   get sql_name() {
-    return `"${db.getTenantSchema()}"."${sqlsanitize(this.name)}"`;
+    return `${db.getTenantSchemaPrefix()}${sqlsanitize(this.name)}"`;
   }
   async deleteRows(where) {
     await db.deleteWhere(this.name, where);

@@ -35,10 +35,10 @@ const reset = async (dontDrop = false, schema = "public") => {
     )
   `);
 
-  await db.insert(`_sc_roles`, { role: "admin", id: 1 });
-  await db.insert(`_sc_roles`, { role: "staff", id: 4 });
-  await db.insert(`_sc_roles`, { role: "user", id: 8 });
-  await db.insert(`_sc_roles`, { role: "public", id: 10 });
+  await db.insert(`_sc_roles`, { role: "admin", id: 1 }, true);
+  await db.insert(`_sc_roles`, { role: "staff", id: 4 }, true);
+  await db.insert(`_sc_roles`, { role: "user", id: 8 }, true);
+  await db.insert(`_sc_roles`, { role: "public", id: 10 }, true);
 
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_tables
@@ -117,7 +117,7 @@ const reset = async (dontDrop = false, schema = "public") => {
     source: "npm",
     location: "@saltcorn/sbadmin2"
   });
-  if (schema === "public")
+  if (schema === "public" && !is_sqlite)
     await db.query(`
     CREATE UNLOGGED TABLE "_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",

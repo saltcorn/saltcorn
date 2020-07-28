@@ -189,12 +189,12 @@ class Field {
 
   static async create(fld) {
     const f = new Field(fld);
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
 
     const Table = require("./table");
     const table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
-      const q = `alter table "${schema}"."${sqlsanitize(
+      const q = `alter table ${schema}${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
@@ -206,7 +206,7 @@ class Field {
         f.sql_bare_type
       }) RETURNS void AS $$
       BEGIN
-      EXECUTE format('alter table "${schema}"."${sqlsanitize(
+      EXECUTE format('alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""

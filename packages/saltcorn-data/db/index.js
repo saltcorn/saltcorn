@@ -8,10 +8,14 @@ const tenant = require("./tenants");
 
 const isSQLite = is_sqlite(connectObj);
 
+
+const getTenantSchemaPrefix = ()=>
+ isSQLite ? '' : `"${tenant.getTenantSchema()}".`
 module.exports = {
   ...tenant,
   sqlsanitize,
   connectObj,
   isSQLite,
-  ...dbmodule
+  ...dbmodule,
+  getTenantSchemaPrefix
 };
