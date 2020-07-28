@@ -58,12 +58,12 @@ const getConfigFile = () => {
   }
 };
 
-const is_sqlite=(connObj)=>{
-  if(connObj.connectionString)
-    return connObj.connectionString.startsWith("sqlite")
-  
-  return !!connObj.sqlite_path
-}
+const is_sqlite = connObj => {
+  if (connObj.connectionString)
+    return connObj.connectionString.startsWith("sqlite");
+
+  return !!connObj.sqlite_path;
+};
 
 module.exports = {
   getConnectObject,

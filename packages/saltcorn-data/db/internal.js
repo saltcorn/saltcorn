@@ -28,16 +28,18 @@ const whereFTS = (v, i) => {
     1})`;
 };
 
-const placeHolder = ( is_sqlite,i)=>
-  is_sqlite ? `?` : `$${i+1}`
+const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i + 1}`);
 
-const whereClause =is_sqlite => ([k, v], i) =>
+const whereClause = is_sqlite => ([k, v], i) =>
   k === "_fts"
     ? whereFTS(v, i)
     : typeof (v || {}).in !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || ${placeHolder(is_sqlite, i)} || '%'`
+    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || ${placeHolder(
+        is_sqlite,
+        i
+      )} || '%'`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
 
 const getVal = ([k, v]) =>
