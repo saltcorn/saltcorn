@@ -3,7 +3,7 @@ const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const { post_btn } = require("@saltcorn/markup");
-const { div, hr } = require("@saltcorn/markup/tags");
+const { div, hr, form, input, label,i } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { getState, restart_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
@@ -27,7 +27,31 @@ router.get(
         ),
         hr(),
 
-        post_btn("/admin/backup", "Backup", req.csrfToken())
+        post_btn("/admin/backup", "Backup", req.csrfToken()),
+        hr(),
+        form(
+            {
+              method: "post",
+              action: `/admin/restore`,
+              encType: "multipart/form-data"
+            },
+            input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+            label(
+              { class: "btn-link", for: "upload_to_restore" },
+              i({ class: "fas fa-2x fa-upload" }),
+              "<br/>",
+              "Restore"
+            ),
+            input({
+              id: "upload_to_restore",
+              class: "d-none",
+              name: "file",
+              type: "file",
+              accept: "application/zip,.zip",
+              onchange: "this.form.submit();"
+            })
+          )
+        
       )
     );
   })
