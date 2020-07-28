@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
+const { is_sqlite } = require("../db/connect");
 const readKey = v => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -201,9 +202,16 @@ class Field {
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
-        f.required ? 'not null default ""' : ""
+        f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
       }`;
       await db.query(q);
+    } else if (is_sqlite) {
+      const q = `alter table ${schema}"${sqlsanitize(
+        table.name
+      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+        f.required ? `not null default ?` : ""
+      }`;
+      await db.query(q, f.attributes.default);
     } else {
       const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
