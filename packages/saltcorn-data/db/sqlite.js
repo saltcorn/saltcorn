@@ -22,7 +22,7 @@ function sql_log(sql, vs) {
 }
 
 function query(sql, params) {
-  sql_log(text, params);
+  sql_log(sql, params);
   return new Promise((resolve, reject) => {
     sqliteDatabase.all(sql, params, function(err, rows) {
       if (err) {

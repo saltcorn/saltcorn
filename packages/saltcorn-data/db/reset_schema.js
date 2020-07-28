@@ -2,13 +2,10 @@ const db = require(".");
 const { migrate } = require("../migrate");
 
 //https://stackoverflow.com/a/21247009
-const reset = async (
-  dontDrop = false,
-  schema = "public",
-  is_sqlite = false
-) => {
+const reset = async (dontDrop = false, schema = "public") => {
+  const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
-  if (!dontDrop) {
+  if (!dontDrop && !is_sqlite) {
     await db.query(`
     DROP SCHEMA "${schema}" CASCADE;
     CREATE SCHEMA "${schema}";

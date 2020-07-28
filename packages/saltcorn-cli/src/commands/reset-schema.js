@@ -9,7 +9,9 @@ class ResetCommand extends Command {
       await reset();
     } else {
       const ans = await cli.confirm(
-        `This will wipe all data from database "${db.connectObj.database}".\nContinue (y/n)?`
+        `This will wipe all data from database "${
+          db.isSQLite ? "SQLite" : db.connectObj.database
+        }".\nContinue (y/n)?`
       );
       if (ans) await reset();
     }
