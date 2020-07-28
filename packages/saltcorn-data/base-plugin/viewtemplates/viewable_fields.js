@@ -66,8 +66,6 @@ const view_linker = contract(
   }
 );
 
-
-
 const get_viewable_fields = contract(
   is.fun(
     [

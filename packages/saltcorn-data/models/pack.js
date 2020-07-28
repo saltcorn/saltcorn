@@ -65,7 +65,10 @@ const page_pack = contract(pack_fun, async name => {
 });
 
 const install_pack = contract(
-  is.fun([is_pack, is.maybe(is.str), is.fun(is_plugin, is.undefined)], is.promise(is.undefined)),
+  is.fun(
+    [is_pack, is.maybe(is.str), is.fun(is_plugin, is.undefined)],
+    is.promise(is.undefined)
+  ),
   async (pack, name, loadAndSaveNewPlugin) => {
     const Plugin = require("./plugin");
     const existingPlugins = await Plugin.find({});

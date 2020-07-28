@@ -25,7 +25,6 @@ const { h5, pre, code } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
-
 router.get(
   "/create/",
   setTenant,
@@ -150,7 +149,9 @@ router.post(
       req.flash("error", error);
       res.sendWrap(`Install Pack`, renderForm(form, req.csrfToken()));
     } else {
-      await install_pack(pack, undefined, p=>load_plugins.loadAndSaveNewPlugin(p));
+      await install_pack(pack, undefined, p =>
+        load_plugins.loadAndSaveNewPlugin(p)
+      );
 
       res.redirect(`/`);
     }
@@ -166,7 +167,9 @@ router.post(
 
     const pack = await fetch_pack_by_name(name);
     //console.log(pack)
-    await install_pack(pack.pack, name, p=>load_plugins.loadAndSaveNewPlugin(p));
+    await install_pack(pack.pack, name, p =>
+      load_plugins.loadAndSaveNewPlugin(p)
+    );
 
     res.redirect(`/`);
   })

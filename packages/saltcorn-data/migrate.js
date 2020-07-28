@@ -36,9 +36,9 @@ const create_blank_migration = async () => {
   fs.writeFileSync(
     fnm,
     `
-const sql= "";
+const sql = "";
 
-module.exports = { sql }
+module.exports = { sql };
     `
   );
   console.log(fnm);
