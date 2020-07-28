@@ -1,4 +1,5 @@
 const { contract, is } = require("contractis");
+const { is_sqlite } = require("./connect");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 const sqlsanitize = contract(is.fun(is.str, is.str), nm => {
@@ -27,14 +28,17 @@ const whereFTS = (v, i) => {
     1})`;
 };
 
-const whereClause = ([k, v], i) =>
+const placeHolder = ( is_sqlite,i)=>
+  is_sqlite ? `?` : `$${i+1}`
+
+const whereClause =is_sqlite => ([k, v], i) =>
   k === "_fts"
     ? whereFTS(v, i)
     : typeof (v || {}).in !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} = ANY ($${i + 1})`
+    ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || $${i + 1} || '%'`
-    : `${sqlsanitizeAllowDots(k)}=$${i + 1}`;
+    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || ${placeHolder(is_sqlite, i)} || '%'`
+    : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
 
 const getVal = ([k, v]) =>
   k === "_fts"
@@ -45,11 +49,11 @@ const getVal = ([k, v]) =>
     ? v.ilike
     : v;
 
-const mkWhere = whereObj => {
+const mkWhere = (whereObj, is_sqlite) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
   const where =
     whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause).join(" and ")
+      ? "where " + wheres.map(whereClause(is_sqlite)).join(" and ")
       : "";
   const values = wheres.map(getVal);
   return { where, values };
