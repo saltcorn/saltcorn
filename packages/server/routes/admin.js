@@ -11,6 +11,7 @@ const { getState, restart_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore} = require("@saltcorn/data/models/backup");
 const fs = require("fs");
+const load_plugins = require("../load_plugins");
 
 const router = new Router();
 module.exports = router;
@@ -97,10 +98,11 @@ router.post(
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
-    const err = await restore(newPath);
+    const err = await restore(newPath,  p =>
+      load_plugins.loadAndSaveNewPlugin(p));
     if(err)
     req.flash("error", err);
     else req.flash("success", "Successfully restored backup");
     fs.unlink(newPath, function() {});
-    res.redirect(`/`);
+    res.redirect(`/admin`);
   }))
