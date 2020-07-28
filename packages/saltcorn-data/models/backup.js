@@ -11,6 +11,7 @@ const tmp = require("tmp-promise");
 const fs = require("fs").promises;
 const path = require("path");
 const dateFormat = require("dateformat");
+const stringify = require("csv-stringify/lib/sync");
 
 const {
   table_pack,
@@ -22,9 +23,7 @@ const {
 
 const { asyncMap } = require("../utils");
 
-const create_backup = async () => {
-  const dir = await tmp.dir({ unsafeCleanup: true });
-
+const create_pack = async dirpath => {
   const tables = await asyncMap(
     await Table.find({}),
     async t => await table_pack(t.name)
@@ -43,7 +42,36 @@ const create_backup = async () => {
   );
   var pack = { tables, views, plugins, pages };
 
-  await fs.writeFile(path.join(dir.path, "pack.json"), JSON.stringify(pack));
+  await fs.writeFile(path.join(dirpath, "pack.json"), JSON.stringify(pack));
+};
+
+const create_csv = async (table, dirpath) => {
+  const rows = await table.getRows();
+  const fnm = path.join(dirpath, table.name + ".csv");
+  const s = stringify(rows, {
+    header: true,
+    cast: {
+      date: value => value.toISOString()
+    }
+  });
+
+  await fs.writeFile(fnm, s);
+};
+
+const create_csvs = async root_dirpath => {
+  const dirpath = path.join(root_dirpath, "tables");
+  await fs.mkdir(dirpath);
+  const tables = await Table.find({});
+  for (const t of tables) {
+    await create_csv(t, dirpath);
+  }
+};
+
+const create_backup = async () => {
+  const dir = await tmp.dir({ unsafeCleanup: true });
+
+  await create_pack(dir.path);
+  await create_csvs(dir.path);
 
   var day = dateFormat(new Date(), "yyyy-mm-dd-hh-MM");
 

@@ -58,11 +58,8 @@ router.post(
     res.attachment(fileName);
     var file = fs.createReadStream(fileName);
     file.on("end", function() {
-      fs.unlink(fileName, function() {
-        // file deleted
-      });
+      fs.unlink(fileName, function() {});
     });
     file.pipe(res);
-    //res.download(fnm, fnm);
   })
 );
