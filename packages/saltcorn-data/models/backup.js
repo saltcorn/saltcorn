@@ -172,11 +172,11 @@ const restore_tables=async(dirpath) =>{
 const restore_config=async(dirpath) =>{
   const cfgs = readdirSync( path.join(dirpath, "config"))
   const state=getState()
+
   for (const cfg of cfgs) {
     const s = await fs.readFile(path.join(dirpath, "config", cfg))
-    state.setConfig(cfg, JSON.parse(s).v)
+    await state.setConfig(cfg, JSON.parse(s).v)
   }
-  
 }
 
 const restore = async (fnm, loadAndSaveNewPlugin) => {
