@@ -22,6 +22,7 @@ const {
 } = require("./pack");
 
 const { asyncMap } = require("../utils");
+const { fstat } = require("fs");
 
 const create_pack = async dirpath => {
   const tables = await asyncMap(
@@ -89,8 +90,19 @@ const backup_files = async root_dirpath => {
   }
   await create_csv_from_rows(files, path.join(root_dirpath, "files.csv"));
 };
-// copy files, config
 
+
+const backup_config = async root_dirpath => {
+  const dirpath = path.join(root_dirpath, "config");
+  await fs.mkdir(dirpath);
+
+  const cfgs = await db.select("_sc_config");
+
+  for (const cfg of cfgs) {
+    await fs.writeFile(path.join(dirpath, cfg.key), JSON.stringify(cfg.value));
+  }
+
+}
 const create_backup = async () => {
   const dir = await tmp.dir({ unsafeCleanup: true });
 
@@ -98,6 +110,7 @@ const create_backup = async () => {
   await create_table_csvs(dir.path);
   await create_users_csv(dir.path);
   await backup_files(dir.path);
+  await backup_config(dir.path);
 
   var day = dateFormat(new Date(), "yyyy-mm-dd-hh-MM");
 
