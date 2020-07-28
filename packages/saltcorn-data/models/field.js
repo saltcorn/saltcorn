@@ -91,8 +91,8 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      const schema = db.getTenantSchema();
-      return `int references "${schema}"."${sqlsanitize(
+      const schema = db.getTenantSchemaPrefix();
+      return `int references ${schema}"${sqlsanitize(
         this.reftable_name
       )}" (id)`;
     } else {
@@ -193,15 +193,15 @@ class Field {
 
     const Table = require("./table");
 
-    const tables = await Table.find();
-    console.log({ tables, fld });
+    //const tables = await Table.find();
+    //console.log({ tables, fld });
 
     const table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
-        f.required ? "not null" : ""
+        f.required ? 'not null default ""' : ""
       }`;
       await db.query(q);
     } else {
