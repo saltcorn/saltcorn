@@ -66,16 +66,6 @@ const view_linker = contract(
   }
 );
 
-const asyncMap = async (xs, asyncF) => {
-  var res = [];
-  var ix = 0;
-  for (const x of xs) {
-    res.push(await asyncF(x, ix));
-    ix += 1;
-  }
-  return res;
-};
-
 const get_viewable_fields = contract(
   is.fun(
     [
@@ -214,7 +204,6 @@ module.exports = {
   get_viewable_fields,
   action_url,
   stateToQueryString,
-  asyncMap,
   view_linker,
   splitUniques
 };

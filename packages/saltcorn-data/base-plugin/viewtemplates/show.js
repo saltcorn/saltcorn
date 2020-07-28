@@ -18,7 +18,7 @@ const {
   initial_config_all_fields,
   calcfldViewOptions
 } = require("../../plugin-helper");
-const { action_url, view_linker, asyncMap } = require("./viewable_fields");
+const { action_url, view_linker } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({
