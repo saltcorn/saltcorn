@@ -1,7 +1,5 @@
 const { AsyncLocalStorage } = require("async_hooks");
-const { getConnectObject } = require("./connect");
-
-var connectObj = getConnectObject();
+const { sqlsanitize } = require("./internal");
 
 var is_multi_tenant = true;
 const is_it_multi_tenant = () => is_multi_tenant;
