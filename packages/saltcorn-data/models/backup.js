@@ -45,9 +45,9 @@ const create_pack = async dirpath => {
   await fs.writeFile(path.join(dirpath, "pack.json"), JSON.stringify(pack));
 };
 
-const create_csv = async (table, dirpath) => {
-  const rows = await table.getRows();
-  const fnm = path.join(dirpath, table.name + ".csv");
+const create_csv_from_rows = async (rows, fnm) => {
+  if (rows.length === 0) return;
+
   const s = stringify(rows, {
     header: true,
     cast: {
@@ -58,20 +58,46 @@ const create_csv = async (table, dirpath) => {
   await fs.writeFile(fnm, s);
 };
 
-const create_csvs = async root_dirpath => {
+const create_table_csv = async (table, dirpath) => {
+  const rows = await table.getRows();
+  await create_csv_from_rows(rows, path.join(dirpath, table.name + ".csv"));
+};
+
+const create_table_csvs = async root_dirpath => {
   const dirpath = path.join(root_dirpath, "tables");
   await fs.mkdir(dirpath);
   const tables = await Table.find({});
   for (const t of tables) {
-    await create_csv(t, dirpath);
+    await create_table_csv(t, dirpath);
   }
 };
+
+const create_users_csv = async root_dirpath => {
+  const users = await db.select("users");
+  await create_csv_from_rows(users, path.join(root_dirpath, "users.csv"));
+};
+
+const backup_files = async root_dirpath => {
+  const dirpath = path.join(root_dirpath, "files");
+  await fs.mkdir(dirpath);
+
+  const files = await db.select("_sc_files");
+  for (const f of files) {
+    const basename = path.basename(f.location);
+    await fs.copyFile(f.location, path.join(dirpath, basename));
+    f.location = basename;
+  }
+  await create_csv_from_rows(files, path.join(root_dirpath, "files.csv"));
+};
+// copy files, config
 
 const create_backup = async () => {
   const dir = await tmp.dir({ unsafeCleanup: true });
 
   await create_pack(dir.path);
-  await create_csvs(dir.path);
+  await create_table_csvs(dir.path);
+  await create_users_csv(dir.path);
+  await backup_files(dir.path);
 
   var day = dateFormat(new Date(), "yyyy-mm-dd-hh-MM");
 
