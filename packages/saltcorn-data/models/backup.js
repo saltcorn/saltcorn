@@ -3,16 +3,17 @@ const { getState } = require("../db/state");
 const db = require("../db");
 const Table = require("./table");
 const View = require("./view");
-const Field = require("./field");
+const File = require("./file");
 const Plugin = require("./plugin");
 const Page = require("./page");
 const Zip = require("adm-zip");
 const tmp = require("tmp-promise");
 const fs = require("fs").promises;
+const {existsSync,readdirSync} = require("fs");
 const path = require("path");
 const dateFormat = require("dateformat");
 const stringify = require("csv-stringify/lib/sync");
-
+const csvtojson = require("csvtojson");
 const {
   table_pack,
   view_pack,
@@ -125,4 +126,84 @@ const create_backup = async () => {
   return zipFileName;
 };
 
-module.exports = { create_backup };
+const extract=async(fnm, dir)=>{
+  return new Promise(function (resolve, reject) {
+    var zip = new Zip(fnm);
+      zip.extractAllToAsync(dir,true, function(err) {
+        if (err) 
+          reject(new Error("Error opening zip filr: " + err));
+        else
+          resolve()
+      })
+  })
+
+}
+const restore_files=async(dirpath) =>{
+  const file_rows = await csvtojson().fromFile(path.join(dirpath, "files.csv"));
+  for(const file of file_rows) {
+    const newPath = File.get_new_path(file.location)
+    //copy file
+    await fs.copyFile(path.join(dirpath, "files", file.location), newPath)
+    //set location
+    file.location = newPath
+    //insert in db
+    await db.insert("_sc_files", file)
+  }
+}
+
+const restore_users=async(dirpath) =>{
+  const user_rows = await csvtojson().fromFile(path.join(dirpath, "users.csv"));
+  for(const user of user_rows) {
+    if(user.id>1)
+      await db.insert("users", user); 
+  }
+}
+
+const restore_tables=async(dirpath) =>{
+  const tables= await Table.find()
+  for(const table of tables) {
+    const fnm=path.join(dirpath, "tables", table.name+".csv")
+    if (existsSync(fnm)) 
+      await table.import_csv_file(fnm)
+    
+  }
+}
+
+const restore_config=async(dirpath) =>{
+  const cfgs = readdirSync( path.join(dirpath, "config"))
+  const state=getState()
+
+  for (const cfg of cfgs) {
+    const s = await fs.readFile(path.join(dirpath, "config", cfg))
+    await state.setConfig(cfg, JSON.parse(s).v)
+  }
+}
+
+const restore = async (fnm, loadAndSaveNewPlugin) => {
+  const dir = await tmp.dir({ unsafeCleanup: true });
+  //unzip
+  await extract(fnm, dir.path)
+  
+  //install pack
+  const pack = JSON.parse(await fs.readFile(path.join(dir.path, "pack.json")))
+  await install_pack(pack, undefined, loadAndSaveNewPlugin)
+
+  // files
+  await restore_files(dir.path)
+
+  //users
+  await restore_users(dir.path)
+
+  //table csvs
+  await restore_tables(dir.path)
+
+  //config
+  await restore_config(dir.path)
+
+
+  await dir.cleanup();
+
+}
+
+
+module.exports = { create_backup, restore };

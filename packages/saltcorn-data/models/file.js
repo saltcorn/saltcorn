@@ -32,10 +32,10 @@ class File {
     await db.update("_sc_files", row, id);
   }
 
-  static get_new_path() {
+  static get_new_path(suggest) {
     const file_store = db.connectObj.file_store;
 
-    const newFnm = uuidv4();
+    const newFnm = suggest || uuidv4();
     return path.join(file_store, newFnm);
   }
   static async from_req_files(file, user_id, min_role_read = 1) {
