@@ -125,4 +125,10 @@ const create_backup = async () => {
   return zipFileName;
 };
 
-module.exports = { create_backup };
+const restore = async (fnm) => {
+  console.log({fnm})
+
+}
+
+
+module.exports = { create_backup, restore };
