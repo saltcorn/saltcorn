@@ -43,7 +43,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_tables
     (
-      id serial primary key,
+      id ${is_sqlite ? "integer" : "serial"} primary key,
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,

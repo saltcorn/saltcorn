@@ -17,9 +17,9 @@ const migrate = async (schema = "public") => {
     .filter(file => file.match(/\.js$/) !== null);
 
   const client = is_sqlite ? db : await db.getClient();
-  if(!is_sqlite) {
-  db.sql_log(`SET search_path TO "${schema}";`);
-  await client.query(`SET search_path TO "${schema}";`);
+  if (!is_sqlite) {
+    db.sql_log(`SET search_path TO "${schema}";`);
+    await client.query(`SET search_path TO "${schema}";`);
   }
   for (const file of files) {
     const name = file.replace(".js", "");
@@ -27,14 +27,13 @@ const migrate = async (schema = "public") => {
       //console.log("Running migration", name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
-        if(!contents.sql.includes("DROP COLUMN"))
+        if (!contents.sql.includes("DROP COLUMN"))
           await client.query(contents.sql);
       }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
   }
-  if(!is_sqlite)
-    client.release(true);
+  if (!is_sqlite) client.release(true);
 };
 
 const create_blank_migration = async () => {

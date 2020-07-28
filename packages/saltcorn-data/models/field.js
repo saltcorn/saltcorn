@@ -192,9 +192,13 @@ class Field {
     const schema = db.getTenantSchemaPrefix();
 
     const Table = require("./table");
+
+    const tables = await Table.find();
+    console.log({ tables, fld });
+
     const table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
-      const q = `alter table ${schema}${sqlsanitize(
+      const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""

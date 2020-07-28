@@ -71,9 +71,7 @@ class Table {
       this.id
     ]);
 
-    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
-      this.id
-    ]);
+    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
   }
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}${sqlsanitize(this.name)}"`;

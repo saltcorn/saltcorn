@@ -47,41 +47,41 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 };
 
 const insert = async (tbl, obj, noid = false) => {
-    const kvs = Object.entries(obj);
-    const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-    const valPosList = kvs.map((kv, ix) => "?").join();
-    const valList = kvs.map(([k, v]) => v);
-    const sql = `insert into "${sqlsanitize(
-      tbl
-    )}"(${fnameList}) values(${valPosList})`;
+  const kvs = Object.entries(obj);
+  const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
+  const valPosList = kvs.map((kv, ix) => "?").join();
+  const valList = kvs.map(([k, v]) => v);
+  const sql = `insert into "${sqlsanitize(
+    tbl
+  )}"(${fnameList}) values(${valPosList})`;
 
-    await query(sql, valList);
-    return;
-  };
+  await query(sql, valList);
+  if (noid) return;
+  const ids = await query("SELECT last_insert_rowid() as id");
+  return ids[0].id;
+};
 
-  const selectOne = async (tbl, where) => {
-    const rows = await select(tbl, where);
-    if (rows.length === 0) {
-      const w = mkWhere(where, true);
-      throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
-    } else return rows[0];
-  };
-  
-  const selectMaybeOne = async (tbl, where) => {
-    const rows = await select(tbl, where);
-    if (rows.length === 0) return null;
-    else return rows[0];
-  };
+const selectOne = async (tbl, where) => {
+  const rows = await select(tbl, where);
+  if (rows.length === 0) {
+    const w = mkWhere(where, true);
+    throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
+  } else return rows[0];
+};
 
-  const count = async (tbl, whereObj) => {
-    const { where, values } = mkWhere(whereObj, true);
-    const sql = `SELECT COUNT(*) FROM "${sqlsanitize(
-      tbl
-    )}" ${where}`;
-    const tq = await query(sql, values);
-        
-    return parseInt(tq[0].count);
-  };
+const selectMaybeOne = async (tbl, where) => {
+  const rows = await select(tbl, where);
+  if (rows.length === 0) return null;
+  else return rows[0];
+};
+
+const count = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj, true);
+  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
+  const tq = await query(sql, values);
+
+  return parseInt(tq[0].count);
+};
 
 module.exports = {
   sql_log,
