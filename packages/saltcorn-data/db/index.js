@@ -1,9 +1,25 @@
 const { Pool } = require("pg");
 const { getConnectObject } = require("./connect");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
-const { AsyncLocalStorage } = require("async_hooks");
 
 var connectObj = getConnectObject();
+
+const mockTenants = {
+  getTenantSchema: () => "public",
+  is_it_multi_tenant: () => false,
+  enable_multi_tenant() {},
+  runWithTenant(t, f) {
+    return f();
+  }
+};
+
+const {
+  getTenantSchema,
+  enable_multi_tenant,
+  runWithTenant,
+  is_it_multi_tenant
+} = connectObj.multi_tenant ? require("./tenants") : mockTenants;
+
 var pool;
 if (connectObj) pool = new Pool(connectObj);
 
@@ -25,29 +41,6 @@ const close = async () => {
 const changeConnection = async (connObj = {}) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
-};
-
-var is_multi_tenant = false;
-const is_it_multi_tenant = () => is_multi_tenant;
-
-var tenantNamespace;
-
-const enable_multi_tenant = () => {
-  is_multi_tenant = true;
-  tenantNamespace = new AsyncLocalStorage();
-};
-
-const runWithTenant = (tenant, f) => {
-  if (!is_multi_tenant) return f();
-  else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
-};
-
-if (connectObj.multi_tenant) enable_multi_tenant();
-
-const getTenantSchema = () => {
-  if (!is_multi_tenant) return "public";
-  const storeVal = tenantNamespace.getStore();
-  return storeVal || "public";
 };
 
 const select = async (tbl, whereObj, selectopts = {}) => {
