@@ -27,6 +27,7 @@ describe("app", () => {
     console.log(packs_available);
 
     for (const { name } of packs_available) {
+      console.log({name})
       await resetToFixtures();
       const loginCookie = await getAdminLoginCookie();
       const app = await getApp({ disableCsrf: true });
@@ -34,6 +35,9 @@ describe("app", () => {
         .post(`/packs/install-named/${encodeURIComponent(name)}`)
         .set("Cookie", loginCookie)
         .expect(toRedirect("/"));
+
+      console.log("installed")
+
       await chaos_guinea_pig(app);
     }
   });
