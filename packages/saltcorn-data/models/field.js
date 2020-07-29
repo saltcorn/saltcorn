@@ -233,7 +233,7 @@ class Field {
 
     if (f.is_unique)
       await db.query(
-        `alter table "${schema}"."${sqlsanitize(
+        `alter table ${schema}"${sqlsanitize(
           table.name
         )}" add CONSTRAINT ${sqlsanitize(f.name)}_unique UNIQUE (${sqlsanitize(
           f.name
