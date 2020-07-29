@@ -297,10 +297,9 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    //console.log(sql);
-    const { rows } = await db.query(sql, values);
+    const res = await db.query(sql, values);
 
-    return rows;
+    return db.isSQLite? res : res.rows;
   }
 }
 
