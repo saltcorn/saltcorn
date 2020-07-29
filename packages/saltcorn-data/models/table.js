@@ -52,7 +52,7 @@ class Table {
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id serial primary key)`
+      `create table ${schema}"${sqlsanitize(name)}" (id ${db.isSQLite ? "integer" : "serial"} primary key)`
     );
     const tblrow = {
       name,
