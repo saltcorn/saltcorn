@@ -43,10 +43,17 @@ class RunTestsCommand extends Command {
   }
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
-    await db.changeConnection({ database: "saltcorn_test" });
+    var env;
+    if(db.isSQLite){
+      const testdbpath = '/tmp/sctestdb'
+      await db.changeConnection({ sqlite_path: testdbpath });
+      env = { ...process.env, SQLITE_FILEPATH: testdbpath };
+    } else {
+      await db.changeConnection({ database: "saltcorn_test" });
+      env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    }
     await reset();
     await fixtures();
-    const env = { ...process.env, PGDATABASE: "saltcorn_test" };
     const covargs = flags.coverage ? ["--", "--coverage"] : [];
     if (args.package === "core") {
       await this.do_test("npm", ["run", "test", ...covargs], flags.forever);

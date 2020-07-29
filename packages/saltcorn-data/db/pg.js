@@ -38,6 +38,15 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   return tq.rows;
 };
 
+const drop_reset_schema=async(schema)=>{
+  await pool.query(`DROP SCHEMA "${schema}" CASCADE;
+  CREATE SCHEMA "${schema}";
+  GRANT ALL ON SCHEMA "${schema}" TO postgres;
+  GRANT ALL ON SCHEMA "${schema}" TO "${schema}" ;
+  COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`)
+}
+
+
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -123,5 +132,6 @@ module.exports = {
   changeConnection,
   set_sql_logging,
   getClient,
-  mkWhere
+  mkWhere,
+  drop_reset_schema
 };

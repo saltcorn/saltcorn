@@ -1,13 +1,15 @@
 const sqlite3 = require("sqlite3").verbose();
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
-
+const fs =require("fs").promises
 var connectObj = getConnectObject();
 
 const get_db_filepath = () => {
   if (connectObj.sqlite_path) return connectObj.sqlite_path;
 };
-var sqliteDatabase = new sqlite3.Database(get_db_filepath());
+
+var current_filepath=get_db_filepath()
+var sqliteDatabase = new sqlite3.Database(current_filepath);
 
 var log_sql_enabled = false;
 
@@ -36,6 +38,15 @@ function query(sql, params) {
   });
 }
 
+const changeConnection = async (connObj) => {
+  await sqliteDatabase.close();
+  current_filepath=connObj.sqlite_path
+  sqliteDatabase = new sqlite3.Database(current_filepath);
+};
+
+const close = async()=>{
+  await sqliteDatabase.close();
+}
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
@@ -83,14 +94,23 @@ const count = async (tbl, whereObj) => {
   return parseInt(tq[0].count);
 };
 
+const drop_reset_schema=async()=>{
+  await sqliteDatabase.close()
+  await fs.unlink(current_filepath)
+  sqliteDatabase = new sqlite3.Database(current_filepath);
+}
+
 module.exports = {
   sql_log,
   set_sql_logging,
   sqliteDatabase,
+  changeConnection,
   query,
   select,
   selectOne,
   selectMaybeOne,
   insert,
-  count
+  count,
+  close,
+  drop_reset_schema
 };

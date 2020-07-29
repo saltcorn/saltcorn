@@ -5,14 +5,8 @@ const { migrate } = require("../migrate");
 const reset = async (dontDrop = false, schema = "public") => {
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
-  if (!dontDrop && !is_sqlite) {
-    await db.query(`
-    DROP SCHEMA "${schema}" CASCADE;
-    CREATE SCHEMA "${schema}";
-    GRANT ALL ON SCHEMA "${schema}" TO postgres;
-    GRANT ALL ON SCHEMA "${schema}" TO "${schema}" ;
-    COMMENT ON SCHEMA "${schema}" IS 'standard public schema';
-  `);
+  if (!dontDrop ) {
+    await db.drop_reset_schema(schema)
   }
 
   await db.query(`
