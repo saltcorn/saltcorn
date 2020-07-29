@@ -193,7 +193,7 @@ class Field {
     const schema = db.getTenantSchemaPrefix();
 
     const Table = require("./table");
-
+    const is_sqlite=db.isSQLite
     //const tables = await Table.find();
     //console.log({ tables, fld });
 
