@@ -38,14 +38,13 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   return tq.rows;
 };
 
-const drop_reset_schema=async(schema)=>{
+const drop_reset_schema = async schema => {
   await pool.query(`DROP SCHEMA "${schema}" CASCADE;
   CREATE SCHEMA "${schema}";
   GRANT ALL ON SCHEMA "${schema}" TO postgres;
   GRANT ALL ON SCHEMA "${schema}" TO "${schema}" ;
-  COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`)
-}
-
+  COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`);
+};
 
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);

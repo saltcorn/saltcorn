@@ -53,7 +53,10 @@ class Field {
       this.input_type = "select";
     }
 
-    this.attributes = typeof o.attributes==='string' ? JSON.parse(o.attributes): (o.attributes || {})
+    this.attributes =
+      typeof o.attributes === "string"
+        ? JSON.parse(o.attributes)
+        : o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
     if (o.table) {
@@ -193,7 +196,7 @@ class Field {
     const schema = db.getTenantSchemaPrefix();
 
     const Table = require("./table");
-    const is_sqlite=db.isSQLite
+    const is_sqlite = db.isSQLite;
     //const tables = await Table.find();
     //console.log({ tables, fld });
 

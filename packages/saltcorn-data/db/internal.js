@@ -24,11 +24,10 @@ const whereFTS = (v, i, is_sqlite) => {
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
-  if(is_sqlite)
-  return `${flds} LIKE '%' || ? || '%'`;
+  if (is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
   else
-  return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
-    1})`;
+    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
+      1})`;
 };
 
 const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i + 1}`);
@@ -39,10 +38,9 @@ const whereClause = is_sqlite => ([k, v], i) =>
     : typeof (v || {}).in !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} ${is_sqlite ? 'LIKE': 'ILIKE'} '%' || ${placeHolder(
-        is_sqlite,
-        i
-      )} || '%'`
+    ? `${sqlsanitizeAllowDots(k)} ${
+        is_sqlite ? "LIKE" : "ILIKE"
+      } '%' || ${placeHolder(is_sqlite, i)} || '%'`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
 
 const getVal = ([k, v]) =>

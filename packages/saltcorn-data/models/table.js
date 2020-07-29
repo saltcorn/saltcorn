@@ -52,7 +52,9 @@ class Table {
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id ${db.isSQLite ? "integer" : "serial"} primary key)`
+      `create table ${schema}"${sqlsanitize(name)}" (id ${
+        db.isSQLite ? "integer" : "serial"
+      } primary key)`
     );
     const tblrow = {
       name,
@@ -289,7 +291,7 @@ class Table {
     const { where, values } = mkWhere(whereObj);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy && ("a."+opts.orderBy),
+      orderBy: opts.orderBy && "a." + opts.orderBy,
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
@@ -299,7 +301,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return db.isSQLite? res : res.rows;
+    return db.isSQLite ? res : res.rows;
   }
 }
 

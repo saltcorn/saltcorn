@@ -44,8 +44,8 @@ class RunTestsCommand extends Command {
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     var env;
-    if(db.isSQLite){
-      const testdbpath = '/tmp/sctestdb'
+    if (db.isSQLite) {
+      const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });
       env = { ...process.env, SQLITE_FILEPATH: testdbpath };
     } else {
@@ -54,10 +54,15 @@ class RunTestsCommand extends Command {
     }
     await reset();
     await fixtures();
-    await db.close()
+    await db.close();
     const covargs = flags.coverage ? ["--", "--coverage"] : [];
     if (args.package === "core") {
-      await this.do_test("npm", ["run", "test", ...covargs], env, flags.forever);
+      await this.do_test(
+        "npm",
+        ["run", "test", ...covargs],
+        env,
+        flags.forever
+      );
     } else if (args.package === "e2e") {
       await this.e2etest(env);
     } else if (args.package) {
@@ -65,13 +70,18 @@ class RunTestsCommand extends Command {
       await this.do_test(
         "npm",
         ["run", "test", ...covargs],
-        env, 
+        env,
         flags.forever,
-        cwd      
+        cwd
       );
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
-      await this.do_test(lerna, ["run", "test", ...covargs], env, flags.forever);
+      await this.do_test(
+        lerna,
+        ["run", "test", ...covargs],
+        env,
+        flags.forever
+      );
       await this.e2etest(env);
     }
     this.exit(0);

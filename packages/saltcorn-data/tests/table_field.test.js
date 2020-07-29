@@ -14,17 +14,16 @@ describe("TableIO", () => {
       name: "foo_height1",
       label: "height1",
       type: "Integer",
-      attributes: {max:18}
+      attributes: { max: 18 }
     });
-    const fs=await db.selectOne("_sc_fields", {name:"foo_height1"})
-    expect(fs.table_id).toBe(tc.id)
-    expect(fs.table_id>0).toBe(true)
-    expect(fs.id>0).toBe(true)
-    const fields=await tc.getFields()
-    expect(fields[0].attributes).toStrictEqual({max:18})
-  })
-
-})
+    const fs = await db.selectOne("_sc_fields", { name: "foo_height1" });
+    expect(fs.table_id).toBe(tc.id);
+    expect(fs.table_id > 0).toBe(true);
+    expect(fs.id > 0).toBe(true);
+    const fields = await tc.getFields();
+    expect(fields[0].attributes).toStrictEqual({ max: 18 });
+  });
+});
 describe("Table create", () => {
   it("should create", async () => {
     expect.assertions(1);
@@ -45,10 +44,10 @@ describe("Table create", () => {
   });
   it("should insert", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
-    expect(mytable1.name).toBe("mytable1")
+    expect(mytable1.name).toBe("mytable1");
     const id = await db.insert(mytable1.name, { height1: 6 });
-    expect(typeof id).toBe("number")
-    expect(id>0).toBe(true)
+    expect(typeof id).toBe("number");
+    expect(id > 0).toBe(true);
 
     const row = await db.selectOne(mytable1.name, { id });
     expect(row.height1).toBe(6);

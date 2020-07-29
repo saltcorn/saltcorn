@@ -1,14 +1,14 @@
 const sqlite3 = require("sqlite3").verbose();
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
-const fs =require("fs").promises
+const fs = require("fs").promises;
 var connectObj = getConnectObject();
 
 const get_db_filepath = () => {
   if (connectObj.sqlite_path) return connectObj.sqlite_path;
 };
 
-var current_filepath=get_db_filepath()
+var current_filepath = get_db_filepath();
 var sqliteDatabase = new sqlite3.Database(current_filepath);
 
 var log_sql_enabled = false;
@@ -38,15 +38,15 @@ function query(sql, params) {
   });
 }
 
-const changeConnection = async (connObj) => {
+const changeConnection = async connObj => {
   await sqliteDatabase.close();
-  current_filepath=connObj.sqlite_path
+  current_filepath = connObj.sqlite_path;
   sqliteDatabase = new sqlite3.Database(current_filepath);
 };
 
-const close = async()=>{
+const close = async () => {
   await sqliteDatabase.close();
-}
+};
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
@@ -59,35 +59,31 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
-  const assigns = kvs
-    .map(([k, v], ix) => `"${sqlsanitize(k)}"=?`)
-    .join();
+  const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
   var valList = kvs.map(([k, v]) => v);
   valList.push(id);
-  const q = `update "${sqlsanitize(
-    tbl
-  )}" set ${assigns} where id=?`;
+  const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
 };
 
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj, true);
-  const sql = `delete FROM "${sqlsanitize(
-    tbl
-  )}" ${where}`;
+  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
 
   const tq = await query(sql, values);
 
   return;
 };
 
-
-
 const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-  const valPosList = kvs.map(([k,v], ix) => typeof v === "object" ? "json(?)": "?").join();
-  const valList = kvs.map(([k, v]) => typeof v === "object" ? JSON.stringify(v): v);
+  const valPosList = kvs
+    .map(([k, v], ix) => (typeof v === "object" ? "json(?)" : "?"))
+    .join();
+  const valList = kvs.map(([k, v]) =>
+    typeof v === "object" ? JSON.stringify(v) : v
+  );
   const sql = `insert into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;
@@ -120,11 +116,11 @@ const count = async (tbl, whereObj) => {
   return parseInt(tq[0].count);
 };
 
-const drop_reset_schema=async()=>{
-  await sqliteDatabase.close()
-  await fs.unlink(current_filepath)
+const drop_reset_schema = async () => {
+  await sqliteDatabase.close();
+  await fs.unlink(current_filepath);
   sqliteDatabase = new sqlite3.Database(current_filepath);
-}
+};
 
 module.exports = {
   sql_log,

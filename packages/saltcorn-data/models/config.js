@@ -43,9 +43,8 @@ const getConfig = contract(
   is.fun([is.str, is.maybe(is.any)], is.promise(is.any)),
   async (key, def) => {
     const cfg = await db.selectMaybeOne("_sc_config", { key });
-    if (cfg && typeof cfg.value==='string')
-    return JSON.parse(cfg.value).v
-    else if(cfg) return cfg.value.v;
+    if (cfg && typeof cfg.value === "string") return JSON.parse(cfg.value).v;
+    else if (cfg) return cfg.value.v;
     else if (def) return def;
     else return configTypes[key] ? configTypes[key].default : undefined;
   }
@@ -57,7 +56,7 @@ const getAllConfig = contract(
     const cfgs = await db.select("_sc_config");
     var cfg = {};
     cfgs.forEach(({ key, value }) => {
-      cfg[key] = typeof value==="string" ? JSON.parse(value).v: value.v;
+      cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
     });
     return cfg;
   }
@@ -81,19 +80,18 @@ const getAllConfigOrDefaults = contract(
 const setConfig = contract(
   is.fun([is.str, is.any], is.promise(is.undefined)),
   async (key, value) => {
-    if(db.isSQLite) 
-    await db.query(
-      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
+    if (db.isSQLite)
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
                     on conflict (key) do update set value = json($value)`,
-      {$key:key, 
-        $value: JSON.stringify({ v: value })}
-    );
+        { $key: key, $value: JSON.stringify({ v: value }) }
+      );
     else
-    await db.query(
-      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
-      [key, { v: value }]
-    );
+        [key, { v: value }]
+      );
     if (configTypes[key] && configTypes[key].onChange)
       configTypes[key].onChange(value);
   }

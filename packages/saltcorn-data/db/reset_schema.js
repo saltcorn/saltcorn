@@ -5,10 +5,10 @@ const { migrate } = require("../migrate");
 const reset = async (dontDrop = false, schema = "public") => {
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
-  const serial = is_sqlite ? "integer" : "serial"
-  const json = is_sqlite ? "json" : "jsonb"
-  if (!dontDrop ) {
-    await db.drop_reset_schema(schema)
+  const serial = is_sqlite ? "integer" : "serial";
+  const json = is_sqlite ? "json" : "jsonb";
+  if (!dontDrop) {
+    await db.drop_reset_schema(schema);
   }
 
   await db.query(`

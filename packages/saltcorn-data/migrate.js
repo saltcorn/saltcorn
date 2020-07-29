@@ -22,7 +22,9 @@ const migrate = async (schema = "public") => {
     await client.query(`SET search_path TO "${schema}";`);
   }
 
-  const fudge=is_sqlite ? s=> s.replace('id serial primary', 'id integer primary'):s=>s 
+  const fudge = is_sqlite
+    ? s => s.replace("id serial primary", "id integer primary")
+    : s => s;
 
   for (const file of files) {
     const name = file.replace(".js", "");
