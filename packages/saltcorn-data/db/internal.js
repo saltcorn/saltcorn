@@ -13,7 +13,7 @@ const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), nm => {
   else return s;
 });
 
-const whereFTS = (v, i) => {
+const whereFTS = (v, i, is_sqlite) => {
   const { fields, table } = v;
   var flds = fields
     .filter(f => f.type && f.type.sql_name === "text")
@@ -24,6 +24,9 @@ const whereFTS = (v, i) => {
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
+  if(is_sqlite)
+  return `${flds} LIKE '%' || ? || '%'`;
+  else
   return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
     1})`;
 };
@@ -32,7 +35,7 @@ const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i + 1}`);
 
 const whereClause = is_sqlite => ([k, v], i) =>
   k === "_fts"
-    ? whereFTS(v, i)
+    ? whereFTS(v, i, is_sqlite)
     : typeof (v || {}).in !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
