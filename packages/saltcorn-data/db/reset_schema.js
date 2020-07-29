@@ -6,6 +6,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
   const serial = is_sqlite ? "integer" : "serial"
+  const json = is_sqlite ? "json" : "jsonb"
   if (!dontDrop ) {
     await db.drop_reset_schema(schema)
   }
@@ -60,7 +61,7 @@ const reset = async (dontDrop = false, schema = "public") => {
       label text,
       type text,
       reftable_name text,
-      attributes jsonb,
+      attributes ${json},
       required boolean NOT NULL DEFAULT false
     )
   `);

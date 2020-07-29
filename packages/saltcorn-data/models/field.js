@@ -53,7 +53,7 @@ class Field {
       this.input_type = "select";
     }
 
-    this.attributes = o.attributes || {};
+    this.attributes = typeof o.attributes==='string' ? JSON.parse(o.attributes): (o.attributes || {})
     if (o.table_id) this.table_id = o.table_id;
 
     if (o.table) {

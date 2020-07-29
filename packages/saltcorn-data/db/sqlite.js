@@ -86,8 +86,8 @@ const deleteWhere = async (tbl, whereObj) => {
 const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-  const valPosList = kvs.map((kv, ix) => "?").join();
-  const valList = kvs.map(([k, v]) => v);
+  const valPosList = kvs.map(([k,v], ix) => typeof v === "object" ? "json(?)": "?").join();
+  const valList = kvs.map(([k, v]) => typeof v === "object" ? JSON.stringify(v): v);
   const sql = `insert into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;
