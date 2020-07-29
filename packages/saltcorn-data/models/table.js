@@ -289,7 +289,7 @@ class Table {
     const { where, values } = mkWhere(whereObj);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy,
+      orderBy: opts.orderBy && ("a."+opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
