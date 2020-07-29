@@ -5,13 +5,14 @@ const { migrate } = require("../migrate");
 const reset = async (dontDrop = false, schema = "public") => {
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
+  const serial = is_sqlite ? "integer" : "serial"
   if (!dontDrop ) {
     await db.drop_reset_schema(schema)
   }
 
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_roles (
-      id serial primary key,      
+      id ${serial} primary key,      
       role VARCHAR(50)
     )
   `);
@@ -37,7 +38,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_tables
     (
-      id ${is_sqlite ? "integer" : "serial"} primary key,
+      id ${serial} primary key,
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
@@ -53,7 +54,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_fields
     (
-      id serial primary key,
+      id ${serial} primary key,
       table_id integer references ${schemaQdot}_sc_tables(id) NOT NULL,
       name text NOT NULL,
       label text,
@@ -70,7 +71,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_views
     (
-      id serial primary key,
+      id ${serial} primary key,
       viewtemplate text NOT NULL,
       name text NOT NULL,
       table_id integer references ${schemaQdot}_sc_tables(id),
@@ -86,7 +87,7 @@ const reset = async (dontDrop = false, schema = "public") => {
 
   await db.query(`
     CREATE TABLE ${schemaQdot}users (
-      id serial primary key,      
+      id ${serial} primary key,      
       email VARCHAR(128),
       password VARCHAR(60),
       role_id integer not null references ${schemaQdot}_sc_roles(id)
@@ -95,7 +96,7 @@ const reset = async (dontDrop = false, schema = "public") => {
 
   await db.query(`
   CREATE TABLE ${schemaQdot}_sc_plugins (
-    id serial primary key,      
+    id ${serial} primary key,      
     name VARCHAR(128),
     source VARCHAR(128),
     location VARCHAR(128)

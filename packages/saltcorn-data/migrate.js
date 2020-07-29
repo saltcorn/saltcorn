@@ -21,14 +21,17 @@ const migrate = async (schema = "public") => {
     db.sql_log(`SET search_path TO "${schema}";`);
     await client.query(`SET search_path TO "${schema}";`);
   }
+
+  const fudge=is_sqlite ? s=>s : s=> s.replace('id serial primary', 'id integer primary')
+
   for (const file of files) {
     const name = file.replace(".js", "");
     if (!dbmigrations.includes(name)) {
       //console.log("Running migration", name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
-        if (!contents.sql.includes("DROP COLUMN"))
-          await client.query(contents.sql);
+        if (!(is_sqlite && contents.sql.includes("DROP COLUMN")))
+          await client.query(fudge(contents.sql));
       }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
