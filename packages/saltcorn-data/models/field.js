@@ -184,6 +184,7 @@ class Field {
     const table = await Table.findOne({ id: this.table_id });
     const schema = db.getTenantSchemaPrefix();
 
+    if(!db.isSQLite)
     await db.query(
       `alter table ${schema}"${sqlsanitize(
         table.name
@@ -209,12 +210,13 @@ class Field {
       }`;
       await db.query(q);
     } else if (is_sqlite) {
+      //warning: not safe but sqlite so we don't care
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
-        f.required ? `not null default ?` : ""
+        f.required ? `not null default ${JSON.stringify(f.attributes.default)}` : ""
       }`;
-      await db.query(q, f.attributes.default);
+      await db.query(q );
     } else {
       const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
