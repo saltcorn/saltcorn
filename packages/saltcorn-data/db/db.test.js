@@ -43,13 +43,13 @@ describe("mkWhere", () => {
 describe("where", () => {
   it("should support in", async () => {
     await Table.create("myothertable");
-    if(!db.isSQLite) {
-    
-    const tf = await db.selectOne("_sc_tables", {
-      name: { in: ["myothertable", "nosuchtable"] }
-    });
+    if (!db.isSQLite) {
+      const tf = await db.selectOne("_sc_tables", {
+        name: { in: ["myothertable", "nosuchtable"] }
+      });
 
-    expect(tf.name).toStrictEqual("myothertable");}
+      expect(tf.name).toStrictEqual("myothertable");
+    }
   });
 
   it("should support ilike", async () => {

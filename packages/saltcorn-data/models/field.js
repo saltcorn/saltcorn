@@ -184,12 +184,12 @@ class Field {
     const table = await Table.findOne({ id: this.table_id });
     const schema = db.getTenantSchemaPrefix();
 
-    if(!db.isSQLite)
-    await db.query(
-      `alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" drop column "${sqlsanitize(this.name)}"`
-    );
+    if (!db.isSQLite)
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" drop column "${sqlsanitize(this.name)}"`
+      );
   }
 
   static async create(fld) {
@@ -214,9 +214,11 @@ class Field {
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
-        f.required ? `not null default ${JSON.stringify(f.attributes.default)}` : ""
+        f.required
+          ? `not null default ${JSON.stringify(f.attributes.default)}`
+          : ""
       }`;
-      await db.query(q );
+      await db.query(q);
     } else {
       const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${

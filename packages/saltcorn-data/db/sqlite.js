@@ -112,7 +112,7 @@ const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
   const tq = await query(sql, values);
-  return parseInt(tq[0]['COUNT(*)']);
+  return parseInt(tq[0]["COUNT(*)"]);
 };
 
 const drop_reset_schema = async () => {
