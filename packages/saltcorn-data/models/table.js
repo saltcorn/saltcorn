@@ -288,7 +288,7 @@ class Table {
         else whereObj["a." + k] = opts.where[k];
       });
     }
-    const { where, values } = mkWhere(whereObj);
+    const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts = {
       limit: opts.limit,
       orderBy: opts.orderBy && "a." + opts.orderBy,

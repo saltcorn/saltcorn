@@ -13,7 +13,7 @@ class View {
     if (o.table && !o.table_id) {
       this.table_id = o.table.id;
     }
-    this.configuration = o.configuration;
+    this.configuration = typeof o.configuration === 'string' ? JSON.parse( o.configuration): o.configuration;
     this.is_public = o.is_public;
     this.on_root_page = o.on_root_page;
     const { getState } = require("../db/state");
