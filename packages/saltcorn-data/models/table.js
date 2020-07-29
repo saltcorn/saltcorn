@@ -95,9 +95,9 @@ class Table {
   }
 
   async toggleBool(id, field_name) {
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
     return await db.query(
-      `update "${schema}"."${sqlsanitize(this.name)}" set ${sqlsanitize(
+      `update ${schema}"${sqlsanitize(this.name)}" set ${sqlsanitize(
         field_name
       )}=NOT ${sqlsanitize(field_name)} where id=$1`,
       [id]
@@ -242,7 +242,7 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
-    const schema = sqlsanitize(db.getTenantSchema());
+    const schema = db.getTenantSchemaPrefix();
 
     fields
       .filter(f => f.type === "File")
@@ -259,7 +259,7 @@ class Table {
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${schema}"."${sqlsanitize(
+        joinq += ` left join ${schema}"${sqlsanitize(
           reftable
         )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
@@ -272,7 +272,7 @@ class Table {
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
           `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from "${schema}"."${sqlsanitize(table)}" where ${sqlsanitize(
+            "*"}) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -294,7 +294,7 @@ class Table {
       offset: opts.offset
     };
 
-    const sql = `SELECT ${fldNms.join()} FROM "${schema}"."${sqlsanitize(
+    const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     //console.log(sql);

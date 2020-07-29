@@ -179,10 +179,10 @@ class Field {
     await db.deleteWhere("_sc_fields", { id: this.id });
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
 
     await db.query(
-      `alter table "${schema}"."${sqlsanitize(
+      `alter table ${schema}"${sqlsanitize(
         table.name
       )}" drop column "${sqlsanitize(this.name)}"`
     );

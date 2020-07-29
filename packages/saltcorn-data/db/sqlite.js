@@ -57,6 +57,32 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   return tq;
 };
 
+const update = async (tbl, obj, id) => {
+  const kvs = Object.entries(obj);
+  const assigns = kvs
+    .map(([k, v], ix) => `"${sqlsanitize(k)}"=?`)
+    .join();
+  var valList = kvs.map(([k, v]) => v);
+  valList.push(id);
+  const q = `update "${sqlsanitize(
+    tbl
+  )}" set ${assigns} where id=?`;
+  await query(q, valList);
+};
+
+const deleteWhere = async (tbl, whereObj) => {
+  const { where, values } = mkWhere(whereObj, true);
+  const sql = `delete FROM "${sqlsanitize(
+    tbl
+  )}" ${where}`;
+
+  const tq = await query(sql, values);
+
+  return;
+};
+
+
+
 const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
@@ -112,5 +138,7 @@ module.exports = {
   insert,
   count,
   close,
-  drop_reset_schema
+  drop_reset_schema,
+  update,
+  deleteWhere
 };

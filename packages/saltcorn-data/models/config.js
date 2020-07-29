@@ -80,7 +80,7 @@ const setConfig = contract(
   is.fun([is.str, is.any], is.promise(is.undefined)),
   async (key, value) => {
     await db.query(
-      `insert into "${db.getTenantSchema()}"._sc_config(key, value) values($1, $2) 
+      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
       [key, { v: value }]
     );
