@@ -8,7 +8,7 @@ class File {
   constructor(o) {
     this.filename = o.filename;
     this.location = o.location;
-    this.uploaded_at = o.uploaded_at;
+    this.uploaded_at = typeof o.uploaded_at === 'string' ? new Date(o.uploaded_at):o.uploaded_at;
     this.size_kb = o.size_kb;
     this.id = o.id;
     this.user_id = o.user_id;
