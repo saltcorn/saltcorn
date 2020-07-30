@@ -20,4 +20,14 @@ const asyncMap = async (xs, asyncF) => {
 
 const numberToBool = b => (typeof b === "number" ? b > 0 : b);
 
-module.exports = { removeEmptyStrings, isEmpty, asyncMap, numberToBool };
+const stringToJSON = (v) => {
+  try {
+  return typeof v === "string"
+        ? JSON.parse(v)
+        : v;
+  } catch(e) {
+    throw new Error(`stringToJSON(${JSON.stringify(v)}): ${e.message}`)
+  }
+}
+
+module.exports = { removeEmptyStrings, isEmpty, asyncMap, numberToBool, stringToJSON };

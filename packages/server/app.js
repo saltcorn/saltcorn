@@ -6,7 +6,6 @@ const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
-const pgSession = require("connect-pg-simple")(session);
 const User = require("@saltcorn/data/models/user");
 const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
@@ -46,6 +45,20 @@ const getApp = async (opts = {}) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins);
   }
+  if(db.isSQLite){
+    var SQLiteStore = require('connect-sqlite3')(session);
+    app.use(
+      session({
+        store: new SQLiteStore,
+        secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
+        resave: false,
+        saveUninitialized: false,
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
+      })
+    );
+  } else {
+const pgSession = require("connect-pg-simple")(session);
+
   app.use(
     session({
       store: new pgSession({
@@ -58,6 +71,7 @@ const getApp = async (opts = {}) => {
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
     })
   );
+  }
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());

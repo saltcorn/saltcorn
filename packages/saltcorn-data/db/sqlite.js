@@ -56,11 +56,13 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
   return tq;
 };
+const mkVal =([k, v]) =>
+typeof v === "object" && v !== null ? JSON.stringify(v) : v
 
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
-  var valList = kvs.map(([k, v]) => v);
+  var valList = kvs.map(mkVal);
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
@@ -81,8 +83,7 @@ const insert = async (tbl, obj, noid = false) => {
   const valPosList = kvs
     .map(([k, v], ix) => (typeof v === "object" ? "json(?)" : "?"))
     .join();
-  const valList = kvs.map(([k, v]) =>
-    typeof v === "object" && v !== null ? JSON.stringify(v) : v
+  const valList = kvs.map(mkVal
   );
   const sql = `insert into "${sqlsanitize(
     tbl
