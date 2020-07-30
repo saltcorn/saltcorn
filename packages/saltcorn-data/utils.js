@@ -18,4 +18,6 @@ const asyncMap = async (xs, asyncF) => {
   return res;
 };
 
-module.exports = { removeEmptyStrings, isEmpty, asyncMap };
+const numberToBool = b => (typeof b === "number" ? b > 0 : b);
+
+module.exports = { removeEmptyStrings, isEmpty, asyncMap, numberToBool };

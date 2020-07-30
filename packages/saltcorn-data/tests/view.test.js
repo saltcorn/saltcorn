@@ -13,6 +13,8 @@ const mockReqRes = { req: { csrfToken: () => "" }, res: { redirect() {} } };
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    expect(v.is_public).toBe(true);
+    expect(v.on_root_page).toBe(true);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });

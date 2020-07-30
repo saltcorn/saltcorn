@@ -9,8 +9,12 @@ class Page {
     this.description = o.description;
     this.min_role = +o.min_role;
     this.id = o.id;
-    this.layout = typeof o.layout === 'string' ? JSON.parse( o.layout):o.layout;
-    this.fixed_states = typeof o.fixed_states === 'string' ? JSON.parse( o.fixed_states): (o.fixed_states || {})
+    this.layout =
+      typeof o.layout === "string" ? JSON.parse(o.layout) : o.layout;
+    this.fixed_states =
+      typeof o.fixed_states === "string"
+        ? JSON.parse(o.fixed_states)
+        : o.fixed_states || {};
     contract.class(this);
   }
   static async find(where, selectopts) {

@@ -82,7 +82,7 @@ const insert = async (tbl, obj, noid = false) => {
     .map(([k, v], ix) => (typeof v === "object" ? "json(?)" : "?"))
     .join();
   const valList = kvs.map(([k, v]) =>
-    typeof v === "object" && v!==null ? JSON.stringify(v) : v
+    typeof v === "object" && v !== null ? JSON.stringify(v) : v
   );
   const sql = `insert into "${sqlsanitize(
     tbl

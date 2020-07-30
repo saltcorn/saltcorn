@@ -7,12 +7,14 @@ class Crash {
     this.id = o.id;
     this.stack = o.stack;
     this.message = o.message;
-    this.occur_at = typeof o.occur_at === 'string' ? new Date(o.occur_at): o.occur_at;
+    this.occur_at =
+      typeof o.occur_at === "string" ? new Date(o.occur_at) : o.occur_at;
     this.tenant = o.tenant;
     this.user_id = o.user_id;
     this.body = o.body;
     this.url = o.url;
-    this.headers = typeof o.headers==='string'?JSON.parse(o.headers):o.headers;
+    this.headers =
+      typeof o.headers === "string" ? JSON.parse(o.headers) : o.headers;
     contract.class(this);
   }
   static async find(where) {
