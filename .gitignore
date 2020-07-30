@@ -106,3 +106,5 @@ dist
 plugin_packages/
 
 *.sqlc
+
+sessions.sqlite

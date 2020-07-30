@@ -10,6 +10,7 @@ const getConnectObject = (connSpec = {}) => {
   var connObj = { ...connSpec };
 
   connObj.user = connObj.user || process.env.PGUSER;
+  connObj.sqlite_path = connObj.sqlite_path || process.env.SQLITE_FILEPATH;
   connObj.host = connObj.host || process.env.PGHOST;
   connObj.port = connObj.port || process.env.PGPORT;
   connObj.password = connObj.password || process.env.PGPASSWORD;
@@ -22,6 +23,7 @@ const getConnectObject = (connSpec = {}) => {
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};
+    connObj.sqlite_path = connObj.sqlite_path || cfg.sqlite_path;
     connObj.user = connObj.user || cfg.user;
     connObj.password = connObj.password || cfg.password;
     connObj.host = connObj.host || cfg.host;
@@ -38,7 +40,10 @@ const getConnectObject = (connSpec = {}) => {
   connObj.file_store =
     connObj.file_store || path.join(xdgBasedir.data, "saltcorn");
 
-  if (connObj.user && connObj.password && connObj.database) {
+  if (
+    connObj.sqlite_path ||
+    (connObj.user && connObj.password && connObj.database)
+  ) {
     return connObj;
   } else {
     return false;
@@ -57,9 +62,18 @@ const getConfigFile = () => {
     return false;
   }
 };
+
+const is_sqlite = connObj => {
+  if (connObj.connectionString)
+    return connObj.connectionString.startsWith("sqlite");
+
+  return !!connObj.sqlite_path;
+};
+
 module.exports = {
   getConnectObject,
   getConfigFile,
   configFileDir,
-  configFilePath
+  configFilePath,
+  is_sqlite
 };

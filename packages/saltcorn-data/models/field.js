@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
+const { is_sqlite } = require("../db/connect");
 const readKey = v => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -52,7 +53,10 @@ class Field {
       this.input_type = "select";
     }
 
-    this.attributes = o.attributes || {};
+    this.attributes =
+      typeof o.attributes === "string"
+        ? JSON.parse(o.attributes)
+        : o.attributes || {};
     if (o.table_id) this.table_id = o.table_id;
 
     if (o.table) {
@@ -91,8 +95,8 @@ class Field {
 
   get sql_type() {
     if (this.is_fkey) {
-      const schema = db.getTenantSchema();
-      return `int references "${schema}"."${sqlsanitize(
+      const schema = db.getTenantSchemaPrefix();
+      return `int references ${schema}"${sqlsanitize(
         this.reftable_name
       )}" (id)`;
     } else {
@@ -178,26 +182,41 @@ class Field {
     await db.deleteWhere("_sc_fields", { id: this.id });
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
 
-    await db.query(
-      `alter table "${schema}"."${sqlsanitize(
-        table.name
-      )}" drop column "${sqlsanitize(this.name)}"`
-    );
+    if (!db.isSQLite)
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" drop column "${sqlsanitize(this.name)}"`
+      );
   }
 
   static async create(fld) {
     const f = new Field(fld);
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
 
     const Table = require("./table");
+    const is_sqlite = db.isSQLite;
+    //const tables = await Table.find();
+    //console.log({ tables, fld });
+
     const table = await Table.findOne({ id: f.table_id });
     if (!f.attributes.default) {
-      const q = `alter table "${schema}"."${sqlsanitize(
+      const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
-        f.required ? "not null" : ""
+        f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
+      }`;
+      await db.query(q);
+    } else if (is_sqlite) {
+      //warning: not safe but sqlite so we don't care
+      const q = `alter table ${schema}"${sqlsanitize(
+        table.name
+      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+        f.required
+          ? `not null default ${JSON.stringify(f.attributes.default)}`
+          : ""
       }`;
       await db.query(q);
     } else {
@@ -206,7 +225,7 @@ class Field {
         f.sql_bare_type
       }) RETURNS void AS $$
       BEGIN
-      EXECUTE format('alter table "${schema}"."${sqlsanitize(
+      EXECUTE format('alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
         f.required ? "not null" : ""
@@ -221,7 +240,7 @@ class Field {
 
     if (f.is_unique)
       await db.query(
-        `alter table "${schema}"."${sqlsanitize(
+        `alter table ${schema}"${sqlsanitize(
           table.name
         )}" add CONSTRAINT ${sqlsanitize(f.name)}_unique UNIQUE (${sqlsanitize(
           f.name

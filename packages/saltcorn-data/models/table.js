@@ -50,9 +50,11 @@ class Table {
     return tbls.map(t => new Table(t));
   }
   static async create(name, options = {}) {
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `create table "${schema}"."${sqlsanitize(name)}" (id serial primary key)`
+      `create table ${schema}"${sqlsanitize(name)}" (id ${
+        db.isSQLite ? "integer" : "serial"
+      } primary key)`
     );
     const tblrow = {
       name,
@@ -65,18 +67,16 @@ class Table {
     return new Table({ ...tblrow, id });
   }
   async delete() {
-    const schema = db.getTenantSchema();
-    await db.query(`drop table "${schema}"."${sqlsanitize(this.name)}"`);
-    await db.query(`delete FROM "${schema}"._sc_fields WHERE table_id = $1`, [
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
+    await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
       this.id
     ]);
 
-    await db.query(`delete FROM "${schema}"._sc_tables WHERE id = $1`, [
-      this.id
-    ]);
+    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
   }
   get sql_name() {
-    return `"${db.getTenantSchema()}"."${sqlsanitize(this.name)}"`;
+    return `${db.getTenantSchemaPrefix()}${sqlsanitize(this.name)}"`;
   }
   async deleteRows(where) {
     await db.deleteWhere(this.name, where);
@@ -97,9 +97,9 @@ class Table {
   }
 
   async toggleBool(id, field_name) {
-    const schema = db.getTenantSchema();
+    const schema = db.getTenantSchemaPrefix();
     return await db.query(
-      `update "${schema}"."${sqlsanitize(this.name)}" set ${sqlsanitize(
+      `update ${schema}"${sqlsanitize(this.name)}" set ${sqlsanitize(
         field_name
       )}=NOT ${sqlsanitize(field_name)} where id=$1`,
       [id]
@@ -244,7 +244,7 @@ class Table {
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
-    const schema = sqlsanitize(db.getTenantSchema());
+    const schema = db.getTenantSchemaPrefix();
 
     fields
       .filter(f => f.type === "File")
@@ -261,7 +261,7 @@ class Table {
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join "${schema}"."${sqlsanitize(
+        joinq += ` left join ${schema}"${sqlsanitize(
           reftable
         )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
       }
@@ -274,7 +274,7 @@ class Table {
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
           `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from "${schema}"."${sqlsanitize(table)}" where ${sqlsanitize(
+            "*"}) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -288,21 +288,20 @@ class Table {
         else whereObj["a." + k] = opts.where[k];
       });
     }
-    const { where, values } = mkWhere(whereObj);
+    const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy,
+      orderBy: opts.orderBy && "a." + opts.orderBy,
       orderDesc: opts.orderDesc,
       offset: opts.offset
     };
 
-    const sql = `SELECT ${fldNms.join()} FROM "${schema}"."${sqlsanitize(
+    const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
-    //console.log(sql);
-    const { rows } = await db.query(sql, values);
+    const res = await db.query(sql, values);
 
-    return rows;
+    return db.isSQLite ? res : res.rows;
   }
 }
 

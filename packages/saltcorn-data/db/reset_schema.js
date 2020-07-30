@@ -3,81 +3,79 @@ const { migrate } = require("../migrate");
 
 //https://stackoverflow.com/a/21247009
 const reset = async (dontDrop = false, schema = "public") => {
+  const is_sqlite = db.isSQLite;
+  const schemaQdot = is_sqlite ? "" : `"${schema}".`;
+  const serial = is_sqlite ? "integer" : "serial";
+  const json = is_sqlite ? "json" : "jsonb";
   if (!dontDrop) {
-    await db.query(`
-    DROP SCHEMA "${schema}" CASCADE;
-    CREATE SCHEMA "${schema}";
-    GRANT ALL ON SCHEMA "${schema}" TO postgres;
-    GRANT ALL ON SCHEMA "${schema}" TO "${schema}" ;
-    COMMENT ON SCHEMA "${schema}" IS 'standard public schema';
-  `);
+    await db.drop_reset_schema(schema);
   }
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_roles (
-      id serial primary key,      
+    CREATE TABLE ${schemaQdot}_sc_roles (
+      id ${serial} primary key,      
       role VARCHAR(50)
     )
   `);
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_config (
+    CREATE TABLE ${schemaQdot}_sc_config (
       key text primary key,      
       value JSONB not null
     )
   `);
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_migrations (
+    CREATE TABLE ${schemaQdot}_sc_migrations (
       migration text primary key
     )
   `);
 
-  await db.insert(`_sc_roles`, { role: "admin", id: 1 });
-  await db.insert(`_sc_roles`, { role: "staff", id: 4 });
-  await db.insert(`_sc_roles`, { role: "user", id: 8 });
-  await db.insert(`_sc_roles`, { role: "public", id: 10 });
+  await db.insert(`_sc_roles`, { role: "admin", id: 1 }, true);
+  await db.insert(`_sc_roles`, { role: "staff", id: 4 }, true);
+  await db.insert(`_sc_roles`, { role: "user", id: 8 }, true);
+  await db.insert(`_sc_roles`, { role: "public", id: 10 }, true);
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_tables
+    CREATE TABLE ${schemaQdot}_sc_tables
     (
-      id serial primary key,
+      id ${serial} primary key,
       name text NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
-      min_role_read integer NOT NULL references "${schema}"._sc_roles(id) DEFAULT 1,
-      min_role_write integer NOT NULL references "${schema}"._sc_roles(id) DEFAULT 1
+      min_role_read integer NOT NULL references ${schemaQdot}_sc_roles(id) DEFAULT 1,
+      min_role_write integer NOT NULL references ${schemaQdot}_sc_roles(id) DEFAULT 1
     )
   `);
 
   await db.query(`
-    CREATE INDEX _sc_idx_table_name on "${schema}"._sc_tables(name); 
+    CREATE INDEX _sc_idx_table_name on ${schemaQdot}_sc_tables(name); 
   `);
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_fields
+    CREATE TABLE ${schemaQdot}_sc_fields
     (
-      id serial primary key,
-      table_id integer references "${schema}"._sc_tables(id) NOT NULL,
+      id ${serial} primary key,
+      table_id integer references ${schemaQdot}_sc_tables(id) NOT NULL,
       name text NOT NULL,
       label text,
       type text,
       reftable_name text,
-      attributes jsonb,
+      attributes ${json},
       required boolean NOT NULL DEFAULT false
     )
   `);
   await db.query(`
-    CREATE INDEX _sc_idx_field_table on "${schema}"._sc_fields(table_id); 
+    CREATE INDEX _sc_idx_field_table on ${schemaQdot}_sc_fields(table_id); 
   `);
 
   await db.query(`
-    CREATE TABLE "${schema}"._sc_views
+    CREATE TABLE ${schemaQdot}_sc_views
     (
-      id serial primary key,
+      id ${serial} primary key,
       viewtemplate text NOT NULL,
       name text NOT NULL,
-      table_id integer references "${schema}"._sc_tables(id),
+      table_id integer references ${schemaQdot}_sc_tables(id),
       configuration jsonb NOT NULL,
       is_public boolean NOT NULL DEFAULT false,
       on_root_page boolean NOT NULL DEFAULT false,
@@ -85,21 +83,21 @@ const reset = async (dontDrop = false, schema = "public") => {
     )
   `);
   await db.query(`
-    CREATE INDEX _sc_idx_view_name on "${schema}"._sc_views(name); 
+    CREATE INDEX _sc_idx_view_name on ${schemaQdot}_sc_views(name); 
   `);
 
   await db.query(`
-    CREATE TABLE "${schema}".users (
-      id serial primary key,      
+    CREATE TABLE ${schemaQdot}users (
+      id ${serial} primary key,      
       email VARCHAR(128),
       password VARCHAR(60),
-      role_id integer not null references "${schema}"._sc_roles(id)
+      role_id integer not null references ${schemaQdot}_sc_roles(id)
     )
   `);
 
   await db.query(`
-  CREATE TABLE "${schema}"._sc_plugins (
-    id serial primary key,      
+  CREATE TABLE ${schemaQdot}_sc_plugins (
+    id ${serial} primary key,      
     name VARCHAR(128),
     source VARCHAR(128),
     location VARCHAR(128)
@@ -115,7 +113,7 @@ const reset = async (dontDrop = false, schema = "public") => {
     source: "npm",
     location: "@saltcorn/sbadmin2"
   });
-  if (schema === "public")
+  if (schema === "public" && !is_sqlite)
     await db.query(`
     CREATE UNLOGGED TABLE "_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",

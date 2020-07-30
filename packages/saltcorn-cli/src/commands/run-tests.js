@@ -9,31 +9,31 @@ function sleep(ms) {
 }
 
 class RunTestsCommand extends Command {
-  async do_test(cmd, args, forever, cwd, keepalive) {
-    const env = { ...process.env, PGDATABASE: "saltcorn_test" };
+  async do_test(cmd, args, env, forever, cwd, keepalive) {
     const res = spawnSync(cmd, args, {
       stdio: "inherit",
       env,
       cwd
     });
     if (forever && res.status === 0)
-      await this.do_test(cmd, args, forever, cwd);
+      await this.do_test(cmd, args, env, forever, cwd);
     else if (res.status !== 0 && !keepalive) this.exit(res.status);
     return res;
   }
-  async e2etest() {
+  async e2etest(env) {
     const server = spawn(
       "packages/saltcorn-cli/bin/saltcorn",
       ["serve", "-p", "2987"],
       {
         stdio: "inherit",
-        env: { ...process.env, PGDATABASE: "saltcorn_test" }
+        env
       }
     );
     await sleep(2000);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
+      env,
       false,
       "packages/e2e",
       true
@@ -43,27 +43,46 @@ class RunTestsCommand extends Command {
   }
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
-    await db.changeConnection({ database: "saltcorn_test" });
+    var env;
+    if (db.isSQLite) {
+      const testdbpath = "/tmp/sctestdb";
+      await db.changeConnection({ sqlite_path: testdbpath });
+      env = { ...process.env, SQLITE_FILEPATH: testdbpath };
+    } else {
+      await db.changeConnection({ database: "saltcorn_test" });
+      env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    }
     await reset();
     await fixtures();
-    const env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    await db.close();
     const covargs = flags.coverage ? ["--", "--coverage"] : [];
     if (args.package === "core") {
-      await this.do_test("npm", ["run", "test", ...covargs], flags.forever);
+      await this.do_test(
+        "npm",
+        ["run", "test", ...covargs],
+        env,
+        flags.forever
+      );
     } else if (args.package === "e2e") {
-      await this.e2etest();
+      await this.e2etest(env);
     } else if (args.package) {
       const cwd = "packages/" + args.package;
       await this.do_test(
         "npm",
         ["run", "test", ...covargs],
+        env,
         flags.forever,
         cwd
       );
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
-      await this.do_test(lerna, ["run", "test", ...covargs], flags.forever);
-      await this.e2etest();
+      await this.do_test(
+        lerna,
+        ["run", "test", ...covargs],
+        env,
+        flags.forever
+      );
+      await this.e2etest(env);
     }
     this.exit(0);
   }

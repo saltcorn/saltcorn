@@ -2,7 +2,7 @@ const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate } = require("../contracts");
-const { removeEmptyStrings } = require("../utils");
+const { removeEmptyStrings, numberToBool,stringToJSON } = require("../utils");
 
 class View {
   constructor(o) {
@@ -13,9 +13,10 @@ class View {
     if (o.table && !o.table_id) {
       this.table_id = o.table.id;
     }
-    this.configuration = o.configuration;
-    this.is_public = o.is_public;
-    this.on_root_page = o.on_root_page;
+    this.configuration = stringToJSON(o.configuration)
+      
+    this.is_public = numberToBool(o.is_public);
+    this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     contract.class(this);

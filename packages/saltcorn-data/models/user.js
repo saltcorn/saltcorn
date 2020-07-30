@@ -41,8 +41,8 @@ class User {
     return res > 0;
   }
   async delete() {
-    const schema = db.getTenantSchema();
-    await db.query(`delete FROM "${schema}".users WHERE id = $1`, [this.id]);
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
   static async get_roles() {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });

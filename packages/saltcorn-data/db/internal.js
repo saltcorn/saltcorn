@@ -1,4 +1,5 @@
 const { contract, is } = require("contractis");
+const { is_sqlite } = require("./connect");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 const sqlsanitize = contract(is.fun(is.str, is.str), nm => {
@@ -12,7 +13,7 @@ const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), nm => {
   else return s;
 });
 
-const whereFTS = (v, i) => {
+const whereFTS = (v, i, is_sqlite) => {
   const { fields, table } = v;
   var flds = fields
     .filter(f => f.type && f.type.sql_name === "text")
@@ -23,18 +24,24 @@ const whereFTS = (v, i) => {
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
-  return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
-    1})`;
+  if (is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
+  else
+    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i +
+      1})`;
 };
 
-const whereClause = ([k, v], i) =>
+const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i + 1}`);
+
+const whereClause = is_sqlite => ([k, v], i) =>
   k === "_fts"
-    ? whereFTS(v, i)
+    ? whereFTS(v, i, is_sqlite)
     : typeof (v || {}).in !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} = ANY ($${i + 1})`
+    ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} ILIKE '%' || $${i + 1} || '%'`
-    : `${sqlsanitizeAllowDots(k)}=$${i + 1}`;
+    ? `${sqlsanitizeAllowDots(k)} ${
+        is_sqlite ? "LIKE" : "ILIKE"
+      } '%' || ${placeHolder(is_sqlite, i)} || '%'`
+    : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
 
 const getVal = ([k, v]) =>
   k === "_fts"
@@ -45,11 +52,11 @@ const getVal = ([k, v]) =>
     ? v.ilike
     : v;
 
-const mkWhere = whereObj => {
+const mkWhere = (whereObj, is_sqlite) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
   const where =
     whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause).join(" and ")
+      ? "where " + wheres.map(whereClause(is_sqlite)).join(" and ")
       : "";
   const values = wheres.map(getVal);
   return { where, values };
@@ -67,7 +74,7 @@ const mkSelectOptions = selopts => {
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
       : selopts.orderBy
-      ? `order by ${sqlsanitize(selopts.orderBy)}${
+      ? `order by ${sqlsanitizeAllowDots(selopts.orderBy)}${
           selopts.orderDesc ? " DESC" : ""
         }`
       : "";
