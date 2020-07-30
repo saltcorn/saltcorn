@@ -49,7 +49,7 @@ const getApp = async (opts = {}) => {
     var SQLiteStore = require('connect-sqlite3')(session);
     app.use(
       session({
-        store: new SQLiteStore,
+        store: new SQLiteStore({db:"sessions.sqlite"}),
         secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
         resave: false,
         saveUninitialized: false,

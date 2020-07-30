@@ -107,4 +107,4 @@ plugin_packages/
 
 *.sqlc
 
-packages/server/sessions
+sessions.sqlite
