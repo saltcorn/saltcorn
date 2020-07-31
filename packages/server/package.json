@@ -19,7 +19,7 @@
     "csurf": "^1.11.0",
     "csv-stringify": "^5.5.0",
     "express": "^4.17.1",
-    "express-fileupload": "^1.1.7-alpha.3",
+    "express-fileupload": "^1.1.8",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.1",
     "helmet": "^3.23.3",
