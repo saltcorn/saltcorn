@@ -56,7 +56,14 @@ const getAllConfig = contract(
     const cfgs = await db.select("_sc_config");
     var cfg = {};
     cfgs.forEach(({ key, value }) => {
-      cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
+      try {
+        cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
+      } catch (e) {
+        console.log("error in parsing config");
+        console.log(e);
+        console.log({ key, value });
+        console.log("Tenant:", db.getTenantSchema());
+      }
     });
     return cfg;
   }
