@@ -17,7 +17,15 @@ const fieldForm = fkey_opts =>
   new Form({
     action: "/field",
     fields: [
-      new Field({ label: "Label", name: "label", input_type: "text" }),
+      new Field({
+        label: "Label",
+        name: "label",
+        input_type: "text",
+        validator(s) {
+          if (s.toLowerCase() === "id")
+            return `Column '${s}' already exists (but is hidden)`;
+        }
+      }),
       new Field({
         label: "Type",
         name: "type",

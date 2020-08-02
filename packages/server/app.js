@@ -45,11 +45,11 @@ const getApp = async (opts = {}) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins);
   }
-  if(db.isSQLite){
-    var SQLiteStore = require('connect-sqlite3')(session);
+  if (db.isSQLite) {
+    var SQLiteStore = require("connect-sqlite3")(session);
     app.use(
       session({
-        store: new SQLiteStore({db:"sessions.sqlite"}),
+        store: new SQLiteStore({ db: "sessions.sqlite" }),
         secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
         resave: false,
         saveUninitialized: false,
@@ -57,20 +57,20 @@ const getApp = async (opts = {}) => {
       })
     );
   } else {
-const pgSession = require("connect-pg-simple")(session);
+    const pgSession = require("connect-pg-simple")(session);
 
-  app.use(
-    session({
-      store: new pgSession({
-        pool: db.pool,
-        tableName: "_sc_session"
-      }),
-      secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
-    })
-  );
+    app.use(
+      session({
+        store: new pgSession({
+          pool: db.pool,
+          tableName: "_sc_session"
+        }),
+        secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
+        resave: false,
+        saveUninitialized: false,
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
+      })
+    );
   }
   app.use(passport.initialize());
   app.use(passport.session());
