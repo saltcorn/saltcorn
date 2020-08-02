@@ -56,6 +56,10 @@ const getAllConfig = contract(
     const cfgs = await db.select("_sc_config");
     var cfg = {};
     cfgs.forEach(({ key, value }) => {
+      if (key === "testMigration")
+        //legacy invalid cfg
+        return;
+
       try {
         cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
       } catch (e) {
