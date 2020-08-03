@@ -120,33 +120,33 @@ class Table {
 
   async create_history_triggers() {
     const schemaPrefix = db.getTenantSchemaPrefix();
-
     const schema = db.getTenantSchema();
+    const fields = await this.getFields();
     await db.query(`
-          create or replace function next_${schema}_${sqlsanitize(
+      create or replace function next_${schema}_${sqlsanitize(
       this.name
     )}_version(rid int) 
-          returns int as $body$
-          select _version+1 from ${schemaPrefix}"${sqlsanitize(
+      returns int as $body$
+      select _version+1 from ${schemaPrefix}"${sqlsanitize(
       this.name
     )}__history"
-          where id=rid;
-          $body$ LANGUAGE sql;
-          `);
+      where id=rid;
+      $body$ LANGUAGE sql;`);
     await db.query(`
-          create function ${schema}_${sqlsanitize(this.name)}_insert() 
-          returns trigger as $body$
-          begin
-            insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
-            select 1::integer as _version, new.*;
-            return null;
-          end;
-          $body$ LANGUAGE plpgsql;
-          `);
+      create or replace function ${schema}_${sqlsanitize(this.name)}_insert() 
+      returns trigger as $body$
+      begin
+        insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+        (id, _version${fields.map(f=>`, ${f.name}`).join('')}) 
+        values (new.id, 1${fields.map(f=>`, new.${f.name}`).join('')});          
+        return null;
+      end;
+      $body$ LANGUAGE plpgsql;`);
     await db.query(`
-          create trigger ${schema}_${sqlsanitize(this.name)}_insert_trigger 
-          after insert on ${schemaPrefix}"${sqlsanitize(this.name)}"
-          for each row execute function ${schema}_${sqlsanitize(
+      drop trigger if exists ${schema}_${sqlsanitize(this.name)}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";
+      create trigger ${schema}_${sqlsanitize(this.name)}_insert_trigger 
+      after insert on ${schemaPrefix}"${sqlsanitize(this.name)}"
+      for each row execute function ${schema}_${sqlsanitize(
       this.name
     )}_insert();`);
   }
