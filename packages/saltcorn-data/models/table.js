@@ -120,19 +120,33 @@ class Table {
 
   static async update(id, new_table) {
     //TODO RENAME TABLE
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    const schema = db.getTenantSchema();
     const existing = await db.selectOne("_sc_tables", {id})
     await db.update("_sc_tables", new_table, id);
     if(new_table.versioned && !existing.versioned) {
       const fields=await this.getFields()
       const flds=fields.map(f=>`,"${sqlsanitize(f.name)}" ${f.sql_type}`)
       await db.query(
-        `create table ${schema}"${sqlsanitize(name)}__history" (
+        `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
           id integer not null,
           _version integer not null,
           PRIMARY KEY(id, _version)
           ${flds.join('')}
-          );
-          `
+          );`)
+          await db.query(`
+          create function ${schema}_${sqlsanitize(new_table.name)}_insert() 
+          returns trigger as $body$
+          begin
+            insert into ${schemaPrefix}"${sqlsanitize(new_table.name)}__history"(id, _version) 
+            values (1,1);
+          end;
+          $body$ LANGUAGE plpgsql;
+          `);
+          await db.query(`
+          create trigger ${schema}_${sqlsanitize(new_table.name)}_insert_trigger 
+          after insert on ${schemaPrefix}"${sqlsanitize(new_table.name)}"
+          for each row execute function ${schema}_${sqlsanitize(new_table.name)}_insert();`
       );
     } else if(!new_table.versioned && existing.versioned) {
 

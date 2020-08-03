@@ -4,7 +4,7 @@
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest"
+    "test": "jest -t 'Table get data'"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
