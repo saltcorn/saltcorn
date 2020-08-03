@@ -204,6 +204,8 @@ describe("Table get data", () => {
     expect(history2[1].name).toBe("Goon");
     const goon = await table.getRow({ id: bunnyFooFoo.id });
     expect(goon.name).toBe("Goon");
+    table.versioned = false;
+    await Table.update(table.id, table);
   });
 });
 

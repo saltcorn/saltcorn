@@ -176,11 +176,17 @@ class Table {
       );
       await new_table.create_history_triggers();
     } else if (!new_table.versioned && existing.versioned) {
+      const schema = db.getTenantSchema();
+      await db.query(`
+      drop trigger if exists ${schema}_${sqlsanitize(
+        this.name
+      )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";`);
+      await db.query(`
+      drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
     }
   }
 
-  async get_history(id) {
-    const schemaPrefix = db.getTenantSchemaPrefix();
+  async get_history() {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
       {},
