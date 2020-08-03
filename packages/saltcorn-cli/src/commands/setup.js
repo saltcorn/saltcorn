@@ -45,23 +45,22 @@ const askDevServer = async () => {
   return responses.mode;
 };
 
-const unloadModule=(mod)=> {
+const unloadModule = mod => {
   var name = require.resolve(mod);
   delete require.cache[name];
-}
-
+};
 
 const setupDevMode = async () => {
   const dbPath = path.join(defaultDataPath, "scdb.sqlite");
   fs.promises.mkdir(defaultDataPath, { recursive: true });
 
   await write_connection_config({ sqlite_path: dbPath });
-  
+
   if (!fs.existsSync(dbPath)) {
-    unloadModule('@saltcorn/data/db');
-  unloadModule('@saltcorn/data/db/reset_schema')
-  const reset = require("@saltcorn/data/db/reset_schema");
-  await reset(true);
+    unloadModule("@saltcorn/data/db");
+    unloadModule("@saltcorn/data/db/reset_schema");
+    const reset = require("@saltcorn/data/db/reset_schema");
+    await reset(true);
   }
 
   console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
@@ -211,7 +210,6 @@ const setup_connection_config = async () => {
 };
 
 const write_connection_config = async connobj => {
-  
   fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };

@@ -32,7 +32,7 @@ function query(sql, params) {
         console.log(err);
         reject(err);
       } else {
-        resolve({rows});
+        resolve({ rows });
       }
     });
   });
@@ -91,7 +91,7 @@ const insert = async (tbl, obj, noid = false) => {
   await query(sql, valList);
   if (noid) return;
   const ids = await query("SELECT last_insert_rowid() as id");
-  return ids[0].id;
+  return ids.rows[0].id;
 };
 
 const selectOne = async (tbl, where) => {
