@@ -37,6 +37,7 @@ class Table {
     this.expose_api_write = o.expose_api_write;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
+    this.versioned = !!o.versioned;
     contract.class(this);
   }
   static async findOne(where) {
@@ -58,6 +59,7 @@ class Table {
     );
     const tblrow = {
       name,
+      versioned: options.versioned || false,
       expose_api_read: options.expose_api_read || false,
       expose_api_write: options.expose_api_write || false,
       min_role_read: options.min_role_read || 1,
@@ -118,7 +120,24 @@ class Table {
 
   static async update(id, new_table) {
     //TODO RENAME TABLE
+    const existing = await db.selectOne("_sc_tables", {id})
     await db.update("_sc_tables", new_table, id);
+    if(new_table.versioned && !existing.versioned) {
+      const fields=await this.getFields()
+      const flds=fields.map(f=>`,"${sqlsanitize(f.name)}" ${f.sql_type}`)
+      await db.query(
+        `create table ${schema}"${sqlsanitize(name)}__history" (
+          id integer not null,
+          _version integer not null,
+          PRIMARY KEY(id, _version)
+          ${flds.join('')}
+          );
+          `
+      );
+    } else if(!new_table.versioned && existing.versioned) {
+
+    }
+  
   }
 
   static async create_from_csv(name, filePath) {
