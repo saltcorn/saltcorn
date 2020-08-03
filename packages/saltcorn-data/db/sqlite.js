@@ -32,7 +32,7 @@ function query(sql, params) {
         console.log(err);
         reject(err);
       } else {
-        resolve(rows);
+        resolve({rows});
       }
     });
   });
@@ -54,7 +54,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   )}`;
   const tq = await query(sql, values);
 
-  return tq;
+  return tq.rows;
 };
 const mkVal = ([k, v]) =>
   typeof v === "object" && v !== null ? JSON.stringify(v) : v;
@@ -112,7 +112,7 @@ const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
   const tq = await query(sql, values);
-  return parseInt(tq[0]["COUNT(*)"]);
+  return parseInt(tq.rows[0]["COUNT(*)"]);
 };
 
 const drop_reset_schema = async () => {

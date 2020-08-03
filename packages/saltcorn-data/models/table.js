@@ -76,7 +76,7 @@ class Table {
     await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
   }
   get sql_name() {
-    return `${db.getTenantSchemaPrefix()}${sqlsanitize(this.name)}"`;
+    return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
   async deleteRows(where) {
     await db.deleteWhere(this.name, where);
@@ -301,7 +301,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return db.isSQLite ? res : res.rows;
+    return res.rows;
   }
 }
 
