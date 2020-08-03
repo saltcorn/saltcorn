@@ -164,7 +164,7 @@ class Table {
     await db.update("_sc_tables", new_table, id);
     if (new_table.versioned && !existing.versioned) {
       const fields = await new_table.getFields();
-      const flds = fields.map(f => `,"${sqlsanitize(f.name)}" ${f.sql_type}`);
+      const flds = fields.map(f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
 
       await db.query(
         `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (

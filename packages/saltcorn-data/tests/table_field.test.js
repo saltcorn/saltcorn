@@ -204,6 +204,16 @@ describe("Table get data", () => {
     expect(history2[1].name).toBe("Goon");
     const goon = await table.getRow({ id: bunnyFooFoo.id });
     expect(goon.name).toBe("Goon");
+    const fc = await Field.create({
+      table: table,
+      name: "Height19",
+      label: "height19",
+      type: "Integer",
+      required: true,
+      attributes: { default: 6 }
+    });
+    await fc.delete()
+
     table.versioned = false;
     await Table.update(table.id, table);
   });

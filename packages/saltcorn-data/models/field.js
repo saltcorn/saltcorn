@@ -184,12 +184,20 @@ class Field {
     const table = await Table.findOne({ id: this.table_id });
     const schema = db.getTenantSchemaPrefix();
 
-    if (!db.isSQLite)
+    if (!db.isSQLite) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
         )}" drop column "${sqlsanitize(this.name)}"`
       );
+      if(table.versioned) {
+        await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}__history" drop column "${sqlsanitize(this.name)}"`);
+        await table.create_history_triggers()
+      }
+    }
   }
 
   static async create(fld) {
@@ -236,6 +244,13 @@ class Field {
       await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
         f.attributes.default
       ]);
+    }
+    if(table.versioned) {
+      await db.query(`alter table ${schema}"${sqlsanitize(
+        table.name
+      )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`)
+      await table.create_history_triggers()
+
     }
 
     if (f.is_unique)
