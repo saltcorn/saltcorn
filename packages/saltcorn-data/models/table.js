@@ -180,9 +180,9 @@ class Table {
       await db.query(`
       drop trigger if exists ${schema}_${sqlsanitize(
         this.name
-      )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";`);
+      )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(new_table.name)}";`);
       await db.query(`
-      drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
+      drop table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history";`);
     }
   }
 

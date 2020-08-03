@@ -182,7 +182,6 @@ describe("Table get data", () => {
     expect(rows.length).toBe(2);
   });
   it("should enable versioning", async () => {
-    db.set_sql_logging();
     const table = await Table.findOne({ name: "patients" });
     table.versioned = true;
     await Table.update(table.id, table);
