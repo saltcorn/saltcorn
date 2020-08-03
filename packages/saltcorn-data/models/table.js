@@ -122,30 +122,33 @@ class Table {
     const schemaPrefix = db.getTenantSchemaPrefix();
     const schema = db.getTenantSchema();
     const fields = await this.getFields();
+    const next_fun = `next_${schema}_${sqlsanitize(this.name)}_version`;
     await db.query(`
-      create or replace function next_${schema}_${sqlsanitize(
-      this.name
-    )}_version(rid int) 
+      create or replace function ${next_fun}(rid int) 
       returns int as $body$
-      select _version+1 from ${schemaPrefix}"${sqlsanitize(
+      select coalesce((select max(_version) from ${schemaPrefix}"${sqlsanitize(
       this.name
     )}__history"
-      where id=rid;
+      where id=rid),0)+1;
       $body$ LANGUAGE sql;`);
     await db.query(`
       create or replace function ${schema}_${sqlsanitize(this.name)}_insert() 
       returns trigger as $body$
       begin
         insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-        (id, _version${fields.map(f=>`, ${f.name}`).join('')}) 
-        values (new.id, 1${fields.map(f=>`, new.${f.name}`).join('')});          
+        (id, _version${fields.map(f => `, ${f.name}`).join("")}) 
+        values (new.id, ${next_fun}(new.id)${fields
+      .map(f => `, new.${f.name}`)
+      .join("")});          
         return null;
       end;
       $body$ LANGUAGE plpgsql;`);
     await db.query(`
-      drop trigger if exists ${schema}_${sqlsanitize(this.name)}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";
+      drop trigger if exists ${schema}_${sqlsanitize(
+      this.name
+    )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";
       create trigger ${schema}_${sqlsanitize(this.name)}_insert_trigger 
-      after insert on ${schemaPrefix}"${sqlsanitize(this.name)}"
+      after insert or update on ${schemaPrefix}"${sqlsanitize(this.name)}"
       for each row execute function ${schema}_${sqlsanitize(
       this.name
     )}_insert();`);
@@ -178,9 +181,11 @@ class Table {
 
   async get_history(id) {
     const schemaPrefix = db.getTenantSchemaPrefix();
-    const res = await db.select(`${sqlsanitize(this.name)}__history`, {});
-    console.log({ res });
-    return res;
+    return await db.select(
+      `${sqlsanitize(this.name)}__history`,
+      {},
+      { orderBy: "_version" }
+    );
   }
 
   static async create_from_csv(name, filePath) {

@@ -186,11 +186,24 @@ describe("Table get data", () => {
     const table = await Table.findOne({ name: "patients" });
     table.versioned = true;
     await Table.update(table.id, table);
-    const bunnyId = await table.insertRow({ name: "Bunny foo-foo" });
-    console.log({ bunnyId });
+    await table.insertRow({ name: "Bunny foo-foo" });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
     const history1 = await table.get_history(bunnyFooFoo.id);
     expect(history1.length).toBe(1);
+    expect(history1[0].id).toBe(bunnyFooFoo.id);
+    expect(history1[0]._version).toBe(1);
+    expect(history1[0].name).toBe("Bunny foo-foo");
+    await table.updateRow({ name: "Goon" }, bunnyFooFoo.id);
+    const history2 = await table.get_history(bunnyFooFoo.id);
+    expect(history2.length).toBe(2);
+    expect(history2[0].id).toBe(bunnyFooFoo.id);
+    expect(history2[0]._version).toBe(1);
+    expect(history2[0].name).toBe("Bunny foo-foo");
+    expect(history2[1].id).toBe(bunnyFooFoo.id);
+    expect(history2[1]._version).toBe(2);
+    expect(history2[1].name).toBe("Goon");
+    const goon = await table.getRow({ id: bunnyFooFoo.id });
+    expect(goon.name).toBe("Goon");
   });
 });
 
