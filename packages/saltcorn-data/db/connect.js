@@ -1,7 +1,11 @@
-const xdgBasedir = require("xdg-basedir");
 const path = require("path");
-const os = require("os");
 const fs = require("fs");
+const envPaths = require("env-paths");
+
+const pathsNoApp = envPaths("", { suffix: "" });
+const pathsWithApp = envPaths("saltcorn", { suffix: "" });
+
+const defaultDataPath = pathsWithApp.data;
 
 const getConnectObject = (connSpec = {}) => {
   if (process.env.DATABASE_URL) {
@@ -37,8 +41,7 @@ const getConnectObject = (connSpec = {}) => {
         : connObj.multi_tenant;
   }
 
-  connObj.file_store =
-    connObj.file_store || path.join(xdgBasedir.data, "saltcorn");
+  connObj.file_store = connObj.file_store || pathsWithApp.data;
 
   if (
     connObj.sqlite_path ||
@@ -50,7 +53,7 @@ const getConnectObject = (connSpec = {}) => {
   }
 };
 
-const configFileDir = xdgBasedir.config || os.homeDir();
+const configFileDir = pathsNoApp.config;
 
 const configFilePath = path.join(configFileDir, ".saltcorn");
 
@@ -75,5 +78,6 @@ module.exports = {
   getConfigFile,
   configFileDir,
   configFilePath,
-  is_sqlite
+  is_sqlite,
+  defaultDataPath
 };

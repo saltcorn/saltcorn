@@ -17,14 +17,14 @@
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
+    "env-paths": "^2.2.0",
     "moment": "^2.27.0",
     "node-fetch": "^2.6.0",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
     "sqlite3": "^5.0.0",
     "tmp-promise": "^3.0.2",
-    "uuid": "^8.2.0",
-    "xdg-basedir": "^4.0.0"
+    "uuid": "^8.2.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

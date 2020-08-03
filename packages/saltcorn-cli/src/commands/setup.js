@@ -2,10 +2,13 @@ const { Command, flags } = require("@oclif/command");
 const {
   getConnectObject,
   configFilePath,
-  configFileDir
+  configFileDir,
+  defaultDataPath
 } = require("@saltcorn/data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
+const path = require("path");
+const fs = require("fs");
 const inquirer = require("inquirer");
 var tcpPortUsed = require("tcp-port-used");
 const { spawnSync } = require("child_process");
@@ -15,6 +18,52 @@ const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;
   else return gen_password();
+};
+
+const askDevServer = async () => {
+  if (process.platform !== "linux") {
+    console.log("Non-linux platform, continuing development-mode install");
+    return "dev";
+  }
+  const responses = await inquirer.prompt([
+    {
+      name: "mode",
+      message: "How will you run Saltcorn?",
+      type: "list",
+      choices: [
+        {
+          name: "Development mode. I will start Saltcorn when needed",
+          value: "dev"
+        },
+        {
+          name: "Server mode. Always run in background, with Postgres",
+          value: "server"
+        }
+      ]
+    }
+  ]);
+  return responses.mode;
+};
+
+const unloadModule = mod => {
+  var name = require.resolve(mod);
+  delete require.cache[name];
+};
+
+const setupDevMode = async () => {
+  const dbPath = path.join(defaultDataPath, "scdb.sqlite");
+  fs.promises.mkdir(defaultDataPath, { recursive: true });
+
+  await write_connection_config({ sqlite_path: dbPath });
+
+  if (!fs.existsSync(dbPath)) {
+    unloadModule("@saltcorn/data/db");
+    unloadModule("@saltcorn/data/db/reset_schema");
+    const reset = require("@saltcorn/data/db/reset_schema");
+    await reset(true);
+  }
+
+  console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
 };
 
 const check_db = async () => {
@@ -161,10 +210,7 @@ const setup_connection_config = async () => {
 };
 
 const write_connection_config = async connobj => {
-  const fs = require("fs");
-  spawnSync("mkdir", ["-p", configFileDir], {
-    stdio: "inherit"
-  });
+  fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
 
@@ -226,14 +272,18 @@ const setup_users = async () => {
 
 class SetupCommand extends Command {
   async run() {
-    // check if i already know how to connect
-    await setup_connection();
-    // check if schema is live
-    await setup_schema();
-    //check if there are any users
-    await setup_users();
-
-    await require("@saltcorn/data/db").close();
+    const mode = await askDevServer();
+    if (mode == "server") {
+      // check if i already know how to connect
+      await setup_connection();
+      // check if schema is live
+      await setup_schema();
+      //check if there are any users
+      await setup_users();
+      await require("@saltcorn/data/db").close();
+    } else {
+      await setupDevMode();
+    }
   }
 }
 

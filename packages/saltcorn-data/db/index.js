@@ -16,5 +16,6 @@ module.exports = {
   connectObj,
   isSQLite,
   ...dbmodule,
+  mkWhere: q => mkWhere(q, isSQLite),
   getTenantSchemaPrefix
 };
