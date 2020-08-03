@@ -184,7 +184,7 @@ describe("Table get data", () => {
   it("should enable versioning", async () => {
     const table = await Table.findOne({ name: "patients" });
     table.versioned = true;
-    await Table.update(table.id, table);
+    await table.update(table);
     await table.insertRow({ name: "Bunny foo-foo" });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
     const history1 = await table.get_history(bunnyFooFoo.id);
@@ -214,7 +214,7 @@ describe("Table get data", () => {
     await fc.delete()
 
     table.versioned = false;
-    await Table.update(table.id, table);
+    await table.update(table);
   });
 });
 

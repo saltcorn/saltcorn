@@ -69,6 +69,11 @@ const tableForm = table => {
         name: "min_role_write",
         input_type: "select",
         options: roleOptions
+      },
+      {
+        label: "Version history",
+        name: "versioned",
+        type: "Bool"
       }
     ]
   });
@@ -370,7 +375,8 @@ router.post(
       }
     } else {
       const { id, _csrf, ...rest } = v;
-      await Table.update(parseInt(id), rest);
+      const table=await Table.findOne({id: parseInt(id)})
+      await table.update(rest);
       res.redirect(`/table/${id}`);
     }
   })

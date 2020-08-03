@@ -154,14 +154,15 @@ class Table {
     )}_insert();`);
   }
 
-  static async update(id, new_table_rec) {
+  async update(new_table_rec) {
     //TODO RENAME TABLE
 
-    const new_table = new Table(new_table_rec);
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const existing = await db.selectOne("_sc_tables", { id });
-    await db.update("_sc_tables", new_table, id);
+    const existing = await Table.findOne({ id:this.id });
+    await db.update("_sc_tables", new_table_rec, this. id);
+    const new_table = await Table.findOne({ id: this.id });
+
     if (new_table.versioned && !existing.versioned) {
       const fields = await new_table.getFields();
       const flds = fields.map(f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
@@ -430,8 +431,8 @@ Table.contract = {
       is.promise(is.array(is.class("Table")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
-    create: is.fun(is.str, is.promise(is.class("Table"))),
-    update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
+    create: is.fun(is.str, is.promise(is.class("Table")))
+    //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
 };
 module.exports = Table;
