@@ -118,41 +118,69 @@ class Table {
     return this.fields;
   }
 
-  static async update(id, new_table) {
-    //TODO RENAME TABLE
+  async create_history_triggers() {
     const schemaPrefix = db.getTenantSchemaPrefix();
+
     const schema = db.getTenantSchema();
-    const existing = await db.selectOne("_sc_tables", {id})
-    await db.update("_sc_tables", new_table, id);
-    if(new_table.versioned && !existing.versioned) {
-      const fields=await this.getFields()
-      const flds=fields.map(f=>`,"${sqlsanitize(f.name)}" ${f.sql_type}`)
-      await db.query(
-        `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
-          id integer not null,
-          _version integer not null,
-          PRIMARY KEY(id, _version)
-          ${flds.join('')}
-          );`)
-          await db.query(`
-          create function ${schema}_${sqlsanitize(new_table.name)}_insert() 
+    await db.query(`
+          create or replace function next_${schema}_${sqlsanitize(
+      this.name
+    )}_version(rid int) 
+          returns int as $body$
+          select _version+1 from ${schemaPrefix}"${sqlsanitize(
+      this.name
+    )}__history"
+          where id=rid;
+          $body$ LANGUAGE sql;
+          `);
+    await db.query(`
+          create function ${schema}_${sqlsanitize(this.name)}_insert() 
           returns trigger as $body$
           begin
-            insert into ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" 
+            insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
             select 1::integer as _version, new.*;
             return null;
           end;
           $body$ LANGUAGE plpgsql;
           `);
-          await db.query(`
-          create trigger ${schema}_${sqlsanitize(new_table.name)}_insert_trigger 
-          after insert on ${schemaPrefix}"${sqlsanitize(new_table.name)}"
-          for each row execute function ${schema}_${sqlsanitize(new_table.name)}_insert();`
-      );
-    } else if(!new_table.versioned && existing.versioned) {
+    await db.query(`
+          create trigger ${schema}_${sqlsanitize(this.name)}_insert_trigger 
+          after insert on ${schemaPrefix}"${sqlsanitize(this.name)}"
+          for each row execute function ${schema}_${sqlsanitize(
+      this.name
+    )}_insert();`);
+  }
 
+  static async update(id, new_table_rec) {
+    //TODO RENAME TABLE
+
+    const new_table = new Table(new_table_rec);
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    const existing = await db.selectOne("_sc_tables", { id });
+    await db.update("_sc_tables", new_table, id);
+    if (new_table.versioned && !existing.versioned) {
+      const fields = await new_table.getFields();
+      const flds = fields.map(f => `,"${sqlsanitize(f.name)}" ${f.sql_type}`);
+
+      await db.query(
+        `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
+          id integer not null,
+          _version integer,
+          PRIMARY KEY(id, _version)
+          ${flds.join("")}
+          );`
+      );
+      await new_table.create_history_triggers();
+    } else if (!new_table.versioned && existing.versioned) {
     }
-  
+  }
+
+  async get_history(id) {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    const res = await db.select(`${sqlsanitize(this.name)}__history`, {});
+    console.log({ res });
+    return res;
   }
 
   static async create_from_csv(name, filePath) {

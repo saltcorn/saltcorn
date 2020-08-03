@@ -182,12 +182,16 @@ describe("Table get data", () => {
     expect(rows.length).toBe(2);
   });
   it("should enable versioning", async () => {
-    db.set_sql_logging()
+    db.set_sql_logging();
     const table = await Table.findOne({ name: "patients" });
-    table.versioned=true
-    await Table.update(table.id, table)
-    await table.insertRow({name: "Bunny foo-foo"})
-  })
+    table.versioned = true;
+    await Table.update(table.id, table);
+    const bunnyId = await table.insertRow({ name: "Bunny foo-foo" });
+    console.log({ bunnyId });
+    const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
+    const history1 = await table.get_history(bunnyFooFoo.id);
+    expect(history1.length).toBe(1);
+  });
 });
 
 describe("Field", () => {
