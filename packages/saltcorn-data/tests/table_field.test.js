@@ -186,6 +186,7 @@ describe("Table get data", () => {
     const table = await Table.findOne({ name: "patients" });
     table.versioned=true
     await Table.update(table.id, table)
+    await table.insertRow({name: "Bunny foo-foo"})
   })
 });
 

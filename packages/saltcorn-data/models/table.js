@@ -138,8 +138,9 @@ class Table {
           create function ${schema}_${sqlsanitize(new_table.name)}_insert() 
           returns trigger as $body$
           begin
-            insert into ${schemaPrefix}"${sqlsanitize(new_table.name)}__history"(id, _version) 
-            values (1,1);
+            insert into ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" 
+            select 1::integer as _version, new.*;
+            return null;
           end;
           $body$ LANGUAGE plpgsql;
           `);
