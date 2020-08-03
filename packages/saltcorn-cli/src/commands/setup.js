@@ -19,10 +19,10 @@ const gen_password = () => {
   else return gen_password();
 };
 
-const askDevServer =  async () => {
-  if(process.platform!=='linux') {
-    console.log('Non-linux platform, continuing development-mode install')
-    return 'dev'
+const askDevServer = async () => {
+  if (process.platform !== "linux") {
+    console.log("Non-linux platform, continuing development-mode install");
+    return "dev";
   }
   const responses = await inquirer.prompt([
     {
@@ -30,19 +30,28 @@ const askDevServer =  async () => {
       message: "How will you run Saltcorn?",
       type: "list",
       choices: [
-        { name: "Development mode. I will start Saltcorn when needed", value: "dev" },
-        { name: "Server mode. Always run in background, with Postgres", value: "server" }
+        {
+          name: "Development mode. I will start Saltcorn when needed",
+          value: "dev"
+        },
+        {
+          name: "Server mode. Always run in background, with Postgres",
+          value: "server"
+        }
       ]
     }
   ]);
-  return responses.mode
-}
+  return responses.mode;
+};
 
 const setupDevMode = async () => {
-  const dbPath = path.join(defaultDataPath, "scdb.sqlite")
-  await write_connection_config({sqlite_path:dbPath})
-  console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n")
-}
+  const dbPath = path.join(defaultDataPath, "scdb.sqlite");
+  await write_connection_config({ sqlite_path: dbPath });
+  const reset = require("@saltcorn/data/db/reset_schema");
+  await reset(true);
+
+  console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
+};
 
 const check_db = async () => {
   const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
@@ -189,7 +198,7 @@ const setup_connection_config = async () => {
 
 const write_connection_config = async connobj => {
   const fs = require("fs");
-  fs.promises.mkdir(configFileDir, {recursive: true})
+  fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
 
@@ -251,8 +260,8 @@ const setup_users = async () => {
 
 class SetupCommand extends Command {
   async run() {
-    const mode = await askDevServer()
-    if(mode=='server'){
+    const mode = await askDevServer();
+    if (mode == "server") {
       // check if i already know how to connect
       await setup_connection();
       // check if schema is live
@@ -261,10 +270,8 @@ class SetupCommand extends Command {
       await setup_users();
       await require("@saltcorn/data/db").close();
     } else {
-      await setupDevMode()
+      await setupDevMode();
     }
-
-
   }
 }
 

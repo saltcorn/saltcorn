@@ -5,7 +5,7 @@ const envPaths = require("env-paths");
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
-const defaultDataPath=pathsWithApp.data;
+const defaultDataPath = pathsWithApp.data;
 
 const getConnectObject = (connSpec = {}) => {
   if (process.env.DATABASE_URL) {
