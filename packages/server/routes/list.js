@@ -33,7 +33,7 @@ router.get(
     });
     tfields.push({
       label: "By user ID",
-      key: r =>r._userid
+      key: r => r._userid
     });
     tfields.push({
       label: "Restore",

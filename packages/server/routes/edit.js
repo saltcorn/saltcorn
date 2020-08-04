@@ -65,7 +65,11 @@ router.post(
         await table.insertRow(form.values, req.user ? req.user.id : undefined);
       } else {
         const id = v.id;
-        await table.updateRow(form.values, parseInt(id), req.user ? req.user.id : undefined);
+        await table.updateRow(
+          form.values,
+          parseInt(id),
+          req.user ? req.user.id : undefined
+        );
       }
       res.redirect(`/list/${table.name}`);
     }

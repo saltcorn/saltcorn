@@ -81,9 +81,11 @@ const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
-    .map(([k, v], ix) => (typeof v === "object" ? "json(?)" : "?"))
+    .map(([k, v], ix) =>
+      v && v.sql ? v.sql : typeof v === "object" ? "json(?)" : "?"
+    )
     .join();
-  const valList = kvs.map(mkVal);
+  const valList = kvs.filter(([k, v]) => !(v && v.sql)).map(mkVal);
   const sql = `insert into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;

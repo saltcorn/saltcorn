@@ -71,15 +71,11 @@ const tableForm = table => {
         input_type: "select",
         options: roleOptions
       },
-      ...(db.isSQLite
-        ? []
-        : [
-            {
-              label: "Version history",
-              name: "versioned",
-              type: "Bool"
-            }
-          ])
+      {
+        label: "Version history",
+        name: "versioned",
+        type: "Bool"
+      }
     ]
   });
   if (table) {

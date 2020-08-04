@@ -158,9 +158,9 @@ class Table {
           id integer not null,
           _version integer,
           _time timestamp,
-          _userid integer,
-          PRIMARY KEY(id, _version)
+          _userid integer
           ${flds.join("")}
+          ,PRIMARY KEY(id, _version)
           );`
       );
     } else if (!new_table.versioned && existing.versioned) {
