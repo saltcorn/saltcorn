@@ -211,7 +211,7 @@ describe("Table get data", () => {
       required: true,
       attributes: { default: 6 }
     });
-    await fc.delete()
+    await fc.delete();
 
     table.versioned = false;
     await table.update(table);

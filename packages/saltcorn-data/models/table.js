@@ -159,13 +159,15 @@ class Table {
 
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const existing = await Table.findOne({ id:this.id });
-    await db.update("_sc_tables", new_table_rec, this. id);
+    const existing = await Table.findOne({ id: this.id });
+    await db.update("_sc_tables", new_table_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
 
     if (new_table.versioned && !existing.versioned) {
       const fields = await new_table.getFields();
-      const flds = fields.map(f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
+      const flds = fields.map(
+        f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+      );
 
       await db.query(
         `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (

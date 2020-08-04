@@ -71,11 +71,15 @@ const tableForm = table => {
         input_type: "select",
         options: roleOptions
       },
-      ...(db.isSQLite ? [] : [{
-        label: "Version history",
-        name: "versioned",
-        type: "Bool"
-      }])
+      ...(db.isSQLite
+        ? []
+        : [
+            {
+              label: "Version history",
+              name: "versioned",
+              type: "Bool"
+            }
+          ])
     ]
   });
   if (table) {
@@ -376,9 +380,8 @@ router.post(
       }
     } else {
       const { id, _csrf, ...rest } = v;
-      const table=await Table.findOne({id: parseInt(id)})
-      if(!rest.versioned) 
-        rest.versioned=false;
+      const table = await Table.findOne({ id: parseInt(id) });
+      if (!rest.versioned) rest.versioned = false;
       await table.update(rest);
       res.redirect(`/table/${id}`);
     }

@@ -190,12 +190,13 @@ class Field {
           table.name
         )}" drop column "${sqlsanitize(this.name)}"`
       );
-      if(table.versioned) {
+      if (table.versioned) {
         await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          table.name
-        )}__history" drop column "${sqlsanitize(this.name)}"`);
-        await table.create_history_triggers()
+          `alter table ${schema}"${sqlsanitize(
+            table.name
+          )}__history" drop column "${sqlsanitize(this.name)}"`
+        );
+        await table.create_history_triggers();
       }
     }
   }
@@ -245,12 +246,13 @@ class Field {
         f.attributes.default
       ]);
     }
-    if(table.versioned) {
-      await db.query(`alter table ${schema}"${sqlsanitize(
-        table.name
-      )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`)
-      await table.create_history_triggers()
-
+    if (table.versioned) {
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+      );
+      await table.create_history_triggers();
     }
 
     if (f.is_unique)
