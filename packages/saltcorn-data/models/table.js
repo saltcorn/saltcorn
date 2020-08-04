@@ -95,6 +95,10 @@ class Table {
     return await db.count(this.name, where);
   }
   async updateRow(v, id) {
+    if(this.versioned)
+      await db.insert(this.name+'__history', {...v, id, 
+        _version: {sql: `coalesce((select max(_version) from "${this.name+'__history'}" where id=${+id}), 0)+1`},
+        _time: new Date()});
     return await db.update(this.name, v, id);
   }
 
@@ -109,49 +113,16 @@ class Table {
   }
 
   async insertRow(v) {
-    return await db.insert(this.name, v);
+    const id = await db.insert(this.name, v);
+    if(this.versioned)
+      await db.insert(this.name+'__history', {...v, id, _version: 1, _time: new Date()});
+    return id
   }
 
   async getFields() {
     if (!this.fields)
       this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
     return this.fields;
-  }
-
-  async create_history_triggers() {
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    const schema = db.getTenantSchema();
-    const fields = await this.getFields();
-    const next_fun = `next_${schema}_${sqlsanitize(this.name)}_version`;
-    await db.query(`
-      create or replace function ${next_fun}(rid int) 
-      returns int as $body$
-      select coalesce((select max(_version) from ${schemaPrefix}"${sqlsanitize(
-      this.name
-    )}__history"
-      where id=rid),0)+1;
-      $body$ LANGUAGE sql;`);
-    await db.query(`
-      create or replace function ${schema}_${sqlsanitize(this.name)}_insert() 
-      returns trigger as $body$
-      begin
-        insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-        (id, _version, _time ${fields.map(f => `, ${f.name}`).join("")}) 
-        values (new.id, ${next_fun}(new.id), now() ${fields
-      .map(f => `, new.${f.name}`)
-      .join("")});          
-        return null;
-      end;
-      $body$ LANGUAGE plpgsql;`);
-    await db.query(`
-      drop trigger if exists ${schema}_${sqlsanitize(
-      this.name
-    )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(this.name)}";
-      create trigger ${schema}_${sqlsanitize(this.name)}_insert_trigger 
-      after insert or update on ${schemaPrefix}"${sqlsanitize(this.name)}"
-      for each row execute function ${schema}_${sqlsanitize(
-      this.name
-    )}_insert();`);
   }
 
   async update(new_table_rec) {
@@ -178,13 +149,7 @@ class Table {
           ${flds.join("")}
           );`
       );
-      await new_table.create_history_triggers();
     } else if (!new_table.versioned && existing.versioned) {
-      const schema = db.getTenantSchema();
-      await db.query(`
-      drop trigger if exists ${schema}_${sqlsanitize(
-        this.name
-      )}_insert_trigger on ${schemaPrefix}"${sqlsanitize(new_table.name)}";`);
       await db.query(`
       drop table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history";`);
     }

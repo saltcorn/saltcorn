@@ -196,7 +196,6 @@ class Field {
             table.name
           )}__history" drop column "${sqlsanitize(this.name)}"`
         );
-        await table.create_history_triggers();
       }
     }
   }
@@ -252,7 +251,6 @@ class Field {
           table.name
         )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`
       );
-      await table.create_history_triggers();
     }
 
     if (f.is_unique)

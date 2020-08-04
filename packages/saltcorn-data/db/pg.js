@@ -72,11 +72,19 @@ const deleteWhere = async (tbl, whereObj) => {
 const insert = async (tbl, obj, noid = false, client) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-  const valPosList = kvs.map((kv, ix) => "$" + (ix + 1)).join();
-  const valList = kvs.map(([k, v]) => v);
+  var valPosList = []
+  var valList = []  
+  kvs.forEach(([k, v]) =>  {
+    if(v && v.sql) {
+      valPosList.push(v.sql)
+    } else{
+      valList.push(v)
+      valPosList.push(`$${valList.length}`)
+    }
+  })
   const sql = `insert into "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}"(${fnameList}) values(${valPosList}) returning ${noid ? "*" : "id"}`;
+  )}"(${fnameList}) values(${valPosList.join()}) returning ${noid ? "*" : "id"}`;
   sql_log(sql, valList);
   const { rows } = await (client || pool).query(sql, valList);
   if (noid) return;
