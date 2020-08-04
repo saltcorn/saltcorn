@@ -62,6 +62,7 @@ const setupDevMode = async () => {
       unloadModule("@saltcorn/data/db/reset_schema");
       const reset = require("@saltcorn/data/db/reset_schema");
       await reset(true);
+      console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
     } catch (e) {
       console.log("An error occurred upon resetting the database: ", e.message);
       console.log("An error at this point expected and I know what to do.");
@@ -70,8 +71,6 @@ const setupDevMode = async () => {
       );
     }
   }
-
-  console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
 };
 
 const check_db = async () => {
