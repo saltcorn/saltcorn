@@ -57,10 +57,18 @@ const setupDevMode = async () => {
   await write_connection_config({ sqlite_path: dbPath });
 
   if (!fs.existsSync(dbPath)) {
-    unloadModule("@saltcorn/data/db");
-    unloadModule("@saltcorn/data/db/reset_schema");
-    const reset = require("@saltcorn/data/db/reset_schema");
-    await reset(true);
+    try {
+      unloadModule("@saltcorn/data/db");
+      unloadModule("@saltcorn/data/db/reset_schema");
+      const reset = require("@saltcorn/data/db/reset_schema");
+      await reset(true);
+    } catch (e) {
+      console.log("An error occurred upon resetting the database: ", e.message);
+      console.log("An error at this point expected and I know what to do.");
+      console.log(
+        "Re-run the setup script to resume database initialisation by typing:\n\nsaltcorn setup\n"
+      );
+    }
   }
 
   console.log("Done. Run saltcorn by typing:\n\nsaltcorn serve\n");
