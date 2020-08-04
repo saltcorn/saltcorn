@@ -1,5 +1,6 @@
 const Router = require("express-promise-router");
 
+const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const File = require("@saltcorn/data/models/file");
@@ -70,11 +71,11 @@ const tableForm = table => {
         input_type: "select",
         options: roleOptions
       },
-      {
+      ...(db.isSQLite ? [] : [{
         label: "Version history",
         name: "versioned",
         type: "Bool"
-      }
+      }])
     ]
   });
   if (table) {
@@ -376,6 +377,8 @@ router.post(
     } else {
       const { id, _csrf, ...rest } = v;
       const table=await Table.findOne({id: parseInt(id)})
+      if(!rest.versioned) 
+        rest.versioned=false;
       await table.update(rest);
       res.redirect(`/table/${id}`);
     }

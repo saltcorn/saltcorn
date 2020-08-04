@@ -136,8 +136,8 @@ class Table {
       returns trigger as $body$
       begin
         insert into ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-        (id, _version${fields.map(f => `, ${f.name}`).join("")}) 
-        values (new.id, ${next_fun}(new.id)${fields
+        (id, _version, _time ${fields.map(f => `, ${f.name}`).join("")}) 
+        values (new.id, ${next_fun}(new.id), now() ${fields
       .map(f => `, new.${f.name}`)
       .join("")});          
         return null;
@@ -171,6 +171,7 @@ class Table {
         `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
           id integer not null,
           _version integer,
+          _time timestamp,
           PRIMARY KEY(id, _version)
           ${flds.join("")}
           );`
