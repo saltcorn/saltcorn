@@ -94,11 +94,18 @@ class Table {
   async countRows(where) {
     return await db.count(this.name, where);
   }
-  async updateRow(v, id) {
-    if(this.versioned)
-      await db.insert(this.name+'__history', {...v, id, 
-        _version: {sql: `coalesce((select max(_version) from "${this.name+'__history'}" where id=${+id}), 0)+1`},
-        _time: new Date()});
+  async updateRow(v, id, _userid) {
+    if (this.versioned)
+      await db.insert(this.name + "__history", {
+        ...v,
+        id,
+        _version: {
+          sql: `coalesce((select max(_version) from "${this.name +
+            "__history"}" where id=${+id}), 0)+1`
+        },
+        _time: new Date(),
+        _userid
+      });
     return await db.update(this.name, v, id);
   }
 
@@ -112,11 +119,17 @@ class Table {
     );
   }
 
-  async insertRow(v) {
+  async insertRow(v, _userid) {
     const id = await db.insert(this.name, v);
-    if(this.versioned)
-      await db.insert(this.name+'__history', {...v, id, _version: 1, _time: new Date()});
-    return id
+    if (this.versioned)
+      await db.insert(this.name + "__history", {
+        ...v,
+        id,
+        _version: 1,
+        _userid,
+        _time: new Date()
+      });
+    return id;
   }
 
   async getFields() {
@@ -145,6 +158,7 @@ class Table {
           id integer not null,
           _version integer,
           _time timestamp,
+          _userid integer,
           PRIMARY KEY(id, _version)
           ${flds.join("")}
           );`

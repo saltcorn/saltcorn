@@ -32,6 +32,10 @@ router.get(
       key: r => moment(r._time).fromNow()
     });
     tfields.push({
+      label: "By user ID",
+      key: r =>r._userid
+    });
+    tfields.push({
       label: "Restore",
       key: r =>
         post_btn(
