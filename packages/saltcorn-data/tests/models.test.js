@@ -1,14 +1,15 @@
 const db = require("../db/index.js");
 const renderLayout = require("@saltcorn/markup/layout");
-const Table = require("./table");
-const Form = require("./form");
-const Field = require("./field");
-const Crash = require("./crash");
-const File = require("./file");
-const View = require("./view");
-const User = require("./user");
-const Page = require("./page");
+const Table = require("../models/table");
+const Form = require("../models/form");
+const Field = require("../models/field");
+const Crash = require("../models/crash");
+const File = require("../models/file");
+const View = require("../models/view");
+const User = require("../models/user");
+const Page = require("../models/page");
 const { getState } = require("../db/state");
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
