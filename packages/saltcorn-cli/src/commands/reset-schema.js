@@ -1,9 +1,10 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const reset = require("@saltcorn/data/db/reset_schema");
-const db = require("@saltcorn/data/db/");
+
 class ResetCommand extends Command {
   async run() {
+    const reset = require("@saltcorn/data/db/reset_schema");
+    const db = require("@saltcorn/data/db/");
     const { flags } = this.parse(ResetCommand);
     if (flags.force) {
       await reset();

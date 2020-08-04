@@ -1,8 +1,9 @@
 const { Command, flags } = require("@oclif/command");
-const fixtures = require("@saltcorn/server/fixtures");
-const reset = require("@saltcorn/data/db/reset_schema");
+
 class FixturesCommand extends Command {
   async run() {
+    const fixtures = require("@saltcorn/server/fixtures");
+    const reset = require("@saltcorn/data/db/reset_schema");
     const { flags } = this.parse(FixturesCommand);
     if (flags.reset) {
       await reset();
