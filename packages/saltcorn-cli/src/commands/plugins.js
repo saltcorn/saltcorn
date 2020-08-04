@@ -1,14 +1,11 @@
 const { Command, flags } = require("@oclif/command");
-const fixtures = require("@saltcorn/server/fixtures");
-const reset = require("@saltcorn/data/db/reset_schema");
-const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
-const db = require("@saltcorn/data/db");
-const { requirePlugin } = require("@saltcorn/server/load_plugins");
-const { getAllTenants } = require("@saltcorn/data/models/tenant");
-const Plugin = require("@saltcorn/data/models/plugin");
 
 class PluginsCommand extends Command {
   async run() {
+    const db = require("@saltcorn/data/db");
+    const { requirePlugin } = require("@saltcorn/server/load_plugins");
+    const { getAllTenants } = require("@saltcorn/data/models/tenant");
+    const Plugin = require("@saltcorn/data/models/plugin");
     var plugins = [];
     const { flags } = this.parse(PluginsCommand);
 

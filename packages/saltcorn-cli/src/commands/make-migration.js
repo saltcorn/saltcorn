@@ -1,6 +1,5 @@
 const { Command, flags } = require("@oclif/command");
 
-
 class MigrationCommand extends Command {
   async run() {
     const { create_blank_migration } = require("@saltcorn/data/migrate");

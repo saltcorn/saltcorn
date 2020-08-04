@@ -1,9 +1,9 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const User = require("@saltcorn/data/models/user");
 
 class CreateUserCommand extends Command {
   async run() {
+    const User = require("@saltcorn/data/models/user");
     const { flags } = this.parse(CreateUserCommand);
     const email = await cli.prompt("Email address");
     const password = await cli.prompt("Password", { type: "hide" });

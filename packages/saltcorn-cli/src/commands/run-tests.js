@@ -1,6 +1,5 @@
 const { Command, flags } = require("@oclif/command");
 
-const db = require("@saltcorn/data/db");
 const { spawnSync, spawn } = require("child_process");
 
 function sleep(ms) {
@@ -43,6 +42,8 @@ class RunTestsCommand extends Command {
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     var env;
+    const db = require("@saltcorn/data/db");
+
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });

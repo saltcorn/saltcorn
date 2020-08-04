@@ -1,15 +1,15 @@
 const { Command, flags } = require("@oclif/command");
-const fixtures = require("@saltcorn/server/fixtures");
-const reset = require("@saltcorn/data/db/reset_schema");
-const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
-const db = require("@saltcorn/data/db");
-const { requirePlugin } = require("@saltcorn/server/load_plugins");
 
 const lastPath = ps =>
   ps[ps.length - 1] === "" ? ps[ps.length - 2] : ps[ps.length - 1];
 
 class TestPluginCommand extends Command {
   async run() {
+    const fixtures = require("@saltcorn/server/fixtures");
+    const reset = require("@saltcorn/data/db/reset_schema");
+    const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
+    const db = require("@saltcorn/data/db");
+    const { requirePlugin } = require("@saltcorn/server/load_plugins");
     const { args } = this.parse(TestPluginCommand);
     await db.changeConnection({ database: "saltcorn_test" });
     await reset();

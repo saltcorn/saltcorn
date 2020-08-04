@@ -1,4 +1,3 @@
-
 //https://stackoverflow.com/a/21247009
 const reset = async (dontDrop = false, schema = "public") => {
   const db = require(".");
