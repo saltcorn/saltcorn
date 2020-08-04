@@ -60,6 +60,7 @@ const setupDevMode = async () => {
     try {
       unloadModule("@saltcorn/data/db");
       unloadModule("@saltcorn/data/db/reset_schema");
+      unloadModule("@saltcorn/data/db/migrate");
       const reset = require("@saltcorn/data/db/reset_schema");
       await reset(true);
       console.log("Done. Run saltcorn by typing:\n\n  saltcorn serve\n");
