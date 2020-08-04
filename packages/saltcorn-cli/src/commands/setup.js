@@ -64,6 +64,8 @@ const setupDevMode = async () => {
       await reset(true);
       console.log("Done. Run saltcorn by typing:\n\n  saltcorn serve\n");
     } catch (e) {
+      if (fs.existsSync(dbPath))
+        await fs.promises.unlink(dbPath)
       console.log(
         "\nAn error occurred upon resetting the database: ",
         e.message
