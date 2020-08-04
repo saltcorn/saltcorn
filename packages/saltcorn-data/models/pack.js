@@ -23,6 +23,7 @@ const table_pack = contract(pack_fun, async name => {
     expose_api_write: table.expose_api_write,
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
+    versioned: table.versioned,
     fields: fields.map(f => strip_ids(f.toJson))
   };
 });

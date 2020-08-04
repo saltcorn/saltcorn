@@ -225,9 +225,13 @@ const runPost = async (
 
     var id = body.id;
     if (typeof id === "undefined") {
-      id = await table.insertRow(row);
+      id = await table.insertRow(row, req.user ? req.user.id : undefined);
     } else {
-      await table.updateRow(row, parseInt(id));
+      await table.updateRow(
+        row,
+        parseInt(id),
+        req.user ? req.user.id : undefined
+      );
     }
 
     if (!view_when_done) {

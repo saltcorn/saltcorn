@@ -62,10 +62,14 @@ router.post(
       ); // vres.errors.join("\n"));
     } else {
       if (typeof v.id === "undefined") {
-        await table.insertRow(form.values);
+        await table.insertRow(form.values, req.user ? req.user.id : undefined);
       } else {
         const id = v.id;
-        await table.updateRow(form.values, parseInt(id));
+        await table.updateRow(
+          form.values,
+          parseInt(id),
+          req.user ? req.user.id : undefined
+        );
       }
       res.redirect(`/list/${table.name}`);
     }

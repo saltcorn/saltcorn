@@ -181,6 +181,41 @@ describe("Table get data", () => {
 
     expect(rows.length).toBe(2);
   });
+  it("should enable versioning", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    table.versioned = true;
+    await table.update(table);
+    await table.insertRow({ name: "Bunny foo-foo" });
+    const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
+    const history1 = await table.get_history(bunnyFooFoo.id);
+    expect(history1.length).toBe(1);
+    expect(history1[0].id).toBe(bunnyFooFoo.id);
+    expect(history1[0]._version).toBe(1);
+    expect(history1[0].name).toBe("Bunny foo-foo");
+    await table.updateRow({ name: "Goon" }, bunnyFooFoo.id);
+    const history2 = await table.get_history(bunnyFooFoo.id);
+    expect(history2.length).toBe(2);
+    expect(history2[0].id).toBe(bunnyFooFoo.id);
+    expect(history2[0]._version).toBe(1);
+    expect(history2[0].name).toBe("Bunny foo-foo");
+    expect(history2[1].id).toBe(bunnyFooFoo.id);
+    expect(history2[1]._version).toBe(2);
+    expect(history2[1].name).toBe("Goon");
+    const goon = await table.getRow({ id: bunnyFooFoo.id });
+    expect(goon.name).toBe("Goon");
+    const fc = await Field.create({
+      table: table,
+      name: "Height19",
+      label: "height19",
+      type: "Integer",
+      required: true,
+      attributes: { default: 6 }
+    });
+    await fc.delete();
+
+    table.versioned = false;
+    await table.update(table);
+  });
 });
 
 describe("Field", () => {

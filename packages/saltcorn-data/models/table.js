@@ -37,6 +37,7 @@ class Table {
     this.expose_api_write = o.expose_api_write;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
+    this.versioned = !!o.versioned;
     contract.class(this);
   }
   static async findOne(where) {
@@ -58,6 +59,7 @@ class Table {
     );
     const tblrow = {
       name,
+      versioned: options.versioned || false,
       expose_api_read: options.expose_api_read || false,
       expose_api_write: options.expose_api_write || false,
       min_role_read: options.min_role_read || 1,
@@ -92,7 +94,18 @@ class Table {
   async countRows(where) {
     return await db.count(this.name, where);
   }
-  async updateRow(v, id) {
+  async updateRow(v, id, _userid) {
+    if (this.versioned)
+      await db.insert(this.name + "__history", {
+        ...v,
+        id,
+        _version: {
+          sql: `coalesce((select max(_version) from "${this.name +
+            "__history"}" where id=${+id}), 0)+1`
+        },
+        _time: new Date(),
+        _userid
+      });
     return await db.update(this.name, v, id);
   }
 
@@ -106,8 +119,17 @@ class Table {
     );
   }
 
-  async insertRow(v) {
-    return await db.insert(this.name, v);
+  async insertRow(v, _userid) {
+    const id = await db.insert(this.name, v);
+    if (this.versioned)
+      await db.insert(this.name + "__history", {
+        ...v,
+        id,
+        _version: 1,
+        _userid,
+        _time: new Date()
+      });
+    return id;
   }
 
   async getFields() {
@@ -116,9 +138,43 @@ class Table {
     return this.fields;
   }
 
-  static async update(id, new_table) {
+  async update(new_table_rec) {
     //TODO RENAME TABLE
-    await db.update("_sc_tables", new_table, id);
+
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    const existing = await Table.findOne({ id: this.id });
+    await db.update("_sc_tables", new_table_rec, this.id);
+    const new_table = await Table.findOne({ id: this.id });
+
+    if (new_table.versioned && !existing.versioned) {
+      const fields = await new_table.getFields();
+      const flds = fields.map(
+        f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+      );
+
+      await db.query(
+        `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
+          id integer not null,
+          _version integer,
+          _time timestamp,
+          _userid integer
+          ${flds.join("")}
+          ,PRIMARY KEY(id, _version)
+          );`
+      );
+    } else if (!new_table.versioned && existing.versioned) {
+      await db.query(`
+      drop table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history";`);
+    }
+  }
+
+  async get_history() {
+    return await db.select(
+      `${sqlsanitize(this.name)}__history`,
+      {},
+      { orderBy: "_version" }
+    );
   }
 
   static async create_from_csv(name, filePath) {
@@ -357,8 +413,8 @@ Table.contract = {
       is.promise(is.array(is.class("Table")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
-    create: is.fun(is.str, is.promise(is.class("Table"))),
-    update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
+    create: is.fun(is.str, is.promise(is.class("Table")))
+    //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
 };
 module.exports = Table;
