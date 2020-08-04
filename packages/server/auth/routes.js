@@ -105,10 +105,7 @@ router.post(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const { email, password } = req.body;
-      console.log("creating user")
       const u = await User.create({ email, password, role_id: 1 });
-      console.log({u})
-
       req.login(
         {
           email: u.email,
@@ -117,8 +114,6 @@ router.post(
           tenant: db.getTenantSchema()
         },
         function(err) {
-      console.log({err})
-
           if (!err) {
             res.redirect("/");
           } else {
