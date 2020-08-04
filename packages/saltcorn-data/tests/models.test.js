@@ -9,6 +9,7 @@ const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
 const { getState } = require("../db/state");
+const fs = require("fs").promises;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -119,8 +120,11 @@ describe("Page", () => {
 
 describe("File", () => {
   it("should create", async () => {
+    const mv = async fnm => {
+      await fs.writeFile(fnm, "nevergonnagiveyouup");
+    };
     await File.from_req_files(
-      { mimetype: "image/png", name: "rick.png", mv() {}, size: 245752 },
+      { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
       1,
       10
     );
