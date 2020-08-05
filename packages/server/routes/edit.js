@@ -79,12 +79,13 @@ router.post(
 router.post(
   "/toggle/:name/:id/:field_name",
   setTenant,
-  loggedIn,
   error_catcher(async (req, res) => {
     const { name, id, field_name } = req.params;
     const { redirect } = req.query;
     const table = await Table.findOne({ name });
-    await table.toggleBool(+id, field_name);
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
+    else req.flash("error", `Not allowed to write to table ${table.name}`);
 
     res.redirect(redirect || `/list/${table.name}`);
   })
