@@ -1,14 +1,13 @@
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const View = require("@saltcorn/data/models/view");
-const User = require("@saltcorn/data/models/user");
-const Page = require("@saltcorn/data/models/page");
-const basePlugin = require("@saltcorn/base-plugin");
+const db = require(".");
+const { getState } = require("./state");
+const Table = require("../models/table");
+const Field = require("../models/field");
+const View = require("../models/view");
+const User = require("../models/user");
+const Page = require("../models/page");
 
 module.exports = async () => {
-  getState().registerPlugin("base", basePlugin);
+  getState().registerPlugin("base", require("../base-plugin"));
   const table = await Table.create("books", {
     expose_api_read: true,
     min_role_read: 10

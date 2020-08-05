@@ -52,7 +52,7 @@ class RunTestsCommand extends Command {
       await db.changeConnection({ database: "saltcorn_test" });
       env = { ...process.env, PGDATABASE: "saltcorn_test" };
     }
-    const fixtures = require("@saltcorn/server/fixtures");
+    const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
     await fixtures();

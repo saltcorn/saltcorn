@@ -5,7 +5,7 @@ const lastPath = ps =>
 
 class TestPluginCommand extends Command {
   async run() {
-    const fixtures = require("@saltcorn/server/fixtures");
+    const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
     const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
     const db = require("@saltcorn/data/db");
