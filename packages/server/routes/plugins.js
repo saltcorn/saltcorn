@@ -57,7 +57,7 @@ router.get(
       if(!plugin)
         return ''
       if(plugin.configuration_workflow)
-        return link(`/plugins/configure/${r.id}`, "Configure")
+        return link(`/plugins/configure/${row.id}`, "Configure")
       else
         return ''
     }
@@ -148,6 +148,20 @@ router.get(
         }
       ]
     });
+  })
+);
+
+router.get(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const plugin=await Plugin.findOne({id})
+    const module = getState().plugins[plugin.name]
+    const wfres = await module.configuration_workflow().run(plugin.cfg||{});
+
+    res.sendWrap(`Configure ${plugin.name} Plugin`, renderForm(wfres.renderForm, req.csrfToken()));
   })
 );
 
