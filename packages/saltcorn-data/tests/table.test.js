@@ -3,13 +3,13 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const fs = require("fs").promises
+const fs = require("fs").promises;
 
 afterAll(db.close);
 beforeAll(async () => {
-    await require("../db/reset_schema")();
-    await require("../db/fixtures")();
-  });
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
 
 describe("TableIO", () => {
   it("should store attributes", async () => {
@@ -223,29 +223,28 @@ describe("Table get data", () => {
   });
 });
 describe("CSV import", () => {
-    it("should import into existing table", async () => {
-        const csv =`author,pages
+  it("should import into existing table", async () => {
+    const csv = `author,pages
 Joe Celko, 856
 Gordon Kane, 217`;
-        const fnm="/tmp/test1.csv"
-        await fs.writeFile(fnm, csv)
-        const table= await Table.findOne({name:"books"})
-        expect(!!table).toBe(true)
-        await table.import_csv_file(fnm)
-        const rows = await table.getRows({author:"Gordon Kane"})
-        expect(rows.length).toBe(1)
-        expect(rows[0].pages).toBe(217)
-    })
-    it("should create by importing", async () => {
-        const csv =`item,cost,vatable
+    const fnm = "/tmp/test1.csv";
+    await fs.writeFile(fnm, csv);
+    const table = await Table.findOne({ name: "books" });
+    expect(!!table).toBe(true);
+    await table.import_csv_file(fnm);
+    const rows = await table.getRows({ author: "Gordon Kane" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].pages).toBe(217);
+  });
+  it("should create by importing", async () => {
+    const csv = `item,cost,vatable
 Book, 5, f
 Pencil, 0.5, t`;
-        const fnm="/tmp/test2.csv"
-        await fs.writeFile(fnm, csv)
-        const {table}=await Table.create_from_csv("Invoice", fnm)
-        const rows = await table.getRows({item:"Pencil"})
-        expect(rows.length).toBe(1)
-        expect(rows[0].vatable).toBe(true)
-        
-    })
-})
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("Invoice", fnm);
+    const rows = await table.getRows({ item: "Pencil" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].vatable).toBe(true);
+  });
+});

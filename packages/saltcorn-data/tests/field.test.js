@@ -6,7 +6,6 @@ getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
 
-
 describe("Field", () => {
   it("should add and then delete required field", async () => {
     const patients = await Table.findOne({ name: "patients" });

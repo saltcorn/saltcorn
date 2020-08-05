@@ -133,19 +133,19 @@ const extract = async (fnm, dir) => {
   });
 };
 const restore_files = async dirpath => {
-  const fnm=path.join(dirpath, "files.csv")
+  const fnm = path.join(dirpath, "files.csv");
   if (existsSync(fnm)) {
-  const file_rows = await csvtojson().fromFile(fnm);
-  for (const file of file_rows) {
-    const newPath = File.get_new_path(file.location);
-    //copy file
-    await fs.copyFile(path.join(dirpath, "files", file.location), newPath);
-    //set location
-    file.location = newPath;
-    //insert in db
-    await db.insert("_sc_files", file);
+    const file_rows = await csvtojson().fromFile(fnm);
+    for (const file of file_rows) {
+      const newPath = File.get_new_path(file.location);
+      //copy file
+      await fs.copyFile(path.join(dirpath, "files", file.location), newPath);
+      //set location
+      file.location = newPath;
+      //insert in db
+      await db.insert("_sc_files", file);
+    }
   }
-}
 };
 
 const restore_users = async dirpath => {
@@ -187,7 +187,7 @@ const restore = async (fnm, loadAndSaveNewPlugin) => {
 
   // files
   await restore_files(dir.path);
-  
+
   //table csvs
   await restore_tables(dir.path);
 

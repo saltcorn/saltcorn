@@ -5,16 +5,18 @@ const {
   getStaffLoginCookie,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
-  toInclude, toRedirect,
-  toNotInclude, resetToFixtures
+  toInclude,
+  toRedirect,
+  toNotInclude,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
 
 beforeAll(async () => {
-    await resetToFixtures();
-  });
+  await resetToFixtures();
+});
 
 describe("Search config Endpoints", () => {
   itShouldRedirectUnauthToLogin("/search/config");
@@ -25,7 +27,7 @@ describe("Search config Endpoints", () => {
     await request(app)
       .get("/search/config")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Result preview for books"))
+      .expect(toInclude("Result preview for books"));
   });
   it("should set search view", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -35,18 +37,18 @@ describe("Search config Endpoints", () => {
       .post("/search/config/")
       .send("books=authorshow")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/search/config"));    
+      .expect(toRedirect("/search/config"));
   });
   it("should show search form", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/search")
-      .expect(toInclude("Search all tables"))
+      .expect(toInclude("Search all tables"));
   });
   it("should show search form", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/search?q=Tolstoy")
-      .expect(toInclude("Leo"))
+      .expect(toInclude("Leo"));
   });
 });
