@@ -124,7 +124,7 @@ describe("Page", () => {
 
 describe("File", () => {
   it("should create", async () => {
-    await File.ensure_file_store()
+    await File.ensure_file_store();
     const mv = async fnm => {
       await fs.writeFile(fnm, "nevergonnagiveyouup");
     };

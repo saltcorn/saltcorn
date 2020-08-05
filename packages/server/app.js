@@ -166,7 +166,7 @@ Sitemap: ${base}sitemap.xml
   );
   if (!opts.disableCatch) app.use(errors);
 
-  await File.ensure_file_store()
+  await File.ensure_file_store();
   return app;
 };
 module.exports = getApp;
