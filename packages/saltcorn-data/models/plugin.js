@@ -11,6 +11,7 @@ class Plugin {
     this.source = o.source;
     this.location = o.location;
     this.version = o.version;
+    this.configuration = o.configuration;
     contract.class(this);
   }
   static async findOne(where) {
@@ -24,7 +25,8 @@ class Plugin {
       name: this.name,
       source: this.source,
       location: this.location,
-      version: this.version
+      version: this.version,
+      configuration: this.configuration
     };
     if (typeof this.id === "undefined") {
       // insert
@@ -85,6 +87,7 @@ Plugin.contract = {
     location: is.str,
     name: is.str,
     version: is.maybe(is.str),
+    configuration: is.maybe(is.obj()),
     source: is.one_of(["npm", "github", "local"])
   },
   methods: {

@@ -142,7 +142,7 @@ const is_viewtemplate = is.obj({
   )
 });
 
-const is_maybe_cfg_fun = a=> is.or(is.fun(is.obj, a), a, is.undefined)
+const is_maybe_cfg_fun = a => is.or(is.fun(is.obj, a), a, is.undefined);
 
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,

@@ -23,7 +23,10 @@ const migrate = async (schema = "public") => {
   }
 
   const fudge = is_sqlite
-    ? s => s.replace("id serial primary", "id integer primary")
+    ? s =>
+        s
+          .replace("id serial primary", "id integer primary")
+          .replace("jsonb", "json")
     : s => s;
 
   for (const file of files) {
