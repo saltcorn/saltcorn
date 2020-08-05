@@ -237,7 +237,7 @@ Gordon Kane, 217`;
         expect(rows[0].pages).toBe(217)
     })
     it("should create by importing", async () => {
-        const csv =`item,cost, vatable
+        const csv =`item,cost,vatable
 Book, 5, f
 Pencil, 0.5, t`;
         const fnm="/tmp/test2.csv"
