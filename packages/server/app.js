@@ -7,6 +7,7 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
+const File = require("@saltcorn/data/models/file");
 const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("@saltcorn/data/migrate");
@@ -164,6 +165,8 @@ Sitemap: ${base}sitemap.xml
     })
   );
   if (!opts.disableCatch) app.use(errors);
+
+  await File.ensure_file_store()
   return app;
 };
 module.exports = getApp;
