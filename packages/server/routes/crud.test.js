@@ -124,3 +124,15 @@ describe("db page", () => {
       .expect(toInclude(">Bye bye<"));
   });
 });
+
+describe("bool toggle", () => {
+  it("should toggle", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post(`/edit/toggle/readings/1/normalised`)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect('/list/readings'));
+  });
+});

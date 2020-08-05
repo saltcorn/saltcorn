@@ -147,6 +147,12 @@ module.exports = async () => {
     reftable: patients,
     required: true
   });
+  await Field.create({
+    table: readings,
+    name: "normalised",
+    label: "Normalised",
+    type: "Bool"
+  });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
@@ -158,9 +164,9 @@ module.exports = async () => {
     favbook: 2,
     parent: kirk_id
   });
-  await db.insert("readings", { temperature: 37, patient_id: kirk_id });
-  await db.insert("readings", { temperature: 39, patient_id: kirk_id });
-  await db.insert("readings", { temperature: 37, patient_id: michael_id });
+  await db.insert("readings", { temperature: 37, patient_id: kirk_id, normalised: true });
+  await db.insert("readings", { temperature: 39, patient_id: kirk_id, normalised: false });
+  await db.insert("readings", { temperature: 37, patient_id: michael_id, normalised: false });
   await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
   await User.create({
     email: "staff@foo.com",
