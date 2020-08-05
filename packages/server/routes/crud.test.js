@@ -133,6 +133,6 @@ describe("bool toggle", () => {
     await request(app)
       .post(`/edit/toggle/readings/1/normalised`)
       .set("Cookie", loginCookie)
-      .expect(toRedirect('/list/readings'));
+      .expect(toRedirect("/list/readings"));
   });
 });
