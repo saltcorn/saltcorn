@@ -12,6 +12,10 @@ const { getState } = require("../db/state");
 const fs = require("fs").promises;
 
 getState().registerPlugin("base", require("../base-plugin"));
+beforeAll(async () => {
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
 
 afterAll(db.close);
 

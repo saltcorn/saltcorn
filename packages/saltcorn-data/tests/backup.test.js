@@ -10,8 +10,12 @@ const fs = require("fs").promises;
 const Table = require("../models/table");
 const View = require("../models/view");
 const User = require("../models/user");
-
 afterAll(db.close);
+
+beforeAll(async () => {
+    await require("../db/reset_schema")();
+    await require("../db/fixtures")();
+  });
 
 describe("Backup and restore", () => {
     it("should create and restore backup", async () => {
