@@ -41,6 +41,12 @@ class File {
     const newFnm = suggest || uuidv4();
     return path.join(file_store, newFnm);
   }
+
+  static async ensure_file_store() {
+    const file_store = db.connectObj.file_store;
+    await fs.mkdir(file_store, { recursive: true });
+  }
+
   static async from_req_files(file, user_id, min_role_read = 1) {
     const newPath = File.get_new_path();
     const [mime_super, mime_sub] = file.mimetype.split("/");

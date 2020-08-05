@@ -1,15 +1,21 @@
 const db = require("../db/index.js");
 const renderLayout = require("@saltcorn/markup/layout");
-const Table = require("./table");
-const Form = require("./form");
-const Field = require("./field");
-const Crash = require("./crash");
-const File = require("./file");
-const View = require("./view");
-const User = require("./user");
-const Page = require("./page");
+const Table = require("../models/table");
+const Form = require("../models/form");
+const Field = require("../models/field");
+const Crash = require("../models/crash");
+const File = require("../models/file");
+const View = require("../models/view");
+const User = require("../models/user");
+const Page = require("../models/page");
 const { getState } = require("../db/state");
+const fs = require("fs").promises;
+
 getState().registerPlugin("base", require("../base-plugin"));
+beforeAll(async () => {
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
 
 afterAll(db.close);
 
@@ -118,8 +124,12 @@ describe("Page", () => {
 
 describe("File", () => {
   it("should create", async () => {
+    await File.ensure_file_store();
+    const mv = async fnm => {
+      await fs.writeFile(fnm, "nevergonnagiveyouup");
+    };
     await File.from_req_files(
-      { mimetype: "image/png", name: "rick.png", mv() {}, size: 245752 },
+      { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
       1,
       10
     );

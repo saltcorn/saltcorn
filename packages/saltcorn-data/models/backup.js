@@ -23,7 +23,6 @@ const {
 } = require("./pack");
 
 const { asyncMap } = require("../utils");
-const { fstat } = require("fs");
 
 const create_pack = async dirpath => {
   const tables = await asyncMap(
@@ -134,15 +133,18 @@ const extract = async (fnm, dir) => {
   });
 };
 const restore_files = async dirpath => {
-  const file_rows = await csvtojson().fromFile(path.join(dirpath, "files.csv"));
-  for (const file of file_rows) {
-    const newPath = File.get_new_path(file.location);
-    //copy file
-    await fs.copyFile(path.join(dirpath, "files", file.location), newPath);
-    //set location
-    file.location = newPath;
-    //insert in db
-    await db.insert("_sc_files", file);
+  const fnm = path.join(dirpath, "files.csv");
+  if (existsSync(fnm)) {
+    const file_rows = await csvtojson().fromFile(fnm);
+    for (const file of file_rows) {
+      const newPath = File.get_new_path(file.location);
+      //copy file
+      await fs.copyFile(path.join(dirpath, "files", file.location), newPath);
+      //set location
+      file.location = newPath;
+      //insert in db
+      await db.insert("_sc_files", file);
+    }
   }
 };
 
@@ -180,11 +182,11 @@ const restore = async (fnm, loadAndSaveNewPlugin) => {
   const pack = JSON.parse(await fs.readFile(path.join(dir.path, "pack.json")));
   await install_pack(pack, undefined, loadAndSaveNewPlugin);
 
-  // files
-  await restore_files(dir.path);
-
   //users
   await restore_users(dir.path);
+
+  // files
+  await restore_files(dir.path);
 
   //table csvs
   await restore_tables(dir.path);
