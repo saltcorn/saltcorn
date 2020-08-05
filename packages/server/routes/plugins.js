@@ -51,6 +51,17 @@ router.get(
     const packs_available = await fetch_available_packs();
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
+
+    const cfg_link= row=>{
+      const plugin=getState().plugins[row.name]
+      if(!plugin)
+        return ''
+      if(plugin.configuration_workflow)
+        return link(`/plugins/configure/${r.id}`, "Configure")
+      else
+        return ''
+    }
+    
     res.sendWrap("Plugins", {
       above: [
         {
@@ -62,6 +73,7 @@ router.get(
               { label: "Source", key: "source" },
               { label: "Location", key: "location" },
               { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+              { label: "Configure", key: r => cfg_link(r) },
               {
                 label: "Reload",
                 key: r =>
