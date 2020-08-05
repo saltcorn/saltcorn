@@ -142,19 +142,22 @@ const is_viewtemplate = is.obj({
   )
 });
 
+const is_maybe_cfg_fun = a=> is.or(is.fun(is.obj, a), a, is.undefined)
+
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
-  headers: is.maybe(is.array(is_header)),
-  layout: is.maybe(
+  headers: is_maybe_cfg_fun(is.array(is_header)),
+  layout: is_maybe_cfg_fun(
     is.obj({
       wrap: is_plugin_wrap
     })
   ),
-  types: is.maybe(is.array(is_plugin_type)),
-  pages: is.maybe(
+  types: is_maybe_cfg_fun(is.array(is_plugin_type)),
+  pages: is_maybe_cfg_fun(
     is.objVals(is.obj({ getPage: is.fun([], is.promise(is_layout)) }))
   ),
-  viewtemplates: is.maybe(is.array(is_viewtemplate))
+  viewtemplates: is_maybe_cfg_fun(is.array(is_viewtemplate)),
+  configuration_workflow: is.maybe(is.fun([], is.class("Workflow")))
 });
 
 const is_pack = is.obj({
