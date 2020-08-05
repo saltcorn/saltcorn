@@ -1,6 +1,6 @@
 {
   "name": "chaos-guinea-pig",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Click and fill forms randomly on webpages till an error occurs",
   "main": "index.js",
   "repository": "github:saltcorn/saltcorn",
