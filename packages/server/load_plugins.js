@@ -19,7 +19,7 @@ const manager = new PluginManager({
 
 const loadPlugin = async plugin => {
   const { plugin_module } = await requirePlugin(plugin);
-  getState().registerPlugin(plugin.name, plugin_module);
+  getState().registerPlugin(plugin.name, plugin_module, plugin.configuration);
 };
 
 const requirePlugin = async (plugin, force) => {

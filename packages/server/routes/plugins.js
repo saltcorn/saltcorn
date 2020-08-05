@@ -51,6 +51,15 @@ router.get(
     const packs_available = await fetch_available_packs();
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
+
+    const cfg_link = row => {
+      const plugin = getState().plugins[row.name];
+      if (!plugin) return "";
+      if (plugin.configuration_workflow)
+        return link(`/plugins/configure/${row.id}`, "Configure");
+      else return "";
+    };
+
     res.sendWrap("Plugins", {
       above: [
         {
@@ -62,6 +71,7 @@ router.get(
               { label: "Source", key: "source" },
               { label: "Location", key: "location" },
               { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+              { label: "Configure", key: r => cfg_link(r) },
               {
                 label: "Reload",
                 key: r =>
@@ -139,6 +149,48 @@ router.get(
   })
 );
 
+router.get(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const plugin = await Plugin.findOne({ id });
+    const module = getState().plugins[plugin.name];
+    const flow = module.configuration_workflow();
+    flow.action = `/plugins/configure/${plugin.id}`;
+    const wfres = await flow.run(plugin.configuration || {});
+
+    res.sendWrap(
+      `Configure ${plugin.name} Plugin`,
+      renderForm(wfres.renderForm, req.csrfToken())
+    );
+  })
+);
+router.post(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const plugin = await Plugin.findOne({ id });
+    const module = getState().plugins[plugin.name];
+    const flow = module.configuration_workflow();
+    flow.action = `/plugins/configure/${plugin.id}`;
+    const wfres = await flow.run(req.body);
+    if (wfres.renderForm)
+      res.sendWrap(
+        `Configure ${plugin.name} Plugin`,
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
+    else {
+      plugin.configuration = wfres;
+      await plugin.upsert();
+      await load_plugins.loadPlugin(plugin);
+      res.redirect("/plugins");
+    }
+  })
+);
 router.get(
   "/new/",
   setTenant,
