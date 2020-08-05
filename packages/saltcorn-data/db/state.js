@@ -64,26 +64,30 @@ class State {
   registerPlugin(name, plugin, cfg) {
     this.plugins[name] = plugin;
 
-    const withCfg=(key, def)=>
-      plugin.configuration_workflow ? (plugin[key] ? plugin[key](cfg||{}) : def) : plugin[key] || def
+    const withCfg = (key, def) =>
+      plugin.configuration_workflow
+        ? plugin[key]
+          ? plugin[key](cfg || {})
+          : def
+        : plugin[key] || def;
 
-    withCfg('types',[]).forEach(t => {
+    withCfg("types", []).forEach(t => {
       this.addType(t);
     });
-    withCfg('viewtemplates', []).forEach(vt => {
+    withCfg("viewtemplates", []).forEach(vt => {
       this.viewtemplates[vt.name] = vt;
     });
-    Object.entries(withCfg('pages' , {})).forEach(([k, v]) => {
+    Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
       this.pages[k] = v;
     });
-    Object.entries(withCfg('fileviews', {})).forEach(([k, v]) => {
+    Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
-    const layout = withCfg('layout')
+    const layout = withCfg("layout");
     if (layout && layout.wrap)
       this.layout.wrap = contract(is_plugin_wrap, layout.wrap);
 
-    withCfg('headers', []).forEach(h => {
+    withCfg("headers", []).forEach(h => {
       if (!this.headers.includes(h)) this.headers.push(h);
     });
   }

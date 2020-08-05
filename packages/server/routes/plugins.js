@@ -52,16 +52,14 @@ router.get(
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
 
-    const cfg_link= row=>{
-      const plugin=getState().plugins[row.name]
-      if(!plugin)
-        return ''
-      if(plugin.configuration_workflow)
-        return link(`/plugins/configure/${row.id}`, "Configure")
-      else
-        return ''
-    }
-    
+    const cfg_link = row => {
+      const plugin = getState().plugins[row.name];
+      if (!plugin) return "";
+      if (plugin.configuration_workflow)
+        return link(`/plugins/configure/${row.id}`, "Configure");
+      else return "";
+    };
+
     res.sendWrap("Plugins", {
       above: [
         {
@@ -157,13 +155,16 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const plugin=await Plugin.findOne({id})
-    const module = getState().plugins[plugin.name]
-    const flow =module.configuration_workflow()
-    flow.action=`/plugins/configure/${plugin.id}`
-    const wfres = await flow.run(plugin.configuration||{});
+    const plugin = await Plugin.findOne({ id });
+    const module = getState().plugins[plugin.name];
+    const flow = module.configuration_workflow();
+    flow.action = `/plugins/configure/${plugin.id}`;
+    const wfres = await flow.run(plugin.configuration || {});
 
-    res.sendWrap(`Configure ${plugin.name} Plugin`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(
+      `Configure ${plugin.name} Plugin`,
+      renderForm(wfres.renderForm, req.csrfToken())
+    );
   })
 );
 router.post(
@@ -172,18 +173,21 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const plugin=await Plugin.findOne({id})
-    const module = getState().plugins[plugin.name]
-    const flow =module.configuration_workflow()
-    flow.action=`/plugins/configure/${plugin.id}`
+    const plugin = await Plugin.findOne({ id });
+    const module = getState().plugins[plugin.name];
+    const flow = module.configuration_workflow();
+    flow.action = `/plugins/configure/${plugin.id}`;
     const wfres = await flow.run(req.body);
     if (wfres.renderForm)
-      res.sendWrap(`Configure ${plugin.name} Plugin`, renderForm(wfres.renderForm, req.csrfToken()));
+      res.sendWrap(
+        `Configure ${plugin.name} Plugin`,
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
     else {
-      plugin.configuration=wfres
-      await plugin.upsert()
+      plugin.configuration = wfres;
+      await plugin.upsert();
       await load_plugins.loadPlugin(plugin);
-      res.redirect("/plugins")
+      res.redirect("/plugins");
     }
   })
 );
