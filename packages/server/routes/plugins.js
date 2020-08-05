@@ -159,12 +159,34 @@ router.get(
     const { id } = req.params;
     const plugin=await Plugin.findOne({id})
     const module = getState().plugins[plugin.name]
-    const wfres = await module.configuration_workflow().run(plugin.cfg||{});
+    const flow =module.configuration_workflow()
+    flow.action=`/plugins/configure/${plugin.id}`
+    const wfres = await flow.run(plugin.configuration||{});
 
     res.sendWrap(`Configure ${plugin.name} Plugin`, renderForm(wfres.renderForm, req.csrfToken()));
   })
 );
-
+router.post(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const plugin=await Plugin.findOne({id})
+    const module = getState().plugins[plugin.name]
+    const flow =module.configuration_workflow()
+    flow.action=`/plugins/configure/${plugin.id}`
+    const wfres = await flow.run(req.body);
+    if (wfres.renderForm)
+      res.sendWrap(`Configure ${plugin.name} Plugin`, renderForm(wfres.renderForm, req.csrfToken()));
+    else {
+      plugin.configuration=wfres
+      await plugin.upsert()
+      await load_plugins.loadPlugin(plugin);
+      res.redirect("/plugins")
+    }
+  })
+);
 router.get(
   "/new/",
   setTenant,
