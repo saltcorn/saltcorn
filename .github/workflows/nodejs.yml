@@ -51,3 +51,9 @@ jobs:
           PGPASSWORD:
             postgres
             # The default PostgreSQL port
+      - run: packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data
+        env:
+          SQLITE_FILEPATH: /tmp/testdb.sqlite
+      - run: packages/saltcorn-cli/bin/saltcorn run-tests server
+        env:
+          SQLITE_FILEPATH: /tmp/testdb.sqlite

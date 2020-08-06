@@ -245,6 +245,6 @@ Pencil, 0.5, t`;
     const { table } = await Table.create_from_csv("Invoice", fnm);
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
-    expect(rows[0].vatable).toBe(true);
+    expect(rows[0].vatable).toBe(db.isSQLite ? "t" : true);
   });
 });
