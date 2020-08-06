@@ -103,10 +103,12 @@ const leftNavBar = ({ name, logo }) => [
   )
 ];
 
-const navbar = (brand, sections, currentUrl) =>
+const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
-      class: "navbar navbar-expand-lg navbar-light fixed-top",
+      class: `navbar navbar-expand-lg ${
+        opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
+      } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav"
     },
     div(
