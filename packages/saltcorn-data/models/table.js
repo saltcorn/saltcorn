@@ -235,7 +235,7 @@ class Table {
       includeColumns: colRe
     }).fromFile(filePath);
     var i = 1;
-    const client = await db.getClient();
+    const client =  db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
@@ -250,7 +250,7 @@ class Table {
     }
     await client.query("COMMIT");
 
-    await client.release(true);
+    if (!db.isSQLite) await client.release(true);
 
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`
