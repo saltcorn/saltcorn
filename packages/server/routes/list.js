@@ -4,7 +4,7 @@ const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
 const { a } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { setTenant, loggedIn, error_catcher } = require("./utils");
+const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
 
 const router = new Router();
@@ -15,7 +15,7 @@ module.exports = router;
 router.get(
   "/_versions/:name/:id",
   setTenant,
-  loggedIn,
+  isAdmin,
   error_catcher(async (req, res) => {
     const { name, id } = req.params;
     const table = await Table.findOne({ name });
@@ -60,7 +60,7 @@ router.get(
 router.post(
   "/_restore/:name/:id/:_version",
   setTenant,
-  loggedIn,
+  isAdmin,
   error_catcher(async (req, res) => {
     const { name, id, _version } = req.params;
     const table = await Table.findOne({ name });
@@ -80,7 +80,7 @@ router.post(
 router.get(
   "/:tname",
   setTenant,
-  loggedIn,
+  isAdmin,
   error_catcher(async (req, res) => {
     const { tname } = req.params;
     const table = await Table.findOne({ name: tname });
