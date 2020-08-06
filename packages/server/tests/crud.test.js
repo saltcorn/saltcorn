@@ -141,7 +141,7 @@ describe("history", () => {
       .send("versioned=on")
       .expect(toRedirect("/table/1"));
     const table = await Table.findOne({ name: "books" });
-    expect(table.versioned).toBe(true)    
+    expect(table.versioned).toBe(true);
   });
   it("create new row in versioned table", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -157,12 +157,12 @@ describe("history", () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     const table = await Table.findOne({ name: "books" });
-    const tolstoy = await table.getRow({author: "Leo Tolstoy"})
+    const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     await request(app)
       .post("/edit/books")
       .send("author=Leo%20Tolstoy")
       .send("pages=729")
-      .send("id="+tolstoy.id)
+      .send("id=" + tolstoy.id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/list/books"));
   });
@@ -170,57 +170,55 @@ describe("history", () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     const table = await Table.findOne({ name: "books" });
-    const tolstoy = await table.getRow({author: "Leo Tolstoy"})
+    const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     await request(app)
       .post("/edit/books")
       .send("author=Leo%20Tolstoy")
       .send("pages=730")
-      .send("id="+tolstoy.id)
+      .send("id=" + tolstoy.id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/list/books"));
   });
-    it("show list", async () => {
-      const loginCookie = await getAdminLoginCookie();
-      const app = await getApp({ disableCsrf: true });
-      await request(app)
-        .get("/list/books")
-        .set("Cookie", loginCookie)
-        .expect(toInclude("/list/_versions/"))
-        .expect(toInclude("730"))
-        .expect(toNotInclude("729"))
-  })
+  it("show list", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/list/books")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("/list/_versions/"))
+      .expect(toInclude("730"))
+      .expect(toNotInclude("729"));
+  });
   it("show versions", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = await Table.findOne({ name: "books" });
-    const tolstoy = await table.getRow({author: "Leo Tolstoy"})
+    const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/list/_versions/books/"+tolstoy.id)
+      .get("/list/_versions/books/" + tolstoy.id)
       .set("Cookie", loginCookie)
       .expect(toInclude("729"))
       .expect(toInclude("730"))
       .expect(toNotInclude("728"))
-      .expect(toInclude("Leo Tolstoy"))
-})
-it("restores old version", async () => {
-  const loginCookie = await getAdminLoginCookie();
-  const table = await Table.findOne({ name: "books" });
-  const tolstoy = await table.getRow({author: "Leo Tolstoy"})
-  const app = await getApp({ disableCsrf: true });
-  await request(app)
-    .post(`/list/_restore/books/${tolstoy.id}/1`)
-    .set("Cookie", loginCookie)
-    
-})
-it("show list with restored version", async () => {
-  const loginCookie = await getAdminLoginCookie();
-  const app = await getApp({ disableCsrf: true });
-  await request(app)
-    .get("/list/books")
-    .set("Cookie", loginCookie)
-    .expect(toInclude("/list/_versions/"))
-    .expect(toInclude("729"))
-    .expect(toNotInclude("730"))
-})
-
-})
+      .expect(toInclude("Leo Tolstoy"));
+  });
+  it("restores old version", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+    const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post(`/list/_restore/books/${tolstoy.id}/1`)
+      .set("Cookie", loginCookie);
+  });
+  it("show list with restored version", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/list/books")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("/list/_versions/"))
+      .expect(toInclude("729"))
+      .expect(toNotInclude("730"));
+  });
+});
