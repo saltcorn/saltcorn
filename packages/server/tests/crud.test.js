@@ -116,15 +116,6 @@ describe("homepage", () => {
   });
 });
 
-describe("db page", () => {
-  it("shows to public", async () => {
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/page/a_page")
-      .expect(toInclude(">Bye bye<"));
-  });
-});
-
 describe("bool toggle", () => {
   it("should toggle", async () => {
     const loginCookie = await getAdminLoginCookie();

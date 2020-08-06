@@ -6,6 +6,7 @@ const {
   toRedirect,
   itShouldRedirectUnauthToLogin,
   toInclude,
+  toSucceed,
   toNotInclude,
   resetToFixtures
 } = require("../auth/testhelp");
@@ -41,8 +42,17 @@ describe("pageedit", () => {
     await request(app)
       .get("/pageedit/edit/a_page")
       .set("Cookie", loginCookie)
-
       .expect(toInclude("A short name that will be in your URL"));
+
+    //TODO full context
+    const ctx = encodeURIComponent(JSON.stringify({}));
+    await request(app)
+      .post("/pageedit/edit")
+      .set("Cookie", loginCookie)
+      .send("name=a_page")
+      .send("stepName=page")
+      .send("contextEnc=" + ctx)
+      .expect(toInclude("builder.renderBuilder"));
   });
   it("show new", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -52,5 +62,20 @@ describe("pageedit", () => {
       .set("Cookie", loginCookie)
 
       .expect(toInclude("A short name that will be in your URL"));
+  });
+  it("should delete page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/pageedit/delete/1")
+      .set("Cookie", loginCookie)
+
+      .expect(toRedirect("/pageedit"));
+
+    await request(app)
+      .get("/pageedit")
+      .set("Cookie", loginCookie)
+
+      .expect(toNotInclude("a_page"));
   });
 });

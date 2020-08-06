@@ -43,7 +43,7 @@ describe("admin page", () => {
     await request(app)
       .post("/admin/backup")
       .set("Cookie", loginCookie)
-      .expect(toSucceed);
+      .expect(toSucceed());
   });
 });
 
@@ -149,7 +149,7 @@ describe("files admin", () => {
     await request(app)
       .get("/files/download/1")
       .set("Cookie", loginCookie)
-      .expect(toSucceed);
+      .expect(toSucceed());
   });
 
   it("serve file", async () => {
@@ -158,7 +158,7 @@ describe("files admin", () => {
     await request(app)
       .get("/files/serve/1")
       .set("Cookie", loginCookie)
-      .expect(toSucceed);
+      .expect(toSucceed());
   });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -179,6 +179,6 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/files/serve/1")
-      .expect(toSucceed);
+      .expect(toSucceed());
   });
 });
