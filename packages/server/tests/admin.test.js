@@ -30,9 +30,8 @@ describe("admin page", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/admin/backup")
+      .post("/admin/backup")
       .set("Cookie", loginCookie)
       .expect(toSucceed);
   });
-
 });
