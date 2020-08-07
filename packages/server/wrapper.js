@@ -121,7 +121,7 @@ const get_brand = state => {
   };
 };
 module.exports = function(req, res, next) {
-  res.sendAuthWrap = function(title, form, ...html) {
+  res.sendAuthWrap = function(title, form, authLinks, ...html) {
     const state = getState();
 
     const layout = state.layout;
@@ -130,6 +130,7 @@ module.exports = function(req, res, next) {
         state.layout.authWrap({
           title,
           form,
+          authLinks,
           afterForm: html.length === 1 ? html[0] : html.join(""),
           brand: get_brand(state),
           menu: get_menu(req),

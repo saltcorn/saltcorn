@@ -43,9 +43,7 @@ router.get(
     res.sendAuthWrap(
       `Login`,
       loginForm(),
-      ...(allow_signup
-        ? ["Don't have an account? ", link("/auth/signup", "Signup »")]
-        : [])
+      allow_signup ? { signup: "/auth/signup" } : {}
     );
   })
 );
@@ -67,12 +65,7 @@ router.get(
       const form = loginForm();
       form.action = "/auth/signup";
       form.submitLabel = "Sign up";
-      res.sendAuthWrap(
-        `Sign up`,
-        form,
-        "Already have an account? ",
-        link("/auth/login", "Login »")
-      );
+      res.sendAuthWrap(`Sign up`, form, { login: "/auth/signup" });
     } else {
       req.flash("danger", "Signups not enabled");
       res.redirect("/auth/login");
@@ -91,7 +84,7 @@ router.get(
       form.submitLabel = "Create user";
       form.blurb =
         "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-      res.sendAuthWrap(`Create first user`, form);
+      res.sendAuthWrap(`Create first user`, form, {});
     } else {
       req.flash("danger", "Users already present");
       res.redirect("/auth/login");

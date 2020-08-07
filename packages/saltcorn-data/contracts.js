@@ -98,7 +98,12 @@ const is_plugin_authwrap_arg = is.obj({
       msg: is.or(is.str, is.array(is.str))
     })
   ),
-  headers: is.array(is_header)
+  headers: is.array(is_header),
+  authLinks: is.obj({
+    login: is.maybe(is.str),
+    signup: is.maybe(is.str),
+    forgot: is.maybe(is.str)
+  })
 });
 
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);

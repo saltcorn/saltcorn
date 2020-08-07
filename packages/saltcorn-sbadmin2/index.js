@@ -15,7 +15,7 @@ const {
   footer
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
-const { renderForm } = require("@saltcorn/markup");
+const { renderForm, link } = require("@saltcorn/markup");
 
 const subItem = currentUrl => item =>
   item.link
@@ -154,13 +154,30 @@ const renderBody = (title, body) =>
     layout:
       typeof body === "string" ? { type: "card", title, contents: body } : body
   });
+
+const renderAuthLinks = authLinks => {
+  var links = [];
+  if (authLinks.login)
+    links.push(link(authLinks.login, "Already have an account? Login!"));
+  if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
+  if (authLinks.signup) links.push(link(authLinks.login, "Create an account!"));
+  if (links.length === 0) return "";
+  else return hr() + links.map(l => div({ class: "text-center" }, l)).join("");
+};
+
+const formModify = form => {
+  form.formStyle = "vert";
+  form.submitButtonClass = "btn-primary btn-user btn-block";
+  return form;
+};
 const authWrap = ({
   title,
   alerts,
   form,
   afterForm,
   headers,
-  csrfToken
+  csrfToken,
+  authLinks
 }) => `<!doctype html>
   <html lang="en">
   <head>
@@ -197,7 +214,8 @@ const authWrap = ({
                     <div class="text-center">
                       <h1 class="h4 text-gray-900 mb-4">${title}</h1>
                     </div>
-                    ${renderForm(form, csrfToken)}
+                    ${renderForm(formModify(form), csrfToken)}
+                    ${renderAuthLinks(authLinks)}
                     ${afterForm}
                   </div>
                 </div>
