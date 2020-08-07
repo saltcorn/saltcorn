@@ -1,6 +1,6 @@
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
-const { ul, li, div, small } = require("@saltcorn/markup/tags");
+const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 
 const getFlashes = req =>
@@ -121,7 +121,7 @@ const get_brand = state => {
   };
 };
 module.exports = function(req, res, next) {
-  res.sendAuthWrap = function({ title, form, afterForm }) {
+  res.sendAuthWrap = function(title, form, ...html) {
     const state = getState();
 
     const layout = state.layout;
@@ -130,7 +130,7 @@ module.exports = function(req, res, next) {
         state.layout.authWrap({
           title,
           form,
-          afterForm,
+          afterForm: html.length === 1 ? html[0] : html.join(""),
           brand: get_brand(state),
           menu: get_menu(req),
           alerts: getFlashes(req),
@@ -138,7 +138,9 @@ module.exports = function(req, res, next) {
         })
       );
     } else {
-      const body = div(h3(title), renderForm(form, req.csrfToken()), afterForm);
+      const body = div(h3(title), renderForm(form, req.csrfToken()), ...html);
+      const currentUrl = req.originalUrl.split("?")[0];
+
       res.send(
         state.layout.wrap({
           title,
