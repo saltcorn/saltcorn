@@ -230,8 +230,7 @@ const authWrap = ({
   wrapIt(
     headers,
     'class="bg-gradient-primary"',
-    `
-    <div class="container">
+    `<div class="container">
       <div class="row justify-content-center">
         <div class="col-xl-10 col-lg-12 col-md-9">
           <div class="card o-hidden border-0 shadow-lg my-5">
@@ -253,7 +252,6 @@ const authWrap = ({
           </div>
         </div>
       </div>
-
     </div>`
   );
 
@@ -261,8 +259,7 @@ const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
   wrapIt(
     headers,
     'id="page-top"',
-    `
-    <div id="wrapper">
+    `<div id="wrapper">
       ${sidebar(brand, menu, currentUrl)}
 
       <div id="content-wrapper" class="d-flex flex-column">
