@@ -81,7 +81,32 @@ const is_plugin_wrap_arg = is.obj({
   headers: is.array(is_header)
 });
 
+const is_plugin_authwrap_arg = is.obj({
+  title: is.str,
+  form: is.class("Form"),
+  afterForm: is.maybe(is.str),
+  brand: is.obj({ name: is.str }),
+  menu: is.array(
+    is.obj({
+      section: is.str,
+      items: is.array(is_menu_item)
+    })
+  ),
+  alerts: is.array(
+    is.obj({
+      type: is.one_of(["error", "danger", "success", "warning"]),
+      msg: is.or(is.str, is.array(is.str))
+    })
+  ),
+  headers: is.array(is_header)
+});
+
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
+
+const is_plugin_layout = is.obj({
+  wrap: is_plugin_wrap,
+  authWrap: is.maybe(is.fun(is_plugin_authwrap_arg, is.str))
+})
 
 const is_attribute = is.obj({ name: is.str, type: is.str, required: is.bool });
 
@@ -148,9 +173,7 @@ const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
   layout: is_maybe_cfg_fun(
-    is.obj({
-      wrap: is_plugin_wrap
-    })
+    is_plugin_layout
   ),
   types: is_maybe_cfg_fun(is.array(is_plugin_type)),
   pages: is_maybe_cfg_fun(
@@ -180,5 +203,6 @@ module.exports = {
   is_viewtemplate,
   is_header,
   is_pack,
-  is_column
+  is_column,
+  is_plugin_layout
 };
