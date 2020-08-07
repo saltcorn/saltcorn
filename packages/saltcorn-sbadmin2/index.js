@@ -172,7 +172,7 @@ const formModify = form => {
   return form;
 };
 
-const wrapIt = (headers, bodyAttr, rest) =>
+const wrapIt = (headers, title, bodyAttr, rest) =>
   `<!doctype html>
   <html lang="en">
   <head>
@@ -229,6 +229,7 @@ const authWrap = ({
 }) =>
   wrapIt(
     headers,
+    title,
     'class="bg-gradient-primary"',
     `<div class="container">
       <div class="row justify-content-center">
@@ -258,6 +259,7 @@ const authWrap = ({
 const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
   wrapIt(
     headers,
+    title,
     'id="page-top"',
     `<div id="wrapper">
       ${sidebar(brand, menu, currentUrl)}
