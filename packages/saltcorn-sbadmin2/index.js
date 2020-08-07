@@ -15,6 +15,7 @@ const {
   footer
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
+const { renderForm } = require("@saltcorn/markup");
 
 const subItem = currentUrl => item =>
   item.link
@@ -153,6 +154,83 @@ const renderBody = (title, body) =>
     layout:
       typeof body === "string" ? { type: "card", title, contents: body } : body
   });
+const authWrap = ({
+  title,
+  alerts,
+  form,
+  afterForm,
+  headers,
+  csrfToken
+}) => `<!doctype html>
+  <html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+  
+    <!-- Custom styles for this template-->
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
+    ${headers
+      .filter(h => h.css)
+      .map(h => `<link href="${h.css}" rel="stylesheet">`)
+      .join("")}
+    ${headers
+      .filter(h => h.headerTag)
+      .map(h => h.headerTag)
+      .join("")}
+    <title>${text(title)}</title>
+  </head>
+  <body class="bg-gradient-primary">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9">
+          <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+              <div class="row">
+                <div class="col">
+                  <div class="p-5">
+                    ${alerts.map(a => alert(a.type, a.msg)).join("")}
+                    <div class="text-center">
+                      <h1 class="h4 text-gray-900 mb-4">${title}</h1>
+                    </div>
+                    ${renderForm(form, csrfToken)}
+                    ${afterForm}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/bootstrap/js/bootstrap.bundle.min.js" integrity="sha256-fzFFyH01cBVPYzl16KT40wqjhgPtq6FFUB6ckN2+GGw=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/jquery-easing/jquery.easing.min.js" integrity="sha256-H3cjtrm/ztDeuhCN9I4yh4iN2Ybx/y1RM7rMmAesA0k=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js" integrity="sha256-tCfY819ixSSCdfJ1UH/P8fV9/PdD2aldEgg6Te0HaOU=" crossorigin="anonymous"></script>
+    ${headers
+      .filter(h => h.script)
+      .map(
+        h =>
+          `<script src="${h.script}" ${
+            h.integrity
+              ? `integrity="${h.integrity}" crossorigin="anonymous"`
+              : ""
+          }></script>`
+      )
+      .join("")}
+    </body>
+  </html>`;
 
 const wrap = ({
   title,
@@ -198,17 +276,11 @@ const wrap = ({
         </div>
       </div>
     </div>
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/bootstrap/js/bootstrap.bundle.min.js" integrity="sha256-fzFFyH01cBVPYzl16KT40wqjhgPtq6FFUB6ckN2+GGw=" crossorigin="anonymous"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/vendor/jquery-easing/jquery.easing.min.js" integrity="sha256-H3cjtrm/ztDeuhCN9I4yh4iN2Ybx/y1RM7rMmAesA0k=" crossorigin="anonymous"></script>
-  
-    <!-- Custom scripts for all pages-->
     <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.0.7/js/sb-admin-2.min.js" integrity="sha256-tCfY819ixSSCdfJ1UH/P8fV9/PdD2aldEgg6Te0HaOU=" crossorigin="anonymous"></script>
     ${headers
       .filter(h => h.script)
@@ -237,4 +309,4 @@ const alert = (type, s) => {
     : "";
 };
 
-module.exports = { sc_plugin_api_version: 1, layout: { wrap } };
+module.exports = { sc_plugin_api_version: 1, layout: { wrap, authWrap } };

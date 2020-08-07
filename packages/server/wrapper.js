@@ -134,7 +134,8 @@ module.exports = function(req, res, next) {
           brand: get_brand(state),
           menu: get_menu(req),
           alerts: getFlashes(req),
-          headers: get_headers(req)
+          headers: get_headers(req),
+          csrfToken: req.csrfToken()
         })
       );
     } else {
