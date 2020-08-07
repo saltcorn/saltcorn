@@ -4,7 +4,8 @@ const {
   is_plugin,
   is_header,
   is_viewtemplate,
-  is_plugin_type
+  is_plugin_type,
+  is_plugin_layout
 } = require("../contracts");
 
 const db = require(".");
@@ -84,9 +85,9 @@ class State {
       this.fileviews[k] = v;
     });
     const layout = withCfg("layout");
-    if (layout && layout.wrap)
-      this.layout.wrap = contract(is_plugin_wrap, layout.wrap);
-
+    if (layout) {
+      this.layout = contract(is_plugin_layout, layout);
+    }
     withCfg("headers", []).forEach(h => {
       if (!this.headers.includes(h)) this.headers.push(h);
     });
