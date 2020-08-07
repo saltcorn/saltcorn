@@ -1,7 +1,7 @@
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
-const { renderForm } = require("@saltcorn/markup");
+const { renderForm, link } = require("@saltcorn/markup");
 
 const getFlashes = req =>
   ["error", "success", "danger", "warning"]
@@ -140,7 +140,19 @@ module.exports = function(req, res, next) {
         })
       );
     } else {
-      const body = div(h3(title), renderForm(form, req.csrfToken()), ...html);
+      var links = [];
+      if (authLinks.login)
+        links.push(link(authLinks.login, "Already have an account? Login!"));
+      if (authLinks.forgot)
+        links.push(link(authLinks.forgot, "Forgot password?"));
+      if (authLinks.signup)
+        links.push(link(authLinks.signup, "Create an account!"));
+      const body = div(
+        h3(title),
+        renderForm(form, req.csrfToken()),
+        links.join(" | "),
+        ...html
+      );
       const currentUrl = req.originalUrl.split("?")[0];
 
       res.send(
