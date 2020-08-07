@@ -65,7 +65,7 @@ router.get(
       const form = loginForm();
       form.action = "/auth/signup";
       form.submitLabel = "Sign up";
-      res.sendAuthWrap(`Sign up`, form, { login: "/auth/signup" });
+      res.sendAuthWrap(`Sign up`, form, { login: "/auth/login" });
     } else {
       req.flash("danger", "Signups not enabled");
       res.redirect("/auth/login");
