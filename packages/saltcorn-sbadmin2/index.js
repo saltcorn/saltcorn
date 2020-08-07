@@ -16,7 +16,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
-
+const { alert } = require("@saltcorn/markup/layout_utils");
 const subItem = currentUrl => item =>
   item.link
     ? a(
@@ -274,18 +274,5 @@ const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
       </div>
     </div>`
   );
-
-const alert = (type, s) => {
-  //console.log("alert", type, s,s.length)
-  const realtype = type === "error" ? "danger" : type;
-  return s && s.length > 0
-    ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-  ${text(s)}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>`
-    : "";
-};
 
 module.exports = { sc_plugin_api_version: 1, layout: { wrap, authWrap } };
