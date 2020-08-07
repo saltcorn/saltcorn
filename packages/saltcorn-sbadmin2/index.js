@@ -160,7 +160,7 @@ const renderAuthLinks = authLinks => {
   if (authLinks.login)
     links.push(link(authLinks.login, "Already have an account? Login!"));
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
-  if (authLinks.signup) links.push(link(authLinks.login, "Create an account!"));
+  if (authLinks.signup) links.push(link(authLinks.signup, "Create an account!"));
   if (links.length === 0) return "";
   else return hr() + links.map(l => div({ class: "text-center" }, l)).join("");
 };
