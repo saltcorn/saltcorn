@@ -85,7 +85,7 @@ const is_plugin_authwrap_arg = is.obj({
   title: is.str,
   form: is.class("Form"),
   afterForm: is.maybe(is.str),
-  brand: is.obj({ name: is.str }),
+  brand: is.obj({ name: is.str, logo: is.maybe(is.str) }),
   menu: is.array(
     is.obj({
       section: is.str,
@@ -106,7 +106,7 @@ const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
 const is_plugin_layout = is.obj({
   wrap: is_plugin_wrap,
   authWrap: is.maybe(is.fun(is_plugin_authwrap_arg, is.str))
-})
+});
 
 const is_attribute = is.obj({ name: is.str, type: is.str, required: is.bool });
 
@@ -172,9 +172,7 @@ const is_maybe_cfg_fun = a => is.or(is.fun(is.obj, a), a, is.undefined);
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
-  layout: is_maybe_cfg_fun(
-    is_plugin_layout
-  ),
+  layout: is_maybe_cfg_fun(is_plugin_layout),
   types: is_maybe_cfg_fun(is.array(is_plugin_type)),
   pages: is_maybe_cfg_fun(
     is.objVals(is.obj({ getPage: is.fun([], is.promise(is_layout)) }))
