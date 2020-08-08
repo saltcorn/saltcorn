@@ -12,7 +12,7 @@ const labelToName = label => sqlsanitize(label.toLowerCase().replace(" ", "_"));
 
 class Field {
   constructor(o) {
-    if (!o.type && !o.input_type) throw "Field initialised with no type";
+    if (!o.type && !o.input_type) throw new Error(`Field ${o.name} initialised with no type`);
     this.label = o.label || o.name;
     this.name = o.name || labelToName(o.label);
     this.fieldview = o.fieldview;
