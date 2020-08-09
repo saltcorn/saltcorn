@@ -55,6 +55,13 @@ const no_views_logged_in = async (req, res) => {
                 a(
                   { href: `/table/new`, class: "btn btn-primary" },
                   "Create a table »"
+                ),
+                a(
+                  {
+                    href: `/table/create-from-csv`,
+                    class: "btn btn-secondary mx-3"
+                  },
+                  "Create table from CSV upload"
                 )
               )
             )
@@ -105,6 +112,13 @@ const no_views_logged_in = async (req, res) => {
                 a(
                   { href: `/table/new`, class: "btn btn-primary" },
                   "Create a table"
+                ),
+                a(
+                  {
+                    href: `/table/create-from-csv`,
+                    class: "btn btn-secondary mx-3"
+                  },
+                  "Create table from CSV upload"
                 )
               )
             )

@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
+const File = require("@saltcorn/data/models/file");
 const Form = require("@saltcorn/data/models/form");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
@@ -24,15 +25,28 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const cfgs = await getAllConfigOrDefaults();
-    const canEdit = key => getState().types[configTypes[key].type];
+    const files = await File.find({ min_role_read: 10 });
+    const canEdit = key =>
+      getState().types[configTypes[key].type] ||
+      configTypes[key].type === "File";
     const hideValue = key =>
       configTypes[key] ? configTypes[key].type === "hidden" : true;
+    const showFile = r => {
+      const file = files.find(f => f.id == r.value);
+      return file ? file.filename : "Unknown file";
+    };
+    const showValue = r =>
+      hideValue(r.key)
+        ? "..."
+        : configTypes[r.key].type === "File"
+        ? showFile(r)
+        : JSON.stringify(r.value);
     const configTable = mkTable(
       [
         { label: "Key", key: r => r.label || r.key },
         {
           label: "Value",
-          key: r => (hideValue(r.key) ? "..." : JSON.stringify(r.value))
+          key: showValue
         },
         {
           label: "Edit",
@@ -51,20 +65,23 @@ router.get(
   })
 );
 
-const formForKey = (key, value) =>
-  new Form({
+const formForKey = async (key, value) => {
+  const form = new Form({
     action: `/config/edit/${key}`,
     fields: [
       {
         name: key,
         label: configTypes[key].label || key,
-        type: getState().types[configTypes[key].type],
-        sublabel: configTypes[key].sublabel
+        type: configTypes[key].type,
+        sublabel: configTypes[key].sublabel,
+        attributes: configTypes[key].attributes
       }
     ],
     ...(typeof value !== "undefined" && { values: { [key]: value } })
   });
-
+  await form.fill_fkey_options();
+  return form;
+};
 router.get(
   "/edit/:key",
   setTenant,
@@ -73,9 +90,10 @@ router.get(
     const { key } = req.params;
 
     const value = await getConfig(key);
+    const form = await formForKey(key, value);
     res.sendWrap(
       `Edit configuration key ${key}`,
-      renderForm(formForKey(key, value), req.csrfToken())
+      renderForm(form, req.csrfToken())
     );
   })
 );
@@ -87,7 +105,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { key } = req.params;
 
-    const form = formForKey(key);
+    const form = await formForKey(key);
     const valres = form.validate(req.body);
     if (valres.errors)
       res.sendWrap(

@@ -3,7 +3,12 @@ const { contract, is } = require("contractis");
 
 const configTypes = {
   site_name: { type: "String", label: "Site name", default: "Saltcorn" },
-  site_logo_id: { type: "Integer", label: "Site logo", default: 0 },
+  site_logo_id: {
+    type: "File",
+    label: "Site logo",
+    default: 0,
+    attributes: { select_file_where: { min_role_read: 10 } }
+  },
   base_url: { type: "String", label: "Base URL", default: "" },
   menu_items: { type: "hidden", label: "Menu items" },
   globalSearch: { type: "hidden", label: "Global search" },

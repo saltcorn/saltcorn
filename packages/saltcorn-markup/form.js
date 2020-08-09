@@ -96,11 +96,15 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         name
       )}">${opts}</select>`;
     case "file":
-      return `${
-        v[hdr.name] ? text(v[hdr.name]) : ""
-      }<input type="file" class="form-control-file ${validClass} ${
-        hdr.class
-      }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
+      if (hdr.attributes && hdr.attributes.select_file_where) {
+        hdr.input_type = "select";
+        return innerField(v, errors, nameAdd)(hdr);
+      } else
+        return `${
+          v[hdr.name] ? text(v[hdr.name]) : ""
+        }<input type="file" class="form-control-file ${validClass} ${
+          hdr.class
+        }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
     case "search":
       return search_bar(name, v && v[hdr.name]);
     default:
