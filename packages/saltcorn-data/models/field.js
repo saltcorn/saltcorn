@@ -85,16 +85,16 @@ class Field {
     if (
       this.is_fkey &&
       (this.type !== "File" ||
-        typeof this.attributes.select_file_where !== "undefined")
+        (this.type == "File" &&
+          typeof this.attributes.select_file_where !== "undefined"))
     ) {
       const rows = await db.select(
         this.reftable_name,
         this.type === "File" ? this.attributes.select_file_where : undefined
       );
       const summary_field =
-        this.attributes.summary_field || this.type === "File"
-          ? "filename"
-          : "id";
+        this.attributes.summary_field ||
+        (this.type === "File" ? "filename" : "id");
       const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
       const allOpts =
         !this.required || force_allow_none
