@@ -85,8 +85,7 @@ class Field {
     if (
       this.is_fkey &&
       (this.type !== "File" ||
-        (this.type == "File" &&
-          typeof this.attributes.select_file_where !== "undefined"))
+        typeof this.attributes.select_file_where !== "undefined")
     ) {
       const rows = await db.select(
         this.reftable_name,
