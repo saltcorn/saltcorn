@@ -77,16 +77,35 @@ const can_install_pack = contract(
     )
   ),
   async pack => {
-    const matchTables = await Table.find({
-      name: { in: pack.tables.map(t => t.name) }
-    });
+    const warns = [];
+    const allTables = (await Table.find()).map(t =>
+      db.sqlsanitize(t.name.toLowerCase())
+    );
+    const packTables = (pack.tables || []).map(t =>
+      db.sqlsanitize(t.name.toLowerCase())
+    );
+    const matchTables = allTables.filter(dbt =>
+      packTables.some(pt => pt === dbt)
+    );
 
     if (matchTables.length > 0)
       return {
-        error: "Tables already exist: " + matchTables.map(t => t.name).join()
+        error: "Tables already exist: " + matchTables.join()
       };
-
-    return true;
+    const matchViews = await View.find({
+      name: { in: (pack.views || []).map(t => t.name) }
+    });
+    const matchPages = await Page.find({
+      name: { in: (pack.pages || []).map(t => t.name) }
+    });
+    matchViews.forEach(v => {
+      warns.push(`Clashing view ${v.name}`);
+    });
+    matchPages.forEach(p => {
+      warns.push(`Clashing page ${p.name}`);
+    });
+    if (warns.length > 0) return { warning: warns.join(".") };
+    else return true;
   }
 );
 
