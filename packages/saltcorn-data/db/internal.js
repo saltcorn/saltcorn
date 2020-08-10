@@ -36,7 +36,7 @@ const whereClause = is_sqlite => ([k, v], i) =>
   k === "_fts"
     ? whereFTS(v, i, is_sqlite)
     : typeof (v || {}).in !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} = ANY (${placeHolder(is_sqlite, i)})`
+    ? `${sqlsanitizeAllowDots(k)} = ${is_sqlite ? '' : 'ANY'} (${placeHolder(is_sqlite, i)})`
     : typeof (v || {}).ilike !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
