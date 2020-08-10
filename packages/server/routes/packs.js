@@ -18,7 +18,8 @@ const {
   plugin_pack,
   page_pack,
   install_pack,
-  fetch_pack_by_name
+  fetch_pack_by_name,
+  can_install_pack
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code } = require("@saltcorn/markup/tags");
 
@@ -143,6 +144,14 @@ router.post(
     if (!error && !is_pack.check(pack)) {
       error = "Not a valid pack";
     }
+    if (!error) {
+      const can_install = await can_install_pack(pack);
+      if (can_install.error) {
+        error = can_install.error;
+      } else if (can_install.warning) {
+        req.flash("warning", can_install.warning);
+      }
+    }
     if (error) {
       const form = install_pack_form();
       form.values = { pack: req.body.pack };
@@ -166,7 +175,16 @@ router.post(
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
-    //console.log(pack)
+    const can_install = await can_install_pack(pack.pack);
+
+    if (can_install.error) {
+      error = can_install.error;
+      req.flash("error", error);
+      res.redirect(`/plugins`);
+      return;
+    } else if (can_install.warning) {
+      req.flash("warning", can_install.warning);
+    }
     await install_pack(pack.pack, name, p =>
       load_plugins.loadAndSaveNewPlugin(p)
     );

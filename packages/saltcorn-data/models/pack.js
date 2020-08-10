@@ -1,4 +1,5 @@
 const Table = require("./table");
+const db = require("../db");
 const View = require("./view");
 const Field = require("./field");
 const { getState } = require("../db/state");
@@ -64,6 +65,30 @@ const page_pack = contract(pack_fun, async name => {
     fixed_states: page.fixed_states
   };
 });
+
+const can_install_pack = contract(
+  is.fun(
+    is_pack,
+    is.promise(
+      is.or(
+        is.eq(true),
+        is.obj({ error: is.maybe(is.str), warning: is.maybe(is.str) })
+      )
+    )
+  ),
+  async pack => {
+    const matchTables = await Table.find({
+      name: { in: pack.tables.map(t => t.name) }
+    });
+
+    if (matchTables.length > 0)
+      return {
+        error: "Tables already exist: " + matchTables.map(t => t.name).join()
+      };
+
+    return true;
+  }
+);
 
 const install_pack = contract(
   is.fun(
@@ -161,5 +186,6 @@ module.exports = {
   install_pack,
   fetch_available_packs,
   fetch_pack_by_name,
-  is_stale
+  is_stale,
+  can_install_pack
 };
