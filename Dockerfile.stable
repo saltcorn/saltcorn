@@ -1,0 +1,9 @@
+FROM node:14
+
+RUN npm install -g saltcorn-cli
+
+RUN which saltcorn
+
+ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
+
+ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]
