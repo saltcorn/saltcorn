@@ -60,6 +60,9 @@ describe("crash log", () => {
   it("crashes on missing id", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
+    console.log(
+      "An error is printed below. This is eexpected as part of the test"
+    );
     await request(app)
       .get("/crashlog/99")
       .set("Cookie", loginCookie)
@@ -147,7 +150,7 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
     await request(app)
-      .get("/files/download/1")
+      .get("/files/download/2")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
@@ -156,21 +159,21 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
     await request(app)
-      .get("/files/serve/1")
+      .get("/files/serve/2")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/files/serve/1")
+      .get("/files/serve/2")
       .expect(toRedirect("/"));
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/files/setrole/1")
+      .post("/files/setrole/2")
       .set("Cookie", loginCookie)
       .send("role=10")
       .expect(toRedirect("/files"));
@@ -178,7 +181,7 @@ describe("files admin", () => {
   it("serve file to public after role change", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/files/serve/1")
+      .get("/files/serve/2")
       .expect(toSucceed());
   });
 });

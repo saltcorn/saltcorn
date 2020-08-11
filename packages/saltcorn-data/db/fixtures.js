@@ -2,9 +2,11 @@ const db = require(".");
 const { getState } = require("./state");
 const Table = require("../models/table");
 const Field = require("../models/field");
+const File = require("../models/file");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
+const fs = require("fs").promises;
 
 module.exports = async () => {
   getState().registerPlugin("base", require("../base-plugin"));
@@ -190,6 +192,15 @@ module.exports = async () => {
     password: "secret",
     role_id: 8
   });
+  await File.ensure_file_store();
+  const mv = async fnm => {
+    await fs.writeFile(fnm, "cecinestpasunpng");
+  };
+  await File.from_req_files(
+    { mimetype: "image/png", name: "magrite.png", mv, size: 245752 },
+    1,
+    10
+  );
   await Page.create({
     name: "a_page",
     title: "grgw",

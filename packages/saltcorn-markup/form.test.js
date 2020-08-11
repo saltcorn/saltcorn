@@ -19,7 +19,8 @@ describe("form render", () => {
         {
           name: "name",
           label: "Name",
-          input_type: "text"
+          input_type: "text",
+          form_name: "name"
         }
       ]
     });
@@ -42,7 +43,8 @@ describe("form render", () => {
         {
           name: "name",
           label: "Name",
-          input_type: "text"
+          input_type: "text",
+          form_name: "name"
         }
       ],
       values: {},

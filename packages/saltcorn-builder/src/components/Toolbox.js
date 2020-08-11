@@ -231,8 +231,6 @@ export const ToolboxEdit = () => {
   );
 };
 
-const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
-
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
@@ -309,7 +307,7 @@ export const ToolboxPage = () => {
                 connectors.create(
                   ref,
                   <View
-                    name={rand_ident()}
+                    name={"not_assigned"}
                     state={"shared"}
                     view={views.length > 0 ? views[0].name : "view"}
                   />

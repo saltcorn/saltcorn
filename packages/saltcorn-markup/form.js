@@ -7,6 +7,7 @@ const {
   text_attr,
   button,
   a,
+  h5,
   span
 } = require("./tags");
 const { contract, is } = require("contractis");
@@ -41,16 +42,21 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             { class: "form-check" },
             inner,
             label(
-              { for: `input${text_attr(hdr.name)}`, class: "form-check-label" },
+              {
+                for: `input${text_attr(hdr.form_name)}`,
+                class: "form-check-label"
+              },
               text(hdr.label)
             ),
             text(error)
           )
         )
+      : hdr.input_type === "section_header"
+      ? div({ class: `col-sm-12` }, h5(text(hdr.label)))
       : [
           label(
             {
-              for: `input${text_attr(hdr.name)}`,
+              for: `input${text_attr(hdr.form_name)}`,
               class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`
             },
             text(hdr.label)
@@ -72,21 +78,21 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
   );
 
 const innerField = (v, errors, nameAdd = "") => hdr => {
-  const name = hdr.name + nameAdd;
+  const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
   switch (hdr.input_type) {
     case "fromtype":
       return displayEdit(
         hdr,
         name,
-        v && isdef(v[hdr.name]) ? v[hdr.name] : hdr.default,
+        v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
         validClass
       );
     case "hidden":
       return `<input type="hidden" class="form-control ${validClass} ${
         hdr.class
       }" name="${text_attr(name)}" ${
-        v ? `value="${text_attr(v[hdr.name])}"` : ""
+        v ? `value="${text_attr(v[hdr.form_name])}"` : ""
       }>`;
     case "select":
       const opts = select_options(v, hdr);
@@ -101,17 +107,21 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         return innerField(v, errors, nameAdd)(hdr);
       } else
         return `${
-          v[hdr.name] ? text(v[hdr.name]) : ""
+          v[hdr.form_name] ? text(v[hdr.form_name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class
         }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
     case "search":
-      return search_bar(name, v && v[hdr.name]);
+      return search_bar(name, v && v[hdr.form_name]);
+    case "section_header":
+      return "";
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
       }" name="${name}" id="input${text_attr(name)}" ${
-        v && isdef(v[hdr.name]) ? `value="${text_attr(v[hdr.name])}"` : ""
+        v && isdef(v[hdr.form_name])
+          ? `value="${text_attr(v[hdr.form_name])}"`
+          : ""
       }>`;
       const inner = hdr.postText
         ? div(
@@ -136,7 +146,10 @@ const mkFormRow = (v, errors, formStyle, labelCols) => hdr =>
     : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
 const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
-  const adder = a({ href: `javascript:add_repeater('${hdr.name}')` }, "Add");
+  const adder = a(
+    { href: `javascript:add_repeater('${hdr.form_name}')` },
+    "Add"
+  );
   const icons = div(
     { class: "float-right" },
     span(
@@ -151,13 +164,13 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
       i({ class: "fa fa-arrow-down pull-right" })
     )
   );
-  if (Array.isArray(v[hdr.name]) && v[hdr.name].length > 0) {
+  if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return (
       div(
-        { class: `repeats-${hdr.name}` },
-        v[hdr.name].map((vi, ix) => {
+        { class: `repeats-${hdr.form_name}` },
+        v[hdr.form_name].map((vi, ix) => {
           return div(
-            { class: `form-repeat form-namespace repeat-${hdr.name}` },
+            { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
             icons,
             hdr.fields.map(f => {
               return mkFormRowForField(
@@ -175,9 +188,9 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   } else {
     return (
       div(
-        { class: `repeats-${hdr.name}` },
+        { class: `repeats-${hdr.form_name}` },
         div(
-          { class: `form-repeat form-namespace repeat-${hdr.name}` },
+          { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           icons,
           hdr.fields.map(f => {
             return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
@@ -214,7 +227,7 @@ const mkFormRowForField = (
   labelCols,
   nameAdd = ""
 ) => hdr => {
-  const name = hdr.name + nameAdd;
+  const name = hdr.form_name + nameAdd;
   const errorFeedback = errors[name]
     ? `<div class="invalid-feedback">${text(errors[name])}</div>`
     : "";

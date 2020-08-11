@@ -64,3 +64,56 @@ describe("Field", () => {
     expect(f.sql_bare_type).toBe("int");
   });
 });
+
+describe("validate field", () => {
+  const field = new Field({
+    name: "age",
+    label: "Age",
+    type: "Integer"
+  });
+  expect(field.form_name).toBe("age");
+
+  const res = field.validate({ age: 17 });
+  expect(res).toStrictEqual({ success: 17 });
+});
+describe("validate bool field", () => {
+  const field = new Field({
+    name: "over_age",
+    label: "Over age",
+    type: "Bool"
+  });
+  expect(field.form_name).toBe("over_age");
+
+  const res = field.validate({ over_age: "on" });
+  expect(res).toStrictEqual({ success: true });
+  const res1 = field.validate({});
+  expect(res1).toStrictEqual({ success: false });
+});
+
+describe("validate parent field", () => {
+  const field = new Field({
+    name: "age",
+    label: "Age",
+    parent_field: "person",
+    type: "Integer"
+  });
+  expect(field.form_name).toBe("person_age");
+
+  const res = field.validate({ person_age: 17 });
+  expect(res).toStrictEqual({ success: 17 });
+});
+
+describe("validate parent field", () => {
+  const field = new Field({
+    name: "over_age",
+    label: "Over age",
+    type: "Bool",
+    parent_field: "person"
+  });
+  expect(field.form_name).toBe("person_over_age");
+
+  const res = field.validate({ person_over_age: "on" });
+  expect(res).toStrictEqual({ success: true });
+  const res1 = field.validate({});
+  expect(res1).toStrictEqual({ success: false });
+});
