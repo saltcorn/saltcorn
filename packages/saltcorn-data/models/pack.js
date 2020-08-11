@@ -81,28 +81,31 @@ const can_install_pack = contract(
     const allTables = (await Table.find()).map(t =>
       db.sqlsanitize(t.name.toLowerCase())
     );
+    const allViews = (await View.find()).map(t => t.name);
+    const allPages = (await Page.find()).map(t => t.name);
     const packTables = (pack.tables || []).map(t =>
       db.sqlsanitize(t.name.toLowerCase())
     );
     const matchTables = allTables.filter(dbt =>
       packTables.some(pt => pt === dbt)
     );
+    const matchViews = allViews.filter(dbt =>
+      (pack.views || []).some(pt => pt.name === dbt)
+    );
+    const matchPages = allPages.filter(dbt =>
+      (pack.pages || []).some(pt => pt.name === dbt)
+    );
 
     if (matchTables.length > 0)
       return {
         error: "Tables already exist: " + matchTables.join()
       };
-    const matchViews = await View.find({
-      name: { in: (pack.views || []).map(t => t.name) }
-    });
-    const matchPages = await Page.find({
-      name: { in: (pack.pages || []).map(t => t.name) }
-    });
+
     matchViews.forEach(v => {
-      warns.push(`Clashing view ${v.name}.`);
+      warns.push(`Clashing view ${v}.`);
     });
     matchPages.forEach(p => {
-      warns.push(`Clashing page ${p.name}.`);
+      warns.push(`Clashing page ${p}.`);
     });
     if (warns.length > 0) return { warning: warns.join(" ") };
     else return true;
