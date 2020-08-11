@@ -2,8 +2,10 @@ FROM node:14
 
 RUN npm install -g lerna
 
-WORKDIR /opt/saltcorn
+WORKDIR /opt/
 
-COPY . /opt/saltcorn
+COPY . /opt/
 
 RUN lerna bootstrap
+
+CMD ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]
