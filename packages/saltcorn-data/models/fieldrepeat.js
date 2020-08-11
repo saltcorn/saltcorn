@@ -41,6 +41,9 @@ class FieldRepeat {
       return { success: [res, ...rest.success] };
     } else return { success: [] };
   }
+  get form_name() {
+    return this.name;
+  }
 }
 
 FieldRepeat.contract = {

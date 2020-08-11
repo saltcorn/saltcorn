@@ -190,7 +190,6 @@ export const layoutToNodes = (layout, query, actions) => {
 
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
-
 export const craftToSaltcorn = nodes => {
   //console.log(nodes);
   var columns = [];
@@ -271,7 +270,8 @@ export const craftToSaltcorn = nodes => {
       return {
         type: "view",
         view: node.props.view,
-        name: node.props.name ==="not_assigned" ? rand_ident() : node.props.name,
+        name:
+          node.props.name === "not_assigned" ? rand_ident() : node.props.name,
         state: node.props.state
       };
     }

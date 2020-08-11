@@ -122,8 +122,12 @@ describe("parent field", () => {
       })
     ]
   });
-  form.validate({ age: 16 });
+  const html = renderForm(form, "");
+  expect(html.includes("<form")).toBe(true);
+  expect(html.includes('name="person_age"')).toBe(true);
+  form.validate({ person_age: 16 });
   expect(form.values.age).toBe(undefined);
+  expect(!!form.values.person).toBe(true);
   expect(form.values.person.age).toBe(16);
 });
 

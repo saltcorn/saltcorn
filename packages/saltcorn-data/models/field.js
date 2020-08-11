@@ -81,6 +81,12 @@ class Field {
       required: this.required
     };
   }
+
+  get form_name() {
+    if (this.parent_field) return `${this.parent_field}_${this.name}`;
+    else return this.name;
+  }
+
   async fill_fkey_options(force_allow_none = false) {
     if (
       this.is_fkey &&
@@ -141,12 +147,12 @@ class Field {
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval = this.is_fkey
-      ? readKey(whole_rec[this.name])
+      ? readKey(whole_rec[this.form_name])
       : !type || !type.read
-      ? whole_rec[this.name]
+      ? whole_rec[this.form_name]
       : type.readFromFormRecord
-      ? type.readFromFormRecord(whole_rec, this.name)
-      : type.read(whole_rec[this.name]);
+      ? type.readFromFormRecord(whole_rec, this.form_name)
+      : type.read(whole_rec[this.form_name]);
     if (typeof readval === "undefined" || readval === null)
       if (this.required) return { error: "Unable to read " + type.name };
       else return { success: null };

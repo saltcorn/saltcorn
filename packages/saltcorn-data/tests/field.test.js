@@ -64,3 +64,27 @@ describe("Field", () => {
     expect(f.sql_bare_type).toBe("int");
   });
 });
+
+describe("validate field", () => {
+  const field = new Field({
+    name: "age",
+    label: "Age",
+    type: "Integer"
+  });
+  expect(field.form_name).toBe("age");
+
+  const res = field.validate({ age: 17 });
+  expect(res).toStrictEqual({ success: 17 });
+});
+describe("validate parent field", () => {
+  const field = new Field({
+    name: "age",
+    label: "Age",
+    parent_field: "person",
+    type: "Integer"
+  });
+  expect(field.form_name).toBe("person_age");
+
+  const res = field.validate({ person_age: 17 });
+  expect(res).toStrictEqual({ success: 17 });
+});
