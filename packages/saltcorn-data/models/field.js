@@ -308,7 +308,8 @@ Field.contract = {
         "fromtype",
         "search",
         "text",
-        "password"
+        "password",
+        "section_header"
       ])
     ),
     is_fkey: is.bool,

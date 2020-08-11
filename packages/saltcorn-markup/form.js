@@ -7,6 +7,7 @@ const {
   text_attr,
   button,
   a,
+  h5,
   span
 } = require("./tags");
 const { contract, is } = require("contractis");
@@ -47,6 +48,8 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             text(error)
           )
         )
+      : hdr.input_type === "section_header"
+      ? div({ class: `col-sm-12` }, h5(text(hdr.label)))
       : [
           label(
             {
@@ -107,6 +110,8 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
     case "search":
       return search_bar(name, v && v[hdr.name]);
+    case "section_header":
+      return "";
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
