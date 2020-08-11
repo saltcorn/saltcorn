@@ -89,11 +89,10 @@ describe("Pack Endpoints", () => {
   itShouldRedirectUnauthToLogin("/plugins/install");
 });
 
-
-describe("Pack clas detection", () => {
+describe("Pack clash detection", () => {
   it("should reset", async () => {
     await resetToFixtures();
-  })
+  });
   it("should install issues", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -110,7 +109,7 @@ describe("Pack clas detection", () => {
     await request(app)
       .post("/packs/install-named/Blog")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"))
+      .expect(toRedirect("/plugins"));
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
@@ -118,8 +117,8 @@ describe("Pack clas detection", () => {
   });
   it("should reset again", async () => {
     await resetToFixtures();
-  })
-})
+  });
+});
 describe("config endpoints", () => {
   itShouldRedirectUnauthToLogin("/config");
   it("should show get list", async () => {

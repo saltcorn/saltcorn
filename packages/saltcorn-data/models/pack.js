@@ -99,12 +99,12 @@ const can_install_pack = contract(
       name: { in: (pack.pages || []).map(t => t.name) }
     });
     matchViews.forEach(v => {
-      warns.push(`Clashing view ${v.name}`);
+      warns.push(`Clashing view ${v.name}.`);
     });
     matchPages.forEach(p => {
-      warns.push(`Clashing page ${p.name}`);
+      warns.push(`Clashing page ${p.name}.`);
     });
-    if (warns.length > 0) return { warning: warns.join(".") };
+    if (warns.length > 0) return { warning: warns.join(" ") };
     else return true;
   }
 );
