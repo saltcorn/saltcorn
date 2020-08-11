@@ -1,0 +1,3 @@
+**/node_modules
+plugin_packages/
+Dockerfile
