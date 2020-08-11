@@ -35,6 +35,9 @@ describe("Crash", () => {
     const cs = await Crash.find();
 
     expect(cs[0].reltime.length > 0).toBe(true);
+    const cs0 = await Crash.findOne({id: cs[0].id});
+    expect(cs0.msg_short).toBe("my error");
+
   });
 });
 
