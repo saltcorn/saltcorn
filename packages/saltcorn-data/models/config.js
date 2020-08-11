@@ -68,10 +68,12 @@ const getAllConfig = contract(
       try {
         cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
       } catch (e) {
-        console.log("error in parsing config");
-        console.log(e);
-        console.log({ key, value });
-        console.log("Tenant:", db.getTenantSchema());
+        console.error(
+          "config parsing error",
+          e,
+          { key, value },
+          db.getTenantSchema()
+        );
       }
     });
     return cfg;

@@ -60,7 +60,9 @@ describe("crash log", () => {
   it("crashes on missing id", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    console.log("An error is printed below. This is eexpected as part of the test")
+    console.log(
+      "An error is printed below. This is eexpected as part of the test"
+    );
     await request(app)
       .get("/crashlog/99")
       .set("Cookie", loginCookie)

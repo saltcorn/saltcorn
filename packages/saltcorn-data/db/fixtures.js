@@ -193,14 +193,14 @@ module.exports = async () => {
     role_id: 8
   });
   await File.ensure_file_store();
-    const mv = async fnm => {
-      await fs.writeFile(fnm, "cecinestpasunpng");
-    };
-    await File.from_req_files(
-      { mimetype: "image/png", name: "magrite.png", mv, size: 245752 },
-      1,
-      10
-    );
+  const mv = async fnm => {
+    await fs.writeFile(fnm, "cecinestpasunpng");
+  };
+  await File.from_req_files(
+    { mimetype: "image/png", name: "magrite.png", mv, size: 245752 },
+    1,
+    10
+  );
   await Page.create({
     name: "a_page",
     title: "grgw",
