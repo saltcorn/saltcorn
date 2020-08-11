@@ -10,7 +10,7 @@ const select_options = (v, hdr) => {
       : selected.length
       ? selected.includes(value)
       : value === selected;
-  return (opts = hdr.options
+  return (opts = (hdr.options||[])
     .map(o => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
