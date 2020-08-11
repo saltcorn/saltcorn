@@ -22,8 +22,12 @@ const viewTable = views =>
     [
       { label: "Name", key: "name" },
       {
+        label: "Run",
+        key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+      },
+      {
         label: "Edit",
-        key: r => link(`viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+        key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
       }
     ],
     views
