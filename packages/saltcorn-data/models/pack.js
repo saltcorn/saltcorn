@@ -1,4 +1,5 @@
 const Table = require("./table");
+const db = require("../db");
 const View = require("./view");
 const Field = require("./field");
 const { getState } = require("../db/state");
@@ -64,6 +65,52 @@ const page_pack = contract(pack_fun, async name => {
     fixed_states: page.fixed_states
   };
 });
+
+const can_install_pack = contract(
+  is.fun(
+    is_pack,
+    is.promise(
+      is.or(
+        is.eq(true),
+        is.obj({ error: is.maybe(is.str), warning: is.maybe(is.str) })
+      )
+    )
+  ),
+  async pack => {
+    const warns = [];
+    const allTables = (await Table.find()).map(t =>
+      db.sqlsanitize(t.name.toLowerCase())
+    );
+    const allViews = (await View.find()).map(t => t.name);
+    const allPages = (await Page.find()).map(t => t.name);
+    const packTables = (pack.tables || []).map(t =>
+      db.sqlsanitize(t.name.toLowerCase())
+    );
+    const matchTables = allTables.filter(dbt =>
+      packTables.some(pt => pt === dbt)
+    );
+    const matchViews = allViews.filter(dbt =>
+      (pack.views || []).some(pt => pt.name === dbt)
+    );
+    const matchPages = allPages.filter(dbt =>
+      (pack.pages || []).some(pt => pt.name === dbt)
+    );
+
+    if (matchTables.length > 0)
+      return {
+        error: "Tables already exist: " + matchTables.join()
+      };
+
+    matchViews.forEach(v => {
+      warns.push(`Clashing view ${v}.`);
+    });
+    matchPages.forEach(p => {
+      warns.push(`Clashing page ${p}.`);
+    });
+    if (warns.length > 0) return { warning: warns.join(" ") };
+    else return true;
+  }
+);
 
 const install_pack = contract(
   is.fun(
@@ -161,5 +208,6 @@ module.exports = {
   install_pack,
   fetch_available_packs,
   fetch_pack_by_name,
-  is_stale
+  is_stale,
+  can_install_pack
 };
