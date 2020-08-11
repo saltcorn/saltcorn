@@ -89,6 +89,37 @@ describe("Pack Endpoints", () => {
   itShouldRedirectUnauthToLogin("/plugins/install");
 });
 
+
+describe("Pack clas detection", () => {
+  it("should reset", async () => {
+    await resetToFixtures();
+  })
+  it("should install issues", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/packs/install-named/Issue%20%20tracker")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/"));
+  });
+  it("should install issues", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/packs/install-named/Blog")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"))
+    await request(app)
+      .get("/plugins")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Tables already exist: comments"));
+  });
+  it("should reset again", async () => {
+    await resetToFixtures();
+  })
+})
 describe("config endpoints", () => {
   itShouldRedirectUnauthToLogin("/config");
   it("should show get list", async () => {
