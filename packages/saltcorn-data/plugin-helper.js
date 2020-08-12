@@ -154,6 +154,14 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "ViewLink" }
       },
       {
+        name: "view_label",
+        label: "View label",
+        sublabel: "Leave blank for default label.",
+        type: "String",
+        required: false,
+        showIf: { ".coltype": "ViewLink" }
+      },
+      {
         name: "join_field",
         label: "Join Field",
         type: "String",

@@ -27,10 +27,10 @@ const get_view_link_query = contract(
 
 const view_linker = contract(
   is.fun(
-    [is.str, is.array(is.class("Field"))],
+    [is.obj({view: is.str}), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  (view, fields) => {
+  ({view, view_label}, fields) => {
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
@@ -38,14 +38,14 @@ const view_linker = contract(
         const get_query = get_view_link_query(fields);
         return {
           label: vnm,
-          key: r => link(`/view/${encodeURIComponent(vnm)}${get_query(r)}`, vnm)
+          key: r => link(`/view/${encodeURIComponent(vnm)}${get_query(r)}`, view_label||vnm)
         };
       case "ChildList":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
           key: r =>
-            link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, viewnm)
+            link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, view_label||viewnm)
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -56,7 +56,7 @@ const view_linker = contract(
             r[pfld]
               ? link(
                   `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
-                  pviewnm
+                  view_label||pviewnm
                 )
               : ""
         };
@@ -98,7 +98,7 @@ const get_viewable_fields = contract(
               )
           };
         else if (column.type === "ViewLink") {
-          return view_linker(column.view, fields);
+          return view_linker(column, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {

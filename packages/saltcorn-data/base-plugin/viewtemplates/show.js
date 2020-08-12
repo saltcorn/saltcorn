@@ -151,7 +151,7 @@ const render = (row, fields, layout, viewname, table, role, req) => {
         req.csrfToken()
       );
     },
-    view_link({ view }) {
+    view_link(view ) {
       const { key } = view_linker(view, fields);
       return key(row);
     }
