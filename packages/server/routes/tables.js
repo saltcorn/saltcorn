@@ -100,7 +100,14 @@ router.get(
         new Form({
           action: "/table",
           submitLabel: "Create",
-          fields: [{ label: "Table name", name: "name", input_type: "text" }]
+          fields: [
+            {
+              label: "Table name",
+              name: "name",
+              input_type: "text",
+              required: true
+            }
+          ]
         }),
         req.csrfToken()
       )
@@ -365,14 +372,20 @@ router.post(
       // insert
       const { name, ...rest } = v;
       const alltables = await Table.find({});
-      const existing_tables = ["users", ...alltables.map(t => t.name)];
-      if (!existing_tables.includes(name)) {
+      const existing_tables = [
+        "users",
+        ...alltables.map(t => db.sqlsanitize(t.name))
+      ];
+      if (existing_tables.includes(db.sqlsanitize(name))) {
+        req.flash("error", `Table ${name} already exists`);
+        res.redirect(`/table/new`);
+      } else if (db.sqlsanitize(name) === "") {
+        req.flash("error", `Invalid table name ${name}`);
+        res.redirect(`/table/new`);
+      } else {
         const table = await Table.create(name, rest);
         req.flash("success", `Table ${name} created`);
         res.redirect(`/table/${table.id}`);
-      } else {
-        req.flash("error", `Table ${name} already exists`);
-        res.redirect(`/table/new`);
       }
     } else {
       const { id, _csrf, ...rest } = v;

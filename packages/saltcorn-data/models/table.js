@@ -186,13 +186,13 @@ class Table {
       if (k === "id") continue;
       const required = vs.every(v => v !== "");
       const nonEmpties = vs.filter(v => v !== "");
+      const isBools = "true false yes no on off y n t f".split(" ");
       var type;
       if (
         nonEmpties.every(v =>
           //https://www.postgresql.org/docs/11/datatype-boolean.html
-          "true false yes no on off y n t f"
-            .split(" ")
-            .includes(v.toLowerCase())
+
+          isBools.includes(v && v.toLowerCase && v.toLowerCase())
         )
       )
         type = "Bool";

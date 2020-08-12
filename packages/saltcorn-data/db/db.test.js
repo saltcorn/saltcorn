@@ -8,6 +8,9 @@ describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
     expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
   });
+  it("should remove spaces", () => {
+    expect(sqlsanitize(" ")).toBe("");
+  });
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
   });
