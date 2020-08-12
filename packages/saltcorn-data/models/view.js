@@ -14,7 +14,12 @@ class View {
       this.table_id = o.table.id;
     }
     this.configuration = stringToJSON(o.configuration);
-    this.min_role = +o.min_role;
+    this.min_role =
+      !o.min_role && typeof o.is_public !== "undefined"
+        ? o.is_public
+          ? 10
+          : 8
+        : +o.min_role;
     this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
