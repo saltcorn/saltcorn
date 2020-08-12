@@ -374,9 +374,9 @@ router.post(
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
-        ...alltables.map(t => db.sqlsanitize(t.name))
+        ...alltables.map(t => db.sqlsanitize(t.name).toLowerCase())
       ];
-      if (existing_tables.includes(db.sqlsanitize(name))) {
+      if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
         req.flash("error", `Table ${name} already exists`);
         res.redirect(`/table/new`);
       } else if (db.sqlsanitize(name) === "") {

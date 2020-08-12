@@ -253,7 +253,8 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    await Page.delete({ id });
+    const page = await Page.findOne({ id });
+    await page.delete();
     req.flash("success", `Page deleted`);
     res.redirect(`/pageedit`);
   })

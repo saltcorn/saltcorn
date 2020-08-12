@@ -56,10 +56,7 @@ const plugin_pack = contract(pack_fun, async name => {
 });
 const page_pack = contract(pack_fun, async name => {
   const page = await Page.findOne({ name });
-  const roles = await User.get_roles();
-  const root_page_for_roles = roles
-    .filter(r => getState().getConfig(r.role + "_home", "") === name)
-    .map(r => r.role);
+  const root_page_for_roles = await page.is_root_page_for_roles();
   return {
     name: page.name,
     title: page.title,

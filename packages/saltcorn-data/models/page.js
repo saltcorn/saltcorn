@@ -39,12 +39,23 @@ class Page {
     return page;
   }
   async delete() {
-    await Page.delete({ id: this.id });
-  }
-  static async delete(where) {
-    await db.deleteWhere("_sc_pages", where);
+    await db.deleteWhere("_sc_pages", { id: this.id });
+    const root_page_for_roles = await this.is_root_page_for_roles();
+    for (const role of root_page_for_roles) {
+      const { getState } = require("../db/state");
+      await getState().setConfig(role + "_home", "");
+    }
   }
 
+  async is_root_page_for_roles() {
+    const User = require("./user");
+    const { getState } = require("../db/state");
+
+    const roles = await User.get_roles();
+    return roles
+      .filter(r => getState().getConfig(r.role + "_home", "") === this.name)
+      .map(r => r.role);
+  }
   async eachView(f) {
     const go = async segment => {
       if (!segment) return;
