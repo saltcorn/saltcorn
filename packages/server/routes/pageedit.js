@@ -122,11 +122,10 @@ const pageFlow = new Workflow({
   ]
 });
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
+const getPageList = async csrfToken => {
   const rows = await Page.find({}, { orderBy: "name" });
   const roles = await User.get_roles();
-  res.sendWrap(
-    "Pages",
+  return div(
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -148,7 +147,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/pageedit/delete/${r.id}`, req.csrfToken())
+          key: r => post_delete_btn(`/pageedit/delete/${r.id}`, csrfToken)
         }
       ],
       rows
@@ -161,6 +160,23 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       "Add page"
     )
   );
+};
+
+router.get("/", setTenant, isAdmin, async (req, res) => {
+  const pageList = await getPageList(req.csrfToken());
+  res.sendWrap("Pages", {
+    above: [
+      {
+        type: "pageHeader",
+        title: `Pages`
+      },
+      {
+        type: "card",
+        title: "Your pages",
+        contents: pageList
+      }
+    ]
+  });
 });
 
 router.get(
