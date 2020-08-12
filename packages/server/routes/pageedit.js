@@ -122,9 +122,7 @@ const pageFlow = new Workflow({
   ]
 });
 
-const getPageList = async csrfToken => {
-  const rows = await Page.find({}, { orderBy: "name" });
-  const roles = await User.get_roles();
+const getPageList =  (rows, roles, csrfToken) => {
   return div(
     mkTable(
       [
@@ -162,8 +160,22 @@ const getPageList = async csrfToken => {
   );
 };
 
+const getRootPageForm = (pages, roles) => 
+new Form({
+  action: "/pageedit/set_root_page",
+  blurb: "The root page is the page that is served when the user visits the home location (/). This can be set for each user role.",
+  fields: roles.map(r=>new Field({
+    name: r.role+"_home",
+    label: r.role,
+    input_type: "select",
+    options: pages.map(p => p.name)
+  }))
+})
+
 router.get("/", setTenant, isAdmin, async (req, res) => {
-  const pageList = await getPageList(req.csrfToken());
+  const pages = await Page.find({}, { orderBy: "name" });
+  const roles = await User.get_roles();
+
   res.sendWrap("Pages", {
     above: [
       {
@@ -173,7 +185,12 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       {
         type: "card",
         title: "Your pages",
-        contents: pageList
+        contents: getPageList(pages, roles, req.csrfToken())
+      },
+      {
+        type: "card",
+        title: "Root pages",
+        contents: renderForm(getRootPageForm(pages,roles), req.csrfToken())
       }
     ]
   });
