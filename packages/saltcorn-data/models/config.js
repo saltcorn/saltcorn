@@ -24,6 +24,8 @@ const configTypes = {
   },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
+  staff_home: { type: "String", label: "Staff home page", default: "" },
+  admin_home: { type: "String", label: "Admin home page", default: "" },
   allow_signup: { type: "Bool", label: "Allow signups", default: true },
   login_menu: { type: "Bool", label: "Login in menu", default: true },
   extra_menu: {

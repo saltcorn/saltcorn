@@ -122,11 +122,8 @@ const pageFlow = new Workflow({
   ]
 });
 
-router.get("/", setTenant, isAdmin, async (req, res) => {
-  const rows = await Page.find({}, { orderBy: "name" });
-  const roles = await User.get_roles();
-  res.sendWrap(
-    "Pages",
+const getPageList = (rows, roles, csrfToken) => {
+  return div(
     mkTable(
       [
         { label: "Name", key: "name" },
@@ -148,7 +145,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
         },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/pageedit/delete/${r.id}`, req.csrfToken())
+          key: r => post_delete_btn(`/pageedit/delete/${r.id}`, csrfToken)
         }
       ],
       rows
@@ -161,6 +158,50 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
       "Add page"
     )
   );
+};
+
+const getRootPageForm = (pages, roles) => {
+  const form = new Form({
+    action: "/pageedit/set_root_page",
+    blurb:
+      "The root page is the page that is served when the user visits the home location (/). This can be set for each user role.",
+    fields: roles.map(
+      r =>
+        new Field({
+          name: r.role,
+          label: r.role,
+          input_type: "select",
+          options: ["", ...pages.map(p => p.name)]
+        })
+    )
+  });
+  for (const role of roles) {
+    form.values[role.role] = getState().getConfig(role.role + "_home", "");
+  }
+  return form;
+};
+router.get("/", setTenant, isAdmin, async (req, res) => {
+  const pages = await Page.find({}, { orderBy: "name" });
+  const roles = await User.get_roles();
+
+  res.sendWrap("Pages", {
+    above: [
+      {
+        type: "pageHeader",
+        title: `Pages`
+      },
+      {
+        type: "card",
+        title: "Your pages",
+        contents: getPageList(pages, roles, req.csrfToken())
+      },
+      {
+        type: "card",
+        title: "Root pages",
+        contents: renderForm(getRootPageForm(pages, roles), req.csrfToken())
+      }
+    ]
+  });
 });
 
 router.get(
@@ -214,6 +255,28 @@ router.post(
     const { id } = req.params;
     await Page.delete({ id });
     req.flash("success", `Page deleted`);
+    res.redirect(`/pageedit`);
+  })
+);
+
+router.post(
+  "/set_root_page",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const pages = await Page.find({}, { orderBy: "name" });
+    const roles = await User.get_roles();
+    const form = await getRootPageForm(pages, roles);
+    const valres = form.validate(req.body);
+    if (valres.success) {
+      for (const role of roles) {
+        await getState().setConfig(
+          role.role + "_home",
+          valres.success[role.role]
+        );
+      }
+      req.flash("success", `Root pages updated`);
+    } else req.flash("danger", `Error reading pages`);
     res.redirect(`/pageedit`);
   })
 );
