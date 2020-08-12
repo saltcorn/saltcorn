@@ -181,7 +181,7 @@ const no_views_logged_in = async (req, res) => {
   }
 };
 
-const get_config_response = async (cfgKey, res) => {
+const get_config_response = async (cfgKey, res, req) => {
   const homeCfg = getState().getConfig(cfgKey);
   if (homeCfg) {
     if (getState().pages[homeCfg]) {
@@ -196,11 +196,14 @@ const get_config_response = async (cfgKey, res) => {
       return true;
     } else {
       const db_page = await Page.findOne({ name: homeCfg });
+
       if (db_page) {
+        const contents = await db_page.run(req.query, { res, req });
+
         res.sendWrap(
           { title: db_page.title, description: db_page.description } ||
             `${pagename} page`,
-          db_page.layout
+          contents
         );
       } else res.redirect(homeCfg);
       return true;
@@ -209,13 +212,11 @@ const get_config_response = async (cfgKey, res) => {
 };
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
-  if (!isAuth) {
-    const cfgResp = await get_config_response("public_home", res);
-    if (cfgResp) return;
-  } else if (isAuth && req.user.role_id === 8) {
-    const cfgResp = await get_config_response("user_home", res);
-    if (cfgResp) return;
-  }
+  const role_id = req.user ? req.user.role_id : 10;
+  const role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[role_id];
+  const cfgResp = await get_config_response(role + "_home", res, req);
+  if (cfgResp) return;
+  
   const views = getState().views.filter(
     v => v.on_root_page && (isAuth || v.min_role === 10)
   );
