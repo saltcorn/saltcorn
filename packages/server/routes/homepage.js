@@ -217,7 +217,7 @@ module.exports = async (req, res) => {
     if (cfgResp) return;
   }
   const views = getState().views.filter(
-    v => v.on_root_page && (isAuth || v.is_public)
+    v => v.on_root_page && (isAuth || v.min_role === 10)
   );
 
   if (views.length === 0) {

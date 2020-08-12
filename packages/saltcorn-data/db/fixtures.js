@@ -74,7 +74,7 @@ module.exports = async () => {
         }
       ]
     },
-    is_public: true,
+    min_role: 10,
     on_root_page: true
   });
   await View.create({
@@ -97,7 +97,7 @@ module.exports = async () => {
         above: [{ type: "field", fieldview: "show", field_name: "author" }]
       }
     },
-    is_public: true,
+    min_role: 10,
     on_root_page: true
   });
   await View.create({
@@ -113,7 +113,7 @@ module.exports = async () => {
         pages: 678
       }
     },
-    is_public: true,
+    min_role: 10,
     on_root_page: true
   });
   await View.create({
@@ -130,7 +130,7 @@ module.exports = async () => {
         { type: "JoinField", join_field: "favbook.pages" }
       ]
     },
-    is_public: false,
+    min_role: 8,
     on_root_page: true
   });
   const readings = await Table.create("readings");

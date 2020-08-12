@@ -17,6 +17,7 @@ const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
+const User = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
@@ -70,7 +71,7 @@ router.get(
   })
 );
 
-const viewForm = (tableOptions, values) =>
+const viewForm = (tableOptions, roles, values) =>
   new Form({
     action: "/viewedit/save",
     blurb: "First, please give some basic information about your new view.",
@@ -91,9 +92,11 @@ const viewForm = (tableOptions, values) =>
         options: tableOptions
       }),
       new Field({
-        label: "Publicly viewable",
-        name: "is_public",
-        type: "Bool"
+        name: "min_role",
+        label: "Role required to run view",
+        input_type: "select",
+        required: true,
+        options: roles.map(r => ({ value: r.id, label: r.role }))
       }),
       new Field({
         label: "On root page",
@@ -117,7 +120,8 @@ router.get(
     const currentTable = tables.find(t => t.id === viewrow.table_id);
     viewrow.table_name = currentTable.name;
     const tableOptions = tables.map(t => t.name);
-    const form = viewForm(tableOptions, viewrow);
+    const roles = await User.get_roles();
+    const form = viewForm(tableOptions, roles, viewrow);
     form.hidden("id");
     res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
   })
@@ -130,7 +134,8 @@ router.get(
   error_catcher(async (req, res) => {
     const tables = await Table.find();
     const tableOptions = tables.map(t => t.name);
-    const form = viewForm(tableOptions);
+    const roles = await User.get_roles();
+    const form = viewForm(tableOptions, roles);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -145,7 +150,8 @@ router.post(
   error_catcher(async (req, res) => {
     const tables = await Table.find();
     const tableOptions = tables.map(t => t.name);
-    const form = viewForm(tableOptions);
+    const roles = await User.get_roles();
+    const form = viewForm(tableOptions, roles);
     const result = form.validate(req.body);
 
     if (result.success) {

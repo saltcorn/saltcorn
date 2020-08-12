@@ -15,12 +15,14 @@ router.get(
     const { viewname } = req.params;
 
     const view = await View.findOne({ name: viewname });
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (!req.isAuthenticated() && !view.is_public) {
-      req.flash("danger", "Login required");
-      res.redirect("/auth/login");
+    } else if (role > view.min_role) {
+      req.flash("danger", "Not authorized");
+      res.redirect("/");
     } else {
       const state = view.combine_state_and_default_state(req.query);
       const resp = await view.run(state, { res, req });
@@ -38,14 +40,15 @@ router.post(
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (!req.isAuthenticated() && !view.is_public) {
-      req.flash("danger", "Login required");
-      res.redirect("/auth/login");
+    } else if (role > view.min_role) {
+      req.flash("danger", "Not authorized");
+      res.redirect("/");
     } else {
       await view.runRoute(route, req.body, res, { res, req });
     }
@@ -57,14 +60,15 @@ router.post(
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (!req.isAuthenticated() && !view.is_public) {
-      req.flash("danger", "Login required");
-      res.redirect("/auth/login");
+    } else if (role > view.min_role) {
+      req.flash("danger", "Not authorized");
+      res.redirect("/");
     } else {
       await view.runPost(req.query, req.body, { res, req });
     }

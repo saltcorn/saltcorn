@@ -14,8 +14,12 @@ class View {
       this.table_id = o.table.id;
     }
     this.configuration = stringToJSON(o.configuration);
-
-    this.is_public = numberToBool(o.is_public);
+    this.min_role =
+      !o.min_role && typeof o.is_public !== "undefined"
+        ? o.is_public
+          ? 10
+          : 8
+        : +o.min_role;
     this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
@@ -88,6 +92,10 @@ class View {
   }
 
   static async create(v) {
+    if (!v.min_role && typeof v.is_public !== "undefined") {
+      v.min_role = v.is_public ? 10 : 8;
+      delete v.is_public;
+    }
     const id = await db.insert("_sc_views", v);
     await require("../db/state")
       .getState()
@@ -212,6 +220,7 @@ View.contract = {
     id: is.maybe(is.posint),
     table_id: is.maybe(is.posint),
     viewtemplate: is.str,
+    min_role: is.posint,
     viewtemplateObj: is.maybe(is_viewtemplate)
   },
   methods: {

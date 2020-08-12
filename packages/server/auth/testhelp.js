@@ -66,12 +66,13 @@ const getAdminLoginCookie = async () => {
   return res.headers["set-cookie"][0];
 };
 
-const itShouldRedirectUnauthToLogin = path => {
-  it(`should redirect unauth ${path} to login`, async () => {
+const itShouldRedirectUnauthToLogin = (path, dest) => {
+  it(`should redirect unauth ${path} to ${dest || "login"}`, async () => {
     const app = await getApp({ disableCsrf: true });
     const res = await request(app)
       .get(path)
-      .expect("Location", "/auth/login");
+      .expect(302)
+      .expect("Location", dest || "/auth/login");
 
     expect(res.statusCode).toEqual(302);
   });

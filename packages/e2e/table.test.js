@@ -109,7 +109,7 @@ describe("Table create", () => {
   it("edits list view", async () => {
     await browser.goto("/viewedit/edit/PersonList");
     expect(await browser.content()).toContain("PersonList");
-    await browser.page.click("#inputis_public");
+    await browser.page.select("#inputmin_role", "10");
     await browser.page.click("#inputon_root_page");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Use view to create");
