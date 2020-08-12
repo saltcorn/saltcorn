@@ -92,6 +92,11 @@ class View {
   }
 
   static async create(v) {
+
+    if(!v.min_role && typeof v.is_public !== "undefined") {
+      v.min_role= v.is_public ? 10 : 8
+      delete v.is_public;
+    }
     const id = await db.insert("_sc_views", v);
     await require("../db/state")
       .getState()
