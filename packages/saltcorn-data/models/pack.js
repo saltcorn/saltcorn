@@ -1,6 +1,7 @@
 const Table = require("./table");
 const db = require("../db");
 const View = require("./view");
+const User = require("./user");
 const Field = require("./field");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
@@ -55,14 +56,18 @@ const plugin_pack = contract(pack_fun, async name => {
 });
 const page_pack = contract(pack_fun, async name => {
   const page = await Page.findOne({ name });
-
+  const roles = await User.get_roles();
+  const root_page_for_roles = roles
+    .filter(r => getState().getConfig(r.role + "_home", "") === name)
+    .map(r => r.role);
   return {
     name: page.name,
     title: page.title,
     description: page.description,
     min_role: page.min_role,
     layout: page.layout,
-    fixed_states: page.fixed_states
+    fixed_states: page.fixed_states,
+    root_page_for_roles
   };
 });
 
@@ -139,8 +144,14 @@ const install_pack = contract(
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
     }
-    for (const pageSpec of pack.pages || []) {
+    for (const pageFullSpec of pack.pages || []) {
+      const { root_page_for_roles, ...pageSpec } = pageFullSpec;
       await Page.create(pageSpec);
+      for (const role of root_page_for_roles || []) {
+        const current_root = getState().getConfig(role + "_home", "");
+        if (!current_root || current_root === "")
+          await getState().setConfig(role + "_home", pageSpec.name);
+      }
     }
     if (name) {
       const existPacks = getState().getConfig("installed_packs", []);
