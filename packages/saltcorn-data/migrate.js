@@ -38,6 +38,12 @@ const migrate = async (schema = "public") => {
         if (!(is_sqlite && contents.sql.includes("DROP COLUMN")))
           await client.query(fudge(contents.sql));
       }
+      if (contents.sql_pg && !(is_sqlite)) {
+        await client.query(contents.sql_pg);
+      }
+      if (contents.sql_sqlite && is_sqlite) {
+        await client.query(contents.sql_sqlite);
+      }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
   }
