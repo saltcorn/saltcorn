@@ -20,7 +20,7 @@ router.get(
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (role <= view.min_role) {
+    } else if (role > view.min_role) {
       req.flash("danger", "Not authorized");
       res.redirect("/");
     } else {
@@ -46,7 +46,7 @@ router.post(
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (role <= view.min_role) {
+    } else if (role > view.min_role) {
       req.flash("danger", "Not authorized");
       res.redirect("/");
     } else {
@@ -66,7 +66,7 @@ router.post(
     if (!view) {
       req.flash("danger", `No such view: ${text(viewname)}`);
       res.redirect("/");
-    } else if (role <= view.min_role) {
+    } else if (role > view.min_role) {
       req.flash("danger", "Not authorized");
       res.redirect("/");
     } else {

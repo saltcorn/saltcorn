@@ -21,7 +21,7 @@ describe("view list endpoint", () => {
   });
 });
 describe("view patients list endpoint", () => {
-  itShouldRedirectUnauthToLogin("/view/patientlist");
+  itShouldRedirectUnauthToLogin("/view/patientlist", "/");
 
   it("should show view to staff", async () => {
     const loginCookie = await getStaffLoginCookie();
