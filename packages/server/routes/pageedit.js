@@ -168,7 +168,7 @@ new Form({
     name: r.role+"_home",
     label: r.role,
     input_type: "select",
-    options: pages.map(p => p.name)
+    options: ['', ...pages.map(p => p.name)]
   }))
 })
 
