@@ -95,6 +95,7 @@ const viewForm = (tableOptions, roles, values) =>
         name: "min_role",
         label: "Role required to run view",
         input_type: "select",
+        required: true,
         options: roles.map(r => ({ value: r.id, label: r.role }))
       }),
       new Field({
