@@ -56,6 +56,14 @@ class Page {
       .filter(r => getState().getConfig(r.role + "_home", "") === this.name)
       .map(r => r.role);
   }
+
+  get menu_label() {
+    const { getState } = require("../db/state");
+    const menu_items = getState().getConfig("menu_items", []);
+    const item = menu_items.find(mi => mi.pagename === this.name);
+    return item ? item.label : undefined;
+  }
+
   async eachView(f) {
     const go = async segment => {
       if (!segment) return;

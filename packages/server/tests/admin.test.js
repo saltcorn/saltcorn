@@ -61,7 +61,7 @@ describe("crash log", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     console.log(
-      "An error is printed below. This is eexpected as part of the test"
+      "An error is printed below. This is expected as part of the test."
     );
     await request(app)
       .get("/crashlog/99")

@@ -40,7 +40,8 @@ const view_pack = contract(pack_fun, async name => {
     configuration: view.configuration,
     min_role: view.min_role,
     on_root_page: view.on_root_page,
-    table: table.name
+    table: table.name,
+    menu_label: view.menu_label
   };
 });
 
@@ -64,6 +65,7 @@ const page_pack = contract(pack_fun, async name => {
     min_role: page.min_role,
     layout: page.layout,
     fixed_states: page.fixed_states,
+    menu_label: page.menu_label,
     root_page_for_roles
   };
 });
@@ -114,6 +116,12 @@ const can_install_pack = contract(
   }
 );
 
+const add_to_memu = async item => {
+  const current_menu = getState().getConfig("menu_items", []);
+  current_menu.push(item);
+  await getState().setConfig("menu_items", current_menu);
+};
+
 const install_pack = contract(
   is.fun(
     [is_pack, is.maybe(is.str), is.fun(is_plugin, is.undefined)],
@@ -137,18 +145,30 @@ const install_pack = contract(
         await Field.create({ table, ...field });
     }
     for (const viewSpec of pack.views) {
-      const { table, on_menu, ...viewNoTable } = viewSpec;
+      const { table, on_menu, menu_label, ...viewNoTable } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
+      if (menu_label)
+        await add_to_memu({
+          label: menu_label,
+          type: "View",
+          viewname: viewSpec.name
+        });
     }
     for (const pageFullSpec of pack.pages || []) {
-      const { root_page_for_roles, ...pageSpec } = pageFullSpec;
+      const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
       await Page.create(pageSpec);
       for (const role of root_page_for_roles || []) {
         const current_root = getState().getConfig(role + "_home", "");
         if (!current_root || current_root === "")
           await getState().setConfig(role + "_home", pageSpec.name);
       }
+      if (menu_label)
+        await add_to_memu({
+          label: menu_label,
+          type: "Page",
+          pagename: pageSpec.name
+        });
     }
     if (name) {
       const existPacks = getState().getConfig("installed_packs", []);

@@ -5,6 +5,7 @@ const {
   table_pack,
   view_pack,
   plugin_pack,
+  page_pack,
   fetch_available_packs,
   fetch_pack_by_name,
   is_stale,
@@ -54,16 +55,85 @@ describe("pack create", () => {
       min_role: 10,
       name: "authorlist",
       on_root_page: true,
+      menu_label: undefined,
       table: "books",
       viewtemplate: "List"
     });
   });
-  it("creates view pack", async () => {
+  it("creates plugin pack", async () => {
     const ppack = await plugin_pack("base");
     expect(ppack).toStrictEqual({
       location: "@saltcorn/base-plugin",
       name: "base",
       source: "npm"
+    });
+  });
+  it("creates page pack", async () => {
+    const ppack = await page_pack("a_page");
+    expect(ppack).toEqual({
+      name: "a_page",
+      title: "grgw",
+      description: "rgerg",
+      menu_label: undefined,
+      min_role: 10,
+      layout: {
+        above: [
+          {
+            type: "blank",
+            block: false,
+            contents: "Hello world",
+            textStyle: ""
+          },
+          { type: "line_break" },
+          { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
+          {
+            url: "https://saltcorn.com/",
+            text: "Click here",
+            type: "link",
+            block: false,
+            textStyle: ""
+          },
+          {
+            type: "card",
+            title: "header",
+            contents: {
+              above: [
+                null,
+                {
+                  aligns: ["left", "left"],
+                  widths: [6, 6],
+                  besides: [
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          block: false,
+                          contents: "Hello world",
+                          textStyle: ""
+                        }
+                      ]
+                    },
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          block: false,
+                          contents: "Bye bye",
+                          textStyle: ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      fixed_states: {},
+      root_page_for_roles: []
     });
   });
 });
@@ -157,8 +227,8 @@ const todoPack = {
     {
       name: "List Todos",
       table: "TodoItems",
-      on_menu: true,
       min_role: 10,
+      menu_label: "List",
       on_root_page: true,
       viewtemplate: "List",
       configuration: {
@@ -233,6 +303,7 @@ const todoPack = {
   pages: [
     {
       name: "FooPage",
+      menu_label: "FooPage",
       title: "Foo",
       description: "Foo",
       layout: {},
@@ -247,6 +318,11 @@ describe("pack install", () => {
     await install_pack(todoPack, "", () => {});
     const tbl = await Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
+    const menu = getState().getConfig("menu_items", []);
+    expect(menu).toStrictEqual([
+      { label: "List", type: "View", viewname: "List Todos" },
+      { label: "FooPage", pagename: "FooPage", type: "Page" }
+    ]);
   });
   it("cannot install pack again", async () => {
     const can = await can_install_pack(todoPack);

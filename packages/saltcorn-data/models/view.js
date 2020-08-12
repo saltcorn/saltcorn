@@ -44,7 +44,12 @@ class View {
       );
     } else return [];
   }
-
+  get menu_label() {
+    const { getState } = require("../db/state");
+    const menu_items = getState().getConfig("menu_items", []);
+    const item = menu_items.find(mi => mi.viewname === this.name);
+    return item ? item.label : undefined;
+  }
   static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
     const link_views = await View.find({
