@@ -51,7 +51,7 @@ describe("pack create", () => {
           }
         ]
       },
-      is_public: true,
+      min_role: 10,
       name: "authorlist",
       on_root_page: true,
       table: "books",
@@ -106,7 +106,7 @@ const todoPack = {
       name: "EditTodo",
       table: "TodoItems",
       on_menu: false,
-      is_public: true,
+      min_role: 10,
       on_root_page: false,
       viewtemplate: "Edit",
       configuration: {
@@ -158,7 +158,7 @@ const todoPack = {
       name: "List Todos",
       table: "TodoItems",
       on_menu: true,
-      is_public: true,
+      min_role: 10,
       on_root_page: true,
       viewtemplate: "List",
       configuration: {

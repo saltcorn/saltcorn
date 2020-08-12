@@ -17,7 +17,7 @@ const mockReqRes = { req: { csrfToken: () => "" }, res: { redirect() {} } };
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    expect(v.is_public).toBe(true);
+    expect(v.min_role).toBe(10);
     expect(v.on_root_page).toBe(true);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
@@ -80,7 +80,7 @@ describe("View", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
-      is_public: true,
+      min_role: 10,
       on_root_page: true
     });
     expect(typeof v.id).toBe("number");
