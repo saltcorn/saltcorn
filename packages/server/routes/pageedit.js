@@ -268,14 +268,15 @@ router.post(
     const roles = await User.get_roles();
     const form = await getRootPageForm(pages, roles);
     const valres = form.validate(req.body);
-    for (const role of roles) {
-      if (valres.success && valres.success[role.role])
+    if (valres.success) {
+      for (const role of roles) {
         await getState().setConfig(
           role.role + "_home",
           valres.success[role.role]
         );
-    }
-    req.flash("success", `Root pages updated`);
+      }
+      req.flash("success", `Root pages updated`);
+    } else req.flash("danger", `Error reading pages`);
     res.redirect(`/pageedit`);
   })
 );

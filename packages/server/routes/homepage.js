@@ -216,7 +216,7 @@ module.exports = async (req, res) => {
   const role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[role_id];
   const cfgResp = await get_config_response(role + "_home", res, req);
   if (cfgResp) return;
-  
+
   const views = getState().views.filter(
     v => v.on_root_page && (isAuth || v.min_role === 10)
   );
