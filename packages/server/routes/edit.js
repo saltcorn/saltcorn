@@ -54,7 +54,9 @@ router.post(
     const fields = await Field.find({ table_id: table.id });
     const v = req.body;
 
-    const form = new Form({ action: `/edit/${tname}`, fields, validate: v });
+    const form = new Form({ action: `/edit/${tname}`, fields });
+    if (typeof v.id !== "undefined") form.hidden("id");
+    form.validate(v);
     if (form.hasErrors) {
       res.sendWrap(
         `${table.name} create new`,
@@ -62,16 +64,32 @@ router.post(
       ); // vres.errors.join("\n"));
     } else {
       if (typeof v.id === "undefined") {
-        await table.insertRow(form.values, req.user ? req.user.id : undefined);
+        const ins_res = await table.tryInsertRow(
+          form.values,
+          req.user ? req.user.id : undefined
+        );
+        if (ins_res.error) {
+          req.flash("error", ins_res.error);
+          res.sendWrap(
+            `${table.name} create new`,
+            renderForm(form, req.csrfToken())
+          );
+        } else res.redirect(`/list/${table.name}`);
       } else {
         const id = v.id;
-        await table.updateRow(
+        const upd_res = await table.tryUpdateRow(
           form.values,
           parseInt(id),
           req.user ? req.user.id : undefined
         );
+        if (upd_res.error) {
+          req.flash("error", upd_res.error);
+          res.sendWrap(
+            `${table.name} create new`,
+            renderForm(form, req.csrfToken())
+          );
+        } else res.redirect(`/list/${table.name}`);
       }
-      res.redirect(`/list/${table.name}`);
     }
   })
 );
