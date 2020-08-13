@@ -108,6 +108,14 @@ class Table {
       });
     return await db.update(this.name, v, id);
   }
+  async tryUpdateRow(v, id, _userid) {
+    try {
+      await this.updateRow(v, id, _userid);
+      return { success: true };
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
 
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
@@ -130,6 +138,15 @@ class Table {
         _time: new Date()
       });
     return id;
+  }
+
+  async tryInsertRow(v, _userid) {
+    try {
+      const id = await this.insertRow(v, _userid);
+      return { success: id };
+    } catch (e) {
+      return { error: e.message };
+    }
   }
 
   async getFields() {
