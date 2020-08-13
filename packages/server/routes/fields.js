@@ -126,6 +126,7 @@ const fieldFlow = new Workflow({
       name: "summary",
       onlyWhen: context =>
         context.type !== "Key to users" &&
+        context.reftable_name !== "users" &&
         context.type !== "File" &&
         new Field(context).is_fkey,
       form: async context => {
