@@ -129,7 +129,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const fields = await table.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns);
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const tfields = get_viewable_fields(
     viewname,
     table,

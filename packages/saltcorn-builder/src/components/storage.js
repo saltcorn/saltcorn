@@ -110,6 +110,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <ViewLink
           key={ix}
           name={segment.view}
+          label={segment.view_label}
           block={segment.block || false}
           minRole={segment.minRole || 10}
         />
@@ -326,6 +327,7 @@ export const craftToSaltcorn = nodes => {
       return {
         type: "view_link",
         block: node.props.block,
+        view_label: node.props.label,
         view: node.props.name,
         minRole: node.props.minRole
       };

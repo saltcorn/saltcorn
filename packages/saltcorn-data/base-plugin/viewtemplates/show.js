@@ -83,7 +83,7 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   if (!columns || !layout) return "View not yet built";
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
-  const { joinFields, aggregations } = picked_fields_to_query(columns);
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   const rows = await tbl.getJoinedRows({
     where: qstate,
@@ -105,7 +105,7 @@ const runMany = async (
 ) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await Field.find({ table_id: tbl.id });
-  const { joinFields, aggregations } = picked_fields_to_query(columns);
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
   const rows = await tbl.getJoinedRows({
     where: qstate,
@@ -151,7 +151,7 @@ const render = (row, fields, layout, viewname, table, role, req) => {
         req.csrfToken()
       );
     },
-    view_link({ view }) {
+    view_link(view) {
       const { key } = view_linker(view, fields);
       return key(row);
     }

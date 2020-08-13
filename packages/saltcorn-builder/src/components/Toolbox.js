@@ -106,11 +106,12 @@ export const ToolboxShow = () => {
                     name={options.link_view_opts[0].name}
                     block={false}
                     minRole={10}
+                    label={""}
                   />
                 )
               }
             >
-              Link
+              View Link
             </td>
             <td
               title="Action button"
