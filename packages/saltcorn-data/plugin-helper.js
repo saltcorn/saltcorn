@@ -267,14 +267,26 @@ const get_parent_views = contract(
 );
 
 const picked_fields_to_query = contract(
-  is.fun(is.array(is_column), is_table_query),
-  columns => {
+  is.fun([is.array(is_column), is.array(is.class("Field"))], is_table_query),
+  (columns, fields) => {
     var joinFields = {};
     var aggregations = {};
     (columns || []).forEach(column => {
       if (column.type === "JoinField") {
         const [refNm, targetNm] = column.join_field.split(".");
         joinFields[targetNm] = { ref: refNm, target: targetNm };
+      }
+      if (column.type === "ViewLink") {
+        const [vtype, vrest] = column.view.split(":");
+        if (vtype === "ParentShow") {
+          const [pviewnm, ptbl, pfld] = vrest.split(".");
+          const field = fields.find(f => f.name === pfld);
+          if (field && field.attributes.summary_field)
+            joinFields[`summary_field_${ptbl.toLowerCase()}`] = {
+              ref: pfld,
+              target: field.attributes.summary_field
+            };
+        }
       } else if (column.type === "Aggregation") {
         //console.log(column)
         const [table, fld] = column.agg_relation.split(".");

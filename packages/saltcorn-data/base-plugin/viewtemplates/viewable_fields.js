@@ -27,10 +27,10 @@ const get_view_link_query = contract(
 
 const view_linker = contract(
   is.fun(
-    [is.obj({view: is.str}), is.array(is.class("Field"))],
+    [is.obj({ view: is.str }), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  ({view, view_label}, fields) => {
+  ({ view, view_label }, fields) => {
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
@@ -38,27 +38,39 @@ const view_linker = contract(
         const get_query = get_view_link_query(fields);
         return {
           label: vnm,
-          key: r => link(`/view/${encodeURIComponent(vnm)}${get_query(r)}`, view_label||vnm)
+          key: r =>
+            link(
+              `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
+              view_label || vnm
+            )
         };
       case "ChildList":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
           key: r =>
-            link(`/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`, view_label||viewnm)
+            link(
+              `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
+              view_label || viewnm
+            )
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
         //console.log([pviewnm, ptbl, pfld])
         return {
           label: pviewnm,
-          key: r =>
-            r[pfld]
+          key: r => {
+            const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
+            return r[pfld]
               ? link(
                   `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
-                  view_label||pviewnm
+                  view_label ||
+                    (typeof summary_field === "undefined"
+                      ? pviewnm
+                      : summary_field)
                 )
-              : ""
+              : "";
+          }
         };
       default:
         throw new Error(view);
