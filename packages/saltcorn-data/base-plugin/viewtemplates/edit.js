@@ -206,7 +206,7 @@ const runPost = async (
   const form = await getForm(table, viewname, columns, layout, body.id);
   form.validate(body);
   if (form.hasErrors) {
-    res.sendWrap(`${table.name} create new`, renderForm(form, req.csrfToken()));
+    res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     const use_fixed = await fill_presets(table, req, fixed);
     var row = { ...use_fixed, ...form.values };
@@ -225,13 +225,27 @@ const runPost = async (
 
     var id = body.id;
     if (typeof id === "undefined") {
-      id = await table.insertRow(row, req.user ? req.user.id : undefined);
+      const ins_res = await table.tryInsertRow(
+        row,
+        req.user ? req.user.id : undefined
+      );
+      if (ins_res.success) id = ins_res.success;
+      else {
+        req.flash("error", ins_res.error);
+        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        return;
+      }
     } else {
-      await table.updateRow(
+      const upd_res = await table.tryUpdateRow(
         row,
         parseInt(id),
         req.user ? req.user.id : undefined
       );
+      if (upd_res.error) {
+        req.flash("error", upd_res.error);
+        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        return;
+      }
     }
 
     if (!view_when_done) {
