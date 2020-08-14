@@ -80,6 +80,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
 const innerField = (v, errors, nameAdd = "") => hdr => {
   const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
+  const maybe_disabled = hdr.disabled ? 'disabled' : ''
   switch (hdr.input_type) {
     case "fromtype":
       return displayEdit(
@@ -98,7 +99,7 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
       const opts = select_options(v, hdr);
       return `<select class="form-control ${validClass} ${
         hdr.class
-      }" name="${text_attr(name)}" id="input${text_attr(
+      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
       )}">${opts}</select>`;
     case "file":
@@ -110,7 +111,7 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
           v[hdr.form_name] ? text(v[hdr.form_name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class
-        }" name="${text_attr(name)}" id="input${text_attr(name)}">`;
+        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(name)}">`;
     case "search":
       return search_bar(name, v && v[hdr.form_name]);
     case "section_header":
@@ -118,7 +119,7 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
     default:
       const the_input = `<input type="${hdr.input_type}" class="form-control ${
         hdr.class
-      }" name="${name}" id="input${text_attr(name)}" ${
+      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
@@ -203,6 +204,9 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
 
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
+  var attributes = hdr.attributes
+  if(hdr.disabled)
+    attributes.disabled=true
   if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {
@@ -214,7 +218,7 @@ const displayEdit = (hdr, name, v, extracls) => {
   return fieldview.run(
     name,
     v,
-    hdr.attributes,
+    attributes,
     extracls + " " + hdr.class,
     hdr.required
   );
@@ -320,7 +324,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
   } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
-  //console.log(hdrs);
+  //console.log(form.fields);
   const flds = form.fields
     .map(
       mkFormRow(

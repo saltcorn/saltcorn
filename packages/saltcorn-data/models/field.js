@@ -32,6 +32,7 @@ class Field {
     this.required = o.required ? true : false;
     this.is_unique = o.is_unique ? true : false;
     this.hidden = o.hidden || false;
+    this.disabled = !!o.disabled;
 
     this.is_fkey =
       o.type === "Key" ||
@@ -328,6 +329,7 @@ Field.contract = {
     is_fkey: is.bool,
     is_unique: is.bool,
     required: is.bool,
+    disabled: is.bool,
     id: is.maybe(is.posint),
     attributes: is.obj(),
     table_id: is.maybe(is.posint)

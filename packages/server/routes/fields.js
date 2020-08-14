@@ -9,11 +9,12 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { disable } = require("contractis/contract");
 
 const router = new Router();
 module.exports = router;
 
-const fieldForm = fkey_opts =>
+const fieldForm = (fkey_opts, id) =>
   new Form({
     action: "/field",
     fields: [
@@ -30,7 +31,8 @@ const fieldForm = fkey_opts =>
         label: "Type",
         name: "type",
         input_type: "select",
-        options: getState().type_names.concat(fkey_opts || [])
+        options: getState().type_names.concat(fkey_opts || []),
+        disabled: !!id
       }),
       new Field({
         label: "Required",
@@ -84,7 +86,7 @@ const fieldFlow = new Workflow({
           "Key to users",
           "File"
         ];
-        const form = fieldForm(fkey_opts);
+        const form = fieldForm(fkey_opts, context.id);
         if (context.type === "Key" && context.reftable_name) {
           form.values.type = `Key to ${context.reftable_name}`;
         }
