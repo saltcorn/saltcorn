@@ -7,6 +7,7 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { disable } = require("contractis/contract");
@@ -37,7 +38,8 @@ const fieldForm = (fkey_opts, id) =>
       new Field({
         label: "Required",
         name: "required",
-        type: getState().types["Bool"]
+        type: getState().types["Bool"],
+        disabled: !!id && db.isSQLite
       }),
       new Field({
         label: "Unique",
@@ -72,7 +74,15 @@ const fieldFlow = new Workflow({
       attributes
     };
     if (context.id) {
-      await Field.update(fldRow, context.id);
+      const field = await Field.findOne({ id: context.id });
+      try {
+        await field.update(fldRow);
+      } catch (e) {
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message]
+        };
+      }
     } else await Field.create(fldRow);
     return { redirect: `/table/${context.table_id}` };
   },
@@ -222,6 +232,9 @@ router.post(
         `Field attributes`,
         renderForm(wfres.renderForm, req.csrfToken())
       );
-    else res.redirect(wfres.redirect);
+    else {
+      if (wfres.flash) req.flash(...wfres.flash);
+      res.redirect(wfres.redirect);
+    }
   })
 );

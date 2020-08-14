@@ -80,7 +80,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
 const innerField = (v, errors, nameAdd = "") => hdr => {
   const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
-  const maybe_disabled = hdr.disabled ? 'disabled' : ''
+  const maybe_disabled = hdr.disabled ? "disabled" : "";
   switch (hdr.input_type) {
     case "fromtype":
       return displayEdit(
@@ -111,7 +111,9 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
           v[hdr.form_name] ? text(v[hdr.form_name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class
-        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(name)}">`;
+        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+          name
+        )}">`;
     case "search":
       return search_bar(name, v && v[hdr.form_name]);
     case "section_header":
@@ -204,9 +206,8 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
 
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
-  var attributes = hdr.attributes
-  if(hdr.disabled)
-    attributes.disabled=true
+  var attributes = hdr.attributes;
+  if (hdr.disabled) attributes.disabled = true;
   if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {

@@ -172,13 +172,82 @@ class Field {
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map(dbf => new Field(dbf));
   }
+
   static async findOne(where) {
     const db_fld = await db.selectOne("_sc_fields", where);
     return new Field(db_fld);
   }
 
-  static async update(v, id) {
-    await db.update("_sc_fields", v, id);
+  async add_unique_constraint() {
+    const schema = db.getTenantSchemaPrefix();
+    await this.fill_table();
+    if (db.isSQLite)
+      await db.query(
+        `create unique index ${sqlsanitize(this.name)}_unique on "${sqlsanitize(
+          this.table.name
+        )}"(${sqlsanitize(this.name)})`
+      );
+    else
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" add CONSTRAINT ${this.table.name}_${sqlsanitize(
+          this.name
+        )}_unique UNIQUE (${sqlsanitize(this.name)})`
+      );
+  }
+
+  async remove_unique_constraint() {
+    const schema = db.getTenantSchemaPrefix();
+    await this.fill_table();
+    if (db.isSQLite)
+      await db.query(`drop index ${sqlsanitize(this.name)}_unique;`);
+    else
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop CONSTRAINT ${this.table.name}_${sqlsanitize(
+          this.name
+        )}_unique;`
+      );
+  }
+
+  async toggle_not_null(not_null) {
+    const schema = db.getTenantSchemaPrefix();
+    await this.fill_table();
+    await db.query(
+      `alter table ${schema}"${sqlsanitize(
+        this.table.name
+      )}" alter column ${sqlsanitize(this.name)} ${
+        not_null ? "set" : "drop"
+      } not null;`
+    );
+  }
+
+  async fill_table() {
+    if (!this.table) {
+      const Table = require("./table");
+      this.table = await Table.findOne({ id: this.table_id });
+    }
+  }
+
+  async update(v) {
+    if (
+      typeof v.is_unique !== "undefined" &&
+      !!v.is_unique !== !!this.is_unique
+    ) {
+      if (v.is_unique && !this.is_unique) await this.add_unique_constraint();
+      if (!v.is_unique && this.is_unique) await this.remove_unique_constraint();
+      await db.update("_sc_fields", { is_unique: v.is_unique }, this.id);
+    }
+
+    if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
+      await this.toggle_not_null(v.required);
+
+    await db.update("_sc_fields", v, this.id);
+    Object.entries(v).forEach(([k, v]) => {
+      this[k] = v;
+    });
   }
   get listKey() {
     return this.type.listAs
@@ -270,21 +339,7 @@ class Field {
       );
     }
 
-    if (f.is_unique)
-      if (is_sqlite)
-        await db.query(
-          `create unique index ${sqlsanitize(f.name)}_unique on "${sqlsanitize(
-            table.name
-          )}"(${sqlsanitize(f.name)})`
-        );
-      else
-        await db.query(
-          `alter table ${schema}"${sqlsanitize(
-            table.name
-          )}" add CONSTRAINT ${sqlsanitize(
-            f.name
-          )}_unique UNIQUE (${sqlsanitize(f.name)})`
-        );
+    if (f.is_unique) await f.add_unique_constraint();
 
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
@@ -353,7 +408,8 @@ Field.contract = {
     presets: is.getter(is.maybe(is.objVals(is.fun(is.obj(), is.any)))),
     delete: is.fun([], is.promise(is.eq(undefined))),
     generate: is.fun([], is.promise(is.any)),
-    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
+    update: is.fun(is.obj(), is.promise(is.undefined))
   },
   static_methods: {
     find: is.fun(
@@ -361,8 +417,7 @@ Field.contract = {
       is.promise(is.array(is.class("Field")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
-    create: is.fun(is.obj(), is.promise(is.class("Field"))),
-    update: is.fun([is.obj(), is.posint], is.promise(is.undefined))
+    create: is.fun(is.obj(), is.promise(is.class("Field")))
   }
 };
 module.exports = Field;

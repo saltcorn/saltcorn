@@ -57,6 +57,7 @@ class Form {
   validate(v) {
     this.hasErrors = false;
     this.fields.forEach(f => {
+      if (f.disabled) return;
       const valres = f.validate(v);
       if (valres.error) {
         this.errors[f.name] = valres.error;
