@@ -36,8 +36,8 @@ const normalise_error_message = msg =>
         "Duplicate value for unique field: $2"
       )
     : msg.replace(
-        /duplicate key value violates unique constraint "(.*?)_unique"/,
-        "Duplicate value for unique field: $1"
+        /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/,
+        "Duplicate value for unique field: $2"
       );
 
 class Table {

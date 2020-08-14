@@ -260,7 +260,7 @@ describe("Table unique constraint", () => {
   it("should create table", async () => {
     //db.set_sql_logging()
     const table = await Table.create("TableWithUniques");
-    await Field.create({
+    const field = await Field.create({
       table,
       name: "name",
       type: "String",
@@ -280,5 +280,44 @@ describe("Table unique constraint", () => {
     });
     const upd_res1 = await table.tryUpdateRow({ name: "teddy" }, ted_id);
     expect(upd_res1.success).toEqual(true);
+    await field.update({ is_unique: false });
+    const field1 = await Field.findOne({ id: field.id });
+    expect(field1.is_unique).toBe(false);
+    //const bill2_id = await table.insertRow({ name: "Bill" });
+
+    await field1.update({ is_unique: true });
+    const field2 = await Field.findOne({ id: field.id });
+    expect(field2.is_unique).toBe(true);
+    expect(field1.is_unique).toBe(true);
+  });
+});
+describe("Table not null constraint", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithNotNulls");
+    const field = await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      required: true
+    });
+    await Field.create({
+      table,
+      name: "age",
+      type: "Integer"
+    });
+    await table.insertRow({ name: "Bill", age: 13 });
+    await table.insertRow({ name: "Bill", age: 13 });
+    const ins_res = await table.tryInsertRow({ age: 17, name: null });
+    expect(!!ins_res.error).toBe(true);
+    expect(ins_res.error).toContain("name");
+    if (!db.isSQLite) {
+      await field.update({ required: false });
+      const ted_id = await table.insertRow({ age: 17 });
+      await table.deleteRows({ id: ted_id });
+      await field.update({ required: true });
+      const ins_res1 = await table.tryInsertRow({ age: 167 });
+      expect(!!ins_res1.error).toBe(true);
+    }
   });
 });

@@ -53,7 +53,8 @@ const string = {
               {
                 class: ["form-control", cls],
                 name: text_attr(nm),
-                id: `input${text_attr(nm)}`
+                id: `input${text_attr(nm)}`,
+                disabled: attrs.disabled
               },
               required
                 ? getStrOptions(v, attrs.options)
@@ -67,6 +68,7 @@ const string = {
               {
                 class: ["form-control", cls],
                 name: text_attr(nm),
+                disabled: attrs.disabled,
                 id: `input${text_attr(nm)}`,
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
@@ -77,6 +79,7 @@ const string = {
             )
           : input({
               type: "text",
+              disabled: attrs.disabled,
               class: ["form-control", cls],
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
@@ -90,6 +93,7 @@ const string = {
           {
             class: ["form-control", cls],
             name: text_attr(nm),
+            disabled: attrs.disabled,
             id: `input${text_attr(nm)}`,
             rows: 10
           },
@@ -120,6 +124,7 @@ const int = {
         input({
           type: "number",
           class: ["form-control", cls],
+          disabled: attrs.disabled,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           step: "1",
@@ -164,6 +169,7 @@ const float = {
           type: "number",
           class: ["form-control", cls],
           name: text_attr(nm),
+          disabled: attrs.disabled,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
             : "0.01",
@@ -216,6 +222,7 @@ const date = {
           type: "text",
           class: ["form-control", cls],
           name: text_attr(nm),
+          disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(typeof v === "string" ? v : v.toISOString())
@@ -253,6 +260,7 @@ const bool = {
         input({
           class: ["form-check-input", cls],
           type: "checkbox",
+          disabled: attrs.disabled,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true })
@@ -261,20 +269,26 @@ const bool = {
     tristate: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
-        input({
-          type: "hidden",
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-          value: !isdef(v) ? "" : v ? "T" : "F"
-        }) +
-        button(
-          {
-            onClick: `tristateClick('${text_attr(nm)}')`,
-            type: "button",
-            id: `trib${text_attr(nm)}`
-          },
-          !isdef(v) ? "?" : v ? "T" : "F"
-        )
+        attrs.disabled
+          ? !isdef(v)
+            ? ""
+            : v
+            ? "T"
+            : "F"
+          : input({
+              type: "hidden",
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              value: !isdef(v) ? "" : v ? "T" : "F"
+            }) +
+            button(
+              {
+                onClick: `tristateClick('${text_attr(nm)}')`,
+                type: "button",
+                id: `trib${text_attr(nm)}`
+              },
+              !isdef(v) ? "?" : v ? "T" : "F"
+            )
     }
   },
   attributes: [],

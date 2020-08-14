@@ -7,13 +7,15 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { disable } = require("contractis/contract");
 
 const router = new Router();
 module.exports = router;
 
-const fieldForm = fkey_opts =>
+const fieldForm = (fkey_opts, id) =>
   new Form({
     action: "/field",
     fields: [
@@ -30,12 +32,14 @@ const fieldForm = fkey_opts =>
         label: "Type",
         name: "type",
         input_type: "select",
-        options: getState().type_names.concat(fkey_opts || [])
+        options: getState().type_names.concat(fkey_opts || []),
+        disabled: !!id
       }),
       new Field({
         label: "Required",
         name: "required",
-        type: getState().types["Bool"]
+        type: getState().types["Bool"],
+        disabled: !!id && db.isSQLite
       }),
       new Field({
         label: "Unique",
@@ -70,7 +74,15 @@ const fieldFlow = new Workflow({
       attributes
     };
     if (context.id) {
-      await Field.update(fldRow, context.id);
+      const field = await Field.findOne({ id: context.id });
+      try {
+        await field.update(fldRow);
+      } catch (e) {
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message]
+        };
+      }
     } else await Field.create(fldRow);
     return { redirect: `/table/${context.table_id}` };
   },
@@ -84,7 +96,7 @@ const fieldFlow = new Workflow({
           "Key to users",
           "File"
         ];
-        const form = fieldForm(fkey_opts);
+        const form = fieldForm(fkey_opts, context.id);
         if (context.type === "Key" && context.reftable_name) {
           form.values.type = `Key to ${context.reftable_name}`;
         }
@@ -161,7 +173,10 @@ const fieldFlow = new Workflow({
           label: "Default",
           type: context.type,
           required: true,
-          attributes: { summary_field: context.summary_field }
+          attributes: {
+            summary_field: context.summary_field,
+            ...(context.attributes || {})
+          }
         });
         await formfield.fill_fkey_options();
         return new Form({
@@ -220,6 +235,9 @@ router.post(
         `Field attributes`,
         renderForm(wfres.renderForm, req.csrfToken())
       );
-    else res.redirect(wfres.redirect);
+    else {
+      if (wfres.flash) req.flash(...wfres.flash);
+      res.redirect(wfres.redirect);
+    }
   })
 );
