@@ -401,6 +401,18 @@ Table.contract = {
     updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
     toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.posint)),
+    tryInsertRow: is.fun(
+      [is.obj(), is.maybe(is.posint)],
+      is.promise(
+        is.or(is.obj({ error: is.str }), is.obj({ success: is.posint }))
+      )
+    ),
+    tryUpdateRow: is.fun(
+      [is.obj(), is.posint, is.maybe(is.posint)],
+      is.promise(
+        is.or(is.obj({ error: is.str }), is.obj({ success: is.eq(true) }))
+      )
+    ),
     getFields: is.fun([], is.promise(is.array(is.class("Field")))),
     get_parent_relations: is.fun(
       [],

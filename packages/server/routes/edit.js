@@ -66,7 +66,7 @@ router.post(
       if (typeof v.id === "undefined") {
         const ins_res = await table.tryInsertRow(
           form.values,
-          req.user ? req.user.id : undefined
+          req.user ? +req.user.id : undefined
         );
         if (ins_res.error) {
           req.flash("error", ins_res.error);
@@ -80,7 +80,7 @@ router.post(
         const upd_res = await table.tryUpdateRow(
           form.values,
           parseInt(id),
-          req.user ? req.user.id : undefined
+          req.user ? +req.user.id : undefined
         );
         if (upd_res.error) {
           req.flash("error", upd_res.error);

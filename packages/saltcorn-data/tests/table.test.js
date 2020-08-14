@@ -265,9 +265,13 @@ describe("Table unique constraint", () => {
     expect(ins_res).toEqual({
       error: "Duplicate value for unique field: name"
     });
+    const ins_res1 = await table.tryInsertRow({ name: "Billy" });
+    expect(typeof ins_res1.success).toEqual("number");
     const upd_res = await table.tryUpdateRow({ name: "Bill" }, ted_id);
     expect(upd_res).toEqual({
       error: "Duplicate value for unique field: name"
     });
+    const upd_res1 = await table.tryUpdateRow({ name: "teddy" }, ted_id);
+    expect(upd_res1.success).toEqual(true);
   });
 });
