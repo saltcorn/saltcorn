@@ -248,3 +248,26 @@ Pencil, 0.5, t`;
     expect(rows[0].vatable).toBe(db.isSQLite ? "t" : true);
   });
 });
+
+describe("Table unique constraint", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithUniques");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true
+    });
+    await table.insertRow({ name: "Bill" });
+    const ted_id = await table.insertRow({ name: "Ted" });
+    const ins_res = await table.tryInsertRow({ name: "Bill" });
+    expect(ins_res).toEqual({
+      error: "Duplicate value for unique field: name"
+    });
+    const upd_res = await table.tryUpdateRow({ name: "Bill" }, ted_id);
+    expect(upd_res).toEqual({
+      error: "Duplicate value for unique field: name"
+    });
+  });
+});

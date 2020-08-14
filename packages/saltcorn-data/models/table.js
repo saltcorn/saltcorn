@@ -29,6 +29,17 @@ const isDate = function(date) {
   return moment(date, dateFormats, true).isValid();
 };
 
+const normalise_error_message = msg =>
+  db.isSQLite
+    ? msg.replace(
+        /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
+        "Duplicate value for unique field: $2"
+      )
+    : msg.replace(
+        /duplicate key value violates unique constraint "(.*?)_unique"/,
+        "Duplicate value for unique field: $1"
+      );
+
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -113,7 +124,7 @@ class Table {
       await this.updateRow(v, id, _userid);
       return { success: true };
     } catch (e) {
-      return { error: e.message };
+      return { error: normalise_error_message(e.message) };
     }
   }
 
@@ -145,7 +156,7 @@ class Table {
       const id = await this.insertRow(v, _userid);
       return { success: id };
     } catch (e) {
-      return { error: e.message };
+      return { error: normalise_error_message(e.message) };
     }
   }
 

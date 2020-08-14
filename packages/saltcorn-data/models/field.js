@@ -270,13 +270,20 @@ class Field {
     }
 
     if (f.is_unique)
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          table.name
-        )}" add CONSTRAINT ${sqlsanitize(f.name)}_unique UNIQUE (${sqlsanitize(
-          f.name
-        )})`
-      );
+      if (is_sqlite)
+        await db.query(
+          `create unique index ${sqlsanitize(f.name)}_unique on "${sqlsanitize(
+            table.name
+          )}"(${sqlsanitize(f.name)})`
+        );
+      else
+        await db.query(
+          `alter table ${schema}"${sqlsanitize(
+            table.name
+          )}" add CONSTRAINT ${sqlsanitize(
+            f.name
+          )}_unique UNIQUE (${sqlsanitize(f.name)})`
+        );
 
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
