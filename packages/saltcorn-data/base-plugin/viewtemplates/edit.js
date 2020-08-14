@@ -227,7 +227,7 @@ const runPost = async (
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
-        req.user ? req.user.id : undefined
+        req.user ? +req.user.id : undefined
       );
       if (ins_res.success) id = ins_res.success;
       else {
@@ -239,7 +239,7 @@ const runPost = async (
       const upd_res = await table.tryUpdateRow(
         row,
         parseInt(id),
-        req.user ? req.user.id : undefined
+        req.user ? +req.user.id : undefined
       );
       if (upd_res.error) {
         req.flash("error", upd_res.error);

@@ -28,8 +28,6 @@ function query(sql, params) {
   return new Promise((resolve, reject) => {
     sqliteDatabase.all(sql, params, function(err, rows) {
       if (err) {
-        console.log("Error running sql " + sql);
-        console.log(err);
         reject(err);
       } else {
         resolve({ rows });

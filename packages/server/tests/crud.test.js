@@ -11,6 +11,8 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
+const User = require("@saltcorn/data/models/user");
+const reset = require("@saltcorn/data/db/reset_schema");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -110,10 +112,58 @@ describe("homepage", () => {
     await request(app)
       .get("/")
       .expect(toRedirect("/view/authorlist"));
+
+    await request(app)
+      .post("/config/edit/public_home")
+      .send("public_home=a_page")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/config/"));
+    await request(app)
+      .get("/")
+      .expect(toInclude("Hello world"));
     await request(app)
       .post("/config/delete/public_home")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/config/"));
+  });
+  it("shows empty quick start", async () => {
+    await reset();
+  });
+  it("redirects to create first user", async () => {
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .get("/")
+      .expect(toRedirect("/auth/create_first_user"));
+    await request(app)
+      .post("/auth/create_first_user")
+      .send("email=admin@foo.com")
+      .send("password=secret")
+      .expect(toRedirect("/"));
+  });
+  it("shows empty quick start", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Quick Start"))
+      .expect(toInclude("You have no tables and no views!"));
+  });
+  it("shows no-view quick start", async () => {
+    await Table.create("mytable");
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Quick Start"))
+      .expect(toInclude("You have no views!"));
+  });
+  it("resets", async () => {
+    await resetToFixtures();
   });
 });
 

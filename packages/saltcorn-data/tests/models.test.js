@@ -84,6 +84,12 @@ describe("Page", () => {
                           block: false,
                           contents: "Hello world",
                           textStyle: ""
+                        },
+                        {
+                          type: "view",
+                          view: "authorlist",
+                          name: "v46748",
+                          state: "fixed"
                         }
                       ]
                     },
@@ -111,7 +117,7 @@ describe("Page", () => {
           }
         ]
       },
-      fixed_states: {}
+      fixed_states: { v46748: { author: "Melville" } }
     });
 
     const cs = await Page.findOne({ name: "foo" });
@@ -120,6 +126,14 @@ describe("Page", () => {
     const html = renderLayout({ layout });
     expect(html).toContain(">Bye bye<");
     expect(html).toContain("Tolstoy");
+    const vs = await cs.getViews();
+    expect(vs[0].name).toEqual("v46748");
+    expect(vs[0].view).toEqual("authorlist");
+    expect(vs[0].contents).toContain("Herman");
+    expect(vs[0].contents).not.toContain("Tolstoy");
+    expect(vs[1].name).toEqual("v46747");
+    expect(vs[1].contents).toContain("Herman");
+    expect(vs[1].contents).toContain("Tolstoy");
     await cs.delete();
   });
 });
@@ -138,6 +152,10 @@ describe("File", () => {
     const cs = await File.find();
 
     expect(cs[0].mime_super).toBe("image");
+    const f = await File.findOne({ filename: "rick.png" });
+    expect(f.mime_sub).toBe("png");
+    expect(f.mimetype).toBe("image/png");
+    await f.delete();
   });
 });
 

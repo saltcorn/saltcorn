@@ -237,14 +237,48 @@ Gordon Kane, 217`;
     expect(rows[0].pages).toBe(217);
   });
   it("should create by importing", async () => {
-    const csv = `item,cost,vatable
-Book, 5, f
-Pencil, 0.5, t`;
+    const csv = `item,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const { table } = await Table.create_from_csv("Invoice", fnm);
+    const fields = await table.getFields();
+    const vatField = fields.find(f => f.name === "vatable");
+    expect(vatField.type.name).toBe("Bool");
+    const costField = fields.find(f => f.name === "cost");
+    expect(costField.type.name).toBe("Float");
+    const countField = fields.find(f => f.name === "count");
+    expect(countField.type.name).toBe("Integer");
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
     expect(rows[0].vatable).toBe(db.isSQLite ? "t" : true);
+  });
+});
+
+describe("Table unique constraint", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithUniques");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true
+    });
+    await table.insertRow({ name: "Bill" });
+    const ted_id = await table.insertRow({ name: "Ted" });
+    const ins_res = await table.tryInsertRow({ name: "Bill" });
+    expect(ins_res).toEqual({
+      error: "Duplicate value for unique field: name"
+    });
+    const ins_res1 = await table.tryInsertRow({ name: "Billy" });
+    expect(typeof ins_res1.success).toEqual("number");
+    const upd_res = await table.tryUpdateRow({ name: "Bill" }, ted_id);
+    expect(upd_res).toEqual({
+      error: "Duplicate value for unique field: name"
+    });
+    const upd_res1 = await table.tryUpdateRow({ name: "teddy" }, ted_id);
+    expect(upd_res1.success).toEqual(true);
   });
 });
