@@ -35,7 +35,7 @@ const pageFlow = new Workflow({
   },
   steps: [
     {
-      name: "page",
+      name: "Page",
       form: async context => {
         const roles = await User.get_roles();
 
@@ -70,7 +70,7 @@ const pageFlow = new Workflow({
       }
     },
     {
-      name: "layout",
+      name: "Layout",
       builder: async context => {
         const views = await View.find();
         const images = await File.find({ mime_super: "image" });
@@ -83,7 +83,7 @@ const pageFlow = new Workflow({
       }
     },
     {
-      name: "fixed_states",
+      name: "Fixed states",
       contextField: "fixed_states",
       onlyWhen: async context => {
         const p = new Page(context);

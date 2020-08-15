@@ -50,7 +50,7 @@ describe("pageedit", () => {
       .post("/pageedit/edit")
       .set("Cookie", loginCookie)
       .send("name=a_page")
-      .send("stepName=page")
+      .send("stepName=Page")
       .send("contextEnc=" + ctx)
       .expect(toInclude("builder.renderBuilder"));
   });

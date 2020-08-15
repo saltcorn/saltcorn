@@ -40,7 +40,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=field")
+      .send("stepName=Basic properties")
       .send("name=AgeRating")
       .send("label=AgeRating")
       .send("type=Integer")
@@ -64,7 +64,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=attributes")
+      .send("stepName=Attributes")
       .send("contextEnc=" + ctx)
       .send("min=0")
       .send("max=410")
@@ -87,7 +87,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=field")
+      .send("stepName=Basic properties")
       .send("name=Publisher")
       .send("label=Publisher")
       .send("type=String")
@@ -102,7 +102,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=field")
+      .send("stepName=Basic properties")
       .send("name=wrote")
       .send("label=wrote")
       .send("type=Key+to+books")
@@ -126,7 +126,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=summary")
+      .send("stepName=Summary")
       .send("contextEnc=" + ctx)
       .send("summary_field=pages")
       .set("Cookie", loginCookie)
@@ -149,7 +149,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=default")
+      .send("stepName=Default")
       .send("contextEnc=" + ctx)
       .send("summary_field=pages")
       .send("default=1")
@@ -172,7 +172,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=default")
+      .send("stepName=Default")
       .send("contextEnc=" + ctx)
       .send("default=foo")
       .set("Cookie", loginCookie)
@@ -193,7 +193,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
-      .send("stepName=default")
+      .send("stepName=Default")
       .send("contextEnc=" + ctx)
       .send("default=56")
       .set("Cookie", loginCookie)
