@@ -84,7 +84,10 @@ const fieldFlow = new Workflow({
         };
       }
     } else await Field.create(fldRow);
-    return { redirect: `/table/${context.table_id}` };
+    return {
+      redirect: `/table/${context.table_id}`,
+      flash: ["success", `Field "${label}" ${context.id ? "saved" : "created"}`]
+    };
   },
   steps: [
     {
@@ -193,8 +196,25 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const field = await Field.findOne({ id });
+    const table = await Table.findOne({ id: field.table_id });
     const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
-    res.sendWrap(`Edit field`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(`Edit field`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: `${field.label} field` }
+          ]
+        },
+        {
+          type: "card",
+          title: `Edit ${field.label} field`,
+          contents: renderForm(wfres.renderForm, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -204,8 +224,26 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
+    const table = await Table.findOne({ id: table_id });
+
     const wfres = await fieldFlow.run({ table_id: +table_id });
-    res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(`New field`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: `Add field` }
+          ]
+        },
+        {
+          type: "card",
+          title: `New field`,
+          contents: renderForm(wfres.renderForm, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -219,7 +257,7 @@ router.post(
     const table_id = f.table_id;
 
     await f.delete();
-
+    req.flash("success", `Field "${f.label}" deleted`);
     res.redirect(`/table/${table_id}`);
   })
 );
