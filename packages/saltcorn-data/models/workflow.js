@@ -40,6 +40,10 @@ class Workflow {
           contextEnc
         };
         if (this.action) form.action = this.action;
+        if (!form.submitLabel)
+          form.submitLabel =
+            stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
+
         return {
           renderForm: form,
           context,
@@ -96,7 +100,9 @@ class Workflow {
         }
       });
       if (this.action) form.action = this.action;
-
+      if (!form.submitLabel)
+        form.submitLabel =
+          stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
       return {
         renderForm: form,
         context,
