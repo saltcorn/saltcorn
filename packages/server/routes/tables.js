@@ -98,7 +98,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create table" }]
+          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create" }]
         },
         {
           type: "card",
@@ -476,10 +476,6 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [{ text: "Tables" }]
-        },
-        {
-          type: "pageHeader",
-          title: `Tables`
         },
         {
           type: "card",

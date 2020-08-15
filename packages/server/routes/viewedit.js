@@ -61,20 +61,36 @@ router.get(
             h4("No views defined"),
             p("Views define how table rows are displayed to the user")
           );
-    res.sendWrap(
-      `Views`,
-      viewMarkup,
-      tables.length > 0
-        ? a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
-        : p("You must create at least one table before you can create views.")
-    );
+    res.sendWrap(`Views`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Views" }]
+        },
+        {
+          type: "card",
+          title: "Your views",
+          contents: [
+            viewMarkup,
+            tables.length > 0
+              ? a(
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  "Add view"
+                )
+              : p(
+                  "You must create at least one table before you can create views."
+                )
+          ]
+        }
+      ]
+    });
   })
 );
 
 const viewForm = (tableOptions, roles, values) =>
   new Form({
     action: "/viewedit/save",
-    blurb: "First, please give some basic information about your new view.",
+    blurb: "First, please give some basic information about the view.",
     fields: [
       new Field({ label: "View name", name: "name", type: "String" }),
       new Field({
@@ -123,7 +139,22 @@ router.get(
     const roles = await User.get_roles();
     const form = viewForm(tableOptions, roles, viewrow);
     form.hidden("id");
-    res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Edit view`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Views", href: "/viewedit" },
+            { text: `Edit ${viewname}` }
+          ]
+        },
+        {
+          type: "card",
+          title: `Edit view`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -139,7 +170,19 @@ router.get(
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
-    res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Create view`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Views", href: "/viewedit" }, { text: "Create" }]
+        },
+        {
+          type: "card",
+          title: `Create view`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
