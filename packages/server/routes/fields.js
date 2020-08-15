@@ -91,7 +91,7 @@ const fieldFlow = new Workflow({
   },
   steps: [
     {
-      name: "field",
+      name: "Basic properties",
       form: async context => {
         const tables = await Table.find({});
         const fkey_opts = [
@@ -107,7 +107,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "attributes",
+      name: "Attributes",
       contextField: "attributes",
       onlyWhen: context => {
         if (context.type === "File") return true;
@@ -138,7 +138,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "summary",
+      name: "Summary",
       onlyWhen: context =>
         context.type !== "Key to users" &&
         context.reftable_name !== "users" &&
@@ -162,7 +162,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "default",
+      name: "Default",
       onlyWhen: async context => {
         if (context.type === "Key to users") context.summary_field = "email";
         if (!context.required || context.id) return false;
@@ -205,12 +205,13 @@ router.get(
           crumbs: [
             { text: "Tables", href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: `${field.label} field` }
+            { text: `Edit ${field.label} field` },
+            { text: wfres.stepName }
           ]
         },
         {
           type: "card",
-          title: `Edit ${field.label} field`,
+          title: `${field.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
           contents: renderForm(wfres.renderForm, req.csrfToken())
         }
       ]
@@ -234,12 +235,13 @@ router.get(
           crumbs: [
             { text: "Tables", href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: `Add field` }
+            { text: `Add field` },
+            { text: wfres.stepName }
           ]
         },
         {
           type: "card",
-          title: `New field`,
+          title: `New field: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
           contents: renderForm(wfres.renderForm, req.csrfToken())
         }
       ]
@@ -268,12 +270,27 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const wfres = await fieldFlow.run(req.body);
-    if (wfres.renderForm)
-      res.sendWrap(
-        `Field attributes`,
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
-    else {
+    if (wfres.renderForm) {
+      const table = await Table.findOne({ id: wfres.context.table_id });
+      res.sendWrap(`Field attributes`, {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: "Tables", href: "/table" },
+              { href: `/table/${table.id}`, text: table.name },
+              { text: `Edit ${wfres.context.label} field` },
+              { text: `${wfres.stepName}` }
+            ]
+          },
+          {
+            type: "card",
+            title: `${wfres.context.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+            contents: renderForm(wfres.renderForm, req.csrfToken())
+          }
+        ]
+      });
+    } else {
       if (wfres.flash) req.flash(...wfres.flash);
       res.redirect(wfres.redirect);
     }

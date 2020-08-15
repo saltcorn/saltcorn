@@ -40,7 +40,13 @@ class Workflow {
           contextEnc
         };
         if (this.action) form.action = this.action;
-        return { renderForm: form };
+        return {
+          renderForm: form,
+          context,
+          stepName: step.name,
+          currentStep: stepIx + 1,
+          maxSteps: this.steps.length
+        };
       }
       const toCtx = step.contextField
         ? { [step.contextField]: valres.success }
@@ -91,7 +97,13 @@ class Workflow {
       });
       if (this.action) form.action = this.action;
 
-      return { renderForm: form };
+      return {
+        renderForm: form,
+        context,
+        stepName: step.name,
+        currentStep: stepIx + 1,
+        maxSteps: this.steps.length
+      };
     } else if (step.builder) {
       const options = await applyAsync(step.builder, context);
       return {
