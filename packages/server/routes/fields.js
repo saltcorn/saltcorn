@@ -11,11 +11,12 @@ const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { disable } = require("contractis/contract");
+const { table } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
 
-const fieldForm = (fkey_opts, id) =>
+const fieldForm = (fkey_opts, existing_names, id) =>
   new Form({
     action: "/field",
     fields: [
@@ -26,6 +27,8 @@ const fieldForm = (fkey_opts, id) =>
         validator(s) {
           if (s.toLowerCase() === "id")
             return `Column '${s}' already exists (but is hidden)`;
+          if (!id && existing_names.includes(Field.labelToName(s)))
+            return `Column '${s}' already exists`;
         }
       }),
       new Field({
@@ -94,12 +97,15 @@ const fieldFlow = new Workflow({
       name: "Basic properties",
       form: async context => {
         const tables = await Table.find({});
+        const table = tables.find(t => t.id === context.table_id);
+        const existing_fields = await table.getFields();
+        const existingNames = existing_fields.map(f => f.name);
         const fkey_opts = [
           ...tables.map(t => `Key to ${t.name}`),
           "Key to users",
           "File"
         ];
-        const form = fieldForm(fkey_opts, context.id);
+        const form = fieldForm(fkey_opts, existingNames, context.id);
         if (context.type === "Key" && context.reftable_name) {
           form.values.type = `Key to ${context.reftable_name}`;
         }
@@ -279,13 +285,15 @@ router.post(
             crumbs: [
               { text: "Tables", href: "/table" },
               { href: `/table/${table.id}`, text: table.name },
-              { text: `Edit ${wfres.context.label} field` },
+              { text: `Edit ${wfres.context.label || "new"} field` },
               { text: `${wfres.stepName}` }
             ]
           },
           {
             type: "card",
-            title: `${wfres.context.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+            title: `${wfres.context.label || "New field"}: ${
+              wfres.stepName
+            } (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
             contents: renderForm(wfres.renderForm, req.csrfToken())
           }
         ]
