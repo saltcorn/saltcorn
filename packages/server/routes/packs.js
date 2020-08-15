@@ -55,21 +55,27 @@ router.get(
       name: `page.${t.name}`,
       type: "Bool"
     }));
-    res.sendWrap(
-      `Create Pack`,
-      renderForm(
-        new Form({
-          action: "/packs/create",
-          fields: [
-            ...tableFields,
-            ...viewFields,
-            ...pluginFields,
-            ...pageFields
+    const form = new Form({
+      action: "/packs/create",
+      fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields]
+    });
+    res.sendWrap(`Create Pack`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins", href: "/plugins" },
+            { text: "Create pack" }
           ]
-        }),
-        req.csrfToken()
-      )
-    );
+        },
+        {
+          type: "card",
+          title: `Create pack`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -99,10 +105,23 @@ router.post(
           break;
       }
     }
-    res.sendWrap(
-      `Pack`,
-      pre({ class: "wsprewrap" }, code(JSON.stringify(pack)))
-    );
+    res.sendWrap(`Pack`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins", href: "/plugins" },
+            { text: "Create pack" }
+          ]
+        },
+        {
+          type: "card",
+          title: `Pack`,
+          contents: pre({ class: "wsprewrap" }, code(JSON.stringify(pack)))
+        }
+      ]
+    });
   })
 );
 
@@ -123,10 +142,23 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(
-      `Install Pack`,
-      renderForm(install_pack_form(), req.csrfToken())
-    );
+    res.sendWrap(`Install Pack`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins", href: "/plugins" },
+            { text: "Install pack" }
+          ]
+        },
+        {
+          type: "card",
+          title: `Install Pack`,
+          contents: renderForm(install_pack_form(), req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -156,7 +188,23 @@ router.post(
       const form = install_pack_form();
       form.values = { pack: req.body.pack };
       req.flash("error", error);
-      res.sendWrap(`Install Pack`, renderForm(form, req.csrfToken()));
+      res.sendWrap(`Install Pack`, {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: "Settings" },
+              { text: "Plugins", href: "/plugins" },
+              { text: "Install pack" }
+            ]
+          },
+          {
+            type: "card",
+            title: `Install Pack`,
+            contents: renderForm(form, req.csrfToken())
+          }
+        ]
+      });
     } else {
       await install_pack(pack, undefined, p =>
         load_plugins.loadAndSaveNewPlugin(p)
