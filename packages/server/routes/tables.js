@@ -312,6 +312,10 @@ router.get(
     res.sendWrap(`${table.name} table`, {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Tables", href: "/table" }, { text: table.name }]
+        },
+        {
           type: "pageHeader",
           title: `${table.name} table`
         },
@@ -449,12 +453,16 @@ router.get(
     res.sendWrap("Tables", {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Tables" }]
+        },
+        {
           type: "pageHeader",
           title: `Tables`
         },
         {
           type: "card",
-          title: "Tables",
+          title: "Your tables",
           contents: mainCard
         },
         {

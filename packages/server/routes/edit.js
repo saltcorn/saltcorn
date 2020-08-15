@@ -4,6 +4,7 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { setTenant, loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
+const pluralize = require("pluralize");
 
 const { renderForm } = require("@saltcorn/markup");
 
@@ -21,7 +22,25 @@ router.get(
     const fields = await Field.find({ table_id: table.id });
     const form = new Form({ action: `/edit/${tname}`, fields });
     await form.fill_fkey_options();
-    res.sendWrap(`New ${table.name}`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`New ${table.name}`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: "Data", href: `/list/${table.name}` },
+            { text: "Add row" }
+          ]
+        },
+        ,
+        {
+          type: "card",
+          title: `Add ${pluralize(table.name, 1)}`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -39,7 +58,24 @@ router.get(
     form.hidden("id");
     await form.fill_fkey_options();
 
-    res.sendWrap(`Edit ${table.name}`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Edit ${table.name}`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: "Data", href: `/list/${table.name}` },
+            { text: "Edit row" }
+          ]
+        },
+        {
+          type: "card",
+          title: `Edit ${pluralize(table.name, 1)}`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 

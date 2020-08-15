@@ -1,6 +1,7 @@
 const {
   ul,
   li,
+  ol,
   a,
   span,
   hr,
@@ -146,4 +147,21 @@ const logit = (x, s) => {
   return x;
 };
 
-module.exports = { navbar, alert, logit, navbarSolidOnScroll };
+const breadcrumbs = crumbs =>
+  nav(
+    { "aria-label": "breadcrumb" },
+    ol(
+      { class: "breadcrumb" },
+      crumbs.map(({ href, text }, ix) =>
+        li(
+          {
+            class: ["breadcrumb-item", ix == crumbs.length - 1 && "active"],
+            "aria-current": ix == crumbs.length - 1 && "page"
+          },
+          href ? a({ href }, text) : text
+        )
+      )
+    )
+  );
+
+module.exports = { navbar, alert, logit, navbarSolidOnScroll, breadcrumbs };
