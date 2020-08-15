@@ -18,7 +18,23 @@ const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
-
+const wrap = (cardTitle, response, lastBc) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [
+        { text: "Settings" },
+        { text: "Crash log", href: lastBc && "/crashlog" },
+        ...(lastBc ? [lastBc] : [])
+      ]
+    },
+    {
+      type: "card",
+      title: cardTitle,
+      contents: response
+    }
+  ]
+});
 router.get(
   "/",
   setTenant,
@@ -27,24 +43,27 @@ router.get(
     const crashes = await Crash.find({});
     res.sendWrap(
       "Crash log",
-      crashes.length === 0
-        ? div(
-            h3("No errors reported"),
-            p("Everything is going extremely well.")
-          )
-        : mkTable(
-            [
-              {
-                label: "Show",
-                key: r => link(`/crashlog/${r.id}`, text(r.msg_short))
-              },
-              { label: "When", key: r => r.reltime },
-              ...(db.is_it_multi_tenant()
-                ? [{ label: "Tenant", key: "tenant" }]
-                : [])
-            ],
-            crashes
-          )
+      wrap(
+        "Crash log",
+        crashes.length === 0
+          ? div(
+              h3("No errors reported"),
+              p("Everything is going extremely well.")
+            )
+          : mkTable(
+              [
+                {
+                  label: "Show",
+                  key: r => link(`/crashlog/${r.id}`, text(r.msg_short))
+                },
+                { label: "When", key: r => r.reltime },
+                ...(db.is_it_multi_tenant()
+                  ? [{ label: "Tenant", key: "tenant" }]
+                  : [])
+              ],
+              crashes
+            )
+      )
     );
   })
 );
@@ -58,24 +77,28 @@ router.get(
     const crash = await Crash.findOne({ id });
     res.sendWrap(
       "Crash log",
-      table(
-        { class: "table" },
-        tbody(
-          Object.entries(crash).map(([k, v]) =>
-            tr(
-              td(k),
-              td(
-                pre(
-                  text(
-                    ["headers", "body"].includes(k)
-                      ? JSON.stringify(v, null, 2)
-                      : v
+      wrap(
+        "Crash log entry " + id,
+        table(
+          { class: "table" },
+          tbody(
+            Object.entries(crash).map(([k, v]) =>
+              tr(
+                td(k),
+                td(
+                  pre(
+                    text(
+                      ["headers", "body"].includes(k)
+                        ? JSON.stringify(v, null, 2)
+                        : v
+                    )
                   )
                 )
               )
             )
           )
-        )
+        ),
+        { text: `${id}` }
       )
     );
   })

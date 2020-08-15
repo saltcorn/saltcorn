@@ -21,41 +21,50 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(
-      `Admin`,
-      div(
-        div(
-          "Restart server. Try reloading the page after a few seconds after pressing this button.",
-          post_btn("/admin/restart", "Restart", req.csrfToken())
-        ),
-        hr(),
+    res.sendWrap(`Admin`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Settings" }, { text: "Admin" }]
+        },
+        {
+          type: "card",
+          title: "Admin",
+          contents: div(
+            div(
+              "Restart server. Try reloading the page after a few seconds after pressing this button.",
+              post_btn("/admin/restart", "Restart", req.csrfToken())
+            ),
+            hr(),
 
-        post_btn("/admin/backup", "Backup", req.csrfToken()),
-        hr(),
-        form(
-          {
-            method: "post",
-            action: `/admin/restore`,
-            encType: "multipart/form-data"
-          },
-          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-          label(
-            { class: "btn-link", for: "upload_to_restore" },
-            i({ class: "fas fa-2x fa-upload" }),
-            "<br/>",
-            "Restore"
-          ),
-          input({
-            id: "upload_to_restore",
-            class: "d-none",
-            name: "file",
-            type: "file",
-            accept: "application/zip,.zip",
-            onchange: "this.form.submit();"
-          })
-        )
-      )
-    );
+            post_btn("/admin/backup", "Backup", req.csrfToken()),
+            hr(),
+            form(
+              {
+                method: "post",
+                action: `/admin/restore`,
+                encType: "multipart/form-data"
+              },
+              input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+              label(
+                { class: "btn-link", for: "upload_to_restore" },
+                i({ class: "fas fa-2x fa-upload" }),
+                "<br/>",
+                "Restore"
+              ),
+              input({
+                id: "upload_to_restore",
+                class: "d-none",
+                name: "file",
+                type: "file",
+                accept: "application/zip,.zip",
+                onchange: "this.form.submit();"
+              })
+            )
+          )
+        }
+      ]
+    });
   })
 );
 
