@@ -17,7 +17,7 @@ const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
-        name: "editfields",
+        name: "Layout",
         builder: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
@@ -39,7 +39,7 @@ const configuration_workflow = () =>
         }
       },
       {
-        name: "fixed_fields",
+        name: "Fixed fields",
         contextField: "fixed",
         onlyWhen: async context => {
           const table = await Table.findOne({ id: context.table_id });
@@ -80,7 +80,7 @@ const configuration_workflow = () =>
         }
       },
       {
-        name: "editoptions",
+        name: "Edit options",
         onlyWhen: async context => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>

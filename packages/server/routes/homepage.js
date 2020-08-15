@@ -52,7 +52,7 @@ const no_views_logged_in = async (req, res) => {
           },
           {
             type: "card",
-            title: "Tables",
+            title: link("/table", "Tables"),
             contents: div(
               div("You have no tables and no views!"),
               div(
@@ -109,7 +109,7 @@ const no_views_logged_in = async (req, res) => {
           },
           {
             type: "card",
-            title: "Tables",
+            title: link("/table", "Tables"),
             contents: div(
               tableTable(tables),
               div(
@@ -129,7 +129,7 @@ const no_views_logged_in = async (req, res) => {
           },
           {
             type: "card",
-            title: "Views",
+            title: link("/viewedit", "Views"),
             contents: [
               div("You have no views!"),
               div(
@@ -151,7 +151,7 @@ const no_views_logged_in = async (req, res) => {
           },
           {
             type: "card",
-            title: "Tables",
+            title: link("/table", "Tables"),
             contents: div(
               tableTable(tables),
               div(
@@ -164,7 +164,7 @@ const no_views_logged_in = async (req, res) => {
           },
           {
             type: "card",
-            title: "Views",
+            title: link("/viewedit", "Views"),
             contents: [
               viewTable(views),
               div(

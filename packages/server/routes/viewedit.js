@@ -61,20 +61,37 @@ router.get(
             h4("No views defined"),
             p("Views define how table rows are displayed to the user")
           );
-    res.sendWrap(
-      `Views`,
-      viewMarkup,
-      tables.length > 0
-        ? a({ href: `/viewedit/new`, class: "btn btn-primary" }, "Add view")
-        : p("You must create at least one table before you can create views.")
-    );
+    res.sendWrap(`Views`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Views" }]
+        },
+        {
+          type: "card",
+          title: "Your views",
+          contents: [
+            viewMarkup,
+            tables.length > 0
+              ? a(
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  "Add view"
+                )
+              : p(
+                  "You must create at least one table before you can create views."
+                )
+          ]
+        }
+      ]
+    });
   })
 );
 
 const viewForm = (tableOptions, roles, values) =>
   new Form({
     action: "/viewedit/save",
-    blurb: "First, please give some basic information about your new view.",
+    submitLabel: "Configure &raquo;",
+    blurb: "First, please give some basic information about the view.",
     fields: [
       new Field({ label: "View name", name: "name", type: "String" }),
       new Field({
@@ -123,7 +140,22 @@ router.get(
     const roles = await User.get_roles();
     const form = viewForm(tableOptions, roles, viewrow);
     form.hidden("id");
-    res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Edit view`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Views", href: "/viewedit" },
+            { text: `${viewname}` }
+          ]
+        },
+        {
+          type: "card",
+          title: `Edit ${viewname} view`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -139,7 +171,19 @@ router.get(
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
-    res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Create view`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Views", href: "/viewedit" }, { text: "Create" }]
+        },
+        {
+          type: "card",
+          title: `Create view`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -154,11 +198,27 @@ router.post(
     const form = viewForm(tableOptions, roles);
     const result = form.validate(req.body);
 
+    const sendForm = form => {
+      res.sendWrap(`Edit view`, {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: "Views", href: "/viewedit" }, { text: "Edit" }]
+          },
+          {
+            type: "card",
+            title: `Edit view`,
+            contents: renderForm(form, req.csrfToken())
+          }
+        ]
+      });
+    };
+
     if (result.success) {
       if (result.success.name.replace(" ", "") === "") {
         form.errors.name = "Name required";
         form.hasErrors = true;
-        res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+        sendForm(form);
       } else {
         if (!req.body.id) {
           const existing_views = await View.find();
@@ -166,7 +226,7 @@ router.post(
           if (view_names.includes(result.success.name)) {
             form.errors.name = "A view with this name already exists";
             form.hasErrors = true;
-            res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+            sendForm(form);
             return;
           }
         }
@@ -190,11 +250,41 @@ router.post(
         res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
       }
     } else {
-      res.sendWrap(`Edit view`, renderForm(form, req.csrfToken()));
+      sendForm(form);
     }
   })
 );
+const respondWorkflow = (view, wfres, req, res) => {
+  const wrap = contents => ({
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: "Views", href: "/viewedit" },
+          { href: `/viewedit/edit/${view.name}`, text: view.name },
+          { text: wfres.stepName }
+        ]
+      },
+      {
+        type: "card",
+        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        contents
+      }
+    ]
+  });
 
+  if (wfres.renderForm)
+    res.sendWrap(
+      `View configuration`,
+      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+    );
+  else if (wfres.renderBuilder)
+    res.sendWrap(
+      `View configuration`,
+      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()))
+    );
+  else res.redirect(wfres.redirect);
+};
 router.get(
   "/config/:name",
   setTenant,
@@ -209,17 +299,7 @@ router.get(
       viewname: name,
       ...view.configuration
     });
-    if (wfres.renderForm)
-      res.sendWrap(
-        `View configuration`,
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
-    else if (wfres.renderBuilder)
-      res.sendWrap(
-        `View configuration`,
-        renderBuilder(wfres.renderBuilder, req.csrfToken())
-      );
-    else res.redirect(wfres.redirect);
+    respondWorkflow(view, wfres, req, res);
   })
 );
 
@@ -233,15 +313,7 @@ router.post(
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow();
     const wfres = await configFlow.run(req.body);
-
-    if (wfres.renderForm)
-      res.sendWrap(
-        `View configuration`,
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
-    else {
-      res.redirect(wfres.redirect);
-    }
+    respondWorkflow(view, wfres, req, res);
   })
 );
 

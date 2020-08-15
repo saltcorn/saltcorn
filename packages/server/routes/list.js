@@ -118,10 +118,25 @@ router.get(
         post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken())
     });
     const rows = await table.getJoinedRows(joinOpts);
-    res.sendWrap(
-      `${table.name} data table`,
-      mkTable(tfields, rows),
-      link(`/edit/${table.name}`, "Add row")
-    );
+    res.sendWrap(`${table.name} data table`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: "Data" }
+          ]
+        },
+        {
+          type: "card",
+          title: `${table.name} data table`,
+          contents: [
+            mkTable(tfields, rows),
+            link(`/edit/${table.name}`, "Add row")
+          ]
+        }
+      ]
+    });
   })
 );

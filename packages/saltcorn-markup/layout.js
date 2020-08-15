@@ -1,6 +1,6 @@
 const { contract, is } = require("contractis");
 const { div, a, span, h6, text, img } = require("./tags");
-const { alert } = require("./layout_utils");
+const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
 const makeSegments = (body, alerts) => {
@@ -56,6 +56,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
+    }
+    if (segment.type === "breadcrumbs") {
+      return wrap(segment, isTop, ix, breadcrumbs(segment.crumbs || []));
     }
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");

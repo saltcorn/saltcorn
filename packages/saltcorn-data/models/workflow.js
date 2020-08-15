@@ -40,7 +40,17 @@ class Workflow {
           contextEnc
         };
         if (this.action) form.action = this.action;
-        return { renderForm: form };
+        if (!form.submitLabel)
+          form.submitLabel =
+            stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
+
+        return {
+          renderForm: form,
+          context,
+          stepName: step.name,
+          currentStep: stepIx + 1,
+          maxSteps: this.steps.length
+        };
       }
       const toCtx = step.contextField
         ? { [step.contextField]: valres.success }
@@ -90,8 +100,16 @@ class Workflow {
         }
       });
       if (this.action) form.action = this.action;
-
-      return { renderForm: form };
+      if (!form.submitLabel)
+        form.submitLabel =
+          stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
+      return {
+        renderForm: form,
+        context,
+        stepName: step.name,
+        currentStep: stepIx + 1,
+        maxSteps: this.steps.length
+      };
     } else if (step.builder) {
       const options = await applyAsync(step.builder, context);
       return {
@@ -102,7 +120,11 @@ class Workflow {
           action: this.action,
           stepName: step.name,
           mode: options.mode
-        }
+        },
+        context,
+        stepName: step.name,
+        currentStep: stepIx + 1,
+        maxSteps: this.steps.length
       };
     }
   }

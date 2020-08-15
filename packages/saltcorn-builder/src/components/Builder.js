@@ -83,7 +83,7 @@ const SaveButton = ({ layout }) => {
   };
   return (
     <button className="btn btn-primary" onClick={onClick}>
-      Save
+      Next &raquo;
     </button>
   );
 };

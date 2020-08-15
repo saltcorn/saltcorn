@@ -84,11 +84,14 @@ const fieldFlow = new Workflow({
         };
       }
     } else await Field.create(fldRow);
-    return { redirect: `/table/${context.table_id}` };
+    return {
+      redirect: `/table/${context.table_id}`,
+      flash: ["success", `Field "${label}" ${context.id ? "saved" : "created"}`]
+    };
   },
   steps: [
     {
-      name: "field",
+      name: "Basic properties",
       form: async context => {
         const tables = await Table.find({});
         const fkey_opts = [
@@ -104,7 +107,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "attributes",
+      name: "Attributes",
       contextField: "attributes",
       onlyWhen: context => {
         if (context.type === "File") return true;
@@ -135,7 +138,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "summary",
+      name: "Summary",
       onlyWhen: context =>
         context.type !== "Key to users" &&
         context.reftable_name !== "users" &&
@@ -159,7 +162,7 @@ const fieldFlow = new Workflow({
       }
     },
     {
-      name: "default",
+      name: "Default",
       onlyWhen: async context => {
         if (context.type === "Key to users") context.summary_field = "email";
         if (!context.required || context.id) return false;
@@ -193,8 +196,26 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const field = await Field.findOne({ id });
+    const table = await Table.findOne({ id: field.table_id });
     const wfres = await fieldFlow.run({ ...field.toJson, ...field.attributes });
-    res.sendWrap(`Edit field`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(`Edit field`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: `Edit ${field.label} field` },
+            { text: wfres.stepName }
+          ]
+        },
+        {
+          type: "card",
+          title: `${field.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          contents: renderForm(wfres.renderForm, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -204,8 +225,27 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
+    const table = await Table.findOne({ id: table_id });
+
     const wfres = await fieldFlow.run({ table_id: +table_id });
-    res.sendWrap(`New field`, renderForm(wfres.renderForm, req.csrfToken()));
+    res.sendWrap(`New field`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: `Add field` },
+            { text: wfres.stepName }
+          ]
+        },
+        {
+          type: "card",
+          title: `New field: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          contents: renderForm(wfres.renderForm, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -219,7 +259,7 @@ router.post(
     const table_id = f.table_id;
 
     await f.delete();
-
+    req.flash("success", `Field "${f.label}" deleted`);
     res.redirect(`/table/${table_id}`);
   })
 );
@@ -230,12 +270,27 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const wfres = await fieldFlow.run(req.body);
-    if (wfres.renderForm)
-      res.sendWrap(
-        `Field attributes`,
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
-    else {
+    if (wfres.renderForm) {
+      const table = await Table.findOne({ id: wfres.context.table_id });
+      res.sendWrap(`Field attributes`, {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: "Tables", href: "/table" },
+              { href: `/table/${table.id}`, text: table.name },
+              { text: `Edit ${wfres.context.label} field` },
+              { text: `${wfres.stepName}` }
+            ]
+          },
+          {
+            type: "card",
+            title: `${wfres.context.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+            contents: renderForm(wfres.renderForm, req.csrfToken())
+          }
+        ]
+      });
+    } else {
       if (wfres.flash) req.flash(...wfres.flash);
       res.redirect(wfres.redirect);
     }

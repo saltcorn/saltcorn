@@ -94,24 +94,33 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(
-      `New table`,
-      renderForm(
-        new Form({
-          action: "/table",
-          submitLabel: "Create",
-          fields: [
-            {
-              label: "Table name",
-              name: "name",
-              input_type: "text",
-              required: true
-            }
-          ]
-        }),
-        req.csrfToken()
-      )
-    );
+    res.sendWrap(`New table`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create" }]
+        },
+        {
+          type: "card",
+          title: `New table`,
+          contents: renderForm(
+            new Form({
+              action: "/table",
+              submitLabel: "Create",
+              fields: [
+                {
+                  label: "Table name",
+                  name: "name",
+                  input_type: "text",
+                  required: true
+                }
+              ]
+            }),
+            req.csrfToken()
+          )
+        }
+      ]
+    });
   })
 );
 
@@ -120,20 +129,32 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(
-      `Create table from CSV file`,
-      renderForm(
-        new Form({
-          action: "/table/create-from-csv",
-          submitLabel: "Create",
-          fields: [
-            { label: "Table name", name: "name", input_type: "text" },
-            { label: "File", name: "file", input_type: "file" }
+    res.sendWrap(`Create table from CSV file`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Tables", href: "/table" },
+            { text: "Create from CSV" }
           ]
-        }),
-        req.csrfToken()
-      )
-    );
+        },
+        {
+          type: "card",
+          title: `Create table from CSV file`,
+          contents: renderForm(
+            new Form({
+              action: "/table/create-from-csv",
+              submitLabel: "Create",
+              fields: [
+                { label: "Table name", name: "name", input_type: "text" },
+                { label: "File", name: "file", input_type: "file" }
+              ]
+            }),
+            req.csrfToken()
+          )
+        }
+      ]
+    });
   })
 );
 
@@ -312,6 +333,10 @@ router.get(
     res.sendWrap(`${table.name} table`, {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Tables", href: "/table" }, { text: table.name }]
+        },
+        {
           type: "pageHeader",
           title: `${table.name} table`
         },
@@ -449,12 +474,12 @@ router.get(
     res.sendWrap("Tables", {
       above: [
         {
-          type: "pageHeader",
-          title: `Tables`
+          type: "breadcrumbs",
+          crumbs: [{ text: "Tables" }]
         },
         {
           type: "card",
-          title: "Tables",
+          title: "Your tables",
           contents: mainCard
         },
         {
