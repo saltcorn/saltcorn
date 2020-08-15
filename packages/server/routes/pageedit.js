@@ -31,7 +31,10 @@ const pageFlow = new Workflow({
     if (id) {
       await Page.update(id, pageRow);
     } else await Page.create(pageRow);
-    return { redirect: `/pageedit` };
+    return {
+      redirect: `/pageedit`,
+      flash: ["success", `Page ${pageRow.name} saved`]
+    };
   },
   steps: [
     {
@@ -187,8 +190,8 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   res.sendWrap("Pages", {
     above: [
       {
-        type: "pageHeader",
-        title: `Pages`
+        type: "breadcrumbs",
+        crumbs: [{ text: "Pages" }]
       },
       {
         type: "card",
@@ -204,6 +207,39 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   });
 });
 
+const respondWorkflow = (page, wfres, req, res) => {
+  const wrap = contents => ({
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: "Pages", href: "/pageedit" },
+          page
+            ? { href: `/pageedit/edit/${page.name}`, text: page.name }
+            : { text: "New" },
+          { text: wfres.stepName }
+        ]
+      },
+      {
+        type: "card",
+        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        contents
+      }
+    ]
+  });
+  if (wfres.renderForm)
+    res.sendWrap(
+      `Page attributes`,
+      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+    );
+  else if (wfres.renderBuilder)
+    res.sendWrap(
+      `Page configuration`,
+      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()))
+    );
+  else res.redirect(wfres.redirect);
+};
+
 router.get(
   "/edit/:pagename",
   setTenant,
@@ -212,8 +248,7 @@ router.get(
     const { pagename } = req.params;
     const page = await Page.findOne({ name: pagename });
     const wfres = await pageFlow.run(page);
-
-    res.sendWrap(`Edit page`, renderForm(wfres.renderForm, req.csrfToken()));
+    respondWorkflow(page, wfres, req, res);
   })
 );
 
@@ -223,7 +258,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const wfres = await pageFlow.run({});
-    res.sendWrap(`New page`, renderForm(wfres.renderForm, req.csrfToken()));
+    respondWorkflow(null, wfres, req, res);
   })
 );
 
@@ -233,17 +268,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const wfres = await pageFlow.run(req.body);
-    if (wfres.renderForm)
-      res.sendWrap(
-        `Page attributes`,
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
-    else if (wfres.renderBuilder)
-      res.sendWrap(
-        `Page configuration`,
-        renderBuilder(wfres.renderBuilder, req.csrfToken())
-      );
-    else res.redirect(wfres.redirect);
+    const page =
+      wfres.context && (await Page.findOne({ name: wfres.context.name }));
+
+    respondWorkflow(page, wfres, req, res);
   })
 );
 
