@@ -119,7 +119,9 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
     case "section_header":
       return "";
     default:
-      const the_input = `<input type="${hdr.input_type}" class="form-control ${
+      const the_input = `<input type="${
+        hdr.input_type
+      }" class="form-control ${validClass} ${
         hdr.class
       }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
