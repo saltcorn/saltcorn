@@ -63,6 +63,13 @@ router.get(
     res.sendWrap("Plugins", {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins" }
+          ]
+        },
+        {
           type: "card",
           title: "Installed plugins",
           contents: mkTable(
@@ -209,8 +216,22 @@ router.get(
     const plugin = await Plugin.findOne({ id });
 
     res.sendWrap(
-      `Edit Plugin`,
-      renderForm(pluginForm(plugin), req.csrfToken())
+      `Edit Plugin`,{
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: "Settings" },
+              { text: "Plugins", href:"/plugins" },
+              { text: plugin.name },
+
+            ]
+          },
+          {
+            type: "card",
+            title: `Edit ${plugin.name} plugin`,
+            contents:
+      renderForm(pluginForm(plugin), req.csrfToken()) }]}
     );
   })
 );
