@@ -14,7 +14,7 @@ const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
-        name: "views",
+        name: "Views",
         form: async context => {
           const list_views = await View.find_table_views_where(
             context.table_id,
@@ -57,7 +57,7 @@ const configuration_workflow = () =>
         }
       },
       {
-        name: "subtables",
+        name: "Subtables",
         contextField: "subtables",
         form: async context => {
           const tbl = await Table.findOne({ id: context.table_id });

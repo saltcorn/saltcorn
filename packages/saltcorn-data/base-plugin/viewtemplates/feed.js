@@ -13,7 +13,7 @@ const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
-        name: "views",
+        name: "Views",
         form: async context => {
           const show_views = await View.find_table_views_where(
             context.table_id,
@@ -56,7 +56,7 @@ const configuration_workflow = () =>
         }
       },
       {
-        name: "order",
+        name: "Order and layout",
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();

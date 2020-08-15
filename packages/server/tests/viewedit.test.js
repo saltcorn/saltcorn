@@ -79,7 +79,7 @@ describe("viewedit new List", () => {
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
-      .send("stepName=listfields")
+      .send("stepName=Columns")
       .send("type_0=Field")
       .send("field_name_0=author")
       .send("type_1=Field")
@@ -109,7 +109,7 @@ describe("viewedit new List", () => {
     await request(app)
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
-      .send("stepName=default_state")
+      .send("stepName=Default state")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
@@ -162,7 +162,7 @@ describe("viewedit new List with one field", () => {
     await request(app)
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
-      .send("stepName=listfields")
+      .send("stepName=Columns")
       .send("type_0=Field")
       .send("field_name_0=author")
       .set("Cookie", loginCookie)
@@ -186,7 +186,7 @@ describe("viewedit new List with one field", () => {
     await request(app)
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
-      .send("stepName=default_state")
+      .send("stepName=Default state")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
@@ -254,7 +254,7 @@ describe("viewedit new Show", () => {
     await request(app)
       .post("/viewedit/config/mybook")
       .send("contextEnc=" + ctx)
-      .send("stepName=showfields")
+      .send("stepName=Layout")
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)

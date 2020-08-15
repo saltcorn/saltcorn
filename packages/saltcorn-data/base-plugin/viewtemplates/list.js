@@ -23,7 +23,7 @@ const configuration_workflow = () =>
   new Workflow({
     steps: [
       {
-        name: "listfields",
+        name: "Columns",
         form: async context => {
           const table = await Table.findOne({ id: context.table_id });
           //console.log(context);
@@ -64,7 +64,7 @@ const configuration_workflow = () =>
         }
       },
       {
-        name: "default_state",
+        name: "Default state",
         contextField: "default_state",
         onlyWhen: async context =>
           context.columns.filter(
