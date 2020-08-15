@@ -47,7 +47,23 @@ const userForm = contract(
     return form;
   }
 );
-
+const wrap = (cardTitle, response, lastBc) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [
+        { text: "Settings" },
+        { text: "Users", href: lastBc && "/useradmin" },
+        ...(lastBc ? [lastBc] : [])
+      ]
+    },
+    {
+      type: "card",
+      title: cardTitle,
+      contents: response
+    }
+  ]
+});
 router.get(
   "/",
   setTenant,
@@ -61,27 +77,29 @@ router.get(
     });
     res.sendWrap(
       "Users",
-      mkTable(
-        [
-          { label: "ID", key: "id" },
-          { label: "Email", key: "email" },
-          { label: "Role", key: r => roleMap[r.role_id] },
-          { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
-          {
-            label: "Delete",
-            key: r =>
-              r.id !== req.user.id
-                ? post_btn(
-                    `/useradmin/delete/${r.id}`,
-                    "Delete",
-                    req.csrfToken()
-                  )
-                : ""
-          }
-        ],
-        users
-      ),
-      link(`/useradmin/new`, "Add user")
+      wrap("Users", [
+        mkTable(
+          [
+            { label: "ID", key: "id" },
+            { label: "Email", key: "email" },
+            { label: "Role", key: r => roleMap[r.role_id] },
+            { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
+            {
+              label: "Delete",
+              key: r =>
+                r.id !== req.user.id
+                  ? post_btn(
+                      `/useradmin/delete/${r.id}`,
+                      "Delete",
+                      req.csrfToken()
+                    )
+                  : ""
+            }
+          ],
+          users
+        ),
+        link(`/useradmin/new`, "Add user")
+      ])
     );
   })
 );
@@ -92,7 +110,10 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm();
-    res.sendWrap("New user", renderForm(form, req.csrfToken()));
+    res.sendWrap(
+      "New user",
+      wrap("New user", renderForm(form, req.csrfToken()), { text: "New" })
+    );
   })
 );
 
@@ -105,7 +126,12 @@ router.get(
     const user = await User.findOne({ id });
     const form = await userForm(user);
 
-    res.sendWrap("Edit user", renderForm(form, req.csrfToken()));
+    res.sendWrap(
+      "Edit user",
+      wrap(`Edit user ${user.email}`, renderForm(form, req.csrfToken()), {
+        text: user.email
+      })
+    );
   })
 );
 
