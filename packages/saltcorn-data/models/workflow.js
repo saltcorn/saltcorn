@@ -120,7 +120,11 @@ class Workflow {
           action: this.action,
           stepName: step.name,
           mode: options.mode
-        }
+        },
+        context,
+        stepName: step.name,
+        currentStep: stepIx + 1,
+        maxSteps: this.steps.length
       };
     }
   }
