@@ -21,7 +21,7 @@ const {
   fetch_pack_by_name,
   can_install_pack
 } = require("@saltcorn/data/models/pack");
-const { h5, pre, code } = require("@saltcorn/markup/tags");
+const { h5, pre, code, p } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -118,7 +118,12 @@ router.post(
         {
           type: "card",
           title: `Pack`,
-          contents: pre({ class: "wsprewrap" }, code(JSON.stringify(pack)))
+          contents: [
+            p(
+              "You can copy the pack contents below to another Saltcorn installation."
+            ),
+            pre({ class: "pack-display" }, code(JSON.stringify(pack)))
+          ]
         }
       ]
     });
