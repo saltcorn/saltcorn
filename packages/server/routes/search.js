@@ -41,7 +41,19 @@ const searchConfigForm = (tables, views) => {
     fields
   });
 };
-
+const wrap = response => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [{ text: "Settings" }, { text: "Search" }]
+    },
+    {
+      type: "card",
+      title: "Search configuration",
+      contents: response
+    }
+  ]
+});
 router.get(
   "/config",
   setTenant,
@@ -51,7 +63,10 @@ router.get(
     const tables = await Table.find();
     const form = searchConfigForm(tables, views);
     form.values = getState().getConfig("globalSearch");
-    res.sendWrap(`Search configuration`, renderForm(form, req.csrfToken()));
+    res.sendWrap(
+      `Search configuration`,
+      wrap(renderForm(form, req.csrfToken()))
+    );
   })
 );
 
@@ -69,7 +84,10 @@ router.post(
       await getState().setConfig("globalSearch", result.success);
       res.redirect("/search/config");
     } else {
-      res.sendWrap(`Search configuration`, renderForm(form, req.csrfToken()));
+      res.sendWrap(
+        `Search configuration`,
+        wrap(renderForm(form, req.csrfToken()))
+      );
     }
   })
 );
