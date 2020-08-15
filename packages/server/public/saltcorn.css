@@ -5,8 +5,11 @@ div.form-repeat {
 input#upload_to_table {
   display: none;
 }
-pre.wsprewrap {
+pre.pack-display {
   white-space: pre-wrap;
+  margin: 5px;
+  padding: 5px;
+  border: 1px dotted grey;
 }
 
 #footer {

@@ -63,6 +63,10 @@ router.get(
     res.sendWrap("Plugins", {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Settings" }, { text: "Plugins" }]
+        },
+        {
           type: "card",
           title: "Installed plugins",
           contents: mkTable(
@@ -196,7 +200,23 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`New Plugin`, renderForm(pluginForm(), req.csrfToken()));
+    res.sendWrap(`New Plugin`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins", href: "/plugins" },
+            { text: "New" }
+          ]
+        },
+        {
+          type: "card",
+          title: `Add plugin`,
+          contents: renderForm(pluginForm(), req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -208,10 +228,23 @@ router.get(
     const { id } = req.params;
     const plugin = await Plugin.findOne({ id });
 
-    res.sendWrap(
-      `Edit Plugin`,
-      renderForm(pluginForm(plugin), req.csrfToken())
-    );
+    res.sendWrap(`Edit Plugin`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: "Settings" },
+            { text: "Plugins", href: "/plugins" },
+            { text: plugin.name }
+          ]
+        },
+        {
+          type: "card",
+          title: `Edit ${plugin.name} plugin`,
+          contents: renderForm(pluginForm(plugin), req.csrfToken())
+        }
+      ]
+    });
   })
 );
 

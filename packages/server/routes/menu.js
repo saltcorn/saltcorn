@@ -109,7 +109,19 @@ router.get(
     form.values.site_name = state.getConfig("site_name");
     form.values.site_logo_id = state.getConfig("site_logo_id");
     form.values.menu_items = state.getConfig("menu_items");
-    res.sendWrap(`Menu editor`, renderForm(form, req.csrfToken()));
+    res.sendWrap(`Menu editor`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Settings" }, { text: "Menu" }]
+        },
+        {
+          type: "card",
+          title: `Menu editor`,
+          contents: renderForm(form, req.csrfToken())
+        }
+      ]
+    });
   })
 );
 
@@ -122,7 +134,19 @@ router.post(
 
     const valres = form.validate(req.body);
     if (valres.errors)
-      res.sendWrap(`Menu editor`, renderForm(form, req.csrfToken()));
+      res.sendWrap(`Menu editor`, {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: "Settings" }, { text: "Menu" }]
+          },
+          {
+            type: "card",
+            title: `Menu editor`,
+            contents: renderForm(form, req.csrfToken())
+          }
+        ]
+      });
     else {
       await getState().setConfig("site_name", valres.success.site_name);
       await getState().setConfig("site_logo_id", valres.success.site_logo_id);

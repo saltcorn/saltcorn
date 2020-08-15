@@ -90,16 +90,14 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         validClass
       );
     case "hidden":
-      return `<input type="hidden" class="form-control ${validClass} ${
-        hdr.class
-      }" name="${text_attr(name)}" ${
+      return `<input type="hidden" class="form-control ${validClass} ${hdr.class ||
+        ""}" name="${text_attr(name)}" ${
         v ? `value="${text_attr(v[hdr.form_name])}"` : ""
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
-        hdr.class
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+      return `<select class="form-control ${validClass} ${hdr.class ||
+        ""}" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
       )}">${opts}</select>`;
     case "file":
@@ -109,9 +107,8 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
       } else
         return `${
           v[hdr.form_name] ? text(v[hdr.form_name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${
-          hdr.class
-        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+        }<input type="file" class="form-control-file ${validClass} ${hdr.class ||
+          ""}" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
           name
         )}">`;
     case "search":
@@ -119,9 +116,10 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
     case "section_header":
       return "";
     default:
-      const the_input = `<input type="${hdr.input_type}" class="form-control ${
-        hdr.class
-      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
+      const the_input = `<input type="${
+        hdr.input_type
+      }" class="form-control ${validClass} ${hdr.class ||
+        ""}" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
@@ -299,11 +297,11 @@ const renderForm = (form, csrfToken) => {
 const mkFormWithLayout = (form, csrfToken) => {
   const hasFile = form.fields.some(f => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" class="form-namespace ${
-    form.class
-  }" method="${form.methodGET ? "get" : "post"}" ${
-    hasFile ? 'encType="multipart/form-data"' : ""
-  }>`;
+  const top = `<form action="${
+    form.action
+  }" class="form-namespace ${form.class || ""}" method="${
+    form.methodGET ? "get" : "post"
+  }" ${hasFile ? 'encType="multipart/form-data"' : ""}>`;
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const hiddens = form.fields
     .filter(f => f.input_type === "hidden")
@@ -322,7 +320,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}" class="form-namespace ${
     form.isStateForm ? "stateForm" : ""
-  } ${form.class}" method="${form.methodGET ? "get" : "post"}" ${
+  } ${form.class || ""}" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);

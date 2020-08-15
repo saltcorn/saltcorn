@@ -113,26 +113,37 @@ router.get(
       return;
     }
     const tens = await db.select("_sc_tenants");
-    res.sendWrap(
-      "Tenant",
-      mkTable(
-        [
-          { label: "Subdomain", key: "subdomain" },
-          { label: "email", key: "email" },
-          {
-            label: "Delete",
-            key: r =>
-              post_btn(
-                `/tenant/delete/${r.subdomain}`,
-                "Delete",
-                req.csrfToken()
-              )
-          }
-        ],
-        tens
-      ),
-      div(`Found ${tens.length} tenants`)
-    );
+    res.sendWrap("Tenant", {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "Settings" }, { text: "Tenants" }]
+        },
+        {
+          type: "card",
+          title: "Tenants",
+          contents: [
+            mkTable(
+              [
+                { label: "Subdomain", key: "subdomain" },
+                { label: "email", key: "email" },
+                {
+                  label: "Delete",
+                  key: r =>
+                    post_btn(
+                      `/tenant/delete/${r.subdomain}`,
+                      "Delete",
+                      req.csrfToken()
+                    )
+                }
+              ],
+              tens
+            ),
+            div(`Found ${tens.length} tenants`)
+          ]
+        }
+      ]
+    });
   })
 );
 

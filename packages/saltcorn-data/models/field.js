@@ -8,14 +8,12 @@ const readKey = v => {
   return isNaN(parsed) ? null : parsed;
 };
 
-const labelToName = label => sqlsanitize(label.toLowerCase().replace(" ", "_"));
-
 class Field {
   constructor(o) {
     if (!o.type && !o.input_type)
       throw new Error(`Field ${o.name} initialised with no type`);
     this.label = o.label || o.name;
-    this.name = o.name || labelToName(o.label);
+    this.name = o.name || Field.labelToName(o.label);
     this.fieldview = o.fieldview;
     this.validator = o.validator || (() => true);
     this.showIf = o.showIf;
@@ -81,6 +79,10 @@ class Field {
       attributes: this.attributes,
       required: this.required
     };
+  }
+
+  static labelToName(label) {
+    return sqlsanitize(label.toLowerCase().replace(" ", "_"));
   }
 
   get form_name() {

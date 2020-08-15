@@ -18,6 +18,23 @@ const {
 const router = new Router();
 module.exports = router;
 
+const wrap = (cardTitle, response, lastBc) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [
+        { text: "Settings" },
+        { text: "Configuration", href: lastBc && "/config" },
+        ...(lastBc ? [lastBc] : [])
+      ]
+    },
+    {
+      type: "card",
+      title: cardTitle,
+      contents: response
+    }
+  ]
+});
 //create -- new
 router.get(
   "/",
@@ -61,7 +78,7 @@ router.get(
       ],
       Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))
     );
-    res.sendWrap(`Configuration`, configTable);
+    res.sendWrap(`Configuration`, wrap("Configuration", configTable));
   })
 );
 
@@ -93,7 +110,9 @@ router.get(
     const form = await formForKey(key, value);
     res.sendWrap(
       `Edit configuration key ${key}`,
-      renderForm(form, req.csrfToken())
+      wrap(`Edit configuration key ${key}`, renderForm(form, req.csrfToken()), {
+        text: key
+      })
     );
   })
 );
@@ -110,7 +129,11 @@ router.post(
     if (valres.errors)
       res.sendWrap(
         `Edit configuration key ${key}`,
-        renderForm(form, req.csrfToken())
+        wrap(
+          `Edit configuration key ${key}`,
+          renderForm(form, req.csrfToken()),
+          { text: key }
+        )
       );
     else {
       await getState().setConfig(key, valres.success[key]);
