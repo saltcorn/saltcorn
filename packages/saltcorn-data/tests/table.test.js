@@ -237,6 +237,22 @@ describe("Table get data", () => {
   });
 });
 
+describe("relations", () => {
+  it("get parent relations", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    const rels = await table.get_parent_relations()
+    expect(rels.parent_field_list).toContain("favbook.author")
+    expect(rels.parent_relations.length).toBe(2)
+  });
+  it("get parent relations", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rels = await table.get_child_relations()
+    expect(rels.child_field_list).toEqual(["patients.favbook"])
+    expect(rels.child_relations.length).toBe(1)
+  });
+
+});
+
 describe("CSV import", () => {
   it("should import into existing table", async () => {
     const csv = `author,Pages
