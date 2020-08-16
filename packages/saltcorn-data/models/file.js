@@ -90,6 +90,10 @@ File.contract = {
     user_id: is.posint,
     min_role_read: is.posint
   },
+  methods: {
+    delete: is.fun([], is.promise(is.undefined)),
+    mimetype: is.getter(is.str)
+  },
   static_methods: {
     find: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
@@ -101,7 +105,9 @@ File.contract = {
       [is.obj(), is.posint, is.maybe(is.posint)],
       is.promise(is.class("File"))
     ),
-    update: is.fun([is.posint, is.obj()], is.promise(is.undefined))
+    update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
+    ensure_file_store: is.fun([], is.promise(is.undefined)),
+    get_new_path: is.fun(is.maybe(is.str), is.str)
   }
 };
 
