@@ -121,7 +121,7 @@ const backup_config = contract(
     for (const cfg of cfgs) {
       await fs.writeFile(
         path.join(dirpath, cfg.key),
-        JSON.stringify(cfg.value)
+        JSON.stringify(db.isSQLite ? JSON.parse(cfg.value) : cfg.value)
       );
     }
   }

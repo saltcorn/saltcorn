@@ -30,7 +30,17 @@ describe("Config", () => {
     await setConfig("cfg1", 9);
     const x = await getConfig("cfg1", 5);
     expect(x).toBe(9);
+    await setConfig("cfgStr", "HelloWorld");
+    const s = await getConfig("cfgStr", "");
+    expect(s).toBe("HelloWorld");
     await setConfig("log_sql", false);
+  });
+  it("should set value via state", async () => {
+    await getState().setConfig("cfgStr1", "FooBaz");
+    const s = getState().getConfig("cfgStr1", "");
+    expect(s).toBe("FooBaz");
+    const s1 = await getConfig("cfgStr1", "");
+    expect(s1).toBe("FooBaz");
   });
   it("should set list int", async () => {
     await setConfig("list_ints", [8]);
