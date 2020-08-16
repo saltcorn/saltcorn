@@ -36,7 +36,7 @@ describe("Table create", () => {
 
     expect(tf.name).toStrictEqual("mytable1");
     expect(tf.sql_name).toStrictEqual('"public"."mytable1"');
-  })
+  });
   it("toggle bools", async () => {
     const tc = await Table.create("mytable17");
 
@@ -46,11 +46,11 @@ describe("Table create", () => {
       type: "Bool",
       required: true
     });
-    const tall_id = await tc.insertRow({group:true})
-    await tc.toggleBool(tall_id, "group")
-    const row=await tc.getRow({id:tall_id})
-    expect(row.group).toBe(false)
-  })
+    const tall_id = await tc.insertRow({ group: true });
+    await tc.toggleBool(tall_id, "group");
+    const row = await tc.getRow({ id: tall_id });
+    expect(row.group).toBe(false);
+  });
   it("should create required field in empty table without default", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
     await Field.create({
@@ -240,17 +240,16 @@ describe("Table get data", () => {
 describe("relations", () => {
   it("get parent relations", async () => {
     const table = await Table.findOne({ name: "patients" });
-    const rels = await table.get_parent_relations()
-    expect(rels.parent_field_list).toContain("favbook.author")
-    expect(rels.parent_relations.length).toBe(2)
+    const rels = await table.get_parent_relations();
+    expect(rels.parent_field_list).toContain("favbook.author");
+    expect(rels.parent_relations.length).toBe(2);
   });
   it("get parent relations", async () => {
     const table = await Table.findOne({ name: "books" });
-    const rels = await table.get_child_relations()
-    expect(rels.child_field_list).toEqual(["patients.favbook"])
-    expect(rels.child_relations.length).toBe(1)
+    const rels = await table.get_child_relations();
+    expect(rels.child_field_list).toEqual(["patients.favbook"]);
+    expect(rels.child_relations.length).toBe(1);
   });
-
 });
 
 describe("CSV import", () => {
@@ -263,7 +262,7 @@ Gordon Kane, 217`;
     const table = await Table.findOne({ name: "books" });
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({"success": "Imported 2 rows into table books"})
+    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
     const rows = await table.getRows({ author: "Gordon Kane" });
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
@@ -277,8 +276,7 @@ Gordon Kane, 217`;
     const table = await Table.findOne({ name: "books" });
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({"error": "Required field missing: Pages"})
-    
+    expect(impres).toEqual({ error: "Required field missing: Pages" });
   });
   it("should create by importing", async () => {
     const csv = `item,cost,count, vatable

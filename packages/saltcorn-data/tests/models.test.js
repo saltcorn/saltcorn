@@ -155,7 +155,7 @@ describe("File", () => {
     const f = await File.findOne({ filename: "rick.png" });
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
-    await File.update(f.id, {size_kb: 56})
+    await File.update(f.id, { size_kb: 56 });
     await f.delete();
   });
 });

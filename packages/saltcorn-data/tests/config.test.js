@@ -17,7 +17,6 @@ describe("Config", () => {
     expect(d).toBe(5);
     const sn = await getConfig("site_name");
     expect(sn).toBe("Saltcorn");
-
   });
   it("should set value", async () => {
     await setConfig("cfg1", 8);

@@ -70,10 +70,9 @@ describe("Field", () => {
   });
   it("generates fkeys", async () => {
     const f = await Field.findOne({ name: "favbook" });
-    const v=await f.generate()
-    expect(typeof v).toBe("number")
+    const v = await f.generate();
+    expect(typeof v).toBe("number");
   });
-  
 });
 
 describe("validate field", () => {
@@ -98,7 +97,7 @@ describe("validate fkey field", () => {
 
   const res = field.validate({ age: 17 });
   expect(res).toStrictEqual({ success: 17 });
-}); 
+});
 
 describe("validate bool field", () => {
   const field = new Field({
@@ -146,7 +145,7 @@ describe("validator", () => {
   const field = new Field({
     label: "Age",
     type: "Integer",
-    validator: x=>false
+    validator: x => false
   });
   const res = field.validate({ age: 17 });
   expect(res).toStrictEqual({ error: "Not accepted" });
@@ -155,8 +154,8 @@ describe("validator", () => {
 describe("user presets", () => {
   const field = new Field({
     label: "User",
-    type: "Key to users",
+    type: "Key to users"
   });
-  const presets= field.presets;
-  expect(presets.LoggedIn({user: {id: 5}})).toBe(5)
+  const presets = field.presets;
+  expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
