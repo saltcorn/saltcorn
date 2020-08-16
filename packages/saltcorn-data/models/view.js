@@ -233,6 +233,7 @@ View.contract = {
     get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
     get_config_flow: is.fun([], is.promise(is.class("Workflow"))),
     delete: is.fun([], is.promise(is.undefined)),
+    menu_label: is.getter(is.maybe(is.str)),
     run: is.fun(
       [is.obj(), is.obj({ req: is.defined, res: is.defined })],
       is.promise(is.any)
@@ -271,6 +272,8 @@ View.contract = {
       is.promise(is.class("View"))
     ),
     update: is.fun([is.obj(), is.posint], is.promise(is.undefined)),
+    delete: is.fun(is.obj(), is.promise(is.undefined)),
+
     find_possible_links_to_table: is.fun(
       is.posint,
       is.promise(is.array(is.class("View")))

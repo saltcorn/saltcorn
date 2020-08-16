@@ -131,9 +131,9 @@ class Table {
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `update ${schema}"${sqlsanitize(this.name)}" set ${sqlsanitize(
+      `update ${schema}"${sqlsanitize(this.name)}" set "${sqlsanitize(
         field_name
-      )}=NOT ${sqlsanitize(field_name)} where id=$1`,
+      )}"=NOT "${sqlsanitize(field_name)}" where id=$1`,
       [id]
     );
   }
@@ -197,10 +197,10 @@ class Table {
     }
   }
 
-  async get_history() {
+  async get_history(id) {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      {},
+      { id },
       { orderBy: "_version" }
     );
   }
@@ -250,10 +250,13 @@ class Table {
     }).fromFile(filePath);
     const fields = await this.getFields();
     const okHeaders = {};
+    const renames = [];
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
-      else if (headers.includes(f.label)) okHeaders[f.label] = f;
-      else if (f.required)
+      else if (headers.includes(f.label)) {
+        okHeaders[f.label] = f;
+        renames.push({ from: f.label, to: f.name });
+      } else if (f.required)
         return { error: `Required field missing: ${f.label}` };
     }
     // also id
@@ -268,6 +271,10 @@ class Table {
     for (const rec of file_rows) {
       i += 1;
       try {
+        renames.forEach(({ from, to }) => {
+          rec[to] = rec[from];
+          delete rec[from];
+        });
         await db.insert(this.name, rec, true, client);
       } catch (e) {
         await client.query("ROLLBACK");
@@ -394,6 +401,7 @@ Table.contract = {
   variables: { name: is.str },
   methods: {
     delete: is.fun([], is.promise(is.eq(undefined))),
+    update: is.fun(is.obj(), is.promise(is.eq(undefined))),
     deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
     getRow: is.fun(is.obj(), is.promise(is.obj())),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
@@ -401,6 +409,7 @@ Table.contract = {
     updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
     toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.posint)),
+    get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
     tryInsertRow: is.fun(
       [is.obj(), is.maybe(is.posint)],
       is.promise(
@@ -413,6 +422,7 @@ Table.contract = {
         is.or(is.obj({ error: is.str }), is.obj({ success: is.eq(true) }))
       )
     ),
+    sql_name: is.getter(is.str),
     getFields: is.fun([], is.promise(is.array(is.class("Field")))),
     get_parent_relations: is.fun(
       [],
@@ -442,6 +452,10 @@ Table.contract = {
         })
       )
     ),
+    import_csv_file: is.fun(
+      is.str,
+      is.promise(is.or(is.obj({ success: is.str }), is.obj({ error: is.str })))
+    ),
     getJoinedRows: is.fun(
       is.maybe(is_table_query),
       is.promise(is.array(is.obj({})))
@@ -453,7 +467,16 @@ Table.contract = {
       is.promise(is.array(is.class("Table")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
-    create: is.fun(is.str, is.promise(is.class("Table")))
+    create: is.fun(is.str, is.promise(is.class("Table"))),
+    create_from_csv: is.fun(
+      [is.str, is.str],
+      is.promise(
+        is.or(
+          is.obj({ success: is.str, table: is.class("Table") }),
+          is.obj({ error: is.str })
+        )
+      )
+    )
     //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
 };

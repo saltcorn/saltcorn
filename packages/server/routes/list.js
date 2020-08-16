@@ -44,11 +44,8 @@ router.get(
           req.csrfToken()
         )
     });
-    const rows = await db.select(
-      `${db.sqlsanitize(table.name)}__history`,
-      { id },
-      { orderBy: "_version" }
-    );
+    const rows = await table.get_history(+id);
+
     res.sendWrap(
       `${table.name} History`,
       mkTable(tfields, rows),

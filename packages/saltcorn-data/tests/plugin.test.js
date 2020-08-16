@@ -53,7 +53,7 @@ describe("plugin store", () => {
   });
   it("reset the plugin store cache", async () => {});
   it("reset the plugin store cache", async () => {
-    getState().deleteConfig("available_plugins");
-    getState().deleteConfig("available_plugins_fetched_at");
+    await getState().deleteConfig("available_plugins");
+    await getState().deleteConfig("available_plugins_fetched_at");
   });
 });

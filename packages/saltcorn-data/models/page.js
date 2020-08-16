@@ -121,11 +121,23 @@ Page.contract = {
     layout: is.obj(),
     fixed_states: is.obj()
   },
+  methods: {
+    delete: is.fun([], is.promise(is.undefined)),
+    getViews: is.fun([], is.promise(is.array(is.obj()))),
+    eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
+    menu_label: is.getter(is.maybe(is.str)),
+    run: is.fun(
+      [is.obj(), is.obj({ req: is.obj(), res: is.obj() })],
+      is.promise(is.any)
+    ),
+    is_root_page_for_roles: is.fun([], is.promise(is.array(is.str)))
+  },
   static_methods: {
     find: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("Page")))
     ),
+    create: is.fun(is.obj(), is.promise(is.class("Page"))),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Page")))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined))
   }

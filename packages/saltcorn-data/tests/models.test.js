@@ -134,6 +134,8 @@ describe("Page", () => {
     expect(vs[1].name).toEqual("v46747");
     expect(vs[1].contents).toContain("Herman");
     expect(vs[1].contents).toContain("Tolstoy");
+    await getState().setConfig("staff_home", "foo");
+    await Page.update(cs.id, { description: "miaw" });
     await cs.delete();
   });
 });
@@ -155,6 +157,7 @@ describe("File", () => {
     const f = await File.findOne({ filename: "rick.png" });
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
+    await File.update(f.id, { size_kb: 56 });
     await f.delete();
   });
 });

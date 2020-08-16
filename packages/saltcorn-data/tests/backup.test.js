@@ -7,6 +7,7 @@ const fs = require("fs").promises;
 const Table = require("../models/table");
 const View = require("../models/view");
 const User = require("../models/user");
+const { setConfig, getConfig } = require("../models/config");
 afterAll(db.close);
 
 beforeAll(async () => {
@@ -16,6 +17,10 @@ beforeAll(async () => {
 
 describe("Backup and restore", () => {
   it("should create and restore backup", async () => {
+    await setConfig("site_name", "backups rule!");
+    const sn1 = await getConfig("site_name");
+    expect(sn1).toBe("backups rule!");
+    await Table.create("myblanktable");
     const fnm = await create_backup();
     const t1 = await Table.findOne({ name: "books" });
     const t1c = await t1.countRows();
@@ -30,6 +35,8 @@ describe("Backup and restore", () => {
     });
     const t2 = await Table.findOne({ name: "books" });
     expect(t2).toBe(null);
+    const sn0 = await getConfig("site_name");
+    expect(sn0).toBe("Saltcorn");
 
     await restore(fnm, p => {});
 
@@ -39,6 +46,8 @@ describe("Backup and restore", () => {
     expect(t1c).toBe(t3c);
     const v2 = await View.find();
     expect(v1.length).toBe(v2.length);
+    const sn = await getConfig("site_name");
+    expect(sn).toBe("backups rule!");
 
     await fs.unlink(fnm);
   });
