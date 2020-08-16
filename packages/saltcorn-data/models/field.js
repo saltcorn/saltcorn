@@ -298,7 +298,7 @@ class Field {
     //console.log({ tables, fld });
 
     const table = await Table.findOne({ id: f.table_id });
-    if (typeof f.attributes.default==="undefined") {
+    if (typeof f.attributes.default === "undefined") {
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
       )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
