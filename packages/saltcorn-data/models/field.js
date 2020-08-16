@@ -187,7 +187,7 @@ class Field {
       await db.query(
         `create unique index ${sqlsanitize(this.name)}_unique on "${sqlsanitize(
           this.table.name
-        )}"(${sqlsanitize(this.name)})`
+        )}"("${sqlsanitize(this.name)}")`
       );
     else
       await db.query(
@@ -195,7 +195,7 @@ class Field {
           this.table.name
         )}" add CONSTRAINT ${this.table.name}_${sqlsanitize(
           this.name
-        )}_unique UNIQUE (${sqlsanitize(this.name)})`
+        )}_unique UNIQUE ("${sqlsanitize(this.name)}")`
       );
   }
 
