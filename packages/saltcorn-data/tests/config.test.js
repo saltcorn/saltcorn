@@ -15,6 +15,9 @@ describe("Config", () => {
   it("should get default", async () => {
     const d = await getConfig("noval", 5);
     expect(d).toBe(5);
+    const sn = await getConfig("site_name");
+    expect(sn).toBe("Saltcorn");
+
   });
   it("should set value", async () => {
     await setConfig("cfg1", 8);
@@ -23,6 +26,7 @@ describe("Config", () => {
     await setConfig("cfg1", 9);
     const x = await getConfig("cfg1", 5);
     expect(x).toBe(9);
+    await setConfig("log_sql", false);
   });
   it("should set list int", async () => {
     await setConfig("list_ints", [8]);
