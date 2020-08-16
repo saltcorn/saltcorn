@@ -11,19 +11,19 @@ describe("Field", () => {
     const patients = await Table.findOne({ name: "patients" });
     const fc = await Field.create({
       table: patients,
-      name: "Height1",
-      label: "height1",
+      label: "Height1",
       type: "Integer",
       required: true,
       attributes: { default: 6 }
     });
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
-    expect(f.toJson.name).toBe("Height1");
-    expect(f.listKey).toBe("Height1");
+    expect(f.name).toBe("height1");
+    expect(f.toJson.name).toBe("height1");
+    expect(f.listKey).toBe("height1");
     expect(f.presets).toBe(null);
     await f.delete();
-    const fs = await Field.find({ name: "Height1" });
+    const fs = await Field.find({ name: "height1" });
     expect(fs.length).toBe(0);
   });
   it("should add and then delete nonrequired field", async () => {
@@ -63,6 +63,12 @@ describe("Field", () => {
     expect(f.is_fkey).toBe(true);
     expect(f.sql_bare_type).toBe("int");
   });
+  it("generates fkeys", async () => {
+    const f = await Field.findOne({ name: "favbook" });
+    const v=await f.generate()
+    expect(typeof v).toBe("number")
+  });
+  
 });
 
 describe("validate field", () => {
@@ -76,6 +82,19 @@ describe("validate field", () => {
   const res = field.validate({ age: 17 });
   expect(res).toStrictEqual({ success: 17 });
 });
+
+describe("validate fkey field", () => {
+  const field = new Field({
+    name: "age",
+    label: "Age",
+    type: "Key to Foos"
+  });
+  expect(field.form_name).toBe("age");
+
+  const res = field.validate({ age: 17 });
+  expect(res).toStrictEqual({ success: 17 });
+}); 
+
 describe("validate bool field", () => {
   const field = new Field({
     name: "over_age",
@@ -116,4 +135,23 @@ describe("validate parent field", () => {
   expect(res).toStrictEqual({ success: true });
   const res1 = field.validate({});
   expect(res1).toStrictEqual({ success: false });
+});
+
+describe("validator", () => {
+  const field = new Field({
+    label: "Age",
+    type: "Integer",
+    validator: x=>false
+  });
+  const res = field.validate({ age: 17 });
+  expect(res).toStrictEqual({ error: "Not accepted" });
+});
+
+describe("user presets", () => {
+  const field = new Field({
+    label: "User",
+    type: "Key to users",
+  });
+  const presets= field.presets;
+  expect(presets.LoggedIn({user: {id: 5}})).toBe(5)
 });

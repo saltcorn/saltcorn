@@ -2,7 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
-const { is_sqlite } = require("../db/connect");
+
 const readKey = v => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
