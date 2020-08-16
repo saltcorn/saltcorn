@@ -134,6 +134,8 @@ describe("Page", () => {
     expect(vs[1].name).toEqual("v46747");
     expect(vs[1].contents).toContain("Herman");
     expect(vs[1].contents).toContain("Tolstoy");
+    await getState().setConfig("staff_home", "foo");
+    await Page.update(cs.id, { description: "miaw" });
     await cs.delete();
   });
 });

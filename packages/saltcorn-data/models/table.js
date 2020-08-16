@@ -197,10 +197,10 @@ class Table {
     }
   }
 
-  async get_history() {
+  async get_history(id) {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      {},
+      { id },
       { orderBy: "_version" }
     );
   }
@@ -401,6 +401,7 @@ Table.contract = {
   variables: { name: is.str },
   methods: {
     delete: is.fun([], is.promise(is.eq(undefined))),
+    update: is.fun(is.obj(), is.promise(is.eq(undefined))),
     deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
     getRow: is.fun(is.obj(), is.promise(is.obj())),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
@@ -408,6 +409,7 @@ Table.contract = {
     updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
     toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.posint)),
+    get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
     tryInsertRow: is.fun(
       [is.obj(), is.maybe(is.posint)],
       is.promise(
@@ -420,6 +422,7 @@ Table.contract = {
         is.or(is.obj({ error: is.str }), is.obj({ success: is.eq(true) }))
       )
     ),
+    sql_name: is.getter(is.str),
     getFields: is.fun([], is.promise(is.array(is.class("Field")))),
     get_parent_relations: is.fun(
       [],
@@ -449,6 +452,10 @@ Table.contract = {
         })
       )
     ),
+    import_csv_file: is.fun(
+      is.str,
+      is.promise(is.or(is.obj({ success: is.str }), is.obj({ error: is.str })))
+    ),
     getJoinedRows: is.fun(
       is.maybe(is_table_query),
       is.promise(is.array(is.obj({})))
@@ -460,7 +467,16 @@ Table.contract = {
       is.promise(is.array(is.class("Table")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
-    create: is.fun(is.str, is.promise(is.class("Table")))
+    create: is.fun(is.str, is.promise(is.class("Table"))),
+    create_from_csv: is.fun(
+      [is.str, is.str],
+      is.promise(
+        is.or(
+          is.obj({ success: is.str, table: is.class("Table") }),
+          is.obj({ error: is.str })
+        )
+      )
+    )
     //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
   }
 };

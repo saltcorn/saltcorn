@@ -116,11 +116,17 @@ const can_install_pack = contract(
   }
 );
 
-const add_to_memu = async item => {
-  const current_menu = getState().getConfig("menu_items", []);
-  current_menu.push(item);
-  await getState().setConfig("menu_items", current_menu);
-};
+const add_to_menu = contract(
+  is.fun(
+    is.obj({ label: is.str, type: is.one_of(["View", "Page"]) }),
+    is.promise(is.undefined)
+  ),
+  async item => {
+    const current_menu = getState().getConfig("menu_items", []);
+    current_menu.push(item);
+    await getState().setConfig("menu_items", current_menu);
+  }
+);
 
 const install_pack = contract(
   is.fun(
@@ -149,7 +155,7 @@ const install_pack = contract(
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
       if (menu_label)
-        await add_to_memu({
+        await add_to_menu({
           label: menu_label,
           type: "View",
           viewname: viewSpec.name
@@ -164,7 +170,7 @@ const install_pack = contract(
           await getState().setConfig(role + "_home", pageSpec.name);
       }
       if (menu_label)
-        await add_to_memu({
+        await add_to_menu({
           label: menu_label,
           type: "Page",
           pagename: pageSpec.name
