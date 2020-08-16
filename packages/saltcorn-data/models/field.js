@@ -220,7 +220,7 @@ class Field {
     await db.query(
       `alter table ${schema}"${sqlsanitize(
         this.table.name
-      )}" alter column ${sqlsanitize(this.name)} ${
+      )}" alter column "${sqlsanitize(this.name)}" ${
         not_null ? "set" : "drop"
       } not null;`
     );
