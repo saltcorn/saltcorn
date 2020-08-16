@@ -11,6 +11,11 @@ const {
 } = require("../models/config");
 afterAll(db.close);
 
+beforeAll(async () => {
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
+
 describe("Config", () => {
   it("should get default", async () => {
     const d = await getConfig("noval", 5);
