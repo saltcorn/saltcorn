@@ -244,7 +244,7 @@ class Field {
     }
 
     if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
-      await this.toggle_not_null(v.required);
+      await this.toggle_not_null(!!v.required);
 
     await db.update("_sc_fields", v, this.id);
     Object.entries(v).forEach(([k, v]) => {
@@ -406,10 +406,16 @@ Field.contract = {
     toJson: is.getter(is.obj({ type: is.str })),
     sql_type: is.getter(is.str),
     sql_bare_type: is.getter(is.str),
+    form_name: is.getter(is.str),
     listKey: is.getter(is.any), // todo why not str?
     presets: is.getter(is.maybe(is.objVals(is.fun(is.obj(), is.any)))),
-    delete: is.fun([], is.promise(is.eq(undefined))),
+    delete: is.fun([], is.promise(is.undefined)),
     generate: is.fun([], is.promise(is.any)),
+    add_unique_constraint: is.fun([], is.promise(is.undefined)),
+    remove_unique_constraint: is.fun([], is.promise(is.undefined)),
+    toggle_not_null: is.fun(is.bool, is.promise(is.undefined)), // TODO requires postgres
+    fill_table: is.fun([], is.promise(is.undefined)),
+    update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
     update: is.fun(is.obj(), is.promise(is.undefined))
   },
@@ -419,7 +425,8 @@ Field.contract = {
       is.promise(is.array(is.class("Field")))
     ),
     findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
-    create: is.fun(is.obj(), is.promise(is.class("Field")))
+    create: is.fun(is.obj(), is.promise(is.class("Field"))),
+    labelToName: is.fun(is.str, is.str)
   }
 };
 module.exports = Field;
