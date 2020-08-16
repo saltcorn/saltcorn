@@ -31,12 +31,26 @@ describe("TableIO", () => {
 });
 describe("Table create", () => {
   it("should create", async () => {
-    expect.assertions(1);
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });
 
     expect(tf.name).toStrictEqual("mytable1");
-  });
+    expect(tf.sql_name).toStrictEqual('"public"."mytable1"');
+  })
+  it("toggle bools", async () => {
+    const tc = await Table.create("mytable17");
+
+    await Field.create({
+      table: tc,
+      label: "Group",
+      type: "Bool",
+      required: true
+    });
+    const tall_id = await tc.insertRow({group:true})
+    await tc.toggleBool(tall_id, "group")
+    const row=await tc.getRow({id:tall_id})
+    expect(row.group).toBe(false)
+  })
   it("should create required field in empty table without default", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
     await Field.create({

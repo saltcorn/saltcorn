@@ -131,9 +131,9 @@ class Table {
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
-      `update ${schema}"${sqlsanitize(this.name)}" set ${sqlsanitize(
+      `update ${schema}"${sqlsanitize(this.name)}" set "${sqlsanitize(
         field_name
-      )}=NOT ${sqlsanitize(field_name)} where id=$1`,
+      )}"=NOT "${sqlsanitize(field_name)}" where id=$1`,
       [id]
     );
   }
