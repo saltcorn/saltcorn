@@ -18,6 +18,8 @@ beforeAll(async () => {
 describe("Backup and restore", () => {
   it("should create and restore backup", async () => {
     await setConfig("site_name", "backups rule!");
+    const sn1 = await getConfig("site_name");
+    expect(sn1).toBe("backups rule!");
     await Table.create("myblanktable");
     const fnm = await create_backup();
     const t1 = await Table.findOne({ name: "books" });
@@ -33,6 +35,8 @@ describe("Backup and restore", () => {
     });
     const t2 = await Table.findOne({ name: "books" });
     expect(t2).toBe(null);
+    const sn0 = await getConfig("site_name");
+    expect(sn0).toBe("Saltcorn");
 
     await restore(fnm, p => {});
 

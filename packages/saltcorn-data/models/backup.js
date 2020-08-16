@@ -210,6 +210,7 @@ const restore_config = contract(
 
     for (const cfg of cfgs) {
       const s = await fs.readFile(path.join(dirpath, "config", cfg));
+      console.log({cfg, s})
       await state.setConfig(cfg, JSON.parse(s).v);
     }
   }
