@@ -236,19 +236,33 @@ describe("Table get data", () => {
     await table.update(table);
   });
 });
+
 describe("CSV import", () => {
   it("should import into existing table", async () => {
-    const csv = `author,pages
+    const csv = `author,Pages
 Joe Celko, 856
 Gordon Kane, 217`;
     const fnm = "/tmp/test1.csv";
     await fs.writeFile(fnm, csv);
     const table = await Table.findOne({ name: "books" });
     expect(!!table).toBe(true);
-    await table.import_csv_file(fnm);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({"success": "Imported 2 rows into table books"})
     const rows = await table.getRows({ author: "Gordon Kane" });
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
+  });
+  it("fail on required field", async () => {
+    const csv = `author,Pagez
+Joe Celko, 856
+Gordon Kane, 217`;
+    const fnm = "/tmp/test1f.csv";
+    await fs.writeFile(fnm, csv);
+    const table = await Table.findOne({ name: "books" });
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({"error": "Required field missing: Pages"})
+    
   });
   it("should create by importing", async () => {
     const csv = `item,cost,count, vatable

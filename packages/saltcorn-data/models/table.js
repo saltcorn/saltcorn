@@ -250,9 +250,13 @@ class Table {
     }).fromFile(filePath);
     const fields = await this.getFields();
     const okHeaders = {};
+    const renames = []
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
-      else if (headers.includes(f.label)) okHeaders[f.label] = f;
+      else if (headers.includes(f.label)) {
+        okHeaders[f.label] = f;
+        renames.push({from: f.label, to: f.name})
+      }
       else if (f.required)
         return { error: `Required field missing: ${f.label}` };
     }
@@ -268,6 +272,10 @@ class Table {
     for (const rec of file_rows) {
       i += 1;
       try {
+        renames.forEach(({from, to})=>{
+          rec[to]=rec[from]
+          delete rec[from]
+        })
         await db.insert(this.name, rec, true, client);
       } catch (e) {
         await client.query("ROLLBACK");
