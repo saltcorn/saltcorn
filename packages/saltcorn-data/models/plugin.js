@@ -3,6 +3,7 @@ const { contract, is } = require("contractis");
 const View = require("./view");
 const { is_stale } = require("./pack");
 const fetch = require("node-fetch");
+const { stringToJSON } = require("../utils");
 
 class Plugin {
   constructor(o) {
@@ -11,7 +12,7 @@ class Plugin {
     this.source = o.source;
     this.location = o.location;
     this.version = o.version;
-    this.configuration = o.configuration;
+    this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
   static async findOne(where) {

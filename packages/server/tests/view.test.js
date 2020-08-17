@@ -71,7 +71,7 @@ describe("edit view", () => {
     await request(app)
       .post("/view/authoredit")
       .send("author=Chekov")
-      
+
       .expect(toRedirect("/"));
   });
 });
