@@ -94,7 +94,20 @@ describe("Plugin Endpoints", () => {
       .expect(toRedirect("/plugins"));
   });
 });
+describe("Plugin dependency resolution", () => {
+  it("should install quill", async () => {
+    const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/plugins/")
+      .set("Cookie", loginCookie)
+      .send("name=quill-editor")
+      .send("source=npm")
+      .send("location=%40saltcorn%2Fquill-editor")
+      .expect(toRedirect("/plugins"));
+  })
+})
 describe("Pack Endpoints", () => {
   it("should show get create", async () => {
     const loginCookie = await getAdminLoginCookie();

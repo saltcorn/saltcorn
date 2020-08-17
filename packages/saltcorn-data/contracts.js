@@ -202,7 +202,7 @@ const is_plugin = is.obj({
       )
     )
   ),
-  dependencies: is.maybe(is.array([is.str]))
+  dependencies: is.maybe(is.array(is.str))
 });
 
 const is_pack = is.obj({
