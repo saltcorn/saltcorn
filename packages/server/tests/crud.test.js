@@ -11,6 +11,7 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const reset = require("@saltcorn/data/db/reset_schema");
 
@@ -90,6 +91,14 @@ describe("homepage", () => {
       .get("/")
       .expect(toInclude("authorlist"));
   });
+  it("shows single on_root_page view", async () => {
+    await db.query("update _sc_views set on_root_page=false where id<>1;");
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/")
+      .expect(toInclude("Melville"));
+  });
+
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -161,6 +170,24 @@ describe("homepage", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Quick Start"))
       .expect(toInclude("You have no views!"));
+  });
+  it("shows with-view quick start", async () => {
+    const v = await View.create({
+      table_id: 1,
+      name: "anewview",
+      viewtemplate: "List",
+      configuration: { columns: [], default_state: { foo: "bar" } },
+      min_role: 10,
+      on_root_page: false
+    });
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Quick Start"))
+      .expect(toNotInclude("You have no views!"));
   });
   it("resets", async () => {
     await resetToFixtures();
