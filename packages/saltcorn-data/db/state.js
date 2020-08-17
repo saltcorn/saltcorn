@@ -84,6 +84,13 @@ class State {
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
+    Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
+      const type = this.types[v.type];
+      if (type) {
+        if (type.fieldviews) type.fieldviews[k] = v;
+        else type.fieldviews = { [k]: v };
+      }
+    });
     const layout = withCfg("layout");
     if (layout) {
       this.layout = contract(is_plugin_layout, layout);

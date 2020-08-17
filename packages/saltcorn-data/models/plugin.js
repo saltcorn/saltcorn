@@ -16,7 +16,8 @@ class Plugin {
     contract.class(this);
   }
   static async findOne(where) {
-    return new Plugin(await db.selectOne("_sc_plugins", where));
+    const p = await db.selectMaybeOne("_sc_plugins", where);
+    return p ? new Plugin(p) : p;
   }
   static async find(where) {
     return (await db.select("_sc_plugins", where)).map(p => new Plugin(p));
@@ -98,7 +99,7 @@ Plugin.contract = {
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
-    findOne: is.fun(is.obj(), is.promise(is.class("Plugin"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Plugin")))),
     store_by_name: is.fun(is.str, is.promise(is.maybe(is.class("Plugin")))),
     store_plugins_available_from_store: is.fun(
       [],

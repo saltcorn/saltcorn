@@ -56,6 +56,14 @@ const loadAllPlugins = async () => {
 
 const loadAndSaveNewPlugin = async (plugin, force) => {
   const { version, plugin_module } = await requirePlugin(plugin, force);
+  for (const location of plugin_module.dependencies || []) {
+    const existing = await Plugin.findOne({ location });
+    if (!existing && location !== plugin.location) {
+      await loadAndSaveNewPlugin(
+        new Plugin({ name: location, location, source: "npm" })
+      );
+    }
+  }
   getState().registerPlugin(plugin.name, plugin_module);
   if (version) plugin.version = version;
   await plugin.upsert();

@@ -2,6 +2,7 @@ const request = require("supertest");
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
+const { getState } = require("@saltcorn/data/db/state");
 
 const {
   getAdminLoginCookie,
@@ -94,7 +95,26 @@ describe("Plugin Endpoints", () => {
       .expect(toRedirect("/plugins"));
   });
 });
+describe("Plugin dependency resolution", () => {
+  it("should install quill", async () => {
+    const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/plugins/")
+      .set("Cookie", loginCookie)
+      .send("name=quill-editor")
+      .send("source=npm")
+      .send("location=%40saltcorn%2Fquill-editor")
+      .expect(toRedirect("/plugins"));
+    const quill = await Plugin.findOne({ name: "quill-editor" });
+    expect(quill.location).toBe("@saltcorn/quill-editor");
+    const html = await Plugin.findOne({ location: "@saltcorn/html" });
+    expect(html.location).toBe("@saltcorn/html");
+    const html_type = getState().types.HTML;
+    expect(!!html_type.fieldviews.Quill).toBe(true);
+  });
+});
 describe("Pack Endpoints", () => {
   it("should show get create", async () => {
     const loginCookie = await getAdminLoginCookie();
