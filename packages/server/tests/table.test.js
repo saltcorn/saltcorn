@@ -22,11 +22,18 @@ describe("Table Endpoints", () => {
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
+      .get("/table/new")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Table name"));
+    await request(app)
       .post("/table/")
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/4"));
-
+      await request(app)
+      .get("/table/4")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("mypostedtable"));
     //expect(res.statusCode).toEqual(302);
   });
   it("should reject existing tables", async () => {
@@ -39,7 +46,16 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/new"));
   });
+  it("should reject blank name", async () => {
+    const loginCookie = await getAdminLoginCookie();
 
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/")
+      .send("name=")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/new"));
+  });
   itShouldRedirectUnauthToLogin("/table/");
 
   it("should list tables", async () => {
@@ -71,6 +87,28 @@ describe("Table Endpoints", () => {
         "api_access=Read+only&min_role_read=10&min_role_write=1&id=" + tbl.id
       )
       .expect(toRedirect(`/table/${tbl.id}`));
+    await request(app)
+      .get(`/table/${tbl.id}`)
+      .set("Cookie", loginCookie);
+    await request(app)
+      .post(`/table`)
+      .set("Cookie", loginCookie)
+      .send("api_access=No+API&min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .expect(toRedirect(`/table/${tbl.id}`));
+    await request(app)
+      .get(`/table/${tbl.id}`)
+      .set("Cookie", loginCookie);
+    await request(app)
+      .post(`/table`)
+      .set("Cookie", loginCookie)
+      .send(
+        "api_access=Read+and+write&min_role_read=10&min_role_write=1&id=" +
+          tbl.id
+      )
+      .expect(toRedirect(`/table/${tbl.id}`));
+    await request(app)
+      .get(`/table/${tbl.id}`)
+      .set("Cookie", loginCookie);
   });
   it("should download csv ", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -79,6 +117,14 @@ describe("Table Endpoints", () => {
       .get("/table/download/books")
       .set("Cookie", loginCookie)
       .expect(200);
+  });
+  it("should show create from csv form", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .expect(toInclude('type="file"'));
   });
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -93,6 +139,20 @@ describe("Table Endpoints", () => {
       .get("/table/")
       .set("Cookie", loginCookie)
       .expect(toNotInclude(`/table/${tbl.id}`))
+      .expect(toInclude("books"));
+  });
+  it("should delete tables", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const tbl = await Table.findOne({ name: "books" });
+    await request(app)
+      .post(`/table/delete/${tbl.id}`)
+      .set("Cookie", loginCookie)
+      .expect(302);
+    await request(app)
+      .get("/table/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("alert-danger"))
       .expect(toInclude("books"));
   });
 });
