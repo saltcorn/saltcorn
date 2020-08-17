@@ -63,6 +63,23 @@ describe("pageedit", () => {
 
       .expect(toInclude("A short name that will be in your URL"));
   });
+  it("sets root page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/pageedit/set_root_page")
+      .send("public_home=a_page")
+      .send("staff_home=")
+      .send("user_home=")
+      .send("admin_home=")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/pageedit"));
+    await request(app)
+      .get("/pageedit")
+      .set("Cookie", loginCookie)
+
+      .expect(toInclude("Root pages updated"));
+  });
   it("should delete page", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
