@@ -7,11 +7,16 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  toRedirect
+  toRedirect,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
+
+beforeAll(async () => {
+  await resetToFixtures();
+});
 
 describe("Field Endpoints", () => {
   itShouldRedirectUnauthToLogin("/field/1");
