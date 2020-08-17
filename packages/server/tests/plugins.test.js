@@ -81,6 +81,16 @@ describe("Plugin Endpoints", () => {
     .set("Cookie", loginCookie)
     .send("theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D")
     .expect(toRedirect("/plugins"));
+    await request(app)
+    .post("/plugins/reload/"+p.id)
+    .set("Cookie", loginCookie)
+    .expect(toRedirect("/plugins"));
+
+    await request(app)
+    .post("/plugins/delete/"+p.id)
+    .set("Cookie", loginCookie)
+    .expect(toRedirect("/plugins"));
+
   })
 });
 
