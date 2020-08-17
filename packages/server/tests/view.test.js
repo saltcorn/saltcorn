@@ -58,3 +58,20 @@ describe("view show endpoint", () => {
       .expect(toInclude("Herman Melville"));
   });
 });
+
+describe("edit view", () => {
+  it("should show edit", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/view/authoredit")
+      .expect(toInclude("inputauthor"));
+  });
+  it("should submit edit", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/authoredit")
+      .send("author=Chekov")
+      
+      .expect(toRedirect("/"));
+  });
+});
