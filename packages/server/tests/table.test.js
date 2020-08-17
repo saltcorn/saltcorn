@@ -30,7 +30,7 @@ describe("Table Endpoints", () => {
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/4"));
-      await request(app)
+    await request(app)
       .get("/table/4")
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"));
