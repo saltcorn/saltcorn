@@ -22,14 +22,20 @@ beforeAll(async () => {
 
 describe("tenant routes", () => {
   if (!db.isSQLite) {
-    it("creates tenant", async () => {
+    it("shows create form", async () => {
       db.enable_multi_tenant();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/tenant/create")
+        .expect(toInclude("subdomain"));
+    });
+
+    it("creates tenant", async () => {
       const app = await getApp({ disableCsrf: true });
       await request(app)
         .post("/tenant/create")
         .send("subdomain=test2")
         .expect(toInclude("Success"));
-      expect(1).toBe(1);
     });
     it("creates tenant with capital letter", async () => {
       db.enable_multi_tenant();
@@ -39,8 +45,34 @@ describe("tenant routes", () => {
         .send("subdomain=Peashoot")
         .expect(toInclude("Success"));
       db.set_sql_logging(false);
+    });
+    it("rejects existing tenant", async () => {
+      db.enable_multi_tenant();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/tenant/create")
+        .send("subdomain=test2")
+        .expect(toInclude("already exists"));
+    });
+    itShouldRedirectUnauthToLogin("/tenant/list");
 
-      expect(1).toBe(1);
+    it("lists tenants", async () => {
+      const loginCookie = await getAdminLoginCookie();
+
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/tenant/list")
+        .set("Cookie", loginCookie)
+        .expect(toInclude("peashoot"));
+    });
+    it("lists tenants", async () => {
+      const loginCookie = await getAdminLoginCookie();
+
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/tenant/delete/peashoot")
+        .set("Cookie", loginCookie)
+        .expect(toRedirect("/tenant/list"));
     });
   } else {
     it("does not support tenants on SQLite", async () => {

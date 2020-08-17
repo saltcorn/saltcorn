@@ -68,32 +68,32 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("/plugins/configure/"));
   });
   it("should run config", async () => {
-    const p= await Plugin.findOne({name:"any-bootstrap-theme"})
+    const p = await Plugin.findOne({ name: "any-bootstrap-theme" });
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-    .get("/plugins/configure/"+p.id)
-    .set("Cookie", loginCookie)
-    .expect(toInclude("Navbar color scheme"));
+      .get("/plugins/configure/" + p.id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Navbar color scheme"));
     await request(app)
-    .post("/plugins/configure/"+p.id)
-    .set("Cookie", loginCookie)
-    .send("theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D")
-    .expect(toRedirect("/plugins"));
+      .post("/plugins/configure/" + p.id)
+      .set("Cookie", loginCookie)
+      .send(
+        "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D"
+      )
+      .expect(toRedirect("/plugins"));
     await request(app)
-    .post("/plugins/reload/"+p.id)
-    .set("Cookie", loginCookie)
-    .expect(toRedirect("/plugins"));
+      .post("/plugins/reload/" + p.id)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
 
     await request(app)
-    .post("/plugins/delete/"+p.id)
-    .set("Cookie", loginCookie)
-    .expect(toRedirect("/plugins"));
-
-  })
+      .post("/plugins/delete/" + p.id)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+  });
 });
-
 
 describe("Pack Endpoints", () => {
   it("should show get create", async () => {
@@ -112,7 +112,9 @@ describe("Pack Endpoints", () => {
     await request(app)
       .post("/packs/create/")
       .set("Cookie", loginCookie)
-      .send("table.books=on&view.authorlist=on&view.authorshow=on&plugin.sbadmin2=on&page.a_page=on")
+      .send(
+        "table.books=on&view.authorlist=on&view.authorshow=on&plugin.sbadmin2=on&page.a_page=on"
+      )
       .expect(toInclude("You can copy the pack contents below"));
   });
 
@@ -132,7 +134,9 @@ describe("Pack Endpoints", () => {
     await request(app)
       .post("/packs/install/")
       .set("Cookie", loginCookie)
-      .send("pack=%7B+%22tables%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D")
+      .send(
+        "pack=%7B+%22tables%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D"
+      )
       .expect(toRedirect("/"));
   });
 
@@ -143,7 +147,9 @@ describe("Pack Endpoints", () => {
     await request(app)
       .post("/packs/install/")
       .set("Cookie", loginCookie)
-      .send("pack=les%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D")
+      .send(
+        "pack=les%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D"
+      )
       .expect(toInclude("alert-danger"));
   });
   it("should install named", async () => {
