@@ -1,9 +1,9 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
+const Plugin = require("@saltcorn/data/models/plugin");
 
 const {
-  getStaffLoginCookie,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
@@ -53,7 +53,37 @@ describe("Plugin Endpoints", () => {
   itShouldRedirectUnauthToLogin("/plugins");
   itShouldRedirectUnauthToLogin("/plugins/new");
   itShouldRedirectUnauthToLogin("/plugins/1");
+
+  it("should install named with config", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/plugins/install/any-bootstrap-theme")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    await request(app)
+      .get("/plugins")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("/plugins/configure/"));
+  });
+  it("should run config", async () => {
+    const p= await Plugin.findOne({name:"any-bootstrap-theme"})
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+    .get("/plugins/configure/"+p.id)
+    .set("Cookie", loginCookie)
+    .expect(toInclude("Navbar color scheme"));
+    await request(app)
+    .post("/plugins/configure/"+p.id)
+    .set("Cookie", loginCookie)
+    .send("theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D")
+    .expect(toRedirect("/plugins"));
+  })
 });
+
 
 describe("Pack Endpoints", () => {
   it("should show get create", async () => {
