@@ -183,7 +183,26 @@ const is_plugin = is.obj({
     is.objVals(is.obj({ getPage: is.fun([], is.promise(is_layout)) }))
   ),
   viewtemplates: is_maybe_cfg_fun(is.array(is_viewtemplate)),
-  configuration_workflow: is.maybe(is.fun([], is.class("Workflow")))
+  configuration_workflow: is.maybe(is.fun([], is.class("Workflow"))),
+  fieldviews: is.maybe(
+    is.objVals(
+      is.obj(
+        {
+          type: is.str,
+          isEdit: is.bool,
+          run: is.or(
+            is.fun(is.any, is.str),
+            is.fun(
+              [is.str, is.any, is.maybe(is.obj()), is.str, is.bool],
+              is.str
+            )
+          )
+        },
+        o => (o.isEdit && o.run.length >= 2) || (!o.isEdit && o.run.length == 1)
+      )
+    )
+  ),
+  dependencies: is.maybe(is.array([is.str]))
 });
 
 const is_pack = is.obj({

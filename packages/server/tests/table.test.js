@@ -149,7 +149,7 @@ describe("Table Endpoints", () => {
       .post(`/table/delete/${tbl.id}`)
       .set("Cookie", loginCookie)
       .expect(302);
-    if(!db.isSQLite)
+    if (!db.isSQLite)
       await request(app)
         .get("/table/")
         .set("Cookie", loginCookie)
