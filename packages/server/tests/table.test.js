@@ -6,12 +6,16 @@ const {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
+  toRedirect,
+  resetToFixtures
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
 afterAll(db.close);
-
+beforeAll(async () => {
+  await resetToFixtures();
+});
 describe("Table Endpoints", () => {
   it("should create tables", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -20,9 +24,20 @@ describe("Table Endpoints", () => {
     await request(app)
       .post("/table/")
       .send("name=mypostedtable")
-      .set("Cookie", loginCookie);
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/4"))
 
     //expect(res.statusCode).toEqual(302);
+  });
+  it("should reject existing tables", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/")
+      .send("name=mypostedtable")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/new"))
   });
 
   itShouldRedirectUnauthToLogin("/table/");
@@ -48,8 +63,21 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Add field"))
       .expect(toNotInclude("[object"));
-  });
 
+      await request(app)
+      .post(`/table`)
+      .set("Cookie", loginCookie)
+      .send("api_access=Read+only&min_role_read=10&min_role_write=1&id="+tbl.id)
+      .expect(toRedirect(`/table/${tbl.id}`));
+  });
+  it("should download csv ", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/download/books")
+      .set("Cookie", loginCookie)
+      .expect(200)
+  })
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
