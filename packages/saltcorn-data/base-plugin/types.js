@@ -306,6 +306,7 @@ const bool = {
         return v ? true : false;
     }
   },
+  readFromDB: v => !!v,
   validate: () => x => true
 };
 
