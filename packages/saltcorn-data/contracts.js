@@ -134,6 +134,7 @@ const is_plugin_type = is.obj({
   attributes: is.maybe(is.array(is_attribute)),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
+  readFromDB: is.maybe(is.fun(is.any, is.any)),
   validate: is.maybe(is.fun(is.obj(), is.fun(is.any, is.bool))),
   presets: is.maybe(is.objVals(is.fun([], is.any)))
 });
