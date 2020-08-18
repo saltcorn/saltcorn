@@ -94,17 +94,29 @@ class Table {
   async deleteRows(where) {
     await db.deleteWhere(this.name, where);
   }
-
+  readFromDB(row) {
+    for (const f of this.fields) {
+      if (f.type && f.type.readFromDB)
+        row[f.name] = f.type.readFromDB(row[f.name]);
+    }
+    return row;
+  }
   async getRow(where) {
-    return await db.selectOne(this.name, where);
+    await this.getFields();
+    const row = await db.selectOne(this.name, where);
+    return this.readFromDB(row);
   }
 
   async getRows(where, selopts) {
-    return await db.select(this.name, where, selopts);
+    await this.getFields();
+    const rows = await db.select(this.name, where, selopts);
+    return rows.map(r => this.readFromDB(r));
   }
+
   async countRows(where) {
     return await db.count(this.name, where);
   }
+
   async updateRow(v, id, _userid) {
     if (this.versioned)
       await db.insert(this.name + "__history", {

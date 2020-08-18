@@ -51,7 +51,7 @@ describe("Table create", () => {
     const tall_id = await tc.insertRow({ group: true });
     await tc.toggleBool(tall_id, "group");
     const row = await tc.getRow({ id: tall_id });
-    expect(row.group).toBe(db.isSQLite ? 0 : false);
+    expect(row.group).toBe(false);
   });
   it("should create required field in empty table without default", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
@@ -206,6 +206,10 @@ describe("Table get data", () => {
     const table = await Table.findOne({ name: "patients" });
     table.versioned = true;
     await table.update(table);
+  });
+  it("should save version on insert", async () => {
+    const table = await Table.findOne({ name: "patients" });
+
     await table.insertRow({ name: "Bunny foo-foo" });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
     const history1 = await table.get_history(bunnyFooFoo.id);
@@ -213,6 +217,12 @@ describe("Table get data", () => {
     expect(history1[0].id).toBe(bunnyFooFoo.id);
     expect(history1[0]._version).toBe(1);
     expect(history1[0].name).toBe("Bunny foo-foo");
+  });
+  it("should save version on update", async () => {
+    const table = await Table.findOne({ name: "patients" });
+
+    const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
+
     await table.updateRow({ name: "Goon" }, bunnyFooFoo.id);
     const history2 = await table.get_history(bunnyFooFoo.id);
     expect(history2.length).toBe(2);
@@ -224,6 +234,10 @@ describe("Table get data", () => {
     expect(history2[1].name).toBe("Goon");
     const goon = await table.getRow({ id: bunnyFooFoo.id });
     expect(goon.name).toBe("Goon");
+  });
+  it("create field on version table", async () => {
+    const table = await Table.findOne({ name: "patients" });
+
     const fc = await Field.create({
       table: table,
       name: "Height19",
@@ -233,9 +247,11 @@ describe("Table get data", () => {
       attributes: { default: 6 }
     });
     await fc.delete();
-
-    table.versioned = false;
-    await table.update(table);
+  });
+  it("should disable versioning", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    await table.getFields();
+    await table.update({ versioned: false });
   });
 });
 
@@ -296,7 +312,7 @@ Pencil, 0.5,2, t`;
     expect(countField.type.name).toBe("Integer");
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
-    expect(rows[0].vatable).toBe(db.isSQLite ? "t" : true);
+    expect(rows[0].vatable).toBe(true);
   });
 });
 
