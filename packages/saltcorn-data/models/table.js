@@ -119,7 +119,7 @@ class Table {
 
   async updateRow(v, id, _userid) {
     if (this.versioned) {
-      const existing = await this.getRow({id})
+      const existing = await this.getRow({ id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,

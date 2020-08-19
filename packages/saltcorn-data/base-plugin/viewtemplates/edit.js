@@ -214,7 +214,7 @@ const runPost = async (
       const use_fixed = await fill_presets(table, req, fixed);
       row = { ...use_fixed, ...form.values };
     } else {
-      row = form.values
+      row = form.values;
     }
     const file_fields = form.fields.filter(f => f.type === "File");
     for (const field of file_fields) {
