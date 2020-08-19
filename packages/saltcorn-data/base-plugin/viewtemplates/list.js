@@ -137,7 +137,7 @@ const run = async (
     false,
     extraOpts.req.csrfToken()
   );
-  const { id, ...state} = stateWithId||{}
+  const { id, ...state } = stateWithId || {};
   const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
@@ -155,7 +155,7 @@ const run = async (
   var page_opts =
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
-      : {selectedId: id};
+      : { selectedId: id };
 
   if (rows.length === rows_per_page || current_page > 1) {
     const nrows = await table.countRows(qstate);
