@@ -36,7 +36,7 @@ const fieldForm = (fkey_opts, existing_names, id) =>
         name: "type",
         input_type: "select",
         options: getState().type_names.concat(fkey_opts || []),
-        disabled: !!id
+        disabled: !!id && !getState().getConfig("development_mode", false)
       }),
       new Field({
         label: "Required",

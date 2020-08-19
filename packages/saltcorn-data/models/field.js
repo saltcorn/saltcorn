@@ -416,8 +416,7 @@ Field.contract = {
     toggle_not_null: is.fun(is.bool, is.promise(is.undefined)), // TODO requires postgres
     fill_table: is.fun([], is.promise(is.undefined)),
     update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
-    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
-    update: is.fun(is.obj(), is.promise(is.undefined))
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
   },
   static_methods: {
     find: is.fun(
