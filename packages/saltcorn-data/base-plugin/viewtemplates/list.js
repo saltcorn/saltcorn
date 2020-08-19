@@ -122,12 +122,11 @@ const run = async (
   table_id,
   viewname,
   { columns, view_to_create },
-  state,
+  stateWithId,
   extraOpts
 ) => {
   //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
-
   const fields = await table.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const tfields = get_viewable_fields(
@@ -138,6 +137,7 @@ const run = async (
     false,
     extraOpts.req.csrfToken()
   );
+  const { id, ...state} = stateWithId||{}
   const qstate = await stateFieldsToWhere({ fields, state });
   const rows_per_page = 20;
   const current_page = parseInt(state._page) || 1;
