@@ -320,8 +320,8 @@ describe("pack install", () => {
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
     expect(menu).toStrictEqual([
-      { label: "List", type: "View", viewname: "List Todos" },
-      { label: "FooPage", pagename: "FooPage", type: "Page" }
+      { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
+      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 }
     ]);
   });
   it("cannot install pack again", async () => {

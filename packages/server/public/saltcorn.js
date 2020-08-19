@@ -127,8 +127,11 @@ function removeQueryStringParameter(uri, key) {
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
-    return uri.replace(re, "$1" + "$2");
+    uri = uri.replace(re, "$1" + "$2");
   }
+  if (uri[uri.length - 1] === "?" || uri[uri.length - 1] === "&")
+    uri = uri.substring(0, uri.length - 1);
+  return uri;
 }
 
 function select_id(id) {

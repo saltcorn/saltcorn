@@ -94,14 +94,15 @@ const mkTable = contract(
     )
 );
 
-const mkClickHandler = (opts, v) =>
-  !opts.onRowSelect
-    ? {}
-    : {
-        onclick:
-          typeof opts.onRowSelect === "function"
-            ? opts.onRowSelect(v)
-            : opts.onRowSelect
-      };
-
+const mkClickHandler = (opts, v) => {
+  var attrs = {};
+  if (opts.onRowSelect)
+    attrs.onclick =
+      typeof opts.onRowSelect === "function"
+        ? opts.onRowSelect(v)
+        : opts.onRowSelect;
+  if (opts.selectedId && v.id && +v.id === +opts.selectedId)
+    attrs.class = "table-active";
+  return attrs;
+};
 module.exports = mkTable;

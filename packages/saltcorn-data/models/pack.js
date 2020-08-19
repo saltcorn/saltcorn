@@ -158,7 +158,8 @@ const install_pack = contract(
         await add_to_menu({
           label: menu_label,
           type: "View",
-          viewname: viewSpec.name
+          viewname: viewSpec.name,
+          min_role: viewSpec.min_role || 10
         });
     }
     for (const pageFullSpec of pack.pages || []) {
@@ -173,7 +174,8 @@ const install_pack = contract(
         await add_to_menu({
           label: menu_label,
           type: "Page",
-          pagename: pageSpec.name
+          pagename: pageSpec.name,
+          min_role: pageSpec.min_role
         });
     }
     if (name) {
