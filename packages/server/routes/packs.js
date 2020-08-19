@@ -133,6 +133,7 @@ router.post(
 const install_pack_form = () =>
   new Form({
     action: "/packs/install",
+    submitLabel: "Install",
     fields: [
       {
         name: "pack",
