@@ -210,7 +210,7 @@ describe("Table get data", () => {
   it("should save version on insert", async () => {
     const table = await Table.findOne({ name: "patients" });
 
-    await table.insertRow({ name: "Bunny foo-foo" });
+    await table.insertRow({ name: "Bunny foo-foo", favbook: 1 });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
     const history1 = await table.get_history(bunnyFooFoo.id);
     expect(history1.length).toBe(1);
@@ -229,11 +229,14 @@ describe("Table get data", () => {
     expect(history2[0].id).toBe(bunnyFooFoo.id);
     expect(history2[0]._version).toBe(1);
     expect(history2[0].name).toBe("Bunny foo-foo");
+    expect(history2[0].favbook).toBe(1);
     expect(history2[1].id).toBe(bunnyFooFoo.id);
     expect(history2[1]._version).toBe(2);
     expect(history2[1].name).toBe("Goon");
+    expect(history2[1].favbook).toBe(1);
     const goon = await table.getRow({ id: bunnyFooFoo.id });
     expect(goon.name).toBe("Goon");
+    expect(goon.favbook).toBe(1);
   });
   it("create field on version table", async () => {
     const table = await Table.findOne({ name: "patients" });

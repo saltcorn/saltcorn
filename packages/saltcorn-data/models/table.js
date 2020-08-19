@@ -118,8 +118,10 @@ class Table {
   }
 
   async updateRow(v, id, _userid) {
-    if (this.versioned)
+    if (this.versioned) {
+      const existing = await this.getRow({id})
       await db.insert(this.name + "__history", {
+        ...existing,
         ...v,
         id,
         _version: {
@@ -129,6 +131,7 @@ class Table {
         _time: new Date(),
         _userid
       });
+    }
     return await db.update(this.name, v, id);
   }
   async tryUpdateRow(v, id, _userid) {
