@@ -208,9 +208,14 @@ const runPost = async (
   if (form.hasErrors) {
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
-    const use_fixed = await fill_presets(table, req, fixed);
-    var row = { ...use_fixed, ...form.values };
-
+    var row;
+    var id = body.id;
+    if (typeof id === "undefined") {
+      const use_fixed = await fill_presets(table, req, fixed);
+      row = { ...use_fixed, ...form.values };
+    } else {
+      row = form.values;
+    }
     const file_fields = form.fields.filter(f => f.type === "File");
     for (const field of file_fields) {
       if (req.files && req.files[field.name]) {
@@ -223,7 +228,6 @@ const runPost = async (
       }
     }
 
-    var id = body.id;
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
