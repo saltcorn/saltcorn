@@ -154,8 +154,8 @@ const run = async (
 
   var page_opts =
     extraOpts && extraOpts.onRowSelect
-      ? { onRowSelect: extraOpts.onRowSelect }
-      : {};
+      ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
+      : {selectedId: id};
 
   if (rows.length === rows_per_page || current_page > 1) {
     const nrows = await table.countRows(qstate);
@@ -179,6 +179,7 @@ const run = async (
           `Add ${pluralize(table.name, 1)}`
         )
       : "";
+
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
