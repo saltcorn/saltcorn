@@ -119,13 +119,14 @@ class Table {
 
   async updateRow(v, id, _userid) {
     if (this.versioned) {
+      const schema = db.getTenantSchemaPrefix();
       const existing = await this.getRow({ id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,
         id,
         _version: {
-          sql: `coalesce((select max(_version) from "${this.name +
+          sql: `coalesce((select max(_version) from ${schema}"${this.name +
             "__history"}" where id=${+id}), 0)+1`
         },
         _time: new Date(),
