@@ -17,8 +17,11 @@ describe("Packs", () => {
     expect(await browser.content()).toContain("Add Post");
     await browser.goto("/view/EditPost");
     await browser.page.type("#inputtitle", "My First Post");
-    await browser.page.type("#inputexcerpt", "A wonderful post");
-    await browser.page.type("#inputbody", "Lorem ipsum");
+    await browser.page.type(
+      "#inputexcerpt+div div.note-editable",
+      "A wonderful post"
+    );
+    await browser.page.type("#inputbody+div div.note-editable", "Lorem ipsum");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     expect(await browser.content()).toContain("Add Post");
@@ -27,7 +30,7 @@ describe("Packs", () => {
     expect(await browser.content()).not.toContain("Add Post");
     expect(await browser.content()).toContain("A wonderful post");
     expect(await browser.content()).toContain(
-      '<a href="/view/Full%20Post?title=My%20First%20Post">Full Post</a>'
+      '<a href="/view/Full%20Post?title=My%20First%20Post">Read full post...</a>'
     );
     await browser.goto("/view/Full%20Post?title=My%20First%20Post");
     expect(await browser.content()).not.toContain("A wonderful post");
@@ -35,7 +38,10 @@ describe("Packs", () => {
     expect(await browser.content()).toContain("Add Comment");
     await browser.goto("/view/EditComment?post=1");
     await browser.page.type("#inputname", "Donald Trump");
-    await browser.page.type("#inputcomment", "I'm a fraud");
+    await browser.page.type(
+      "#inputcomment+div div.note-editable",
+      "I'm a fraud"
+    );
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     expect(await browser.content()).toContain(
