@@ -9,7 +9,7 @@ const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
-const {getViews} = require("@saltcorn/data/models/layout");
+const { getViews } = require("@saltcorn/data/models/layout");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
