@@ -166,19 +166,19 @@ export const layoutToNodes = (layout, query, actions) => {
         if (child) go(child, parent);
       });
     } else if (segment.besides) {
-      const node = query.createNode(
+      const node = query.parseReactElement(
         <TwoSplit
           widths={getColWidths(segment)}
           ncols={segment.besides.length}
           aligns={segment.aligns || segment.besides.map(() => "left")}
           contents={segment.besides.map(toTag)}
         />
-      );
+      ).toNodeTree();
       actions.add(node, parent);
     } else {
       const tag = toTag(segment);
       if (tag) {
-        const node = query.createNode(tag);
+        const node = query.parseReactElement(tag).toNodeTree();
         //console.log("other", node);
         actions.add(node, parent);
       }
@@ -186,7 +186,7 @@ export const layoutToNodes = (layout, query, actions) => {
   }
   //const node1 = query.createNode(toTag(layout));
   //actions.add(node1, );
-  go(layout, "canvas-ROOT");
+  go(layout, "ROOT");
 };
 
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
@@ -225,7 +225,7 @@ export const craftToSaltcorn = nodes => {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) =>
-          go(nodes[node._childCanvas["Col" + ix]])
+          go(nodes[node.linkedNodes["Col" + ix]])
         ),
         aligns: node.props.aligns,
         widths
@@ -233,14 +233,14 @@ export const craftToSaltcorn = nodes => {
     }
     if (node.displayName === Card.name) {
       return {
-        contents: go(nodes[node._childCanvas.cardContents]),
+        contents: go(nodes[node.linkedNodes.cardContents]),
         type: "card",
         title: node.props.title
       };
     }
     if (node.displayName === Container.name) {
       return {
-        contents: go(nodes[node._childCanvas.containerContents]),
+        contents: go(nodes[node.linkedNodes.containerContents]),
         type: "container",
         borderWidth: node.props.borderWidth,
         borderStyle: node.props.borderStyle,
@@ -346,7 +346,7 @@ export const craftToSaltcorn = nodes => {
       };
     }
   };
-  const layout = go(nodes["canvas-ROOT"]) || { type: "blank", contents: "" };
+  const layout = go(nodes["ROOT"]) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
