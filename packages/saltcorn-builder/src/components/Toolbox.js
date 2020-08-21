@@ -151,7 +151,7 @@ export const ToolboxShow = () => {
           </tr>
           <tr>
             <td
-              title="View"
+              title="Embed view"
               ref={ref =>
                 connectors.create(
                   ref,
