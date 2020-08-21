@@ -17,11 +17,13 @@ class ContractViolation extends Error {
     const conStr = theContract.options
       ? `${theContract.contract_name}(${JSON.stringify(theContract.options)})`
       : theContract.contract_name;
-    message = `value ${JSON.stringify(
-      val,
-      null,
-      2
-    )} violates contract ${conStr}${in_str}`;
+    var value;
+    try {
+      value = JSON.stringify(val, null, 2);
+    } catch (e) {
+      value = `Error printing value: ${e.message}`;
+    }
+    message = `value ${value}} violates contract ${conStr}${in_str}`;
     if (theContract.get_error_message) {
       message += ". " + theContract.get_error_message(val);
     } else {

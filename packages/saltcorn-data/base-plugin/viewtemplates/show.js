@@ -8,6 +8,7 @@ const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
+const { eachView } = require("../../models/layout");
 
 const { div, text, span } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -87,7 +88,7 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
+const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
@@ -101,10 +102,14 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
     aggregations,
     limit: 1
   });
-  const role = req.user ? req.user.role_id : 10;
+  const role = extra.req.user ? extra.req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
   db.sql_log(layout);
-  return render(rows[0], fields, layout, viewname, tbl, role, req);
+  await eachView(layout, async segment => {
+    const view = await View.findOne({ name: segment.view });
+    segment.contents = await view.run(state, extra);
+  });
+  return render(rows[0], fields, layout, viewname, tbl, role, extra.req);
 };
 
 const runMany = async (
