@@ -23,7 +23,8 @@ export const Container = ({
         border: `${borderWidth}px ${borderStyle} black`
       }}
     >
-      <Element canvas
+      <Element
+        canvas
         id={`containerContents`}
         is="div"
         style={{

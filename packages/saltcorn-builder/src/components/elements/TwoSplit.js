@@ -31,7 +31,8 @@ export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
     <div className="row" ref={dom => connect(drag(dom))}>
       {ntimes(ncols, ix => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
-          <Element canvas
+          <Element
+            canvas
             id={`Col${ix}`}
             is="div"
             className={`canvas text-${aligns[ix]}`}

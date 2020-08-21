@@ -166,14 +166,16 @@ export const layoutToNodes = (layout, query, actions) => {
         if (child) go(child, parent);
       });
     } else if (segment.besides) {
-      const node = query.parseReactElement(
-        <TwoSplit
-          widths={getColWidths(segment)}
-          ncols={segment.besides.length}
-          aligns={segment.aligns || segment.besides.map(() => "left")}
-          contents={segment.besides.map(toTag)}
-        />
-      ).toNodeTree();
+      const node = query
+        .parseReactElement(
+          <TwoSplit
+            widths={getColWidths(segment)}
+            ncols={segment.besides.length}
+            aligns={segment.aligns || segment.besides.map(() => "left")}
+            contents={segment.besides.map(toTag)}
+          />
+        )
+        .toNodeTree();
       actions.addNodeTree(node, parent);
     } else {
       const tag = toTag(segment);
@@ -224,9 +226,7 @@ export const craftToSaltcorn = nodes => {
     if (node.displayName === TwoSplit.name) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
-        besides: widths.map((w, ix) =>
-          go(nodes[node.linkedNodes["Col" + ix]])
-        ),
+        besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         aligns: node.props.aligns,
         widths
       };
