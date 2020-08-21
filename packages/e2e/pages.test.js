@@ -14,11 +14,9 @@ describe("Dotcom and db page page", () => {
     await browser.goto("/auth/login");
     await browser.page.type("#inputemail", "admin@foo.com");
     await browser.page.type("#inputpassword", "secret");
-    await browser.clickNav("button[type=submit]");
+    await browser.clickNav("button[type=submit]", true);
 
-    await browser.goto("/");
-    const page = await browser.page.content();
-    expect(page).toContain("Logout");
+
   });
   it("sets home page", async () => {
     await browser.goto("/config");
@@ -26,6 +24,14 @@ describe("Dotcom and db page page", () => {
     expect(await browser.content()).toContain("Public home page");
     await browser.page.type("#inputpublic_home", "a_page");
     await browser.clickNav("button[type=submit]");
+
+    await browser.goto("/config/edit/admin_home");
+    expect(await browser.content()).toContain("Admin home page");
+    await browser.page.type("#inputadmin_home", "");
+    await browser.clickNav("button[type=submit]");
+    await browser.goto("/");
+    const page = await browser.page.content();
+    expect(page).toContain("Logout");
   });
   it("Logs out 1", async () => {
     await browser.goto("/auth/logout");
