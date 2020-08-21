@@ -174,13 +174,13 @@ export const layoutToNodes = (layout, query, actions) => {
           contents={segment.besides.map(toTag)}
         />
       ).toNodeTree();
-      actions.add(node, parent);
+      actions.addNodeTree(node, parent);
     } else {
       const tag = toTag(segment);
       if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
         //console.log("other", node);
-        actions.add(node, parent);
+        actions.addNodeTree(node, parent);
       }
     }
   }
