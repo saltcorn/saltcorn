@@ -159,7 +159,6 @@ export const ToolboxShow = () => {
                   <View
                     name={"not_assigned"}
                     state={"shared"}
-                    inView={true}
                     view={views.length > 0 ? views[0].name : "view"}
                   />
                 )
@@ -329,7 +328,6 @@ export const ToolboxPage = () => {
                   <View
                     name={"not_assigned"}
                     state={"shared"}
-                    inView={false}
                     view={views.length > 0 ? views[0].name : "view"}
                   />
                 )

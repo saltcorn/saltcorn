@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const View = ({ name, view, state, inView }) => {
+export const View = ({ name, view, state }) => {
   const {
     connectors: { connect, drag }
   } = useNode();
@@ -11,17 +11,17 @@ export const View = ({ name, view, state, inView }) => {
 };
 
 export const ViewSettings = () => {
-  const { setProp, name, view, state, inView } = useNode(node => ({
+  const { setProp, name, view, state } = useNode(node => ({
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
-    inView: node.data.props.inView
   }));
   const options = useContext(optionsCtx);
+  //console.log(options)
   return (
     <div>
       <div>
-        <label>View to {inView ? 'embed' : 'show'}</label>
+        <label>View to {options.mode==='show' ? 'embed' : 'show'}</label>
         <select
           value={view}
           onChange={e => setProp(prop => (prop.view = e.target.value))}
@@ -33,7 +33,7 @@ export const ViewSettings = () => {
           ))}
         </select>
       </div>
-      {!inView && (
+      {options.mode==='page' && (
         <div>
           <label>State</label>
           <select
