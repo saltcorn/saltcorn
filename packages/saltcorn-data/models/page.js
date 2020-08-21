@@ -1,7 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
-
+const { eachView } = require("./layout");
 class Page {
   constructor(o) {
     this.name = o.name;
@@ -64,39 +64,8 @@ class Page {
     return item ? item.label : undefined;
   }
 
-  async eachView(f) {
-    const go = async segment => {
-      if (!segment) return;
-      if (segment.type === "view") {
-        await f(segment);
-        return;
-      }
-      if (segment.contents) {
-        if (typeof contents !== "string") await go(segment.contents);
-        return;
-      }
-      if (segment.above) {
-        for (const seg of segment.above) await go(seg);
-        return;
-      }
-      if (segment.besides) {
-        for (const seg of segment.besides) await go(seg);
-        return;
-      }
-    };
-    await go(this.layout);
-  }
-
-  async getViews() {
-    const views = [];
-    await this.eachView(segment => {
-      views.push(segment);
-    });
-    return views;
-  }
-
   async run(querystate, extraArgs) {
-    await this.eachView(async segment => {
+    await eachView(this.layout, async segment => {
       const view = await View.findOne({ name: segment.view });
       if (segment.state === "shared") {
         const mystate = view.combine_state_and_default_state(querystate);
@@ -123,8 +92,7 @@ Page.contract = {
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
-    getViews: is.fun([], is.promise(is.array(is.obj()))),
-    eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
+
     menu_label: is.getter(is.maybe(is.str)),
     run: is.fun(
       [is.obj(), is.obj({ req: is.obj(), res: is.obj() })],

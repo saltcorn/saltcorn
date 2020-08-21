@@ -15,8 +15,6 @@ describe("Dotcom and db page page", () => {
     await browser.page.type("#inputemail", "admin@foo.com");
     await browser.page.type("#inputpassword", "secret");
     await browser.clickNav("button[type=submit]", true);
-
-
   });
   it("sets home page", async () => {
     await browser.goto("/config");

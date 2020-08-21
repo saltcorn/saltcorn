@@ -1,12 +1,14 @@
 const Form = require("../../models/form");
 const User = require("../../models/user");
 const Field = require("../../models/field");
+const View = require("../../models/view");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
+const { eachView } = require("../../models/layout");
 
 const { div, text, span } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -19,6 +21,7 @@ const {
   calcfldViewOptions
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
+const db = require("../../db");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -52,6 +55,13 @@ const configuration_workflow = () =>
               `${table.name}.${key_field.name}`
             ] = table.fields.map(f => f.name);
           });
+          const views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewtemplate, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.some(sf => sf.name === "id")
+          );
+
           return {
             fields,
             actions,
@@ -61,6 +71,7 @@ const configuration_workflow = () =>
             child_field_list,
             agg_field_opts,
             roles,
+            views,
             mode: "show"
           };
         }
@@ -77,7 +88,7 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
+const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
@@ -91,9 +102,14 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
     aggregations,
     limit: 1
   });
-  const role = req.user ? req.user.role_id : 10;
+  const role = extra.req.user ? extra.req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  return render(rows[0], fields, layout, viewname, tbl, role, req);
+  db.sql_log(layout);
+  await eachView(layout, async segment => {
+    const view = await View.findOne({ name: segment.view });
+    segment.contents = await view.run(state, extra);
+  });
+  return render(rows[0], fields, layout, viewname, tbl, role, extra.req);
 };
 
 const runMany = async (

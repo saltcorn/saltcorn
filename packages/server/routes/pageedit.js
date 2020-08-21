@@ -9,6 +9,7 @@ const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
+const { getViews } = require("@saltcorn/data/models/layout");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -90,12 +91,12 @@ const pageFlow = new Workflow({
       contextField: "fixed_states",
       onlyWhen: async context => {
         const p = new Page(context);
-        const vs = await p.getViews();
+        const vs = await getViews(p.layout);
         return vs.filter(v => v.state === "fixed").length > 0;
       },
       form: async context => {
         const p = new Page(context);
-        const vs = await p.getViews();
+        const vs = await getViews(p.layout);
         const fixedvs = vs.filter(vseg => vseg.state === "fixed");
         const fields = [];
         for (const vseg of fixedvs) {

@@ -30,7 +30,8 @@ export const ToolboxShow = () => {
     fields,
     field_view_options,
     child_field_list,
-    agg_field_opts
+    agg_field_opts,
+    views
   } = options;
   return (
     <Fragment>
@@ -147,6 +148,23 @@ export const ToolboxShow = () => {
               }
             >
               ∑
+            </td>
+          </tr>
+          <tr>
+            <td
+              title="Embed view"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <View
+                    name={"not_assigned"}
+                    state={"shared"}
+                    view={views.length > 0 ? views[0].name : "view"}
+                  />
+                )
+              }
+            >
+              <i className="fas fa-lg fa-eye"></i>
             </td>
           </tr>
         </tbody>
