@@ -14,7 +14,7 @@ describe("Dotcom and db page page", () => {
     await browser.goto("/auth/login");
     await browser.page.type("#inputemail", "admin@foo.com");
     await browser.page.type("#inputpassword", "secret");
-    await browser.clickNav("button[type=submit]");
+    await browser.clickNav("button[type=submit]", true);
 
     await browser.goto("/");
     const page = await browser.page.content();
