@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { Text } from "./Text";
 
-import { Canvas, useNode } from "@craftjs/core";
+import { Element, useNode } from "@craftjs/core";
 
 export const Card = ({ contents, title }) => {
   const {
@@ -12,9 +12,9 @@ export const Card = ({ contents, title }) => {
     <div className="card builder" ref={dom => connect(drag(dom))}>
       {title && title.length > 0 && <div className="card-header">{title}</div>}
       <div className="card-body">
-        <Canvas id={`cardContents`} is="div" className={`canvas`}>
+        <Element canvas id={`cardContents`} is="div" className={`canvas`}>
           {contents}
-        </Canvas>
+        </Element>
       </div>
     </div>
   );

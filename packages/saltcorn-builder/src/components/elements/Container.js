@@ -1,6 +1,6 @@
 import React, { useContext, Fragment } from "react";
 
-import { Canvas, useNode } from "@craftjs/core";
+import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 
 export const Container = ({
@@ -23,7 +23,8 @@ export const Container = ({
         border: `${borderWidth}px ${borderStyle} black`
       }}
     >
-      <Canvas
+      <Element
+        canvas
         id={`containerContents`}
         is="div"
         style={{
@@ -41,7 +42,7 @@ export const Container = ({
         }`}
       >
         {contents}
-      </Canvas>
+      </Element>
     </div>
   );
 };
