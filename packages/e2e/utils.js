@@ -41,6 +41,10 @@ class Browser {
       this.page.waitForNavigation(),
       this.page.click(sel)
     ]);
+    if(response.status()>=400) {
+      const page = await this.page.content();
+      console.log(page)
+    }
     expect(response.status()).toBeLessThanOrEqual(399);
   }
   content() {
