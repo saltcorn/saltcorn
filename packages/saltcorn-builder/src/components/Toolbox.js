@@ -149,6 +149,24 @@ export const ToolboxShow = () => {
               ∑
             </td>
           </tr>
+          <tr>
+            <td
+              title="View"
+              ref={ref =>
+                connectors.create(
+                  ref,
+                  <View
+                    name={"not_assigned"}
+                    state={"shared"}
+                    inView={true}
+                    view={views.length > 0 ? views[0].name : "view"}
+                  />
+                )
+              }
+            >
+              <i className="fas fa-lg fa-eye"></i>
+            </td>
+          </tr>
         </tbody>
       </table>
     </Fragment>
@@ -310,6 +328,7 @@ export const ToolboxPage = () => {
                   <View
                     name={"not_assigned"}
                     state={"shared"}
+                    inView={false}
                     view={views.length > 0 ? views[0].name : "view"}
                   />
                 )
