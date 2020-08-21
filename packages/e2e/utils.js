@@ -37,13 +37,16 @@ class Browser {
     expect(response.status()).toBe(200);
   }
   async clickNav(sel) {
+    const prevpage = await this.page.content();
+
     const [response] = await Promise.all([
       this.page.waitForNavigation(),
       this.page.click(sel)
     ]);
     if(response.status()>=400) {
       const page = await this.page.content();
-      console.log(page)
+      console.log("beforeNav", prevpage)
+      console.log("afterNav", page)
     }
     expect(response.status()).toBeLessThanOrEqual(399);
   }
