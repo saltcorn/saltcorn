@@ -20,6 +20,7 @@ const {
   calcfldViewOptions
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
+const db = require("../../db");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -102,6 +103,7 @@ const run = async (table_id, viewname, { columns, layout }, state, { req }) => {
   });
   const role = req.user ? req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
+  db.sql_log(layout);
   return render(rows[0], fields, layout, viewname, tbl, role, req);
 };
 

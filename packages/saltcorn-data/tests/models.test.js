@@ -8,6 +8,8 @@ const File = require("../models/file");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
+const { getViews } = require("../models/layout");
+
 const { getState } = require("../db/state");
 const fs = require("fs").promises;
 
@@ -126,7 +128,7 @@ describe("Page", () => {
     const html = renderLayout({ layout });
     expect(html).toContain(">Bye bye<");
     expect(html).toContain("Tolstoy");
-    const vs = await cs.getViews();
+    const vs = await getViews(cs.layout);
     expect(vs[0].name).toEqual("v46748");
     expect(vs[0].view).toEqual("authorlist");
     expect(vs[0].contents).toContain("Herman");

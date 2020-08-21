@@ -14,14 +14,14 @@ export const ViewSettings = () => {
   const { setProp, name, view, state } = useNode(node => ({
     name: node.data.props.name,
     view: node.data.props.view,
-    state: node.data.props.state,
+    state: node.data.props.state
   }));
   const options = useContext(optionsCtx);
   //console.log(options)
   return (
     <div>
       <div>
-        <label>View to {options.mode==='show' ? 'embed' : 'show'}</label>
+        <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
           onChange={e => setProp(prop => (prop.view = e.target.value))}
@@ -33,7 +33,7 @@ export const ViewSettings = () => {
           ))}
         </select>
       </div>
-      {options.mode==='page' && (
+      {options.mode === "page" && (
         <div>
           <label>State</label>
           <select

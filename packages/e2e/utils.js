@@ -43,14 +43,13 @@ class Browser {
       this.page.waitForNavigation(),
       this.page.click(sel)
     ]);
-    if(response.status()>=400 && !dontCheck) {
+    if (response.status() >= 400 && !dontCheck) {
       const page = await this.page.content();
-      console.log("nav sel", sel)
-      console.log("beforeNav", prevpage)
-      console.log("afterNav", page)
+      console.log("nav sel", sel);
+      console.log("beforeNav", prevpage);
+      console.log("afterNav", page);
     }
-    if(!dontCheck)
-      expect(response.status()).toBeLessThanOrEqual(399);
+    if (!dontCheck) expect(response.status()).toBeLessThanOrEqual(399);
   }
   content() {
     return this.page.content();
