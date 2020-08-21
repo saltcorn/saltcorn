@@ -21,7 +21,7 @@ export const ViewSettings = () => {
   return (
     <div>
       <div>
-        <label>View to show</label>
+        <label>View to {inView ? 'embed' : 'show'}</label>
         <select
           value={view}
           onChange={e => setProp(prop => (prop.view = e.target.value))}

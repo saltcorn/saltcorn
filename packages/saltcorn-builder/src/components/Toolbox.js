@@ -30,7 +30,8 @@ export const ToolboxShow = () => {
     fields,
     field_view_options,
     child_field_list,
-    agg_field_opts
+    agg_field_opts,
+    views
   } = options;
   return (
     <Fragment>

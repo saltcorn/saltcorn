@@ -1,6 +1,7 @@
 const Form = require("../../models/form");
 const User = require("../../models/user");
 const Field = require("../../models/field");
+const View = require("../../models/view");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("@saltcorn/markup");
@@ -52,6 +53,13 @@ const configuration_workflow = () =>
               `${table.name}.${key_field.name}`
             ] = table.fields.map(f => f.name);
           });
+          const views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewtemplate, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.some(sf => sf.name === "id")
+          );
+
           return {
             fields,
             actions,
@@ -61,6 +69,7 @@ const configuration_workflow = () =>
             child_field_list,
             agg_field_opts,
             roles,
+            views,
             mode: "show"
           };
         }
