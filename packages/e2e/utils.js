@@ -45,6 +45,7 @@ class Browser {
     ]);
     if(response.status()>=400) {
       const page = await this.page.content();
+      console.log("nav sel", sel)
       console.log("beforeNav", prevpage)
       console.log("afterNav", page)
     }
