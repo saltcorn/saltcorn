@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { Text } from "./Text";
 
-import { Canvas, useNode } from "@craftjs/core";
+import { Element, useNode } from "@craftjs/core";
 
 export const ntimes = (n, f) => {
   var res = [];
@@ -31,13 +31,13 @@ export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
     <div className="row" ref={dom => connect(drag(dom))}>
       {ntimes(ncols, ix => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
-          <Canvas
+          <Element canvas
             id={`Col${ix}`}
             is="div"
             className={`canvas text-${aligns[ix]}`}
           >
             {contents[ix]}
-          </Canvas>
+          </Element>
         </div>
       ))}
     </div>

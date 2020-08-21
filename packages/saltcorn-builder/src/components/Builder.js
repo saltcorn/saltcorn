@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, Fragment } from "react";
-import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
+import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
@@ -115,7 +115,7 @@ const Builder = ({ options, layout, mode }) => {
                 Container
               }}
             >
-              <Canvas className="canvas"></Canvas>
+              <Element canvas className="canvas"></Element>
             </Frame>
           </div>
           <div className="col-sm-3">
