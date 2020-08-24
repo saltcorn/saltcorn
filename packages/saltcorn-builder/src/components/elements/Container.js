@@ -10,7 +10,9 @@ export const Container = ({
   minHeight,
   vAlign,
   hAlign,
-  bgFileId
+  bgFileId,
+  bgType,
+  bgColor
 }) => {
   const {
     connectors: { connect, drag }
@@ -55,11 +57,15 @@ export const ContainerSettings = () => {
     minHeight,
     vAlign,
     hAlign,
-    bgFileId
+    bgFileId,
+    bgType,
+    bgColor
   } = useNode(node => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
+    bgType: node.data.props.bgType,
+    bgColor: node.data.props.bgType,
     bgFileId: node.data.props.bgFileId,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign
@@ -143,18 +149,31 @@ export const ContainerSettings = () => {
         <option value="right">Right</option>
       </select>
       <br />
-      <label>Background Image</label>
+      <label>Background</label>
       <select
+        value={bgType}
+        onChange={e =>
+          setProp(prop => {
+            prop.bgType = e.target.value;
+          })
+        }
+      >
+        <option>None</option>
+        <option>Image</option>
+        <option>Color</option>
+      </select>
+      <br />
+     {bgType==='Image' && <select
         value={bgFileId}
         onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
       >
-        <option value={0}>None</option>
         {options.images.map((f, ix) => (
           <option key={ix} value={f.id}>
             {f.filename}
           </option>
         ))}
-      </select>
+      </select>}
+      
     </div>
   );
 };
@@ -165,7 +184,8 @@ Container.craft = {
     minHeight: 0,
     vAlign: "top",
     hAlign: "left",
-    bgFileId: 0
+    bgFileId: 0,
+    bgType: "None"
   },
   related: {
     settings: ContainerSettings
