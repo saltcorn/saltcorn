@@ -65,7 +65,6 @@ const configuration_workflow = () =>
                       attributes: {
                         options: "Link,Embedded"
                       }
-
                     }
                   ]
                 : [])
@@ -131,7 +130,7 @@ const initial_config = initial_config_all_fields(false);
 const run = async (
   table_id,
   viewname,
-  { columns, view_to_create,create_view_display },
+  { columns, view_to_create, create_view_display },
   stateWithId,
   extraOpts
 ) => {
@@ -182,21 +181,17 @@ const run = async (
       ? extraOpts.req.user.role_id
       : 10;
 
-  var create_link = '';
-  if(view_to_create && role <= table.min_role_write) {
-    if(create_view_display==="Embedded") {
+  var create_link = "";
+  if (view_to_create && role <= table.min_role_write) {
+    if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
-      create_link = await create_view.run(state, extraOpts)
+      create_link = await create_view.run(state, extraOpts);
     } else
-      create_link =link(
-          `/view/${view_to_create}${stateToQueryString(state)}`,
-          `Add ${pluralize(table.name, 1)}`
-        )
+      create_link = link(
+        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `Add ${pluralize(table.name, 1)}`
+      );
   }
-   
-    
-
-      
 
   return mkTable(tfields, rows, page_opts) + create_link;
 };
