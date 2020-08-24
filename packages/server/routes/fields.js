@@ -86,7 +86,17 @@ const fieldFlow = new Workflow({
           flash: ["error", e.message]
         };
       }
-    } else await Field.create(fldRow);
+    } else {
+      try {
+        await Field.create(fldRow);
+      } catch (e) {
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message]
+        };
+      }
+    }
+
     return {
       redirect: `/table/${context.table_id}`,
       flash: ["success", `Field "${label}" ${context.id ? "saved" : "created"}`]

@@ -333,15 +333,6 @@ class Field {
         f.attributes.default
       ]);
     }
-    if (table.versioned) {
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          table.name
-        )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`
-      );
-    }
-
-    if (f.is_unique) await f.add_unique_constraint();
 
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
@@ -353,6 +344,17 @@ class Field {
       is_unique: f.is_unique,
       attributes: f.attributes
     });
+
+    if (table.versioned) {
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+      );
+    }
+
+    if (f.is_unique) await f.add_unique_constraint();
+
     return f;
   }
 }
