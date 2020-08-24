@@ -61,6 +61,7 @@ const configuration_workflow = () =>
                       name: "create_view_display",
                       label: "Display create view as",
                       type: "String",
+                      required: true,
                       attributes: {
                         options: "Link,Embedded"
                       }
