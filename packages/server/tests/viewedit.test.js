@@ -84,6 +84,7 @@ describe("viewedit new List", () => {
       .send("field_name_0=author")
       .send("type_1=Field")
       .send("field_name_1=pages")
+      .send("create_view_display=Link")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
@@ -165,6 +166,7 @@ describe("viewedit new List with one field", () => {
       .send("stepName=Columns")
       .send("type_0=Field")
       .send("field_name_0=author")
+      .send("create_view_display=Link")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
