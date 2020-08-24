@@ -169,7 +169,7 @@ function tristateClick(nm) {
       break;
     default:
       $(`button#trib${nm}`).html("?");
-      $(`input#input${nm}`).val("");
+      $(`input#input${nm}`).val("?");
       break;
   }
 }
