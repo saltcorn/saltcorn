@@ -287,7 +287,7 @@ const bool = {
                 type: "button",
                 id: `trib${text_attr(nm)}`
               },
-              (!isdef(logit("v", v)) || v===null) ? "?" : v ? "T" : "F"
+              (!isdef(v) || v===null) ? "?" : v ? "T" : "F"
             )
     }
   },
@@ -312,10 +312,5 @@ const bool = {
   readFromDB: v => !!v,
   validate: () => x => true
 };
-const logit =(s,x)=>{
-  console.log(s,x);
-  return x;
-  
-}
 
 module.exports = { string, int, bool, date, float };
