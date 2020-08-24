@@ -270,7 +270,7 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
         attrs.disabled
-          ? !(!isdef(v) || v===null)
+          ? !(!isdef(v) || v === null)
             ? ""
             : v
             ? "T"
@@ -279,7 +279,7 @@ const bool = {
               type: "hidden",
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
-              value:(!isdef(v) || v===null) ? "?" : v ? "on" : "off"
+              value: !isdef(v) || v === null ? "?" : v ? "on" : "off"
             }) +
             button(
               {
@@ -287,7 +287,7 @@ const bool = {
                 type: "button",
                 id: `trib${text_attr(nm)}`
               },
-              (!isdef(v) || v===null) ? "?" : v ? "T" : "F"
+              !isdef(v) || v === null ? "?" : v ? "T" : "F"
             )
     }
   },
@@ -295,17 +295,17 @@ const bool = {
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;
     if (["undefined", "false", "off"].includes(rec[name])) return false;
-    if (rec[name]==="?") return null;
+    if (rec[name] === "?") return null;
     return rec[name] ? true : false;
   },
   read: v => {
     switch (typeof v) {
       case "string":
         if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
-        if (v==="?") return null;
+        if (v === "?") return null;
         else return false;
       default:
-        if( v===null) return null;
+        if (v === null) return null;
         return v ? true : false;
     }
   },

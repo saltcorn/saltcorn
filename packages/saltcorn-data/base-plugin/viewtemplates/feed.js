@@ -50,6 +50,15 @@ const configuration_workflow = () =>
                 attributes: {
                   options: create_view_opts.join()
                 }
+              },
+              {
+                name: "create_view_display",
+                label: "Display create view as",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: "Link,Embedded"
+                }
               }
             ]
           });
@@ -145,7 +154,15 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 const run = async (
   table_id,
   viewname,
-  { show_view, order_field, descending, view_to_create, in_card, ...cols },
+  {
+    show_view,
+    order_field,
+    descending,
+    view_to_create,
+    create_view_display,
+    in_card,
+    ...cols
+  },
   state,
   extraArgs
 ) => {
@@ -161,13 +178,17 @@ const run = async (
     extraArgs && extraArgs.req && extraArgs.req.user
       ? extraArgs.req.user.role_id
       : 10;
-  const create_link =
-    view_to_create && role <= table.min_role_write
-      ? link(
-          `/view/${view_to_create}${stateToQueryString(state)}`,
-          `Add ${pluralize(table.name, 1)}`
-        )
-      : "";
+  var create_link = "";
+  if (view_to_create && role <= table.min_role_write) {
+    if (create_view_display === "Embedded") {
+      const create_view = await View.findOne({ name: view_to_create });
+      create_link = await create_view.run(state, extraArgs);
+    } else
+      create_link = link(
+        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `Add ${pluralize(table.name, 1)}`
+      );
+  }
   const setCols = sz => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
   const showRowInner = r =>
