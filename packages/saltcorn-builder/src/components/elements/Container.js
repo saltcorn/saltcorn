@@ -65,7 +65,7 @@ export const ContainerSettings = () => {
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
     bgType: node.data.props.bgType,
-    bgColor: node.data.props.bgType,
+    bgColor: node.data.props.bgColor,
     bgFileId: node.data.props.bgFileId,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign
@@ -173,7 +173,17 @@ export const ContainerSettings = () => {
           </option>
         ))}
       </select>}
-      
+      {bgType==='Color' &&
+      <input
+        type="color"
+        value={bgColor}
+        onChange={e =>
+          setProp(prop => {
+            prop.bgColor = e.target.value;
+          })
+        }
+      />
+        }
     </div>
   );
 };
