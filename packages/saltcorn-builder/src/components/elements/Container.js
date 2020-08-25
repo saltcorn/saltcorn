@@ -22,38 +22,40 @@ export const Container = ({
   return (
     <div
       ref={dom => connect(drag(dom))}
+      className={`text-${hAlign} ${
+        vAlign === "middle" ? "d-flex align-items-center" : ""
+      } ${vAlign === "middle" &&
+        hAlign === "center" &&
+        "justify-content-center"}`}
       style={{
         padding: "4px",
-        border: `${borderWidth}px ${borderStyle} black`
+        minHeight: `${Math.max(minHeight, 15)}px`,
+        border: `${borderWidth}px ${borderStyle} black`,
+        ...(bgType === "Image" && bgFileId && +bgFileId
+          ? {
+              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat"
+            }
+          : {}),
+        ...(bgType === "Color"
+          ? {
+              backgroundColor: bgColor
+            }
+          : {}),
+        ...(setTextColor
+          ? {
+              color: textColor
+            }
+          : {})
       }}
     >
       <Element
         canvas
         id={`containerContents`}
         is="div"
-        style={{
-          minHeight: `${Math.max(minHeight, 15)}px`,
-          ...(bgType === "Image" && bgFileId && +bgFileId
-            ? {
-                backgroundImage: `url('/files/serve/${bgFileId}')`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat"
-              }
-            : {}),
-          ...(bgType === "Color"
-            ? {
-                backgroundColor: bgColor
-              }
-            : {}),
-          ...(setTextColor
-            ? {
-                color: textColor
-              }
-            : {})
-        }}
-        className={`canvas text-${hAlign} ${
-          vAlign === "middle" ? "d-flex align-items-center" : ""
-        }`}
+        style={{}}
+        className={`canvas`}
       >
         {contents}
       </Element>
@@ -63,7 +65,7 @@ export const Container = ({
 
 export const ContainerSettings = () => {
   const {
-    setProp,
+    actions: { setProp },
     borderWidth,
     borderStyle,
     minHeight,

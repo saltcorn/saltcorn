@@ -117,18 +117,21 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           {
             class: [
               `text-${hAlign}`,
-              vAlign === "middle" && "d-flex align-items-center"
+              vAlign === "middle" && "d-flex align-items-center",
+              vAlign === "middle" &&
+                hAlign === "center" &&
+                "justify-content-center"
             ],
             style: `min-height: ${minHeight}px; 
           border: ${borderWidth}px ${borderStyle} black; 
           ${
-            bgType ==='Image' && bgFileId && +bgFileId
+            bgType === "Image" && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
           background-size: contain;
           background-repeat: no-repeat`
               : ""
           }
-          ${bgType ==='Color' && `background-color: ${bgColor};`}
+          ${bgType === "Color" && `background-color: ${bgColor};`}
           ${setTextColor && `color: ${textColor};`}`
           },
           go(segment.contents)
