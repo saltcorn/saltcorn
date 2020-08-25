@@ -104,8 +104,10 @@ const get_state_fields = async (
   };
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
+    if(lview) {
     const lview_sfs = await lview.get_state_fields();
     return [id, ...lview_sfs];
+    } else  return [id]
   } else return [id];
 };
 
