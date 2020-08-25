@@ -148,7 +148,9 @@ const get_viewable_fields = contract(
                         row[f.name],
                         row[`${f.name}__filename`]
                       )
-                  : column.fieldview && f.type.fieldviews[column.fieldview]
+                  : column.fieldview &&
+                    f.type.fieldviews &&
+                    f.type.fieldviews[column.fieldview]
                   ? row =>
                       f.type.fieldviews[column.fieldview].run(
                         row[f.name],

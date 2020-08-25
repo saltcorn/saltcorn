@@ -9,8 +9,8 @@ class PluginsCommand extends Command {
     var plugins = [];
     const { flags } = this.parse(PluginsCommand);
 
-    const tenantList = ["public", ...await getAllTenants()];
-    
+    const tenantList = ["public", ...(await getAllTenants())];
+
     for (const domain of tenantList) {
       await db.runWithTenant(domain, async () => {
         const myplugins = await Plugin.find({});

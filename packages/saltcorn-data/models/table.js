@@ -225,9 +225,8 @@ class Table {
     const rows = await csvtojson().fromFile(filePath);
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
-
+    var prev_names = [];
     for (const [k, vs] of Object.entries(rowsTr)) {
-      if (k === "id") continue;
       const required = vs.every(v => v !== "");
       const nonEmpties = vs.filter(v => v !== "");
       const isBools = "true false yes no on off y n t f".split(" ");
@@ -246,13 +245,43 @@ class Table {
       else if (nonEmpties.every(v => isDate(v))) type = "Date";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
-      await Field.create({
+
+      //can fail here if: non integer id, duplicate headers, invalid name
+      const fld = new Field({
         name: k,
         required,
         type,
         table,
         label
       });
+      if (db.sqlsanitize(k.toLowerCase()) === "id") {
+        if (type !== "Integer") {
+          await table.delete();
+          return { error: `Columns named "id" must have only integers` };
+        }
+        if (!required) {
+          await table.delete();
+          return { error: `Columns named "id" must not have missing values` };
+        }
+        continue;
+      }
+      if (prev_names.includes(fld.name)) {
+        await table.delete();
+        return { error: `Duplicate column names on ${k}` };
+      }
+      if (db.sqlsanitize(fld.name) === "") {
+        await table.delete();
+        return {
+          error: `Invalid column name ${k} - Use A-Z, a-z, 0-9, _ only`
+        };
+      }
+      try {
+        await Field.create(fld);
+      } catch (e) {
+        await table.delete();
+        return { error: `Error in header ${k}: ${e.message}` };
+      }
+      prev_names.push(k);
     }
     const parse_res = await table.import_csv_file(filePath);
     parse_res.table = table;
