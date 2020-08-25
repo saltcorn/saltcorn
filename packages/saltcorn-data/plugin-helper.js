@@ -328,6 +328,8 @@ const stateFieldsToWhere = contract(
         approximate
       ) {
         qstate[k] = { ilike: v };
+      } else if (field && field.type.name === "Bool" && state[k] === "?") {
+        // omit
       } else if (field || k === "id") qstate[k] = v;
     });
     return qstate;
