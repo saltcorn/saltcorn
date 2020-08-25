@@ -103,6 +103,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         bgColor,
         vAlign,
         hAlign,
+        imageSize,
         minHeight,
         borderWidth,
         borderStyle,
@@ -122,17 +123,17 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
                 hAlign === "center" &&
                 "justify-content-center"
             ],
-            style: `min-height: ${minHeight||0}px; 
-          border: ${borderWidth||0}px ${borderStyle} black; 
+            style: `min-height: ${minHeight || 0}px; 
+          border: ${borderWidth || 0}px ${borderStyle} black; 
           ${
             bgType === "Image" && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
-          background-size: contain;
-          background-repeat: no-repeat`
+          background-size: ${imageSize || "contain"};
+          background-repeat: no-repeat;`
               : ""
           }
-          ${bgType === "Color" ? `background-color: ${bgColor};`:''}
-          ${setTextColor ? `color: ${textColor};` :''}`
+          ${bgType === "Color" ? `background-color: ${bgColor};` : ""}
+          ${setTextColor ? `color: ${textColor};` : ""}`
           },
           go(segment.contents)
         )

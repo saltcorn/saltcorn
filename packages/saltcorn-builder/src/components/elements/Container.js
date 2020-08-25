@@ -11,6 +11,7 @@ export const Container = ({
   vAlign,
   hAlign,
   bgFileId,
+  imageSize,
   bgType,
   bgColor,
   setTextColor,
@@ -34,7 +35,7 @@ export const Container = ({
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
-              backgroundSize: "contain",
+              backgroundSize: imageSize || "contain",
               backgroundRepeat: "no-repeat"
             }
           : {}),
@@ -72,6 +73,7 @@ export const ContainerSettings = () => {
     vAlign,
     hAlign,
     bgFileId,
+    imageSize,
     bgType,
     bgColor,
     setTextColor,
@@ -83,6 +85,7 @@ export const ContainerSettings = () => {
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
     bgFileId: node.data.props.bgFileId,
+    imageSize: node.data.props.imageSize,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     setTextColor: node.data.props.setTextColor,
@@ -173,12 +176,13 @@ export const ContainerSettings = () => {
         onChange={e => {
           setProp(prop => {
             prop.bgType = e.target.value;
-          })
+          });
           setProp(prop => {
-            prop.bgFileId = prop.bgFileId || options.images.length>0 && options.images[0].id
-          })
-        }
-        }
+            prop.bgFileId =
+              prop.bgFileId ||
+              (options.images.length > 0 && options.images[0].id);
+          });
+        }}
       >
         <option>None</option>
         <option>Image</option>
@@ -196,6 +200,18 @@ export const ContainerSettings = () => {
                 {f.filename}
               </option>
             ))}
+          </select>
+          <label>Size</label>
+          <select
+            value={imageSize}
+            onChange={e =>
+              setProp(prop => {
+                prop.imageSize = e.target.value;
+              })
+            }
+          >
+            <option>contain</option>
+            <option>cover</option>
           </select>
         </Fragment>
       )}
@@ -253,7 +269,8 @@ Container.craft = {
     bgType: "None",
     bgColor: "#ffffff",
     setTextColor: false,
-    textColor: "#ffffff"
+    textColor: "#ffffff",
+    imageSize: "contain"
   },
   related: {
     settings: ContainerSettings

@@ -143,6 +143,7 @@ export const layoutToNodes = (layout, query, actions) => {
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           bgFileId={segment.bgFileId}
+          imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
@@ -253,6 +254,7 @@ export const craftToSaltcorn = nodes => {
         hAlign: node.props.hAlign,
         bgFileId: node.props.bgFileId,
         bgType: node.props.bgType,
+        imageSize: node.props.imageSize,
         bgColor: node.props.bgColor,
         setTextColor: node.props.setTextColor,
         textColor: node.props.textColor
