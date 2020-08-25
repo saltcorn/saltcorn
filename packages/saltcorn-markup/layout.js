@@ -110,6 +110,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         setTextColor,
         textColor
       } = segment;
+      const renderBg = !(
+        isTop &&
+        blockDispatch.noBackgroundAtTop &&
+        blockDispatch.noBackgroundAtTop()
+      );
       return wrap(
         segment,
         isTop,
@@ -126,13 +131,17 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             style: `min-height: ${minHeight || 0}px; 
           border: ${borderWidth || 0}px ${borderStyle} black; 
           ${
-            bgType === "Image" && bgFileId && +bgFileId
+            renderBg && bgType === "Image" && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
           background-size: ${imageSize || "contain"};
           background-repeat: no-repeat;`
               : ""
           }
-          ${bgType === "Color" ? `background-color: ${bgColor};` : ""}
+          ${
+            renderBg && bgType === "Color"
+              ? `background-color: ${bgColor};`
+              : ""
+          }
           ${setTextColor ? `color: ${textColor};` : ""}`
           },
           go(segment.contents)
