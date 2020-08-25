@@ -122,8 +122,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
                 hAlign === "center" &&
                 "justify-content-center"
             ],
-            style: `min-height: ${minHeight}px; 
-          border: ${borderWidth}px ${borderStyle} black; 
+            style: `min-height: ${minHeight||0}px; 
+          border: ${borderWidth||0}px ${borderStyle} black; 
           ${
             bgType === "Image" && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
@@ -131,8 +131,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           background-repeat: no-repeat`
               : ""
           }
-          ${bgType === "Color" && `background-color: ${bgColor};`}
-          ${setTextColor && `color: ${textColor};`}`
+          ${bgType === "Color" ? `background-color: ${bgColor};`:''}
+          ${setTextColor ? `color: ${textColor};` :''}`
           },
           go(segment.contents)
         )

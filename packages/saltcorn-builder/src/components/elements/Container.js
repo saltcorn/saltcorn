@@ -170,10 +170,14 @@ export const ContainerSettings = () => {
       <label>Background</label>
       <select
         value={bgType}
-        onChange={e =>
+        onChange={e => {
           setProp(prop => {
             prop.bgType = e.target.value;
           })
+          setProp(prop => {
+            prop.bgFileId = prop.bgFileId || options.images.length>0 && options.images[0].id
+          })
+        }
         }
       >
         <option>None</option>
