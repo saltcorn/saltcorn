@@ -33,11 +33,21 @@ export const Container = ({
         is="div"
         style={{
           minHeight: `${Math.max(minHeight, 15)}px`,
-          ...(bgFileId && +bgFileId
+          ...(bgType === "Image" && bgFileId && +bgFileId
             ? {
                 backgroundImage: `url('/files/serve/${bgFileId}')`,
                 backgroundSize: "contain",
                 backgroundRepeat: "no-repeat"
+              }
+            : {}),
+          ...(bgType === "Color"
+            ? {
+                backgroundColor: bgColor
+              }
+            : {}),
+          ...(setTextColor
+            ? {
+                color: textColor
               }
             : {})
         }}

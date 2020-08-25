@@ -99,11 +99,15 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     if (segment.type === "container") {
       const {
         bgFileId,
+        bgType,
+        bgColor,
         vAlign,
         hAlign,
         minHeight,
         borderWidth,
-        borderStyle
+        borderStyle,
+        setTextColor,
+        textColor
       } = segment;
       return wrap(
         segment,
@@ -118,12 +122,14 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             style: `min-height: ${minHeight}px; 
           border: ${borderWidth}px ${borderStyle} black; 
           ${
-            bgFileId && +bgFileId
+            bgType ==='Image' && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
           background-size: contain;
           background-repeat: no-repeat`
               : ""
-          }`
+          }
+          ${bgType ==='Color' && `background-color: ${bgColor};`}
+          ${setTextColor && `color: ${textColor};`}`
           },
           go(segment.contents)
         )
