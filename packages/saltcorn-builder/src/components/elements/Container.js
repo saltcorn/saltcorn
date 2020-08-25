@@ -10,7 +10,12 @@ export const Container = ({
   minHeight,
   vAlign,
   hAlign,
-  bgFileId
+  bgFileId,
+  imageSize,
+  bgType,
+  bgColor,
+  setTextColor,
+  textColor
 }) => {
   const {
     connectors: { connect, drag }
@@ -18,28 +23,40 @@ export const Container = ({
   return (
     <div
       ref={dom => connect(drag(dom))}
+      className={`text-${hAlign} ${
+        vAlign === "middle" ? "d-flex align-items-center" : ""
+      } ${vAlign === "middle" &&
+        hAlign === "center" &&
+        "justify-content-center"}`}
       style={{
         padding: "4px",
-        border: `${borderWidth}px ${borderStyle} black`
+        minHeight: `${Math.max(minHeight, 15)}px`,
+        border: `${borderWidth}px ${borderStyle} black`,
+        ...(bgType === "Image" && bgFileId && +bgFileId
+          ? {
+              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundSize: imageSize || "contain",
+              backgroundRepeat: "no-repeat"
+            }
+          : {}),
+        ...(bgType === "Color"
+          ? {
+              backgroundColor: bgColor
+            }
+          : {}),
+        ...(setTextColor
+          ? {
+              color: textColor
+            }
+          : {})
       }}
     >
       <Element
         canvas
         id={`containerContents`}
         is="div"
-        style={{
-          minHeight: `${Math.max(minHeight, 15)}px`,
-          ...(bgFileId && +bgFileId
-            ? {
-                backgroundImage: `url('/files/serve/${bgFileId}')`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat"
-              }
-            : {})
-        }}
-        className={`canvas text-${hAlign} ${
-          vAlign === "middle" ? "d-flex align-items-center" : ""
-        }`}
+        style={{}}
+        className={`canvas`}
       >
         {contents}
       </Element>
@@ -49,20 +66,30 @@ export const Container = ({
 
 export const ContainerSettings = () => {
   const {
-    setProp,
+    actions: { setProp },
     borderWidth,
     borderStyle,
     minHeight,
     vAlign,
     hAlign,
-    bgFileId
+    bgFileId,
+    imageSize,
+    bgType,
+    bgColor,
+    setTextColor,
+    textColor
   } = useNode(node => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
+    bgType: node.data.props.bgType,
+    bgColor: node.data.props.bgColor,
     bgFileId: node.data.props.bgFileId,
+    imageSize: node.data.props.imageSize,
     vAlign: node.data.props.vAlign,
-    hAlign: node.data.props.hAlign
+    hAlign: node.data.props.hAlign,
+    setTextColor: node.data.props.setTextColor,
+    textColor: node.data.props.textColor
   }));
   const options = useContext(optionsCtx);
   return (
@@ -143,18 +170,91 @@ export const ContainerSettings = () => {
         <option value="right">Right</option>
       </select>
       <br />
-      <label>Background Image</label>
+      <label>Background</label>
       <select
-        value={bgFileId}
-        onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
+        value={bgType}
+        onChange={e => {
+          setProp(prop => {
+            prop.bgType = e.target.value;
+          });
+          setProp(prop => {
+            prop.bgFileId =
+              prop.bgFileId ||
+              (options.images.length > 0 && options.images[0].id);
+          });
+        }}
       >
-        <option value={0}>None</option>
-        {options.images.map((f, ix) => (
-          <option key={ix} value={f.id}>
-            {f.filename}
-          </option>
-        ))}
+        <option>None</option>
+        <option>Image</option>
+        <option>Color</option>
       </select>
+      {bgType === "Image" && (
+        <Fragment>
+          <br />
+          <select
+            value={bgFileId}
+            onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
+          >
+            {options.images.map((f, ix) => (
+              <option key={ix} value={f.id}>
+                {f.filename}
+              </option>
+            ))}
+          </select>
+          <label>Size</label>
+          <select
+            value={imageSize}
+            onChange={e =>
+              setProp(prop => {
+                prop.imageSize = e.target.value;
+              })
+            }
+          >
+            <option>contain</option>
+            <option>cover</option>
+          </select>
+        </Fragment>
+      )}
+      {bgType === "Color" && (
+        <Fragment>
+          <br />
+          <input
+            type="color"
+            value={bgColor}
+            onChange={e =>
+              setProp(prop => {
+                prop.bgColor = e.target.value;
+              })
+            }
+          />
+        </Fragment>
+      )}{" "}
+      <br />
+      <label>
+        Set text color
+        <input
+          name="setTextColor"
+          type="checkbox"
+          checked={setTextColor}
+          onChange={e =>
+            setProp(prop => (prop.setTextColor = e.target.checked))
+          }
+        />{" "}
+      </label>
+      {setTextColor && (
+        <Fragment>
+          <br />
+          <input
+            type="color"
+            value={textColor}
+            onChange={e =>
+              setProp(prop => {
+                prop.textColor = e.target.value;
+              })
+            }
+          />
+        </Fragment>
+      )}
     </div>
   );
 };
@@ -165,7 +265,12 @@ Container.craft = {
     minHeight: 0,
     vAlign: "top",
     hAlign: "left",
-    bgFileId: 0
+    bgFileId: 0,
+    bgType: "None",
+    bgColor: "#ffffff",
+    setTextColor: false,
+    textColor: "#ffffff",
+    imageSize: "contain"
   },
   related: {
     settings: ContainerSettings

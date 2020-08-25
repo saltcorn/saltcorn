@@ -99,12 +99,22 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     if (segment.type === "container") {
       const {
         bgFileId,
+        bgType,
+        bgColor,
         vAlign,
         hAlign,
+        imageSize,
         minHeight,
         borderWidth,
-        borderStyle
+        borderStyle,
+        setTextColor,
+        textColor
       } = segment;
+      const renderBg = !(
+        isTop &&
+        blockDispatch.noBackgroundAtTop &&
+        blockDispatch.noBackgroundAtTop()
+      );
       return wrap(
         segment,
         isTop,
@@ -113,17 +123,26 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           {
             class: [
               `text-${hAlign}`,
-              vAlign === "middle" && "d-flex align-items-center"
+              vAlign === "middle" && "d-flex align-items-center",
+              vAlign === "middle" &&
+                hAlign === "center" &&
+                "justify-content-center"
             ],
-            style: `min-height: ${minHeight}px; 
-          border: ${borderWidth}px ${borderStyle} black; 
+            style: `min-height: ${minHeight || 0}px; 
+          border: ${borderWidth || 0}px ${borderStyle} black; 
           ${
-            bgFileId && +bgFileId
+            renderBg && bgType === "Image" && bgFileId && +bgFileId
               ? `background-image: url('/files/serve/${bgFileId}');
-          background-size: contain;
-          background-repeat: no-repeat`
+          background-size: ${imageSize || "contain"};
+          background-repeat: no-repeat;`
               : ""
-          }`
+          }
+          ${
+            renderBg && bgType === "Color"
+              ? `background-color: ${bgColor};`
+              : ""
+          }
+          ${setTextColor ? `color: ${textColor};` : ""}`
           },
           go(segment.contents)
         )

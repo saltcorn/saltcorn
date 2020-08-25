@@ -143,6 +143,11 @@ export const layoutToNodes = (layout, query, actions) => {
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           bgFileId={segment.bgFileId}
+          imageSize={segment.imageSize || "contain"}
+          bgType={segment.bgType || "None"}
+          bgColor={segment.bgColor || "#ffffff"}
+          setTextColor={!!segment.setTextColor}
+          textColor={segment.textColor || "#000000"}
         />
       );
     } else if (segment.besides) {
@@ -247,7 +252,12 @@ export const craftToSaltcorn = nodes => {
         minHeight: node.props.minHeight,
         vAlign: node.props.vAlign,
         hAlign: node.props.hAlign,
-        bgFileId: node.props.bgFileId
+        bgFileId: node.props.bgFileId,
+        bgType: node.props.bgType,
+        imageSize: node.props.imageSize,
+        bgColor: node.props.bgColor,
+        setTextColor: node.props.setTextColor,
+        textColor: node.props.textColor
       };
     }
     if (node.displayName === Image.name) {
