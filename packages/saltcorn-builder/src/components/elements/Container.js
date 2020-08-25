@@ -195,7 +195,8 @@ Container.craft = {
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
-    bgType: "None"
+    bgType: "None",
+    bgColor: "#000000"
   },
   related: {
     settings: ContainerSettings
