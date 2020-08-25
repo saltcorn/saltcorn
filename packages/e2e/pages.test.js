@@ -52,10 +52,10 @@ describe("Dotcom and db page page", () => {
   it("activates plugins", async () => {
     await browser.goto("/plugins");
     await browser.clickNav(
-      'form[action="/plugins/install/plain-bootstrap-theme"] button'
+      'form[action="/plugins/install/any-bootstrap-theme"] button'
     );
     expect(await browser.content()).toContain(
-      "Plugin plain-bootstrap-theme installed"
+      "Plugin any-bootstrap-theme installed"
     );
     await browser.goto("/plugins/new");
     await browser.page.type("#inputname", "saltcorn-dotcom-pages");
