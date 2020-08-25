@@ -310,6 +310,7 @@ const bool = {
     }
   },
   readFromDB: v => !!v,
+  listAs: v=> JSON.stringify(v),
   validate: () => x => true
 };
 
