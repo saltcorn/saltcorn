@@ -164,7 +164,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files.file) {
-      const name=req.body.name
+      const name = req.body.name;
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
@@ -183,13 +183,16 @@ router.post(
       await req.files.file.mv(newPath);
       const parse_res = await Table.create_from_csv(name, newPath);
       await fs.unlink(newPath);
-      if (parse_res.error) req.flash("error", parse_res.error);
-      else
+      if (parse_res.error) {
+        req.flash("error", parse_res.error);
+        res.redirect(`/table/create-from-csv`);
+      } else {
         req.flash(
           "success",
           `Created table ${parse_res.table.name}. ${parse_res.success}`
         );
-      res.redirect(`/table/${parse_res.table.id}`);
+        res.redirect(`/table/${parse_res.table.id}`);
+      }
     } else {
       req.flash("error", "Error: missing name or file");
       res.redirect(`/table/create-from-csv`);

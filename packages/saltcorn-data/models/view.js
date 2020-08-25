@@ -190,8 +190,8 @@ class View {
       fields.forEach(f => {
         f.required = false;
         if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-        if(f.type && f.type.read && typeof query[f.name]!=="undefined") {
-          query[f.name]=f.type.read(query[f.name])
+        if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
+          query[f.name] = f.type.read(query[f.name]);
         }
       });
       const form = new Form({
