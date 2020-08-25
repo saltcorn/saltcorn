@@ -25,8 +25,8 @@ router.get(
     } else {
       const role = req.isAuthenticated() ? req.user.role_id : 10;
       const db_page = await Page.findOne({ name: pagename });
-      const contents = await db_page.run(req.query, { res, req });
       if (db_page && role <= db_page.min_role) {
+        const contents = await db_page.run(req.query, { res, req });
         res.sendWrap(
           { title: db_page.title, description: db_page.description } ||
             `${pagename} page`,

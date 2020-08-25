@@ -24,6 +24,12 @@ describe("db page", () => {
       .get("/page/a_page")
       .expect(toInclude(">Bye bye<"));
   });
+  it("404s not found", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/page/b_page")
+      .expect(toInclude("not found", 404));
+  });
 });
 describe("page create", () => {
   it("show new", async () => {
