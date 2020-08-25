@@ -12,7 +12,9 @@ export const Container = ({
   hAlign,
   bgFileId,
   bgType,
-  bgColor
+  bgColor,
+  setTextColor,
+  textColor
 }) => {
   const {
     connectors: { connect, drag }
@@ -59,7 +61,9 @@ export const ContainerSettings = () => {
     hAlign,
     bgFileId,
     bgType,
-    bgColor
+    bgColor,
+    setTextColor,
+    textColor
   } = useNode(node => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
@@ -68,7 +72,9 @@ export const ContainerSettings = () => {
     bgColor: node.data.props.bgColor,
     bgFileId: node.data.props.bgFileId,
     vAlign: node.data.props.vAlign,
-    hAlign: node.data.props.hAlign
+    hAlign: node.data.props.hAlign,
+    setTextColor: node.data.props.setTextColor,
+    textColor: node.data.props.textColor
   }));
   const options = useContext(optionsCtx);
   return (
@@ -162,28 +168,61 @@ export const ContainerSettings = () => {
         <option>Image</option>
         <option>Color</option>
       </select>
+      {bgType === "Image" && (
+        <Fragment>
+          <br />
+          <select
+            value={bgFileId}
+            onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
+          >
+            {options.images.map((f, ix) => (
+              <option key={ix} value={f.id}>
+                {f.filename}
+              </option>
+            ))}
+          </select>
+        </Fragment>
+      )}
+      {bgType === "Color" && (
+        <Fragment>
+          <br />
+          <input
+            type="color"
+            value={bgColor}
+            onChange={e =>
+              setProp(prop => {
+                prop.bgColor = e.target.value;
+              })
+            }
+          />
+        </Fragment>
+      )}{" "}
       <br />
-     {bgType==='Image' && <select
-        value={bgFileId}
-        onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
-      >
-        {options.images.map((f, ix) => (
-          <option key={ix} value={f.id}>
-            {f.filename}
-          </option>
-        ))}
-      </select>}
-      {bgType==='Color' &&
-      <input
-        type="color"
-        value={bgColor}
-        onChange={e =>
-          setProp(prop => {
-            prop.bgColor = e.target.value;
-          })
-        }
-      />
-        }
+      <label>
+        Set text color
+        <input
+          name="setTextColor"
+          type="checkbox"
+          checked={setTextColor}
+          onChange={e =>
+            setProp(prop => (prop.setTextColor = e.target.checked))
+          }
+        />{" "}
+      </label>
+      {setTextColor && (
+        <Fragment>
+          <br />
+          <input
+            type="color"
+            value={textColor}
+            onChange={e =>
+              setProp(prop => {
+                prop.textColor = e.target.value;
+              })
+            }
+          />
+        </Fragment>
+      )}
     </div>
   );
 };
@@ -196,7 +235,9 @@ Container.craft = {
     hAlign: "left",
     bgFileId: 0,
     bgType: "None",
-    bgColor: "#000000"
+    bgColor: "#ffffff",
+    setTextColor: false,
+    textColor: "#ffffff"
   },
   related: {
     settings: ContainerSettings
