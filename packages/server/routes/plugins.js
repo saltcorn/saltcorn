@@ -1,6 +1,6 @@
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const { mkTable, renderForm, link, post_btn,post_delete_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
@@ -79,12 +79,12 @@ router.get(
               {
                 label: "Reload",
                 key: r =>
-                  post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken())
+                  post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken(),{btnClass: "secondary", small: true})
               },
               {
                 label: "Delete",
                 key: r =>
-                  post_btn(`/plugins/delete/${r.id}`, "Remove", req.csrfToken())
+                post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken())
               }
             ],
             rows
@@ -133,7 +133,8 @@ router.get(
                                 r.name
                               )}`,
                               "Install",
-                              req.csrfToken()
+                              req.csrfToken(),
+                              {onClick: ""}
                             )
                     }
                   ],
