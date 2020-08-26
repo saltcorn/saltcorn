@@ -82,7 +82,7 @@ router.get(
                   post_btn(`/plugins/reload/${r.id}`, '<i class="fas fa-sync"></i>', req.csrfToken(),{btnClass: "secondary", small: true})
               },
               {
-                label: "Delete",
+                label: "Delete", 
                 key: r =>
                 post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken())
               }
@@ -105,7 +105,8 @@ router.get(
                         post_btn(
                           `/plugins/install/${encodeURIComponent(r.name)}`,
                           "Install",
-                          req.csrfToken()
+                          req.csrfToken(),
+                          {klass: "store-install", onClick:"press_store_button(this)"}
                         )
                     }
                   ],
@@ -134,7 +135,7 @@ router.get(
                               )}`,
                               "Install",
                               req.csrfToken(),
-                              {onClick: ""}
+                              {klass: "store-install",onClick: "press_store_button(this)"} 
                             )
                     }
                   ],
