@@ -6,13 +6,13 @@ const { a, text } = require("./tags");
 
 const link = (href, s) => a({ href: text(href) }, text(s));
 
-const post_btn = (href, s, csrfToken, btnClass = "primary") =>
+const post_btn = (href, s, csrfToken, {btnClass = "primary", onClick}={}) =>
   `<form action="${text(href)}" method="post">
   <input type="hidden" name="_csrf" value="${csrfToken}">
-<button type="submit" class="btn btn-${btnClass}">${s}</button></form>`;
+<button type="submit" ${onClick ? `onclick="${onClick}"`: ''} class="btn btn-${btnClass}">${s}</button></form>`;
 
 const post_delete_btn = (href, csrfToken) =>
-  post_btn(href, '<i class="fas fa-trash"></i>', csrfToken, "danger");
+  post_btn(href, '<i class="fas fa-trash"></i>', csrfToken, {btnClass: "danger"});
 
 module.exports = {
   mkTable,
