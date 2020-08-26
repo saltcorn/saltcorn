@@ -79,7 +79,14 @@ class Browser {
     }
     await this.page.waitFor(50);
   }
-
+  async getInnerText(sel) {
+    const element = await this.page.$(sel);
+    const text = await this.page.evaluate(
+      element => element.textContent,
+      element
+    );
+    return text;
+  }
   async create_tenant(nm) {
     if (typeof this.tenant !== "undefined")
       throw new Error("tenant not deleted");

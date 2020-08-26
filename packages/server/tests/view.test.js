@@ -22,7 +22,7 @@ describe("view list endpoint", () => {
 });
 describe("nonexisting view", () => {
   itShouldRedirectUnauthToLogin("/view/patlist", "/");
-})
+});
 describe("view patients list endpoint", () => {
   itShouldRedirectUnauthToLogin("/view/patientlist", "/");
 
