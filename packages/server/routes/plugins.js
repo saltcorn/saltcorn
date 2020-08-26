@@ -323,7 +323,17 @@ router.post(
 
     const plugin = await Plugin.store_by_name(name);
     await load_plugins.loadAndSaveNewPlugin(plugin);
-    req.flash("success", `Plugin ${plugin.name} installed`);
-    res.redirect(`/plugins`);
+    const plugin_module = getState().plugins[name];
+    if (plugin_module && plugin_module.configuration_workflow) {
+      const plugin_db = await Plugin.findOne({ name });
+      req.flash(
+        "success",
+        `Plugin ${plugin_db.name} installed, please complete configuration.`
+      );
+      res.redirect(`/plugins/configure/${plugin_db.id}`);
+    } else {
+      req.flash("success", `Plugin ${plugin.name} installed`);
+      res.redirect(`/plugins`);
+    }
   })
 );
