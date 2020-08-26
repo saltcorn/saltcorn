@@ -188,5 +188,5 @@ function view_post(viewname, route, data, onDone) {
 
 function press_store_button(clicked) {
   //$('button.store-install').prop('disabled', true);
-  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>')
+  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }

@@ -107,7 +107,6 @@ describe("Plugin Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("@saltcorn/markdown"));
   });
-
 });
 describe("Plugin dependency resolution", () => {
   it("should install quill", async () => {

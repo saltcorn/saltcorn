@@ -6,7 +6,13 @@ const Form = require("@saltcorn/data/models/form");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 
-const { mkTable, renderForm, link, post_btn,post_delete_btn } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  post_delete_btn
+} = require("@saltcorn/markup");
 const {
   getConfig,
   setConfig,
@@ -72,8 +78,7 @@ router.get(
         },
         {
           label: "Delete",
-          key: r =>
-          post_delete_btn(`/config/delete/${r.key}`, req.csrfToken())
+          key: r => post_delete_btn(`/config/delete/${r.key}`, req.csrfToken())
         }
       ],
       Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))

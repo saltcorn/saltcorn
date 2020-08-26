@@ -1,6 +1,12 @@
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn,post_delete_btn } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  post_delete_btn
+} = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
@@ -10,7 +16,7 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp,a } = require("@saltcorn/markup/tags");
+const { h5, nbsp, a } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -51,12 +57,19 @@ router.get(
     const packs_available = await fetch_available_packs();
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
-    const installed_plugin_names=rows.map(p=> p.name)
+    const installed_plugin_names = rows.map(p => p.name);
     const cfg_link = row => {
       const plugin = getState().plugins[row.name];
       if (!plugin) return "";
       if (plugin.configuration_workflow)
-        return a({class: "btn btn-secondary btn-sm", role: "button", href: `/plugins/configure/${row.id}`}, '<i class="fas fa-cog"></i>');
+        return a(
+          {
+            class: "btn btn-secondary btn-sm",
+            role: "button",
+            href: `/plugins/configure/${row.id}`
+          },
+          '<i class="fas fa-cog"></i>'
+        );
       else return "";
     };
 
@@ -74,17 +87,33 @@ router.get(
               { label: "Name", key: "name" },
               { label: "Source", key: "source" },
               { label: "Location", key: "location" },
-              { label: "Edit", key: r => a({class: "btn btn-outline-secondary btn-sm", role: "button", href: `/plugins/${r.id}`},'<i class="fas fa-edit"></i>') },
+              {
+                label: "Edit",
+                key: r =>
+                  a(
+                    {
+                      class: "btn btn-outline-secondary btn-sm",
+                      role: "button",
+                      href: `/plugins/${r.id}`
+                    },
+                    '<i class="fas fa-edit"></i>'
+                  )
+              },
               { label: "Configure", key: r => cfg_link(r) },
               {
                 label: "Reload",
                 key: r =>
-                  post_btn(`/plugins/reload/${r.id}`, '<i class="fas fa-sync"></i>', req.csrfToken(),{btnClass: "secondary", small: true})
+                  post_btn(
+                    `/plugins/reload/${r.id}`,
+                    '<i class="fas fa-sync"></i>',
+                    req.csrfToken(),
+                    { btnClass: "secondary", small: true }
+                  )
               },
               {
-                label: "Delete", 
+                label: "Delete",
                 key: r =>
-                post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken())
+                  post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken())
               }
             ],
             rows
@@ -102,14 +131,17 @@ router.get(
                     {
                       label: "Install",
                       key: r =>
-                        installed_plugin_names.includes(r.name) ?
-                        'Installed' :
-                        post_btn(
-                          `/plugins/install/${encodeURIComponent(r.name)}`,
-                          "Install",
-                          req.csrfToken(),
-                          {klass: "store-install", onClick:"press_store_button(this)"}
-                        )
+                        installed_plugin_names.includes(r.name)
+                          ? "Installed"
+                          : post_btn(
+                              `/plugins/install/${encodeURIComponent(r.name)}`,
+                              "Install",
+                              req.csrfToken(),
+                              {
+                                klass: "store-install",
+                                onClick: "press_store_button(this)"
+                              }
+                            )
                     }
                   ],
                   instore
@@ -137,7 +169,10 @@ router.get(
                               )}`,
                               "Install",
                               req.csrfToken(),
-                              {klass: "store-install",onClick: "press_store_button(this)"} 
+                              {
+                                klass: "store-install",
+                                onClick: "press_store_button(this)"
+                              }
                             )
                     }
                   ],
