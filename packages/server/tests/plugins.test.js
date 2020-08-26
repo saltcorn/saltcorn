@@ -62,7 +62,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .post("/plugins/install/any-bootstrap-theme")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"));
+      .expect(toRedirect("/plugins/configure/3"));
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
@@ -94,6 +94,20 @@ describe("Plugin Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
   });
+  it("should install named without config", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/plugins/install/markdown")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    await request(app)
+      .get("/plugins")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("@saltcorn/markdown"));
+  });
+
 });
 describe("Plugin dependency resolution", () => {
   it("should install quill", async () => {
