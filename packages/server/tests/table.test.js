@@ -126,6 +126,19 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude('type="file"'));
   });
+  it("should create from csv", async () => {
+    const csv = `item,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .field('name','expenses')
+      .attach('file', Buffer.from(csv, 'utf-8'))
+      .expect(toRedirect("/table/5"));
+  });
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
