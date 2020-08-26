@@ -48,3 +48,6 @@ table.toolbox td {
 table.toolbox {
   table-layout: fixed;
 }
+button.store-install {
+  width: 5em;
+}

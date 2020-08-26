@@ -34,6 +34,7 @@ class State {
     this.fileviews = {};
     this.favicon = null;
     this.plugins = {};
+    this.plugin_cfgs = {};
     this.layout = { wrap: s => s };
     this.headers = [];
     contract.class(this);
@@ -64,6 +65,7 @@ class State {
 
   registerPlugin(name, plugin, cfg) {
     this.plugins[name] = plugin;
+    this.plugin_cfgs[name] = cfg;
 
     const withCfg = (key, def) =>
       plugin.configuration_workflow
@@ -104,6 +106,28 @@ class State {
   }
   addType(t) {
     this.types[t.name] = t;
+  }
+
+  remove_plugin(name) {
+    delete this.plugins[name];
+    this.reload_plugins();
+  }
+
+  reload_plugins() {
+    this.views = [];
+    this.viewtemplates = {};
+    this.tables = [];
+    this.types = {};
+    this.pages = {};
+    this.fields = [];
+    this.configs = {};
+    this.fileviews = {};
+    this.favicon = null;
+    this.layout = { wrap: s => s };
+    this.headers = [];
+    Object.entries(this.plugins).forEach(([k, v]) => {
+      this.registerPlugin(k, v, this.plugin_cfgs[k]);
+    });
   }
 }
 
