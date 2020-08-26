@@ -51,7 +51,7 @@ router.get(
     const packs_available = await fetch_available_packs();
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
-
+    const installed_plugin_names=rows.map(p=> p.name)
     const cfg_link = row => {
       const plugin = getState().plugins[row.name];
       if (!plugin) return "";
@@ -102,6 +102,8 @@ router.get(
                     {
                       label: "Install",
                       key: r =>
+                        installed_plugin_names.includes(r.name) ?
+                        'Installed' :
                         post_btn(
                           `/plugins/install/${encodeURIComponent(r.name)}`,
                           "Install",
