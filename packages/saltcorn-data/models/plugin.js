@@ -39,6 +39,8 @@ class Plugin {
   }
   async delete() {
     await db.deleteWhere("_sc_plugins", { id: this.id });
+    const { getState } = require("../db/state");
+    getState().remove_plugin(this.name);
   }
 
   async dependant_views() {

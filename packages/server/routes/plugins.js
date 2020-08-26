@@ -289,10 +289,7 @@ router.post(
     const depviews = await plugin.dependant_views();
     if (depviews.length === 0) {
       await plugin.delete();
-      req.flash(
-        "success",
-        "Plugin removed. You may need to restart the server (Settings » Admin) for changes to take effect."
-      );
+      req.flash("success", `Plugin ${plugin.name} removed.`);
     } else {
       req.flash(
         "error",
