@@ -167,6 +167,10 @@ Sitemap: ${base}sitemap.xml
   if (!opts.disableCatch) app.use(errors);
 
   await File.ensure_file_store();
+
+  app.get("*", function(req, res) {
+    res.status(404).sendWrap("Not found", "<h1>Page not found</h1>");
+  });
   return app;
 };
 module.exports = getApp;
