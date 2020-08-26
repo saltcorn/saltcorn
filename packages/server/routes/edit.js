@@ -140,7 +140,7 @@ router.post(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
     else req.flash("error", `Not allowed to write to table ${table.name}`);
-
-    res.redirect(redirect || `/list/${table.name}`);
+    if (req.get("referer")) res.redirect(req.get("referer"));
+    else res.redirect(redirect || `/list/${table.name}`);
   })
 );
