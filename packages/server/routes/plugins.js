@@ -10,7 +10,7 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp } = require("@saltcorn/markup/tags");
+const { h5, nbsp,a } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -56,7 +56,7 @@ router.get(
       const plugin = getState().plugins[row.name];
       if (!plugin) return "";
       if (plugin.configuration_workflow)
-        return link(`/plugins/configure/${row.id}`, "Configure");
+        return a({class: "btn btn-secondary btn-sm", role: "button", href: `/plugins/configure/${row.id}`}, '<i class="fas fa-cog"></i>');
       else return "";
     };
 
@@ -74,12 +74,12 @@ router.get(
               { label: "Name", key: "name" },
               { label: "Source", key: "source" },
               { label: "Location", key: "location" },
-              { label: "View", key: r => link(`/plugins/${r.id}`, "Edit") },
+              { label: "Edit", key: r => a({class: "btn btn-outline-secondary btn-sm", role: "button", href: `/plugins/${r.id}`},'<i class="fas fa-edit"></i>') },
               { label: "Configure", key: r => cfg_link(r) },
               {
                 label: "Reload",
                 key: r =>
-                  post_btn(`/plugins/reload/${r.id}`, "Reload", req.csrfToken(),{btnClass: "secondary", small: true})
+                  post_btn(`/plugins/reload/${r.id}`, '<i class="fas fa-sync"></i>', req.csrfToken(),{btnClass: "secondary", small: true})
               },
               {
                 label: "Delete",
