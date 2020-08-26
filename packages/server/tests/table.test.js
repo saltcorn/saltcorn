@@ -126,6 +126,37 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude('type="file"'));
   });
+  it("should create from csv", async () => {
+    const csv = `item,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .field("name", "expenses")
+      .attach("file", Buffer.from(csv, "utf-8"))
+      .expect(toRedirect("/table/5"));
+  });
+  it("should upload csv to existing table", async () => {
+    const csv = `author,Pages
+Joe Celko, 856
+Gordon Kane, 217`;
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/upload_to_table/books")
+      .set("Cookie", loginCookie)
+      .attach("file", Buffer.from(csv, "utf-8"))
+      .expect(toRedirect("/table/1"));
+    await request(app)
+      .get(`/table/1`)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Imported 2 rows"))
+      .expect(toInclude("success"));
+  });
+
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });

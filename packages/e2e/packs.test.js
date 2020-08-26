@@ -8,7 +8,7 @@ beforeAll(async () => {
   browser = await Browser.init();
 });
 
-describe("Packs", () => {
+describe("blog pack", () => {
   it("Installs blog pack", async () => {
     await browser.delete_tenant("sub2");
     await browser.create_tenant("sub2");
@@ -51,7 +51,8 @@ describe("Packs", () => {
     expect(await browser.content()).toContain("Donald Trump");
     expect(await browser.content()).toContain("I'm a fraud");
   });
-
+});
+describe("PM packs", () => {
   it("Installs PM pack", async () => {
     await browser.delete_tenant("sub3");
     await browser.create_tenant("sub3");
@@ -80,9 +81,76 @@ describe("Packs", () => {
   });
 });
 
+describe("todo packs", () => {
+  it("Installs todo pack", async () => {
+    await browser.delete_tenant("sub4");
+    await browser.create_tenant("sub4");
+    await browser.install_pack("Todo list");
+    expect(await browser.content()).toContain("Description");
+    expect(await browser.content()).toContain('id="inputdescription"');
+
+    await browser.page.type(
+      'form[action="/view/EditTodo"] input[type="text"]',
+      "Take out trash"
+    );
+    await browser.clickNav('form[action="/view/EditTodo"] button');
+
+    expect(await browser.content()).toContain("Description");
+    await browser.page.type(
+      'form[action="/view/EditTodo"] input[type="text"]',
+      "Clean bathroom"
+    );
+    await browser.clickNav('form[action="/view/EditTodo"] button');
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).toContain("Clean bathroom");
+    await browser.clickNav(
+      'form[action^="/edit/toggle/TodoItems/1/done"] button'
+    );
+    expect(await browser.content()).not.toContain("Take out trash");
+    expect(await browser.content()).toContain("Clean bathroom");
+
+    await browser.page.click("button#dropdownMenuButton");
+    await browser.page.waitFor(250);
+    expect(await browser.getInnerText("button#tribdone")).toBe("F");
+    await browser.page.click("button#tribdone");
+    expect(await browser.getInnerText("button#tribdone")).toBe("?");
+
+    await browser.clickNav(
+      'form[action="/view/List%20Todos"] button[type="submit"]'
+    );
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).toContain("Clean bathroom");
+
+    await browser.page.click("button#dropdownMenuButton");
+    await browser.page.waitFor(250);
+    expect(await browser.getInnerText("button#tribdone")).toBe("?");
+    await browser.page.click("button#tribdone");
+    expect(await browser.getInnerText("button#tribdone")).toBe("T");
+    await browser.clickNav(
+      'form[action="/view/List%20Todos"] button[type="submit"]'
+    );
+
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).not.toContain("Clean bathroom");
+    await browser.page.click("button#dropdownMenuButton");
+    await browser.page.waitFor(250);
+    expect(await browser.getInnerText("button#tribdone")).toBe("T");
+    await browser.page.click("button#tribdone");
+    await browser.page.click("button#tribdone");
+    expect(await browser.getInnerText("button#tribdone")).toBe("?");
+    await browser.page.type("#input_fts", "trash");
+    await browser.clickNav(
+      'form[action="/view/List%20Todos"] button[type="submit"]'
+    );
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).not.toContain("Clean bathroom");
+  });
+});
+
 afterAll(async () => {
   await browser.delete_tenant("sub2");
   await browser.delete_tenant("sub3");
   await browser.delete_tenant("sub1");
+  await browser.delete_tenant("sub4");
   await browser.close();
 });

@@ -20,6 +20,9 @@ describe("view list endpoint", () => {
       .expect(toNotInclude("728"));
   });
 });
+describe("nonexisting view", () => {
+  itShouldRedirectUnauthToLogin("/view/patlist", "/");
+});
 describe("view patients list endpoint", () => {
   itShouldRedirectUnauthToLogin("/view/patientlist", "/");
 
