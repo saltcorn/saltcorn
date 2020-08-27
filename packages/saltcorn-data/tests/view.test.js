@@ -113,6 +113,7 @@ describe("View with routes", () => {
     });
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
+    await v.runRoute("the_null_route", {}, spy, mockReqRes);
     expect(json).toEqual({ success: "ok" });
     expect(html).toEqual("<div>Hello</div>");
 

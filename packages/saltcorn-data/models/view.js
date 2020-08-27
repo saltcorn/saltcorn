@@ -160,8 +160,8 @@ class View {
       body,
       extraArgs
     );
-    if (result.json) res.json(result.json);
-    else if (result.html) res.send(result.html);
+    if (result && result.json) res.json(result.json);
+    else if (result && result.html) res.send(result.html);
     else res.json({ success: "ok" });
   }
 

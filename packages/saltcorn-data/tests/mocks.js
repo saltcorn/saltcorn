@@ -36,7 +36,8 @@ const plugin_with_routes = {
         },
         the_html_route: async () => {
           return { html: "<div>Hello</div>" };
-        }
+        },
+        the_null_route:  () => null
       }
     }
   ]
