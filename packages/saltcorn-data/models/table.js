@@ -338,7 +338,7 @@ class Table {
       } catch (e) {
         await client.query("ROLLBACK");
 
-        if(!db.isSQLite) await client.release(true);
+        if (!db.isSQLite) await client.release(true);
         return { error: `${e.message} in row ${i}` };
       }
     }
