@@ -328,6 +328,8 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only"
     });
+    const table = await Table.findOne({ name: "Invoice1" });
+    expect(table).toBe(null);
   });
   it("ignores a col on duplicate col nm", async () => {
     const csv = `item,cost,cost, vatable
@@ -348,6 +350,8 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: `Columns named "id" must have only integers`
     });
+    const table = await Table.findOne({ name: "Invoice2" });
+    expect(table).toBe(null);
   });
   it("should fail missing id", async () => {
     const csv = `id,cost,!, vatable
@@ -359,6 +363,8 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: `Columns named "id" must not have missing values`
     });
+    const table = await Table.findOne({ name: "Invoice3" });
+    expect(table).toBe(null);
   });
   it("should succeed on good id", async () => {
     const csv = `id,cost,count, vatable
