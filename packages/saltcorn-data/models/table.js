@@ -222,7 +222,12 @@ class Table {
   }
 
   static async create_from_csv(name, filePath) {
-    const rows = await csvtojson().fromFile(filePath);
+    var rows;
+    try {
+      rows = await csvtojson().fromFile(filePath);
+    } catch (e) {
+      return { error: `Error processing CSV file` };
+    }
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
     for (const [k, vs] of Object.entries(rowsTr)) {
@@ -288,10 +293,15 @@ class Table {
   }
 
   async import_csv_file(filePath) {
-    const [headers] = await csvtojson({
-      output: "csv",
-      noheader: true
-    }).fromFile(filePath);
+    var headers;
+    try {
+      [headers] = await csvtojson({
+        output: "csv",
+        noheader: true
+      }).fromFile(filePath);
+    } catch (e) {
+      return { error: `Error processing CSV file` };
+    }
     const fields = await this.getFields();
     const okHeaders = {};
     const renames = [];
@@ -306,9 +316,14 @@ class Table {
     // also id
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
     const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
-    const file_rows = await csvtojson({
-      includeColumns: colRe
-    }).fromFile(filePath);
+    var file_rows;
+    try {
+      file_rows = await csvtojson({
+        includeColumns: colRe
+      }).fromFile(filePath);
+    } catch (e) {
+      return { error: `Error processing CSV file` };
+    }
     var i = 1;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
