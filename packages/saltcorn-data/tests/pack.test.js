@@ -327,8 +327,7 @@ describe("pack install", () => {
       { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 }
     ]);
     const pubhome = getState().getConfig("public_home", []);
-    expect(pubhome).toBe("FooPage")
-
+    expect(pubhome).toBe("FooPage");
   });
   it("cannot install pack again", async () => {
     const can = await can_install_pack(todoPack);

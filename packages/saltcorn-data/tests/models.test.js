@@ -11,7 +11,7 @@ const Page = require("../models/page");
 const { getViews } = require("../models/layout");
 
 const { getState } = require("../db/state");
-const {rick_file}=require("./mocks")
+const { rick_file } = require("./mocks");
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -143,7 +143,7 @@ describe("Page", () => {
 
 describe("File", () => {
   it("should create", async () => {
-    await rick_file()
+    await rick_file();
     const cs = await File.find();
 
     expect(cs[0].mime_super).toBe("image");

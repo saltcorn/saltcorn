@@ -225,7 +225,6 @@ class Table {
     const rows = await csvtojson().fromFile(filePath);
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
-    var prev_names = [];
     for (const [k, vs] of Object.entries(rowsTr)) {
       const required = vs.every(v => v !== "");
       const nonEmpties = vs.filter(v => v !== "");
@@ -265,10 +264,6 @@ class Table {
         }
         continue;
       }
-      if (prev_names.includes(fld.name)) {
-        await table.delete();
-        return { error: `Duplicate column names on ${k}` };
-      }
       if (db.sqlsanitize(fld.name) === "") {
         await table.delete();
         return {
@@ -281,9 +276,13 @@ class Table {
         await table.delete();
         return { error: `Error in header ${k}: ${e.message}` };
       }
-      prev_names.push(k);
     }
     const parse_res = await table.import_csv_file(filePath);
+    if (parse_res.error) {
+      await table.delete();
+      return { error: parse_res.error };
+    }
+
     parse_res.table = table;
     return parse_res;
   }
