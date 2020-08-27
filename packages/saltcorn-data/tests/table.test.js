@@ -385,8 +385,8 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice4", fnm);
-    expect(res.error).toEqual(
-      'duplicate key value violates unique constraint "Invoice4_pkey" in row 3'
+    expect(res.error).toContain(
+      "Invoice4"
     );
     const table = await Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
