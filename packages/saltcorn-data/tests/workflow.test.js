@@ -35,6 +35,34 @@ const wf = new Workflow({
     }
   ]
 });
+const wf1 = new Workflow({
+  steps: [
+    {
+      name: "step1",
+      form: async context => {
+        return new Form({
+          blurb: "Specify the fields in the table to show",
+          fields: [
+            { name: "colour", label: "Colour", input_type: "text" },
+            { name: "is_nice", type: "Bool" }
+          ]
+        });
+      }
+    }
+  ]
+});
+
+const wfbuild = new Workflow({
+  steps: [
+    {
+      name: "step1",
+      builder: async context => {
+        return { mode: "foo" };
+      }
+    }
+  ]
+});
+
 describe("Workflow", () => {
   it("should run with context", async () => {
     const v = await wf.run({ foo: "bar" });
@@ -70,5 +98,22 @@ describe("Workflow", () => {
     });
     const v3 = await wf.run(submit_missing);
     expect(v3.renderForm.values.contextEnc).toContain("bar");
+  });
+  it("should run with existing", async () => {
+    const v = await wf1.run({ colour: "purple", is_nice: "on" });
+    expect(v.renderForm.values.colour).toBe("purple");
+    expect(v.renderForm.values.is_nice).toBe(true);
+  });
+  it("should run builder", async () => {
+    const v = await wfbuild.run({});
+    expect(v.renderBuilder.mode).toBe("foo");
+    var submit1 = {
+      layout: encodeURIComponent("{}"),
+      columns: encodeURIComponent("{}"),
+      stepName: v.stepName,
+      contextEnc: encodeURIComponent(JSON.stringify(v.context))
+    };
+    const v2 = await wfbuild.run(submit1);
+    expect(v2).toEqual({ columns: {}, layout: {} });
   });
 });

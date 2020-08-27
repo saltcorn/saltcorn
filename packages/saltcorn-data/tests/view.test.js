@@ -105,7 +105,7 @@ describe("View with routes", () => {
     };
     const v = await View.create({
       table_id: 1,
-      name: "anewview",
+      name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 10,

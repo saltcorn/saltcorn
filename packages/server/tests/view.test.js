@@ -8,6 +8,10 @@ const {
   toNotInclude
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
+const View = require("@saltcorn/data/models/view");
+
+const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
 afterAll(db.close);
 
@@ -76,5 +80,44 @@ describe("edit view", () => {
       .send("author=Chekov")
 
       .expect(toRedirect("/"));
+  });
+});
+
+describe("view with routes", () => {
+  it("should enable", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
+    const v = await View.create({
+      table_id: 1,
+      name: "aviewwithroutes",
+      viewtemplate: "ViewWithRoutes",
+      configuration: {},
+      min_role: 8,
+      on_root_page: true
+    });
+  });
+  it("should redirect if not auth", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/aviewwithroutes/the_html_route")
+      .expect(toRedirect("/"));
+  });
+  it("should redirect if view not present", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/aviewwithrutes/the_html_route")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/"));
+  });
+  it("should run route", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/aviewwithroutes/the_html_route")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<div>Hello</div>"));
   });
 });
