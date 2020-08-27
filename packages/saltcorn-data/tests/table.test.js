@@ -4,6 +4,7 @@ const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
+const {rick_file}=require("./mocks")
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -384,3 +385,33 @@ describe("Table not null constraint", () => {
     }
   });
 });
+describe("Table with users and files", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const rick = await rick_file()
+    const table = await Table.create("TableWithUsers");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true
+    });
+    await Field.create({
+      table,
+      name: "owner",
+      type: "Key to users",
+    });
+    await Field.create({
+      table,
+      name: "mugshot",
+      type: "File",
+    });
+    await table.insertRow({name: "Rocket", owner: 1, mugshot: rick.id})
+    const rels = await table.get_parent_relations()
+    expect(rels.parent_field_list).toEqual(["owner.email"])
+    const joined = await table.getJoinedRows()
+   // expect(joined).toEqual("rick.png")
+    expect(joined[0].mugshot__filename).toEqual("rick.png")
+
+  })
+})

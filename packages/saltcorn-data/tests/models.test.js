@@ -11,8 +11,7 @@ const Page = require("../models/page");
 const { getViews } = require("../models/layout");
 
 const { getState } = require("../db/state");
-const fs = require("fs").promises;
-
+const {rick_file}=require("./mocks")
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -144,15 +143,7 @@ describe("Page", () => {
 
 describe("File", () => {
   it("should create", async () => {
-    await File.ensure_file_store();
-    const mv = async fnm => {
-      await fs.writeFile(fnm, "nevergonnagiveyouup");
-    };
-    await File.from_req_files(
-      { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
-      1,
-      10
-    );
+    await rick_file()
     const cs = await File.find();
 
     expect(cs[0].mime_super).toBe("image");
