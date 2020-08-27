@@ -16,7 +16,36 @@ const rick_file = async () => {
 };
 const configuration_workflow = () =>
   new Workflow({
-    steps: []
+    steps: [
+      {
+        name: "step1",
+        form: context =>
+          new Form({
+            fields: [
+              {
+                name: "first_name",
+                label: "First name",
+                type: "String",
+                required: true
+              }
+            ]
+          })
+      },
+      {
+        name: "step2",
+        form: context =>
+          new Form({
+            fields: [
+              {
+                name: "last_name",
+                label: "Last name",
+                type: "String",
+                required: true
+              }
+            ]
+          })
+      }
+    ]
   });
 
 const plugin_with_routes = {
@@ -37,7 +66,7 @@ const plugin_with_routes = {
         the_html_route: async () => {
           return { html: "<div>Hello</div>" };
         },
-        the_null_route:  () => null
+        the_null_route: () => null
       }
     }
   ]

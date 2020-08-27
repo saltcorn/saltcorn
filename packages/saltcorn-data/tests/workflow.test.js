@@ -6,10 +6,10 @@ const db = require("../db");
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
+const { mockReqRes } = require("./mocks");
 
 afterAll(db.close);
 
-const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 const wf = new Workflow({
   steps: [
     {
@@ -27,7 +27,9 @@ const wf = new Workflow({
       form: async context => {
         return new Form({
           blurb: "Specify the fields in the table to show",
-          fields: [{ name: "age", label: "Age", type: "Integer" }]
+          fields: [
+            { name: "age", label: "Age", type: "Integer", required: true }
+          ]
         });
       }
     }
@@ -62,5 +64,11 @@ describe("Workflow", () => {
       foo: "bar",
       substep: { age: 67 }
     });
+    var submit_missing = {};
+    hiddenFields1.forEach(f => {
+      submit_missing[f] = v1.renderForm.values[f];
+    });
+    const v3 = await wf.run(submit_missing);
+    expect(v3.renderForm.values.contextEnc).toContain("bar");
   });
 });
