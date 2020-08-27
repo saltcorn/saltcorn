@@ -23,7 +23,7 @@ class ContractViolation extends Error {
     } catch (e) {
       value = `Error printing value: ${e.message}`;
     }
-    message = `value ${value}} violates contract ${conStr}${in_str}`;
+    message = `value ${value} violates contract ${conStr}${in_str}`;
     if (theContract.get_error_message) {
       message += ". " + theContract.get_error_message(val);
     } else {

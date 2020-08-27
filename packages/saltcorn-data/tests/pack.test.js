@@ -307,7 +307,8 @@ const todoPack = {
       title: "Foo",
       description: "Foo",
       layout: {},
-      min_role: 10
+      min_role: 10,
+      root_page_for_roles: ["public"]
     }
   ],
   plugins: []
@@ -315,7 +316,9 @@ const todoPack = {
 
 describe("pack install", () => {
   it("installs pack", async () => {
-    await install_pack(todoPack, "", () => {});
+    const can = await can_install_pack(todoPack);
+    expect(can).toBe(true);
+    await install_pack(todoPack, "Todo list", () => {});
     const tbl = await Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
@@ -323,6 +326,8 @@ describe("pack install", () => {
       { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
       { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 }
     ]);
+    const pubhome = getState().getConfig("public_home", []);
+    expect(pubhome).toBe("FooPage");
   });
   it("cannot install pack again", async () => {
     const can = await can_install_pack(todoPack);

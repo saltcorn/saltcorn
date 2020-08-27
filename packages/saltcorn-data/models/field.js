@@ -185,9 +185,11 @@ class Field {
     await this.fill_table();
     if (db.isSQLite)
       await db.query(
-        `create unique index ${sqlsanitize(this.name)}_unique on "${sqlsanitize(
-          this.table.name
-        )}"("${sqlsanitize(this.name)}")`
+        `create unique index ${sqlsanitize(this.table.name)}_${sqlsanitize(
+          this.name
+        )}_unique on "${sqlsanitize(this.table.name)}"("${sqlsanitize(
+          this.name
+        )}")`
       );
     else
       await db.query(
@@ -203,7 +205,11 @@ class Field {
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
     if (db.isSQLite)
-      await db.query(`drop index ${sqlsanitize(this.name)}_unique;`);
+      await db.query(
+        `drop index ${sqlsanitize(this.table.name)}_${sqlsanitize(
+          this.name
+        )}_unique;`
+      );
     else
       await db.query(
         `alter table ${schema}"${sqlsanitize(

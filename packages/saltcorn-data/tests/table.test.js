@@ -4,6 +4,7 @@ const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
+const { rick_file } = require("./mocks");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -317,6 +318,77 @@ Pencil, 0.5,2, t`;
     expect(rows.length).toBe(1);
     expect(rows[0].vatable).toBe(true);
   });
+  it("should fail on bad col nm", async () => {
+    const csv = `item,cost,!, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice1", fnm);
+    expect(res).toEqual({
+      error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only"
+    });
+    const table = await Table.findOne({ name: "Invoice1" });
+    expect(table).toBe(null);
+  });
+  it("ignores a col on duplicate col nm", async () => {
+    const csv = `item,cost,cost, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice1", fnm);
+    expect(res.table.fields.length).toEqual(3);
+  });
+  it("should fail non-int id", async () => {
+    const csv = `id,cost,!, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice2", fnm);
+    expect(res).toEqual({
+      error: `Columns named "id" must have only integers`
+    });
+    const table = await Table.findOne({ name: "Invoice2" });
+    expect(table).toBe(null);
+  });
+  it("should fail missing id", async () => {
+    const csv = `id,cost,!, vatable
+1, 5,4, f
+, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice3", fnm);
+    expect(res).toEqual({
+      error: `Columns named "id" must not have missing values`
+    });
+    const table = await Table.findOne({ name: "Invoice3" });
+    expect(table).toBe(null);
+  });
+  it("should succeed on good id", async () => {
+    const csv = `id,cost,count, vatable
+1, 5,4, f
+2, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice3", fnm);
+    expect(res.table.fields.length).toEqual(3);
+    const table = await Table.findOne({ name: "Invoice3" });
+    const rows = await table.getRows();
+    expect(rows.length).toBe(2);
+  });
+  it("should fail on repeat id", async () => {
+    const csv = `id,cost,count, vatable
+1, 5,4, f
+1, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice4", fnm);
+    expect(res.error).toContain("Invoice4");
+    const table = await Table.findOne({ name: "Invoice4" });
+    expect(table).toBe(null);
+  });
 });
 
 describe("Table unique constraint", () => {
@@ -382,5 +454,34 @@ describe("Table not null constraint", () => {
       const ins_res1 = await table.tryInsertRow({ age: 167 });
       expect(!!ins_res1.error).toBe(true);
     }
+  });
+});
+describe("Table with users and files", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const rick = await rick_file();
+    const table = await Table.create("TableWithUsers");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true
+    });
+    await Field.create({
+      table,
+      name: "owner",
+      type: "Key to users"
+    });
+    await Field.create({
+      table,
+      name: "mugshot",
+      type: "File"
+    });
+    await table.insertRow({ name: "Rocket", owner: 1, mugshot: rick.id });
+    const rels = await table.get_parent_relations();
+    expect(rels.parent_field_list).toEqual(["owner.email"]);
+    const joined = await table.getJoinedRows();
+    // expect(joined).toEqual("rick.png")
+    expect(joined[0].mugshot__filename).toEqual("rick.png");
   });
 });
