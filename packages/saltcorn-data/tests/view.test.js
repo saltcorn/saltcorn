@@ -115,5 +115,9 @@ describe("View with routes", () => {
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
     expect(json).toEqual({ success: "ok" });
     expect(html).toEqual("<div>Hello</div>");
+
+    const sf = await v.get_state_form({})
+    expect(sf).toBe(null)
+
   });
 });
