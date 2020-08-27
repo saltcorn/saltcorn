@@ -2,7 +2,7 @@ const Table = require("../models/table");
 const Field = require("../models/field");
 const View = require("../models/view");
 const db = require("../db");
-
+const { plugin_with_routes, mockReqRes } = require("./mocks");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -11,8 +11,6 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
-
-const mockReqRes = { req: { csrfToken: () => "" }, res: { redirect() {} } };
 
 describe("View", () => {
   it("should run with no query", async () => {
@@ -90,5 +88,32 @@ describe("View", () => {
     expect(st).toStrictEqual({ baz: 3, foo: "bar" });
     await View.update({ on_root_page: false }, v.id);
     await v.delete();
+  });
+});
+describe("View with routes", () => {
+  it("should create and delete", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
+    var html, json;
+    const spy = {
+      send(h) {
+        html = h;
+      },
+      json(h) {
+        json = h;
+      }
+    };
+    const v = await View.create({
+      table_id: 1,
+      name: "anewview",
+      viewtemplate: "ViewWithRoutes",
+      configuration: {},
+      min_role: 10,
+      on_root_page: true
+    });
+    await v.runRoute("the_json_route", {}, spy, mockReqRes);
+    await v.runRoute("the_html_route", {}, spy, mockReqRes);
+    expect(json).toEqual({ success: "ok" });
+    expect(html).toEqual("<div>Hello</div>");
   });
 });
