@@ -121,3 +121,78 @@ describe("View with routes", () => {
     expect(sf).toBe(null);
   });
 });
+describe("nested views", () => {
+  it("should create and run", async () => {
+    const small = await View.create({
+      table_id: 1,
+      name: "small",
+      viewtemplate: "Show",
+      configuration: {
+        layout: {
+          above: [
+            {
+              aligns: ["left", "left"],
+              widths: [2, 10],
+              besides: [
+                { above: [null, { type: "blank", contents: "Pages" }] },
+                {
+                  above: [
+                    null,
+                    { type: "field", fieldview: "show", field_name: "pages" }
+                  ]
+                }
+              ]
+            },
+            { type: "line_break" }
+          ]
+        },
+        columns: [{ type: "Field", fieldview: "show", field_name: "pages" }],
+        viewname: "small"
+      },
+      min_role: 10,
+      on_root_page: false
+    });
+    const medium = await View.create({
+      table_id: 1,
+      name: "medium",
+      viewtemplate: "Show",
+      configuration: {
+        layout: {
+          above: [
+            {
+              aligns: ["left", "left"],
+              widths: [2, 10],
+              besides: [
+                { above: [null, { type: "blank", contents: "Author" }] },
+                {
+                  above: [
+                    null,
+                    {
+                      type: "field",
+                      fieldview: "as_text",
+                      field_name: "author"
+                    }
+                  ]
+                }
+              ]
+            },
+            { type: "line_break" },
+            { name: "64063e", type: "view", view: "small", state: "shared" }
+          ]
+        },
+        columns: [
+          { type: "Field", fieldview: "as_text", field_name: "author" }
+        ],
+        viewname: "medium"
+      },
+      min_role: 10,
+      on_root_page: false
+    });
+    const res = await medium.run({ id: 2 }, mockReqRes);
+
+    expect(res).toContain("Tolstoy");
+    expect(res).toContain("728");
+    expect(res).not.toContain("967");
+    expect(res).not.toContain("Melville");
+  });
+});
