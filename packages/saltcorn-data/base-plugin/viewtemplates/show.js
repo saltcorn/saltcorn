@@ -22,6 +22,7 @@ const {
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
+const { asyncMap } = require("../../utils");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -93,7 +94,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
   const tbl = await Table.findOne({ id: table_id });
-  const fields = await Field.find({ table_id: tbl.id });
+  const fields = await tbl.getFields();
+
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   const rows = await tbl.getJoinedRows({
@@ -102,14 +104,54 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     aggregations,
     limit: 1
   });
-  const role = extra.req.user ? extra.req.user.role_id : 10;
   if (rows.length !== 1) return "No record selected";
-  db.sql_log(layout);
-  await eachView(layout, async segment => {
-    const view = await View.findOne({ name: segment.view });
-    segment.contents = await view.run(state, extra);
+
+  return (await renderRows(tbl, viewname, { columns, layout }, extra, rows))[0];
+};
+
+const renderRows = async (
+  table,
+  viewname,
+  { columns, layout },
+  extra,
+  rows
+) => {
+  //console.log(columns);
+  //console.log(layout);
+  if (!columns || !layout) return "View not yet built";
+
+  const fields = await table.getFields();
+
+  const role = extra.req.user ? extra.req.user.role_id : 10;
+  var views = {};
+  const getView = async nm => {
+    if (views[nm]) return views[nm];
+    const view = await View.findOne({ name: nm });
+    view.table = await Table.findOne({ id: view.table_id });
+    views[nm] = view;
+    return view;
+  };
+
+  return await asyncMap(rows, async row => {
+    await eachView(layout, async segment => {
+      const view = await getView(segment.view);
+
+      if (view.viewtemplateObj.renderRows) {
+        segment.contents = (
+          await view.viewtemplateObj.renderRows(
+            view.table,
+            view.name,
+            view.configuration,
+            extra,
+            [row]
+          )
+        )[0];
+      } else {
+        segment.contents = await view.run({ id: row.id }, extra);
+      }
+    });
+    return render(row, fields, layout, viewname, table, role, extra.req);
   });
-  return render(rows[0], fields, layout, viewname, tbl, role, extra.req);
 };
 
 const runMany = async (
@@ -120,7 +162,7 @@ const runMany = async (
   extra
 ) => {
   const tbl = await Table.findOne({ id: table_id });
-  const fields = await Field.find({ table_id: tbl.id });
+  const fields = await tbl.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
   const rows = await tbl.getJoinedRows({
@@ -130,12 +172,16 @@ const runMany = async (
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc })
   });
-  const role = extra.req && extra.req.user ? extra.req.user.role_id : 10;
 
-  return rows.map(row => ({
-    html: render(row, fields, layout, viewname, tbl, role, extra.req),
-    row
-  }));
+  const rendered = await renderRows(
+    tbl,
+    viewname,
+    { columns, layout },
+    extra,
+    rows
+  );
+
+  return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
 const render = (row, fields, layout, viewname, table, role, req) => {
@@ -181,6 +227,7 @@ module.exports = {
   configuration_workflow,
   run,
   runMany,
+  renderRows,
   initial_config,
   display_state_form: false
 };
