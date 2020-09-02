@@ -16,7 +16,7 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp, a } = require("@saltcorn/markup/tags");
+const { h5, nbsp, a, div } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -47,161 +47,130 @@ const pluginForm = (plugin) => {
   }
   return form;
 };
+
+const get_store_items = async () => {
+  const installed_plugins = await Plugin.find({});
+  const instore = await Plugin.store_plugins_available();
+  const packs_available = await fetch_available_packs();
+  const packs_installed = getState().getConfig("installed_packs", []);
+  const schema = db.getTenantSchema();
+  const installed_plugin_names = installed_plugins.map((p) => p.name);
+  const plugins_item = instore.map((plugin) => ({
+    name: plugin.name,
+    installed: installed_plugin_names.includes(plugin.name),
+    plugin: true,
+  }));
+
+  const pack_items = packs_available.map((pack) => ({
+    name: pack.name,
+    installed: packs_installed.includes(pack.name),
+    pack: true,
+  }));
+
+  return [...plugins_item, ...pack_items].sort((a, b) =>
+    a.name > b.name ? 1 : -1
+  );
+};
+
+const cfg_link = (row) => {
+  const plugin = getState().plugins[row.name];
+  if (!plugin) return "";
+  if (plugin.configuration_workflow)
+    return a(
+      {
+        class: "btn btn-secondary btn-sm",
+        role: "button",
+        href: `/plugins/configure/${row.name}`,
+        title: "Configure plugin",
+      },
+      '<i class="fas fa-cog"></i>'
+    );
+  else return "";
+};
+
+const store_item_html = (req) => (item) => ({
+  type: "card",
+  title: item.name,
+  contents: div(
+    !item.installed &&
+      item.plugin &&
+      post_btn(
+        `/plugins/install/${encodeURIComponent(item.name)}`,
+        "Install",
+        req.csrfToken(),
+        {
+          klass: "store-install",
+          small: true,
+          onClick: "press_store_button(this)",
+        }
+      ),
+    !item.installed &&
+      item.pack &&
+      post_btn(
+        `/packs/install-named/${encodeURIComponent(item.name)}`,
+        "Install",
+        req.csrfToken(),
+        {
+          klass: "store-install",
+          small: true,
+          onClick: "press_store_button(this)",
+        }
+      ),
+
+    item.installed && item.plugin && cfg_link(item),
+    item.installed && item.pack && "Installed",
+    item.installed &&
+      item.plugin &&
+      post_btn(`/plugins/delete/${item.name}`, "Remove", req.csrfToken(), {
+        klass: "store-install",
+        small: true,
+        btnClass: "danger",
+        onClick: "press_store_button(this)",
+      })
+  ),
+});
+
+const plugin_store_html = (items, req) => {
+  return {
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [{ text: "Settings" }, { text: "Plugins" }],
+      },
+      {
+        type: "card",
+        contents: "", // switch on type, refresh
+      },
+      {
+        besides: items.map(store_item_html(req)),
+        widths: items.map((item) => 4),
+      },
+    ],
+  };
+};
+
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Plugin.find({});
-    const instore = await Plugin.store_plugins_available();
-    const packs_available = await fetch_available_packs();
-    const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
-    const installed_plugin_names = rows.map((p) => p.name);
-    const cfg_link = (row) => {
-      const plugin = getState().plugins[row.name];
-      if (!plugin) return "";
-      if (plugin.configuration_workflow)
-        return a(
-          {
-            class: "btn btn-secondary btn-sm",
-            role: "button",
-            href: `/plugins/configure/${row.id}`,
-          },
-          '<i class="fas fa-cog"></i>'
-        );
-      else return "";
-    };
 
-    res.sendWrap("Plugins", {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Plugins" }],
-        },
-        {
-          type: "card",
-          title: "Installed plugins",
-          contents: mkTable(
-            [
-              { label: "Name", key: "name" },
-              { label: "Source", key: "source" },
-              { label: "Location", key: "location" },
-              {
-                label: "Edit",
-                key: (r) =>
-                  a(
-                    {
-                      class: "btn btn-outline-secondary btn-sm",
-                      role: "button",
-                      href: `/plugins/${r.id}`,
-                    },
-                    '<i class="fas fa-edit"></i>'
-                  ),
-              },
-              { label: "Configure", key: (r) => cfg_link(r) },
-              {
-                label: "Reload",
-                key: (r) =>
-                  post_btn(
-                    `/plugins/reload/${r.id}`,
-                    '<i class="fas fa-sync"></i>',
-                    req.csrfToken(),
-                    { btnClass: "secondary", small: true }
-                  ),
-              },
-              {
-                label: "Delete",
-                key: (r) =>
-                  post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken()),
-              },
-            ],
-            rows
-          ),
-        },
-        {
-          besides: [
-            {
-              type: "card",
-              title: "Available plugins",
-              contents: [
-                mkTable(
-                  [
-                    { label: "Name", key: "name" },
-                    {
-                      label: "Install",
-                      key: (r) =>
-                        installed_plugin_names.includes(r.name)
-                          ? "Installed"
-                          : post_btn(
-                              `/plugins/install/${encodeURIComponent(r.name)}`,
-                              "Install",
-                              req.csrfToken(),
-                              {
-                                klass: "store-install",
-                                onClick: "press_store_button(this)",
-                              }
-                            ),
-                    },
-                  ],
-                  instore
-                ),
-                schema === "public"
-                  ? link(`/plugins/new`, "Add another plugin")
-                  : "",
-              ],
-            },
-            {
-              type: "card",
-              title: "Available packs",
-              contents: [
-                mkTable(
-                  [
-                    { label: "Name", key: "name" },
-                    {
-                      label: "Install",
-                      key: (r) =>
-                        packs_installed.includes(r.name)
-                          ? "Installed"
-                          : post_btn(
-                              `/packs/install-named/${encodeURIComponent(
-                                r.name
-                              )}`,
-                              "Install",
-                              req.csrfToken(),
-                              {
-                                klass: "store-install",
-                                onClick: "press_store_button(this)",
-                              }
-                            ),
-                    },
-                  ],
-                  packs_available
-                ),
-                link(`/packs/install`, "Install another pack"),
-                nbsp,
-                "|",
-                nbsp,
-                link(`/packs/create`, "Create pack"),
-              ],
-            },
-          ],
-        },
-      ],
-    });
+    const items = await get_store_items();
+    res.sendWrap("Plugins", plugin_store_html(items, req));
   })
 );
 
 router.get(
-  "/configure/:id",
+  "/configure/:name",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const plugin = await Plugin.findOne({ id });
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
-    flow.action = `/plugins/configure/${plugin.id}`;
+    flow.action = `/plugins/configure/${plugin.name}`;
     const wfres = await flow.run(plugin.configuration || {});
 
     res.sendWrap(
@@ -211,15 +180,15 @@ router.get(
   })
 );
 router.post(
-  "/configure/:id",
+  "/configure/:name",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const plugin = await Plugin.findOne({ id });
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
-    flow.action = `/plugins/configure/${plugin.id}`;
+    flow.action = `/plugins/configure/${plugin.name}`;
     const wfres = await flow.run(req.body);
     if (wfres.renderForm)
       res.sendWrap(
@@ -318,13 +287,13 @@ router.post(
 );
 
 router.post(
-  "/delete/:id",
+  "/delete/:name",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { name } = req.params;
 
-    const plugin = await Plugin.findOne({ id });
+    const plugin = await Plugin.findOne({ name });
     const depviews = await plugin.dependant_views();
     if (depviews.length === 0) {
       await plugin.delete();
@@ -369,7 +338,7 @@ router.post(
         "success",
         `Plugin ${plugin_db.name} installed, please complete configuration.`
       );
-      res.redirect(`/plugins/configure/${plugin_db.id}`);
+      res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
       req.flash("success", `Plugin ${plugin.name} installed`);
       res.redirect(`/plugins`);
