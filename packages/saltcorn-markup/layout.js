@@ -93,7 +93,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
                 text(segment.title)
               )
             ),
-          div({ class: "card-body" }, go(segment.contents))
+          div({ class: "card-body" }, go(segment.contents)),
+          segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
     if (segment.type === "container") {

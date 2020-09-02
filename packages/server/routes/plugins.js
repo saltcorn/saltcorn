@@ -24,7 +24,6 @@ const {
   span,
   ul,
   li,
-  h3,
   button,
 } = require("@saltcorn/markup/tags");
 
@@ -133,8 +132,9 @@ const store_item_html = (req) => (item) => ({
       item.local && badge("Local"),
       item.installed && badge("Installed")
     ),
-    div(item.description || ""),
-
+    div(item.description || "")
+  ),
+  footer: div(
     div(
       !item.installed &&
         item.plugin &&
@@ -278,15 +278,16 @@ const plugin_store_html = (items, req) => {
         crumbs: [{ text: "Settings" }, { text: "Plugins" }],
       },
       {
+        type: "pageHeader",
+        title: "Plugin and pack store",
+      },
+      {
         type: "card",
-        contents: [
-          h3("Plugin and pack store"),
-          div(
-            { class: "d-flex" },
-            storeNavPills(req),
-            div({ class: "ml-auto" }, store_actions_dropdown)
-          ),
-        ],
+        contents: div(
+          { class: "d-flex" },
+          storeNavPills(req),
+          div({ class: "ml-auto" }, store_actions_dropdown)
+        ),
       },
       {
         besides: items.map(store_item_html(req)),
