@@ -173,6 +173,21 @@ const storeNavPills = (req) => {
     link("Installed")
   );
 };
+
+const filter_items = (items, query) => {
+  switch (query.q) {
+    case "plugins":
+      return items.filter((item) => item.plugin);
+    case "packs":
+      return items.filter((item) => item.pack);
+    case "themes":
+      return items.filter((item) => item.has_theme);
+    case "installed":
+      return items.filter((item) => item.installed);
+    default:
+      return items;
+  }
+};
 const plugin_store_html = (items, req) => {
   return {
     above: [
@@ -216,7 +231,8 @@ router.get(
     const schema = db.getTenantSchema();
 
     const items = await get_store_items();
-    res.sendWrap("Plugins", plugin_store_html(items, req));
+    const relevant_items = filter_items(items, req.query);
+    res.sendWrap("Plugins", plugin_store_html(relevant_items, req));
   })
 );
 
