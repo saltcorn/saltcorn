@@ -3,7 +3,7 @@ const {
   getConnectObject,
   configFilePath,
   configFileDir,
-  defaultDataPath
+  defaultDataPath,
 } = require("@saltcorn/data/db/connect");
 const { cli } = require("cli-ux");
 const { is } = require("contractis");
@@ -33,19 +33,19 @@ const askDevServer = async () => {
       choices: [
         {
           name: "Development mode. I will start Saltcorn when needed",
-          value: "dev"
+          value: "dev",
         },
         {
           name: "Server mode. Always run in background, with Postgres",
-          value: "server"
-        }
-      ]
-    }
+          value: "server",
+        },
+      ],
+    },
   ]);
   return responses.mode;
 };
 
-const unloadModule = mod => {
+const unloadModule = (mod) => {
   var name = require.resolve(mod);
   delete require.cache[name];
 };
@@ -76,9 +76,9 @@ const check_db = async () => {
         type: "list",
         choices: [
           { name: "Install PostgreSQL locally", value: "install" },
-          { name: "Connect to a an existing database", value: "connect" }
-        ]
-      }
+          { name: "Connect to a an existing database", value: "connect" },
+        ],
+      },
     ]);
     if (responses.whatnow === "install") {
       await install_db();
@@ -92,30 +92,30 @@ const check_db = async () => {
   }
 };
 
-const asyncSudo = args => {
-  return new Promise(function(resolve, reject) {
+const asyncSudo = (args) => {
+  return new Promise(function (resolve, reject) {
     var child = sudo(args, { cachePassword: true });
     //var child = sudo(['ls'], {cachePassword: true})
-    child.stdout.on("data", function(data) {
+    child.stdout.on("data", function (data) {
       console.log(data.toString());
     });
-    child.stderr.on("data", function(data) {
+    child.stderr.on("data", function (data) {
       console.error(data.toString());
     });
-    child.on("exit", function(data) {
+    child.on("exit", function (data) {
       resolve();
     });
   });
 };
 
-const asyncSudoPostgres = args => {
+const asyncSudoPostgres = (args) => {
   return asyncSudo(["sudo", "-u", "postgres", ...args]);
 };
 
-const get_password = async for_who => {
+const get_password = async (for_who) => {
   var password = await cli.prompt(`Set ${for_who} to [auto-generate]`, {
     type: "hide",
-    required: false
+    required: false,
   });
   if (!password) {
     password = gen_password();
@@ -137,13 +137,13 @@ const install_db = async () => {
     "-U",
     "postgres",
     "-c",
-    `CREATE USER ${user} WITH CREATEDB PASSWORD '${scpass}';`
+    `CREATE USER ${user} WITH CREATEDB PASSWORD '${scpass}';`,
   ]);
   spawnSync("createdb", ["saltcorn"], {
-    stdio: "inherit"
+    stdio: "inherit",
   });
   spawnSync("createdb", ["saltcorn_test"], {
-    stdio: "inherit"
+    stdio: "inherit",
   });
   await asyncSudoPostgres([
     "psql",
@@ -152,7 +152,7 @@ const install_db = async () => {
     "-d",
     "saltcorn",
     "-c",
-    `ALTER SCHEMA public OWNER TO ${user};`
+    `ALTER SCHEMA public OWNER TO ${user};`,
   ]);
   await asyncSudoPostgres([
     "psql",
@@ -161,7 +161,7 @@ const install_db = async () => {
     "-d",
     "saltcorn_test",
     "-c",
-    `ALTER SCHEMA public OWNER TO ${user};`
+    `ALTER SCHEMA public OWNER TO ${user};`,
   ]);
   const session_secret = await get_password("session secret");
   await write_connection_config({
@@ -171,25 +171,25 @@ const install_db = async () => {
     user,
     password: scpass,
     session_secret,
-    multi_tenant: false
+    multi_tenant: false,
   });
 };
 
 const prompt_connection = async () => {
   console.log("Enter database connection parameters");
   const host = await cli.prompt("Database host [localhost]", {
-    required: false
+    required: false,
   });
   const port = await cli.prompt("Database port [5432]", { required: false });
   const database = await cli.prompt("Database name [saltcorn]", {
-    required: false
+    required: false,
   });
   const user = await cli.prompt("Database user [saltcorn]", {
-    required: false
+    required: false,
   });
   const password = await cli.prompt("Database password", {
     type: "hide",
-    required: true
+    required: true,
   });
   const session_secret = await get_password("session secret");
   return {
@@ -199,7 +199,7 @@ const prompt_connection = async () => {
     user: user || "saltcorn",
     password: password,
     session_secret,
-    multi_tenant: false
+    multi_tenant: false,
   };
 };
 
@@ -208,7 +208,7 @@ const setup_connection_config = async () => {
   await write_connection_config(connobj);
 };
 
-const write_connection_config = async connobj => {
+const write_connection_config = async (connobj) => {
   fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
@@ -293,7 +293,7 @@ configuration file
 `;
 
 SetupCommand.flags = {
-  coverage: flags.boolean({ char: "c", description: "Coverage" })
+  coverage: flags.boolean({ char: "c", description: "Coverage" }),
 };
 
 module.exports = SetupCommand;

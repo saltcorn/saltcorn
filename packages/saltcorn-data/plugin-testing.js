@@ -3,13 +3,13 @@ const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
 
-const auto_test_wrap = wrap => {
+const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
-const generate_attributes = attrs => {
+const generate_attributes = (attrs) => {
   var res = {};
-  (attrs || []).forEach(a => {
+  (attrs || []).forEach((a) => {
     if (a.required || is.bool.generate()) {
       const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
@@ -19,11 +19,11 @@ const generate_attributes = attrs => {
   return res;
 };
 
-const auto_test_type = t => {
+const auto_test_type = (t) => {
   const fvs = t.fieldviews || {};
 
   //run edit field views without a value
-  Object.values(fvs).forEach(fv => {
+  Object.values(fvs).forEach((fv) => {
     if (fv.isEdit) {
       const attr = generate_attributes(t.attributes);
       is.str(fv.run("foo", undefined, attr, "myclass", true));
@@ -40,7 +40,7 @@ const auto_test_type = t => {
     const attribs = generate_attributes(t.attributes);
     if (has_contract || (typeof x !== "undefined" && x !== null))
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
-        Object.values(fvs).forEach(fv => {
+        Object.values(fvs).forEach((fv) => {
           if (fv.isEdit) {
             is.str(fv.run("foo", x, attribs, "myclass", true));
             is.str(fv.run("foo", x, attribs, "myclass", false));
@@ -73,7 +73,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
 
 const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
-const auto_test_viewtemplate = async vt => {
+const auto_test_viewtemplate = async (vt) => {
   const wf = vt.configuration_workflow();
   is.class("Workflow")(wf);
   for (let index = 0; index < 10; index++) {
@@ -83,19 +83,19 @@ const auto_test_viewtemplate = async vt => {
     else
       cfg = await auto_test_workflow(wf, {
         table_id: 1,
-        viewname: "newview"
+        viewname: "newview",
       });
     const sfs = await vt.get_state_fields(1, "newview", cfg);
     const res = await vt.run(1, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
-    if (sfs.some(sf => (sf.name = "id"))) {
+    if (sfs.some((sf) => (sf.name = "id"))) {
       const resid = await vt.run(1, "newview", cfg, { id: 1 }, mockReqRes);
       is.or(is.str, is.array(is.str))(resid);
     }
   }
 };
 
-const auto_test_plugin = async plugin => {
+const auto_test_plugin = async (plugin) => {
   is_plugin(plugin);
   getState().registerPlugin("test_plugin", plugin);
   if (plugin.layout) {

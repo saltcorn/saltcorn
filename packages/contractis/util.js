@@ -3,7 +3,7 @@ const get_return_contract = (returns, args) =>
     ? returns(...args)
     : returns;
 
-const get_arguments_returns = contract => {
+const get_arguments_returns = (contract) => {
   if (contract.contract_name === "fun")
     return { arguments: contract.options[0], returns: contract.options[1] };
   else return contract;
@@ -44,5 +44,5 @@ module.exports = {
   get_return_contract,
   get_arguments_returns,
   ContractViolation,
-  log_it
+  log_it,
 };

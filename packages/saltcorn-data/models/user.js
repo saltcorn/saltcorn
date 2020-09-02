@@ -16,7 +16,7 @@ class User {
     const id = await db.insert("users", {
       email: u.email,
       password: hashpw,
-      role_id: u.role_id
+      role_id: u.role_id,
     });
     u.id = id;
     return u;
@@ -30,7 +30,7 @@ class User {
   }
   static async find(where) {
     const us = await db.select("users", where);
-    return us.map(u => new User(u));
+    return us.map((u) => new User(u));
   }
   static async findOne(where) {
     const u = await db.selectOne("users", where);
@@ -55,10 +55,10 @@ User.contract = {
     id: is.maybe(is.posint),
     email: is.str,
     password: is.str,
-    role_id: is.posint
+    role_id: is.posint,
   },
   methods: {
-    delete: is.fun([], is.promise(is.undefined))
+    delete: is.fun([], is.promise(is.undefined)),
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("User")))),
@@ -72,8 +72,8 @@ User.contract = {
     get_roles: is.fun(
       [],
       is.promise(is.array(is.obj({ id: is.posint, role: is.str })))
-    )
-  }
+    ),
+  },
 };
 
 module.exports = User;

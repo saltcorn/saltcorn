@@ -7,7 +7,7 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -16,7 +16,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-const succeedJsonWith = pred => res => {
+const succeedJsonWith = (pred) => (res) => {
   if (res.statusCode !== 200) {
     console.log(res.text);
     throw new Error(`Expected status 200, received ${res.statusCode}`);
@@ -28,7 +28,7 @@ const succeedJsonWith = pred => res => {
   }
 };
 
-const notAuthorized = res => {
+const notAuthorized = (res) => {
   if (res.statusCode !== 401) {
     console.log(res.text);
     throw new Error(`Expected status 401, received ${res.statusCode}`);
@@ -42,7 +42,7 @@ describe("API Endpoints", () => {
       .get("/api/books/")
       .expect(
         succeedJsonWith(
-          rows =>
+          (rows) =>
             rows.length == 2 &&
             rows[0].author === "Herman Melville" &&
             rows[0].pages === 967
@@ -57,7 +57,7 @@ describe("API Endpoints", () => {
       .get("/api/books/?fields=author")
       .expect(
         succeedJsonWith(
-          rows =>
+          (rows) =>
             rows.length == 2 &&
             rows[0].author === "Herman Melville" &&
             !rows[0].pages
@@ -72,7 +72,7 @@ describe("API Endpoints", () => {
       .get("/api/books/?pages=967")
       .expect(
         succeedJsonWith(
-          rows =>
+          (rows) =>
             rows.length == 1 &&
             rows[0].author === "Herman Melville" &&
             rows[0].pages === 967
@@ -87,7 +87,7 @@ describe("API Endpoints", () => {
       .get("/api/books/?fields=author&pages=967")
       .expect(
         succeedJsonWith(
-          rows =>
+          (rows) =>
             rows.length == 1 &&
             rows[0].author === "Herman Melville" &&
             !rows[0].pages
@@ -98,9 +98,7 @@ describe("API Endpoints", () => {
   });
   it("should not allow public access to patients", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/api/patients/")
-      .expect(notAuthorized);
+    await request(app).get("/api/patients/").expect(notAuthorized);
 
     //expect(res.statusCode).toEqual(302);
   });
@@ -111,7 +109,7 @@ describe("API Endpoints", () => {
     await request(app)
       .get("/api/patients/")
       .set("Cookie", loginCookie)
-      .expect(succeedJsonWith(rows => rows.length == 2));
+      .expect(succeedJsonWith((rows) => rows.length == 2));
 
     //expect(res.statusCode).toEqual(302);
   });

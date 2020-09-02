@@ -8,7 +8,7 @@ const basePlugin = require("@saltcorn/base-plugin");
 
 getState().registerPlugin("base", basePlugin);
 
-const rndElem = vs => vs[Math.floor(Math.random() * vs.length)];
+const rndElem = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
 const randomPerson = () => {
   const gender = Math.random() > 0.5 ? "Female" : "Male";
@@ -35,21 +35,21 @@ const fixturePersons = async () => {
     name: "first_name",
     label: "First name",
     type: "String",
-    required: true
+    required: true,
   });
   await Field.create({
     table,
     name: "last_name",
     label: "Last name",
     type: "String",
-    required: true
+    required: true,
   });
   await Field.create({
     table,
     name: "age",
     label: "Age",
     type: "Integer",
-    required: true
+    required: true,
   });
   await Field.create({
     table,
@@ -57,7 +57,7 @@ const fixturePersons = async () => {
     label: "Gender",
     type: "String",
     required: true,
-    attributes: { options: "Male,Female" }
+    attributes: { options: "Male,Female" },
   });
   for (let index = 0; index < 100; index++) {
     await db.insert("persons", randomPerson());
@@ -69,7 +69,7 @@ fixturePersons().then(
     console.log("Fixtures loaded successful");
     process.exit(0);
   },
-  err => {
+  (err) => {
     console.error(err);
     process.exit(1);
   }

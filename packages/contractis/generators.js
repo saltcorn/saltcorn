@@ -6,10 +6,10 @@ const num_positive = () => Math.pow(10, num_between(-3, 8));
 
 const any_num = () => (bool() ? num_positive() : -num_positive());
 
-const generate_from = contr =>
+const generate_from = (contr) =>
   contr.generate ? contr.generate() : rejection_sample(contr);
 
-const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
+const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
 const ntimes = (n, f) => {
   var res = new Array(n);
@@ -39,12 +39,12 @@ const date = () => {
   return date;
 };
 
-const array = g => () => {
+const array = (g) => () => {
   const n = Math.round(num_between(0, 20));
   return ntimes(n, g);
 };
 
-const konst = x => () => x;
+const konst = (x) => () => x;
 
 const anyObj = () => {
   const n = Math.round(num_between(0, 10));
@@ -55,7 +55,7 @@ const anyObj = () => {
   return res;
 };
 
-const obj = o => () => {
+const obj = (o) => () => {
   var res = {};
   Object.entries(o).forEach(([k, v]) => {
     res[k] = v.generate();
@@ -72,16 +72,16 @@ const any = () =>
     konst(null),
     konst(() => any()),
     anyObj,
-    date
+    date,
   ])();
 
-const gen_arguments = args => {
+const gen_arguments = (args) => {
   if (!args) return [];
   const argumentcs = Array.isArray(args) ? args : [args];
-  return argumentcs.map(c => generate_from(c));
+  return argumentcs.map((c) => generate_from(c));
 };
 
-const generate_class = cls => () => {
+const generate_class = (cls) => () => {
   const contr = cls.contract;
   const cargs = contr.constructs ? gen_arguments(contr.constructs) : [];
   const inst = new cls(...cargs);
@@ -115,5 +115,5 @@ module.exports = {
   gen_arguments,
   reject_if,
   accept_if,
-  date
+  date,
 };

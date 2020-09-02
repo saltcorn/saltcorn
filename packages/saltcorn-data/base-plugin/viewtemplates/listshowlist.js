@@ -15,22 +15,22 @@ const configuration_workflow = () =>
     steps: [
       {
         name: "Views",
-        form: async context => {
+        form: async (context) => {
           const list_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewrow, viewtemplate }) =>
               viewtemplate.view_quantity === "Many" &&
               viewrow.name !== context.viewname &&
-              state_fields.every(sf => !sf.required)
+              state_fields.every((sf) => !sf.required)
           );
-          const list_view_opts = list_views.map(v => v.name);
+          const list_view_opts = list_views.map((v) => v.name);
           const show_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
-              state_fields.some(sf => sf.name === "id")
+              state_fields.some((sf) => sf.name === "id")
           );
-          const show_view_opts = show_views.map(v => v.name);
+          const show_view_opts = show_views.map((v) => v.name);
 
           return new Form({
             fields: [
@@ -40,8 +40,8 @@ const configuration_workflow = () =>
                 type: "String",
                 required: false,
                 attributes: {
-                  options: list_view_opts.join()
-                }
+                  options: list_view_opts.join(),
+                },
               },
               {
                 name: "show_view",
@@ -49,17 +49,17 @@ const configuration_workflow = () =>
                 type: "String",
                 required: false,
                 attributes: {
-                  options: show_view_opts.join()
-                }
-              }
-            ]
+                  options: show_view_opts.join(),
+                },
+              },
+            ],
           });
-        }
+        },
       },
       {
         name: "Subtables",
         contextField: "subtables",
-        form: async context => {
+        form: async (context) => {
           const tbl = await Table.findOne({ id: context.table_id });
           var fields = [];
           const child_views = await get_child_views(tbl, context.viewname);
@@ -68,7 +68,7 @@ const configuration_workflow = () =>
               fields.push({
                 name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
                 label: `${view.name} of ${relation.label} on ${related_table.name}`,
-                type: "Bool"
+                type: "Bool",
               });
             }
           }
@@ -78,18 +78,18 @@ const configuration_workflow = () =>
               fields.push({
                 name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
                 label: `${view.name} of ${relation.name} on ${related_table.name}`,
-                type: "Bool"
+                type: "Bool",
               });
             }
           }
           return new Form({
             fields,
             blurb:
-              "Which related tables would you like to show in sub-lists below the selected item?"
+              "Which related tables would you like to show in sub-lists below the selected item?",
           });
-        }
-      }
-    ]
+        },
+      },
+    ],
   });
 
 const get_state_fields = async (
@@ -100,7 +100,7 @@ const get_state_fields = async (
   const id = {
     name: "id",
     type: "Integer",
-    required: false
+    required: false,
   };
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
@@ -127,7 +127,7 @@ const run = async (
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
-      onRowSelect: v => `select_id(${v.id})`
+      onRowSelect: (v) => `select_id(${v.id})`,
     });
   }
 
@@ -198,5 +198,5 @@ module.exports = {
   configuration_workflow,
   run,
   get_state_fields,
-  display_state_form: ({ list_view }) => !!list_view
+  display_state_form: ({ list_view }) => !!list_view,
 };

@@ -8,11 +8,8 @@ describe("layout", () => {
         return p(s);
       },
       reverseIt({ theString }) {
-        return theString
-          .split("")
-          .reverse()
-          .join("");
-      }
+        return theString.split("").reverse().join("");
+      },
     };
     const markup = { above: [{ type: "reverseIt", theString: "foobar" }] };
     expect(render({ blockDispatch, layout: markup })).toBe("<p>raboof</p>");

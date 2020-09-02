@@ -10,7 +10,7 @@ class RmTenantCommand extends Command {
 }
 
 RmTenantCommand.args = [
-  { name: "tenant", required: true, description: "Tenant to remove" }
+  { name: "tenant", required: true, description: "Tenant to remove" },
 ];
 
 RmTenantCommand.description = `Remove a tenant`;

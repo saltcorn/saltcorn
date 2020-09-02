@@ -19,7 +19,7 @@ const {
   page_pack,
   install_pack,
   fetch_pack_by_name,
-  can_install_pack
+  can_install_pack,
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code, p } = require("@saltcorn/markup/tags");
 
@@ -32,32 +32,32 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find({});
-    const tableFields = tables.map(t => ({
+    const tableFields = tables.map((t) => ({
       label: `${t.name} table`,
       name: `table.${t.name}`,
-      type: "Bool"
+      type: "Bool",
     }));
     const views = await View.find({});
-    const viewFields = views.map(t => ({
+    const viewFields = views.map((t) => ({
       label: `${t.name} view`,
       name: `view.${t.name}`,
-      type: "Bool"
+      type: "Bool",
     }));
     const plugins = await Plugin.find({});
-    const pluginFields = plugins.map(t => ({
+    const pluginFields = plugins.map((t) => ({
       label: `${t.name} plugin`,
       name: `plugin.${t.name}`,
-      type: "Bool"
+      type: "Bool",
     }));
     const pages = await Page.find({});
-    const pageFields = pages.map(t => ({
+    const pageFields = pages.map((t) => ({
       label: `${t.name} page`,
       name: `page.${t.name}`,
-      type: "Bool"
+      type: "Bool",
     }));
     const form = new Form({
       action: "/packs/create",
-      fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields]
+      fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields],
     });
     res.sendWrap(`Create Pack`, {
       above: [
@@ -66,15 +66,15 @@ router.get(
           crumbs: [
             { text: "Settings" },
             { text: "Plugins", href: "/plugins" },
-            { text: "Create pack" }
-          ]
+            { text: "Create pack" },
+          ],
         },
         {
           type: "card",
           title: `Create pack`,
-          contents: renderForm(form, req.csrfToken())
-        }
-      ]
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -112,8 +112,8 @@ router.post(
           crumbs: [
             { text: "Settings" },
             { text: "Plugins", href: "/plugins" },
-            { text: "Create pack" }
-          ]
+            { text: "Create pack" },
+          ],
         },
         {
           type: "card",
@@ -122,10 +122,10 @@ router.post(
             p(
               "You can copy the pack contents below to another Saltcorn installation."
             ),
-            pre({ class: "pack-display" }, code(JSON.stringify(pack)))
-          ]
-        }
-      ]
+            pre({ class: "pack-display" }, code(JSON.stringify(pack))),
+          ],
+        },
+      ],
     });
   })
 );
@@ -138,9 +138,9 @@ const install_pack_form = () =>
       {
         name: "pack",
         type: "String",
-        fieldview: "textarea"
-      }
-    ]
+        fieldview: "textarea",
+      },
+    ],
   });
 
 router.get(
@@ -155,15 +155,15 @@ router.get(
           crumbs: [
             { text: "Settings" },
             { text: "Plugins", href: "/plugins" },
-            { text: "Install pack" }
-          ]
+            { text: "Install pack" },
+          ],
         },
         {
           type: "card",
           title: `Install Pack`,
-          contents: renderForm(install_pack_form(), req.csrfToken())
-        }
-      ]
+          contents: renderForm(install_pack_form(), req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -201,18 +201,18 @@ router.post(
             crumbs: [
               { text: "Settings" },
               { text: "Plugins", href: "/plugins" },
-              { text: "Install pack" }
-            ]
+              { text: "Install pack" },
+            ],
           },
           {
             type: "card",
             title: `Install Pack`,
-            contents: renderForm(form, req.csrfToken())
-          }
-        ]
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
       });
     } else {
-      await install_pack(pack, undefined, p =>
+      await install_pack(pack, undefined, (p) =>
         load_plugins.loadAndSaveNewPlugin(p)
       );
 
@@ -239,7 +239,7 @@ router.post(
     } else if (can_install.warning) {
       req.flash("warning", can_install.warning);
     }
-    await install_pack(pack.pack, name, p =>
+    await install_pack(pack.pack, name, (p) =>
       load_plugins.loadAndSaveNewPlugin(p)
     );
 

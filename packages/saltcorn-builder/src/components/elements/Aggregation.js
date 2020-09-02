@@ -8,16 +8,16 @@ export const Aggregation = ({
   agg_field,
   stat,
   block,
-  textStyle
+  textStyle,
 }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
     <span
       className={textStyle}
       {...blockProps(block)}
-      ref={dom => connect(drag(dom))}
+      ref={(dom) => connect(drag(dom))}
     >
       [{stat} {agg_relation} {agg_field}]
     </span>
@@ -26,12 +26,12 @@ export const Aggregation = ({
 
 export const AggregationSettings = () => {
   const { setProp, agg_relation, agg_field, stat, block, textStyle } = useNode(
-    node => ({
+    (node) => ({
       agg_relation: node.data.props.agg_relation,
       agg_field: node.data.props.agg_field,
       stat: node.data.props.stat,
       block: node.data.props.block,
-      textStyle: node.data.props.textStyle
+      textStyle: node.data.props.textStyle,
     })
   );
   const options = useContext(optionsCtx);
@@ -41,7 +41,9 @@ export const AggregationSettings = () => {
         <label>Relation</label>
         <select
           value={agg_relation}
-          onChange={e => setProp(prop => (prop.agg_relation = e.target.value))}
+          onChange={(e) =>
+            setProp((prop) => (prop.agg_relation = e.target.value))
+          }
         >
           {options.child_field_list.map((f, ix) => (
             <option key={ix} value={f}>
@@ -54,7 +56,7 @@ export const AggregationSettings = () => {
         <label>Child table field</label>
         <select
           value={agg_field}
-          onChange={e => setProp(prop => (prop.agg_field = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.agg_field = e.target.value))}
         >
           {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
             <option key={ix} value={f}>
@@ -67,7 +69,7 @@ export const AggregationSettings = () => {
         <label>Statistic</label>
         <select
           value={stat}
-          onChange={e => setProp(prop => (prop.stat = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.stat = e.target.value))}
         >
           <option value={"Count"}>Count</option>
           <option value={"Avg"}>Avg</option>
@@ -84,6 +86,6 @@ export const AggregationSettings = () => {
 
 Aggregation.craft = {
   related: {
-    settings: AggregationSettings
-  }
+    settings: AggregationSettings,
+  },
 };

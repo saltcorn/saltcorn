@@ -10,10 +10,10 @@ const { stateFieldsToWhere } = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
-const limitFields = fields => r => {
+const limitFields = (fields) => (r) => {
   if (fields) {
     var res = {};
-    fields.split().forEach(f => {
+    fields.split().forEach((f) => {
       res[f] = r[f];
     });
     return res;
@@ -42,7 +42,7 @@ router.get(
         const qstate = await stateFieldsToWhere({
           fields: tbl_fields,
           approximate: false,
-          state: req.query
+          state: req.query,
         });
         rows = await table.getRows(qstate);
       } else {

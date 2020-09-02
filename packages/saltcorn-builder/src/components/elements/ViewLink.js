@@ -5,23 +5,23 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const ViewLink = ({ name, block, minRole, label }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   const names = name.split(":");
   const displabel = names.length > 1 ? names[1] : names[0];
   return (
-    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
       [{displabel}]
     </span>
   );
 };
 
 export const ViewLinkSettings = () => {
-  const { setProp, name, block, minRole, label } = useNode(node => ({
+  const { setProp, name, block, minRole, label } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
-    label: node.data.props.label
+    label: node.data.props.label,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -30,7 +30,7 @@ export const ViewLinkSettings = () => {
         <label>View to link to</label>
         <select
           value={name}
-          onChange={e => setProp(prop => (prop.name = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.link_view_opts.map((f, ix) => (
             <option key={ix} value={f.name}>
@@ -45,7 +45,7 @@ export const ViewLinkSettings = () => {
           type="text"
           className="viewlink-label"
           value={label}
-          onChange={e => setProp(prop => (prop.label = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
         />
       </div>
       <BlockSetting block={block} setProp={setProp} />
@@ -56,6 +56,6 @@ export const ViewLinkSettings = () => {
 
 ViewLink.craft = {
   related: {
-    settings: ViewLinkSettings
-  }
+    settings: ViewLinkSettings,
+  },
 };

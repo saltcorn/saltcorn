@@ -1,7 +1,7 @@
 import React, { Fragment, useContext } from "react";
 import optionsCtx from "../context";
 
-export const blockProps = is_block =>
+export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
 
 export const BlockSetting = ({ block, setProp }) => (
@@ -11,7 +11,7 @@ export const BlockSetting = ({ block, setProp }) => (
       name="block"
       type="checkbox"
       checked={block}
-      onChange={e => setProp(prop => (prop.block = e.target.checked))}
+      onChange={(e) => setProp((prop) => (prop.block = e.target.checked))}
     />
   </label>
 );
@@ -23,9 +23,9 @@ export const MinRoleSetting = ({ minRole, setProp }) => {
       <label>Minimum Role</label>
       <select
         value={minRole}
-        onChange={e => setProp(prop => (prop.minRole = e.target.value))}
+        onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
       >
-        {options.roles.map(r => (
+        {options.roles.map((r) => (
           <option key={r.id} value={r.id}>
             {r.role}
           </option>
@@ -41,7 +41,7 @@ export const TextStyleSetting = ({ textStyle, setProp }) => {
       <label>Text Style</label>
       <select
         value={textStyle}
-        onChange={e => setProp(prop => (prop.textStyle = e.target.value))}
+        onChange={(e) => setProp((prop) => (prop.textStyle = e.target.value))}
       >
         <option value="">Normal</option>
         <option value="h1">Heading 1</option>

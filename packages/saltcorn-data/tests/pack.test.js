@@ -10,7 +10,7 @@ const {
   fetch_pack_by_name,
   is_stale,
   install_pack,
-  can_install_pack
+  can_install_pack,
 } = require("../models/pack");
 const { getState } = require("../db/state");
 const Table = require("../models/table.js");
@@ -48,16 +48,16 @@ describe("pack create", () => {
             agg_field: "name",
             agg_relation: "patients.favbook",
             stat: "Count",
-            type: "Aggregation"
-          }
-        ]
+            type: "Aggregation",
+          },
+        ],
       },
       min_role: 10,
       name: "authorlist",
       on_root_page: true,
       menu_label: undefined,
       table: "books",
-      viewtemplate: "List"
+      viewtemplate: "List",
     });
   });
   it("creates plugin pack", async () => {
@@ -65,7 +65,7 @@ describe("pack create", () => {
     expect(ppack).toStrictEqual({
       location: "@saltcorn/base-plugin",
       name: "base",
-      source: "npm"
+      source: "npm",
     });
   });
   it("creates page pack", async () => {
@@ -82,7 +82,7 @@ describe("pack create", () => {
             type: "blank",
             block: false,
             contents: "Hello world",
-            textStyle: ""
+            textStyle: "",
           },
           { type: "line_break" },
           { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
@@ -91,7 +91,7 @@ describe("pack create", () => {
             text: "Click here",
             type: "link",
             block: false,
-            textStyle: ""
+            textStyle: "",
           },
           {
             type: "card",
@@ -110,9 +110,9 @@ describe("pack create", () => {
                           type: "blank",
                           block: false,
                           contents: "Hello world",
-                          textStyle: ""
-                        }
-                      ]
+                          textStyle: "",
+                        },
+                      ],
                     },
                     {
                       above: [
@@ -121,19 +121,19 @@ describe("pack create", () => {
                           type: "blank",
                           block: false,
                           contents: "Bye bye",
-                          textStyle: ""
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
+                          textStyle: "",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
       },
       fixed_states: {},
-      root_page_for_roles: []
+      root_page_for_roles: [],
     });
   });
 });
@@ -194,9 +194,9 @@ const todoPack = {
                       type: "blank",
                       block: false,
                       contents: "Description",
-                      textStyle: ""
-                    }
-                  ]
+                      textStyle: "",
+                    },
+                  ],
                 },
                 {
                   above: [
@@ -206,23 +206,23 @@ const todoPack = {
                       block: false,
                       fieldview: "edit",
                       textStyle: "",
-                      field_name: "description"
-                    }
-                  ]
-                }
-              ]
+                      field_name: "description",
+                    },
+                  ],
+                },
+              ],
             },
             { type: "line_break" },
-            { type: "action", block: false, minRole: 10, action_name: "Save" }
-          ]
+            { type: "action", block: false, minRole: 10, action_name: "Save" },
+          ],
         },
         columns: [
           { type: "Field", fieldview: "edit", field_name: "description" },
-          { type: "Action", minRole: 10, action_name: "Save" }
+          { type: "Action", minRole: 10, action_name: "Save" },
         ],
         viewname: "EditTodo",
-        view_when_done: "List Todos"
-      }
+        view_when_done: "List Todos",
+      },
     },
     {
       name: "List Todos",
@@ -242,7 +242,7 @@ const todoPack = {
             join_field: "",
             action_name: "Delete",
             state_field: "on",
-            agg_relation: ""
+            agg_relation: "",
           },
           {
             stat: "Count",
@@ -253,7 +253,7 @@ const todoPack = {
             join_field: "",
             action_name: "Delete",
             state_field: "on",
-            agg_relation: ""
+            agg_relation: "",
           },
           {
             stat: "Count",
@@ -264,14 +264,14 @@ const todoPack = {
             join_field: "",
             action_name: "Toggle done",
             state_field: "on",
-            agg_relation: ""
-          }
+            agg_relation: "",
+          },
         ],
         viewname: "List Todos",
         default_state: { done: false, description: "" },
-        view_to_create: "EditTodo"
-      }
-    }
+        view_to_create: "EditTodo",
+      },
+    },
   ],
   tables: [
     {
@@ -283,7 +283,7 @@ const todoPack = {
           label: "Description",
           required: true,
           is_unique: false,
-          attributes: { options: "" }
+          attributes: { options: "" },
         },
         {
           name: "done",
@@ -291,14 +291,14 @@ const todoPack = {
           label: "Done",
           required: true,
           is_unique: false,
-          attributes: {}
-        }
+          attributes: {},
+        },
       ],
       min_role_read: 1,
       min_role_write: 1,
       expose_api_read: false,
-      expose_api_write: false
-    }
+      expose_api_write: false,
+    },
   ],
   pages: [
     {
@@ -308,10 +308,10 @@ const todoPack = {
       description: "Foo",
       layout: {},
       min_role: 10,
-      root_page_for_roles: ["public"]
-    }
+      root_page_for_roles: ["public"],
+    },
   ],
-  plugins: []
+  plugins: [],
 };
 
 describe("pack install", () => {
@@ -324,7 +324,7 @@ describe("pack install", () => {
     const menu = getState().getConfig("menu_items", []);
     expect(menu).toStrictEqual([
       { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
-      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 }
+      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 },
     ]);
     const pubhome = getState().getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");
@@ -340,7 +340,7 @@ describe("pack install", () => {
     const can = await can_install_pack(restOfPack);
     expect(can).toStrictEqual({
       warning:
-        "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage."
+        "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage.",
     });
   });
 });

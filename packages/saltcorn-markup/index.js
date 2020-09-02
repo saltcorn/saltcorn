@@ -23,7 +23,7 @@ const post_btn = (
 const post_delete_btn = (href, csrfToken) =>
   post_btn(href, '<i class="fas fa-trash"></i>', csrfToken, {
     btnClass: "danger",
-    small: true
+    small: true,
   });
 
 module.exports = {
@@ -33,5 +33,5 @@ module.exports = {
   link,
   post_btn,
   post_delete_btn,
-  tabs
+  tabs,
 };

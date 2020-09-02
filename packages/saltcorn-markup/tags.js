@@ -1,8 +1,8 @@
 const xss = require("xss");
 const escape = require("escape-html");
 
-const ppClasses = cs =>
-  typeof cs === "string" ? cs : !cs ? "" : cs.filter(c => c).join(" ");
+const ppClasses = (cs) =>
+  typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
 
 const ppAttrib = ([k, v]) =>
   typeof v === "boolean"
@@ -18,7 +18,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
   var attribs = " ";
 
-  const argIter = arg => {
+  const argIter = (arg) => {
     if (typeof arg === "undefined" || arg === null || arg === false) {
       //do nothing
     } else if (typeof arg === "string") {
@@ -27,9 +27,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
       if (Array.isArray(arg)) {
         arg.forEach(argIter);
       } else {
-        attribs += Object.entries(arg)
-          .map(ppAttrib)
-          .join(" ");
+        attribs += Object.entries(arg).map(ppAttrib).join(" ");
       }
     } else body += arg;
   };
@@ -39,18 +37,16 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
     ? `<${tnm}${attribs}>${body}</${tnm}>`
     : `<${tnm}${attribs} />`;
 };
-const input = kvs => {
-  const attribs = Object.entries(kvs)
-    .map(ppAttrib)
-    .join(" ");
+const input = (kvs) => {
+  const attribs = Object.entries(kvs).map(ppAttrib).join(" ");
   return `<input ${attribs}>`;
 };
 
-const domReady = js =>
+const domReady = (js) =>
   `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
 
-const text = t => (t === 0 ? "0" : xss(t));
-const text_attr = t => (t === 0 ? "0" : escape(t));
+const text = (t) => (t === 0 ? "0" : xss(t));
+const text_attr = (t) => (t === 0 ? "0" : escape(t));
 
 const nbsp = "&nbsp;";
 module.exports = {
@@ -96,5 +92,5 @@ module.exports = {
   text,
   text_attr,
   nbsp,
-  mkTag
+  mkTag,
 };

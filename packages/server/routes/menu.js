@@ -16,7 +16,7 @@ const {
   setConfig,
   getAllConfigOrDefaults,
   deleteConfig,
-  configTypes
+  configTypes,
 } = require("@saltcorn/data/models/config");
 
 const router = new Router();
@@ -29,7 +29,7 @@ const menuForm = async () => {
   );
   const images = [
     { label: "None", value: 0 },
-    ...imageFiles.map(f => ({ label: f.filename, value: f.id }))
+    ...imageFiles.map((f) => ({ label: f.filename, value: f.id })),
   ];
   const views = await View.find({});
   const pages = await Page.find({});
@@ -41,13 +41,13 @@ const menuForm = async () => {
       {
         name: "site_name",
         label: "Site name",
-        input_type: "text"
+        input_type: "text",
       },
       {
         name: "site_logo_id",
         label: "Site logo",
         input_type: "select",
-        options: images
+        options: images,
       },
       new FieldRepeat({
         name: "menu_items",
@@ -58,43 +58,43 @@ const menuForm = async () => {
             input_type: "select",
             class: "menutype",
             required: true,
-            options: ["View", "Page", "Link"]
+            options: ["View", "Page", "Link"],
           },
           {
             name: "label",
             label: "Text label",
             input_type: "text",
-            required: true
+            required: true,
           },
           {
             name: "min_role",
             label: "Minimum role",
             input_type: "select",
-            options: roles.map(r => ({ label: r.role, value: r.id }))
+            options: roles.map((r) => ({ label: r.role, value: r.id })),
           },
           {
             name: "url",
             label: "URL",
             input_type: "text",
-            showIf: { ".menutype": "Link" }
+            showIf: { ".menutype": "Link" },
           },
           {
             name: "pagename",
             label: "Page",
             input_type: "select",
-            options: pages.map(r => r.name),
-            showIf: { ".menutype": "Page" }
+            options: pages.map((r) => r.name),
+            showIf: { ".menutype": "Page" },
           },
           {
             name: "viewname",
             label: "Views",
             input_type: "select",
-            options: views.map(r => r.name),
-            showIf: { ".menutype": "View" }
-          }
-        ]
-      })
-    ]
+            options: views.map((r) => r.name),
+            showIf: { ".menutype": "View" },
+          },
+        ],
+      }),
+    ],
   });
 };
 
@@ -113,14 +113,14 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Menu" }]
+          crumbs: [{ text: "Settings" }, { text: "Menu" }],
         },
         {
           type: "card",
           title: `Menu editor`,
-          contents: renderForm(form, req.csrfToken())
-        }
-      ]
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -138,14 +138,14 @@ router.post(
         above: [
           {
             type: "breadcrumbs",
-            crumbs: [{ text: "Settings" }, { text: "Menu" }]
+            crumbs: [{ text: "Settings" }, { text: "Menu" }],
           },
           {
             type: "card",
             title: `Menu editor`,
-            contents: renderForm(form, req.csrfToken())
-          }
-        ]
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
       });
     else {
       await getState().setConfig("site_name", valres.success.site_name);

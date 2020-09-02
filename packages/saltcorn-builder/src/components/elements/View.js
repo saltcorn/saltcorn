@@ -5,16 +5,16 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const View = ({ name, view, state }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
-  return <div ref={dom => connect(drag(dom))}>[{view}]</div>;
+  return <div ref={(dom) => connect(drag(dom))}>[{view}]</div>;
 };
 
 export const ViewSettings = () => {
-  const { setProp, name, view, state } = useNode(node => ({
+  const { setProp, name, view, state } = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
-    state: node.data.props.state
+    state: node.data.props.state,
   }));
   const options = useContext(optionsCtx);
   //console.log(options)
@@ -24,7 +24,7 @@ export const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
-          onChange={e => setProp(prop => (prop.view = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
           {options.views.map((f, ix) => (
             <option key={ix} value={f.name}>
@@ -38,7 +38,7 @@ export const ViewSettings = () => {
           <label>State</label>
           <select
             value={state}
-            onChange={e => setProp(prop => (prop.state = e.target.value))}
+            onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
           >
             <option value="shared">Shared</option>
             <option value="fixed">Fixed</option>
@@ -51,6 +51,6 @@ export const ViewSettings = () => {
 
 View.craft = {
   related: {
-    settings: ViewSettings
-  }
+    settings: ViewSettings,
+  },
 };

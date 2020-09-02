@@ -1,6 +1,6 @@
 //https://stackoverflow.com/a/698386
-jQuery.fn.swapWith = function(to) {
-  return this.each(function() {
+jQuery.fn.swapWith = function (to) {
+  return this.each(function () {
     var copy_to = $(to).clone(true);
     var copy_from = $(this).clone(true);
     $(to).replaceWith(copy_from);
@@ -21,41 +21,36 @@ function add_repeater(nm) {
   var e = es.first();
   var newix = es.length;
   var newe = $(e).clone();
-  newe.find("[name]").each(function(ix, element) {
+  newe.find("[name]").each(function (ix, element) {
     var newnm = element.name.replace("_0", "_" + newix);
     var newid = element.id.replace("_0", "_" + newix);
-    $(element)
-      .attr("name", newnm)
-      .attr("id", newid);
+    $(element).attr("name", newnm).attr("id", newid);
   });
   newe.appendTo($("div.repeats-" + nm));
 }
 // "e.closest('.form-namespace').find('.coltype').val()==='Field';"
 function apply_showif() {
-  $("[data-show-if]").each(function(ix, element) {
+  $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     var to_show = new Function("e", "return " + e.attr("data-show-if"));
     if (to_show(e)) e.show();
     else e.hide();
   });
-  $("[data-calc-options]").each(function(ix, element) {
+  $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
     var data = JSON.parse(decodeURIComponent(e.attr("data-calc-options")));
 
-    var val = e
-      .closest(".form-namespace")
-      .find(data[0])
-      .val();
+    var val = e.closest(".form-namespace").find(data[0]).val();
 
     var options = data[1][val];
     var current = e.attr("data-selected");
     //console.log(val, options, current,data)
     e.empty();
-    (options || []).forEach(o => {
+    (options || []).forEach((o) => {
       if (current === o) e.append($("<option selected>" + o + "</option>"));
       else e.append($("<option>" + o + "</option>"));
     });
-    e.change(function(ec) {
+    e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
     });
   });
@@ -65,7 +60,7 @@ function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
   var ix = myrep.index();
   var parent = myrep.parent();
-  parent.children().each(function(childix, element) {
+  parent.children().each(function (childix, element) {
     if (childix > ix) {
       reindex(element, childix, childix - 1);
     }
@@ -107,7 +102,7 @@ function rep_down(e) {
   }
 }
 
-$(function() {
+$(function () {
   $("form").change(apply_showif);
   apply_showif();
 });
@@ -179,10 +174,10 @@ function view_post(viewname, route, data, onDone) {
     dataType: "json",
     type: "POST",
     headers: {
-      "CSRF-Token": _sc_globalCsrf
+      "CSRF-Token": _sc_globalCsrf,
     },
     contentType: "application/json",
-    data: JSON.stringify(data)
+    data: JSON.stringify(data),
   }).done(onDone);
 }
 

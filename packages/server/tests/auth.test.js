@@ -7,7 +7,7 @@ const {
   getAdminLoginCookie,
   toRedirect,
   toInclude,
-  toSucceed
+  toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -16,16 +16,12 @@ afterAll(db.close);
 describe("Public auth Endpoints", () => {
   it("should show login", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/auth/login/")
-      .expect(toSucceed());
+    await request(app).get("/auth/login/").expect(toSucceed());
   });
 
   it("should show signup", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/auth/signup/")
-      .expect(toSucceed());
+    await request(app).get("/auth/signup/").expect(toSucceed());
   });
 
   it("should allow logout for unauth user", async () => {
@@ -45,9 +41,7 @@ describe("login process", () => {
   it("should say Logout when logged in", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
-    await request(app)
-      .get("/")
-      .set("Cookie", loginCookie);
+    await request(app).get("/").set("Cookie", loginCookie);
 
     expect(toInclude("Logout"));
   });

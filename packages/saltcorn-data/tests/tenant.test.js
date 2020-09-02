@@ -3,13 +3,13 @@ const {
   getState,
   init_multi_tenant,
   create_tenant,
-  restart_tenant
+  restart_tenant,
 } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const {
   createTenant,
   deleteTenant,
-  getAllTenants
+  getAllTenants,
 } = require("../models/tenant");
 
 afterAll(db.close);

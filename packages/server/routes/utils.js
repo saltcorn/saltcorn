@@ -45,9 +45,9 @@ const setTenant = (req, res, next) => {
     next();
   }
 };
-const ensure_final_slash = s => (s.endsWith("/") ? s : s + "/");
+const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
 
-const get_base_url = req => {
+const get_base_url = (req) => {
   const cfg = getState().getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
 
@@ -60,14 +60,14 @@ const get_base_url = req => {
   return `${req.protocol}://${req.hostname}${ports}/`;
 };
 
-const csrfField = req =>
+const csrfField = (req) =>
   input({
     type: "hidden",
     name: "_csrf",
-    value: req.csrfToken ? req.csrfToken() : req
+    value: req.csrfToken ? req.csrfToken() : req,
   });
 
-const error_catcher = fn => (request, response, next) => {
+const error_catcher = (fn) => (request, response, next) => {
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 
@@ -78,5 +78,5 @@ module.exports = {
   isAdmin,
   setTenant,
   get_base_url,
-  error_catcher
+  error_catcher,
 };

@@ -11,10 +11,10 @@ const { is_pack, is_plugin } = require("../contracts");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
-const table_pack = contract(pack_fun, async name => {
+const table_pack = contract(pack_fun, async (name) => {
   const table = await Table.findOne({ name });
   const fields = await table.getFields();
-  const strip_ids = o => {
+  const strip_ids = (o) => {
     delete o.id;
     delete o.table_id;
     return o;
@@ -26,11 +26,11 @@ const table_pack = contract(pack_fun, async name => {
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
     versioned: table.versioned,
-    fields: fields.map(f => strip_ids(f.toJson))
+    fields: fields.map((f) => strip_ids(f.toJson)),
   };
 });
 
-const view_pack = contract(pack_fun, async name => {
+const view_pack = contract(pack_fun, async (name) => {
   const view = await View.findOne({ name });
   const table = await Table.findOne({ id: view.table_id });
 
@@ -41,21 +41,21 @@ const view_pack = contract(pack_fun, async name => {
     min_role: view.min_role,
     on_root_page: view.on_root_page,
     table: table.name,
-    menu_label: view.menu_label
+    menu_label: view.menu_label,
   };
 });
 
-const plugin_pack = contract(pack_fun, async name => {
+const plugin_pack = contract(pack_fun, async (name) => {
   const Plugin = require("./plugin");
   const plugin = await Plugin.findOne({ name });
 
   return {
     name: plugin.name,
     source: plugin.source,
-    location: plugin.location
+    location: plugin.location,
   };
 });
-const page_pack = contract(pack_fun, async name => {
+const page_pack = contract(pack_fun, async (name) => {
   const page = await Page.findOne({ name });
   const root_page_for_roles = await page.is_root_page_for_roles();
   return {
@@ -66,7 +66,7 @@ const page_pack = contract(pack_fun, async name => {
     layout: page.layout,
     fixed_states: page.fixed_states,
     menu_label: page.menu_label,
-    root_page_for_roles
+    root_page_for_roles,
   };
 });
 
@@ -80,35 +80,35 @@ const can_install_pack = contract(
       )
     )
   ),
-  async pack => {
+  async (pack) => {
     const warns = [];
-    const allTables = (await Table.find()).map(t =>
+    const allTables = (await Table.find()).map((t) =>
       db.sqlsanitize(t.name.toLowerCase())
     );
-    const allViews = (await View.find()).map(t => t.name);
-    const allPages = (await Page.find()).map(t => t.name);
-    const packTables = (pack.tables || []).map(t =>
+    const allViews = (await View.find()).map((t) => t.name);
+    const allPages = (await Page.find()).map((t) => t.name);
+    const packTables = (pack.tables || []).map((t) =>
       db.sqlsanitize(t.name.toLowerCase())
     );
-    const matchTables = allTables.filter(dbt =>
-      packTables.some(pt => pt === dbt)
+    const matchTables = allTables.filter((dbt) =>
+      packTables.some((pt) => pt === dbt)
     );
-    const matchViews = allViews.filter(dbt =>
-      (pack.views || []).some(pt => pt.name === dbt)
+    const matchViews = allViews.filter((dbt) =>
+      (pack.views || []).some((pt) => pt.name === dbt)
     );
-    const matchPages = allPages.filter(dbt =>
-      (pack.pages || []).some(pt => pt.name === dbt)
+    const matchPages = allPages.filter((dbt) =>
+      (pack.pages || []).some((pt) => pt.name === dbt)
     );
 
     if (matchTables.length > 0)
       return {
-        error: "Tables already exist: " + matchTables.join()
+        error: "Tables already exist: " + matchTables.join(),
       };
 
-    matchViews.forEach(v => {
+    matchViews.forEach((v) => {
       warns.push(`Clashing view ${v}.`);
     });
-    matchPages.forEach(p => {
+    matchPages.forEach((p) => {
       warns.push(`Clashing page ${p}.`);
     });
     if (warns.length > 0) return { warning: warns.join(" ") };
@@ -121,7 +121,7 @@ const add_to_menu = contract(
     is.obj({ label: is.str, type: is.one_of(["View", "Page"]) }),
     is.promise(is.undefined)
   ),
-  async item => {
+  async (item) => {
     const current_menu = getState().getConfig("menu_items", []);
     current_menu.push(item);
     await getState().setConfig("menu_items", current_menu);
@@ -137,7 +137,7 @@ const install_pack = contract(
     const Plugin = require("./plugin");
     const existingPlugins = await Plugin.find({});
     for (const plugin of pack.plugins) {
-      if (!existingPlugins.some(ep => ep.name === plugin.name)) {
+      if (!existingPlugins.some((ep) => ep.name === plugin.name)) {
         const p = new Plugin(plugin);
         await loadAndSaveNewPlugin(p);
       }
@@ -159,7 +159,7 @@ const install_pack = contract(
           label: menu_label,
           type: "View",
           viewname: viewSpec.name,
-          min_role: viewSpec.min_role || 10
+          min_role: viewSpec.min_role || 10,
         });
     }
     for (const pageFullSpec of pack.pages || []) {
@@ -175,7 +175,7 @@ const install_pack = contract(
           label: menu_label,
           type: "Page",
           pagename: pageSpec.name,
-          min_role: pageSpec.min_role
+          min_role: pageSpec.min_role,
         });
     }
     if (name) {
@@ -187,7 +187,7 @@ const install_pack = contract(
 
 const is_stale = contract(
   is.fun(is.or(is.class("Date"), is.str), is.bool),
-  date => {
+  (date) => {
     const oneday = 60 * 60 * 24 * 1000;
     const now = new Date();
     return new Date(date) < now - oneday;
@@ -226,7 +226,7 @@ const fetch_pack_by_name = contract(
     is.str,
     is.promise(is.maybe(is.obj({ name: is.str, pack: is.obj() })))
   ),
-  async name => {
+  async (name) => {
     const response = await fetch(
       "http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
     );
@@ -245,5 +245,5 @@ module.exports = {
   fetch_available_packs,
   fetch_pack_by_name,
   is_stale,
-  can_install_pack
+  can_install_pack,
 };

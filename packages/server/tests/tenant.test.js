@@ -8,7 +8,7 @@ const {
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
 } = require("../auth/testhelp");
 
 afterAll(db.close);
@@ -25,9 +25,7 @@ describe("tenant routes", () => {
     it("shows create form", async () => {
       db.enable_multi_tenant();
       const app = await getApp({ disableCsrf: true });
-      await request(app)
-        .get("/tenant/create")
-        .expect(toInclude("subdomain"));
+      await request(app).get("/tenant/create").expect(toInclude("subdomain"));
     });
 
     it("creates tenant", async () => {

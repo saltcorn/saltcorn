@@ -61,7 +61,7 @@ const auto_test_class_async = async (cls, contr, opts) => {
   }
 };
 
-const isPromise = contr =>
+const isPromise = (contr) =>
   get_arguments_returns(contr).returns &&
   get_arguments_returns(contr).returns.contract_name === "promise";
 

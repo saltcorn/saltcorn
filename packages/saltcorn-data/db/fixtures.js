@@ -12,14 +12,14 @@ module.exports = async () => {
   getState().registerPlugin("base", require("../base-plugin"));
   const table = await Table.create("books", {
     expose_api_read: true,
-    min_role_read: 10
+    min_role_read: 10,
   });
   await Field.create({
     table,
     name: "author",
     label: "Author",
     type: "String",
-    required: true
+    required: true,
   });
   await Field.create({
     table,
@@ -27,18 +27,18 @@ module.exports = async () => {
     label: "Pages",
     type: "Integer",
     required: true,
-    attributes: { min: 0 }
+    attributes: { min: 0 },
   });
   const patients = await Table.create("patients", {
     expose_api_read: true,
-    min_role_read: 4
+    min_role_read: 4,
   });
   await Field.create({
     table: patients,
     name: "name",
     label: "Name",
     type: "String",
-    required: true
+    required: true,
   });
   await Field.create({
     table: patients,
@@ -47,7 +47,7 @@ module.exports = async () => {
     type: "Key",
     reftable: table,
     required: false,
-    attributes: { summary_field: "author" }
+    attributes: { summary_field: "author" },
   });
   await Field.create({
     table: patients,
@@ -55,7 +55,7 @@ module.exports = async () => {
     label: "Parent",
     type: "Key",
     reftable: patients,
-    required: false
+    required: false,
   });
   await View.create({
     table_id: table.id,
@@ -70,12 +70,12 @@ module.exports = async () => {
           type: "Aggregation",
           agg_relation: "patients.favbook",
           agg_field: "name",
-          stat: "Count"
-        }
-      ]
+          stat: "Count",
+        },
+      ],
     },
     min_role: 10,
-    on_root_page: true
+    on_root_page: true,
   });
   await View.create({
     table_id: table.id,
@@ -90,15 +90,15 @@ module.exports = async () => {
           type: "Aggregation",
           agg_relation: "patients.favbook",
           agg_field: "name",
-          stat: "Count"
-        }
+          stat: "Count",
+        },
       ],
       layout: {
-        above: [{ type: "field", fieldview: "show", field_name: "author" }]
-      }
+        above: [{ type: "field", fieldview: "show", field_name: "author" }],
+      },
     },
     min_role: 10,
-    on_root_page: true
+    on_root_page: true,
   });
   await View.create({
     table_id: table.id,
@@ -107,14 +107,14 @@ module.exports = async () => {
     configuration: {
       columns: [{ type: "Field", field_name: "author" }],
       layout: {
-        above: [{ type: "field", fieldview: "edit", field_name: "author" }]
+        above: [{ type: "field", fieldview: "edit", field_name: "author" }],
       },
       fixed: {
-        pages: 678
-      }
+        pages: 678,
+      },
     },
     min_role: 10,
-    on_root_page: true
+    on_root_page: true,
   });
   await View.create({
     table_id: patients.id,
@@ -127,11 +127,11 @@ module.exports = async () => {
         { type: "Field", field_name: "parent" },
         { type: "Field", field_name: "favbook" },
         { type: "JoinField", join_field: "favbook.author" },
-        { type: "JoinField", join_field: "favbook.pages" }
-      ]
+        { type: "JoinField", join_field: "favbook.pages" },
+      ],
     },
     min_role: 8,
-    on_root_page: true
+    on_root_page: true,
   });
   const readings = await Table.create("readings");
   await Field.create({
@@ -139,7 +139,7 @@ module.exports = async () => {
     name: "temperature",
     label: "Temperature",
     type: "Integer",
-    required: true
+    required: true,
   });
   await Field.create({
     table: readings,
@@ -147,53 +147,53 @@ module.exports = async () => {
     label: "Patient",
     type: "Key",
     reftable: patients,
-    required: true
+    required: true,
   });
   await Field.create({
     table: readings,
     name: "normalised",
     label: "Normalised",
-    type: "Bool"
+    type: "Bool",
   });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
     name: "Kirk Douglas",
-    favbook: 1
+    favbook: 1,
   });
   const michael_id = await db.insert("patients", {
     name: "Michael Douglas",
     favbook: 2,
-    parent: kirk_id
+    parent: kirk_id,
   });
   await db.insert("readings", {
     temperature: 37,
     patient_id: kirk_id,
-    normalised: true
+    normalised: true,
   });
   await db.insert("readings", {
     temperature: 39,
     patient_id: kirk_id,
-    normalised: false
+    normalised: false,
   });
   await db.insert("readings", {
     temperature: 37,
     patient_id: michael_id,
-    normalised: false
+    normalised: false,
   });
   await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
   await User.create({
     email: "staff@foo.com",
     password: "secret",
-    role_id: 4
+    role_id: 4,
   });
   await User.create({
     email: "user@foo.com",
     password: "secret",
-    role_id: 8
+    role_id: 8,
   });
   await File.ensure_file_store();
-  const mv = async fnm => {
+  const mv = async (fnm) => {
     await fs.writeFile(fnm, "cecinestpasunpng");
   };
   await File.from_req_files(
@@ -212,7 +212,7 @@ module.exports = async () => {
           type: "blank",
           block: false,
           contents: "Hello world",
-          textStyle: ""
+          textStyle: "",
         },
         { type: "line_break" },
         { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
@@ -221,7 +221,7 @@ module.exports = async () => {
           text: "Click here",
           type: "link",
           block: false,
-          textStyle: ""
+          textStyle: "",
         },
         {
           type: "card",
@@ -240,9 +240,9 @@ module.exports = async () => {
                         type: "blank",
                         block: false,
                         contents: "Hello world",
-                        textStyle: ""
-                      }
-                    ]
+                        textStyle: "",
+                      },
+                    ],
                   },
                   {
                     above: [
@@ -251,17 +251,17 @@ module.exports = async () => {
                         type: "blank",
                         block: false,
                         contents: "Bye bye",
-                        textStyle: ""
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ]
+                        textStyle: "",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
     },
-    fixed_states: {}
+    fixed_states: {},
   });
 };

@@ -21,17 +21,17 @@ const manager = new PluginManager({
     "@saltcorn/data/models/view": require("@saltcorn/data/models/view"),
     "@saltcorn/data/models/page": require("@saltcorn/data/models/page"),
     "@saltcorn/data/models/file": require("@saltcorn/data/models/file"),
-    "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow")
-  }
+    "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
+  },
 });
 
-const loadPlugin = async plugin => {
+const loadPlugin = async (plugin) => {
   const { plugin_module } = await requirePlugin(plugin);
   getState().registerPlugin(plugin.name, plugin_module, plugin.configuration);
 };
 
 const requirePlugin = async (plugin, force) => {
-  const installed_plugins = (await manager.list()).map(p => p.name);
+  const installed_plugins = (await manager.list()).map((p) => p.name);
   if (
     ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(plugin.location)
   ) {
@@ -81,5 +81,5 @@ module.exports = {
   loadAndSaveNewPlugin,
   loadAllPlugins,
   loadPlugin,
-  requirePlugin
+  requirePlugin,
 };

@@ -26,7 +26,7 @@ function sql_log(sql, vs) {
 function query(sql, params) {
   sql_log(sql, params);
   return new Promise((resolve, reject) => {
-    sqliteDatabase.all(sql, params, function(err, rows) {
+    sqliteDatabase.all(sql, params, function (err, rows) {
       if (err) {
         reject(err);
       } else {
@@ -36,7 +36,7 @@ function query(sql, params) {
   });
 }
 
-const changeConnection = async connObj => {
+const changeConnection = async (connObj) => {
   await sqliteDatabase.close();
   current_filepath = connObj.sqlite_path;
   sqliteDatabase = new sqlite3.Database(current_filepath);
@@ -135,5 +135,5 @@ module.exports = {
   close,
   drop_reset_schema,
   update,
-  deleteWhere
+  deleteWhere,
 };

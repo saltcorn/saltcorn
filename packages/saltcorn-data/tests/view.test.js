@@ -62,7 +62,7 @@ describe("View", () => {
   });
   it("should find", async () => {
     const link_views = await View.find({
-      table_id: 1
+      table_id: 1,
     });
     expect(link_views.length).toBe(3);
   });
@@ -79,7 +79,7 @@ describe("View", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: true
+      on_root_page: true,
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
@@ -101,7 +101,7 @@ describe("View with routes", () => {
       },
       json(h) {
         json = h;
-      }
+      },
     };
     const v = await View.create({
       table_id: 1,
@@ -109,7 +109,7 @@ describe("View with routes", () => {
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 10,
-      on_root_page: true
+      on_root_page: true,
     });
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
@@ -138,19 +138,19 @@ describe("nested views", () => {
                 {
                   above: [
                     null,
-                    { type: "field", fieldview: "show", field_name: "pages" }
-                  ]
-                }
-              ]
+                    { type: "field", fieldview: "show", field_name: "pages" },
+                  ],
+                },
+              ],
             },
-            { type: "line_break" }
-          ]
+            { type: "line_break" },
+          ],
         },
         columns: [{ type: "Field", fieldview: "show", field_name: "pages" }],
-        viewname: "small"
+        viewname: "small",
       },
       min_role: 10,
-      on_root_page: false
+      on_root_page: false,
     });
     const medium = await View.create({
       table_id: 1,
@@ -170,23 +170,23 @@ describe("nested views", () => {
                     {
                       type: "field",
                       fieldview: "as_text",
-                      field_name: "author"
-                    }
-                  ]
-                }
-              ]
+                      field_name: "author",
+                    },
+                  ],
+                },
+              ],
             },
             { type: "line_break" },
-            { name: "64063e", type: "view", view: "small", state: "shared" }
-          ]
+            { name: "64063e", type: "view", view: "small", state: "shared" },
+          ],
         },
         columns: [
-          { type: "Field", fieldview: "as_text", field_name: "author" }
+          { type: "Field", fieldview: "as_text", field_name: "author" },
         ],
-        viewname: "medium"
+        viewname: "medium",
       },
       min_role: 10,
-      on_root_page: false
+      on_root_page: false,
     });
     const res = await medium.run({ id: 2 }, mockReqRes);
 
@@ -211,10 +211,10 @@ describe("nested views", () => {
         descending: false,
         order_field: "author",
         view_to_create: "",
-        create_view_display: "Link"
+        create_view_display: "Link",
       },
       min_role: 10,
-      on_root_page: false
+      on_root_page: false,
     });
     const res = await large.run({}, mockReqRes);
 

@@ -5,7 +5,7 @@ class FieldRepeat {
   constructor(o) {
     this.label = o.label || o.name;
     this.name = o.name;
-    this.fields = o.fields.map(f =>
+    this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.isRepeat = true;
@@ -29,7 +29,7 @@ class FieldRepeat {
     var has_any = false;
     var res = {};
 
-    this.fields.forEach(f => {
+    this.fields.forEach((f) => {
       const fval = whole_rec[`${f.name}_${ix}`];
       if (typeof fval !== "undefined") {
         has_any = true;
@@ -51,13 +51,13 @@ FieldRepeat.contract = {
     name: is.str,
     label: is.str,
     fields: is.array(is.class("Field")),
-    isRepeat: is.eq(true)
+    isRepeat: is.eq(true),
   },
   methods: {
     validate: is.fun(
       is.obj(),
       is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
-    )
-  }
+    ),
+  },
 };
 module.exports = FieldRepeat;

@@ -25,7 +25,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Admin" }]
+          crumbs: [{ text: "Settings" }, { text: "Admin" }],
         },
         {
           type: "card",
@@ -43,7 +43,7 @@ router.get(
               {
                 method: "post",
                 action: `/admin/restore`,
-                encType: "multipart/form-data"
+                encType: "multipart/form-data",
               },
               input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
               label(
@@ -58,12 +58,12 @@ router.get(
                 name: "file",
                 type: "file",
                 accept: "application/zip,.zip",
-                onchange: "this.form.submit();"
+                onchange: "this.form.submit();",
               })
             )
-          )
-        }
-      ]
+          ),
+        },
+      ],
     });
   })
 );
@@ -92,8 +92,8 @@ router.post(
     res.type("application/zip");
     res.attachment(fileName);
     var file = fs.createReadStream(fileName);
-    file.on("end", function() {
-      fs.unlink(fileName, function() {});
+    file.on("end", function () {
+      fs.unlink(fileName, function () {});
     });
     file.pipe(res);
   })
@@ -106,12 +106,12 @@ router.post(
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
-    const err = await restore(newPath, p =>
+    const err = await restore(newPath, (p) =>
       load_plugins.loadAndSaveNewPlugin(p)
     );
     if (err) req.flash("error", err);
     else req.flash("success", "Successfully restored backup");
-    fs.unlink(newPath, function() {});
+    fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
   })
 );

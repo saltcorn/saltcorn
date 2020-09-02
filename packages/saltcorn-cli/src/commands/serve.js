@@ -16,7 +16,7 @@ ServeCommand.description = `Start the Saltcorn server`;
 
 ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
-  verbose: flags.boolean({ char: "v", description: "Verbose" })
+  verbose: flags.boolean({ char: "v", description: "Verbose" }),
 };
 
 module.exports = ServeCommand;

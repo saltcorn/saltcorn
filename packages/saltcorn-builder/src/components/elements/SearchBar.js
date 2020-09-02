@@ -3,10 +3,10 @@ import { useNode } from "@craftjs/core";
 
 export const SearchBar = ({}) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
-    <div className="input-group" ref={dom => connect(drag(dom))}>
+    <div className="input-group" ref={(dom) => connect(drag(dom))}>
       <input
         type="text"
         className="form-control bg-light"

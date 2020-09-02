@@ -11,14 +11,14 @@ const {
   renderForm,
   link,
   post_btn,
-  post_delete_btn
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const {
   getConfig,
   setConfig,
   getAllConfigOrDefaults,
   deleteConfig,
-  configTypes
+  configTypes,
 } = require("@saltcorn/data/models/config");
 
 const router = new Router();
@@ -31,15 +31,15 @@ const wrap = (cardTitle, response, lastBc) => ({
       crumbs: [
         { text: "Settings" },
         { text: "Configuration", href: lastBc && "/config" },
-        ...(lastBc ? [lastBc] : [])
-      ]
+        ...(lastBc ? [lastBc] : []),
+      ],
     },
     {
       type: "card",
       title: cardTitle,
-      contents: response
-    }
-  ]
+      contents: response,
+    },
+  ],
 });
 //create -- new
 router.get(
@@ -49,16 +49,16 @@ router.get(
   error_catcher(async (req, res) => {
     const cfgs = await getAllConfigOrDefaults();
     const files = await File.find({ min_role_read: 10 });
-    const canEdit = key =>
+    const canEdit = (key) =>
       getState().types[configTypes[key].type] ||
       configTypes[key].type === "File";
-    const hideValue = key =>
+    const hideValue = (key) =>
       configTypes[key] ? configTypes[key].type === "hidden" : true;
-    const showFile = r => {
-      const file = files.find(f => f.id == r.value);
+    const showFile = (r) => {
+      const file = files.find((f) => f.id == r.value);
       return file ? file.filename : "Unknown file";
     };
-    const showValue = r =>
+    const showValue = (r) =>
       hideValue(r.key)
         ? "..."
         : configTypes[r.key].type === "File"
@@ -66,20 +66,21 @@ router.get(
         : JSON.stringify(r.value);
     const configTable = mkTable(
       [
-        { label: "Key", key: r => r.label || r.key },
+        { label: "Key", key: (r) => r.label || r.key },
         {
           label: "Value",
-          key: showValue
+          key: showValue,
         },
         {
           label: "Edit",
-          key: r =>
-            canEdit(r.key) ? link(`/config/edit/${r.key}`, "Edit") : ""
+          key: (r) =>
+            canEdit(r.key) ? link(`/config/edit/${r.key}`, "Edit") : "",
         },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/config/delete/${r.key}`, req.csrfToken())
-        }
+          key: (r) =>
+            post_delete_btn(`/config/delete/${r.key}`, req.csrfToken()),
+        },
       ],
       Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))
     );
@@ -96,10 +97,10 @@ const formForKey = async (key, value) => {
         label: configTypes[key].label || key,
         type: configTypes[key].type,
         sublabel: configTypes[key].sublabel,
-        attributes: configTypes[key].attributes
-      }
+        attributes: configTypes[key].attributes,
+      },
     ],
-    ...(typeof value !== "undefined" && { values: { [key]: value } })
+    ...(typeof value !== "undefined" && { values: { [key]: value } }),
   });
   await form.fill_fkey_options();
   return form;
@@ -116,7 +117,7 @@ router.get(
     res.sendWrap(
       `Edit configuration key ${key}`,
       wrap(`Edit configuration key ${key}`, renderForm(form, req.csrfToken()), {
-        text: key
+        text: key,
       })
     );
   })

@@ -56,7 +56,7 @@ describe("Page", () => {
             type: "blank",
             block: false,
             contents: "Hello world",
-            textStyle: ""
+            textStyle: "",
           },
           { type: "line_break" },
           { type: "blank", isHTML: true, contents: "<h1> foo</h1>" },
@@ -65,7 +65,7 @@ describe("Page", () => {
             text: "Click here",
             type: "link",
             block: false,
-            textStyle: ""
+            textStyle: "",
           },
           {
             type: "card",
@@ -84,15 +84,15 @@ describe("Page", () => {
                           type: "blank",
                           block: false,
                           contents: "Hello world",
-                          textStyle: ""
+                          textStyle: "",
                         },
                         {
                           type: "view",
                           view: "authorlist",
                           name: "v46748",
-                          state: "fixed"
-                        }
-                      ]
+                          state: "fixed",
+                        },
+                      ],
                     },
                     {
                       above: [
@@ -101,24 +101,24 @@ describe("Page", () => {
                           type: "blank",
                           block: false,
                           contents: "Bye bye",
-                          textStyle: ""
+                          textStyle: "",
                         },
                         {
                           type: "view",
                           view: "authorlist",
                           name: "v46747",
-                          state: "shared"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
+                          state: "shared",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
       },
-      fixed_states: { v46748: { author: "Melville" } }
+      fixed_states: { v46748: { author: "Melville" } },
     });
 
     const cs = await Page.findOne({ name: "foo" });
@@ -167,17 +167,17 @@ describe("User", () => {
   it("should authenticate", async () => {
     const u = await User.authenticate({
       email: "foo@bar.com",
-      password: "secret"
+      password: "secret",
     });
     expect(u.email).toBe("foo@bar.com");
     const u0 = await User.authenticate({
       email: "foo@bar.com",
-      password: "secrat"
+      password: "secrat",
     });
     expect(u0).toBe(false);
     const u00 = await User.authenticate({
       email: "foo@baz.com",
-      password: "secret"
+      password: "secret",
     });
     expect(u00).toBe(false);
   });
@@ -196,9 +196,9 @@ describe("Form new", () => {
         new Field({
           name: "summary_field",
           label: "Summary field",
-          input_type: "text"
-        })
-      ]
+          input_type: "text",
+        }),
+      ],
     });
     expect(form.fields[0].constructor.name).toBe(Field.name);
   });
@@ -209,9 +209,9 @@ describe("Form new", () => {
         {
           name: "summary_field",
           label: "Summary field",
-          input_type: "text"
-        }
-      ]
+          input_type: "text",
+        },
+      ],
     });
     expect(form.fields[0].constructor.name).toBe(Field.name);
   });

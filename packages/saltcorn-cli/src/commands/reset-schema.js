@@ -26,7 +26,7 @@ This will delete all existing information
 `;
 
 ResetCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force" })
+  force: flags.boolean({ char: "f", description: "force" }),
 };
 
 module.exports = ResetCommand;

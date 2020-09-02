@@ -3,7 +3,7 @@ const CrawlState = require("./crawl-state");
 const seedrandom = require("seedrandom");
 const { is } = require("contractis");
 
-const toSucceed = state => res => {
+const toSucceed = (state) => (res) => {
   if (res.statusCode >= 400) {
     console.log(res.text);
     console.log(state.log.slice(Math.max(state.log.length - 3, 0)));
@@ -11,7 +11,7 @@ const toSucceed = state => res => {
   }
 };
 
-const oneOf = vs => vs[Math.floor(Math.random() * vs.length)];
+const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
 const run = async (app, options = {}) => {
   const startAt = options.startAt || "/";
@@ -19,7 +19,7 @@ const run = async (app, options = {}) => {
   return await get_link(startAt, state);
 };
 
-const isLocalURL = url =>
+const isLocalURL = (url) =>
   url &&
   !url.startsWith("javascript:") &&
   new URL(url, "http://my.local/").origin === "http://my.local";
@@ -36,7 +36,7 @@ const get_link = async (url, state) => {
   return await processResponse(res, url, state);
 };
 
-const genRandom = input => {
+const genRandom = (input) => {
   //console.log(input)
   switch (input.attribs.type) {
     case "hidden":
@@ -59,8 +59,8 @@ const genRandom = input => {
   }
 };
 
-const genRandomSelect = input => {
-  const options = input.children.map(e => e.attribs.value);
+const genRandomSelect = (input) => {
+  const options = input.children.map((e) => e.attribs.value);
   return oneOf(options);
 };
 
@@ -80,10 +80,7 @@ const submit_form = async (form, state) => {
   }
 
   if (method === "post") {
-    var req = state
-      .req()
-      .post(action)
-      .set("Cookie", state.cookie);
+    var req = state.req().post(action).set("Cookie", state.cookie);
     for (const [k, v] of Object.entries(body)) {
       const oldreq = req;
       if (typeof v !== "undefined")
@@ -110,7 +107,7 @@ const submit_form = async (form, state) => {
   }
 };
 
-const rndElem = selection => {
+const rndElem = (selection) => {
   var random = Math.floor(Math.random() * selection.length);
   return selection.eq(random);
 };

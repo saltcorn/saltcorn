@@ -10,7 +10,7 @@ const {
   span,
   script,
   input,
-  form
+  form,
 } = require("./tags");
 const { contract, is } = require("contractis");
 
@@ -26,7 +26,7 @@ module.exports = (
       input({
         type: "hidden",
         name: "contextEnc",
-        value: encodeURIComponent(JSON.stringify(context))
+        value: encodeURIComponent(JSON.stringify(context)),
       }),
       input({ type: "hidden", name: "stepName", value: stepName }),
       input({ type: "hidden", name: "columns", value: "" }),

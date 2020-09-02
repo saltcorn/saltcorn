@@ -4,13 +4,13 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const Text = ({ text, block, textStyle }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
     <span
       className={`${textStyle} is-text`}
       {...blockProps(block)}
-      ref={dom => connect(drag(dom))}
+      ref={(dom) => connect(drag(dom))}
     >
       {text}
     </span>
@@ -18,10 +18,10 @@ export const Text = ({ text, block, textStyle }) => {
 };
 
 export const TextSettings = () => {
-  const { setProp, text, block, textStyle } = useNode(node => ({
+  const { setProp, text, block, textStyle } = useNode((node) => ({
     text: node.data.props.text,
     block: node.data.props.block,
-    textStyle: node.data.props.textStyle
+    textStyle: node.data.props.textStyle,
   }));
   return (
     <div>
@@ -30,7 +30,7 @@ export const TextSettings = () => {
         type="text"
         className="text-to-display"
         value={text}
-        onChange={e => setProp(prop => (prop.text = e.target.value))}
+        onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
       />
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
@@ -40,6 +40,6 @@ export const TextSettings = () => {
 
 Text.craft = {
   related: {
-    settings: TextSettings
-  }
+    settings: TextSettings,
+  },
 };

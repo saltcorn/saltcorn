@@ -31,7 +31,7 @@ export const ToolboxShow = () => {
     field_view_options,
     child_field_list,
     agg_field_opts,
-    views
+    views,
   } = options;
   return (
     <Fragment>
@@ -40,7 +40,7 @@ export const ToolboxShow = () => {
         <tbody>
           <tr>
             <td
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Text text="Hello world" block={false} textStyle={""} />
@@ -51,7 +51,7 @@ export const ToolboxShow = () => {
             </td>
             <td
               title="Split into columns"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <TwoSplit contents={[<Empty />, <Empty />]} />
@@ -63,7 +63,7 @@ export const ToolboxShow = () => {
           </tr>
           <tr>
             <td
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Field
@@ -83,7 +83,7 @@ export const ToolboxShow = () => {
             </td>
             <td
               title="Join field"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <JoinField
@@ -100,7 +100,7 @@ export const ToolboxShow = () => {
           <tr>
             <td
               title="Link to a view"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <ViewLink
@@ -116,7 +116,7 @@ export const ToolboxShow = () => {
             </td>
             <td
               title="Action button"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Action
@@ -131,10 +131,10 @@ export const ToolboxShow = () => {
             </td>
           </tr>
           <tr>
-            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
             <td
               title="Aggregation"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Aggregation
@@ -153,7 +153,7 @@ export const ToolboxShow = () => {
           <tr>
             <td
               title="Embed view"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <View
@@ -184,7 +184,7 @@ export const ToolboxEdit = () => {
         <tbody>
           <tr>
             <td
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Text text="Hello world" block={false} textStyle={""} />
@@ -195,7 +195,7 @@ export const ToolboxEdit = () => {
             </td>
             <td
               title="Split into columns"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <TwoSplit contents={[<Empty />, <Empty />]} />
@@ -207,7 +207,7 @@ export const ToolboxEdit = () => {
           </tr>
           <tr>
             <td
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Field
@@ -225,12 +225,12 @@ export const ToolboxEdit = () => {
             >
               Field
             </td>
-            <td ref={ref => connectors.create(ref, <LineBreak />)}>↵</td>
+            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
           </tr>
           <tr>
             <td
               title="Action button"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Action
@@ -261,7 +261,7 @@ export const ToolboxPage = () => {
         <tbody>
           <tr>
             <td
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Text text="Hello world" block={false} textStyle={""} />
@@ -272,7 +272,7 @@ export const ToolboxPage = () => {
             </td>
             <td
               title="Split into columns"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <TwoSplit contents={[<Empty />, <Empty />]} />
@@ -285,14 +285,14 @@ export const ToolboxPage = () => {
           <tr>
             <td
               title="Line break"
-              ref={ref => connectors.create(ref, <LineBreak />)}
+              ref={(ref) => connectors.create(ref, <LineBreak />)}
               style={{ fontSize: "26px" }}
             >
               ↵
             </td>
             <td
               title="HTML code"
-              ref={ref => connectors.create(ref, <HTMLCode text={""} />)}
+              ref={(ref) => connectors.create(ref, <HTMLCode text={""} />)}
             >
               <i className="fas fa-lg fa-code"></i>
             </td>
@@ -300,13 +300,15 @@ export const ToolboxPage = () => {
           <tr>
             <td
               title="Card"
-              ref={ref => connectors.create(ref, <Card contents={<Empty />} />)}
+              ref={(ref) =>
+                connectors.create(ref, <Card contents={<Empty />} />)
+              }
             >
               Card
             </td>
             <td
               title="Image"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <Image fileid={images.length > 0 ? images[0].id : 0} />
@@ -317,12 +319,12 @@ export const ToolboxPage = () => {
             </td>
           </tr>
           <tr>
-            <td title="Link" ref={ref => connectors.create(ref, <Link />)}>
+            <td title="Link" ref={(ref) => connectors.create(ref, <Link />)}>
               <i className="fas fa-lg fa-link"></i>
             </td>
             <td
               title="View"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(
                   ref,
                   <View
@@ -339,13 +341,13 @@ export const ToolboxPage = () => {
           <tr>
             <td
               title="Search bar"
-              ref={ref => connectors.create(ref, <SearchBar />)}
+              ref={(ref) => connectors.create(ref, <SearchBar />)}
             >
               <i className="fas fa-lg fa-search"></i>
             </td>
             <td
               title="Container"
-              ref={ref =>
+              ref={(ref) =>
                 connectors.create(ref, <Container contents={<Empty />} />)
               }
             >

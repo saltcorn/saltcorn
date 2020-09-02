@@ -14,10 +14,10 @@ class PluginsCommand extends Command {
     for (const domain of tenantList) {
       await db.runWithTenant(domain, async () => {
         const myplugins = await Plugin.find({});
-        myplugins.forEach(plugin => {
+        myplugins.forEach((plugin) => {
           if (
             plugin.source === "npm" &&
-            !plugins.map(p => p.location).includes(plugin.location)
+            !plugins.map((p) => p.location).includes(plugin.location)
           ) {
             plugins.push(plugin);
             console.log(plugin.location);
@@ -63,7 +63,7 @@ class PluginsCommand extends Command {
 
 PluginsCommand.flags = {
   upgrade: flags.boolean({ char: "u", description: "Upgrade" }),
-  dryRun: flags.boolean({ char: "d", description: "Upgrade dry-run" })
+  dryRun: flags.boolean({ char: "d", description: "Upgrade dry-run" }),
 };
 
 PluginsCommand.description = `List and upgrade plugins for tenants

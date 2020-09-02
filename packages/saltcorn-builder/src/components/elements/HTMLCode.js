@@ -4,18 +4,18 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const HTMLCode = ({ text }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
-    <span className="is-html-block" ref={dom => connect(drag(dom))}>
+    <span className="is-html-block" ref={(dom) => connect(drag(dom))}>
       {text}
     </span>
   );
 };
 
 export const HTMLCodeSettings = () => {
-  const { setProp, text } = useNode(node => ({
-    text: node.data.props.text
+  const { setProp, text } = useNode((node) => ({
+    text: node.data.props.text,
   }));
   return (
     <div>
@@ -24,7 +24,7 @@ export const HTMLCodeSettings = () => {
         type="text"
         className="text-to-display"
         value={text}
-        onChange={e => setProp(prop => (prop.text = e.target.value))}
+        onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
       ></textarea>
     </div>
   );
@@ -32,6 +32,6 @@ export const HTMLCodeSettings = () => {
 
 HTMLCode.craft = {
   related: {
-    settings: HTMLCodeSettings
-  }
+    settings: HTMLCodeSettings,
+  },
 };

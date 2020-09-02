@@ -7,7 +7,7 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
@@ -72,7 +72,7 @@ describe("viewedit new List", () => {
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 1,
-        viewname: "mybooklist"
+        viewname: "mybooklist",
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -97,13 +97,13 @@ describe("viewedit new List", () => {
         columns: [
           {
             type: "Field",
-            field_name: "author"
+            field_name: "author",
           },
           {
             type: "Field",
-            field_name: "pages"
-          }
-        ]
+            field_name: "pages",
+          },
+        ],
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -156,7 +156,7 @@ describe("viewedit new List with one field", () => {
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 1,
-        viewname: "mybooklist1"
+        viewname: "mybooklist1",
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -179,9 +179,9 @@ describe("viewedit new List with one field", () => {
         columns: [
           {
             type: "Field",
-            field_name: "author"
-          }
-        ]
+            field_name: "author",
+          },
+        ],
       })
     );
     const app = await getApp({ disableCsrf: true });
@@ -235,7 +235,7 @@ describe("viewedit new Show", () => {
     const ctx = encodeURIComponent(
       JSON.stringify({
         table_id: 1,
-        viewname: "mybook"
+        viewname: "mybook",
       })
     );
     const columns = [
@@ -246,11 +246,11 @@ describe("viewedit new Show", () => {
         type: "Aggregation",
         agg_relation: "patients.favbook",
         agg_field: "name",
-        stat: "Count"
-      }
+        stat: "Count",
+      },
     ];
     const layout = {
-      above: [{ type: "field", fieldview: "show", field_name: "author" }]
+      above: [{ type: "field", fieldview: "show", field_name: "author" }],
     };
     const app = await getApp({ disableCsrf: true });
     await request(app)

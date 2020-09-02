@@ -10,7 +10,7 @@ const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const {
   initial_config_all_fields,
-  calcfldViewOptions
+  calcfldViewOptions,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 const configuration_workflow = () =>
@@ -18,7 +18,7 @@ const configuration_workflow = () =>
     steps: [
       {
         name: "Layout",
-        builder: async context => {
+        builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
 
@@ -26,7 +26,7 @@ const configuration_workflow = () =>
 
           const roles = await User.get_roles();
           const actions = [
-            "Save"
+            "Save",
             //"Delete"
           ];
           return {
@@ -34,28 +34,28 @@ const configuration_workflow = () =>
             field_view_options,
             roles,
             actions,
-            mode: "edit"
+            mode: "edit",
           };
-        }
+        },
       },
       {
         name: "Fixed fields",
         contextField: "fixed",
-        onlyWhen: async context => {
+        onlyWhen: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          const in_form_fields = context.columns.map(f => f.field_name);
-          return fields.some(f => !in_form_fields.includes(f.name));
+          const in_form_fields = context.columns.map((f) => f.field_name);
+          return fields.some((f) => !in_form_fields.includes(f.name));
         },
-        form: async context => {
+        form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          const in_form_fields = context.columns.map(f => f.field_name);
+          const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
-            f => !in_form_fields.includes(f.name)
+            (f) => !in_form_fields.includes(f.name)
           );
           var formFields = [];
-          omitted_fields.forEach(f => {
+          omitted_fields.forEach((f) => {
             if (f.presets) {
               f.required = false;
             }
@@ -66,38 +66,38 @@ const configuration_workflow = () =>
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
-                  attributes: { options: Object.keys(f.presets).join() }
+                  attributes: { options: Object.keys(f.presets).join() },
                 })
               );
             }
           });
           const form = new Form({
             blurb: "These fields were missing, you can give values here",
-            fields: formFields
+            fields: formFields,
           });
           await form.fill_fkey_options();
           return form;
-        }
+        },
       },
       {
         name: "Edit options",
-        onlyWhen: async context => {
+        onlyWhen: async (context) => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               (viewrow.table_id === context.table_id ||
-                state_fields.every(sf => !sf.required))
+                state_fields.every((sf) => !sf.required))
           );
           return done_views.length > 0;
         },
-        form: async context => {
+        form: async (context) => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               (viewrow.table_id === context.table_id ||
-                state_fields.every(sf => !sf.required))
+                state_fields.every((sf) => !sf.required))
           );
-          const done_view_opts = done_views.map(v => v.name);
+          const done_view_opts = done_views.map((v) => v.name);
 
           return new Form({
             fields: [
@@ -107,41 +107,41 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: done_view_opts.join()
-                }
-              }
-            ]
+                  options: done_view_opts.join(),
+                },
+              },
+            ],
           });
-        }
-      }
-    ]
+        },
+      },
+    ],
   });
 const get_state_fields = async (table_id, viewname, { columns }) => [
   {
     name: "id",
-    type: "Integer"
-  }
+    type: "Integer",
+  },
 ];
 
 const getForm = async (table, viewname, columns, layout, id) => {
   const fields = await table.getFields();
 
   const tfields = (columns || [])
-    .map(column => {
+    .map((column) => {
       if (column.type === "Field") {
-        const f = fields.find(fld => fld.name === column.field_name);
+        const f = fields.find((fld) => fld.name === column.field_name);
         if (f) {
           f.fieldview = column.fieldview;
           return f;
         }
       }
     })
-    .filter(tf => !!tf);
+    .filter((tf) => !!tf);
 
   const form = new Form({
     action: `/view/${viewname}`,
     fields: tfields,
-    layout
+    layout,
   });
   await form.fill_fkey_options();
   if (id) form.hidden("id");
@@ -160,7 +160,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
     form.values = row;
-    const file_fields = form.fields.filter(f => f.type === "File");
+    const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
       if (row[field.name]) {
         const file = await File.findOne({ id: row[field.name] });
@@ -170,7 +170,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     form.hidden("id");
   }
   Object.entries(nonUniques).forEach(([k, v]) => {
-    const field = form.fields.find(f => f.name === k);
+    const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;
       field.input_type = "hidden";
@@ -181,11 +181,11 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
 
 const fill_presets = async (table, req, fixed) => {
   const fields = await table.getFields();
-  Object.keys(fixed || {}).forEach(k => {
+  Object.keys(fixed || {}).forEach((k) => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
-        const fld = fields.find(f => f.name === fldnm);
+        const fld = fields.find((f) => f.name === fldnm);
         fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user });
       }
       delete fixed[k];
@@ -216,7 +216,7 @@ const runPost = async (
     } else {
       row = form.values;
     }
-    const file_fields = form.fields.filter(f => f.type === "File");
+    const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
       if (req.files && req.files[field.name]) {
         const file = await File.from_req_files(
@@ -267,7 +267,7 @@ const runPost = async (
         const state_fields = await nxview.get_state_fields();
         if (
           nxview.table_id === table_id &&
-          state_fields.some(sf => sf.name === "id")
+          state_fields.some((sf) => sf.name === "id")
         )
           res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
         else res.redirect(`/view/${text(view_when_done)}`);
@@ -283,5 +283,5 @@ module.exports = {
   runPost,
   get_state_fields,
   initial_config,
-  display_state_form: false
+  display_state_form: false,
 };

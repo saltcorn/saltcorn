@@ -5,13 +5,13 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const JoinField = ({ name, block, textStyle }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
     <span
       className={textStyle}
       {...blockProps(block)}
-      ref={dom => connect(drag(dom))}
+      ref={(dom) => connect(drag(dom))}
     >
       [{name}]
     </span>
@@ -19,10 +19,10 @@ export const JoinField = ({ name, block, textStyle }) => {
 };
 
 export const JoinFieldSettings = () => {
-  const { setProp, name, block, textStyle } = useNode(node => ({
+  const { setProp, name, block, textStyle } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
-    textStyle: node.data.props.textStyle
+    textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -32,7 +32,7 @@ export const JoinFieldSettings = () => {
 
         <select
           value={name}
-          onChange={e => setProp(prop => (prop.name = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.parent_field_list.map((f, ix) => (
             <option key={ix} value={f}>
@@ -49,6 +49,6 @@ export const JoinFieldSettings = () => {
 
 JoinField.craft = {
   related: {
-    settings: JoinFieldSettings
-  }
+    settings: JoinFieldSettings,
+  },
 };

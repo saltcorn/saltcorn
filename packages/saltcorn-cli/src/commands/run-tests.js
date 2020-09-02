@@ -3,7 +3,7 @@ const { Command, flags } = require("@oclif/command");
 const { spawnSync, spawn } = require("child_process");
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 class RunTestsCommand extends Command {
@@ -11,7 +11,7 @@ class RunTestsCommand extends Command {
     const res = spawnSync(cmd, args, {
       stdio: "inherit",
       env,
-      cwd
+      cwd,
     });
     if (forever && res.status === 0)
       await this.do_test(cmd, args, env, forever, cwd);
@@ -24,7 +24,7 @@ class RunTestsCommand extends Command {
       ["serve", "-p", "2987"],
       {
         stdio: "inherit",
-        env
+        env,
       }
     );
     await sleep(2000);
@@ -91,14 +91,17 @@ class RunTestsCommand extends Command {
 }
 
 RunTestsCommand.args = [
-  { name: "package", description: "which package to run tests for" }
+  { name: "package", description: "which package to run tests for" },
 ];
 
 RunTestsCommand.description = `Run test suites`;
 
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
-  forever: flags.boolean({ char: "f", description: "Run forever till failure" })
+  forever: flags.boolean({
+    char: "f",
+    description: "Run forever till failure",
+  }),
 };
 
 module.exports = RunTestsCommand;

@@ -5,7 +5,7 @@ const {
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude
+  toNotInclude,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -69,9 +69,7 @@ describe("view show endpoint", () => {
 describe("edit view", () => {
   it("should show edit", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/view/authoredit")
-      .expect(toInclude("inputauthor"));
+    await request(app).get("/view/authoredit").expect(toInclude("inputauthor"));
   });
   it("should submit edit", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -93,7 +91,7 @@ describe("view with routes", () => {
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 8,
-      on_root_page: true
+      on_root_page: true,
     });
   });
   it("should redirect if not auth", async () => {

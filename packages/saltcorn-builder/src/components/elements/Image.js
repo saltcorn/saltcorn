@@ -5,10 +5,10 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const Image = ({ fileid, block, alt }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
-    <span {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
       {fileid === 0 ? (
         "No images Available"
       ) : (
@@ -19,10 +19,10 @@ export const Image = ({ fileid, block, alt }) => {
 };
 
 export const ImageSettings = () => {
-  const { setProp, fileid, alt, block } = useNode(node => ({
+  const { setProp, fileid, alt, block } = useNode((node) => ({
     fileid: node.data.props.name,
     alt: node.data.props.fieldview,
-    block: node.data.props.block
+    block: node.data.props.block,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -31,7 +31,7 @@ export const ImageSettings = () => {
         <label>Image</label>
         <select
           value={fileid}
-          onChange={e => setProp(prop => (prop.fileid = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.fileid = e.target.value))}
         >
           {options.images.map((f, ix) => (
             <option key={ix} value={f.id}>
@@ -44,7 +44,7 @@ export const ImageSettings = () => {
       <input
         type="text"
         value={alt}
-        onChange={e => setProp(prop => (prop.alt = e.target.value))}
+        onChange={(e) => setProp((prop) => (prop.alt = e.target.value))}
       />
       <BlockSetting block={block} setProp={setProp} />
     </div>
@@ -54,9 +54,9 @@ export const ImageSettings = () => {
 Image.craft = {
   defaultProps: {
     alt: "",
-    block: false
+    block: false,
   },
   related: {
-    settings: ImageSettings
-  }
+    settings: ImageSettings,
+  },
 };

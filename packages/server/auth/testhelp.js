@@ -4,7 +4,7 @@ const getApp = require("../app");
 const fixtures = require("@saltcorn/data/db/fixtures");
 const reset = require("@saltcorn/data/db/reset_schema");
 
-const toRedirect = loc => res => {
+const toRedirect = (loc) => (res) => {
   if (res.statusCode !== 302) {
     console.log(res.text);
     throw new Error("Expected redirect, received " + res.statusCode);
@@ -15,7 +15,7 @@ const toRedirect = loc => res => {
   }
 };
 
-const toInclude = (txt, expCode = 200) => res => {
+const toInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
     throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
@@ -27,14 +27,14 @@ const toInclude = (txt, expCode = 200) => res => {
   }
 };
 
-const toSucceed = (expCode = 200) => res => {
+const toSucceed = (expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
     throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
   }
 };
 
-const toNotInclude = (txt, expCode = 200) => res => {
+const toNotInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
     throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
@@ -91,5 +91,5 @@ module.exports = {
   toInclude,
   toNotInclude,
   toSucceed,
-  resetToFixtures
+  resetToFixtures,
 };

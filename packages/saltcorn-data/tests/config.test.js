@@ -7,7 +7,7 @@ const {
   getConfig,
   getAllConfig,
   setConfig,
-  getAllConfigOrDefaults
+  getAllConfigOrDefaults,
 } = require("../models/config");
 afterAll(db.close);
 

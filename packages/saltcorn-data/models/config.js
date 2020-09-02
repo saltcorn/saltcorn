@@ -7,7 +7,7 @@ const configTypes = {
     type: "File",
     label: "Site logo",
     default: 0,
-    attributes: { select_file_where: { min_role_read: 10 } }
+    attributes: { select_file_where: { min_role_read: 10 } },
   },
   base_url: { type: "String", label: "Base URL", default: "" },
   menu_items: { type: "hidden", label: "Menu items" },
@@ -15,12 +15,12 @@ const configTypes = {
   available_packs: { type: "hidden", label: "Available packs" },
   available_packs_fetched_at: {
     type: "Date",
-    label: "Available packs fetched"
+    label: "Available packs fetched",
   },
   available_plugins: { type: "hidden", label: "Available plugins" },
   available_plugins_fetched_at: {
     type: "Date",
-    label: "Available plugins fetched"
+    label: "Available plugins fetched",
   },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
@@ -35,9 +35,9 @@ const configTypes = {
     default: false,
     onChange(val) {
       db.set_sql_logging(val);
-    }
+    },
   },
-  development_mode: { type: "Bool", label: "Development mode", default: false }
+  development_mode: { type: "Bool", label: "Development mode", default: false },
 };
 
 const getConfig = contract(
@@ -113,7 +113,7 @@ const setConfig = contract(
 
 const deleteConfig = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async key => {
+  async (key) => {
     await db.deleteWhere("_sc_config", { key });
   }
 );
@@ -123,5 +123,5 @@ module.exports = {
   setConfig,
   getAllConfigOrDefaults,
   deleteConfig,
-  configTypes
+  configTypes,
 };

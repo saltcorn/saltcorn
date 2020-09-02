@@ -13,7 +13,7 @@ const {
   wrap,
   h,
   link,
-  post_btn
+  post_btn,
 } = require("@saltcorn/markup");
 const passport = require("passport");
 
@@ -27,12 +27,16 @@ const loginForm = () =>
         label: "E-mail",
         name: "email",
         input_type: "text",
-        validator: s => s.length < 128
+        validator: (s) => s.length < 128,
       }),
-      new Field({ label: "Password", name: "password", input_type: "password" })
+      new Field({
+        label: "Password",
+        name: "password",
+        input_type: "password",
+      }),
     ],
     action: "/auth/login",
-    submitLabel: "Login"
+    submitLabel: "Login",
   });
 
 router.get(
@@ -50,7 +54,7 @@ router.get(
 
 router.get("/logout", setTenant, (req, res) => {
   req.logout();
-  req.session.destroy(err => {
+  req.session.destroy((err) => {
     if (err) return next(err);
     req.logout();
     res.redirect("/auth/login");
@@ -104,9 +108,9 @@ router.post(
           email: u.email,
           id: u.id,
           role_id: u.role_id,
-          tenant: db.getTenantSchema()
+          tenant: db.getTenantSchema(),
         },
-        function(err) {
+        function (err) {
           if (!err) {
             res.redirect("/");
           } else {
@@ -147,9 +151,9 @@ router.post(
           email: u.email,
           id: u.id,
           role_id: u.role_id,
-          tenant: db.getTenantSchema()
+          tenant: db.getTenantSchema(),
         },
-        function(err) {
+        function (err) {
           if (!err) {
             res.redirect("/");
           } else {
@@ -171,7 +175,7 @@ router.post(
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/auth/login",
-    failureFlash: true
+    failureFlash: true,
   }),
   error_catcher(async (req, res) => {
     if (req.body.remember) {

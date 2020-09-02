@@ -8,7 +8,7 @@ const {
   toInclude,
   toNotInclude,
   toRedirect,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -87,17 +87,13 @@ describe("Table Endpoints", () => {
         "api_access=Read+only&min_role_read=10&min_role_write=1&id=" + tbl.id
       )
       .expect(toRedirect(`/table/${tbl.id}`));
-    await request(app)
-      .get(`/table/${tbl.id}`)
-      .set("Cookie", loginCookie);
+    await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
       .send("api_access=No+API&min_role_read=10&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
-    await request(app)
-      .get(`/table/${tbl.id}`)
-      .set("Cookie", loginCookie);
+    await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
@@ -106,9 +102,7 @@ describe("Table Endpoints", () => {
           tbl.id
       )
       .expect(toRedirect(`/table/${tbl.id}`));
-    await request(app)
-      .get(`/table/${tbl.id}`)
-      .set("Cookie", loginCookie);
+    await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
   });
   it("should download csv ", async () => {
     const loginCookie = await getAdminLoginCookie();

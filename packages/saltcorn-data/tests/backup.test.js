@@ -31,14 +31,14 @@ describe("Backup and restore", () => {
     await User.create({
       email: "admin@foo.com",
       password: "secret",
-      role_id: 1
+      role_id: 1,
     });
     const t2 = await Table.findOne({ name: "books" });
     expect(t2).toBe(null);
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
 
-    await restore(fnm, p => {});
+    await restore(fnm, (p) => {});
 
     const t3 = await Table.findOne({ name: "books" });
     expect(!!t3).toBe(true);

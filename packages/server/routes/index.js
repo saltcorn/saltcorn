@@ -20,7 +20,7 @@ const del = require("./delete");
 const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
 
-module.exports = app => {
+module.exports = (app) => {
   app.use("/table", table);
   app.use("/field", field);
   app.use("/files", files);

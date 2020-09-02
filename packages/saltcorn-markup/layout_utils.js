@@ -11,20 +11,20 @@ const {
   button,
   nav,
   script,
-  domReady
+  domReady,
 } = require("./tags");
 
-const labelToId = item => text(item.replace(" ", ""));
+const labelToId = (item) => text(item.replace(" ", ""));
 
 const active = (currentUrl, item) =>
   (item.link && currentUrl.startsWith(item.link)) ||
   (item.subitems &&
-    item.subitems.some(si => si.link && currentUrl.startsWith(si.link)));
+    item.subitems.some((si) => si.link && currentUrl.startsWith(si.link)));
 
-const innerSections = sections => {
+const innerSections = (sections) => {
   var items = [];
-  (sections || []).forEach(section => {
-    (section.items || []).forEach(item => {
+  (sections || []).forEach((section) => {
+    (section.items || []).forEach((item) => {
       items.push(item);
     });
   });
@@ -42,16 +42,18 @@ const navSubitems = ({ label, subitems }) =>
         role: "button",
         "data-toggle": "dropdown",
         "aria-haspopup": "true",
-        "aria-expanded": "false"
+        "aria-expanded": "false",
       },
       label
     ),
     div(
       {
         class: "dropdown-menu",
-        "aria-labelledby": `dropdown${labelToId(label)}`
+        "aria-labelledby": `dropdown${labelToId(label)}`,
       },
-      subitems.map(si => a({ class: "dropdown-item", href: si.link }, si.label))
+      subitems.map((si) =>
+        a({ class: "dropdown-item", href: si.link }, si.label)
+      )
     )
   );
 const rightNavBar = (currentUrl, sections) =>
@@ -60,7 +62,7 @@ const rightNavBar = (currentUrl, sections) =>
     ul(
       { class: "navbar-nav ml-auto my-2 my-lg-0" },
 
-      innerSections(sections).map(s =>
+      innerSections(sections).map((s) =>
         s.link
           ? li(
               { class: ["nav-item", active(currentUrl, s) && "active"] },
@@ -86,7 +88,7 @@ const leftNavBar = ({ name, logo }) => [
         height: "30",
         class: "mx-1 d-inline-block align-top",
         alt: "Logo",
-        loading: "lazy"
+        loading: "lazy",
       }),
     name
   ),
@@ -98,10 +100,10 @@ const leftNavBar = ({ name, logo }) => [
       "data-target": "#navbarResponsive",
       "aria-controls": "navbarResponsive",
       "aria-expanded": "false",
-      "aria-label": "Toggle navigation"
+      "aria-label": "Toggle navigation",
     },
     span({ class: "navbar-toggler-icon" })
-  )
+  ),
 ];
 
 const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
@@ -110,7 +112,7 @@ const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
       class: `navbar navbar-expand-lg ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
-      id: "mainNav"
+      id: "mainNav",
     },
     div(
       { class: "container" },
@@ -147,7 +149,7 @@ const logit = (x, s) => {
   return x;
 };
 
-const breadcrumbs = crumbs =>
+const breadcrumbs = (crumbs) =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
@@ -156,7 +158,7 @@ const breadcrumbs = crumbs =>
         li(
           {
             class: ["breadcrumb-item", ix == crumbs.length - 1 && "active"],
-            "aria-current": ix == crumbs.length - 1 && "page"
+            "aria-current": ix == crumbs.length - 1 && "page",
           },
           href ? a({ href }, text) : text
         )

@@ -18,7 +18,7 @@ This manual step it is never required for users and rarely required for develope
 `;
 
 FixturesCommand.flags = {
-  reset: flags.boolean({ char: "r", description: "Also reset schema" })
+  reset: flags.boolean({ char: "r", description: "Also reset schema" }),
 };
 
 module.exports = FixturesCommand;

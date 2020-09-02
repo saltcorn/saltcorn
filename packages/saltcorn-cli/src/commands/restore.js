@@ -21,7 +21,7 @@ class RestoreCommand extends Command {
 }
 
 RestoreCommand.args = [
-  { name: "file", required: true, description: "backup file to restore" }
+  { name: "file", required: true, description: "backup file to restore" },
 ];
 
 RestoreCommand.description = `Restore a previously backed up database from a file`;

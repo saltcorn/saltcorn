@@ -20,7 +20,7 @@ describe("TableIO", () => {
       name: "foo_height1",
       label: "height1",
       type: "Integer",
-      attributes: { max: 18 }
+      attributes: { max: 18 },
     });
     const fs = await db.selectOne("_sc_fields", { name: "foo_height1" });
     expect(fs.table_id).toBe(tc.id);
@@ -47,7 +47,7 @@ describe("Table create", () => {
       table: tc,
       label: "Group",
       type: "Bool",
-      required: true
+      required: true,
     });
     const tall_id = await tc.insertRow({ group: true });
     await tc.toggleBool(tall_id, "group");
@@ -61,7 +61,7 @@ describe("Table create", () => {
       name: "height1",
       label: "height1",
       type: "Integer",
-      required: true
+      required: true,
     });
   });
   it("should insert", async () => {
@@ -119,7 +119,7 @@ describe("Table get data", () => {
   it("should get joined rows where name is Michael", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const michaels = await patients.getJoinedRows({
-      where: { name: "Michael Douglas" }
+      where: { name: "Michael Douglas" },
     });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe(2);
@@ -130,8 +130,8 @@ describe("Table get data", () => {
       where: { name: "Michael Douglas" },
       joinFields: {
         pages: { ref: "favbook", target: "pages" },
-        author: { ref: "favbook", target: "author" }
-      }
+        author: { ref: "favbook", target: "author" },
+      },
     });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].pages).toBe(728);
@@ -141,7 +141,7 @@ describe("Table get data", () => {
     const patients = await Table.findOne({ name: "patients" });
     const all = await patients.getJoinedRows({
       limit: 2,
-      orderBy: "id"
+      orderBy: "id",
     });
     expect(all.length).toStrictEqual(2);
     expect(all[1].favbook).toBe(2);
@@ -151,7 +151,7 @@ describe("Table get data", () => {
     const all = await patients.getJoinedRows({
       limit: 2,
       orderBy: "id",
-      orderDesc: true
+      orderDesc: true,
     });
     expect(all.length).toStrictEqual(2);
     expect(all[0].favbook).toBe(2);
@@ -165,9 +165,9 @@ describe("Table get data", () => {
           table: "readings",
           ref: "patient_id",
           field: "temperature",
-          aggregate: "avg"
-        }
-      }
+          aggregate: "avg",
+        },
+      },
     });
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
@@ -181,13 +181,13 @@ describe("Table get data", () => {
           table: "readings",
           ref: "patient_id",
           field: "temperature",
-          aggregate: "avg"
-        }
+          aggregate: "avg",
+        },
       },
       joinFields: {
         pages: { ref: "favbook", target: "pages" },
-        author: { ref: "favbook", target: "author" }
-      }
+        author: { ref: "favbook", target: "author" },
+      },
     });
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
@@ -198,7 +198,7 @@ describe("Table get data", () => {
     const table = await Table.findOne({ name: "patients" });
     const fields = await table.getFields();
     const rows = await db.select("patients", {
-      _fts: { fields, searchTerm: "Douglas" }
+      _fts: { fields, searchTerm: "Douglas" },
     });
 
     expect(rows.length).toBe(2);
@@ -248,7 +248,7 @@ describe("Table get data", () => {
       label: "height19",
       type: "Integer",
       required: true,
-      attributes: { default: 6 }
+      attributes: { default: 6 },
     });
     await fc.delete();
   });
@@ -308,11 +308,11 @@ Pencil, 0.5,2, t`;
     await fs.writeFile(fnm, csv);
     const { table } = await Table.create_from_csv("Invoice", fnm);
     const fields = await table.getFields();
-    const vatField = fields.find(f => f.name === "vatable");
+    const vatField = fields.find((f) => f.name === "vatable");
     expect(vatField.type.name).toBe("Bool");
-    const costField = fields.find(f => f.name === "cost");
+    const costField = fields.find((f) => f.name === "cost");
     expect(costField.type.name).toBe("Float");
-    const countField = fields.find(f => f.name === "count");
+    const countField = fields.find((f) => f.name === "count");
     expect(countField.type.name).toBe("Integer");
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
@@ -326,7 +326,7 @@ Pencil, 0.5,2, t`;
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice1", fnm);
     expect(res).toEqual({
-      error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only"
+      error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only",
     });
     const table = await Table.findOne({ name: "Invoice1" });
     expect(table).toBe(null);
@@ -348,7 +348,7 @@ Pencil, 0.5,2, t`;
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice2", fnm);
     expect(res).toEqual({
-      error: `Columns named "id" must have only integers`
+      error: `Columns named "id" must have only integers`,
     });
     const table = await Table.findOne({ name: "Invoice2" });
     expect(table).toBe(null);
@@ -361,7 +361,7 @@ Pencil, 0.5,2, t`;
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice3", fnm);
     expect(res).toEqual({
-      error: `Columns named "id" must not have missing values`
+      error: `Columns named "id" must not have missing values`,
     });
     const table = await Table.findOne({ name: "Invoice3" });
     expect(table).toBe(null);
@@ -399,19 +399,19 @@ describe("Table unique constraint", () => {
       table,
       name: "name",
       type: "String",
-      is_unique: true
+      is_unique: true,
     });
     await table.insertRow({ name: "Bill" });
     const ted_id = await table.insertRow({ name: "Ted" });
     const ins_res = await table.tryInsertRow({ name: "Bill" });
     expect(ins_res).toEqual({
-      error: "Duplicate value for unique field: name"
+      error: "Duplicate value for unique field: name",
     });
     const ins_res1 = await table.tryInsertRow({ name: "Billy" });
     expect(typeof ins_res1.success).toEqual("number");
     const upd_res = await table.tryUpdateRow({ name: "Bill" }, ted_id);
     expect(upd_res).toEqual({
-      error: "Duplicate value for unique field: name"
+      error: "Duplicate value for unique field: name",
     });
     const upd_res1 = await table.tryUpdateRow({ name: "teddy" }, ted_id);
     expect(upd_res1.success).toEqual(true);
@@ -434,12 +434,12 @@ describe("Table not null constraint", () => {
       table,
       name: "name",
       type: "String",
-      required: true
+      required: true,
     });
     await Field.create({
       table,
       name: "age",
-      type: "Integer"
+      type: "Integer",
     });
     await table.insertRow({ name: "Bill", age: 13 });
     await table.insertRow({ name: "Bill", age: 13 });
@@ -465,17 +465,17 @@ describe("Table with users and files", () => {
       table,
       name: "name",
       type: "String",
-      is_unique: true
+      is_unique: true,
     });
     await Field.create({
       table,
       name: "owner",
-      type: "Key to users"
+      type: "Key to users",
     });
     await Field.create({
       table,
       name: "mugshot",
-      type: "File"
+      type: "File",
     });
     await table.insertRow({ name: "Rocket", owner: 1, mugshot: rick.id });
     const rels = await table.get_parent_relations();

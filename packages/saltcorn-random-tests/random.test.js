@@ -6,7 +6,7 @@ const {
   getStaffLoginCookie,
   getAdminLoginCookie,
   resetToFixtures,
-  toRedirect
+  toRedirect,
 } = require("@saltcorn/server/auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");

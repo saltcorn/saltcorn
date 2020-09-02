@@ -106,12 +106,12 @@ const reset = async (dontDrop = false, schema = "public") => {
   await db.insert("_sc_plugins", {
     name: "base",
     source: "npm",
-    location: "@saltcorn/base-plugin"
+    location: "@saltcorn/base-plugin",
   });
   await db.insert("_sc_plugins", {
     name: "sbadmin2",
     source: "npm",
-    location: "@saltcorn/sbadmin2"
+    location: "@saltcorn/sbadmin2",
   });
   if (schema === "public" && !is_sqlite)
     await db.query(`

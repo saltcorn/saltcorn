@@ -8,7 +8,7 @@ const {
   toInclude,
   toSucceed,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -20,15 +20,11 @@ afterAll(db.close);
 describe("db page", () => {
   it("shows to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/page/a_page")
-      .expect(toInclude(">Bye bye<"));
+    await request(app).get("/page/a_page").expect(toInclude(">Bye bye<"));
   });
   it("404s not found", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/page/b_page")
-      .expect(toInclude("not found", 404));
+    await request(app).get("/page/b_page").expect(toInclude("not found", 404));
   });
 });
 describe("page create", () => {

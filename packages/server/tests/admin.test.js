@@ -8,7 +8,7 @@ const {
   toInclude,
   toSucceed,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
@@ -16,7 +16,7 @@ const File = require("@saltcorn/data/models/file");
 
 beforeAll(async () => {
   await resetToFixtures();
-  const mv = async fnm => {
+  const mv = async (fnm) => {
     await fs.writeFile(fnm, "nevergonnagiveyouup");
   };
   await File.from_req_files(
@@ -165,9 +165,7 @@ describe("files admin", () => {
   });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/files/serve/2")
-      .expect(toRedirect("/"));
+    await request(app).get("/files/serve/2").expect(toRedirect("/"));
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -180,8 +178,6 @@ describe("files admin", () => {
   });
   it("serve file to public after role change", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/files/serve/2")
-      .expect(toSucceed());
+    await request(app).get("/files/serve/2").expect(toSucceed());
   });
 });

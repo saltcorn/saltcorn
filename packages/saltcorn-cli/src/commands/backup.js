@@ -21,7 +21,7 @@ class BackupCommand extends Command {
 
     execSync(`pg_dump ${pgdb} -U ${pguser} -h localhost -F c >${outfnm}`, {
       stdio: "inherit",
-      env
+      env,
     });
     console.log(outfnm);
   }
@@ -33,8 +33,8 @@ BackupCommand.flags = {
   output: flags.string({
     char: "o",
     description: "output filename",
-    default: default_filenm
-  })
+    default: default_filenm,
+  }),
 };
 
 module.exports = BackupCommand;

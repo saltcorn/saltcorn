@@ -4,7 +4,7 @@ const Field = require("./field");
 
 class Form {
   constructor(o) {
-    this.fields = o.fields.map(f =>
+    this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.errors = o.errors || {};
@@ -26,12 +26,12 @@ class Form {
     contract.class(this);
   }
   hidden(...ks) {
-    ks.forEach(k => {
-      !this.fields.map(f => f.name).includes(k) &&
+    ks.forEach((k) => {
+      !this.fields.map((f) => f.name).includes(k) &&
         this.fields.push(
           new Field({
             name: k,
-            input_type: "hidden"
+            input_type: "hidden",
           })
         );
     });
@@ -56,7 +56,7 @@ class Form {
 
   validate(v) {
     this.hasErrors = false;
-    this.fields.forEach(f => {
+    this.fields.forEach((f) => {
       if (f.disabled) return;
       const valres = f.validate(v);
       if (valres.error) {
@@ -92,7 +92,7 @@ Form.contract = {
     class: is.maybe(is.str),
     isStateForm: is.bool,
     formStyle: is.str,
-    methodGET: is.bool
+    methodGET: is.bool,
   },
   methods: {
     validate: is.fun(
@@ -101,8 +101,8 @@ Form.contract = {
     ),
     generate: is.fun([], is.promise(is.obj())),
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
-    hidden: is.fun(is.any, is.eq(undefined))
-  }
+    hidden: is.fun(is.any, is.eq(undefined)),
+  },
 };
 
 module.exports = Form;

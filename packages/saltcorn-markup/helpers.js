@@ -1,17 +1,17 @@
 const { a, text, div, input, text_attr } = require("./tags");
 
-const isdef = x => typeof x !== "undefined";
+const isdef = (x) => typeof x !== "undefined";
 
 const select_options = (v, hdr) => {
   const selected = v ? v[hdr.name] : undefined;
-  const isSelected = value =>
+  const isSelected = (value) =>
     !selected
       ? false
       : selected.length
       ? selected.includes(value)
       : value === selected;
   return (opts = (hdr.options || [])
-    .map(o => {
+    .map((o) => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
       return `<option value="${text_attr(value)}" ${

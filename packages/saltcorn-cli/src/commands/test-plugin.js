@@ -1,6 +1,6 @@
 const { Command, flags } = require("@oclif/command");
 
-const lastPath = ps =>
+const lastPath = (ps) =>
   ps[ps.length - 1] === "" ? ps[ps.length - 2] : ps[ps.length - 1];
 
 class TestPluginCommand extends Command {
@@ -20,7 +20,7 @@ class TestPluginCommand extends Command {
       const { plugin_module } = await requirePlugin({
         source: "local",
         location: args.path,
-        name: moduleName
+        name: moduleName,
       });
       await auto_test_plugin(plugin_module);
     } else {
@@ -33,7 +33,7 @@ class TestPluginCommand extends Command {
 }
 
 TestPluginCommand.args = [
-  { name: "path", description: "path to plugin package", required: true }
+  { name: "path", description: "path to plugin package", required: true },
 ];
 
 TestPluginCommand.description = `Test a plugin

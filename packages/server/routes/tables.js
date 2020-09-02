@@ -10,7 +10,7 @@ const {
   renderForm,
   link,
   post_btn,
-  post_delete_btn
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
@@ -26,7 +26,7 @@ const {
   i,
   form,
   label,
-  input
+  input,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const fs = require("fs").promises;
@@ -38,16 +38,16 @@ const roleOptions = [
   { value: 1, label: "Admin" },
   { value: 4, label: "Staff" },
   { value: 8, label: "User" },
-  { value: 10, label: "Public" }
+  { value: 10, label: "Public" },
 ];
 
 const apiOptions = [
   { value: "No API", label: "No API" },
   { value: "Read only", label: "Read only" },
-  { value: "Read and write", label: "Read and write" }
+  { value: "Read and write", label: "Read and write" },
 ];
 
-const tableForm = table => {
+const tableForm = (table) => {
   const form = new Form({
     action: "/table",
     fields: [
@@ -57,26 +57,26 @@ const tableForm = table => {
           "APIs allow developers access to your data without using a user interface",
         name: "api_access",
         input_type: "select",
-        options: apiOptions
+        options: apiOptions,
       },
       {
         label: "Minimum role for read",
         name: "min_role_read",
         input_type: "select",
-        options: roleOptions
+        options: roleOptions,
       },
       {
         label: "Minimum role for writing",
         name: "min_role_write",
         input_type: "select",
-        options: roleOptions
+        options: roleOptions,
       },
       {
         label: "Version history",
         name: "versioned",
-        type: "Bool"
-      }
-    ]
+        type: "Bool",
+      },
+    ],
   });
   if (table) {
     if (table.id) form.hidden("id");
@@ -98,7 +98,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create" }]
+          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create" }],
         },
         {
           type: "card",
@@ -112,14 +112,14 @@ router.get(
                   label: "Table name",
                   name: "name",
                   input_type: "text",
-                  required: true
-                }
-              ]
+                  required: true,
+                },
+              ],
             }),
             req.csrfToken()
-          )
-        }
-      ]
+          ),
+        },
+      ],
     });
   })
 );
@@ -135,8 +135,8 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: "Tables", href: "/table" },
-            { text: "Create from CSV" }
-          ]
+            { text: "Create from CSV" },
+          ],
         },
         {
           type: "card",
@@ -147,13 +147,13 @@ router.get(
               submitLabel: "Create",
               fields: [
                 { label: "Table name", name: "name", input_type: "text" },
-                { label: "File", name: "file", input_type: "file" }
-              ]
+                { label: "File", name: "file", input_type: "file" },
+              ],
             }),
             req.csrfToken()
-          )
-        }
-      ]
+          ),
+        },
+      ],
     });
   })
 );
@@ -168,7 +168,7 @@ router.post(
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
-        ...alltables.map(t => db.sqlsanitize(t.name).toLowerCase())
+        ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
         req.flash("error", `Table ${name} already exists`);
@@ -217,28 +217,29 @@ router.get(
         a(
           {
             href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field"
+            class: "btn btn-primary add-field",
           },
           "Add field to table"
-        )
+        ),
       ];
     } else {
       const tableHtml = mkTable(
         [
           { label: "Label", key: "label" },
-          { label: "Required", key: r => (r.required ? "true" : "false") },
+          { label: "Required", key: (r) => (r.required ? "true" : "false") },
           {
             label: "Type",
-            key: r =>
+            key: (r) =>
               r.type === "Key"
                 ? `Key to ${r.reftable_name}`
-                : r.type.name || r.type
+                : r.type.name || r.type,
           },
-          { label: "Edit", key: r => link(`/field/${r.id}`, "Edit") },
+          { label: "Edit", key: (r) => link(`/field/${r.id}`, "Edit") },
           {
             label: "Delete",
-            key: r => post_delete_btn(`/field/delete/${r.id}`, req.csrfToken())
-          }
+            key: (r) =>
+              post_delete_btn(`/field/delete/${r.id}`, req.csrfToken()),
+          },
         ],
         fields
       );
@@ -247,10 +248,10 @@ router.get(
         a(
           {
             href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field"
+            class: "btn btn-primary add-field",
           },
           "Add field"
-        )
+        ),
       ];
     }
     var viewCard;
@@ -264,21 +265,21 @@ router.get(
             { label: "Template", key: "viewtemplate" },
             {
               label: "Run",
-              key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, "Run"),
             },
             {
               label: "Edit",
-              key: r =>
-                link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
+              key: (r) =>
+                link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
             },
             {
               label: "Delete",
-              key: r =>
+              key: (r) =>
                 post_delete_btn(
                   `/viewedit/delete/${encodeURIComponent(r.id)}`,
                   req.csrfToken()
-                )
-            }
+                ),
+            },
           ],
           views
         );
@@ -296,10 +297,10 @@ router.get(
           a(
             {
               href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
-              class: "btn btn-primary"
+              class: "btn btn-primary",
             },
             "Add view"
-          )
+          ),
       };
     }
     const dataCard = div(
@@ -329,7 +330,7 @@ router.get(
           {
             method: "post",
             action: `/table/upload_to_table/${table.name}`,
-            encType: "multipart/form-data"
+            encType: "multipart/form-data",
           },
           input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
           label(
@@ -343,7 +344,7 @@ router.get(
             name: "file",
             type: "file",
             accept: "text/csv,.csv",
-            onchange: "this.form.submit();"
+            onchange: "this.form.submit();",
           })
         )
       )
@@ -352,33 +353,33 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables", href: "/table" }, { text: table.name }]
+          crumbs: [{ text: "Tables", href: "/table" }, { text: table.name }],
         },
         {
           type: "pageHeader",
-          title: `${table.name} table`
+          title: `${table.name} table`,
         },
         {
           type: "card",
           title: "Fields",
-          contents: fieldCard
+          contents: fieldCard,
         },
         ...(fields.length > 0
           ? [
               {
                 type: "card",
                 title: "Table data",
-                contents: dataCard
-              }
+                contents: dataCard,
+              },
             ]
           : []),
         ...(viewCard ? [viewCard] : []),
         {
           type: "card",
           title: "Edit table properties",
-          contents: renderForm(tableForm(table), req.csrfToken())
-        }
-      ]
+          contents: renderForm(tableForm(table), req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -388,7 +389,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const set_api_access = v => {
+    const set_api_access = (v) => {
       switch (v.api_access) {
         case "No API":
           v.expose_api_read = false;
@@ -417,7 +418,7 @@ router.post(
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
-        ...alltables.map(t => db.sqlsanitize(t.name).toLowerCase())
+        ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
         req.flash("error", `Table ${name} already exists`);
@@ -469,12 +470,12 @@ router.get(
         ? mkTable(
             [
               { label: "Name", key: "name" },
-              { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") },
+              { label: "Edit", key: (r) => link(`/table/${r.id}`, "Edit") },
               {
                 label: "Delete",
-                key: r =>
-                  post_delete_btn(`/table/delete/${r.id}`, req.csrfToken())
-              }
+                key: (r) =>
+                  post_delete_btn(`/table/delete/${r.id}`, req.csrfToken()),
+              },
             ],
             rows
           )
@@ -493,19 +494,19 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables" }]
+          crumbs: [{ text: "Tables" }],
         },
         {
           type: "card",
           title: "Your tables",
-          contents: mainCard
+          contents: mainCard,
         },
         {
           type: "card",
           title: "Create table",
-          contents: createCard
-        }
-      ]
+          contents: createCard,
+        },
+      ],
     });
   })
 );
@@ -526,8 +527,8 @@ router.get(
     stringify(rows, {
       header: true,
       cast: {
-        date: value => value.toISOString()
-      }
+        date: (value) => value.toISOString(),
+      },
     }).pipe(res);
   })
 );

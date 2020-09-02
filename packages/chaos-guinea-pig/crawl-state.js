@@ -15,7 +15,7 @@ class CrawlState {
     this.log.push(l);
   }
   check_form_action(action) {
-    return !this.stop_form_actions.some(sfa => action.includes(sfa));
+    return !this.stop_form_actions.some((sfa) => action.includes(sfa));
   }
   decr() {
     this.steps_left -= 1;

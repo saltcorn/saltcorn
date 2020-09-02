@@ -8,12 +8,12 @@ const {
   button,
   a,
   h5,
-  span
+  span,
 } = require("./tags");
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
-const mkShowIf = sIf =>
+const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(
       ([target, value]) =>
@@ -21,22 +21,22 @@ const mkShowIf = sIf =>
     )
     .join(" && ");
 
-const isCheck = hdr => hdr.type && hdr.type.name === "Bool";
-const isHoriz = formStyle => formStyle === "horiz";
+const isCheck = (hdr) => hdr.type && hdr.type.name === "Bool";
+const isHoriz = (formStyle) => formStyle === "horiz";
 const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
   div(
     {
       class: ["form-group", isHoriz(fStyle) && "row"],
       ...(hdr.showIf && {
-        "data-show-if": mkShowIf(hdr.showIf)
-      })
+        "data-show-if": mkShowIf(hdr.showIf),
+      }),
     },
     isCheck(hdr)
       ? div(
           {
             class:
               isHoriz(fStyle) &&
-              `col-sm-${12 - labelCols} offset-md-${labelCols}`
+              `col-sm-${12 - labelCols} offset-md-${labelCols}`,
           },
           div(
             { class: "form-check" },
@@ -44,7 +44,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             label(
               {
                 for: `input${text_attr(hdr.form_name)}`,
-                class: "form-check-label"
+                class: "form-check-label",
               },
               text(hdr.label)
             ),
@@ -57,7 +57,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
           label(
             {
               for: `input${text_attr(hdr.form_name)}`,
-              class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`
+              class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`,
             },
             text(hdr.label)
           ),
@@ -65,19 +65,20 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
             inner,
             text(error)
-          )
+          ),
         ],
     hdr.sublabel &&
       div(
         {
           class:
-            isHoriz(fStyle) && `col-sm-${12 - labelCols} offset-md-${labelCols}`
+            isHoriz(fStyle) &&
+            `col-sm-${12 - labelCols} offset-md-${labelCols}`,
         },
         i(text(hdr.sublabel))
       )
   );
 
-const innerField = (v, errors, nameAdd = "") => hdr => {
+const innerField = (v, errors, nameAdd = "") => (hdr) => {
   const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
   const maybe_disabled = hdr.disabled ? "disabled" : "";
@@ -90,14 +91,16 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
         validClass
       );
     case "hidden":
-      return `<input type="hidden" class="form-control ${validClass} ${hdr.class ||
-        ""}" name="${text_attr(name)}" ${
+      return `<input type="hidden" class="form-control ${validClass} ${
+        hdr.class || ""
+      }" name="${text_attr(name)}" ${
         v ? `value="${text_attr(v[hdr.form_name])}"` : ""
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${hdr.class ||
-        ""}" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+      return `<select class="form-control ${validClass} ${
+        hdr.class || ""
+      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
       )}">${opts}</select>`;
     case "file":
@@ -107,8 +110,9 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
       } else
         return `${
           v[hdr.form_name] ? text(v[hdr.form_name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${hdr.class ||
-          ""}" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+        }<input type="file" class="form-control-file ${validClass} ${
+          hdr.class || ""
+        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
           name
         )}">`;
     case "search":
@@ -118,8 +122,9 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
     default:
       const the_input = `<input type="${
         hdr.input_type
-      }" class="form-control ${validClass} ${hdr.class ||
-        ""}" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
+      }" class="form-control ${validClass} ${
+        hdr.class || ""
+      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
@@ -141,7 +146,7 @@ const innerField = (v, errors, nameAdd = "") => hdr => {
   }
 };
 
-const mkFormRow = (v, errors, formStyle, labelCols) => hdr =>
+const mkFormRow = (v, errors, formStyle, labelCols) => (hdr) =>
   hdr.isRepeat
     ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
     : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
@@ -173,7 +178,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
           return div(
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
             icons,
-            hdr.fields.map(f => {
+            hdr.fields.map((f) => {
               return mkFormRowForField(
                 vi,
                 errors,
@@ -193,7 +198,7 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
         div(
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           icons,
-          hdr.fields.map(f => {
+          hdr.fields.map((f) => {
             return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
           })
         )
@@ -223,13 +228,9 @@ const displayEdit = (hdr, name, v, extracls) => {
   );
 };
 
-const mkFormRowForField = (
-  v,
-  errors,
-  formStyle,
-  labelCols,
-  nameAdd = ""
-) => hdr => {
+const mkFormRowForField = (v, errors, formStyle, labelCols, nameAdd = "") => (
+  hdr
+) => {
   const name = hdr.form_name + nameAdd;
   const errorFeedback = errors[name]
     ? `<div class="invalid-feedback">${text(errors[name])}</div>`
@@ -246,10 +247,10 @@ const mkFormRowForField = (
     );
 };
 
-const renderFormLayout = form => {
+const renderFormLayout = (form) => {
   const blockDispatch = {
     field(segment) {
-      const field = form.fields.find(f => f.name === segment.field_name);
+      const field = form.fields.find((f) => f.name === segment.field_name);
       if (field && field.input_type !== "hidden")
         return innerField(form.values, form.errors)(field);
       else return "";
@@ -258,7 +259,7 @@ const renderFormLayout = form => {
       return `<button type="submit" class="btn btn-primary">${text(
         form.submitLabel || "Save"
       )}</button>`;
-    }
+    },
   };
   return renderLayout({ blockDispatch, layout: form.layout });
 };
@@ -280,7 +281,7 @@ const renderForm = (form, csrfToken) => {
           id: "dropdownMenuButton",
           "data-toggle": "dropdown",
           "aria-haspopup": "true",
-          "aria-expanded": "false"
+          "aria-expanded": "false",
         },
         collapsedSummary || "Search filter"
       ),
@@ -295,17 +296,17 @@ const renderForm = (form, csrfToken) => {
 };
 
 const mkFormWithLayout = (form, csrfToken) => {
-  const hasFile = form.fields.some(f => f.input_type === "file");
+  const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${
-    form.action
-  }" class="form-namespace ${form.class || ""}" method="${
-    form.methodGET ? "get" : "post"
-  }" ${hasFile ? 'encType="multipart/form-data"' : ""}>`;
+  const top = `<form action="${form.action}" class="form-namespace ${
+    form.class || ""
+  }" method="${form.methodGET ? "get" : "post"}" ${
+    hasFile ? 'encType="multipart/form-data"' : ""
+  }>`;
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const hiddens = form.fields
-    .filter(f => f.input_type === "hidden")
-    .map(f => innerField(form.values, form.errors)(f))
+    .filter((f) => f.input_type === "hidden")
+    .map((f) => innerField(form.values, form.errors)(f))
     .join("");
   return (
     blurbp + top + csrfField + hiddens + renderFormLayout(form) + "</form>"
@@ -313,7 +314,7 @@ const mkFormWithLayout = (form, csrfToken) => {
 };
 
 const mkForm = (form, csrfToken, errors = {}) => {
-  const hasFile = form.fields.some(f => f.input_type === "file");
+  const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField =
     csrfToken === false
       ? ""
@@ -337,8 +338,9 @@ const mkForm = (form, csrfToken, errors = {}) => {
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn ${form.submitButtonClass ||
-      "btn-primary"}">${text(form.submitLabel || "Save")}</button>
+    <button type="submit" class="btn ${
+      form.submitButtonClass || "btn-primary"
+    }">${text(form.submitLabel || "Save")}</button>
   </div>
 </div>`;
   return (

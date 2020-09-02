@@ -5,20 +5,20 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const Action = ({ name, block }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
-    <button {...blockProps(block)} ref={dom => connect(drag(dom))}>
+    <button {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
       {name}
     </button>
   );
 };
 
 export const ActionSettings = () => {
-  const { setProp, name, block, minRole } = useNode(node => ({
+  const { setProp, name, block, minRole } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
-    minRole: node.data.props.minRole
+    minRole: node.data.props.minRole,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -28,7 +28,7 @@ export const ActionSettings = () => {
 
         <select
           value={name}
-          onChange={e => setProp(prop => (prop.name = e.target.value))}
+          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.actions.map((f, ix) => (
             <option key={ix} value={f}>
@@ -45,6 +45,6 @@ export const ActionSettings = () => {
 
 Action.craft = {
   related: {
-    settings: ActionSettings
-  }
+    settings: ActionSettings,
+  },
 };

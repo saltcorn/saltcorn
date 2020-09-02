@@ -4,5 +4,5 @@ module.exports = {
   enable_multi_tenant() {},
   runWithTenant(t, f) {
     return f();
-  }
+  },
 };

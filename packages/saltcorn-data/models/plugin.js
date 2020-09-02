@@ -20,7 +20,7 @@ class Plugin {
     return p ? new Plugin(p) : p;
   }
   static async find(where) {
-    return (await db.select("_sc_plugins", where)).map(p => new Plugin(p));
+    return (await db.select("_sc_plugins", where)).map((p) => new Plugin(p));
   }
   async upsert() {
     const row = {
@@ -28,7 +28,7 @@ class Plugin {
       source: this.source,
       location: this.location,
       version: this.version,
-      configuration: this.configuration
+      configuration: this.configuration,
     };
     if (typeof this.id === "undefined") {
       // insert
@@ -47,10 +47,10 @@ class Plugin {
     const views = await View.find({});
     const { getState } = require("../db/state");
     const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
-    const vt_names = myViewTemplates.map(vt => vt.name);
+    const vt_names = myViewTemplates.map((vt) => vt.name);
     return views
-      .filter(v => vt_names.includes(v.viewtemplate))
-      .map(v => v.name);
+      .filter((v) => vt_names.includes(v.viewtemplate))
+      .map((v) => v.name);
   }
 
   static async store_plugins_available() {
@@ -65,13 +65,13 @@ class Plugin {
       await getState().setConfig("available_plugins", from_api);
       await getState().setConfig("available_plugins_fetched_at", new Date());
       return from_api;
-    } else return stored.map(p => new Plugin(p));
+    } else return stored.map((p) => new Plugin(p));
   }
   static async store_plugins_available_from_store() {
     //console.log("fetch plugins");
     const response = await fetch("http://store.saltcorn.com/api/extensions");
     const json = await response.json();
-    return json.success.map(p => new Plugin(p));
+    return json.success.map((p) => new Plugin(p));
   }
 
   static async store_by_name(name) {
@@ -92,12 +92,12 @@ Plugin.contract = {
     name: is.str,
     version: is.maybe(is.str),
     configuration: is.maybe(is.obj()),
-    source: is.one_of(["npm", "github", "local"])
+    source: is.one_of(["npm", "github", "local"]),
   },
   methods: {
     upsert: is.fun([], is.promise(is.eq(undefined))),
     delete: is.fun([], is.promise(is.eq(undefined))),
-    dependant_views: is.fun([], is.promise(is.array(is.str)))
+    dependant_views: is.fun([], is.promise(is.array(is.str))),
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
@@ -110,8 +110,8 @@ Plugin.contract = {
     store_plugins_available: is.fun(
       [],
       is.promise(is.array(is.class("Plugin")))
-    )
-  }
+    ),
+  },
 };
 
 module.exports = Plugin;

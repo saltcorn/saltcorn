@@ -9,7 +9,7 @@ class Form {
   }
 }
 
-const nolines = s => s.split("\n").join("");
+const nolines = (s) => s.split("\n").join("");
 
 describe("form render", () => {
   it("renders a simple form", () => {
@@ -20,9 +20,9 @@ describe("form render", () => {
           name: "name",
           label: "Name",
           input_type: "text",
-          form_name: "name"
-        }
-      ]
+          form_name: "name",
+        },
+      ],
     });
     const want = `<form action="/" class="form-namespace  " method="post" >
 <input type="hidden" name="_csrf" value=""><div class="form-group">
@@ -44,8 +44,8 @@ describe("form render", () => {
           name: "name",
           label: "Name",
           input_type: "text",
-          form_name: "name"
-        }
+          form_name: "name",
+        },
       ],
       values: {},
       errors: {},
@@ -56,11 +56,11 @@ describe("form render", () => {
             block: false,
             fieldview: "edit",
             textStyle: "h2",
-            field_name: "name"
+            field_name: "name",
           },
-          { type: "line_break" }
-        ]
-      }
+          { type: "line_break" },
+        ],
+      },
     });
     const want = `<form action="/" class="form-namespace " method="post" >
 <input type="hidden" name="_csrf" value="">

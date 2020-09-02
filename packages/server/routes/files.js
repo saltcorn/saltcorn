@@ -7,7 +7,7 @@ const {
   renderForm,
   link,
   post_btn,
-  post_delete_btn
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -24,7 +24,7 @@ const {
   button,
   option,
   text,
-  label
+  label,
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("./utils");
 
@@ -35,16 +35,16 @@ const editRoleForm = (file, roles, req) =>
   form(
     {
       action: `/files/setrole/${file.id}`,
-      method: "post"
+      method: "post",
     },
     csrfField(req),
     select(
       { name: "role", onchange: "form.submit()" },
-      roles.map(role =>
+      roles.map((role) =>
         option(
           {
             value: role.id,
-            ...(file.min_role_read === role.id && { selected: true })
+            ...(file.min_role_read === role.id && { selected: true }),
           },
           text(role.role)
         )
@@ -65,20 +65,21 @@ router.get(
         [
           { label: "Filename", key: "filename" },
           { label: "Size (KiB)", key: "size_kb" },
-          { label: "Media type", key: r => r.mimetype },
-          { label: "Role to access", key: r => editRoleForm(r, roles, req) },
+          { label: "Media type", key: (r) => r.mimetype },
+          { label: "Role to access", key: (r) => editRoleForm(r, roles, req) },
           {
             label: "Link",
-            key: r => link(`/files/serve/${r.id}`, "Link")
+            key: (r) => link(`/files/serve/${r.id}`, "Link"),
           },
           {
             label: "Download",
-            key: r => link(`/files/download/${r.id}`, "Download")
+            key: (r) => link(`/files/download/${r.id}`, "Download"),
           },
           {
             label: "Delete",
-            key: r => post_delete_btn(`/files/delete/${r.id}`, req.csrfToken())
-          }
+            key: (r) =>
+              post_delete_btn(`/files/delete/${r.id}`, req.csrfToken()),
+          },
         ],
         rows
       ),
@@ -86,7 +87,7 @@ router.get(
         {
           action: "/files/upload",
           method: "post",
-          encType: "multipart/form-data"
+          encType: "multipart/form-data",
         },
         csrfField(req),
         label("Upload file "),
@@ -94,7 +95,7 @@ router.get(
           name: "file",
           class: "form-control-file",
           type: "file",
-          onchange: "form.submit()"
+          onchange: "form.submit()",
         })
       )
     );

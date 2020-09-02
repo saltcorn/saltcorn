@@ -38,7 +38,7 @@ const getApp = async (opts = {}) => {
     fileUpload({
       useTempFiles: true,
       createParentPath: true,
-      tempFileDir: "/tmp/"
+      tempFileDir: "/tmp/",
     })
   );
   app.use(require("cookie-parser")());
@@ -54,7 +54,7 @@ const getApp = async (opts = {}) => {
         secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
       })
     );
   } else {
@@ -64,12 +64,12 @@ const getApp = async (opts = {}) => {
       session({
         store: new pgSession({
           pool: db.pool,
-          tableName: "_sc_session"
+          tableName: "_sc_session",
         }),
         secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" } // 30 days
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
       })
     );
   }
@@ -78,14 +78,14 @@ const getApp = async (opts = {}) => {
   app.use(flash());
   app.use(
     express.static(__dirname + "/public", {
-      maxAge: development_mode ? 0 : 1000 * 60 * 15
+      maxAge: development_mode ? 0 : 1000 * 60 * 15,
     })
   );
   app.use(
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: development_mode ? 0 : 1000 * 60 * 30
+        maxAge: development_mode ? 0 : 1000 * 60 * 30,
       }
     )
   );
@@ -103,7 +103,7 @@ const getApp = async (opts = {}) => {
               email: mu.email,
               id: mu.id,
               role_id: mu.role_id,
-              tenant: db.getTenantSchema()
+              tenant: db.getTenantSchema(),
             });
           else {
             return done(
@@ -116,10 +116,10 @@ const getApp = async (opts = {}) => {
       }
     )
   );
-  passport.serializeUser(function(user, done) {
+  passport.serializeUser(function (user, done) {
     done(null, user);
   });
-  passport.deserializeUser(function(user, done) {
+  passport.deserializeUser(function (user, done) {
     done(null, user);
   });
 
@@ -168,7 +168,7 @@ Sitemap: ${base}sitemap.xml
 
   await File.ensure_file_store();
 
-  app.get("*", function(req, res) {
+  app.get("*", function (req, res) {
     res.status(404).sendWrap("Not found", "<h1>Page not found</h1>");
   });
   return app;

@@ -16,7 +16,7 @@ const searchConfigForm = (tables, views) => {
   var tbls_noviews = [];
   for (const t of tables) {
     var ok_views = views.filter(
-      v => v.table_id === t.id && v.viewtemplateObj.runMany
+      (v) => v.table_id === t.id && v.viewtemplateObj.runMany
     );
     if (ok_views.length === 0) tbls_noviews.push(t.name);
     else
@@ -25,7 +25,7 @@ const searchConfigForm = (tables, views) => {
         label: "Result preview for " + t.name,
         required: false,
         type: "String",
-        attributes: { options: ok_views.map(v => v.name).join() }
+        attributes: { options: ok_views.map((v) => v.name).join() },
       });
   }
   const blurb1 = `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`;
@@ -38,21 +38,21 @@ const searchConfigForm = (tables, views) => {
             ", "
           )}.`
         : ""),
-    fields
+    fields,
   });
 };
-const wrap = response => ({
+const wrap = (response) => ({
   above: [
     {
       type: "breadcrumbs",
-      crumbs: [{ text: "Settings" }, { text: "Search" }]
+      crumbs: [{ text: "Settings" }, { text: "Search" }],
     },
     {
       type: "card",
       title: "Search configuration",
-      contents: response
-    }
-  ]
+      contents: response,
+    },
+  ],
 });
 router.get(
   "/config",
@@ -102,9 +102,9 @@ const searchForm = () =>
       {
         name: "q",
         label: " ",
-        input_type: "search"
-      }
-    ]
+        input_type: "search",
+      },
+    ],
   });
 
 const runSearch = async (q, req, res) => {
@@ -126,7 +126,7 @@ const runSearch = async (q, req, res) => {
       resp.push({
         type: "card",
         title: tableName,
-        contents: vresps.map(vr => vr.html).join("")
+        contents: vresps.map((vr) => vr.html).join(""),
       });
   }
 
@@ -139,10 +139,10 @@ const runSearch = async (q, req, res) => {
     above: [
       {
         type: "card",
-        contents: renderForm(form, false)
+        contents: renderForm(form, false),
       },
-      ...searchResult
-    ]
+      ...searchResult,
+    ],
   });
 };
 

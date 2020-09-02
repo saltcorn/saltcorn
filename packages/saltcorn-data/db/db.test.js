@@ -38,7 +38,7 @@ describe("mkWhere", () => {
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
       values: [5],
-      where: "where id=$1"
+      where: "where id=$1",
     });
   });
 });
@@ -48,7 +48,7 @@ describe("where", () => {
     await Table.create("myothertable");
     if (!db.isSQLite) {
       const tf = await db.selectOne("_sc_tables", {
-        name: { in: ["myothertable", "nosuchtable"] }
+        name: { in: ["myothertable", "nosuchtable"] },
       });
 
       expect(tf.name).toStrictEqual("myothertable");
@@ -57,7 +57,7 @@ describe("where", () => {
 
   it("should support ilike", async () => {
     const tf = await db.selectOne("_sc_tables", {
-      name: { ilike: "yothertabl" }
+      name: { ilike: "yothertabl" },
     });
 
     expect(tf.name).toStrictEqual("myothertable");
@@ -65,7 +65,7 @@ describe("where", () => {
 
   it("should  count", async () => {
     const tbls = await db.count("_sc_tables", {
-      name: { ilike: "yothertabl" }
+      name: { ilike: "yothertabl" },
     });
 
     expect(tbls).toStrictEqual(1);

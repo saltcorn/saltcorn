@@ -11,25 +11,25 @@ export const ntimes = (n, f) => {
   return res;
 };
 
-export const sum = xs => {
+export const sum = (xs) => {
   var res = 0;
   for (const x of xs) res += x;
   return res;
 };
 
-const resetWidths = ncols => ntimes(ncols - 1, () => 12 / ncols);
+const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
 export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
 
   return (
-    <div className="row" ref={dom => connect(drag(dom))}>
-      {ntimes(ncols, ix => (
+    <div className="row" ref={(dom) => connect(drag(dom))}>
+      {ntimes(ncols, (ix) => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
           <Element
             canvas
@@ -46,10 +46,10 @@ export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
 };
 
 export const TwoSplitSettings = () => {
-  const { setProp, widths, ncols, aligns } = useNode(node => ({
+  const { setProp, widths, ncols, aligns } = useNode((node) => ({
     widths: node.data.props.widths,
     aligns: node.data.props.aligns,
-    ncols: node.data.props.ncols
+    ncols: node.data.props.ncols,
   }));
   return (
     <div>
@@ -61,15 +61,15 @@ export const TwoSplitSettings = () => {
           step="1"
           min="1"
           max="4"
-          onChange={e =>
-            setProp(prop => {
+          onChange={(e) =>
+            setProp((prop) => {
               prop.ncols = e.target.value;
               prop.widths = resetWidths(e.target.value);
             })
           }
         />
       </div>
-      {ntimes(ncols, ix => (
+      {ntimes(ncols, (ix) => (
         <div key={ix}>
           <h6>Column {ix + 1}</h6>
           {ix < ncols - 1 && (
@@ -81,8 +81,8 @@ export const TwoSplitSettings = () => {
                 step="1"
                 min="1"
                 max={12 - ncols}
-                onChange={e =>
-                  setProp(prop => (prop.widths[ix] = +e.target.value))
+                onChange={(e) =>
+                  setProp((prop) => (prop.widths[ix] = +e.target.value))
                 }
               />
               /12
@@ -91,7 +91,9 @@ export const TwoSplitSettings = () => {
           <label>Align</label>
           <select
             value={aligns[ix]}
-            onChange={e => setProp(prop => (prop.aligns[ix] = e.target.value))}
+            onChange={(e) =>
+              setProp((prop) => (prop.aligns[ix] = e.target.value))
+            }
           >
             <option value="left">Left</option>
             <option value="center">Center</option>
@@ -107,9 +109,9 @@ TwoSplit.craft = {
   defaultProps: {
     widths: [6],
     aligns: ["left", "left"],
-    ncols: 2
+    ncols: 2,
   },
   related: {
-    settings: TwoSplitSettings
-  }
+    settings: TwoSplitSettings,
+  },
 };

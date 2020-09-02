@@ -5,7 +5,7 @@ const Workflow = require("../models/workflow");
 const rick_file = async () => {
   await File.ensure_file_store();
 
-  const mv = async fnm => {
+  const mv = async (fnm) => {
     await fs.writeFile(fnm, "nevergonnagiveyouup");
   };
   return await File.from_req_files(
@@ -19,33 +19,33 @@ const configuration_workflow = () =>
     steps: [
       {
         name: "step1",
-        form: context =>
+        form: (context) =>
           new Form({
             fields: [
               {
                 name: "first_name",
                 label: "First name",
                 type: "String",
-                required: true
-              }
-            ]
-          })
+                required: true,
+              },
+            ],
+          }),
       },
       {
         name: "step2",
-        form: context =>
+        form: (context) =>
           new Form({
             fields: [
               {
                 name: "last_name",
                 label: "Last name",
                 type: "String",
-                required: true
-              }
-            ]
-          })
-      }
-    ]
+                required: true,
+              },
+            ],
+          }),
+      },
+    ],
   });
 
 const plugin_with_routes = {
@@ -66,19 +66,19 @@ const plugin_with_routes = {
         the_html_route: async () => {
           return { html: "<div>Hello</div>" };
         },
-        the_null_route: () => null
-      }
-    }
-  ]
+        the_null_route: () => null,
+      },
+    },
+  ],
 };
 const mockReqRes = {
   req: { csrfToken: () => "" },
-  res: { redirect() {}, json() {}, send() {} }
+  res: { redirect() {}, json() {}, send() {} },
 };
 
 module.exports = {
   rick_file,
   plugin_with_routes,
   configuration_workflow,
-  mockReqRes
+  mockReqRes,
 };

@@ -8,7 +8,7 @@ const {
   toInclude,
   toNotInclude,
   toRedirect,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -62,7 +62,7 @@ describe("Field Endpoints", () => {
         name: "AgeRating",
         label: "AgeRating",
         type: "Integer",
-        required: false
+        required: false,
       })
     );
 
@@ -124,7 +124,7 @@ describe("Field Endpoints", () => {
         name: "cowrote",
         label: "cowrote",
         type: "Key to books",
-        required: false
+        required: false,
       })
     );
 
@@ -147,7 +147,7 @@ describe("Field Endpoints", () => {
         label: "Wrote",
         type: "Key to books",
         summary_field: "pages",
-        required: true
+        required: true,
       })
     );
 
@@ -170,7 +170,7 @@ describe("Field Endpoints", () => {
         name: "zowrote",
         label: "ZoWrote",
         type: "String",
-        required: true
+        required: true,
       })
     );
 
@@ -191,7 +191,7 @@ describe("Field Endpoints", () => {
         name: "weight",
         label: "weight",
         type: "Integer",
-        required: true
+        required: true,
       })
     );
 

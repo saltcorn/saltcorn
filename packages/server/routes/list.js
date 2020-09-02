@@ -21,28 +21,28 @@ router.get(
     const table = await Table.findOne({ name });
 
     const fields = await table.getFields();
-    var tfields = fields.map(f => ({ label: f.label, key: f.listKey }));
+    var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
 
     tfields.push({
       label: "Version",
-      key: r => r._version
+      key: (r) => r._version,
     });
     tfields.push({
       label: "Saved",
-      key: r => moment(r._time).fromNow()
+      key: (r) => moment(r._time).fromNow(),
     });
     tfields.push({
       label: "By user ID",
-      key: r => r._userid
+      key: (r) => r._userid,
     });
     tfields.push({
       label: "Restore",
-      key: r =>
+      key: (r) =>
         post_btn(
           `/list/_restore/${table.name}/${r.id}/${r._version}`,
           "Restore",
           req.csrfToken()
-        )
+        ),
     });
     const rows = await table.get_history(+id);
 
@@ -65,10 +65,10 @@ router.post(
     const fields = await table.getFields();
     const row = await db.selectOne(`${db.sqlsanitize(table.name)}__history`, {
       id,
-      _version
+      _version,
     });
     var r = {};
-    fields.forEach(f => (r[f.name] = row[f.name]));
+    fields.forEach((f) => (r[f.name] = row[f.name]));
     await table.updateRow(r, +id);
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
@@ -83,7 +83,7 @@ router.get(
     const table = await Table.findOne({ name: tname });
 
     const fields = await table.getFields();
-    var tfields = fields.map(f => ({ label: f.label, key: f.listKey }));
+    var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
     const joinOpts = { orderBy: "id" };
     if (table.versioned) {
       joinOpts.aggregations = {
@@ -91,28 +91,28 @@ router.get(
           table: table.name + "__history",
           ref: "id",
           field: "id",
-          aggregate: "count"
-        }
+          aggregate: "count",
+        },
       };
       tfields.push({
         label: "Versions",
-        key: r =>
+        key: (r) =>
           r._versions > 0
             ? a(
                 { href: `/list/_versions/${table.name}/${r.id}` },
                 `${r._versions}&nbsp;<i class="fa-sm fas fa-list"></i>`
               )
-            : "0"
+            : "0",
       });
     }
     tfields.push({
       label: "Edit",
-      key: r => link(`/edit/${table.name}/${r.id}`, "Edit")
+      key: (r) => link(`/edit/${table.name}/${r.id}`, "Edit"),
     });
     tfields.push({
       label: "Delete",
-      key: r =>
-        post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken())
+      key: (r) =>
+        post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken()),
     });
     const rows = await table.getJoinedRows(joinOpts);
     res.sendWrap(`${table.name} data table`, {
@@ -122,18 +122,18 @@ router.get(
           crumbs: [
             { text: "Tables", href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: "Data" }
-          ]
+            { text: "Data" },
+          ],
         },
         {
           type: "card",
           title: `${table.name} data table`,
           contents: [
             mkTable(tfields, rows),
-            link(`/edit/${table.name}`, "Add row")
-          ]
-        }
-      ]
+            link(`/edit/${table.name}`, "Add row"),
+          ],
+        },
+      ],
     });
   })
 );

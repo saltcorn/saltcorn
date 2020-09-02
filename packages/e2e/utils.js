@@ -10,16 +10,16 @@ class Browser {
       headless: true, //o || process.env.CI==='true',
       executablePath: "/usr/bin/google-chrome",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      dumpio: true
+      dumpio: true,
     });
 
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
-    b.page.on("pageerror", function(err) {
+    b.page.on("pageerror", function (err) {
       theTempValue = err.toString();
       throw new Error("Page error: " + theTempValue);
     });
-    b.page.on("error", function(err) {
+    b.page.on("error", function (err) {
       theTempValue = err.toString();
       throw new Error("Error: " + theTempValue);
     });
@@ -32,7 +32,7 @@ class Browser {
   async goto(url) {
     const [response] = await Promise.all([
       this.page.waitForNavigation(),
-      this.page.goto(this.baseURL + url)
+      this.page.goto(this.baseURL + url),
     ]);
     expect(response.status()).toBe(200);
   }
@@ -41,7 +41,7 @@ class Browser {
 
     const [response] = await Promise.all([
       this.page.waitForNavigation(),
-      this.page.click(sel)
+      this.page.click(sel),
     ]);
     if (response.status() >= 400 && !dontCheck) {
       const page = await this.page.content();
@@ -63,7 +63,7 @@ class Browser {
   async erase_input(selector) {
     await this.page.click(selector);
     await this.page.waitFor(50);
-    const inputValue = await this.page.$eval(selector, el => el.value);
+    const inputValue = await this.page.$eval(selector, (el) => el.value);
     for (let i = 0; i < inputValue.length; i++) {
       await this.page.waitFor(10);
       await this.page.keyboard.press("Backspace");
@@ -82,7 +82,7 @@ class Browser {
   async getInnerText(sel) {
     const element = await this.page.$(sel);
     const text = await this.page.evaluate(
-      element => element.textContent,
+      (element) => element.textContent,
       element
     );
     return text;

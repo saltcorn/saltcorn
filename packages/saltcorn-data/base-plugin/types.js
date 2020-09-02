@@ -7,18 +7,18 @@ const {
   h3,
   button,
   textarea,
-  text_attr
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 
-const isdef = x => (typeof x === "undefined" || x === null ? false : true);
+const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
         .split(",")
-        .map(o => text_attr(o.trim()))
-        .map(o => option({ value: o, ...(v === o && { selected: true }) }, o))
+        .map((o) => text_attr(o.trim()))
+        .map((o) => option({ value: o, ...(v === o && { selected: true }) }, o))
     : optsStr.map(({ name, label }) =>
         option({ value: name, ...(v === name && { selected: true }) }, label)
       );
@@ -33,18 +33,18 @@ const string = {
       type: "String",
       required: false,
       sublabel:
-        'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.'
-    }
+        'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
+    },
   ],
   contract: ({ options }) =>
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
       ? is.str
-      : is.one_of(options.map(o => o.name)),
+      : is.one_of(options.map((o) => o.name)),
   fieldviews: {
-    as_text: { isEdit: false, run: s => text(s) },
-    as_header: { isEdit: false, run: s => h3(text(s)) },
+    as_text: { isEdit: false, run: (s) => text(s) },
+    as_header: { isEdit: false, run: (s) => h3(text(s)) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required) =>
@@ -54,13 +54,13 @@ const string = {
                 class: ["form-control", cls],
                 name: text_attr(nm),
                 id: `input${text_attr(nm)}`,
-                disabled: attrs.disabled
+                disabled: attrs.disabled,
               },
               required
                 ? getStrOptions(v, attrs.options)
                 : [
                     option({ value: "" }, ""),
-                    ...getStrOptions(v, attrs.options)
+                    ...getStrOptions(v, attrs.options),
                   ]
             )
           : attrs.calcOptions
@@ -73,7 +73,7 @@ const string = {
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
                   JSON.stringify(attrs.calcOptions)
-                )
+                ),
               },
               option({ value: "" }, "")
             )
@@ -83,8 +83,8 @@ const string = {
               class: ["form-control", cls],
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
-              ...(isdef(v) && { value: text_attr(v) })
-            })
+              ...(isdef(v) && { value: text_attr(v) }),
+            }),
     },
     textarea: {
       isEdit: true,
@@ -95,13 +95,13 @@ const string = {
             name: text_attr(nm),
             disabled: attrs.disabled,
             id: `input${text_attr(nm)}`,
-            rows: 10
+            rows: 10,
           },
           text(v) || ""
-        )
-    }
+        ),
+    },
   },
-  read: v => {
+  read: (v) => {
     switch (typeof v) {
       case "string":
         return v;
@@ -109,7 +109,7 @@ const string = {
         return undefined;
     }
   },
-  validate: () => x => true
+  validate: () => (x) => true,
 };
 
 const int = {
@@ -117,7 +117,7 @@ const int = {
   sql_name: "int",
   contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
   fieldviews: {
-    show: { isEdit: false, run: s => text(s) },
+    show: { isEdit: false, run: (s) => text(s) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
@@ -130,15 +130,15 @@ const int = {
           step: "1",
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
-          ...(isdef(v) && { value: text_attr(v) })
-        })
-    }
+          ...(isdef(v) && { value: text_attr(v) }),
+        }),
+    },
   },
   attributes: [
     { name: "max", type: "Integer", required: false },
-    { name: "min", type: "Integer", required: false }
+    { name: "min", type: "Integer", required: false },
   ],
-  read: v => {
+  read: (v) => {
     switch (typeof v) {
       case "number":
         return Math.round(v);
@@ -149,11 +149,11 @@ const int = {
         return undefined;
     }
   },
-  validate: ({ min, max }) => x => {
+  validate: ({ min, max }) => (x) => {
     if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
     if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
     return true;
-  }
+  },
 };
 
 const float = {
@@ -161,7 +161,7 @@ const float = {
   sql_name: "double precision",
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
   fieldviews: {
-    show: { isEdit: false, run: s => text(s) },
+    show: { isEdit: false, run: (s) => text(s) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
@@ -176,17 +176,17 @@ const float = {
           id: `input${text_attr(nm)}`,
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
-          ...(isdef(v) && { value: text_attr(v) })
-        })
-    }
+          ...(isdef(v) && { value: text_attr(v) }),
+        }),
+    },
   },
   attributes: [
     { name: "max", type: "Float", required: false },
     { name: "min", type: "Float", required: false },
     { name: "units", type: "String", required: false },
-    { name: "decimal_places", type: "Integer", required: false }
+    { name: "decimal_places", type: "Integer", required: false },
   ],
-  read: v => {
+  read: (v) => {
     switch (typeof v) {
       case "number":
         return v;
@@ -197,11 +197,11 @@ const float = {
         return undefined;
     }
   },
-  validate: ({ min, max }) => x => {
+  validate: ({ min, max }) => (x) => {
     if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
     if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
     return true;
-  }
+  },
 };
 
 const date = {
@@ -212,9 +212,9 @@ const date = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: d => text(typeof d === "string" ? text(d) : d.toISOString())
+      run: (d) => text(typeof d === "string" ? text(d) : d.toISOString()),
     },
-    relative: { isEdit: false, run: d => text(moment(d).fromNow()) },
+    relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
@@ -225,15 +225,15 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toISOString())
-          })
-        })
-    }
+            value: text_attr(typeof v === "string" ? v : v.toISOString()),
+          }),
+        }),
+    },
   },
   presets: {
-    Now: () => new Date()
+    Now: () => new Date(),
   },
-  read: v => {
+  read: (v) => {
     if (v instanceof Date && !isNaN(v)) return v;
 
     if (typeof v === "string") {
@@ -242,7 +242,7 @@ const date = {
       else return null;
     }
   },
-  validate: ({}) => v => v instanceof Date && !isNaN(v)
+  validate: ({}) => (v) => v instanceof Date && !isNaN(v),
 };
 
 const bool = {
@@ -252,7 +252,7 @@ const bool = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: v => (v === true ? "True" : v === false ? "False" : "")
+      run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },
     edit: {
       isEdit: true,
@@ -263,8 +263,8 @@ const bool = {
           disabled: attrs.disabled,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
-          ...(v && { checked: true })
-        })
+          ...(v && { checked: true }),
+        }),
     },
     tristate: {
       isEdit: true,
@@ -279,17 +279,17 @@ const bool = {
               type: "hidden",
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
-              value: !isdef(v) || v === null ? "?" : v ? "on" : "off"
+              value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
             }) +
             button(
               {
                 onClick: `tristateClick('${text_attr(nm)}')`,
                 type: "button",
-                id: `trib${text_attr(nm)}`
+                id: `trib${text_attr(nm)}`,
               },
               !isdef(v) || v === null ? "?" : v ? "T" : "F"
-            )
-    }
+            ),
+    },
   },
   attributes: [],
   readFromFormRecord: (rec, name) => {
@@ -298,7 +298,7 @@ const bool = {
     if (rec[name] === "?") return null;
     return rec[name] ? true : false;
   },
-  read: v => {
+  read: (v) => {
     switch (typeof v) {
       case "string":
         if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
@@ -309,9 +309,9 @@ const bool = {
         return v ? true : false;
     }
   },
-  readFromDB: v => !!v,
-  listAs: v => JSON.stringify(v),
-  validate: () => x => true
+  readFromDB: (v) => !!v,
+  listAs: (v) => JSON.stringify(v),
+  validate: () => (x) => true,
 };
 
 module.exports = { string, int, bool, date, float };

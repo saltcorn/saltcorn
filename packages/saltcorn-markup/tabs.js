@@ -1,8 +1,8 @@
 const { a, text, div, ul, li } = require("./tags");
 
-const mkId = str => text(str.split(" ").join("_"));
+const mkId = (str) => text(str.split(" ").join("_"));
 
-const tabs = obj => {
+const tabs = (obj) => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
   const lis = entries.map((e, ix) =>
     li(
@@ -15,7 +15,7 @@ const tabs = obj => {
           id: `${mkId(e[0])}-tab`,
           role: "tab",
           "aria-controls": "home",
-          "aria-selected": "true"
+          "aria-selected": "true",
         },
         text(e[0])
       )
@@ -27,7 +27,7 @@ const tabs = obj => {
         class: ["tab-pane fade", ix == 0 && "show active"],
         id: `${mkId(e[0])}`,
         role: "tabpanel",
-        "aria-labelledby": `${mkId(e[0])}-tab`
+        "aria-labelledby": `${mkId(e[0])}-tab`,
       },
       e[1]
     )

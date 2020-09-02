@@ -14,22 +14,22 @@ const configuration_workflow = () =>
     steps: [
       {
         name: "Views",
-        form: async context => {
+        form: async (context) => {
           const show_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewtemplate, viewrow }) =>
               viewtemplate.runMany &&
               viewrow.name !== context.viewname &&
-              state_fields.some(sf => sf.name === "id")
+              state_fields.some((sf) => sf.name === "id")
           );
           const create_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
-              state_fields.every(sf => !sf.required)
+              state_fields.every((sf) => !sf.required)
           );
-          const show_view_opts = show_views.map(v => v.name);
-          const create_view_opts = create_views.map(v => v.name);
+          const show_view_opts = show_views.map((v) => v.name);
+          const create_view_opts = create_views.map((v) => v.name);
           return new Form({
             fields: [
               {
@@ -38,8 +38,8 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: show_view_opts.join()
-                }
+                  options: show_view_opts.join(),
+                },
               },
               {
                 name: "view_to_create",
@@ -48,8 +48,8 @@ const configuration_workflow = () =>
                   "If user has write permission.  Leave blank to have no link to create a new item",
                 type: "String",
                 attributes: {
-                  options: create_view_opts.join()
-                }
+                  options: create_view_opts.join(),
+                },
               },
               {
                 name: "create_view_display",
@@ -57,16 +57,16 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: "Link,Embedded"
-                }
-              }
-            ]
+                  options: "Link,Embedded",
+                },
+              },
+            ],
           });
-        }
+        },
       },
       {
         name: "Order and layout",
-        form: async context => {
+        form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           return new Form({
@@ -77,14 +77,14 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: fields.map(f => f.name).join()
-                }
+                  options: fields.map((f) => f.name).join(),
+                },
               },
               {
                 name: "descending",
                 label: "Descending",
                 type: "Bool",
-                required: true
+                required: true,
               },
               {
                 name: "cols_sm",
@@ -92,10 +92,10 @@ const configuration_workflow = () =>
                 type: "Integer",
                 attributes: {
                   min: 1,
-                  max: 4
+                  max: 4,
                 },
                 required: true,
-                default: 1
+                default: 1,
               },
               {
                 name: "cols_md",
@@ -103,10 +103,10 @@ const configuration_workflow = () =>
                 type: "Integer",
                 attributes: {
                   min: 1,
-                  max: 4
+                  max: 4,
                 },
                 required: true,
-                default: 1
+                default: 1,
               },
               {
                 name: "cols_lg",
@@ -114,10 +114,10 @@ const configuration_workflow = () =>
                 type: "Integer",
                 attributes: {
                   min: 1,
-                  max: 4
+                  max: 4,
                 },
                 required: true,
-                default: 1
+                default: 1,
               },
               {
                 name: "cols_xl",
@@ -125,27 +125,27 @@ const configuration_workflow = () =>
                 type: "Integer",
                 attributes: {
                   min: 1,
-                  max: 4
+                  max: 4,
                 },
                 required: true,
-                default: 1
+                default: 1,
               },
               {
                 name: "in_card",
                 label: "Each in card?",
                 type: "Bool",
-                required: true
-              }
-            ]
+                required: true,
+              },
+            ],
           });
-        }
-      }
-    ]
+        },
+      },
+    ],
   });
 
 const get_state_fields = async (table_id, viewname, { show_view }) => {
   const table_fields = await Field.find({ table_id });
-  return table_fields.map(f => {
+  return table_fields.map((f) => {
     const sf = new Field(f);
     sf.required = false;
     return sf;
@@ -172,7 +172,7 @@ const run = async (
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     orderBy: order_field,
-    ...(descending && { orderDesc: true })
+    ...(descending && { orderDesc: true }),
   });
   const role =
     extraArgs && extraArgs.req && extraArgs.req.user
@@ -189,17 +189,17 @@ const run = async (
         `Add ${pluralize(table.name, 1)}`
       );
   }
-  const setCols = sz => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
+  const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const showRowInner = r =>
+  const showRowInner = (r) =>
     in_card
       ? div({ class: "card shadow mt-4" }, div({ class: "card-body" }, r.html))
       : r.html;
 
-  const showRow = r =>
+  const showRow = (r) =>
     div(
       {
-        class: [setCols("sm"), setCols("md"), setCols("lg"), setCols("xl")]
+        class: [setCols("sm"), setCols("md"), setCols("lg"), setCols("xl")],
       },
       showRowInner(r)
     );
@@ -214,5 +214,5 @@ module.exports = {
   configuration_workflow,
   run,
   get_state_fields,
-  display_state_form: false
+  display_state_form: false,
 };

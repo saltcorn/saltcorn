@@ -6,11 +6,11 @@ const { search_bar_form } = require("./helpers");
 const makeSegments = (body, alerts) => {
   const alertsSegments =
     alerts && alerts.length > 0
-      ? [{ type: "blank", contents: alerts.map(a => alert(a.type, a.msg)) }]
+      ? [{ type: "blank", contents: alerts.map((a) => alert(a.type, a.msg)) }]
       : [];
   if (typeof body === "string")
     return {
-      above: [...alertsSegments, { type: "blank", contents: body }]
+      above: [...alertsSegments, { type: "blank", contents: body }],
     };
   else if (body.above) {
     if (alerts && alerts.length > 0) body.above.unshift(alertsSegments[0]);
@@ -71,7 +71,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         img({
           class: "w-100",
           alt: segment.alt,
-          src: `/files/serve/${segment.fileid}`
+          src: `/files/serve/${segment.fileid}`,
         })
       );
     }
@@ -108,7 +108,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         borderWidth,
         borderStyle,
         setTextColor,
-        textColor
+        textColor,
       } = segment;
       const renderBg = !(
         isTop &&
@@ -126,7 +126,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "middle" &&
                 hAlign === "center" &&
-                "justify-content-center"
+                "justify-content-center",
             ],
             style: `min-height: ${minHeight || 0}px; 
           border: ${borderWidth || 0}px ${borderStyle} black; 
@@ -142,7 +142,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
               ? `background-color: ${bgColor};`
               : ""
           }
-          ${setTextColor ? `color: ${textColor};` : ""}`
+          ${setTextColor ? `color: ${textColor};` : ""}`,
           },
           go(segment.contents)
         )
@@ -166,7 +166,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             {
               class: `col-sm-${
                 segment.widths ? segment.widths[ixb] : defwidth
-              } text-${segment.aligns ? segment.aligns[ixb] : ""}`
+              } text-${segment.aligns ? segment.aligns[ixb] : ""}`,
             },
             go(t, false, ixb)
           )
@@ -188,7 +188,7 @@ module.exports = contract(
       role: is.maybe(is.posint),
       alerts: is.maybe(
         is.array(is.obj({ type: is.str, msg: is.or(is.str, is.array(is.str)) }))
-      )
+      ),
     }),
     is.str
   ),

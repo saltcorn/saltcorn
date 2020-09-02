@@ -4,7 +4,7 @@ const { getState, create_tenant } = require("@saltcorn/data/db/state");
 const {
   getAllTenants,
   domain_sanitize,
-  deleteTenant
+  deleteTenant,
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
 const { div, nbsp, p, a } = require("@saltcorn/markup/tags");
@@ -28,9 +28,9 @@ const tenant_form = () =>
         name: "subdomain",
         label: "Application name",
         input_type: "text",
-        postText: ".saltcorn.com"
-      }
-    ]
+        postText: ".saltcorn.com",
+      },
+    ],
   });
 //TODO only if multi ten and not already in subdomain
 router.get(
@@ -117,7 +117,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Tenants" }]
+          crumbs: [{ text: "Settings" }, { text: "Tenants" }],
         },
         {
           type: "card",
@@ -129,20 +129,20 @@ router.get(
                 { label: "email", key: "email" },
                 {
                   label: "Delete",
-                  key: r =>
+                  key: (r) =>
                     post_btn(
                       `/tenant/delete/${r.subdomain}`,
                       "Delete",
                       req.csrfToken()
-                    )
-                }
+                    ),
+                },
               ],
               tens
             ),
-            div(`Found ${tens.length} tenants`)
-          ]
-        }
-      ]
+            div(`Found ${tens.length} tenants`),
+          ],
+        },
+      ],
     });
   })
 );

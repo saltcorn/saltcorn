@@ -3,7 +3,7 @@ const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
 
-const readKey = v => {
+const readKey = (v) => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
 };
@@ -77,7 +77,7 @@ class Field {
       type: typeof this.type === "string" ? this.type : this.type.name,
       reftable_name: this.reftable_name,
       attributes: this.attributes,
-      required: this.required
+      required: this.required,
     };
   }
 
@@ -103,7 +103,10 @@ class Field {
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");
-      const dbOpts = rows.map(r => ({ label: r[summary_field], value: r.id }));
+      const dbOpts = rows.map((r) => ({
+        label: r[summary_field],
+        value: r.id,
+      }));
       const allOpts =
         !this.required || force_allow_none
           ? [{ label: "", value: "" }, ...dbOpts]
@@ -172,7 +175,7 @@ class Field {
 
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_fields", where, selectopts);
-    return db_flds.map(dbf => new Field(dbf));
+    return db_flds.map((dbf) => new Field(dbf));
   }
 
   static async findOne(where) {
@@ -259,9 +262,9 @@ class Field {
   }
   get listKey() {
     return this.type.listAs
-      ? r => this.type.listAs(r[this.name])
+      ? (r) => this.type.listAs(r[this.name])
       : this.type.showAs
-      ? r => this.type.showAs(r[this.name])
+      ? (r) => this.type.showAs(r[this.name])
       : this.name;
   }
   get presets() {
@@ -336,7 +339,7 @@ class Field {
       $$ LANGUAGE plpgsql;`;
       await db.query(q);
       await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
-        f.attributes.default
+        f.attributes.default,
       ]);
     }
 
@@ -348,7 +351,7 @@ class Field {
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
       required: f.required,
       is_unique: f.is_unique,
-      attributes: f.attributes
+      attributes: f.attributes,
     });
 
     if (table.versioned) {
@@ -388,7 +391,7 @@ Field.contract = {
         "search",
         "text",
         "password",
-        "section_header"
+        "section_header",
       ])
     ),
     is_fkey: is.bool,
@@ -397,7 +400,7 @@ Field.contract = {
     disabled: is.bool,
     id: is.maybe(is.posint),
     attributes: is.obj(),
-    table_id: is.maybe(is.posint)
+    table_id: is.maybe(is.posint),
   },
   instance_check: is.and(
     is.or(is.obj({ type: is.defined }), is.obj({ input_type: is.defined })),
@@ -424,7 +427,7 @@ Field.contract = {
     toggle_not_null: is.fun(is.bool, is.promise(is.undefined)), // TODO requires postgres
     fill_table: is.fun([], is.promise(is.undefined)),
     update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
-    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise())
+    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
   },
   static_methods: {
     find: is.fun(
@@ -433,7 +436,7 @@ Field.contract = {
     ),
     findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
     create: is.fun(is.obj(), is.promise(is.class("Field"))),
-    labelToName: is.fun(is.str, is.str)
-  }
+    labelToName: is.fun(is.str, is.str),
+  },
 };
 module.exports = Field;

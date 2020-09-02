@@ -32,7 +32,7 @@ class View {
   static async find(where, selectopts) {
     const views = await db.select("_sc_views", where, selectopts);
 
-    return views.map(v => new View(v));
+    return views.map((v) => new View(v));
   }
 
   async get_state_fields() {
@@ -47,13 +47,13 @@ class View {
   get menu_label() {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
-    const item = menu_items.find(mi => mi.viewname === this.name);
+    const item = menu_items.find((mi) => mi.viewname === this.name);
     return item ? item.label : undefined;
   }
   static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
     const link_views = await View.find({
-      table_id
+      table_id,
     });
 
     for (const viewrow of link_views) {
@@ -63,7 +63,7 @@ class View {
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
-          state_fields: sfs
+          state_fields: sfs,
         })
       )
         link_view_opts.push(viewrow);
@@ -82,7 +82,7 @@ class View {
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
-          state_fields: sfs
+          state_fields: sfs,
         })
       )
         link_view_opts.push(viewrow);
@@ -92,7 +92,7 @@ class View {
 
   static async find_possible_links_to_table(table_id) {
     return View.find_table_views_where(table_id, ({ state_fields }) =>
-      state_fields.some(sf => sf.name === "id")
+      state_fields.some((sf) => sf.name === "id")
     );
   }
 
@@ -102,9 +102,7 @@ class View {
       delete v.is_public;
     }
     const id = await db.insert("_sc_views", v);
-    await require("../db/state")
-      .getState()
-      .refresh();
+    await require("../db/state").getState().refresh();
     return new View({ id, ...v });
   }
   async delete() {
@@ -112,15 +110,11 @@ class View {
   }
   static async delete(where) {
     await db.deleteWhere("_sc_views", where);
-    await require("../db/state")
-      .getState()
-      .refresh();
+    await require("../db/state").getState().refresh();
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
-    await require("../db/state")
-      .getState()
-      .refresh();
+    await require("../db/state").getState().refresh();
   }
 
   async run(query, extraArgs) {
@@ -187,7 +181,7 @@ class View {
     if (display_state_form) {
       const fields = await this.get_state_fields();
 
-      fields.forEach(f => {
+      fields.forEach((f) => {
         f.required = false;
         if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
         if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
@@ -200,7 +194,7 @@ class View {
         fields,
         submitLabel: "Apply",
         isStateForm: true,
-        values: removeEmptyStrings(query)
+        values: removeEmptyStrings(query),
       });
       await form.fill_fkey_options(true);
       return form;
@@ -210,8 +204,8 @@ class View {
   async get_config_flow() {
     const configFlow = this.viewtemplateObj.configuration_workflow();
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
-    const oldOnDone = configFlow.onDone || (c => c);
-    configFlow.onDone = async ctx => {
+    const oldOnDone = configFlow.onDone || ((c) => c);
+    configFlow.onDone = async (ctx) => {
       const { table_id, ...configuration } = oldOnDone(ctx);
 
       await View.update({ configuration }, this.id);
@@ -229,7 +223,7 @@ View.contract = {
     table_id: is.maybe(is.posint),
     viewtemplate: is.str,
     min_role: is.posint,
-    viewtemplateObj: is.maybe(is_viewtemplate)
+    viewtemplateObj: is.maybe(is_viewtemplate),
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
@@ -250,7 +244,7 @@ View.contract = {
         is.str,
         is.obj(),
         is.obj(),
-        is.obj({ req: is.defined, res: is.defined })
+        is.obj({ req: is.defined, res: is.defined }),
       ],
       is.promise(is.any)
     ),
@@ -258,7 +252,7 @@ View.contract = {
       [is.obj(), is.obj({ req: is.defined, res: is.defined })],
       is.promise(is.array(is.obj({ html: is.defined, row: is.obj() })))
     ),
-    combine_state_and_default_state: is.fun(is.obj(), is.obj())
+    combine_state_and_default_state: is.fun(is.obj(), is.obj()),
   },
   static_methods: {
     find: is.fun(
@@ -270,7 +264,7 @@ View.contract = {
       is.obj({
         name: is.str,
         table_id: is.posint,
-        viewtemplate: is.str
+        viewtemplate: is.str,
       }),
       is.promise(is.class("View"))
     ),
@@ -286,7 +280,7 @@ View.contract = {
         is.obj({
           viewrow: is.class("View"),
           viewtemplate: is.obj(),
-          state_fields: is.array(fieldlike)
+          state_fields: is.array(fieldlike),
         }),
         is.bool
       ),
@@ -299,13 +293,13 @@ View.contract = {
           is.obj({
             viewrow: is.class("View"),
             viewtemplate: is.obj(),
-            state_fields: is.array(fieldlike)
+            state_fields: is.array(fieldlike),
           }),
           is.bool
-        )
+        ),
       ],
       is.promise(is.array(is.class("View")))
-    )
-  }
+    ),
+  },
 };
 module.exports = View;

@@ -38,7 +38,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   return tq.rows;
 };
 
-const drop_reset_schema = async schema => {
+const drop_reset_schema = async (schema) => {
   await pool.query(`DROP SCHEMA "${schema}" CASCADE;
   CREATE SCHEMA "${schema}";
   GRANT ALL ON SCHEMA "${schema}" TO postgres;
@@ -142,5 +142,5 @@ module.exports = {
   set_sql_logging,
   getClient,
   mkWhere,
-  drop_reset_schema
+  drop_reset_schema,
 };

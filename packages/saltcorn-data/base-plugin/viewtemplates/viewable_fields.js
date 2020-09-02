@@ -17,11 +17,11 @@ const action_url = contract(
 );
 const get_view_link_query = contract(
   is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
-  fields => {
-    const fUnique = fields.find(f => f.is_unique);
+  (fields) => {
+    const fUnique = fields.find((f) => f.is_unique);
     if (fUnique)
-      return r => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
-    else return r => `?id=${r.id}`;
+      return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
+    else return (r) => `?id=${r.id}`;
   }
 );
 
@@ -38,28 +38,28 @@ const view_linker = contract(
         const get_query = get_view_link_query(fields);
         return {
           label: vnm,
-          key: r =>
+          key: (r) =>
             link(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
               view_label || vnm
-            )
+            ),
         };
       case "ChildList":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
-          key: r =>
+          key: (r) =>
             link(
               `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
               view_label || viewnm
-            )
+            ),
         };
       case "ParentShow":
         const [pviewnm, ptbl, pfld] = vrest.split(".");
         //console.log([pviewnm, ptbl, pfld])
         return {
           label: pviewnm,
-          key: r => {
+          key: (r) => {
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             return r[pfld]
               ? link(
@@ -70,7 +70,7 @@ const view_linker = contract(
                       : summary_field)
                 )
               : "";
-          }
+          },
         };
       default:
         throw new Error(view);
@@ -86,29 +86,29 @@ const get_viewable_fields = contract(
       is.array(is.class("Field")),
       is.array(is_column),
       is.bool,
-      is.str
+      is.str,
     ],
 
     is.array(
       is.obj({
         key: is.or(is.fun(is.obj(), is.str), is.str, is.undefined),
-        label: is.str
+        label: is.str,
       })
     )
   ),
   (viewname, table, fields, columns, isShow, csrfToken) =>
     columns
-      .map(column => {
+      .map((column) => {
         if (column.type === "Action")
           return {
             label: column.action_name,
-            key: r =>
+            key: (r) =>
               post_btn(
                 action_url(viewname, table, column.action_name, r),
                 column.action_name,
                 csrfToken,
                 { small: true }
-              )
+              ),
           };
         else if (column.type === "ViewLink") {
           return view_linker(column, fields);
@@ -116,7 +116,7 @@ const get_viewable_fields = contract(
           const [refNm, targetNm] = column.join_field.split(".");
           return {
             label: text(targetNm),
-            key: text(targetNm)
+            key: text(targetNm),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {
@@ -132,18 +132,18 @@ const get_viewable_fields = contract(
 
           return {
             label: text(column.stat + " " + table),
-            key: text(targetNm)
+            key: text(targetNm),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Field") {
-          const f = fields.find(fld => fld.name === column.field_name);
+          const f = fields.find((fld) => fld.name === column.field_name);
 
           return (
             f && {
               label: text(f.label),
               key:
                 column.fieldview && f.type === "File"
-                  ? row =>
+                  ? (row) =>
                       row[f.name] &&
                       getState().fileviews[column.fieldview].run(
                         row[f.name],
@@ -152,27 +152,27 @@ const get_viewable_fields = contract(
                   : column.fieldview &&
                     f.type.fieldviews &&
                     f.type.fieldviews[column.fieldview]
-                  ? row =>
+                  ? (row) =>
                       f.type.fieldviews[column.fieldview].run(
                         row[f.name],
                         row[`${f.name}__filename`]
                       )
                   : isShow
                   ? f.type.showAs
-                    ? row => f.type.showAs(row[f.name])
-                    : row => text(row[f.name])
+                    ? (row) => f.type.showAs(row[f.name])
+                    : (row) => text(row[f.name])
                   : f.listKey,
-              sortlink: `javascript:sortby('${text(f.name)}')`
+              sortlink: `javascript:sortby('${text(f.name)}')`,
             }
           );
         }
       })
-      .filter(v => !!v)
+      .filter((v) => !!v)
 );
 
 const stateToQueryString = contract(
   is.fun(is.maybe(is.obj()), is.str),
-  state => {
+  (state) => {
     if (!state || Object.keys(state).length === 0) return "";
 
     return (
@@ -183,7 +183,7 @@ const stateToQueryString = contract(
             ? null
             : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
         )
-        .filter(s => !!s)
+        .filter((s) => !!s)
         .join("&")
     );
   }
@@ -198,7 +198,7 @@ const splitUniques = contract(
     var uniques = [];
     var nonUniques = [];
     Object.entries(state).forEach(([k, v]) => {
-      const field = fields.find(f => f.name === k);
+      const field = fields.find((f) => f.name === k);
       if (k === "id") uniques[k] = v;
       else if (
         field &&
@@ -220,5 +220,5 @@ module.exports = {
   action_url,
   stateToQueryString,
   view_linker,
-  splitUniques
+  splitUniques,
 };

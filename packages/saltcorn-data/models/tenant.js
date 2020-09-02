@@ -14,7 +14,7 @@ const getAllTenants = contract(
 
 const createTenant = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async subdomain => {
+  async (subdomain) => {
     const saneDomain = domain_sanitize(subdomain);
     const id = await db.insert(
       "_sc_tenants",
@@ -35,14 +35,14 @@ const createTenant = contract(
 
 const deleteTenant = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async sub => {
+  async (sub) => {
     const subdomain = domain_sanitize(sub);
     await db.query(`drop schema if exists "${subdomain}" CASCADE `);
     await db.deleteWhere("_sc_tenants", { subdomain });
   }
 );
 
-const domain_sanitize = contract(is.fun(is.str, is.str), s =>
+const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
   sqlsanitize(s.replace(".", "").toLowerCase())
 );
 
@@ -50,5 +50,5 @@ module.exports = {
   getAllTenants,
   createTenant,
   domain_sanitize,
-  deleteTenant
+  deleteTenant,
 };

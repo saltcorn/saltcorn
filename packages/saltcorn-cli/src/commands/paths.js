@@ -1,7 +1,7 @@
 const { Command } = require("@oclif/command");
 const {
   configFilePath,
-  getConnectObject
+  getConnectObject,
 } = require("@saltcorn/data/db/connect");
 
 class PathsCommand extends Command {

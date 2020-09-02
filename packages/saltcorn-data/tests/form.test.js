@@ -14,7 +14,7 @@ const mkRepForm = () =>
       new Field({
         name: "subject",
         label: "Subject",
-        type: "String"
+        type: "String",
       }),
       new FieldRepeat({
         name: "students",
@@ -22,17 +22,17 @@ const mkRepForm = () =>
           new Field({
             name: "name",
             label: "Name",
-            type: "String"
+            type: "String",
           }),
           new Field({
             name: "age",
             label: "Age",
             type: "Integer",
-            attributes: { min: 16 }
-          })
-        ]
-      })
-    ]
+            attributes: { min: 16 },
+          }),
+        ],
+      }),
+    ],
   });
 
 describe("Form", () => {
@@ -44,9 +44,9 @@ describe("Form", () => {
           name: "age",
           label: "Age",
           type: "Integer",
-          attributes: { min: 16 }
-        })
-      ]
+          attributes: { min: 16 },
+        }),
+      ],
     });
     const html = renderForm(form, "");
     form.validate({ age: 32 });
@@ -63,7 +63,7 @@ describe("Form", () => {
       age_0: 18,
       name_0: "Fred",
       age_1: 19,
-      name_1: "George"
+      name_1: "George",
     });
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('name="age_0"')).toBe(true);
@@ -79,8 +79,8 @@ describe("Form", () => {
       subject: "Maths",
       students: [
         { name: "Fred", age: 18 },
-        { name: "George", age: 19 }
-      ]
+        { name: "George", age: 19 },
+      ],
     };
     const html = renderForm(form, "");
     expect(html.includes("<form")).toBe(true);
@@ -98,9 +98,9 @@ describe("Bool Form", () => {
       new Field({
         name: "done",
         label: "Done",
-        type: "Bool"
-      })
-    ]
+        type: "Bool",
+      }),
+    ],
   });
   form.validate({ done: "off" });
   expect(form.values.done).toBe(false);
@@ -118,9 +118,9 @@ describe("parent field", () => {
         name: "age",
         label: "Age",
         parent_field: "person",
-        type: "Integer"
-      })
-    ]
+        type: "Integer",
+      }),
+    ],
   });
   const html = renderForm(form, "");
   expect(html.includes("<form")).toBe(true);
@@ -141,9 +141,9 @@ describe("String form with validator failure ", () => {
         type: "String",
         validator(s) {
           if (s.length < 3) return "Too short";
-        }
-      })
-    ]
+        },
+      }),
+    ],
   });
   const html = renderForm(form, "");
   expect(html.includes("<form")).toBe(true);
@@ -163,9 +163,9 @@ describe("String form with validator success", () => {
         type: "String",
         validator(s) {
           if (s.length < 3) return "Too short";
-        }
-      })
-    ]
+        },
+      }),
+    ],
   });
   const html = renderForm(form, "");
   expect(html.includes("<form")).toBe(true);

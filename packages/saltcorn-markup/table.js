@@ -12,10 +12,10 @@ const {
   tbody,
   ul,
   li,
-  span
+  span,
 } = require("./tags");
 
-const headerCell = hdr =>
+const headerCell = (hdr) =>
   hdr.sortlink
     ? th(a({ href: hdr.sortlink }, text(hdr.label)))
     : th(text(hdr.label));
@@ -65,11 +65,11 @@ const mkTable = contract(
             is.obj({
               current_page: is.posint,
               pages: is.posint,
-              get_page_link: is.fun()
+              get_page_link: is.fun(),
             })
-          )
+          ),
         })
-      )
+      ),
     ],
     is.str
   ),
@@ -78,12 +78,12 @@ const mkTable = contract(
       { class: "table-responsive" },
       table(
         { class: ["table table-sm", opts.onRowSelect && "table-hover"] },
-        thead(tr(hdrs.map(hdr => headerCell(hdr)))),
+        thead(tr(hdrs.map((hdr) => headerCell(hdr)))),
         tbody(
-          (vs || []).map(v =>
+          (vs || []).map((v) =>
             tr(
               mkClickHandler(opts, v),
-              hdrs.map(hdr =>
+              hdrs.map((hdr) =>
                 td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
               )
             )

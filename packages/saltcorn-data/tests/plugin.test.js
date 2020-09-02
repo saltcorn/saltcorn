@@ -25,7 +25,7 @@ describe("plugin", () => {
     const newp = new Plugin({
       name: "foo",
       location: "bar/rol",
-      source: "github"
+      source: "github",
     });
     await newp.upsert();
     await newp.delete();

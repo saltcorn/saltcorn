@@ -6,17 +6,17 @@ const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
 
-const transposeObjects = objs => {
+const transposeObjects = (objs) => {
   const keys = new Set();
   for (const o of objs) {
-    Object.keys(o).forEach(k => keys.add(k));
+    Object.keys(o).forEach((k) => keys.add(k));
   }
   const res = {};
-  keys.forEach(k => {
+  keys.forEach((k) => {
     res[k] = [];
   });
   for (const o of objs) {
-    keys.forEach(k => {
+    keys.forEach((k) => {
       res[k].push(o[k]);
     });
   }
@@ -25,11 +25,11 @@ const transposeObjects = objs => {
 
 const dateFormats = [moment.ISO_8601];
 
-const isDate = function(date) {
+const isDate = function (date) {
   return moment(date, dateFormats, true).isValid();
 };
 
-const normalise_error_message = msg =>
+const normalise_error_message = (msg) =>
   db.isSQLite
     ? msg.replace(
         /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
@@ -59,7 +59,7 @@ class Table {
   static async find(where, selectopts) {
     const tbls = await db.select("_sc_tables", where, selectopts);
 
-    return tbls.map(t => new Table(t));
+    return tbls.map((t) => new Table(t));
   }
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
@@ -74,7 +74,7 @@ class Table {
       expose_api_read: options.expose_api_read || false,
       expose_api_write: options.expose_api_write || false,
       min_role_read: options.min_role_read || 1,
-      min_role_write: options.min_role_write || 1
+      min_role_write: options.min_role_write || 1,
     };
     const id = await db.insert("_sc_tables", tblrow);
     return new Table({ ...tblrow, id });
@@ -83,7 +83,7 @@ class Table {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
     await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
-      this.id
+      this.id,
     ]);
 
     await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
@@ -110,7 +110,7 @@ class Table {
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return rows.map(r => this.readFromDB(r));
+    return rows.map((r) => this.readFromDB(r));
   }
 
   async countRows(where) {
@@ -126,11 +126,12 @@ class Table {
         ...v,
         id,
         _version: {
-          sql: `coalesce((select max(_version) from ${schema}"${this.name +
-            "__history"}" where id=${+id}), 0)+1`
+          sql: `coalesce((select max(_version) from ${schema}"${
+            this.name + "__history"
+          }" where id=${+id}), 0)+1`,
         },
         _time: new Date(),
-        _userid
+        _userid,
       });
     }
     return await db.update(this.name, v, id);
@@ -162,7 +163,7 @@ class Table {
         id,
         _version: 1,
         _userid,
-        _time: new Date()
+        _time: new Date(),
       });
     return id;
   }
@@ -194,7 +195,7 @@ class Table {
     if (new_table.versioned && !existing.versioned) {
       const fields = await new_table.getFields();
       const flds = fields.map(
-        f => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+        (f) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
       );
 
       await db.query(
@@ -231,22 +232,22 @@ class Table {
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
     for (const [k, vs] of Object.entries(rowsTr)) {
-      const required = vs.every(v => v !== "");
-      const nonEmpties = vs.filter(v => v !== "");
+      const required = vs.every((v) => v !== "");
+      const nonEmpties = vs.filter((v) => v !== "");
       const isBools = "true false yes no on off y n t f".split(" ");
       var type;
       if (
-        nonEmpties.every(v =>
+        nonEmpties.every((v) =>
           //https://www.postgresql.org/docs/11/datatype-boolean.html
 
           isBools.includes(v && v.toLowerCase && v.toLowerCase())
         )
       )
         type = "Bool";
-      else if (nonEmpties.every(v => !isNaN(v)))
-        if (nonEmpties.every(v => Number.isSafeInteger(+v))) type = "Integer";
+      else if (nonEmpties.every((v) => !isNaN(v)))
+        if (nonEmpties.every((v) => Number.isSafeInteger(+v))) type = "Integer";
         else type = "Float";
-      else if (nonEmpties.every(v => isDate(v))) type = "Date";
+      else if (nonEmpties.every((v) => isDate(v))) type = "Date";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
@@ -256,7 +257,7 @@ class Table {
         required,
         type,
         table,
-        label
+        label,
       });
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
         if (type !== "Integer") {
@@ -272,7 +273,7 @@ class Table {
       if (db.sqlsanitize(fld.name) === "") {
         await table.delete();
         return {
-          error: `Invalid column name ${k} - Use A-Z, a-z, 0-9, _ only`
+          error: `Invalid column name ${k} - Use A-Z, a-z, 0-9, _ only`,
         };
       }
       try {
@@ -297,7 +298,7 @@ class Table {
     try {
       [headers] = await csvtojson({
         output: "csv",
-        noheader: true
+        noheader: true,
       }).fromFile(filePath);
     } catch (e) {
       return { error: `Error processing CSV file` };
@@ -319,7 +320,7 @@ class Table {
     var file_rows;
     try {
       file_rows = await csvtojson({
-        includeColumns: colRe
+        includeColumns: colRe,
       }).fromFile(filePath);
     } catch (e) {
       return { error: `Error processing CSV file` };
@@ -347,7 +348,7 @@ class Table {
     if (!db.isSQLite) await client.release(true);
 
     return {
-      success: `Imported ${file_rows.length} rows into table ${this.name}`
+      success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };
   }
 
@@ -364,7 +365,7 @@ class Table {
         } else {
           const table = await Table.findOne({ name: f.reftable_name });
           await table.getFields();
-          table.fields.forEach(pf => {
+          table.fields.forEach((pf) => {
             parent_field_list.push(`${f.name}.${pf.name}`);
           });
           parent_relations.push({ key_field: f, table });
@@ -397,17 +398,17 @@ class Table {
     const schema = db.getTenantSchemaPrefix();
 
     fields
-      .filter(f => f.type === "File")
-      .forEach(f => {
+      .filter((f) => f.type === "File")
+      .forEach((f) => {
         joinFields[`${f.name}__filename`] = {
           ref: f.name,
           reftable: "_sc_files",
-          target: `filename`
+          target: `filename`,
         };
       });
 
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
-      const reftable = fields.find(f => f.name === ref).reftable_name;
+      const reftable = fields.find((f) => f.name === ref).reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
@@ -423,8 +424,9 @@ class Table {
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate }]) => {
         fldNms.push(
-          `(select ${sqlsanitize(aggregate)}(${sqlsanitize(field) ||
-            "*"}) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+          `(select ${sqlsanitize(aggregate)}(${
+            sqlsanitize(field) || "*"
+          }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
             ref
           )}=a.id) ${sqlsanitize(fldnm)}`
         );
@@ -433,7 +435,7 @@ class Table {
 
     var whereObj = {};
     if (opts.where) {
-      Object.keys(opts.where).forEach(k => {
+      Object.keys(opts.where).forEach((k) => {
         if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
         else whereObj["a." + k] = opts.where[k];
       });
@@ -443,7 +445,7 @@ class Table {
       limit: opts.limit,
       orderBy: opts.orderBy && "a." + opts.orderBy,
       orderDesc: opts.orderDesc,
-      offset: opts.offset
+      offset: opts.offset,
     };
 
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
@@ -490,10 +492,10 @@ Table.contract = {
           parent_relations: is.array(
             is.obj({
               key_field: is.class("Field"),
-              table: is.class("Table")
+              table: is.class("Table"),
             })
           ),
-          parent_field_list: is.array(is.str)
+          parent_field_list: is.array(is.str),
         })
       )
     ),
@@ -504,10 +506,10 @@ Table.contract = {
           child_relations: is.array(
             is.obj({
               key_field: is.class("Field"),
-              table: is.class("Table")
+              table: is.class("Table"),
             })
           ),
-          child_field_list: is.array(is.str)
+          child_field_list: is.array(is.str),
         })
       )
     ),
@@ -518,7 +520,7 @@ Table.contract = {
     getJoinedRows: is.fun(
       is.maybe(is_table_query),
       is.promise(is.array(is.obj({})))
-    )
+    ),
   },
   static_methods: {
     find: is.fun(
@@ -535,8 +537,8 @@ Table.contract = {
           is.obj({ error: is.str })
         )
       )
-    )
+    ),
     //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
-  }
+  },
 };
 module.exports = Table;

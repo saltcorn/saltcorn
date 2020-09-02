@@ -19,7 +19,7 @@ describe("Field", () => {
       label: "Height1",
       type: "Integer",
       required: true,
-      attributes: { default: 6 }
+      attributes: { default: 6 },
     });
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
@@ -38,7 +38,7 @@ describe("Field", () => {
       name: "Height11",
       label: "height11",
       type: "Integer",
-      required: false
+      required: false,
     });
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
@@ -54,7 +54,7 @@ describe("Field", () => {
       name: "pic",
       label: "pic",
       type: "File",
-      required: false
+      required: false,
     });
     expect(fc.reftable_name).toBe("_sc_files");
   });
@@ -79,7 +79,7 @@ describe("validate field", () => {
   const field = new Field({
     name: "age",
     label: "Age",
-    type: "Integer"
+    type: "Integer",
   });
   expect(field.form_name).toBe("age");
 
@@ -91,7 +91,7 @@ describe("validate fkey field", () => {
   const field = new Field({
     name: "age",
     label: "Age",
-    type: "Key to Foos"
+    type: "Key to Foos",
   });
   expect(field.form_name).toBe("age");
 
@@ -103,7 +103,7 @@ describe("validate bool field", () => {
   const field = new Field({
     name: "over_age",
     label: "Over age",
-    type: "Bool"
+    type: "Bool",
   });
   expect(field.form_name).toBe("over_age");
 
@@ -118,7 +118,7 @@ describe("validate parent field", () => {
     name: "age",
     label: "Age",
     parent_field: "person",
-    type: "Integer"
+    type: "Integer",
   });
   expect(field.form_name).toBe("person_age");
 
@@ -131,7 +131,7 @@ describe("validate parent field", () => {
     name: "over_age",
     label: "Over age",
     type: "Bool",
-    parent_field: "person"
+    parent_field: "person",
   });
   expect(field.form_name).toBe("person_over_age");
 
@@ -145,7 +145,7 @@ describe("validator", () => {
   const field = new Field({
     label: "Age",
     type: "Integer",
-    validator: x => false
+    validator: (x) => false,
   });
   const res = field.validate({ age: 17 });
   expect(res).toStrictEqual({ error: "Not accepted" });
@@ -154,7 +154,7 @@ describe("validator", () => {
 describe("user presets", () => {
   const field = new Field({
     label: "User",
-    type: "Key to users"
+    type: "Key to users",
   });
   const presets = field.presets;
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);

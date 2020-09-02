@@ -1,4 +1,4 @@
-const removeEmptyStrings = obj => {
+const removeEmptyStrings = (obj) => {
   var o = {};
   Object.entries(obj).forEach(([k, v]) => {
     if (v !== "" && v !== null) o[k] = v;
@@ -6,7 +6,7 @@ const removeEmptyStrings = obj => {
   return o;
 };
 
-const isEmpty = o => Object.keys(o).length === 0;
+const isEmpty = (o) => Object.keys(o).length === 0;
 
 const asyncMap = async (xs, asyncF) => {
   var res = [];
@@ -18,9 +18,9 @@ const asyncMap = async (xs, asyncF) => {
   return res;
 };
 
-const numberToBool = b => (typeof b === "number" ? b > 0 : b);
+const numberToBool = (b) => (typeof b === "number" ? b > 0 : b);
 
-const stringToJSON = v => {
+const stringToJSON = (v) => {
   try {
     return typeof v === "string" ? JSON.parse(v) : v;
   } catch (e) {
@@ -33,5 +33,5 @@ module.exports = {
   isEmpty,
   asyncMap,
   numberToBool,
-  stringToJSON
+  stringToJSON,
 };

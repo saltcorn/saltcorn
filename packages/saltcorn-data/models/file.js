@@ -23,7 +23,7 @@ class File {
 
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_files", where, selectopts);
-    return db_flds.map(dbf => new File(dbf));
+    return db_flds.map((dbf) => new File(dbf));
   }
 
   static async findOne(where) {
@@ -59,7 +59,7 @@ class File {
       user_id,
       mime_super,
       mime_sub,
-      min_role_read
+      min_role_read,
     });
   }
   async delete() {
@@ -88,11 +88,11 @@ File.contract = {
     size_kb: is.posint,
     id: is.maybe(is.posint),
     user_id: is.posint,
-    min_role_read: is.posint
+    min_role_read: is.posint,
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
-    mimetype: is.getter(is.str)
+    mimetype: is.getter(is.str),
   },
   static_methods: {
     find: is.fun(
@@ -107,8 +107,8 @@ File.contract = {
     ),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     ensure_file_store: is.fun([], is.promise(is.undefined)),
-    get_new_path: is.fun(is.maybe(is.str), is.str)
-  }
+    get_new_path: is.fun(is.maybe(is.str), is.str),
+  },
 };
 
 module.exports = File;

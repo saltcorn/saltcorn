@@ -3,31 +3,31 @@ const db = require("@saltcorn/data/db");
 const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 
-const getFlashes = req =>
+const getFlashes = (req) =>
   ["error", "success", "danger", "warning"]
-    .map(type => {
+    .map((type) => {
       return { type, msg: req.flash(type) };
     })
-    .filter(a => a.msg && a.msg.length && a.msg.length > 0);
+    .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
-const get_extra_menu = role => {
+const get_extra_menu = (role) => {
   const cfg = getState().getConfig("menu_items", []);
 
   const items = cfg
-    .filter(item => role <= +item.min_role)
-    .map(item => ({
+    .filter((item) => role <= +item.min_role)
+    .map((item) => ({
       label: item.label,
       link:
         item.type === "Link"
           ? item.url
           : item.type === "View"
           ? `/view/${item.viewname}`
-          : `/page/${item.pagename}`
+          : `/page/${item.pagename}`,
     }));
   return items;
 };
 
-const get_menu = req => {
+const get_menu = (req) => {
   const isAuth = req.isAuthenticated();
   const state = getState();
   const role = (req.user || {}).role_id || 10;
@@ -38,11 +38,11 @@ const get_menu = req => {
   const authItems = isAuth
     ? [
         { label: small(req.user.email.split("@")[0]) },
-        { link: "/auth/logout", label: "Logout" }
+        { link: "/auth/logout", label: "Logout" },
       ]
     : [
         ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
-        ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : [])
+        ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : []),
       ];
   const schema = db.getTenantSchema();
   const tenant_list = db.is_it_multi_tenant() && schema === "public";
@@ -64,25 +64,25 @@ const get_menu = req => {
         ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : []),
         ...(schema === "public"
           ? [{ link: "/crashlog", label: "Crash log" }]
-          : [])
-      ]
-    }
+          : []),
+      ],
+    },
   ];
 
   const menu = [
     extra_menu.length > 0 && {
       section: "Menu",
-      items: extra_menu
+      items: extra_menu,
     },
     isAdmin && {
       section: "Admin",
-      items: adminItems
+      items: adminItems,
     },
     {
       section: "User",
-      items: authItems
-    }
-  ].filter(s => s);
+      items: authItems,
+    },
+  ].filter((s) => s);
   return menu;
 };
 
@@ -93,35 +93,35 @@ const get_headers = (req, description) => {
   const iconHeader = favicon
     ? [
         {
-          headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon.id}">`
-        }
+          headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon.id}">`,
+        },
       ]
     : [];
   const meta_description = description
     ? [
         {
-          headerTag: `<meta name="description" content="${description}">`
-        }
+          headerTag: `<meta name="description" content="${description}">`,
+        },
       ]
     : [];
   const stdHeaders = [
     {
-      headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"</script>`
+      headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"</script>`,
     },
     { css: "/saltcorn.css" },
-    { script: "/saltcorn.js" }
+    { script: "/saltcorn.js" },
   ];
   return [...stdHeaders, ...iconHeader, ...meta_description, ...state.headers];
 };
-const get_brand = state => {
+const get_brand = (state) => {
   const logo_id = state.getConfig("site_logo_id", "");
   return {
     name: state.getConfig("site_name"),
-    logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined
+    logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined,
   };
 };
-module.exports = function(req, res, next) {
-  res.sendAuthWrap = function(title, form, authLinks, ...html) {
+module.exports = function (req, res, next) {
+  res.sendAuthWrap = function (title, form, authLinks, ...html) {
     const state = getState();
 
     const layout = state.layout;
@@ -136,7 +136,7 @@ module.exports = function(req, res, next) {
           menu: get_menu(req),
           alerts: getFlashes(req),
           headers: get_headers(req),
-          csrfToken: req.csrfToken()
+          csrfToken: req.csrfToken(),
         })
       );
     } else {
@@ -163,12 +163,12 @@ module.exports = function(req, res, next) {
           currentUrl,
           alerts: getFlashes(req),
           body,
-          headers: get_headers(req)
+          headers: get_headers(req),
         })
       );
     }
   };
-  res.sendWrap = function(opts, ...html) {
+  res.sendWrap = function (opts, ...html) {
     const state = getState();
 
     const currentUrl = req.originalUrl.split("?")[0];
@@ -182,7 +182,7 @@ module.exports = function(req, res, next) {
         currentUrl,
         alerts: getFlashes(req),
         body: html.length === 1 ? html[0] : html.join(""),
-        headers: get_headers(req, opts.description)
+        headers: get_headers(req, opts.description),
       })
     );
   };

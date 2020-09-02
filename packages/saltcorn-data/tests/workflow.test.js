@@ -14,53 +14,53 @@ const wf = new Workflow({
   steps: [
     {
       name: "step1",
-      form: async context => {
+      form: async (context) => {
         return new Form({
           blurb: "Specify the fields in the table to show",
-          fields: [{ name: "colour", label: "Colour", input_type: "text" }]
+          fields: [{ name: "colour", label: "Colour", input_type: "text" }],
         });
-      }
+      },
     },
     {
       name: "step2",
       contextField: "substep",
-      form: async context => {
+      form: async (context) => {
         return new Form({
           blurb: "Specify the fields in the table to show",
           fields: [
-            { name: "age", label: "Age", type: "Integer", required: true }
-          ]
+            { name: "age", label: "Age", type: "Integer", required: true },
+          ],
         });
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 const wf1 = new Workflow({
   steps: [
     {
       name: "step1",
-      form: async context => {
+      form: async (context) => {
         return new Form({
           blurb: "Specify the fields in the table to show",
           fields: [
             { name: "colour", label: "Colour", input_type: "text" },
-            { name: "is_nice", type: "Bool" }
-          ]
+            { name: "is_nice", type: "Bool" },
+          ],
         });
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 
 const wfbuild = new Workflow({
   steps: [
     {
       name: "step1",
-      builder: async context => {
+      builder: async (context) => {
         return { mode: "foo" };
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 
 describe("Workflow", () => {
@@ -68,32 +68,32 @@ describe("Workflow", () => {
     const v = await wf.run({ foo: "bar" });
     expect(v.renderForm.values.contextEnc).toContain("bar");
     const hiddenFields = v.renderForm.fields
-      .filter(f => f.input_type === "hidden")
-      .map(f => f.name);
+      .filter((f) => f.input_type === "hidden")
+      .map((f) => f.name);
     expect(hiddenFields).toContain("contextEnc");
     var submit = { colour: "Blue" };
-    hiddenFields.forEach(f => {
+    hiddenFields.forEach((f) => {
       submit[f] = v.renderForm.values[f];
     });
     const v1 = await wf.run(submit);
     expect(v1.renderForm.values.contextEnc).toContain("bar");
 
     const hiddenFields1 = v1.renderForm.fields
-      .filter(f => f.input_type === "hidden")
-      .map(f => f.name);
+      .filter((f) => f.input_type === "hidden")
+      .map((f) => f.name);
     expect(hiddenFields1).toContain("contextEnc");
     var submit1 = { age: "67" };
-    hiddenFields1.forEach(f => {
+    hiddenFields1.forEach((f) => {
       submit1[f] = v1.renderForm.values[f];
     });
     const v2 = await wf.run(submit1);
     expect(v2).toStrictEqual({
       colour: "Blue",
       foo: "bar",
-      substep: { age: 67 }
+      substep: { age: 67 },
     });
     var submit_missing = {};
-    hiddenFields1.forEach(f => {
+    hiddenFields1.forEach((f) => {
       submit_missing[f] = v1.renderForm.values[f];
     });
     const v3 = await wf.run(submit_missing);
@@ -111,7 +111,7 @@ describe("Workflow", () => {
       layout: encodeURIComponent("{}"),
       columns: encodeURIComponent("{}"),
       stepName: v.stepName,
-      contextEnc: encodeURIComponent(JSON.stringify(v.context))
+      contextEnc: encodeURIComponent(JSON.stringify(v.context)),
     };
     const v2 = await wfbuild.run(submit1);
     expect(v2).toEqual({ columns: {}, layout: {} });

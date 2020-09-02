@@ -13,7 +13,7 @@ const applyAsync = async (f, x) => {
 class Workflow {
   constructor(o) {
     this.steps = o.steps || [];
-    this.onDone = o.onDone || (c => c);
+    this.onDone = o.onDone || ((c) => c);
     this.action = o.action;
     contract.class(this);
   }
@@ -24,7 +24,7 @@ class Workflow {
     const { stepName, contextEnc, ...stepBody } = body;
 
     const context = JSON.parse(decodeURIComponent(contextEnc));
-    const stepIx = this.steps.findIndex(step => step.name === stepName);
+    const stepIx = this.steps.findIndex((step) => step.name === stepName);
     if (stepIx === -1) {
       //error
     }
@@ -37,7 +37,7 @@ class Workflow {
         form.hidden("stepName", "contextEnc");
         form.values = {
           stepName: step.name,
-          contextEnc
+          contextEnc,
         };
         if (this.action) form.action = this.action;
         if (!form.submitLabel)
@@ -49,7 +49,7 @@ class Workflow {
           context,
           stepName: step.name,
           currentStep: stepIx + 1,
-          maxSteps: this.steps.length
+          maxSteps: this.steps.length,
         };
       }
       const toCtx = step.contextField
@@ -60,7 +60,7 @@ class Workflow {
     } else if (step.builder) {
       const toCtx0 = {
         columns: JSON.parse(decodeURIComponent(body.columns)),
-        layout: JSON.parse(decodeURIComponent(body.layout))
+        layout: JSON.parse(decodeURIComponent(body.layout)),
         //craft_nodes: JSON.parse(decodeURIComponent(body.craft_nodes))
       };
       const toCtx = step.contextField
@@ -86,7 +86,7 @@ class Workflow {
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
 
-      form.fields.forEach(fld => {
+      form.fields.forEach((fld) => {
         const ctxValue = step.contextField
           ? (context[step.contextField] || {})[fld.name]
           : context[fld.name];
@@ -108,7 +108,7 @@ class Workflow {
         context,
         stepName: step.name,
         currentStep: stepIx + 1,
-        maxSteps: this.steps.length
+        maxSteps: this.steps.length,
       };
     } else if (step.builder) {
       const options = await applyAsync(step.builder, context);
@@ -119,12 +119,12 @@ class Workflow {
           layout: context.layout,
           action: this.action,
           stepName: step.name,
-          mode: options.mode
+          mode: options.mode,
         },
         context,
         stepName: step.name,
         currentStep: stepIx + 1,
-        maxSteps: this.steps.length
+        maxSteps: this.steps.length,
       };
     }
   }
@@ -134,15 +134,15 @@ Workflow.contract = {
   variables: {
     steps: is.array(is.obj({ name: is.str })),
     onDone: is.fun(is.obj(), is.obj()),
-    action: is.maybe(is.str)
+    action: is.maybe(is.str),
   },
   methods: {
     run: is.fun(
       is.obj(),
       is.promise(is.obj({ renderForm: is.maybe(is.class("Form")) }))
     ),
-    runStep: is.fun([is.obj(), is.posint], is.promise(is.obj()))
-  }
+    runStep: is.fun([is.obj(), is.posint], is.promise(is.obj())),
+  },
 };
 
 module.exports = Workflow;

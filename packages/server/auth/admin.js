@@ -13,29 +13,29 @@ module.exports = router;
 
 const userForm = contract(
   is.fun(is.maybe(is.class("User")), is.promise(is.class("Form"))),
-  async user => {
+  async (user) => {
     const roleField = new Field({
       label: "Role",
       name: "role_id",
       type: "Key",
-      reftable_name: "roles"
+      reftable_name: "roles",
     });
     const roles = await User.get_roles();
-    roleField.options = roles.map(r => ({ label: r.role, value: r.id }));
+    roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
 
     const form = new Form({
       fields: [
-        new Field({ label: "E-mail", name: "email", input_type: "text" })
+        new Field({ label: "E-mail", name: "email", input_type: "text" }),
       ],
       action: "/useradmin/save",
-      submitLabel: user ? "Save" : "Create"
+      submitLabel: user ? "Save" : "Create",
     });
     if (!user)
       form.fields.push(
         new Field({
           label: "Password",
           name: "password",
-          input_type: "password"
+          input_type: "password",
         })
       );
     form.fields.push(roleField);
@@ -54,15 +54,15 @@ const wrap = (cardTitle, response, lastBc) => ({
       crumbs: [
         { text: "Settings" },
         { text: "Users", href: lastBc && "/useradmin" },
-        ...(lastBc ? [lastBc] : [])
-      ]
+        ...(lastBc ? [lastBc] : []),
+      ],
     },
     {
       type: "card",
       title: cardTitle,
-      contents: response
-    }
-  ]
+      contents: response,
+    },
+  ],
 });
 router.get(
   "/",
@@ -72,7 +72,7 @@ router.get(
     const users = await User.find();
     const roles = await User.get_roles();
     var roleMap = {};
-    roles.forEach(r => {
+    roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
     res.sendWrap(
@@ -82,23 +82,23 @@ router.get(
           [
             { label: "ID", key: "id" },
             { label: "Email", key: "email" },
-            { label: "Role", key: r => roleMap[r.role_id] },
-            { label: "View", key: r => link(`/useradmin/${r.id}`, "Edit") },
+            { label: "Role", key: (r) => roleMap[r.role_id] },
+            { label: "View", key: (r) => link(`/useradmin/${r.id}`, "Edit") },
             {
               label: "Delete",
-              key: r =>
+              key: (r) =>
                 r.id !== req.user.id
                   ? post_btn(
                       `/useradmin/delete/${r.id}`,
                       "Delete",
                       req.csrfToken()
                     )
-                  : ""
-            }
+                  : "",
+            },
           ],
           users
         ),
-        link(`/useradmin/new`, "Add user")
+        link(`/useradmin/new`, "Add user"),
       ])
     );
   })
@@ -129,7 +129,7 @@ router.get(
     res.sendWrap(
       "Edit user",
       wrap(`Edit user ${user.email}`, renderForm(form, req.csrfToken()), {
-        text: user.email
+        text: user.email,
       })
     );
   })

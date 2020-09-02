@@ -10,7 +10,7 @@ const {
   toInclude,
   toNotInclude,
   toRedirect,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 beforeAll(async () => {

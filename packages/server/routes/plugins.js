@@ -5,7 +5,7 @@ const {
   renderForm,
   link,
   post_btn,
-  post_delete_btn
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
@@ -21,7 +21,7 @@ const { h5, nbsp, a } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
-const pluginForm = plugin => {
+const pluginForm = (plugin) => {
   const schema = db.getTenantSchema();
   const form = new Form({
     action: "/plugins",
@@ -32,14 +32,14 @@ const pluginForm = plugin => {
         name: "source",
         type: getState().types.String,
         required: true,
-        attributes: { options: "npm,local,github" }
+        attributes: { options: "npm,local,github" },
       }),
       new Field({ label: "Location", name: "location", input_type: "text" }),
       ...(schema === "public"
         ? [new Field({ label: "Version", name: "version", input_type: "text" })]
-        : [])
+        : []),
     ],
-    submitLabel: plugin ? "Save" : "Create"
+    submitLabel: plugin ? "Save" : "Create",
   });
   if (plugin) {
     if (plugin.id) form.hidden("id");
@@ -57,8 +57,8 @@ router.get(
     const packs_available = await fetch_available_packs();
     const packs_installed = getState().getConfig("installed_packs", []);
     const schema = db.getTenantSchema();
-    const installed_plugin_names = rows.map(p => p.name);
-    const cfg_link = row => {
+    const installed_plugin_names = rows.map((p) => p.name);
+    const cfg_link = (row) => {
       const plugin = getState().plugins[row.name];
       if (!plugin) return "";
       if (plugin.configuration_workflow)
@@ -66,7 +66,7 @@ router.get(
           {
             class: "btn btn-secondary btn-sm",
             role: "button",
-            href: `/plugins/configure/${row.id}`
+            href: `/plugins/configure/${row.id}`,
           },
           '<i class="fas fa-cog"></i>'
         );
@@ -77,7 +77,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Plugins" }]
+          crumbs: [{ text: "Settings" }, { text: "Plugins" }],
         },
         {
           type: "card",
@@ -89,35 +89,35 @@ router.get(
               { label: "Location", key: "location" },
               {
                 label: "Edit",
-                key: r =>
+                key: (r) =>
                   a(
                     {
                       class: "btn btn-outline-secondary btn-sm",
                       role: "button",
-                      href: `/plugins/${r.id}`
+                      href: `/plugins/${r.id}`,
                     },
                     '<i class="fas fa-edit"></i>'
-                  )
+                  ),
               },
-              { label: "Configure", key: r => cfg_link(r) },
+              { label: "Configure", key: (r) => cfg_link(r) },
               {
                 label: "Reload",
-                key: r =>
+                key: (r) =>
                   post_btn(
                     `/plugins/reload/${r.id}`,
                     '<i class="fas fa-sync"></i>',
                     req.csrfToken(),
                     { btnClass: "secondary", small: true }
-                  )
+                  ),
               },
               {
                 label: "Delete",
-                key: r =>
-                  post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken())
-              }
+                key: (r) =>
+                  post_delete_btn(`/plugins/delete/${r.id}`, req.csrfToken()),
+              },
             ],
             rows
-          )
+          ),
         },
         {
           besides: [
@@ -130,7 +130,7 @@ router.get(
                     { label: "Name", key: "name" },
                     {
                       label: "Install",
-                      key: r =>
+                      key: (r) =>
                         installed_plugin_names.includes(r.name)
                           ? "Installed"
                           : post_btn(
@@ -139,17 +139,17 @@ router.get(
                               req.csrfToken(),
                               {
                                 klass: "store-install",
-                                onClick: "press_store_button(this)"
+                                onClick: "press_store_button(this)",
                               }
-                            )
-                    }
+                            ),
+                    },
                   ],
                   instore
                 ),
                 schema === "public"
                   ? link(`/plugins/new`, "Add another plugin")
-                  : ""
-              ]
+                  : "",
+              ],
             },
             {
               type: "card",
@@ -160,7 +160,7 @@ router.get(
                     { label: "Name", key: "name" },
                     {
                       label: "Install",
-                      key: r =>
+                      key: (r) =>
                         packs_installed.includes(r.name)
                           ? "Installed"
                           : post_btn(
@@ -171,10 +171,10 @@ router.get(
                               req.csrfToken(),
                               {
                                 klass: "store-install",
-                                onClick: "press_store_button(this)"
+                                onClick: "press_store_button(this)",
                               }
-                            )
-                    }
+                            ),
+                    },
                   ],
                   packs_available
                 ),
@@ -182,12 +182,12 @@ router.get(
                 nbsp,
                 "|",
                 nbsp,
-                link(`/packs/create`, "Create pack")
-              ]
-            }
-          ]
-        }
-      ]
+                link(`/packs/create`, "Create pack"),
+              ],
+            },
+          ],
+        },
+      ],
     });
   })
 );
@@ -246,15 +246,15 @@ router.get(
           crumbs: [
             { text: "Settings" },
             { text: "Plugins", href: "/plugins" },
-            { text: "New" }
-          ]
+            { text: "New" },
+          ],
         },
         {
           type: "card",
           title: `Add plugin`,
-          contents: renderForm(pluginForm(), req.csrfToken())
-        }
-      ]
+          contents: renderForm(pluginForm(), req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -274,15 +274,15 @@ router.get(
           crumbs: [
             { text: "Settings" },
             { text: "Plugins", href: "/plugins" },
-            { text: plugin.name }
-          ]
+            { text: plugin.name },
+          ],
         },
         {
           type: "card",
           title: `Edit ${plugin.name} plugin`,
-          contents: renderForm(pluginForm(plugin), req.csrfToken())
-        }
-      ]
+          contents: renderForm(pluginForm(plugin), req.csrfToken()),
+        },
+      ],
     });
   })
 );

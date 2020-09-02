@@ -8,7 +8,7 @@ const {
   toInclude,
   toRedirect,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -41,14 +41,10 @@ describe("Search config Endpoints", () => {
   });
   it("should show search form", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/search")
-      .expect(toInclude("Search all tables"));
+    await request(app).get("/search").expect(toInclude("Search all tables"));
   });
   it("should show search form", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/search?q=Tolstoy")
-      .expect(toInclude("Leo"));
+    await request(app).get("/search?q=Tolstoy").expect(toInclude("Leo"));
   });
 });

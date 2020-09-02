@@ -30,16 +30,16 @@ router.get(
             { text: "Tables", href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             { text: "Data", href: `/list/${table.name}` },
-            { text: "Add row" }
-          ]
+            { text: "Add row" },
+          ],
         },
         ,
         {
           type: "card",
           title: `Add ${pluralize(table.name, 1)}`,
-          contents: renderForm(form, req.csrfToken())
-        }
-      ]
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
     });
   })
 );
@@ -66,15 +66,15 @@ router.get(
             { text: "Tables", href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             { text: "Data", href: `/list/${table.name}` },
-            { text: "Edit row" }
-          ]
+            { text: "Edit row" },
+          ],
         },
         {
           type: "card",
           title: `Edit ${pluralize(table.name, 1)}`,
-          contents: renderForm(form, req.csrfToken())
-        }
-      ]
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
     });
   })
 );

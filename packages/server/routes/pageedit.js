@@ -18,14 +18,14 @@ const {
   link,
   post_btn,
   post_delete_btn,
-  renderBuilder
+  renderBuilder,
 } = require("@saltcorn/markup");
 const router = new Router();
 module.exports = router;
 
 const pageFlow = new Workflow({
   action: "/pageedit/edit/",
-  onDone: async context => {
+  onDone: async (context) => {
     const { id, columns, ...pageRow } = context;
     pageRow.min_role = +pageRow.min_role;
     if (!pageRow.fixed_states) pageRow.fixed_states = {};
@@ -34,13 +34,13 @@ const pageFlow = new Workflow({
     } else await Page.create(pageRow);
     return {
       redirect: `/pageedit`,
-      flash: ["success", `Page ${pageRow.name} saved`]
+      flash: ["success", `Page ${pageRow.name} saved`],
     };
   },
   steps: [
     {
       name: "Page",
-      form: async context => {
+      form: async (context) => {
         const roles = await User.get_roles();
 
         return new Form({
@@ -49,55 +49,55 @@ const pageFlow = new Workflow({
               label: "Name",
               name: "name",
               sublabel: "A short name that will be in your URL",
-              input_type: "text"
+              input_type: "text",
             }),
             new Field({
               label: "Title",
               name: "title",
               sublabel: "Page title",
-              input_type: "text"
+              input_type: "text",
             }),
             new Field({
               label: "Description",
               name: "description",
               sublabel: "A longer description",
-              input_type: "text"
+              input_type: "text",
             }),
             {
               name: "min_role",
               label: "Role required to access page",
               input_type: "select",
-              options: roles.map(r => ({ value: r.id, label: r.role }))
-            }
-          ]
+              options: roles.map((r) => ({ value: r.id, label: r.role })),
+            },
+          ],
         });
-      }
+      },
     },
     {
       name: "Layout",
-      builder: async context => {
+      builder: async (context) => {
         const views = await View.find();
         const images = await File.find({ mime_super: "image" });
 
         return {
           views,
           images,
-          mode: "page"
+          mode: "page",
         };
-      }
+      },
     },
     {
       name: "Fixed states",
       contextField: "fixed_states",
-      onlyWhen: async context => {
+      onlyWhen: async (context) => {
         const p = new Page(context);
         const vs = await getViews(p.layout);
-        return vs.filter(v => v.state === "fixed").length > 0;
+        return vs.filter((v) => v.state === "fixed").length > 0;
       },
-      form: async context => {
+      form: async (context) => {
         const p = new Page(context);
         const vs = await getViews(p.layout);
-        const fixedvs = vs.filter(vseg => vseg.state === "fixed");
+        const fixedvs = vs.filter((vseg) => vseg.state === "fixed");
         const fields = [];
         for (const vseg of fixedvs) {
           const v = await View.findOne({ name: vseg.view });
@@ -105,7 +105,7 @@ const pageFlow = new Workflow({
           if (fs.length > 0)
             fields.push({
               label: `Fixed state for ${v.name} view`,
-              input_type: "section_header"
+              input_type: "section_header",
             });
           for (const frec of fs) {
             const f = new Field(frec);
@@ -119,11 +119,11 @@ const pageFlow = new Workflow({
         }
         return new Form({
           blurb: "Set fixed states for views",
-          fields
+          fields,
         });
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 
 const getPageList = (rows, roles, csrfToken) => {
@@ -133,31 +133,31 @@ const getPageList = (rows, roles, csrfToken) => {
         { label: "Name", key: "name" },
         {
           label: "Role to access",
-          key: row => {
-            const role = roles.find(r => r.id === row.min_role);
+          key: (row) => {
+            const role = roles.find((r) => r.id === row.min_role);
             return role ? role.role : "?";
-          }
+          },
         },
 
         {
           label: "Run",
-          key: r => link(`/page/${r.name}`, "Run")
+          key: (r) => link(`/page/${r.name}`, "Run"),
         },
         {
           label: "Edit",
-          key: r => link(`/pageedit/edit/${r.name}`, "Edit")
+          key: (r) => link(`/pageedit/edit/${r.name}`, "Edit"),
         },
         {
           label: "Delete",
-          key: r => post_delete_btn(`/pageedit/delete/${r.id}`, csrfToken)
-        }
+          key: (r) => post_delete_btn(`/pageedit/delete/${r.id}`, csrfToken),
+        },
       ],
       rows
     ),
     a(
       {
         href: `/pageedit/new`,
-        class: "btn btn-primary"
+        class: "btn btn-primary",
       },
       "Add page"
     )
@@ -170,14 +170,14 @@ const getRootPageForm = (pages, roles) => {
     blurb:
       "The root page is the page that is served when the user visits the home location (/). This can be set for each user role.",
     fields: roles.map(
-      r =>
+      (r) =>
         new Field({
           name: r.role,
           label: r.role,
           input_type: "select",
-          options: ["", ...pages.map(p => p.name)]
+          options: ["", ...pages.map((p) => p.name)],
         })
-    )
+    ),
   });
   for (const role of roles) {
     form.values[role.role] = getState().getConfig(role.role + "_home", "");
@@ -192,24 +192,24 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
     above: [
       {
         type: "breadcrumbs",
-        crumbs: [{ text: "Pages" }]
+        crumbs: [{ text: "Pages" }],
       },
       {
         type: "card",
         title: "Your pages",
-        contents: getPageList(pages, roles, req.csrfToken())
+        contents: getPageList(pages, roles, req.csrfToken()),
       },
       {
         type: "card",
         title: "Root pages",
-        contents: renderForm(getRootPageForm(pages, roles), req.csrfToken())
-      }
-    ]
+        contents: renderForm(getRootPageForm(pages, roles), req.csrfToken()),
+      },
+    ],
   });
 });
 
 const respondWorkflow = (page, wfres, req, res) => {
-  const wrap = contents => ({
+  const wrap = (contents) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -218,15 +218,15 @@ const respondWorkflow = (page, wfres, req, res) => {
           page
             ? { href: `/pageedit/edit/${page.name}`, text: page.name }
             : { text: "New" },
-          { text: wfres.stepName }
-        ]
+          { text: wfres.stepName },
+        ],
       },
       {
         type: "card",
         title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
-        contents
-      }
-    ]
+        contents,
+      },
+    ],
   });
   if (wfres.renderForm)
     res.sendWrap(

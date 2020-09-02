@@ -10,11 +10,11 @@ const migrate = async (schema = "public") => {
   const is_sqlite = db.isSQLite;
 
   const dbmigrationRows = await db.select("_sc_migrations");
-  const dbmigrations = dbmigrationRows.map(r => r.migration);
+  const dbmigrations = dbmigrationRows.map((r) => r.migration);
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
   const files = fs
     .readdirSync(path.join(__dirname, "migrations"))
-    .filter(file => file.match(/\.js$/) !== null);
+    .filter((file) => file.match(/\.js$/) !== null);
 
   const client = is_sqlite ? db : await db.getClient();
   if (!is_sqlite) {
@@ -23,11 +23,11 @@ const migrate = async (schema = "public") => {
   }
 
   const fudge = is_sqlite
-    ? s =>
+    ? (s) =>
         s
           .replace("id serial primary", "id integer primary")
           .replace("jsonb", "json")
-    : s => s;
+    : (s) => s;
 
   for (const file of files) {
     const name = file.replace(".js", "");

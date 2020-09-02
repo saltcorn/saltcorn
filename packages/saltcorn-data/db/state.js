@@ -5,7 +5,7 @@ const {
   is_header,
   is_viewtemplate,
   is_plugin_type,
-  is_plugin_layout
+  is_plugin_layout,
 } = require("../contracts");
 
 const db = require(".");
@@ -19,7 +19,7 @@ const {
   getAllConfigOrDefaults,
   setConfig,
   deleteConfig,
-  configTypes
+  configTypes,
 } = require("../models/config");
 
 class State {
@@ -35,7 +35,7 @@ class State {
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
-    this.layout = { wrap: s => s };
+    this.layout = { wrap: (s) => s };
     this.headers = [];
     contract.class(this);
   }
@@ -74,10 +74,10 @@ class State {
           : def
         : plugin[key] || def;
 
-    withCfg("types", []).forEach(t => {
+    withCfg("types", []).forEach((t) => {
       this.addType(t);
     });
-    withCfg("viewtemplates", []).forEach(vt => {
+    withCfg("viewtemplates", []).forEach((vt) => {
       this.viewtemplates[vt.name] = vt;
     });
     Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
@@ -97,7 +97,7 @@ class State {
     if (layout) {
       this.layout = contract(is_plugin_layout, layout);
     }
-    withCfg("headers", []).forEach(h => {
+    withCfg("headers", []).forEach((h) => {
       if (!this.headers.includes(h)) this.headers.push(h);
     });
   }
@@ -123,7 +123,7 @@ class State {
     this.configs = {};
     this.fileviews = {};
     this.favicon = null;
-    this.layout = { wrap: s => s };
+    this.layout = { wrap: (s) => s };
     this.headers = [];
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
@@ -135,14 +135,14 @@ State.contract = {
   variables: {
     headers: is.array(is_header),
     viewtemplates: is.objVals(is_viewtemplate),
-    types: is.objVals(is_plugin_type)
+    types: is.objVals(is_plugin_type),
   },
   methods: {
     addType: is.fun(is_plugin_type, is.eq(undefined)),
     registerPlugin: is.fun([is.str, is_plugin], is.eq(undefined)),
     refresh: is.fun([], is.promise(is.eq(undefined))),
-    type_names: is.getter(is.array(is.str))
-  }
+    type_names: is.getter(is.array(is.str)),
+  },
 };
 
 const singleton = new State();
@@ -157,9 +157,9 @@ const getState = contract(is.fun([], is.class("State")), () => {
 
 var tenants = {};
 
-const getTenant = ten => tenants[ten];
+const getTenant = (ten) => tenants[ten];
 
-const init_multi_tenant = async plugin_loader => {
+const init_multi_tenant = async (plugin_loader) => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
     try {
@@ -178,7 +178,7 @@ const create_tenant = async (t, plugin_loader) => {
   await db.runWithTenant(t, plugin_loader);
 };
 
-const restart_tenant = async plugin_loader => {
+const restart_tenant = async (plugin_loader) => {
   const ten = db.getTenantSchema();
   tenants[ten] = new State();
   await plugin_loader();
@@ -189,5 +189,5 @@ module.exports = {
   getTenant,
   init_multi_tenant,
   create_tenant,
-  restart_tenant
+  restart_tenant,
 };

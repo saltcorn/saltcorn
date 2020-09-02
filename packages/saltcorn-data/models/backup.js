@@ -19,7 +19,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
-  install_pack
+  install_pack,
 } = require("./pack");
 const { is_plugin } = require("../contracts");
 
@@ -27,22 +27,22 @@ const { asyncMap } = require("../utils");
 
 const create_pack = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async dirpath => {
+  async (dirpath) => {
     const tables = await asyncMap(
       await Table.find({}),
-      async t => await table_pack(t.name)
+      async (t) => await table_pack(t.name)
     );
     const views = await asyncMap(
       await View.find({}),
-      async v => await view_pack(v.name)
+      async (v) => await view_pack(v.name)
     );
     const plugins = await asyncMap(
       await Plugin.find({}),
-      async v => await plugin_pack(v.name)
+      async (v) => await plugin_pack(v.name)
     );
     const pages = await asyncMap(
       await Page.find({}),
-      async v => await page_pack(v.name)
+      async (v) => await page_pack(v.name)
     );
     var pack = { tables, views, plugins, pages };
 
@@ -58,8 +58,8 @@ const create_csv_from_rows = contract(
     const s = stringify(rows, {
       header: true,
       cast: {
-        date: value => value.toISOString()
-      }
+        date: (value) => value.toISOString(),
+      },
     });
 
     await fs.writeFile(fnm, s);
@@ -76,7 +76,7 @@ const create_table_csv = contract(
 
 const create_table_csvs = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async root_dirpath => {
+  async (root_dirpath) => {
     const dirpath = path.join(root_dirpath, "tables");
     await fs.mkdir(dirpath);
     const tables = await Table.find({});
@@ -88,7 +88,7 @@ const create_table_csvs = contract(
 
 const create_users_csv = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async root_dirpath => {
+  async (root_dirpath) => {
     const users = await db.select("users");
     await create_csv_from_rows(users, path.join(root_dirpath, "users.csv"));
   }
@@ -96,7 +96,7 @@ const create_users_csv = contract(
 
 const backup_files = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async root_dirpath => {
+  async (root_dirpath) => {
     const dirpath = path.join(root_dirpath, "files");
     await fs.mkdir(dirpath);
 
@@ -112,7 +112,7 @@ const backup_files = contract(
 
 const backup_config = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async root_dirpath => {
+  async (root_dirpath) => {
     const dirpath = path.join(root_dirpath, "config");
     await fs.mkdir(dirpath);
 
@@ -151,9 +151,9 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
 const extract = contract(
   is.fun([is.str, is.str], is.promise(is.undefined)),
   async (fnm, dir) => {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       var zip = new Zip(fnm);
-      zip.extractAllToAsync(dir, true, function(err) {
+      zip.extractAllToAsync(dir, true, function (err) {
         if (err) reject(new Error("Error opening zip filr: " + err));
         else resolve();
       });
@@ -162,7 +162,7 @@ const extract = contract(
 );
 const restore_files = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async dirpath => {
+  async (dirpath) => {
     const fnm = path.join(dirpath, "files.csv");
     if (existsSync(fnm)) {
       const file_rows = await csvtojson().fromFile(fnm);
@@ -181,7 +181,7 @@ const restore_files = contract(
 
 const restore_users = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async dirpath => {
+  async (dirpath) => {
     const user_rows = await csvtojson().fromFile(
       path.join(dirpath, "users.csv")
     );
@@ -193,7 +193,7 @@ const restore_users = contract(
 
 const restore_tables = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async dirpath => {
+  async (dirpath) => {
     const tables = await Table.find();
     for (const table of tables) {
       const fnm = path.join(dirpath, "tables", table.name + ".csv");
@@ -204,7 +204,7 @@ const restore_tables = contract(
 
 const restore_config = contract(
   is.fun(is.str, is.promise(is.undefined)),
-  async dirpath => {
+  async (dirpath) => {
     const cfgs = readdirSync(path.join(dirpath, "config"));
     const state = getState();
 

@@ -11,7 +11,7 @@ const {
   pre,
   div,
   h3,
-  p
+  p,
 } = require("@saltcorn/markup/tags");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -25,15 +25,15 @@ const wrap = (cardTitle, response, lastBc) => ({
       crumbs: [
         { text: "Settings" },
         { text: "Crash log", href: lastBc && "/crashlog" },
-        ...(lastBc ? [lastBc] : [])
-      ]
+        ...(lastBc ? [lastBc] : []),
+      ],
     },
     {
       type: "card",
       title: cardTitle,
-      contents: response
-    }
-  ]
+      contents: response,
+    },
+  ],
 });
 router.get(
   "/",
@@ -54,12 +54,12 @@ router.get(
               [
                 {
                   label: "Show",
-                  key: r => link(`/crashlog/${r.id}`, text(r.msg_short))
+                  key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
                 },
-                { label: "When", key: r => r.reltime },
+                { label: "When", key: (r) => r.reltime },
                 ...(db.is_it_multi_tenant()
                   ? [{ label: "Tenant", key: "tenant" }]
-                  : [])
+                  : []),
               ],
               crashes
             )

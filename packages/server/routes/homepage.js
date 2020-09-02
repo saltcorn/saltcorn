@@ -8,27 +8,28 @@ const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 
-const tableTable = tables =>
+const tableTable = (tables) =>
   mkTable(
     [
       { label: "Name", key: "name" },
-      { label: "Edit", key: r => link(`/table/${r.id}`, "Edit") }
+      { label: "Edit", key: (r) => link(`/table/${r.id}`, "Edit") },
     ],
     tables
   );
 
-const viewTable = views =>
+const viewTable = (views) =>
   mkTable(
     [
       { label: "Name", key: "name" },
       {
         label: "Run",
-        key: r => link(`/view/${encodeURIComponent(r.name)}`, "Run")
+        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, "Run"),
       },
       {
         label: "Edit",
-        key: r => link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit")
-      }
+        key: (r) =>
+          link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+      },
     ],
     views
   );
@@ -48,7 +49,7 @@ const no_views_logged_in = async (req, res) => {
         above: [
           {
             type: "pageHeader",
-            title: "Quick Start"
+            title: "Quick Start",
           },
           {
             type: "card",
@@ -63,12 +64,12 @@ const no_views_logged_in = async (req, res) => {
                 a(
                   {
                     href: `/table/create-from-csv`,
-                    class: "btn btn-secondary mx-3"
+                    class: "btn btn-secondary mx-3",
                   },
                   "Create table from CSV upload"
                 )
               )
-            )
+            ),
           },
           {
             type: "card",
@@ -82,7 +83,7 @@ const no_views_logged_in = async (req, res) => {
                   { label: "Name", key: "name" },
                   {
                     label: "Install",
-                    key: r =>
+                    key: (r) =>
                       packs_installed.includes(r.name)
                         ? "Installed"
                         : post_btn(
@@ -91,21 +92,21 @@ const no_views_logged_in = async (req, res) => {
                             )}`,
                             "Install",
                             req.csrfToken()
-                          )
-                  }
+                          ),
+                  },
                 ],
                 packs_available
-              )
-            ]
-          }
-        ]
+              ),
+            ],
+          },
+        ],
       });
     } else if (views.length === 0) {
       res.sendWrap("Hello", {
         above: [
           {
             type: "pageHeader",
-            title: "Quick Start"
+            title: "Quick Start",
           },
           {
             type: "card",
@@ -120,12 +121,12 @@ const no_views_logged_in = async (req, res) => {
                 a(
                   {
                     href: `/table/create-from-csv`,
-                    class: "btn btn-secondary mx-3"
+                    class: "btn btn-secondary mx-3",
                   },
                   "Create table from CSV upload"
                 )
               )
-            )
+            ),
           },
           {
             type: "card",
@@ -137,17 +138,17 @@ const no_views_logged_in = async (req, res) => {
                   { href: `/viewedit/new`, class: "btn btn-primary" },
                   "Create a view »"
                 )
-              )
-            ]
-          }
-        ]
+              ),
+            ],
+          },
+        ],
       });
     } else {
       res.sendWrap("Hello", {
         above: [
           {
             type: "pageHeader",
-            title: "Quick Start"
+            title: "Quick Start",
           },
           {
             type: "card",
@@ -160,7 +161,7 @@ const no_views_logged_in = async (req, res) => {
                   "Create a table"
                 )
               )
-            )
+            ),
           },
           {
             type: "card",
@@ -172,10 +173,10 @@ const no_views_logged_in = async (req, res) => {
                   { href: `/viewedit/new`, class: "btn btn-primary" },
                   "Create a view"
                 )
-              )
-            ]
-          }
-        ]
+              ),
+            ],
+          },
+        ],
       });
     }
   }
@@ -218,7 +219,7 @@ module.exports = async (req, res) => {
   if (cfgResp) return;
 
   const views = getState().views.filter(
-    v => v.on_root_page && (isAuth || v.min_role === 10)
+    (v) => v.on_root_page && (isAuth || v.min_role === 10)
   );
 
   if (views.length === 0) {
@@ -242,7 +243,7 @@ module.exports = async (req, res) => {
       div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
     );
   } else {
-    const viewlis = views.map(v => li(link(`/view/${v.name}`, v.name)));
+    const viewlis = views.map((v) => li(link(`/view/${v.name}`, v.name)));
     res.sendWrap("Hello", ul(viewlis));
   }
 };

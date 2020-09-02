@@ -15,19 +15,19 @@ export const Container = ({
   bgType,
   bgColor,
   setTextColor,
-  textColor
+  textColor,
 }) => {
   const {
-    connectors: { connect, drag }
+    connectors: { connect, drag },
   } = useNode();
   return (
     <div
-      ref={dom => connect(drag(dom))}
+      ref={(dom) => connect(drag(dom))}
       className={`text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
-      } ${vAlign === "middle" &&
-        hAlign === "center" &&
-        "justify-content-center"}`}
+      } ${
+        vAlign === "middle" && hAlign === "center" && "justify-content-center"
+      }`}
       style={{
         padding: "4px",
         minHeight: `${Math.max(minHeight, 15)}px`,
@@ -36,19 +36,19 @@ export const Container = ({
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
               backgroundSize: imageSize || "contain",
-              backgroundRepeat: "no-repeat"
+              backgroundRepeat: "no-repeat",
             }
           : {}),
         ...(bgType === "Color"
           ? {
-              backgroundColor: bgColor
+              backgroundColor: bgColor,
             }
           : {}),
         ...(setTextColor
           ? {
-              color: textColor
+              color: textColor,
             }
-          : {})
+          : {}),
       }}
     >
       <Element
@@ -77,8 +77,8 @@ export const ContainerSettings = () => {
     bgType,
     bgColor,
     setTextColor,
-    textColor
-  } = useNode(node => ({
+    textColor,
+  } = useNode((node) => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
@@ -89,7 +89,7 @@ export const ContainerSettings = () => {
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     setTextColor: node.data.props.setTextColor,
-    textColor: node.data.props.textColor
+    textColor: node.data.props.textColor,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -102,8 +102,8 @@ export const ContainerSettings = () => {
         step="1"
         min="0"
         max="20"
-        onChange={e =>
-          setProp(prop => {
+        onChange={(e) =>
+          setProp((prop) => {
             prop.borderWidth = e.target.value;
           })
         }
@@ -112,8 +112,8 @@ export const ContainerSettings = () => {
       <label>Style</label>
       <select
         value={borderStyle}
-        onChange={e =>
-          setProp(prop => {
+        onChange={(e) =>
+          setProp((prop) => {
             prop.borderStyle = e.target.value;
           })
         }
@@ -135,8 +135,8 @@ export const ContainerSettings = () => {
         step="1"
         min="0"
         max="999"
-        onChange={e =>
-          setProp(prop => {
+        onChange={(e) =>
+          setProp((prop) => {
             prop.minHeight = e.target.value;
           })
         }
@@ -145,8 +145,8 @@ export const ContainerSettings = () => {
       <label>Vert</label>
       <select
         value={vAlign}
-        onChange={e =>
-          setProp(prop => {
+        onChange={(e) =>
+          setProp((prop) => {
             prop.vAlign = e.target.value;
           })
         }
@@ -158,8 +158,8 @@ export const ContainerSettings = () => {
       <label>Horiz</label>
       <select
         value={hAlign}
-        onChange={e =>
-          setProp(prop => {
+        onChange={(e) =>
+          setProp((prop) => {
             prop.hAlign = e.target.value;
           })
         }
@@ -173,11 +173,11 @@ export const ContainerSettings = () => {
       <label>Background</label>
       <select
         value={bgType}
-        onChange={e => {
-          setProp(prop => {
+        onChange={(e) => {
+          setProp((prop) => {
             prop.bgType = e.target.value;
           });
-          setProp(prop => {
+          setProp((prop) => {
             prop.bgFileId =
               prop.bgFileId ||
               (options.images.length > 0 && options.images[0].id);
@@ -193,7 +193,9 @@ export const ContainerSettings = () => {
           <br />
           <select
             value={bgFileId}
-            onChange={e => setProp(prop => (prop.bgFileId = e.target.value))}
+            onChange={(e) =>
+              setProp((prop) => (prop.bgFileId = e.target.value))
+            }
           >
             {options.images.map((f, ix) => (
               <option key={ix} value={f.id}>
@@ -204,8 +206,8 @@ export const ContainerSettings = () => {
           <label>Size</label>
           <select
             value={imageSize}
-            onChange={e =>
-              setProp(prop => {
+            onChange={(e) =>
+              setProp((prop) => {
                 prop.imageSize = e.target.value;
               })
             }
@@ -221,8 +223,8 @@ export const ContainerSettings = () => {
           <input
             type="color"
             value={bgColor}
-            onChange={e =>
-              setProp(prop => {
+            onChange={(e) =>
+              setProp((prop) => {
                 prop.bgColor = e.target.value;
               })
             }
@@ -236,8 +238,8 @@ export const ContainerSettings = () => {
           name="setTextColor"
           type="checkbox"
           checked={setTextColor}
-          onChange={e =>
-            setProp(prop => (prop.setTextColor = e.target.checked))
+          onChange={(e) =>
+            setProp((prop) => (prop.setTextColor = e.target.checked))
           }
         />{" "}
       </label>
@@ -247,8 +249,8 @@ export const ContainerSettings = () => {
           <input
             type="color"
             value={textColor}
-            onChange={e =>
-              setProp(prop => {
+            onChange={(e) =>
+              setProp((prop) => {
                 prop.textColor = e.target.value;
               })
             }
@@ -270,9 +272,9 @@ Container.craft = {
     bgColor: "#ffffff",
     setTextColor: false,
     textColor: "#ffffff",
-    imageSize: "contain"
+    imageSize: "contain",
   },
   related: {
-    settings: ContainerSettings
-  }
+    settings: ContainerSettings,
+  },
 };

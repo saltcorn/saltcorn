@@ -16,7 +16,7 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 
-const getColWidths = segment => {
+const getColWidths = (segment) => {
   if (!segment.widths)
     return ntimes(
       segment.besides.length - 1,
@@ -167,7 +167,7 @@ export const layoutToNodes = (layout, query, actions) => {
   function go(segment, parent) {
     if (!segment) return;
     if (segment.above) {
-      segment.above.forEach(child => {
+      segment.above.forEach((child) => {
         if (child) go(child, parent);
       });
     } else if (segment.besides) {
@@ -198,28 +198,28 @@ export const layoutToNodes = (layout, query, actions) => {
 
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
-export const craftToSaltcorn = nodes => {
+export const craftToSaltcorn = (nodes) => {
   //console.log(nodes);
   var columns = [];
-  const go = node => {
+  const go = (node) => {
     if (node.isCanvas) {
       if (node.nodes.length == 0) return;
       else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-      else return { above: node.nodes.map(nm => go(nodes[nm])) };
+      else return { above: node.nodes.map((nm) => go(nodes[nm])) };
     }
     if (node.displayName === Text.name) {
       return {
         type: "blank",
         contents: node.props.text,
         block: node.props.block,
-        textStyle: node.props.textStyle
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === HTMLCode.name) {
       return {
         type: "blank",
         isHTML: true,
-        contents: node.props.text
+        contents: node.props.text,
       };
     }
     if (node.displayName === LineBreak.name) {
@@ -233,14 +233,14 @@ export const craftToSaltcorn = nodes => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         aligns: node.props.aligns,
-        widths
+        widths,
       };
     }
     if (node.displayName === Card.name) {
       return {
         contents: go(nodes[node.linkedNodes.cardContents]),
         type: "card",
-        title: node.props.title
+        title: node.props.title,
       };
     }
     if (node.displayName === Container.name) {
@@ -257,7 +257,7 @@ export const craftToSaltcorn = nodes => {
         imageSize: node.props.imageSize,
         bgColor: node.props.bgColor,
         setTextColor: node.props.setTextColor,
-        textColor: node.props.textColor
+        textColor: node.props.textColor,
       };
     }
     if (node.displayName === Image.name) {
@@ -265,7 +265,7 @@ export const craftToSaltcorn = nodes => {
         type: "image",
         alt: node.props.alt,
         fileid: node.props.fileid,
-        block: node.props.block
+        block: node.props.block,
       };
     }
     if (node.displayName === Link.name) {
@@ -274,7 +274,7 @@ export const craftToSaltcorn = nodes => {
         text: node.props.text,
         url: node.props.url,
         block: node.props.block,
-        textStyle: node.props.textStyle
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === View.name) {
@@ -283,33 +283,33 @@ export const craftToSaltcorn = nodes => {
         view: node.props.view,
         name:
           node.props.name === "not_assigned" ? rand_ident() : node.props.name,
-        state: node.props.state
+        state: node.props.state,
       };
     }
     if (node.displayName === Field.name) {
       columns.push({
         type: "Field",
         field_name: node.props.name,
-        fieldview: node.props.fieldview
+        fieldview: node.props.fieldview,
       });
       return {
         type: "field",
         block: node.props.block,
         field_name: node.props.name,
         fieldview: node.props.fieldview,
-        textStyle: node.props.textStyle
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === JoinField.name) {
       columns.push({
         type: "JoinField",
-        join_field: node.props.name
+        join_field: node.props.name,
       });
       return {
         type: "join_field",
         block: node.props.block,
         join_field: node.props.name,
-        textStyle: node.props.textStyle
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === Aggregation.name) {
@@ -317,7 +317,7 @@ export const craftToSaltcorn = nodes => {
         type: "Aggregation",
         agg_relation: node.props.agg_relation,
         agg_field: node.props.agg_field,
-        stat: node.props.stat
+        stat: node.props.stat,
       });
       return {
         type: "aggregation",
@@ -325,34 +325,34 @@ export const craftToSaltcorn = nodes => {
         agg_relation: node.props.agg_relation,
         agg_field: node.props.agg_field,
         stat: node.props.stat,
-        textStyle: node.props.textStyle
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === ViewLink.name) {
       columns.push({
         type: "ViewLink",
         view: node.props.name,
-        minRole: node.props.minRole
+        minRole: node.props.minRole,
       });
       return {
         type: "view_link",
         block: node.props.block,
         view_label: node.props.label,
         view: node.props.name,
-        minRole: node.props.minRole
+        minRole: node.props.minRole,
       };
     }
     if (node.displayName === Action.name) {
       columns.push({
         type: "Action",
         action_name: node.props.name,
-        minRole: node.props.minRole
+        minRole: node.props.minRole,
       });
       return {
         type: "action",
         block: node.props.block,
         action_name: node.props.name,
-        minRole: node.props.minRole
+        minRole: node.props.minRole,
       };
     }
   };

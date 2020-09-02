@@ -15,7 +15,7 @@ class CreateUserCommand extends Command {
 CreateUserCommand.description = `Create a new user`;
 
 CreateUserCommand.flags = {
-  admin: flags.boolean({ char: "a", description: "Admin user" })
+  admin: flags.boolean({ char: "a", description: "Admin user" }),
 };
 
 module.exports = CreateUserCommand;

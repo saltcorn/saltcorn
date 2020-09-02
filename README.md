@@ -215,9 +215,9 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
 ### Prettier
 
-we use prettier 1.x:
+we use prettier:
 
-`npm install -g prettier@1.19.1`
+`npm install -g prettier`
 
 to format code:
 

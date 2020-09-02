@@ -3,7 +3,7 @@ const check_contract = require("./check");
 const {
   get_return_contract,
   get_arguments_returns,
-  ContractViolation
+  ContractViolation,
 } = require("./util.js");
 
 const check_arguments = (
@@ -75,7 +75,7 @@ const contract_function = (
       );
       if (opts.returns.contract_name === "promise") {
         var pr_rv = rv;
-        rv = pr_rv.then(v => {
+        rv = pr_rv.then((v) => {
           check_contract(
             opts.returns.options,
             v,
@@ -97,7 +97,7 @@ const contract_function = (
   return newf;
 };
 
-const contract_class = that => {
+const contract_class = (that) => {
   if (!enabled) return;
   const proto = Object.getPrototypeOf(that);
   const opts = proto.constructor.contract;
@@ -188,7 +188,7 @@ function contract(opts, obj) {
   if (!enabled) return obj;
   var trace = stackTrace.get();
   var callert = trace.find(
-    t => !t.getFileName().includes("contractis/contract.js")
+    (t) => !t.getFileName().includes("contractis/contract.js")
   );
   var caller = `${callert.getFunctionName()} (${callert.getFileName()}:${callert.getLineNumber()})`;
   if (typeof obj === "function")

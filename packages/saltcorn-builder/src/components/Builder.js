@@ -34,12 +34,12 @@ const SettingsPanel = () => {
         settings:
           state.nodes[currentNodeId].related &&
           state.nodes[currentNodeId].related.settings,
-        isDeletable: query.node(currentNodeId).isDeletable()
+        isDeletable: query.node(currentNodeId).isDeletable(),
       };
     }
 
     return {
-      selected
+      selected,
     };
   });
 
@@ -112,7 +112,7 @@ const Builder = ({ options, layout, mode }) => {
                 Link,
                 View,
                 SearchBar,
-                Container
+                Container,
               }}
             >
               <Element canvas className="canvas"></Element>

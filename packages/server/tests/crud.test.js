@@ -7,7 +7,7 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
-  resetToFixtures
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
@@ -87,16 +87,12 @@ describe("standard edit form", () => {
 describe("homepage", () => {
   it("shows to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/")
-      .expect(toInclude("authorlist"));
+    await request(app).get("/").expect(toInclude("authorlist"));
   });
   it("shows single on_root_page view", async () => {
     await db.query("update _sc_views set on_root_page=false where id<>1;");
     const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/")
-      .expect(toInclude("Melville"));
+    await request(app).get("/").expect(toInclude("Melville"));
   });
 
   it("shows to admin", async () => {
@@ -118,18 +114,14 @@ describe("homepage", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/config/"));
 
-    await request(app)
-      .get("/")
-      .expect(toRedirect("/view/authorlist"));
+    await request(app).get("/").expect(toRedirect("/view/authorlist"));
 
     await request(app)
       .post("/config/edit/public_home")
       .send("public_home=a_page")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/config/"));
-    await request(app)
-      .get("/")
-      .expect(toInclude("Hello world"));
+    await request(app).get("/").expect(toInclude("Hello world"));
     await request(app)
       .post("/config/delete/public_home")
       .set("Cookie", loginCookie)
@@ -141,9 +133,7 @@ describe("homepage", () => {
   it("redirects to create first user", async () => {
     const app = await getApp({ disableCsrf: true });
 
-    await request(app)
-      .get("/")
-      .expect(toRedirect("/auth/create_first_user"));
+    await request(app).get("/").expect(toRedirect("/auth/create_first_user"));
     await request(app)
       .post("/auth/create_first_user")
       .send("email=admin@foo.com")
@@ -178,7 +168,7 @@ describe("homepage", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: false
+      on_root_page: false,
     });
     const loginCookie = await getAdminLoginCookie();
 

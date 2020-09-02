@@ -19,7 +19,7 @@ class Page {
   }
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_pages", where, selectopts);
-    return db_flds.map(dbf => new Page(dbf));
+    return db_flds.map((dbf) => new Page(dbf));
   }
 
   static async findOne(where) {
@@ -53,19 +53,19 @@ class Page {
 
     const roles = await User.get_roles();
     return roles
-      .filter(r => getState().getConfig(r.role + "_home", "") === this.name)
-      .map(r => r.role);
+      .filter((r) => getState().getConfig(r.role + "_home", "") === this.name)
+      .map((r) => r.role);
   }
 
   get menu_label() {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
-    const item = menu_items.find(mi => mi.pagename === this.name);
+    const item = menu_items.find((mi) => mi.pagename === this.name);
     return item ? item.label : undefined;
   }
 
   async run(querystate, extraArgs) {
-    await eachView(this.layout, async segment => {
+    await eachView(this.layout, async (segment) => {
       const view = await View.findOne({ name: segment.view });
       if (segment.state === "shared") {
         const mystate = view.combine_state_and_default_state(querystate);
@@ -88,7 +88,7 @@ Page.contract = {
     id: is.maybe(is.posint),
     min_role: is.posint,
     layout: is.obj(),
-    fixed_states: is.obj()
+    fixed_states: is.obj(),
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
@@ -98,7 +98,7 @@ Page.contract = {
       [is.obj(), is.obj({ req: is.obj(), res: is.obj() })],
       is.promise(is.any)
     ),
-    is_root_page_for_roles: is.fun([], is.promise(is.array(is.str)))
+    is_root_page_for_roles: is.fun([], is.promise(is.array(is.str))),
   },
   static_methods: {
     find: is.fun(
@@ -107,8 +107,8 @@ Page.contract = {
     ),
     create: is.fun(is.obj(), is.promise(is.class("Page"))),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Page")))),
-    update: is.fun([is.posint, is.obj()], is.promise(is.undefined))
-  }
+    update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
+  },
 };
 
 module.exports = Page;

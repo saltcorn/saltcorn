@@ -1,5 +1,5 @@
 const eachView = async (layout, f) => {
-  const go = async segment => {
+  const go = async (segment) => {
     if (!segment) return;
     if (segment.type === "view") {
       await f(segment);
@@ -21,9 +21,9 @@ const eachView = async (layout, f) => {
   await go(layout);
 };
 
-const getViews = async layout => {
+const getViews = async (layout) => {
   const views = [];
-  await eachView(layout, segment => {
+  await eachView(layout, (segment) => {
     views.push(segment);
   });
   return views;
