@@ -16,7 +16,7 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp, a, div, span } = require("@saltcorn/markup/tags");
+const { h5, nbsp, a, div, span, ul, li } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -147,7 +147,32 @@ const store_item_html = (req) => (item) => ({
     )
   ),
 });
-
+const storeNavPills = (req) => {
+  const link = (txt) =>
+    li(
+      { class: "nav-item" },
+      a(
+        {
+          href: `/plugins?q=${txt.toLowerCase()}`,
+          class: [
+            "nav-link",
+            (req.query.q === txt.toLowerCase() ||
+              (txt === "All" && !req.query.q)) &&
+              "active",
+          ],
+        },
+        txt
+      )
+    );
+  return ul(
+    { class: "nav nav-pills" },
+    link("All"),
+    link("Plugins"),
+    link("Packs"),
+    link("Themes"),
+    link("Installed")
+  );
+};
 const plugin_store_html = (items, req) => {
   return {
     above: [
@@ -158,14 +183,20 @@ const plugin_store_html = (items, req) => {
       {
         type: "card", // switch on type, refresh
         contents: div(
-          a(
-            {
-              class: "btn btn-secondary btn-sm",
-              role: "button",
-              href: `/plugins/refresh`,
-              title: "Refresh store",
-            },
-            '<i class="fas fa-sync"></i>'
+          { class: "d-flex" },
+          storeNavPills(req),
+          div(
+            { class: "ml-auto" },
+
+            a(
+              {
+                class: "btn btn-secondary btn-sm",
+                role: "button",
+                href: `/plugins/refresh`,
+                title: "Refresh store",
+              },
+              '<i class="fas fa-sync"></i>'
+            )
           )
         ),
       },
