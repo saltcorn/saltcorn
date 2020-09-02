@@ -24,6 +24,7 @@ const {
   span,
   ul,
   li,
+  h3,
   button,
 } = require("@saltcorn/markup/tags");
 
@@ -56,7 +57,10 @@ const pluginForm = (plugin) => {
   }
   return form;
 };
-
+const local_has_theme = (name) => {
+  const mod = getState().plugins[name];
+  return mod ? mod.layout : false;
+};
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
@@ -81,7 +85,7 @@ const get_store_items = async () => {
       installed: true,
       plugin: true,
       description: plugin.description,
-      has_theme: plugin.has_theme, // TODO
+      has_theme: local_has_theme(plugin.name),
       github: plugin.source === "github",
       local: plugin.source === "local",
     }));
@@ -274,12 +278,15 @@ const plugin_store_html = (items, req) => {
         crumbs: [{ text: "Settings" }, { text: "Plugins" }],
       },
       {
-        type: "card", // switch on type, refresh
-        contents: div(
-          { class: "d-flex" },
-          storeNavPills(req),
-          div({ class: "ml-auto" }, store_actions_dropdown)
-        ),
+        type: "card",
+        contents: [
+          h3("Plugin and pack store"),
+          div(
+            { class: "d-flex" },
+            storeNavPills(req),
+            div({ class: "ml-auto" }, store_actions_dropdown)
+          ),
+        ],
       },
       {
         besides: items.map(store_item_html(req)),
