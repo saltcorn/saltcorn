@@ -16,7 +16,16 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp, a, div, span, ul, li } = require("@saltcorn/markup/tags");
+const {
+  h5,
+  nbsp,
+  a,
+  div,
+  span,
+  ul,
+  li,
+  button,
+} = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -188,6 +197,58 @@ const filter_items = (items, query) => {
       return items;
   }
 };
+
+const store_actions_dropdown = div(
+  { class: "dropdown" },
+  button(
+    {
+      class: "btn btn-outline-secondary btn-pill",
+      type: "button",
+      id: "dropdownMenuButton",
+      "data-toggle": "dropdown",
+      "aria-haspopup": "true",
+      "aria-expanded": "false",
+    },
+    '<i class="fas fa-ellipsis-v"></i>'
+  ),
+  div(
+    {
+      class: "dropdown-menu dropdown-menu-right",
+      "aria-labelledby": "dropdownMenuButton",
+    },
+    a(
+      {
+        class: "dropdown-item",
+        href: `/plugins/refresh`,
+      },
+      '<i class="fas fa-sync"></i>&nbsp;Refresh'
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/plugins/new`,
+      },
+      '<i class="fas fa-plus"></i>&nbsp;Add another plugin'
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/packs/install`,
+      },
+      '<i class="fas fa-box-open"></i>&nbsp;Add another pack'
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/packs/create`,
+      },
+      '<i class="fas fa-plus-square"></i>&nbsp;Create pack'
+    )
+
+    //another pack
+    //create pack
+  )
+);
 const plugin_store_html = (items, req) => {
   return {
     above: [
@@ -200,19 +261,7 @@ const plugin_store_html = (items, req) => {
         contents: div(
           { class: "d-flex" },
           storeNavPills(req),
-          div(
-            { class: "ml-auto" },
-
-            a(
-              {
-                class: "btn btn-secondary btn-sm",
-                role: "button",
-                href: `/plugins/refresh`,
-                title: "Refresh store",
-              },
-              '<i class="fas fa-sync"></i>'
-            )
-          )
+          div({ class: "ml-auto" }, store_actions_dropdown)
         ),
       },
       {
