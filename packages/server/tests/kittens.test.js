@@ -278,9 +278,9 @@ describe("Kitten tracker", () => {
   });
 
   view_should_include("map_no_popup", "51.23");
-  /*view_should_include("map_with_popup", "Bella");
+  view_should_include("map_with_popup", "Bella");
   view_should_include("kanban_map_nopop", "51.23");
   view_should_include("kanban_map_pop", "Bella");
   view_should_include("kanban_nested_nopop", "51.23");
-  view_should_include("kanban_nested_pop", "Bella");*/
+  view_should_include("kanban_nested_pop", "Bella");
 });
