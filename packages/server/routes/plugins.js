@@ -65,6 +65,7 @@ const get_store_items = async () => {
   const packs_installed = getState().getConfig("installed_packs", []);
   const schema = db.getTenantSchema();
   const installed_plugin_names = installed_plugins.map((p) => p.name);
+  const store_plugin_names = instore.map((p) => p.name);
   const plugins_item = instore.map((plugin) => ({
     name: plugin.name,
     installed: installed_plugin_names.includes(plugin.name),
@@ -73,6 +74,18 @@ const get_store_items = async () => {
     has_theme: plugin.has_theme,
   }));
 
+  const local_logins = installed_plugins
+    .filter((p) => !store_plugin_names.includes(p.name))
+    .map((plugin) => ({
+      name: plugin.name,
+      installed: true,
+      plugin: true,
+      description: plugin.description,
+      has_theme: plugin.has_theme, // TODO
+      github: plugin.source === "github",
+      local: plugin.source === "local",
+    }));
+
   const pack_items = packs_available.map((pack) => ({
     name: pack.name,
     installed: packs_installed.includes(pack.name),
@@ -80,7 +93,7 @@ const get_store_items = async () => {
     description: pack.description,
   }));
 
-  return [...plugins_item, ...pack_items].sort((a, b) =>
+  return [...plugins_item, ...local_logins, ...pack_items].sort((a, b) =>
     a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
   );
 };
@@ -112,6 +125,8 @@ const store_item_html = (req) => (item) => ({
       item.plugin && badge("Plugin"),
       item.pack && badge("Pack"),
       item.has_theme && badge("Theme"),
+      item.github && badge("GitHub"),
+      item.local && badge("Local"),
       item.installed && badge("Installed")
     ),
     div(item.description || ""),
@@ -146,6 +161,7 @@ const store_item_html = (req) => (item) => ({
       item.installed && item.pack && "Installed",
       item.installed &&
         item.plugin &&
+        item.name !== "base" &&
         post_btn(`/plugins/delete/${item.name}`, "Remove", req.csrfToken(), {
           klass: "store-install",
           small: true,
