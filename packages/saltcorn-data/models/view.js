@@ -127,12 +127,35 @@ class View {
     );
   }
   async runMany(query, extraArgs) {
-    return await this.viewtemplateObj.runMany(
-      this.table_id,
-      this.name,
-      this.configuration,
-      query,
-      extraArgs
+    if (this.viewtemplateObj.runMany)
+      return await this.viewtemplateObj.runMany(
+        this.table_id,
+        this.name,
+        this.configuration,
+        query,
+        extraArgs
+      );
+    if (this.viewtemplateObj.renderRows) {
+      const Table = require("./table");
+      const { stateFieldsToWhere } = require("../plugin-helper");
+
+      const tbl = await Table.findOne({ id: this.table_id });
+      const fields = await tbl.getFields();
+      const qstate = await stateFieldsToWhere({ fields, state: query });
+      const rows = await tbl.getRows(qstate);
+      const rendered = await this.viewtemplateObj.renderRows(
+        tbl,
+        this.name,
+        this.configuration,
+        extraArgs,
+        rows
+      );
+
+      return rendered.map((html, ix) => ({ html, row: rows[ix] }));
+    }
+
+    throw new Error(
+      `runMany on view ${this.name}: viewtemplate does not have renderRows or runMany methods`
     );
   }
   async runPost(query, body, extraArgs) {
