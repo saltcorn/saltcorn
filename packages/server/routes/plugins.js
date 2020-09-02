@@ -16,7 +16,7 @@ const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const load_plugins = require("../load_plugins");
-const { h5, nbsp, a, div } = require("@saltcorn/markup/tags");
+const { h5, nbsp, a, div, span } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -61,6 +61,7 @@ const get_store_items = async () => {
     installed: installed_plugin_names.includes(plugin.name),
     plugin: true,
     description: plugin.description,
+    has_theme: plugin.has_theme,
   }));
 
   const pack_items = packs_available.map((pack) => ({
@@ -71,7 +72,7 @@ const get_store_items = async () => {
   }));
 
   return [...plugins_item, ...pack_items].sort((a, b) =>
-    a.name > b.name ? 1 : -1
+    a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
   );
 };
 
@@ -91,11 +92,20 @@ const cfg_link = (row) => {
   else return "";
 };
 
+const badge = (title) =>
+  span({ class: "badge badge-secondary plugin-store" }, title);
+
 const store_item_html = (req) => (item) => ({
   type: "card",
   title: item.name,
   contents: div(
-    item.description || "",
+    div(
+      item.plugin && badge("Plugin"),
+      item.pack && badge("Pack"),
+      item.has_theme && badge("Theme"),
+      item.installed && badge("Installed")
+    ),
+    div(item.description || ""),
 
     div(
       !item.installed &&

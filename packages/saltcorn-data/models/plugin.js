@@ -13,6 +13,7 @@ class Plugin {
     this.location = o.location;
     this.version = o.version;
     this.description = o.description;
+    this.has_theme = o.has_theme;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
