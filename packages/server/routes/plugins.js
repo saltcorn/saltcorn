@@ -239,13 +239,14 @@ const store_actions_dropdown = div(
       },
       '<i class="fas fa-sync"></i>&nbsp;Refresh'
     ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/plugins/new`,
-      },
-      '<i class="fas fa-plus"></i>&nbsp;Add another plugin'
-    ),
+    db.getTenantSchema() === "public" &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/plugins/new`,
+        },
+        '<i class="fas fa-plus"></i>&nbsp;Add another plugin'
+      ),
     a(
       {
         class: "dropdown-item",
@@ -293,8 +294,6 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const schema = db.getTenantSchema();
-
     const items = await get_store_items();
     const relevant_items = filter_items(items, req.query);
     res.sendWrap("Plugins", plugin_store_html(relevant_items, req));
