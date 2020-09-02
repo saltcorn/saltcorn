@@ -51,6 +51,7 @@ const pluginForm = (plugin) => {
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
+
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
   const schema = db.getTenantSchema();
@@ -59,12 +60,14 @@ const get_store_items = async () => {
     name: plugin.name,
     installed: installed_plugin_names.includes(plugin.name),
     plugin: true,
+    description: plugin.description,
   }));
 
   const pack_items = packs_available.map((pack) => ({
     name: pack.name,
     installed: packs_installed.includes(pack.name),
     pack: true,
+    description: pack.description,
   }));
 
   return [...plugins_item, ...pack_items].sort((a, b) =>
@@ -78,7 +81,7 @@ const cfg_link = (row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm",
+        class: "btn btn-secondary btn-sm d-inline",
         role: "button",
         href: `/plugins/configure/${row.name}`,
         title: "Configure plugin",
@@ -92,41 +95,46 @@ const store_item_html = (req) => (item) => ({
   type: "card",
   title: item.name,
   contents: div(
-    !item.installed &&
-      item.plugin &&
-      post_btn(
-        `/plugins/install/${encodeURIComponent(item.name)}`,
-        "Install",
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          onClick: "press_store_button(this)",
-        }
-      ),
-    !item.installed &&
-      item.pack &&
-      post_btn(
-        `/packs/install-named/${encodeURIComponent(item.name)}`,
-        "Install",
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          onClick: "press_store_button(this)",
-        }
-      ),
+    item.description || "",
 
-    item.installed && item.plugin && cfg_link(item),
-    item.installed && item.pack && "Installed",
-    item.installed &&
-      item.plugin &&
-      post_btn(`/plugins/delete/${item.name}`, "Remove", req.csrfToken(), {
-        klass: "store-install",
-        small: true,
-        btnClass: "danger",
-        onClick: "press_store_button(this)",
-      })
+    div(
+      !item.installed &&
+        item.plugin &&
+        post_btn(
+          `/plugins/install/${encodeURIComponent(item.name)}`,
+          "Install",
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            onClick: "press_store_button(this)",
+          }
+        ),
+      !item.installed &&
+        item.pack &&
+        post_btn(
+          `/packs/install-named/${encodeURIComponent(item.name)}`,
+          "Install",
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            onClick: "press_store_button(this)",
+          }
+        ),
+
+      item.installed && item.plugin && cfg_link(item),
+      item.installed && item.pack && "Installed",
+      item.installed &&
+        item.plugin &&
+        post_btn(`/plugins/delete/${item.name}`, "Remove", req.csrfToken(), {
+          klass: "store-install",
+          small: true,
+          btnClass: "danger",
+          formClass: "d-inline",
+          onClick: "press_store_button(this)",
+        })
+    )
   ),
 });
 
@@ -138,8 +146,18 @@ const plugin_store_html = (items, req) => {
         crumbs: [{ text: "Settings" }, { text: "Plugins" }],
       },
       {
-        type: "card",
-        contents: "", // switch on type, refresh
+        type: "card", // switch on type, refresh
+        contents: div(
+          a(
+            {
+              class: "btn btn-secondary btn-sm",
+              role: "button",
+              href: `/plugins/refresh`,
+              title: "Refresh store",
+            },
+            '<i class="fas fa-sync"></i>'
+          )
+        ),
       },
       {
         besides: items.map(store_item_html(req)),
@@ -229,30 +247,13 @@ router.get(
 );
 
 router.get(
-  "/:id/",
+  "/refresh",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const plugin = await Plugin.findOne({ id });
-
-    res.sendWrap(`Edit Plugin`, {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: "Settings" },
-            { text: "Plugins", href: "/plugins" },
-            { text: plugin.name },
-          ],
-        },
-        {
-          type: "card",
-          title: `Edit ${plugin.name} plugin`,
-          contents: renderForm(pluginForm(plugin), req.csrfToken()),
-        },
-      ],
-    });
+    await getState().deleteConfig("available_plugins");
+    await getState().deleteConfig("available_plugins_fetched_at");
+    res.redirect(`/plugins`);
   })
 );
 
