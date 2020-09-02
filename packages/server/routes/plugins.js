@@ -222,14 +222,14 @@ const store_actions_dropdown = div(
   { class: "dropdown" },
   button(
     {
-      class: "btn btn-outline-secondary btn-pill",
+      class: "btn btn-outline-secondary",
       type: "button",
       id: "dropdownMenuButton",
       "data-toggle": "dropdown",
       "aria-haspopup": "true",
       "aria-expanded": "false",
     },
-    '<i class="fas fa-ellipsis-v"></i>'
+    '<i class="fas fa-ellipsis-h"></i>'
   ),
   div(
     {
