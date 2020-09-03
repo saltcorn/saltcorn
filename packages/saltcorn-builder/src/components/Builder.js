@@ -19,6 +19,7 @@ import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
+import {Layers} from "@craftjs/layers"
 
 const { Provider } = optionsCtx;
 
@@ -134,6 +135,9 @@ const Builder = ({ options, layout, mode }) => {
             <div style={{ width: "12rem" }}>
               <div className="card p-2">
                 <SettingsPanel />
+              </div>
+              <div className="card p-2 mt-3">
+                <Layers />
               </div>
               <br />
               <SaveButton layout={layout} />
