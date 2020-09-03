@@ -86,7 +86,21 @@ const SearchElem = ({ connectors }) => (
 );
 const ContainerElem = ({ connectors }) => (
   <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
-    <Container contents={<Empty />} />
+    <Element
+      canvas
+      is={Container}
+      borderWidth={0}
+      borderStyle="solid"
+      minHeight={0}
+      vAlign={"top"}
+      hAlign={"left"}
+      bgFileId={0}
+      imageSize={"contain"}
+      bgType={"None"}
+      bgColor={"#ffffff"}
+      setTextColor={false}
+      textColor={"#000000"}
+    ></Element>
   </WrapElem>
 );
 const FieldElem = ({ connectors, fields, field_view_options }) => (
@@ -165,6 +179,7 @@ export const ToolboxShow = () => {
         agg_field_opts={agg_field_opts}
       />
       <ViewElem connectors={connectors} views={views} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -184,6 +199,7 @@ export const ToolboxEdit = () => {
       />
       <LineBreakElem connectors={connectors} />
       <ActionElem connectors={connectors} options={options} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };

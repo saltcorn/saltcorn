@@ -16,7 +16,7 @@ pre.pack-display {
   margin: 5em 0;
 }
 
-div.canvas {
+.canvas {
   min-height: 30px;
   border: 1px dashed #111111;
 }

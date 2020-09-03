@@ -134,9 +134,9 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "container") {
       return (
-        <Container
+        <Element
           key={ix}
-          contents={toTag(segment.contents)}
+          canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
@@ -148,7 +148,10 @@ export const layoutToNodes = (layout, query, actions) => {
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
-        />
+          is={Container}
+        >
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.besides) {
       return (

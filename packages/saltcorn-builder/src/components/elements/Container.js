@@ -4,7 +4,7 @@ import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 
 export const Container = ({
-  contents,
+  children,
   borderWidth,
   borderStyle,
   minHeight,
@@ -23,7 +23,7 @@ export const Container = ({
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={`text-${hAlign} ${
+      className={`canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
@@ -51,15 +51,7 @@ export const Container = ({
           : {}),
       }}
     >
-      <Element
-        canvas
-        id={`containerContents`}
-        is="div"
-        style={{}}
-        className={`canvas`}
-      >
-        {contents}
-      </Element>
+      {children}
     </div>
   );
 };
@@ -261,7 +253,8 @@ export const ContainerSettings = () => {
   );
 };
 Container.craft = {
-  defaultProps: {
+  displayName: "Container",
+  props: {
     borderWidth: 0,
     borderStyle: "solid",
     minHeight: 0,
@@ -273,6 +266,9 @@ Container.craft = {
     setTextColor: false,
     textColor: "#ffffff",
     imageSize: "contain",
+  },
+  rules: {
+    canDrag: () => true,
   },
   related: {
     settings: ContainerSettings,
