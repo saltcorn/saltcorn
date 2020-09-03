@@ -203,7 +203,7 @@ export const craftToSaltcorn = (nodes) => {
   var columns = [];
   const go = (node) => {
     if (node.isCanvas) {
-      if (node.nodes.length == 0) return;
+      if (!node.nodes || node.nodes.length == 0) return;
       else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
       else return { above: node.nodes.map((nm) => go(nodes[nm])) };
     }
