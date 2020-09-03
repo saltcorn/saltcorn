@@ -132,10 +132,11 @@ const Builder = ({ options, layout, mode }) => {
           <div className="col-sm-auto">
             <div style={{ width: "12rem" }}>
               <SettingsPanel />
+              <br />
+              <SaveButton layout={layout} />
             </div>
           </div>
         </div>
-        <SaveButton layout={layout} />
       </Provider>
     </Editor>
   );
