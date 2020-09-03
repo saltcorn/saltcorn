@@ -78,7 +78,7 @@ const get_store_items = async () => {
   }));
 
   const local_logins = installed_plugins
-    .filter((p) => !store_plugin_names.includes(p.name))
+    .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
       name: plugin.name,
       installed: true,
