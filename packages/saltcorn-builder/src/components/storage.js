@@ -1,4 +1,5 @@
 import React, { Fragment } from "react";
+import { Element } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
@@ -126,17 +127,15 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "card") {
       return (
-        <Card
-          key={ix}
-          contents={toTag(segment.contents)}
-          title={segment.title}
-        />
+        <Element key={ix} canvas title={segment.title} is={Card}>
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.type === "container") {
       return (
-        <Container
+        <Element
           key={ix}
-          contents={toTag(segment.contents)}
+          canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
@@ -148,14 +147,16 @@ export const layoutToNodes = (layout, query, actions) => {
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
-        />
+          is={Container}
+        >
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.besides) {
       return (
         <TwoSplit
           key={ix}
           ncols={segment.besides.length}
-          aligns={segment.aligns || segment.besides.map(() => "left")}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
@@ -176,7 +177,6 @@ export const layoutToNodes = (layout, query, actions) => {
           <TwoSplit
             widths={getColWidths(segment)}
             ncols={segment.besides.length}
-            aligns={segment.aligns || segment.besides.map(() => "left")}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -199,14 +199,40 @@ export const layoutToNodes = (layout, query, actions) => {
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export const craftToSaltcorn = (nodes) => {
-  //console.log(nodes);
+  //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
-  const go = (node) => {
+  const get_nodes = (node) => {
+    if (!node.nodes || node.nodes.length == 0) return;
+    else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
+    else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+  };
+  const go = (node, isRoot) => {
     if (node.isCanvas) {
-      if (node.nodes.length == 0) return;
-      else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-      else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+      if (node.displayName === Container.name && !isRoot)
+        return {
+          contents: get_nodes(node),
+          type: "container",
+          borderWidth: node.props.borderWidth,
+          borderStyle: node.props.borderStyle,
+          minHeight: node.props.minHeight,
+          vAlign: node.props.vAlign,
+          hAlign: node.props.hAlign,
+          bgFileId: node.props.bgFileId,
+          bgType: node.props.bgType,
+          imageSize: node.props.imageSize,
+          bgColor: node.props.bgColor,
+          setTextColor: node.props.setTextColor,
+          textColor: node.props.textColor,
+        };
+      else if (node.displayName === Card.name)
+        return {
+          contents: get_nodes(node),
+          type: "card",
+          title: node.props.title,
+        };
+      else return get_nodes(node);
     }
+
     if (node.displayName === Text.name) {
       return {
         type: "blank",
@@ -232,34 +258,10 @@ export const craftToSaltcorn = (nodes) => {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
-        aligns: node.props.aligns,
         widths,
       };
     }
-    if (node.displayName === Card.name) {
-      return {
-        contents: go(nodes[node.linkedNodes.cardContents]),
-        type: "card",
-        title: node.props.title,
-      };
-    }
-    if (node.displayName === Container.name) {
-      return {
-        contents: go(nodes[node.linkedNodes.containerContents]),
-        type: "container",
-        borderWidth: node.props.borderWidth,
-        borderStyle: node.props.borderStyle,
-        minHeight: node.props.minHeight,
-        vAlign: node.props.vAlign,
-        hAlign: node.props.hAlign,
-        bgFileId: node.props.bgFileId,
-        bgType: node.props.bgType,
-        imageSize: node.props.imageSize,
-        bgColor: node.props.bgColor,
-        setTextColor: node.props.setTextColor,
-        textColor: node.props.textColor,
-      };
-    }
+
     if (node.displayName === Image.name) {
       return {
         type: "image",
@@ -356,7 +358,7 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
   };
-  const layout = go(nodes["ROOT"]) || { type: "blank", contents: "" };
+  const layout = go(nodes["ROOT"], true) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/

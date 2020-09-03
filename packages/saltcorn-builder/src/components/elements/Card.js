@@ -3,7 +3,7 @@ import { Text } from "./Text";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const Card = ({ contents, title }) => {
+export const Card = ({ children, title }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
@@ -11,11 +11,7 @@ export const Card = ({ contents, title }) => {
   return (
     <div className="card builder" ref={(dom) => connect(drag(dom))}>
       {title && title.length > 0 && <div className="card-header">{title}</div>}
-      <div className="card-body">
-        <Element canvas id={`cardContents`} is="div" className={`canvas`}>
-          {contents}
-        </Element>
-      </div>
+      <div className="card-body canvas">{children}</div>
     </div>
   );
 };
@@ -39,9 +35,10 @@ export const CardSettings = () => {
   );
 };
 Card.craft = {
-  defaultProps: {
+  props: {
     title: "",
   },
+  displayName: "Card",
   related: {
     settings: CardSettings,
   },

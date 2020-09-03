@@ -19,6 +19,7 @@ import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
+import { Layers } from "@craftjs/layers";
 
 const { Provider } = optionsCtx;
 
@@ -44,24 +45,26 @@ const SettingsPanel = () => {
   });
 
   return (
-    <div className="settings-panel">
-      <h5>Settings</h5>
-      {selected ? (
-        <Fragment>
-          {selected.settings && React.createElement(selected.settings)}
-          {selected.isDeletable && (
-            <button
-              onClick={() => {
-                actions.delete(selected.id);
-              }}
-            >
-              Delete
-            </button>
-          )}
-        </Fragment>
-      ) : (
-        "No element selected"
-      )}
+    <div className="settings-panel card">
+      <div className="card-header">Settings</div>
+      <div className="card-body">
+        {selected ? (
+          <Fragment>
+            {selected.settings && React.createElement(selected.settings)}
+            {selected.isDeletable && (
+              <button
+                onClick={() => {
+                  actions.delete(selected.id);
+                }}
+              >
+                Delete
+              </button>
+            )}
+          </Fragment>
+        ) : (
+          "No element selected"
+        )}
+      </div>
     </div>
   );
 };
@@ -126,15 +129,17 @@ const Builder = ({ options, layout, mode }) => {
                   Container,
                 }}
               >
-                <Element canvas className="canvas"></Element>
+                <Element canvas is={Container}></Element>
               </Frame>
             </div>
           </div>
           <div className="col-sm-auto">
-            <div style={{ width: "12rem" }}>
+            <div style={{ width: "13rem" }}>
               <div className="card p-2">
-                <SettingsPanel />
+                <div className="card-header">Layers</div>
+                <Layers expandRootOnLoad={true} />
               </div>
+              <SettingsPanel />
               <br />
               <SaveButton layout={layout} />
             </div>

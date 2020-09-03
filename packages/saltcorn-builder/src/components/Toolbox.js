@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, Fragment } from "react";
-import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
+import { Element, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Field } from "./elements/Field";
@@ -42,12 +42,12 @@ const TwoSplitElem = ({ connectors }) => (
     icon="fas fa-columns"
     title="Split into columns"
   >
-    <TwoSplit contents={[<Empty />, <Empty />]} />
+    <TwoSplit contents={[]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
   <WrapElem connectors={connectors} text="↵" fontSize="26px" title="Line break">
-    <Text text="Hello world" block={false} textStyle={""} />
+    <LineBreak />
   </WrapElem>
 );
 const HTMLElem = ({ connectors }) => (
@@ -57,7 +57,7 @@ const HTMLElem = ({ connectors }) => (
 );
 const CardElem = ({ connectors }) => (
   <WrapElem connectors={connectors} text="Card">
-    <Card contents={<Empty />} />
+    <Element canvas is={Card}></Element>
   </WrapElem>
 );
 const ImageElem = ({ connectors, images }) => (
@@ -86,7 +86,7 @@ const SearchElem = ({ connectors }) => (
 );
 const ContainerElem = ({ connectors }) => (
   <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
-    <Container contents={<Empty />} />
+    <Element canvas is={Container}></Element>
   </WrapElem>
 );
 const FieldElem = ({ connectors, fields, field_view_options }) => (
@@ -165,6 +165,7 @@ export const ToolboxShow = () => {
         agg_field_opts={agg_field_opts}
       />
       <ViewElem connectors={connectors} views={views} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -184,6 +185,7 @@ export const ToolboxEdit = () => {
       />
       <LineBreakElem connectors={connectors} />
       <ActionElem connectors={connectors} options={options} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };
