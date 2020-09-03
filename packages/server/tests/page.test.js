@@ -46,7 +46,7 @@ describe("page create", () => {
         "name=whales&title=Whales&description=about+whales&min_role=10&stepName=Page&contextEnc=%257B%257D"
       )
       .set("Cookie", loginCookie)
-      .expect(toInclude("Layout (step 2"));
+      .expect(toInclude("builder.renderBuilder("));
   });
   it("fills layout", async () => {
     const app = await getApp({ disableCsrf: true });
