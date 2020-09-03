@@ -105,33 +105,36 @@ const Builder = ({ options, layout, mode }) => {
             )}
           </div>
           <div className="col">
-            <h5>View canvas</h5>
-            <Frame
-              resolver={{
-                Text,
-                Empty,
-                TwoSplit,
-                JoinField,
-                Field,
-                ViewLink,
-                Action,
-                HTMLCode,
-                LineBreak,
-                Aggregation,
-                Card,
-                Image,
-                Link,
-                View,
-                SearchBar,
-                Container,
-              }}
-            >
-              <Element canvas className="canvas"></Element>
-            </Frame>
+            <div className="card p-2">
+              <Frame
+                resolver={{
+                  Text,
+                  Empty,
+                  TwoSplit,
+                  JoinField,
+                  Field,
+                  ViewLink,
+                  Action,
+                  HTMLCode,
+                  LineBreak,
+                  Aggregation,
+                  Card,
+                  Image,
+                  Link,
+                  View,
+                  SearchBar,
+                  Container,
+                }}
+              >
+                <Element canvas className="canvas"></Element>
+              </Frame>
+            </div>
           </div>
           <div className="col-sm-auto">
             <div style={{ width: "12rem" }}>
-              <SettingsPanel />
+              <div className="card p-2">
+                <SettingsPanel />
+              </div>
               <br />
               <SaveButton layout={layout} />
             </div>
