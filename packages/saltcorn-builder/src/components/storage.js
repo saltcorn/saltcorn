@@ -1,4 +1,5 @@
 import React, { Fragment } from "react";
+import { Element } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
@@ -204,12 +205,32 @@ const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 export const craftToSaltcorn = (nodes) => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
+  const get_nodes = (node) => {
+    if (!node.nodes || node.nodes.length == 0) return;
+    else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
+    else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+  };
   const go = (node) => {
     if (node.isCanvas) {
-      if (!node.nodes || node.nodes.length == 0) return;
-      else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-      else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+      if (node.displayName === Container.name)
+        return {
+          contents: get_nodes(node),
+          type: "container",
+          borderWidth: node.props.borderWidth,
+          borderStyle: node.props.borderStyle,
+          minHeight: node.props.minHeight,
+          vAlign: node.props.vAlign,
+          hAlign: node.props.hAlign,
+          bgFileId: node.props.bgFileId,
+          bgType: node.props.bgType,
+          imageSize: node.props.imageSize,
+          bgColor: node.props.bgColor,
+          setTextColor: node.props.setTextColor,
+          textColor: node.props.textColor,
+        };
+      else return get_nodes(node);
     }
+
     if (node.displayName === Text.name) {
       return {
         type: "blank",
@@ -246,23 +267,7 @@ export const craftToSaltcorn = (nodes) => {
         title: node.props.title,
       };
     }
-    if (node.displayName === Container.name) {
-      return {
-        contents: go(nodes[node.linkedNodes.containerContents]),
-        type: "container",
-        borderWidth: node.props.borderWidth,
-        borderStyle: node.props.borderStyle,
-        minHeight: node.props.minHeight,
-        vAlign: node.props.vAlign,
-        hAlign: node.props.hAlign,
-        bgFileId: node.props.bgFileId,
-        bgType: node.props.bgType,
-        imageSize: node.props.imageSize,
-        bgColor: node.props.bgColor,
-        setTextColor: node.props.setTextColor,
-        textColor: node.props.textColor,
-      };
-    }
+
     if (node.displayName === Image.name) {
       return {
         type: "image",

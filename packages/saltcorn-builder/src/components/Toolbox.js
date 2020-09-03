@@ -1,12 +1,5 @@
 import React, { useEffect, useContext, Fragment } from "react";
-import {
-  Editor,
-  Frame,
-  Canvas,
-  Selector,
-  Element,
-  useEditor,
-} from "@craftjs/core";
+import { Element, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Field } from "./elements/Field";
