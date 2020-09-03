@@ -127,7 +127,7 @@ const Builder = ({ options, layout, mode }) => {
                   Container,
                 }}
               >
-                <Element canvas className="canvas"></Element>
+                <Element canvas is={Container}></Element>
               </Frame>
             </div>
           </div>

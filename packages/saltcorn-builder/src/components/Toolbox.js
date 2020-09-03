@@ -1,5 +1,12 @@
 import React, { useEffect, useContext, Fragment } from "react";
-import { Editor, Frame, Canvas, Selector, useEditor } from "@craftjs/core";
+import {
+  Editor,
+  Frame,
+  Canvas,
+  Selector,
+  Element,
+  useEditor,
+} from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Field } from "./elements/Field";
@@ -86,21 +93,7 @@ const SearchElem = ({ connectors }) => (
 );
 const ContainerElem = ({ connectors }) => (
   <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
-    <Element
-      canvas
-      is={Container}
-      borderWidth={0}
-      borderStyle="solid"
-      minHeight={0}
-      vAlign={"top"}
-      hAlign={"left"}
-      bgFileId={0}
-      imageSize={"contain"}
-      bgType={"None"}
-      bgColor={"#ffffff"}
-      setTextColor={false}
-      textColor={"#000000"}
-    ></Element>
+    <Element canvas is={Container}></Element>
   </WrapElem>
 );
 const FieldElem = ({ connectors, fields, field_view_options }) => (
