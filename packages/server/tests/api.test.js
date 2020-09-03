@@ -66,6 +66,21 @@ describe("API Endpoints", () => {
 
     //expect(res.statusCode).toEqual(302);
   });
+  it("should get books for public with two fields", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/?fields=author%2Cpages")
+      .expect(
+        succeedJsonWith(
+          (rows) =>
+            rows.length == 2 &&
+            rows[0].author === "Herman Melville" &&
+            rows[0].pages
+        )
+      );
+
+    //expect(res.statusCode).toEqual(302);
+  });
   it("should get books for public with search", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
