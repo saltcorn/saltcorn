@@ -157,7 +157,6 @@ export const layoutToNodes = (layout, query, actions) => {
         <TwoSplit
           key={ix}
           ncols={segment.besides.length}
-          aligns={segment.aligns || segment.besides.map(() => "left")}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
         />
@@ -178,7 +177,6 @@ export const layoutToNodes = (layout, query, actions) => {
           <TwoSplit
             widths={getColWidths(segment)}
             ncols={segment.besides.length}
-            aligns={segment.aligns || segment.besides.map(() => "left")}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -260,7 +258,6 @@ export const craftToSaltcorn = (nodes) => {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
-        aligns: node.props.aligns,
         widths,
       };
     }

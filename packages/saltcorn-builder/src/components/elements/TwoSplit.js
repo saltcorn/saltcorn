@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { Text } from "./Text";
+import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -22,7 +22,7 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
-export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
+export const TwoSplit = ({ widths, contents, ncols }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
@@ -31,12 +31,7 @@ export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
     <div className="row" ref={(dom) => connect(drag(dom))}>
       {ntimes(ncols, (ix) => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
-          <Element
-            canvas
-            id={`Col${ix}`}
-            is="div"
-            className={`canvas text-${aligns[ix]}`}
-          >
+          <Element canvas id={`Col${ix}`} is={Column}>
             {contents[ix]}
           </Element>
         </div>
@@ -50,10 +45,8 @@ export const TwoSplitSettings = () => {
     actions: { setProp },
     widths,
     ncols,
-    aligns,
   } = useNode((node) => ({
     widths: node.data.props.widths,
-    aligns: node.data.props.aligns,
     ncols: node.data.props.ncols,
   }));
   return (
@@ -93,18 +86,6 @@ export const TwoSplitSettings = () => {
               /12
             </div>
           )}
-          <label>Align</label>
-          <select
-            value={aligns[ix]}
-            onChange={(e) =>
-              setProp((prop) => (prop.aligns[ix] = e.target.value))
-            }
-          >
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="justify">Justify</option>
-            <option value="right">Right</option>
-          </select>
         </div>
       ))}
     </div>
@@ -113,7 +94,6 @@ export const TwoSplitSettings = () => {
 TwoSplit.craft = {
   defaultProps: {
     widths: [6],
-    aligns: ["left", "left"],
     ncols: 2,
   },
   related: {
