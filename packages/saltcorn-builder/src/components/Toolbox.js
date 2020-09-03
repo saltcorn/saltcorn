@@ -20,9 +20,10 @@ import optionsCtx from "./context";
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
-const WrapElem = ({ children, connectors, icon, text, fontSize }) => (
+const WrapElem = ({ children, connectors, icon, text, fontSize, title }) => (
   <div
     className="wrap-builder-elem d-flex align-items-center justify-content-center"
+    title={title}
     ref={(ref) => connectors.create(ref, children)}
   >
     <div className="inner" style={fontSize ? { fontSize } : {}}>
@@ -36,21 +37,58 @@ const TextElem = ({ connectors }) => (
   </WrapElem>
 );
 const TwoSplitElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-columns">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-columns"
+    title="Split into columns"
+  >
     <TwoSplit contents={[<Empty />, <Empty />]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} text="↵" fontSize="26px">
+  <WrapElem connectors={connectors} text="↵" fontSize="26px" title="Line break">
     <Text text="Hello world" block={false} textStyle={""} />
   </WrapElem>
 );
 const HTMLElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-code">
+  <WrapElem connectors={connectors} icon="fas fa-code" title="HTML code">
     <HTMLCode text={""} />
   </WrapElem>
 );
-
+const CardElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="Card">
+    <Card contents={<Empty />} />
+  </WrapElem>
+);
+const ImageElem = ({ connectors, images }) => (
+  <WrapElem connectors={connectors} icon="fas fa-image" title="Image">
+    <Image fileid={images.length > 0 ? images[0].id : 0} />
+  </WrapElem>
+);
+const LinkElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-link" title="Link">
+    <Link />
+  </WrapElem>
+);
+const ViewElem = ({ connectors, views }) => (
+  <WrapElem connectors={connectors} icon="fas fa-eye" title="View">
+    <View
+      name={"not_assigned"}
+      state={"shared"}
+      view={views.length > 0 ? views[0].name : "view"}
+    />
+  </WrapElem>
+);
+const SearchElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-search" title="Search bar">
+    <SearchBar />
+  </WrapElem>
+);
+const ContainerElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
+    <Container contents={<Empty />} />
+  </WrapElem>
+);
 export const ToolboxShow = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
@@ -285,79 +323,12 @@ export const ToolboxPage = () => {
       <TwoSplitElem connectors={connectors} />
       <LineBreakElem connectors={connectors} />
       <HTMLElem connectors={connectors} />
-      <LineBreakElem connectors={connectors} />
-      <LineBreakElem connectors={connectors} />
-      <LineBreakElem connectors={connectors} />
-    </Fragment>
-  );
-};
-export const ToolboxPageOld = () => {
-  const { connectors, query } = useEditor();
-  const options = useContext(optionsCtx);
-  const { views, images } = options;
-  return (
-    <Fragment>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              title="Card"
-              ref={(ref) =>
-                connectors.create(ref, <Card contents={<Empty />} />)
-              }
-            >
-              Card
-            </td>
-            <td
-              title="Image"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Image fileid={images.length > 0 ? images[0].id : 0} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-image"></i>
-            </td>
-          </tr>
-          <tr>
-            <td title="Link" ref={(ref) => connectors.create(ref, <Link />)}>
-              <i className="fas fa-lg fa-link"></i>
-            </td>
-            <td
-              title="View"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <View
-                    name={"not_assigned"}
-                    state={"shared"}
-                    view={views.length > 0 ? views[0].name : "view"}
-                  />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-eye"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Search bar"
-              ref={(ref) => connectors.create(ref, <SearchBar />)}
-            >
-              <i className="fas fa-lg fa-search"></i>
-            </td>
-            <td
-              title="Container"
-              ref={(ref) =>
-                connectors.create(ref, <Container contents={<Empty />} />)
-              }
-            >
-              <i className="fas fa-lg fa-box-open"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CardElem connectors={connectors} />
+      <ImageElem connectors={connectors} images={images} />
+      <LinkElem connectors={connectors} />
+      <ViewElem connectors={connectors} views={views} />
+      <SearchElem connectors={connectors} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };
