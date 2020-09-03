@@ -17,11 +17,39 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
-import { craftToSaltcorn, layoutToNodes } from "./storage";
-
-const { Provider } = optionsCtx;
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
+
+const WrapElem = ({ children, connectors, icon, text, fontSize }) => (
+  <div
+    className="wrap-builder-elem d-flex align-items-center justify-content-center"
+    ref={(ref) => connectors.create(ref, children)}
+  >
+    <div className="inner" style={fontSize ? { fontSize } : {}}>
+      {text || <i className={`fa-lg ${icon}`}></i>}
+    </div>
+  </div>
+);
+const TextElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="Text">
+    <Text text="Hello world" block={false} textStyle={""} />
+  </WrapElem>
+);
+const TwoSplitElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-columns">
+    <TwoSplit contents={[<Empty />, <Empty />]} />
+  </WrapElem>
+);
+const LineBreakElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="↵" fontSize="26px">
+    <Text text="Hello world" block={false} textStyle={""} />
+  </WrapElem>
+);
+const HTMLElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-code">
+    <HTMLCode text={""} />
+  </WrapElem>
+);
 
 export const ToolboxShow = () => {
   const { connectors, query } = useEditor();
@@ -35,7 +63,6 @@ export const ToolboxShow = () => {
   } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
       <table className="mb-3 toolbox">
         <tbody>
           <tr>
@@ -179,7 +206,6 @@ export const ToolboxEdit = () => {
   const { fields, field_view_options } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
       <table className="mb-3 toolbox">
         <tbody>
           <tr>
@@ -249,54 +275,30 @@ export const ToolboxEdit = () => {
     </Fragment>
   );
 };
-
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const { views, images } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <LineBreakElem connectors={connectors} />
+      <HTMLElem connectors={connectors} />
+      <LineBreakElem connectors={connectors} />
+      <LineBreakElem connectors={connectors} />
+      <LineBreakElem connectors={connectors} />
+    </Fragment>
+  );
+};
+export const ToolboxPageOld = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const { views, images } = options;
+  return (
+    <Fragment>
       <table className="mb-3 toolbox">
         <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Line break"
-              ref={(ref) => connectors.create(ref, <LineBreak />)}
-              style={{ fontSize: "26px" }}
-            >
-              ↵
-            </td>
-            <td
-              title="HTML code"
-              ref={(ref) => connectors.create(ref, <HTMLCode text={""} />)}
-            >
-              <i className="fas fa-lg fa-code"></i>
-            </td>
-          </tr>
           <tr>
             <td
               title="Card"

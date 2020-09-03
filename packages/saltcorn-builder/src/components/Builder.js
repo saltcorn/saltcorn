@@ -94,17 +94,15 @@ const Builder = ({ options, layout, mode }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-auto">
-            <div style={{ width: "5rem" }}>
-              {mode === "show" ? (
-                <ToolboxShow />
-              ) : mode === "edit" ? (
-                <ToolboxEdit />
-              ) : mode === "page" ? (
-                <ToolboxPage />
-              ) : (
-                <div>Missing mode</div>
-              )}
-            </div>
+            {mode === "show" ? (
+              <ToolboxShow />
+            ) : mode === "edit" ? (
+              <ToolboxEdit />
+            ) : mode === "page" ? (
+              <ToolboxPage />
+            ) : (
+              <div>Missing mode</div>
+            )}
           </div>
           <div className="col">
             <h5>View canvas</h5>
