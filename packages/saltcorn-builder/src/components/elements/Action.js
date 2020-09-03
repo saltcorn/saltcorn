@@ -15,7 +15,12 @@ export const Action = ({ name, block }) => {
 };
 
 export const ActionSettings = () => {
-  const { setProp, name, block, minRole } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    name,
+    block,
+    minRole,
+  } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,

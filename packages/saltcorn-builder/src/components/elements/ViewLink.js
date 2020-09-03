@@ -17,7 +17,13 @@ export const ViewLink = ({ name, block, minRole, label }) => {
 };
 
 export const ViewLinkSettings = () => {
-  const { setProp, name, block, minRole, label } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    name,
+    block,
+    minRole,
+    label,
+  } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,

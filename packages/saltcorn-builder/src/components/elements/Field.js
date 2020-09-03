@@ -19,7 +19,13 @@ export const Field = ({ name, fieldview, block, textStyle }) => {
 };
 
 export const FieldSettings = () => {
-  const { setProp, name, fieldview, block, textStyle } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    name,
+    fieldview,
+    block,
+    textStyle,
+  } = useNode((node) => ({
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
     block: node.data.props.block,

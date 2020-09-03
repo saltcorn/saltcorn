@@ -19,7 +19,12 @@ export const JoinField = ({ name, block, textStyle }) => {
 };
 
 export const JoinFieldSettings = () => {
-  const { setProp, name, block, textStyle } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    name,
+    block,
+    textStyle,
+  } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     textStyle: node.data.props.textStyle,

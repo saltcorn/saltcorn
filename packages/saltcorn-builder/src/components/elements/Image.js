@@ -19,7 +19,12 @@ export const Image = ({ fileid, block, alt }) => {
 };
 
 export const ImageSettings = () => {
-  const { setProp, fileid, alt, block } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    fileid,
+    alt,
+    block,
+  } = useNode((node) => ({
     fileid: node.data.props.name,
     alt: node.data.props.fieldview,
     block: node.data.props.block,

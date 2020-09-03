@@ -11,7 +11,12 @@ export const View = ({ name, view, state }) => {
 };
 
 export const ViewSettings = () => {
-  const { setProp, name, view, state } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    name,
+    view,
+    state,
+  } = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
