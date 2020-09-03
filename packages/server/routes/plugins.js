@@ -182,11 +182,11 @@ const storeNavPills = (req) => {
       { class: "nav-item" },
       a(
         {
-          href: `/plugins?q=${txt.toLowerCase()}`,
+          href: `/plugins?set=${txt.toLowerCase()}`,
           class: [
             "nav-link",
-            (req.query.q === txt.toLowerCase() ||
-              (txt === "All" && !req.query.q)) &&
+            (req.query.set === txt.toLowerCase() ||
+              (txt === "All" && !req.query.set)) &&
               "active",
           ],
         },
@@ -204,7 +204,7 @@ const storeNavPills = (req) => {
 };
 
 const filter_items = (items, query) => {
-  switch (query.q) {
+  switch (query.set) {
     case "plugins":
       return items.filter((item) => item.plugin);
     case "packs":

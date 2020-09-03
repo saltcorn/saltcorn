@@ -1,5 +1,5 @@
 const { contract, is } = require("contractis");
-const { div, a, span, h6, text, img } = require("./tags");
+const { div, a, span, h6, text, img, p, h1 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
@@ -62,6 +62,14 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     }
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");
+    }
+    if (segment.type === "pageHeader") {
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        h1(segment.title) + p(segment.blurb || "")
+      );
     }
     if (segment.type === "image") {
       return wrap(
