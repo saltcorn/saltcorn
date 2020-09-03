@@ -155,6 +155,7 @@ export const ToolboxShow = () => {
         fields={fields}
         field_view_options={field_view_options}
       />
+      <LineBreakElem connectors={connectors} />
       <JoinFieldElem connectors={connectors} options={options} />
       <ViewLinkElem connectors={connectors} options={options} />
       <ActionElem connectors={connectors} options={options} />
@@ -174,75 +175,19 @@ export const ToolboxEdit = () => {
   const { fields, field_view_options } = options;
   return (
     <Fragment>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Field
-                    name={fields[0].name}
-                    block={false}
-                    textStyle={""}
-                    fieldview={
-                      fields[0].is_fkey
-                        ? ""
-                        : field_view_options[fields[0].name][0]
-                    }
-                  />
-                )
-              }
-            >
-              Field
-            </td>
-            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
-          </tr>
-          <tr>
-            <td
-              title="Action button"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Action
-                    name={options.actions[0]}
-                    block={false}
-                    minRole={10}
-                  />
-                )
-              }
-            >
-              Action
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />
+      <LineBreakElem connectors={connectors} />
+      <ActionElem connectors={connectors} options={options} />
     </Fragment>
   );
 };
+
 export const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
