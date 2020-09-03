@@ -199,7 +199,7 @@ export const layoutToNodes = (layout, query, actions) => {
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export const craftToSaltcorn = (nodes) => {
-  //console.log(nodes);
+  //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   const go = (node) => {
     if (node.isCanvas) {
