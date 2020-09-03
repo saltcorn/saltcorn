@@ -21,6 +21,7 @@ const {
   deleteConfig,
   configTypes,
 } = require("../models/config");
+const emergency_layout = require("@saltcorn/markup/emergency_layout");
 
 class State {
   constructor() {
@@ -35,7 +36,7 @@ class State {
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
-    this.layout = { wrap: (s) => s };
+    this.layout = { wrap: emergency_layout };
     this.headers = [];
     contract.class(this);
   }
@@ -123,7 +124,7 @@ class State {
     this.configs = {};
     this.fileviews = {};
     this.favicon = null;
-    this.layout = { wrap: (s) => s };
+    this.layout = { wrap: emergency_layout };
     this.headers = [];
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);

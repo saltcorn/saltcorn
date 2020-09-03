@@ -10,9 +10,11 @@ const post_btn = (
   href,
   s,
   csrfToken,
-  { btnClass = "primary", onClick, small, klass = "" } = {}
+  { btnClass = "primary", onClick, small, klass = "", formClass } = {}
 ) =>
-  `<form action="${text(href)}" method="post">
+  `<form action="${text(href)}" method="post"${
+    formClass ? `class="${formClass}"` : ""
+  }>
   <input type="hidden" name="_csrf" value="${csrfToken}">
 <button type="submit" ${
     onClick ? `onclick="${onClick}"` : ""

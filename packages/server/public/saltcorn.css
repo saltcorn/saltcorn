@@ -51,3 +51,7 @@ table.toolbox {
 button.store-install {
   width: 5em;
 }
+
+span.badge.plugin-store {
+  margin-right: 0.25rem !important;
+}

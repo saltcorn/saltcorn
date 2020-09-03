@@ -12,6 +12,8 @@ class Plugin {
     this.source = o.source;
     this.location = o.location;
     this.version = o.version;
+    this.description = o.description;
+    this.has_theme = o.has_theme;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
@@ -41,6 +43,20 @@ class Plugin {
     await db.deleteWhere("_sc_plugins", { id: this.id });
     const { getState } = require("../db/state");
     getState().remove_plugin(this.name);
+  }
+
+  async upgrade_version(requirePlugin) {
+    if (this.source === "npm") {
+      const old_version = this.version;
+      this.version = "latest";
+      const { version } = await requirePlugin(this, true);
+      if (version && version !== old_version) {
+        this.version = version;
+        this.upsert();
+      }
+    } else {
+      await requirePlugin(this, true);
+    }
   }
 
   async dependant_views() {

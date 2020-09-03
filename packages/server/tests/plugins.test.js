@@ -13,6 +13,8 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const load_plugins = require("../load_plugins");
+
 beforeAll(async () => {
   await resetToFixtures();
 });
@@ -28,7 +30,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Available plugins"));
+      .expect(toInclude("Plugin and pack store"));
   });
 
   it("should show new", async () => {
@@ -41,19 +43,8 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("New Plugin"));
   });
 
-  it("should show edit existing", async () => {
-    const loginCookie = await getAdminLoginCookie();
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/plugins/1")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Edit Plugin"));
-  });
-
   itShouldRedirectUnauthToLogin("/plugins");
   itShouldRedirectUnauthToLogin("/plugins/new");
-  itShouldRedirectUnauthToLogin("/plugins/1");
 
   it("should install named with config", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -62,7 +53,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .post("/plugins/install/any-bootstrap-theme")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins/configure/3"));
+      .expect(toRedirect("/plugins/configure/any-bootstrap-theme"));
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
@@ -74,23 +65,19 @@ describe("Plugin Endpoints", () => {
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/plugins/configure/" + p.id)
+      .get("/plugins/configure/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toInclude("Navbar color scheme"));
     await request(app)
-      .post("/plugins/configure/" + p.id)
+      .post("/plugins/configure/" + p.name)
       .set("Cookie", loginCookie)
       .send(
         "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D"
       )
       .expect(toRedirect("/plugins"));
-    await request(app)
-      .post("/plugins/reload/" + p.id)
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"));
 
     await request(app)
-      .post("/plugins/delete/" + p.id)
+      .post("/plugins/delete/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
   });
@@ -105,10 +92,10 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
-      .expect(toInclude("@saltcorn/markdown"));
+      .expect(toInclude("/plugins/delete/markdown"));
   });
 });
-describe("Plugin dependency resolution", () => {
+describe("Plugin dependency resolution and upgrade", () => {
   it("should install quill", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -126,6 +113,36 @@ describe("Plugin dependency resolution", () => {
     expect(html.location).toBe("@saltcorn/html");
     const html_type = getState().types.HTML;
     expect(!!html_type.fieldviews.Quill).toBe(true);
+  });
+  it("should install old tabler", async () => {
+    const tabler = new Plugin({
+      name: "tabler",
+      source: "npm",
+      location: "@saltcorn/tabler",
+      version: "0.1.2",
+    });
+    await load_plugins.loadAndSaveNewPlugin(tabler);
+  });
+  it("should refresh store", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/refresh")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+  });
+  it("should upgrade installed", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/upgrade")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const tabler = await Plugin.findOne({ name: "tabler" });
+    expect(tabler.version > "0.1.2").toBe(true);
+    expect(tabler.version > "9.1.2").toBe(false);
   });
 });
 describe("Pack Endpoints", () => {
@@ -195,8 +212,7 @@ describe("Pack Endpoints", () => {
       .expect(toRedirect("/"));
   });
 
-  itShouldRedirectUnauthToLogin("/plugins/create");
-  itShouldRedirectUnauthToLogin("/plugins/install");
+  itShouldRedirectUnauthToLogin("/plugins/new");
 });
 
 describe("Pack clash detection", () => {
