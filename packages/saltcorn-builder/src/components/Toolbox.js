@@ -42,12 +42,12 @@ const TwoSplitElem = ({ connectors }) => (
     icon="fas fa-columns"
     title="Split into columns"
   >
-    <TwoSplit contents={[<Empty />, <Empty />]} />
+    <TwoSplit contents={[]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
   <WrapElem connectors={connectors} text="↵" fontSize="26px" title="Line break">
-    <Text text="Hello world" block={false} textStyle={""} />
+    <LineBreak />
   </WrapElem>
 );
 const HTMLElem = ({ connectors }) => (
