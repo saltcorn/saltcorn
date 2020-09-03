@@ -210,9 +210,9 @@ export const craftToSaltcorn = (nodes) => {
     else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
     else return { above: node.nodes.map((nm) => go(nodes[nm])) };
   };
-  const go = (node) => {
+  const go = (node, isRoot) => {
     if (node.isCanvas) {
-      if (node.displayName === Container.name)
+      if (node.displayName === Container.name && !isRoot)
         return {
           contents: get_nodes(node),
           type: "container",
@@ -364,7 +364,7 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
   };
-  const layout = go(nodes["ROOT"]) || { type: "blank", contents: "" };
+  const layout = go(nodes["ROOT"], true) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
