@@ -222,8 +222,8 @@ const respondWorkflow = (page, wfres, req, res) => {
         ],
       },
       {
-        type: "card",
-        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        type: "container",
+        //title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
         contents,
       },
     ],

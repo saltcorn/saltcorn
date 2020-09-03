@@ -93,7 +93,20 @@ const Builder = ({ options, layout, mode }) => {
     <Editor>
       <Provider value={options}>
         <div className="row">
-          <div className="col-sm-9">
+          <div className="col-sm-auto">
+            <div style={{ width: "5rem" }}>
+              {mode === "show" ? (
+                <ToolboxShow />
+              ) : mode === "edit" ? (
+                <ToolboxEdit />
+              ) : mode === "page" ? (
+                <ToolboxPage />
+              ) : (
+                <div>Missing mode</div>
+              )}
+            </div>
+          </div>
+          <div className="col">
             <h5>View canvas</h5>
             <Frame
               resolver={{
@@ -118,17 +131,10 @@ const Builder = ({ options, layout, mode }) => {
               <Element canvas className="canvas"></Element>
             </Frame>
           </div>
-          <div className="col-sm-3">
-            {mode === "show" ? (
-              <ToolboxShow />
-            ) : mode === "edit" ? (
-              <ToolboxEdit />
-            ) : mode === "page" ? (
-              <ToolboxPage />
-            ) : (
-              <div>Missing mode</div>
-            )}
-            <SettingsPanel />
+          <div className="col-sm-auto">
+            <div style={{ width: "12rem" }}>
+              <SettingsPanel />
+            </div>
           </div>
         </div>
         <SaveButton layout={layout} />
