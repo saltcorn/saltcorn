@@ -216,7 +216,10 @@ const fetch_available_packs_from_store = contract(
     const response = await fetch(
       "http://store.saltcorn.com/api/packs?fields=name"
     );
+
     const json = await response.json();
+    console.log(json);
+
     return json.success;
   }
 );

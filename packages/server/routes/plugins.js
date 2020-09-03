@@ -382,6 +382,8 @@ router.get(
   error_catcher(async (req, res) => {
     await getState().deleteConfig("available_plugins");
     await getState().deleteConfig("available_plugins_fetched_at");
+    await getState().deleteConfig("available_packs");
+    await getState().deleteConfig("available_packs_fetched_at");
     res.redirect(`/plugins`);
   })
 );
