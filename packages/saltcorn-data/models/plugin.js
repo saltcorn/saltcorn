@@ -45,6 +45,20 @@ class Plugin {
     getState().remove_plugin(this.name);
   }
 
+  async upgrade_version(requirePlugin) {
+    if (this.source === "npm") {
+      const old_version = this.version;
+      this.version = "latest";
+      const { version } = await requirePlugin(this, true);
+      if (version && version !== old_version) {
+        this.version = version;
+        this.upsert();
+      }
+    } else {
+      await requirePlugin(this, true);
+    }
+  }
+
   async dependant_views() {
     const views = await View.find({});
     const { getState } = require("../db/state");

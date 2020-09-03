@@ -247,10 +247,19 @@ const store_actions_dropdown = div(
       a(
         {
           class: "dropdown-item",
+          href: `/plugins/upgrade`,
+        },
+        '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;Upgrade installed plugins'
+      ),
+    db.getTenantSchema() === "public" &&
+      a(
+        {
+          class: "dropdown-item",
           href: `/plugins/new`,
         },
         '<i class="fas fa-plus"></i>&nbsp;Add another plugin'
       ),
+
     a(
       {
         class: "dropdown-item",
@@ -388,6 +397,18 @@ router.get(
   })
 );
 
+router.get(
+  "/upgrade",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const installed_plugins = await Plugin.find({});
+    for (const plugin of installed_plugins) {
+      await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+    }
+    res.redirect(`/plugins`);
+  })
+);
 router.post(
   "/",
   setTenant,
