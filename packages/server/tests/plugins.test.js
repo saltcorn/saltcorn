@@ -13,6 +13,8 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const load_plugins = require("../load_plugins");
+
 beforeAll(async () => {
   await resetToFixtures();
 });
@@ -93,7 +95,7 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("/plugins/delete/markdown"));
   });
 });
-describe("Plugin dependency resolution", () => {
+describe("Plugin dependency resolution and upgrade", () => {
   it("should install quill", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -111,6 +113,36 @@ describe("Plugin dependency resolution", () => {
     expect(html.location).toBe("@saltcorn/html");
     const html_type = getState().types.HTML;
     expect(!!html_type.fieldviews.Quill).toBe(true);
+  });
+  it("should install old tabler", async () => {
+    const tabler = new Plugin({
+      name: "tabler",
+      source: "npm",
+      location: "@saltcorn/tabler",
+      version: "0.1.2",
+    });
+    await load_plugins.loadAndSaveNewPlugin(tabler);
+  });
+  it("should refresh store", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/refresh")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+  });
+  it("should upgrade installed", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/upgrade")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const tabler = await Plugin.findOne({ name: "tabler" });
+    expect(tabler.version > "0.1.2").toBe(true);
+    expect(tabler.version > "9.1.2").toBe(false);
   });
 });
 describe("Pack Endpoints", () => {
