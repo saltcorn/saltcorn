@@ -13,7 +13,8 @@ module.exports = router;
 const limitFields = (fields) => (r) => {
   if (fields) {
     var res = {};
-    fields.split().forEach((f) => {
+
+    fields.split(",").forEach((f) => {
       res[f] = r[f];
     });
     return res;
