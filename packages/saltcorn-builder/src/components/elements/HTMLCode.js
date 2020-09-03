@@ -14,7 +14,10 @@ export const HTMLCode = ({ text }) => {
 };
 
 export const HTMLCodeSettings = () => {
-  const { setProp, text } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    text,
+  } = useNode((node) => ({
     text: node.data.props.text,
   }));
   return (

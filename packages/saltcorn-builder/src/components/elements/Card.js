@@ -21,7 +21,10 @@ export const Card = ({ contents, title }) => {
 };
 
 export const CardSettings = () => {
-  const { setProp, title } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    title,
+  } = useNode((node) => ({
     title: node.data.props.title,
   }));
   return (

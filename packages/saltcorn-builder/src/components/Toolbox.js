@@ -17,11 +17,124 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
-import { craftToSaltcorn, layoutToNodes } from "./storage";
-
-const { Provider } = optionsCtx;
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
+
+const WrapElem = ({ children, connectors, icon, text, fontSize, title }) => (
+  <div
+    className="wrap-builder-elem d-flex align-items-center justify-content-center"
+    title={title}
+    ref={(ref) => connectors.create(ref, children)}
+  >
+    <div className="inner" style={fontSize ? { fontSize } : {}}>
+      {text || <i className={`fa-lg ${icon}`}></i>}
+    </div>
+  </div>
+);
+const TextElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="Text">
+    <Text text="Hello world" block={false} textStyle={""} />
+  </WrapElem>
+);
+const TwoSplitElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-columns"
+    title="Split into columns"
+  >
+    <TwoSplit contents={[<Empty />, <Empty />]} />
+  </WrapElem>
+);
+const LineBreakElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="↵" fontSize="26px" title="Line break">
+    <Text text="Hello world" block={false} textStyle={""} />
+  </WrapElem>
+);
+const HTMLElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-code" title="HTML code">
+    <HTMLCode text={""} />
+  </WrapElem>
+);
+const CardElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} text="Card">
+    <Card contents={<Empty />} />
+  </WrapElem>
+);
+const ImageElem = ({ connectors, images }) => (
+  <WrapElem connectors={connectors} icon="fas fa-image" title="Image">
+    <Image fileid={images.length > 0 ? images[0].id : 0} />
+  </WrapElem>
+);
+const LinkElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-link" title="Link">
+    <Link />
+  </WrapElem>
+);
+const ViewElem = ({ connectors, views }) => (
+  <WrapElem connectors={connectors} icon="fas fa-eye" title="Embed view">
+    <View
+      name={"not_assigned"}
+      state={"shared"}
+      view={views.length > 0 ? views[0].name : "view"}
+    />
+  </WrapElem>
+);
+const SearchElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-search" title="Search bar">
+    <SearchBar />
+  </WrapElem>
+);
+const ContainerElem = ({ connectors }) => (
+  <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
+    <Container contents={<Empty />} />
+  </WrapElem>
+);
+const FieldElem = ({ connectors, fields, field_view_options }) => (
+  <WrapElem connectors={connectors} text="Field">
+    <Field
+      name={fields[0].name}
+      block={false}
+      textStyle={""}
+      fieldview={fields[0].is_fkey ? "" : field_view_options[fields[0].name][0]}
+    />
+  </WrapElem>
+);
+const JoinFieldElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="Join" title="Join field">
+    <JoinField
+      name={options.parent_field_list[0]}
+      textStyle={""}
+      block={false}
+    />
+  </WrapElem>
+);
+const ViewLinkElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="View Link" title="Link to a view">
+    <ViewLink
+      name={options.link_view_opts[0].name}
+      block={false}
+      minRole={10}
+      label={""}
+    />
+  </WrapElem>
+);
+
+const ActionElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="Action" title="Action button">
+    <Action name={options.actions[0]} block={false} minRole={10} />
+  </WrapElem>
+);
+const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
+  <WrapElem connectors={connectors} text="∑" title="Aggregation">
+    <Aggregation
+      agg_relation={child_field_list[0]}
+      agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
+      stat={"Count"}
+      textStyle={""}
+      block={false}
+    />
+  </WrapElem>
+);
 
 export const ToolboxShow = () => {
   const { connectors, query } = useEditor();
@@ -35,140 +148,23 @@ export const ToolboxShow = () => {
   } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Field
-                    name={fields[0].name}
-                    block={false}
-                    textStyle={""}
-                    fieldview={
-                      fields[0].is_fkey
-                        ? ""
-                        : field_view_options[fields[0].name][0]
-                    }
-                  />
-                )
-              }
-            >
-              Field
-            </td>
-            <td
-              title="Join field"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <JoinField
-                    name={options.parent_field_list[0]}
-                    textStyle={""}
-                    block={false}
-                  />
-                )
-              }
-            >
-              Join
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Link to a view"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <ViewLink
-                    name={options.link_view_opts[0].name}
-                    block={false}
-                    minRole={10}
-                    label={""}
-                  />
-                )
-              }
-            >
-              View Link
-            </td>
-            <td
-              title="Action button"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Action
-                    name={options.actions[0]}
-                    block={false}
-                    minRole={10}
-                  />
-                )
-              }
-            >
-              Action
-            </td>
-          </tr>
-          <tr>
-            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
-            <td
-              title="Aggregation"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Aggregation
-                    agg_relation={child_field_list[0]}
-                    agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
-                    stat={"Count"}
-                    textStyle={""}
-                    block={false}
-                  />
-                )
-              }
-            >
-              ∑
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Embed view"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <View
-                    name={"not_assigned"}
-                    state={"shared"}
-                    view={views.length > 0 ? views[0].name : "view"}
-                  />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-eye"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />
+      <LineBreakElem connectors={connectors} />
+      <JoinFieldElem connectors={connectors} options={options} />
+      <ViewLinkElem connectors={connectors} options={options} />
+      <ActionElem connectors={connectors} options={options} />
+      <AggregationElem
+        connectors={connectors}
+        child_field_list={child_field_list}
+        agg_field_opts={agg_field_opts}
+      />
+      <ViewElem connectors={connectors} views={views} />
     </Fragment>
   );
 };
@@ -179,73 +175,15 @@ export const ToolboxEdit = () => {
   const { fields, field_view_options } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Field
-                    name={fields[0].name}
-                    block={false}
-                    textStyle={""}
-                    fieldview={
-                      fields[0].is_fkey
-                        ? ""
-                        : field_view_options[fields[0].name][0]
-                    }
-                  />
-                )
-              }
-            >
-              Field
-            </td>
-            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
-          </tr>
-          <tr>
-            <td
-              title="Action button"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Action
-                    name={options.actions[0]}
-                    block={false}
-                    minRole={10}
-                  />
-                )
-              }
-            >
-              Action
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />
+      <LineBreakElem connectors={connectors} />
+      <ActionElem connectors={connectors} options={options} />
     </Fragment>
   );
 };
@@ -256,106 +194,16 @@ export const ToolboxPage = () => {
   const { views, images } = options;
   return (
     <Fragment>
-      <h5>Drag to add</h5>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Line break"
-              ref={(ref) => connectors.create(ref, <LineBreak />)}
-              style={{ fontSize: "26px" }}
-            >
-              ↵
-            </td>
-            <td
-              title="HTML code"
-              ref={(ref) => connectors.create(ref, <HTMLCode text={""} />)}
-            >
-              <i className="fas fa-lg fa-code"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Card"
-              ref={(ref) =>
-                connectors.create(ref, <Card contents={<Empty />} />)
-              }
-            >
-              Card
-            </td>
-            <td
-              title="Image"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Image fileid={images.length > 0 ? images[0].id : 0} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-image"></i>
-            </td>
-          </tr>
-          <tr>
-            <td title="Link" ref={(ref) => connectors.create(ref, <Link />)}>
-              <i className="fas fa-lg fa-link"></i>
-            </td>
-            <td
-              title="View"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <View
-                    name={"not_assigned"}
-                    state={"shared"}
-                    view={views.length > 0 ? views[0].name : "view"}
-                  />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-eye"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Search bar"
-              ref={(ref) => connectors.create(ref, <SearchBar />)}
-            >
-              <i className="fas fa-lg fa-search"></i>
-            </td>
-            <td
-              title="Container"
-              ref={(ref) =>
-                connectors.create(ref, <Container contents={<Empty />} />)
-              }
-            >
-              <i className="fas fa-lg fa-box-open"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <LineBreakElem connectors={connectors} />
+      <HTMLElem connectors={connectors} />
+      <CardElem connectors={connectors} />
+      <ImageElem connectors={connectors} images={images} />
+      <LinkElem connectors={connectors} />
+      <ViewElem connectors={connectors} views={views} />
+      <SearchElem connectors={connectors} />
+      <ContainerElem connectors={connectors} />
     </Fragment>
   );
 };

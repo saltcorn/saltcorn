@@ -209,7 +209,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
 });
 
 const respondWorkflow = (page, wfres, req, res) => {
-  const wrap = (contents) => ({
+  const wrap = (contents, noCard) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -222,7 +222,7 @@ const respondWorkflow = (page, wfres, req, res) => {
         ],
       },
       {
-        type: "card",
+        type: noCard ? "container" : "card",
         title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
         contents,
       },
@@ -236,7 +236,7 @@ const respondWorkflow = (page, wfres, req, res) => {
   else if (wfres.renderBuilder)
     res.sendWrap(
       `Page configuration`,
-      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()))
+      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   else res.redirect(wfres.redirect);
 };

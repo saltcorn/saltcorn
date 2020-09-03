@@ -18,7 +18,13 @@ export const Link = ({ text, block, textStyle }) => {
 };
 
 export const LinkSettings = () => {
-  const { setProp, text, url, block, textStyle } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    text,
+    url,
+    block,
+    textStyle,
+  } = useNode((node) => ({
     text: node.data.props.text,
     url: node.data.props.url,
     block: node.data.props.block,

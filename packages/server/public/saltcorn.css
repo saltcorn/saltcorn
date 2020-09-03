@@ -55,3 +55,15 @@ button.store-install {
 span.badge.plugin-store {
   margin-right: 0.25rem !important;
 }
+
+div.wrap-builder-elem {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-bottom: 1px solid black;
+}
+
+div.wrap-builder-elem:nth-child(1) {
+  border-top: 1px solid black;
+}

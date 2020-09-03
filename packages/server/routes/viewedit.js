@@ -255,7 +255,7 @@ router.post(
   })
 );
 const respondWorkflow = (view, wfres, req, res) => {
-  const wrap = (contents) => ({
+  const wrap = (contents, noCard) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -266,7 +266,7 @@ const respondWorkflow = (view, wfres, req, res) => {
         ],
       },
       {
-        type: "card",
+        type: noCard ? "container" : "card",
         title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
         contents,
       },
@@ -281,7 +281,7 @@ const respondWorkflow = (view, wfres, req, res) => {
   else if (wfres.renderBuilder)
     res.sendWrap(
       `View configuration`,
-      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()))
+      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   else res.redirect(wfres.redirect);
 };

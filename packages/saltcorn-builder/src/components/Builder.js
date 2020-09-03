@@ -93,32 +93,7 @@ const Builder = ({ options, layout, mode }) => {
     <Editor>
       <Provider value={options}>
         <div className="row">
-          <div className="col-sm-9">
-            <h5>View canvas</h5>
-            <Frame
-              resolver={{
-                Text,
-                Empty,
-                TwoSplit,
-                JoinField,
-                Field,
-                ViewLink,
-                Action,
-                HTMLCode,
-                LineBreak,
-                Aggregation,
-                Card,
-                Image,
-                Link,
-                View,
-                SearchBar,
-                Container,
-              }}
-            >
-              <Element canvas className="canvas"></Element>
-            </Frame>
-          </div>
-          <div className="col-sm-3">
+          <div className="col-sm-auto">
             {mode === "show" ? (
               <ToolboxShow />
             ) : mode === "edit" ? (
@@ -128,10 +103,43 @@ const Builder = ({ options, layout, mode }) => {
             ) : (
               <div>Missing mode</div>
             )}
-            <SettingsPanel />
+          </div>
+          <div className="col">
+            <div className="card p-2">
+              <Frame
+                resolver={{
+                  Text,
+                  Empty,
+                  TwoSplit,
+                  JoinField,
+                  Field,
+                  ViewLink,
+                  Action,
+                  HTMLCode,
+                  LineBreak,
+                  Aggregation,
+                  Card,
+                  Image,
+                  Link,
+                  View,
+                  SearchBar,
+                  Container,
+                }}
+              >
+                <Element canvas className="canvas"></Element>
+              </Frame>
+            </div>
+          </div>
+          <div className="col-sm-auto">
+            <div style={{ width: "12rem" }}>
+              <div className="card p-2">
+                <SettingsPanel />
+              </div>
+              <br />
+              <SaveButton layout={layout} />
+            </div>
           </div>
         </div>
-        <SaveButton layout={layout} />
       </Provider>
     </Editor>
   );

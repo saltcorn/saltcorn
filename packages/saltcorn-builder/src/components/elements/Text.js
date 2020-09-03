@@ -18,7 +18,12 @@ export const Text = ({ text, block, textStyle }) => {
 };
 
 export const TextSettings = () => {
-  const { setProp, text, block, textStyle } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    text,
+    block,
+    textStyle,
+  } = useNode((node) => ({
     text: node.data.props.text,
     block: node.data.props.block,
     textStyle: node.data.props.textStyle,

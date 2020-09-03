@@ -25,15 +25,20 @@ export const Aggregation = ({
 };
 
 export const AggregationSettings = () => {
-  const { setProp, agg_relation, agg_field, stat, block, textStyle } = useNode(
-    (node) => ({
-      agg_relation: node.data.props.agg_relation,
-      agg_field: node.data.props.agg_field,
-      stat: node.data.props.stat,
-      block: node.data.props.block,
-      textStyle: node.data.props.textStyle,
-    })
-  );
+  const {
+    actions: { setProp },
+    agg_relation,
+    agg_field,
+    stat,
+    block,
+    textStyle,
+  } = useNode((node) => ({
+    agg_relation: node.data.props.agg_relation,
+    agg_field: node.data.props.agg_field,
+    stat: node.data.props.stat,
+    block: node.data.props.block,
+    textStyle: node.data.props.textStyle,
+  }));
   const options = useContext(optionsCtx);
   return (
     <div>

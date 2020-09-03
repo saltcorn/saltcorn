@@ -46,7 +46,12 @@ export const TwoSplit = ({ widths, contents, ncols, aligns }) => {
 };
 
 export const TwoSplitSettings = () => {
-  const { setProp, widths, ncols, aligns } = useNode((node) => ({
+  const {
+    actions: { setProp },
+    widths,
+    ncols,
+    aligns,
+  } = useNode((node) => ({
     widths: node.data.props.widths,
     aligns: node.data.props.aligns,
     ncols: node.data.props.ncols,
