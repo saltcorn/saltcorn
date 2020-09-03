@@ -96,7 +96,7 @@ describe("Table create", () => {
     await browser.page.select("#inputviewtemplate", "Edit");
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("View canvas");
+    expect(await browser.content()).toContain("Action button");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
     await browser.erase_input("input.text-to-display");
@@ -148,7 +148,7 @@ describe("Table create", () => {
     await browser.page.select("#inputviewtemplate", "Show");
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("View canvas");
+    expect(await browser.content()).toContain("Join field");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
     await browser.page.waitFor(100);
