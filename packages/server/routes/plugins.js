@@ -393,6 +393,8 @@ router.get(
     await getState().deleteConfig("available_plugins_fetched_at");
     await getState().deleteConfig("available_packs");
     await getState().deleteConfig("available_packs_fetched_at");
+    req.flash("success", `Store refreshed`);
+
     res.redirect(`/plugins`);
   })
 );
@@ -406,6 +408,8 @@ router.get(
     for (const plugin of installed_plugins) {
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
+    req.flash("success", `Plugins up-to-date`);
+
     res.redirect(`/plugins`);
   })
 );
