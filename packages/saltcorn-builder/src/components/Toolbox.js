@@ -71,7 +71,7 @@ const LinkElem = ({ connectors }) => (
   </WrapElem>
 );
 const ViewElem = ({ connectors, views }) => (
-  <WrapElem connectors={connectors} icon="fas fa-eye" title="View">
+  <WrapElem connectors={connectors} icon="fas fa-eye" title="Embed view">
     <View
       name={"not_assigned"}
       state={"shared"}
@@ -89,6 +89,53 @@ const ContainerElem = ({ connectors }) => (
     <Container contents={<Empty />} />
   </WrapElem>
 );
+const FieldElem = ({ connectors, fields, field_view_options }) => (
+  <WrapElem connectors={connectors} text="Field">
+    <Field
+      name={fields[0].name}
+      block={false}
+      textStyle={""}
+      fieldview={fields[0].is_fkey ? "" : field_view_options[fields[0].name][0]}
+    />
+  </WrapElem>
+);
+const JoinFieldElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="Join" title="Join field">
+    <JoinField
+      name={options.parent_field_list[0]}
+      textStyle={""}
+      block={false}
+    />
+  </WrapElem>
+);
+const ViewLinkElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="View Link" title="Link to a view">
+    <ViewLink
+      name={options.link_view_opts[0].name}
+      block={false}
+      minRole={10}
+      label={""}
+    />
+  </WrapElem>
+);
+
+const ActionElem = ({ connectors, options }) => (
+  <WrapElem connectors={connectors} text="Action" title="Action button">
+    <Action name={options.actions[0]} block={false} minRole={10} />
+  </WrapElem>
+);
+const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
+  <WrapElem connectors={connectors} text="∑" title="Aggregation">
+    <Aggregation
+      agg_relation={child_field_list[0]}
+      agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
+      stat={"Count"}
+      textStyle={""}
+      block={false}
+    />
+  </WrapElem>
+);
+
 export const ToolboxShow = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
@@ -101,139 +148,22 @@ export const ToolboxShow = () => {
   } = options;
   return (
     <Fragment>
-      <table className="mb-3 toolbox">
-        <tbody>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Text text="Hello world" block={false} textStyle={""} />
-                )
-              }
-            >
-              Text
-            </td>
-            <td
-              title="Split into columns"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <TwoSplit contents={[<Empty />, <Empty />]} />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-columns"></i>
-            </td>
-          </tr>
-          <tr>
-            <td
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Field
-                    name={fields[0].name}
-                    block={false}
-                    textStyle={""}
-                    fieldview={
-                      fields[0].is_fkey
-                        ? ""
-                        : field_view_options[fields[0].name][0]
-                    }
-                  />
-                )
-              }
-            >
-              Field
-            </td>
-            <td
-              title="Join field"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <JoinField
-                    name={options.parent_field_list[0]}
-                    textStyle={""}
-                    block={false}
-                  />
-                )
-              }
-            >
-              Join
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Link to a view"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <ViewLink
-                    name={options.link_view_opts[0].name}
-                    block={false}
-                    minRole={10}
-                    label={""}
-                  />
-                )
-              }
-            >
-              View Link
-            </td>
-            <td
-              title="Action button"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Action
-                    name={options.actions[0]}
-                    block={false}
-                    minRole={10}
-                  />
-                )
-              }
-            >
-              Action
-            </td>
-          </tr>
-          <tr>
-            <td ref={(ref) => connectors.create(ref, <LineBreak />)}>↵</td>
-            <td
-              title="Aggregation"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <Aggregation
-                    agg_relation={child_field_list[0]}
-                    agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
-                    stat={"Count"}
-                    textStyle={""}
-                    block={false}
-                  />
-                )
-              }
-            >
-              ∑
-            </td>
-          </tr>
-          <tr>
-            <td
-              title="Embed view"
-              ref={(ref) =>
-                connectors.create(
-                  ref,
-                  <View
-                    name={"not_assigned"}
-                    state={"shared"}
-                    view={views.length > 0 ? views[0].name : "view"}
-                  />
-                )
-              }
-            >
-              <i className="fas fa-lg fa-eye"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <TextElem connectors={connectors} />
+      <TwoSplitElem connectors={connectors} />
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />
+      <JoinFieldElem connectors={connectors} options={options} />
+      <ViewLinkElem connectors={connectors} options={options} />
+      <ActionElem connectors={connectors} options={options} />
+      <AggregationElem
+        connectors={connectors}
+        child_field_list={child_field_list}
+        agg_field_opts={agg_field_opts}
+      />
+      <ViewElem connectors={connectors} views={views} />
     </Fragment>
   );
 };
