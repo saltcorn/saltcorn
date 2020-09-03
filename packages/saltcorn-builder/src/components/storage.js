@@ -127,11 +127,9 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "card") {
       return (
-        <Card
-          key={ix}
-          contents={toTag(segment.contents)}
-          title={segment.title}
-        />
+        <Element key={ix} canvas title={segment.title} is={Card}>
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.type === "container") {
       return (
@@ -228,6 +226,12 @@ export const craftToSaltcorn = (nodes) => {
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
         };
+      else if (node.displayName === Card.name)
+        return {
+          contents: get_nodes(node),
+          type: "card",
+          title: node.props.title,
+        };
       else return get_nodes(node);
     }
 
@@ -258,13 +262,6 @@ export const craftToSaltcorn = (nodes) => {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         aligns: node.props.aligns,
         widths,
-      };
-    }
-    if (node.displayName === Card.name) {
-      return {
-        contents: go(nodes[node.linkedNodes.cardContents]),
-        type: "card",
-        title: node.props.title,
       };
     }
 

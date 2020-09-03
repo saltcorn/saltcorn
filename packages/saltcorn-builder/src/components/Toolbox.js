@@ -57,7 +57,7 @@ const HTMLElem = ({ connectors }) => (
 );
 const CardElem = ({ connectors }) => (
   <WrapElem connectors={connectors} text="Card">
-    <Card contents={<Empty />} />
+    <Element canvas is={Card}></Element>
   </WrapElem>
 );
 const ImageElem = ({ connectors, images }) => (
