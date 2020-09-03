@@ -28,7 +28,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Available plugins"));
+      .expect(toInclude("Plugin and pack store"));
   });
 
   it("should show new", async () => {
@@ -41,19 +41,8 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("New Plugin"));
   });
 
-  it("should show edit existing", async () => {
-    const loginCookie = await getAdminLoginCookie();
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/plugins/1")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Edit Plugin"));
-  });
-
   itShouldRedirectUnauthToLogin("/plugins");
   itShouldRedirectUnauthToLogin("/plugins/new");
-  itShouldRedirectUnauthToLogin("/plugins/1");
 
   it("should install named with config", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -62,7 +51,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .post("/plugins/install/any-bootstrap-theme")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins/configure/3"));
+      .expect(toRedirect("/plugins/configure/any-bootstrap-theme"));
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
@@ -74,23 +63,19 @@ describe("Plugin Endpoints", () => {
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/plugins/configure/" + p.id)
+      .get("/plugins/configure/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toInclude("Navbar color scheme"));
     await request(app)
-      .post("/plugins/configure/" + p.id)
+      .post("/plugins/configure/" + p.name)
       .set("Cookie", loginCookie)
       .send(
         "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D"
       )
       .expect(toRedirect("/plugins"));
-    await request(app)
-      .post("/plugins/reload/" + p.id)
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"));
 
     await request(app)
-      .post("/plugins/delete/" + p.id)
+      .post("/plugins/delete/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
   });
@@ -105,7 +90,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
-      .expect(toInclude("@saltcorn/markdown"));
+      .expect(toInclude("/plugins/delete/markdown"));
   });
 });
 describe("Plugin dependency resolution", () => {
@@ -195,8 +180,7 @@ describe("Pack Endpoints", () => {
       .expect(toRedirect("/"));
   });
 
-  itShouldRedirectUnauthToLogin("/plugins/create");
-  itShouldRedirectUnauthToLogin("/plugins/install");
+  itShouldRedirectUnauthToLogin("/plugins/new");
 });
 
 describe("Pack clash detection", () => {

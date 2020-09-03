@@ -351,7 +351,7 @@ router.post(
   })
 );
 router.get(
-  "/new/",
+  "/new",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
@@ -434,20 +434,6 @@ router.post(
         `Cannot remove plugin: views ${depviews.join()} depend on it`
       );
     }
-    res.redirect(`/plugins`);
-  })
-);
-
-router.post(
-  "/reload/:id",
-  setTenant,
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const { id } = req.params;
-
-    const plugin = await Plugin.findOne({ id });
-    await load_plugins.loadPlugin(plugin);
-
     res.redirect(`/plugins`);
   })
 );
