@@ -7,7 +7,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { TwoSplit } from "./elements/TwoSplit";
+import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
@@ -20,58 +20,112 @@ import optionsCtx from "./context";
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
-const WrapElem = ({ children, connectors, icon, text, fontSize, title }) => (
+const WrapElem = ({
+  children,
+  connectors,
+  icon,
+  icons,
+  text,
+  fontSize,
+  title,
+  bold,
+  label,
+}) => (
   <div
     className="wrap-builder-elem d-flex align-items-center justify-content-center"
     title={title}
     ref={(ref) => connectors.create(ref, children)}
   >
     <div className="inner" style={fontSize ? { fontSize } : {}}>
-      {text || <i className={`fa-lg ${icon}`}></i>}
+      {(text && (bold ? <strong>{text}</strong> : text)) ||
+        (icons &&
+          icons.map((ic, ix) => <i key={ix} className={`${ic}`}></i>)) || (
+          <i className={`fa-lg ${icon}`}></i>
+        )}
     </div>
+    <label>{label}</label>
   </div>
 );
 const TextElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} text="Text">
+  <WrapElem
+    connectors={connectors}
+    text="T"
+    fontSize="22px"
+    title="Text"
+    bold
+    label="Text"
+  >
     <Text text="Hello world" block={false} textStyle={""} />
   </WrapElem>
 );
-const TwoSplitElem = ({ connectors }) => (
+const ColumnsElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
     icon="fas fa-columns"
     title="Split into columns"
+    label="Columns"
   >
-    <TwoSplit contents={[]} />
+    <Columns contents={[]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} text="↵" fontSize="26px" title="Line break">
+  <WrapElem
+    connectors={connectors}
+    text="↵"
+    fontSize="26px"
+    title="Line break"
+    label="Break"
+  >
     <LineBreak />
   </WrapElem>
 );
 const HTMLElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-code" title="HTML code">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-code"
+    title="HTML code"
+    label="Code"
+  >
     <HTMLCode text={""} />
   </WrapElem>
 );
 const CardElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} text="Card">
+  <WrapElem
+    connectors={connectors}
+    title="Card"
+    icon="far fa-square"
+    label="Card"
+  >
     <Element canvas is={Card}></Element>
   </WrapElem>
 );
 const ImageElem = ({ connectors, images }) => (
-  <WrapElem connectors={connectors} icon="fas fa-image" title="Image">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-image"
+    title="Image"
+    label="Image"
+  >
     <Image fileid={images.length > 0 ? images[0].id : 0} />
   </WrapElem>
 );
 const LinkElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-link" title="Link">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-link"
+    title="Link"
+    label="Link"
+  >
     <Link />
   </WrapElem>
 );
 const ViewElem = ({ connectors, views }) => (
-  <WrapElem connectors={connectors} icon="fas fa-eye" title="Embed view">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-eye"
+    title="Embed a view"
+    label="View"
+  >
     <View
       name={"not_assigned"}
       state={"shared"}
@@ -80,17 +134,32 @@ const ViewElem = ({ connectors, views }) => (
   </WrapElem>
 );
 const SearchElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-search" title="Search bar">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-search"
+    title="Search bar"
+    label="Search"
+  >
     <SearchBar />
   </WrapElem>
 );
 const ContainerElem = ({ connectors }) => (
-  <WrapElem connectors={connectors} icon="fas fa-box-open" title="Container">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-box-open"
+    title="Container"
+    label="Contain"
+  >
     <Element canvas is={Container}></Element>
   </WrapElem>
 );
 const FieldElem = ({ connectors, fields, field_view_options }) => (
-  <WrapElem connectors={connectors} text="Field">
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-asterisk"
+    title="Field"
+    label="Field"
+  >
     <Field
       name={fields[0].name}
       block={false}
@@ -100,7 +169,12 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
   </WrapElem>
 );
 const JoinFieldElem = ({ connectors, options }) => (
-  <WrapElem connectors={connectors} text="Join" title="Join field">
+  <WrapElem
+    connectors={connectors}
+    icon="fab fa-mixer"
+    title="Join field"
+    label="Join"
+  >
     <JoinField
       name={options.parent_field_list[0]}
       textStyle={""}
@@ -109,7 +183,12 @@ const JoinFieldElem = ({ connectors, options }) => (
   </WrapElem>
 );
 const ViewLinkElem = ({ connectors, options }) => (
-  <WrapElem connectors={connectors} text="View Link" title="Link to a view">
+  <WrapElem
+    connectors={connectors}
+    icons={["fas fa-eye", "fas fa-link"]}
+    title="Link to a view"
+    label="Link"
+  >
     <ViewLink
       name={options.link_view_opts[0].name}
       block={false}
@@ -120,12 +199,24 @@ const ViewLinkElem = ({ connectors, options }) => (
 );
 
 const ActionElem = ({ connectors, options }) => (
-  <WrapElem connectors={connectors} text="Action" title="Action button">
+  <WrapElem
+    connectors={connectors}
+    label="Action"
+    icon="fas fa-running"
+    title="Action button"
+  >
     <Action name={options.actions[0]} block={false} minRole={10} />
   </WrapElem>
 );
 const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
-  <WrapElem connectors={connectors} text="∑" title="Aggregation">
+  <WrapElem
+    connectors={connectors}
+    text="∑"
+    title="Aggregation"
+    label="Calc"
+    bold
+    fontSize="16px"
+  >
     <Aggregation
       agg_relation={child_field_list[0]}
       agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
@@ -149,7 +240,7 @@ export const ToolboxShow = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <FieldElem
         connectors={connectors}
         fields={fields}
@@ -177,7 +268,7 @@ export const ToolboxEdit = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <FieldElem
         connectors={connectors}
         fields={fields}
@@ -197,7 +288,7 @@ export const ToolboxPage = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <LineBreakElem connectors={connectors} />
       <HTMLElem connectors={connectors} />
       <CardElem connectors={connectors} />

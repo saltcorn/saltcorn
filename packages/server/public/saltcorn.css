@@ -56,14 +56,45 @@ span.badge.plugin-store {
   margin-right: 0.25rem !important;
 }
 
+div.builder-embed-view {
+  width: 100%;
+  height: 100px;
+  border: 1px solid black;
+  margin: 2px;
+  background: linear-gradient(
+      to top left,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) calc(50% - 0.8px),
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0) calc(50% + 0.8px),
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      to top right,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) calc(50% - 0.8px),
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0) calc(50% + 0.8px),
+      rgba(0, 0, 0, 0) 100%
+    );
+}
 div.wrap-builder-elem {
   width: 3.5rem;
   height: 3.5rem;
-  border-left: 1px solid black;
-  border-right: 1px solid black;
-  border-bottom: 1px solid black;
+  border-top: 1px solid #bcbcbc;
+  position: relative;
 }
 
 div.wrap-builder-elem:nth-child(1) {
-  border-top: 1px solid black;
+  border-top: none;
+}
+div.wrap-builder-elem label {
+  position: absolute;
+  bottom: -1px;
+  text-transform: uppercase;
+  font-size: x-small;
+}
+
+.builder-sidebar h5 {
+  text-decoration: underline;
 }

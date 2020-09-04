@@ -35,13 +35,14 @@ export const LinkSettings = () => {
       <label>Text to display</label>
       <input
         type="text"
-        className="text-to-display"
+        className="text-to-display w-100"
         value={text}
         onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
       />
       <label>URL</label>
       <input
         type="text"
+        className="w-100"
         value={url}
         onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
       />

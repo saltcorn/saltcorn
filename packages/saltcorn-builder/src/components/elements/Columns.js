@@ -22,7 +22,7 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
-export const TwoSplit = ({ widths, contents, ncols }) => {
+export const Columns = ({ widths, contents, ncols }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
@@ -40,7 +40,7 @@ export const TwoSplit = ({ widths, contents, ncols }) => {
   );
 };
 
-export const TwoSplitSettings = () => {
+export const ColumnsSettings = () => {
   const {
     actions: { setProp },
     widths,
@@ -69,34 +69,37 @@ export const TwoSplitSettings = () => {
       </div>
       {ntimes(ncols, (ix) => (
         <div key={ix}>
-          <h6>Column {ix + 1}</h6>
-          {ix < ncols - 1 && (
-            <div>
-              <label>width</label>
+          <h5>Column {ix + 1}</h5>
+
+          <div>
+            <label>width</label>
+            {ix < ncols - 1 ? (
               <input
                 type="number"
                 value={widths[ix]}
                 step="1"
                 min="1"
-                max={12 - ncols}
+                max={12 - ncols + 1}
                 onChange={(e) =>
                   setProp((prop) => (prop.widths[ix] = +e.target.value))
                 }
               />
-              /12
-            </div>
-          )}
+            ) : (
+              ` ${12 - sum(widths)}`
+            )}
+            /12
+          </div>
         </div>
       ))}
     </div>
   );
 };
-TwoSplit.craft = {
+Columns.craft = {
   defaultProps: {
     widths: [6],
     ncols: 2,
   },
   related: {
-    settings: TwoSplitSettings,
+    settings: ColumnsSettings,
   },
 };

@@ -3,7 +3,7 @@ import { Element } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
-import { TwoSplit, ntimes, sum } from "./elements/TwoSplit";
+import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -154,7 +154,7 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.besides) {
       return (
-        <TwoSplit
+        <Columns
           key={ix}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
@@ -174,7 +174,7 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.besides) {
       const node = query
         .parseReactElement(
-          <TwoSplit
+          <Columns
             widths={getColWidths(segment)}
             ncols={segment.besides.length}
             contents={segment.besides.map(toTag)}
@@ -206,9 +206,9 @@ export const craftToSaltcorn = (nodes) => {
     else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
     else return { above: node.nodes.map((nm) => go(nodes[nm])) };
   };
-  const go = (node, isRoot) => {
+  const go = (node) => {
     if (node.isCanvas) {
-      if (node.displayName === Container.name && !isRoot)
+      if (node.displayName === Container.name)
         return {
           contents: get_nodes(node),
           type: "container",
@@ -254,7 +254,7 @@ export const craftToSaltcorn = (nodes) => {
     if (node.displayName === SearchBar.name) {
       return { type: "search_bar" };
     }
-    if (node.displayName === TwoSplit.name) {
+    if (node.displayName === Columns.name) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
@@ -358,7 +358,7 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
   };
-  const layout = go(nodes["ROOT"], true) || { type: "blank", contents: "" };
+  const layout = go(nodes["ROOT"]) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/

@@ -8,10 +8,14 @@ export const ViewLink = ({ name, block, minRole, label }) => {
     connectors: { connect, drag },
   } = useNode();
   const names = name.split(":");
-  const displabel = names.length > 1 ? names[1] : names[0];
+  const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
-    <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
-      [{displabel}]
+    <span
+      className="is-builder-link"
+      {...blockProps(block)}
+      ref={(dom) => connect(drag(dom))}
+    >
+      {displabel}
     </span>
   );
 };
@@ -49,7 +53,7 @@ export const ViewLinkSettings = () => {
         <label>Label (leave blank for default)</label>
         <input
           type="text"
-          className="viewlink-label"
+          className="viewlink-label w-100"
           value={label}
           onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
         />

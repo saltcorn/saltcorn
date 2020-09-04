@@ -8,7 +8,11 @@ export const Action = ({ name, block }) => {
     connectors: { connect, drag },
   } = useNode();
   return (
-    <button {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
+    <button
+      className="btn btn-primary"
+      {...blockProps(block)}
+      ref={(dom) => connect(drag(dom))}
+    >
       {name}
     </button>
   );

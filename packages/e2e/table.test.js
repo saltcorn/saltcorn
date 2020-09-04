@@ -101,7 +101,7 @@ describe("Table create", () => {
     await browser.page.waitForSelector("input.text-to-display");
     await browser.erase_input("input.text-to-display");
     await browser.slowly_type("input.text-to-display", "MyOwnInput");
-    await browser.clickNav("button.btn-primary");
+    await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
 
     expect(await browser.content()).toContain("Add view");
@@ -155,7 +155,7 @@ describe("Table create", () => {
     await browser.erase_input("input.text-to-display");
     await browser.slowly_type("input.text-to-display", "MyOtherInput");
     await browser.page.waitFor(100);
-    await browser.clickNav("button.btn-primary");
+    await browser.clickNav("button.btn-primary.builder-save");
 
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonShow");

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, Fragment } from "react";
+import React, { useEffect, useContext, useState, Fragment } from "react";
 import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
@@ -6,7 +6,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { TwoSplit } from "./elements/TwoSplit";
+import { Columns } from "./elements/Columns";
 import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
@@ -19,6 +19,7 @@ import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
+import { Column } from "./elements/Column";
 import { Layers } from "@craftjs/layers";
 
 const { Provider } = optionsCtx;
@@ -45,7 +46,7 @@ const SettingsPanel = () => {
   });
 
   return (
-    <div className="settings-panel card">
+    <div className="settings-panel card mt-2">
       <div className="card-header">Settings</div>
       <div className="card-body">
         {selected ? (
@@ -53,6 +54,7 @@ const SettingsPanel = () => {
             {selected.settings && React.createElement(selected.settings)}
             {selected.isDeletable && (
               <button
+                className="btn btn-danger mt-2"
                 onClick={() => {
                   actions.delete(selected.id);
                 }}
@@ -85,35 +87,39 @@ const SaveButton = ({ layout }) => {
     document.getElementById("scbuildform").submit();
   };
   return (
-    <button className="btn btn-primary" onClick={onClick}>
+    <button className="btn btn-primary builder-save" onClick={onClick}>
       Next &raquo;
     </button>
   );
 };
 
 const Builder = ({ options, layout, mode }) => {
+  const [showLayers, setShowLayers] = useState(true);
+
   return (
     <Editor>
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-auto">
-            {mode === "show" ? (
-              <ToolboxShow />
-            ) : mode === "edit" ? (
-              <ToolboxEdit />
-            ) : mode === "page" ? (
-              <ToolboxPage />
-            ) : (
-              <div>Missing mode</div>
-            )}
+            <div className="card">
+              {mode === "show" ? (
+                <ToolboxShow />
+              ) : mode === "edit" ? (
+                <ToolboxEdit />
+              ) : mode === "page" ? (
+                <ToolboxPage />
+              ) : (
+                <div>Missing mode</div>
+              )}
+            </div>
           </div>
           <div className="col">
-            <div className="card p-2">
+            <div>
               <Frame
                 resolver={{
                   Text,
                   Empty,
-                  TwoSplit,
+                  Columns,
                   JoinField,
                   Field,
                   ViewLink,
@@ -127,17 +133,31 @@ const Builder = ({ options, layout, mode }) => {
                   View,
                   SearchBar,
                   Container,
+                  Column,
                 }}
               >
-                <Element canvas is={Container}></Element>
+                <Element canvas is={Column}></Element>
               </Frame>
             </div>
           </div>
-          <div className="col-sm-auto">
+          <div className="col-sm-auto builder-sidebar">
             <div style={{ width: "13rem" }}>
-              <div className="card p-2">
-                <div className="card-header">Layers</div>
-                <Layers expandRootOnLoad={true} />
+              <div className="card">
+                <div className="card-header">
+                  Layers
+                  <div className="float-right">
+                    <input
+                      type="checkbox"
+                      checked={showLayers}
+                      onChange={(e) => setShowLayers(e.target.checked)}
+                    />
+                  </div>
+                </div>
+                {showLayers && (
+                  <div className="card-body p-0 builder-layers">
+                    <Layers expandRootOnLoad={true} />
+                  </div>
+                )}
               </div>
               <SettingsPanel />
               <br />

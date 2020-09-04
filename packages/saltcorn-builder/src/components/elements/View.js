@@ -7,7 +7,14 @@ export const View = ({ name, view, state }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
-  return <div ref={(dom) => connect(drag(dom))}>[{view}]</div>;
+  return (
+    <div
+      ref={(dom) => connect(drag(dom))}
+      className="builder-embed-view text-center"
+    >
+      {view} view
+    </div>
+  );
 };
 
 export const ViewSettings = () => {
@@ -29,6 +36,7 @@ export const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
+          className="w-100"
           onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
           {options.views.map((f, ix) => (

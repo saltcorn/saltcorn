@@ -86,7 +86,7 @@ export const ContainerSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      <h6>Border</h6>
+      <h5>Border</h5>
       <label>Width</label>
       <input
         type="number"
@@ -119,7 +119,7 @@ export const ContainerSettings = () => {
         <option>inset</option>
         <option>outset</option>
       </select>
-      <h6>Height</h6>
+      <h5>Height</h5>
       <label>Min</label>
       <input
         type="number"
@@ -133,7 +133,7 @@ export const ContainerSettings = () => {
           })
         }
       />
-      <h6>Align</h6>
+      <h5>Align</h5>
       <label>Vert</label>
       <select
         value={vAlign}
@@ -195,6 +195,7 @@ export const ContainerSettings = () => {
               </option>
             ))}
           </select>
+          <br />
           <label>Size</label>
           <select
             value={imageSize}
