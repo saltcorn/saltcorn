@@ -7,7 +7,14 @@ export const View = ({ name, view, state }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
-  return <div ref={(dom) => connect(drag(dom))}>[{view}]</div>;
+  return (
+    <div
+      ref={(dom) => connect(drag(dom))}
+      className="builder-embed-view text-center"
+    >
+      {view} view
+    </div>
+  );
 };
 
 export const ViewSettings = () => {
