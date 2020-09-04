@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, Fragment } from "react";
+import React, { useEffect, useContext, useState, Fragment } from "react";
 import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
@@ -94,6 +94,8 @@ const SaveButton = ({ layout }) => {
 };
 
 const Builder = ({ options, layout, mode }) => {
+  const [showLayers, setShowLayers] = useState(true);
+
   return (
     <Editor>
       <Provider value={options}>
@@ -138,9 +140,22 @@ const Builder = ({ options, layout, mode }) => {
           </div>
           <div className="col-sm-auto">
             <div style={{ width: "13rem" }}>
-              <div className="card p-2">
-                <div className="card-header">Layers</div>
-                <Layers expandRootOnLoad={true} />
+              <div className="card">
+                <div className="card-header">
+                  Layers
+                  <div className="float-right">
+                    <input
+                      type="checkbox"
+                      checked={showLayers}
+                      onChange={(e) => setShowLayers(e.target.checked)}
+                    />
+                  </div>
+                </div>
+                {showLayers && (
+                  <div className="card-body p-0">
+                    <Layers expandRootOnLoad={true} />
+                  </div>
+                )}
               </div>
               <SettingsPanel />
               <br />
