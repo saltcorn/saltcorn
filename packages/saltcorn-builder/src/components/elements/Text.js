@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 import ContentEditable from "react-contenteditable";
@@ -6,16 +6,29 @@ import ContentEditable from "react-contenteditable";
 export const Text = ({ text, block, textStyle }) => {
   const {
     connectors: { connect, drag },
-    actions: { setPropThrottled, setProp },
-  } = useNode();
+    selected,
+    actions: { setProp },
+  } = useNode((state) => ({
+    selected: state.events.selected,
+    dragged: state.events.dragged,
+  }));
+  const [editable, setEditable] = useState(false);
+
+  useEffect(() => {
+    !selected && setEditable(false);
+  }, [selected]);
+
   return (
     <span
       className={`${textStyle} is-text`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      onClick={(e) => selected && setEditable(true)}
     >
       <ContentEditable
         html={text}
+        style={{ display: "inline" }}
+        disabled={!editable}
         onChange={(e) => setProp((props) => (props.text = e.target.value))}
       />
     </span>
