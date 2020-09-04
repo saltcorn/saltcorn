@@ -81,11 +81,9 @@ div.builder-embed-view {
 div.wrap-builder-elem {
   width: 3.5rem;
   height: 3.5rem;
-  border-left: 1px solid black;
-  border-right: 1px solid black;
-  border-bottom: 1px solid black;
+  border-top: 1px solid #bcbcbc;
 }
 
 div.wrap-builder-elem:nth-child(1) {
-  border-top: 1px solid black;
+  border-top: none;
 }

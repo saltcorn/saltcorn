@@ -101,15 +101,17 @@ const Builder = ({ options, layout, mode }) => {
       <Provider value={options}>
         <div className="row">
           <div className="col-sm-auto">
-            {mode === "show" ? (
-              <ToolboxShow />
-            ) : mode === "edit" ? (
-              <ToolboxEdit />
-            ) : mode === "page" ? (
-              <ToolboxPage />
-            ) : (
-              <div>Missing mode</div>
-            )}
+            <div className="card">
+              {mode === "show" ? (
+                <ToolboxShow />
+              ) : mode === "edit" ? (
+                <ToolboxEdit />
+              ) : mode === "page" ? (
+                <ToolboxPage />
+              ) : (
+                <div>Missing mode</div>
+              )}
+            </div>
           </div>
           <div className="col">
             <div>
@@ -152,7 +154,7 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                 </div>
                 {showLayers && (
-                  <div className="card-body p-0">
+                  <div className="card-body p-0 builder-layers">
                     <Layers expandRootOnLoad={true} />
                   </div>
                 )}
