@@ -8,7 +8,8 @@ export const HTMLCode = ({ text }) => {
   } = useNode();
   return (
     <span className="is-html-block" ref={(dom) => connect(drag(dom))}>
-      {text}
+      <div style={{ fontSize: "8px" }}>HTML</div>
+      <div dangerouslySetInnerHTML={{ __html: text }}></div>
     </span>
   );
 };
