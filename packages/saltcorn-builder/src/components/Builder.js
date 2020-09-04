@@ -46,7 +46,7 @@ const SettingsPanel = () => {
   });
 
   return (
-    <div className="settings-panel card">
+    <div className="settings-panel card mt-2">
       <div className="card-header">Settings</div>
       <div className="card-body">
         {selected ? (
