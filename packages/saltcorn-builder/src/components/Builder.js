@@ -109,7 +109,7 @@ const Builder = ({ options, layout, mode }) => {
             )}
           </div>
           <div className="col">
-            <div className="card p-2">
+            <div>
               <Frame
                 resolver={{
                   Text,
