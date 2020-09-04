@@ -70,22 +70,25 @@ export const ColumnsSettings = () => {
       {ntimes(ncols, (ix) => (
         <div key={ix}>
           <h6>Column {ix + 1}</h6>
-          {ix < ncols - 1 && (
-            <div>
-              <label>width</label>
+
+          <div>
+            <label>width</label>
+            {ix < ncols - 1 ? (
               <input
                 type="number"
                 value={widths[ix]}
                 step="1"
                 min="1"
-                max={12 - ncols}
+                max={12 - ncols + 1}
                 onChange={(e) =>
                   setProp((prop) => (prop.widths[ix] = +e.target.value))
                 }
               />
-              /12
-            </div>
-          )}
+            ) : (
+              ` ${12 - sum(widths)}`
+            )}
+            /12
+          </div>
         </div>
       ))}
     </div>
