@@ -49,7 +49,7 @@ export const ViewLinkSettings = () => {
         <label>Label (leave blank for default)</label>
         <input
           type="text"
-          className="viewlink-label"
+          className="viewlink-label w-100"
           value={label}
           onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
         />
