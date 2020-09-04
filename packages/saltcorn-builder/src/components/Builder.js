@@ -54,6 +54,7 @@ const SettingsPanel = () => {
             {selected.settings && React.createElement(selected.settings)}
             {selected.isDeletable && (
               <button
+                className="btn btn-danger mt-2"
                 onClick={() => {
                   actions.delete(selected.id);
                 }}

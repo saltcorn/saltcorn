@@ -29,6 +29,7 @@ export const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
+          className="w-100"
           onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
           {options.views.map((f, ix) => (

@@ -28,6 +28,7 @@ export const CardSettings = () => {
       <label>Card title</label>
       <input
         type="text"
+        className="w-100"
         value={title}
         onChange={(e) => setProp((prop) => (prop.title = e.target.value))}
       />

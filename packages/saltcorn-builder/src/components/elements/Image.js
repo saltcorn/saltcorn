@@ -48,6 +48,7 @@ export const ImageSettings = () => {
       <label>Alt text</label>
       <input
         type="text"
+        className="w-100"
         value={alt}
         onChange={(e) => setProp((prop) => (prop.alt = e.target.value))}
       />
