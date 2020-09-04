@@ -26,7 +26,7 @@ export const HTMLCodeSettings = () => {
       <label>HTML code</label>
       <textarea
         type="text"
-        className="text-to-display"
+        className="text-to-display w-100"
         value={text}
         onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
       ></textarea>
