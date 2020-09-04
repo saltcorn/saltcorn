@@ -22,7 +22,7 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
-export const TwoSplit = ({ widths, contents, ncols }) => {
+export const Columns = ({ widths, contents, ncols }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
@@ -40,7 +40,7 @@ export const TwoSplit = ({ widths, contents, ncols }) => {
   );
 };
 
-export const TwoSplitSettings = () => {
+export const ColumnsSettings = () => {
   const {
     actions: { setProp },
     widths,
@@ -91,12 +91,12 @@ export const TwoSplitSettings = () => {
     </div>
   );
 };
-TwoSplit.craft = {
+Columns.craft = {
   defaultProps: {
     widths: [6],
     ncols: 2,
   },
   related: {
-    settings: TwoSplitSettings,
+    settings: ColumnsSettings,
   },
 };

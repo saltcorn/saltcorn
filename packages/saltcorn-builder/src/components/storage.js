@@ -3,7 +3,7 @@ import { Element } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
-import { TwoSplit, ntimes, sum } from "./elements/TwoSplit";
+import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -154,7 +154,7 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.besides) {
       return (
-        <TwoSplit
+        <Columns
           key={ix}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
@@ -174,7 +174,7 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.besides) {
       const node = query
         .parseReactElement(
-          <TwoSplit
+          <Columns
             widths={getColWidths(segment)}
             ncols={segment.besides.length}
             contents={segment.besides.map(toTag)}
@@ -254,7 +254,7 @@ export const craftToSaltcorn = (nodes) => {
     if (node.displayName === SearchBar.name) {
       return { type: "search_bar" };
     }
-    if (node.displayName === TwoSplit.name) {
+    if (node.displayName === Columns.name) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),

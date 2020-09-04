@@ -7,7 +7,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { TwoSplit } from "./elements/TwoSplit";
+import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
@@ -36,13 +36,13 @@ const TextElem = ({ connectors }) => (
     <Text text="Hello world" block={false} textStyle={""} />
   </WrapElem>
 );
-const TwoSplitElem = ({ connectors }) => (
+const ColumnsElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
     icon="fas fa-columns"
     title="Split into columns"
   >
-    <TwoSplit contents={[]} />
+    <Columns contents={[]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
@@ -149,7 +149,7 @@ export const ToolboxShow = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <FieldElem
         connectors={connectors}
         fields={fields}
@@ -177,7 +177,7 @@ export const ToolboxEdit = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <FieldElem
         connectors={connectors}
         fields={fields}
@@ -197,7 +197,7 @@ export const ToolboxPage = () => {
   return (
     <Fragment>
       <TextElem connectors={connectors} />
-      <TwoSplitElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
       <LineBreakElem connectors={connectors} />
       <HTMLElem connectors={connectors} />
       <CardElem connectors={connectors} />

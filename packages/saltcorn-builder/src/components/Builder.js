@@ -6,7 +6,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { TwoSplit } from "./elements/TwoSplit";
+import { Columns } from "./elements/Columns";
 import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
@@ -115,7 +115,7 @@ const Builder = ({ options, layout, mode }) => {
                 resolver={{
                   Text,
                   Empty,
-                  TwoSplit,
+                  Columns,
                   JoinField,
                   Field,
                   ViewLink,
