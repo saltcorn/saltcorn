@@ -95,7 +95,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           { class: "card shadow mt-4" },
           segment.title &&
             div(
-              { class: "card-header py-3" },
+              { class: "card-header" },
               h6(
                 { class: "m-0 font-weight-bold text-primary" },
                 text(segment.title)
