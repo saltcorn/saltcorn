@@ -19,6 +19,7 @@ import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
+import { Column } from "./elements/Column";
 import { Layers } from "@craftjs/layers";
 
 const { Provider } = optionsCtx;
@@ -127,9 +128,10 @@ const Builder = ({ options, layout, mode }) => {
                   View,
                   SearchBar,
                   Container,
+                  Column,
                 }}
               >
-                <Element canvas is={Container}></Element>
+                <Element canvas is={Column}></Element>
               </Frame>
             </div>
           </div>
