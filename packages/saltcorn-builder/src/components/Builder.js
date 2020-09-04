@@ -140,7 +140,7 @@ const Builder = ({ options, layout, mode }) => {
               </Frame>
             </div>
           </div>
-          <div className="col-sm-auto">
+          <div className="col-sm-auto builder-sidebar">
             <div style={{ width: "13rem" }}>
               <div className="card">
                 <div className="card-header">

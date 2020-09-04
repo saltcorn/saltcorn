@@ -69,7 +69,7 @@ export const ColumnsSettings = () => {
       </div>
       {ntimes(ncols, (ix) => (
         <div key={ix}>
-          <h6>Column {ix + 1}</h6>
+          <h5>Column {ix + 1}</h5>
 
           <div>
             <label>width</label>
