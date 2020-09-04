@@ -87,7 +87,7 @@ const SaveButton = ({ layout }) => {
     document.getElementById("scbuildform").submit();
   };
   return (
-    <button className="btn btn-primary" onClick={onClick}>
+    <button className="btn btn-primary builder-save" onClick={onClick}>
       Next &raquo;
     </button>
   );
