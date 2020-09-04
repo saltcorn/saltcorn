@@ -82,8 +82,15 @@ div.wrap-builder-elem {
   width: 3.5rem;
   height: 3.5rem;
   border-top: 1px solid #bcbcbc;
+  position: relative;
 }
 
 div.wrap-builder-elem:nth-child(1) {
   border-top: none;
+}
+div.wrap-builder-elem label {
+  position: absolute;
+  bottom: -1px;
+  text-transform: uppercase;
+  font-size: x-small;
 }

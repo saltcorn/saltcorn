@@ -29,6 +29,7 @@ const WrapElem = ({
   fontSize,
   title,
   bold,
+  label,
 }) => (
   <div
     className="wrap-builder-elem d-flex align-items-center justify-content-center"
@@ -42,6 +43,7 @@ const WrapElem = ({
           <i className={`fa-lg ${icon}`}></i>
         )}
     </div>
+    <label>{label}</label>
   </div>
 );
 const TextElem = ({ connectors }) => (
