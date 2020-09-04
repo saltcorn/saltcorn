@@ -1,10 +1,12 @@
 import React from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
+import ContentEditable from "react-contenteditable";
 
 export const Text = ({ text, block, textStyle }) => {
   const {
     connectors: { connect, drag },
+    actions: { setPropThrottled, setProp },
   } = useNode();
   return (
     <span
@@ -12,7 +14,10 @@ export const Text = ({ text, block, textStyle }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      {text}
+      <ContentEditable
+        html={text}
+        onChange={(e) => setProp((props) => (props.text = e.target.value))}
+      />
     </span>
   );
 };
@@ -33,7 +38,7 @@ export const TextSettings = () => {
       <label>Text to display</label>
       <input
         type="text"
-        className="text-to-display"
+        className="text-to-display w-100"
         value={text}
         onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
       />
