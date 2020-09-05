@@ -59,6 +59,7 @@ Link.craft = {
     block: false,
     textStyle: "",
   },
+  displayName: "Link",
   related: {
     settings: LinkSettings,
   },

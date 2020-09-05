@@ -53,6 +53,7 @@ export const ActionSettings = () => {
 };
 
 Action.craft = {
+  displayName: "Action",
   related: {
     settings: ActionSettings,
   },

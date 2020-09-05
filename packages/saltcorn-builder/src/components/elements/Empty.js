@@ -11,3 +11,6 @@ export const Empty = ({}) => {
     </Fragment>
   );
 };
+Empty.craft = {
+  displayName: "Empty",
+};
