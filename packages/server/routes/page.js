@@ -27,7 +27,6 @@ router.get(
       const db_page = await Page.findOne({ name: pagename });
       if (db_page && role <= db_page.min_role) {
         const contents = await db_page.run(req.query, { res, req });
-        console.log(contents);
 
         res.sendWrap(
           { title: db_page.title, description: db_page.description } ||
