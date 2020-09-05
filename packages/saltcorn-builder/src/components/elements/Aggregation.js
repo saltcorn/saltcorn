@@ -90,6 +90,7 @@ export const AggregationSettings = () => {
 };
 
 Aggregation.craft = {
+  displayName: "Aggregation",
   related: {
     settings: AggregationSettings,
   },

@@ -35,6 +35,7 @@ export const HTMLCodeSettings = () => {
 };
 
 HTMLCode.craft = {
+  displayName: "HTMLCode",
   related: {
     settings: HTMLCodeSettings,
   },

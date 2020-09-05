@@ -63,6 +63,7 @@ export const ViewSettings = () => {
 };
 
 View.craft = {
+  displayName: "View",
   related: {
     settings: ViewSettings,
   },

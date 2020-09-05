@@ -62,6 +62,7 @@ export const TextSettings = () => {
 };
 
 Text.craft = {
+  displayName: "Text",
   related: {
     settings: TextSettings,
   },
