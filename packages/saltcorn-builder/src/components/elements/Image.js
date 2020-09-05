@@ -58,7 +58,6 @@ export const ImageSettings = () => {
 };
 
 Image.craft = {
-  displayName: "Image",
   defaultProps: {
     alt: "",
     block: false,

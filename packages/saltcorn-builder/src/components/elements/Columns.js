@@ -95,7 +95,6 @@ export const ColumnsSettings = () => {
   );
 };
 Columns.craft = {
-  displayName: "Columns",
   defaultProps: {
     widths: [6],
     ncols: 2,

@@ -53,7 +53,6 @@ export const JoinFieldSettings = () => {
 };
 
 JoinField.craft = {
-  displayName: "JoinField",
   related: {
     settings: JoinFieldSettings,
   },

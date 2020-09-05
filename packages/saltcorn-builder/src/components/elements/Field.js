@@ -75,7 +75,6 @@ export const FieldSettings = () => {
 };
 
 Field.craft = {
-  displayName: "Field",
   related: {
     settings: FieldSettings,
   },

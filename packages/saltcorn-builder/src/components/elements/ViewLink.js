@@ -65,7 +65,6 @@ export const ViewLinkSettings = () => {
 };
 
 ViewLink.craft = {
-  displayName: "ViewLink",
   related: {
     settings: ViewLinkSettings,
   },

@@ -26,7 +26,3 @@ export const SearchBar = ({}) => {
     </div>
   );
 };
-
-SearchBar.craft = {
-  displayName: "SearchBar",
-};

@@ -49,7 +49,7 @@ table.toolbox {
   table-layout: fixed;
 }
 button.store-install {
-  width: auto;
+  width: 5em;
 }
 
 span.badge.plugin-store {
