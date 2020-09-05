@@ -13,6 +13,10 @@ const {
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
+const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
+const { table } = require("console");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -70,5 +74,82 @@ describe("files admin", () => {
   it("serve file to public after role change", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/2").expect(toSucceed());
+  });
+});
+describe("files edit", () => {
+  it("creates table and view", async () => {
+    const table = await Table.create("thefiletable");
+    await Field.create({
+      table,
+      name: "first_name",
+      label: "First name",
+      type: "String",
+    });
+    await Field.create({
+      table,
+      name: "mugshot",
+      label: "Mugshot",
+      type: "File",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "thefileview",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "mugshot", fieldview: "upload" },
+          { type: "Field", field_name: "first_name", fieldview: "edit" },
+          { type: "Action", action_name: "Save", minRole: 10 },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              field_name: "mugshot",
+              fieldview: "upload",
+            },
+            {
+              type: "field",
+              field_name: "first_name",
+              fieldview: "edit",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+      on_root_page: false,
+    });
+  });
+  it("shows edit view", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/view/thefileview")
+      .set("Cookie", loginCookie)
+      .expect(toSucceed());
+  });
+  it("shows edit view", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/view/thefileview")
+      .set("Cookie", loginCookie)
+      .expect(toSucceed());
+  });
+  it("submits edit view", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .post("/view/thefileview")
+      .set("Cookie", loginCookie)
+      .field("first_name", "elvis")
+      .attach("mugshot", Buffer.from("iamelvis", "utf-8"))
+      .expect(toRedirect("/"));
+  });
+  it("has file", async () => {
+    const table = await Table.findOne({ name: "thefiletable" });
+    const row = await table.getRow({ first_name: "elvis" });
+    const file = await File.findOne({ id: row.mugshot });
+    expect(!!file).toBe(true);
   });
 });
