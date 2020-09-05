@@ -12,3 +12,7 @@ export const LineBreak = ({}) => {
     </Fragment>
   );
 };
+
+LineBreak.craft = {
+  displayName: "LineBreak",
+};
