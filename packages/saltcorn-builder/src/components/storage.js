@@ -208,7 +208,7 @@ export const craftToSaltcorn = (nodes) => {
   };
   const go = (node) => {
     if (node.isCanvas) {
-      if (node.displayName === Container.name)
+      if (node.displayName === Container.craft.displayName)
         return {
           contents: get_nodes(node),
           type: "container",
@@ -224,7 +224,7 @@ export const craftToSaltcorn = (nodes) => {
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
         };
-      else if (node.displayName === Card.name)
+      else if (node.displayName === Card.craft.displayName)
         return {
           contents: get_nodes(node),
           type: "card",
@@ -233,7 +233,7 @@ export const craftToSaltcorn = (nodes) => {
       else return get_nodes(node);
     }
 
-    if (node.displayName === Text.name) {
+    if (node.displayName === Text.craft.displayName) {
       return {
         type: "blank",
         contents: node.props.text,
@@ -241,20 +241,20 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
       };
     }
-    if (node.displayName === HTMLCode.name) {
+    if (node.displayName === HTMLCode.craft.displayName) {
       return {
         type: "blank",
         isHTML: true,
         contents: node.props.text,
       };
     }
-    if (node.displayName === LineBreak.name) {
+    if (node.displayName === LineBreak.craft.displayName) {
       return { type: "line_break" };
     }
-    if (node.displayName === SearchBar.name) {
+    if (node.displayName === SearchBar.craft.displayName) {
       return { type: "search_bar" };
     }
-    if (node.displayName === Columns.name) {
+    if (node.displayName === Columns.craft.displayName) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
@@ -262,7 +262,7 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
 
-    if (node.displayName === Image.name) {
+    if (node.displayName === Image.craft.displayName) {
       return {
         type: "image",
         alt: node.props.alt,
@@ -270,7 +270,7 @@ export const craftToSaltcorn = (nodes) => {
         block: node.props.block,
       };
     }
-    if (node.displayName === Link.name) {
+    if (node.displayName === Link.craft.displayName) {
       return {
         type: "link",
         text: node.props.text,
@@ -279,7 +279,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
       };
     }
-    if (node.displayName === View.name) {
+    if (node.displayName === View.craft.displayName) {
       return {
         type: "view",
         view: node.props.view,
@@ -288,7 +288,7 @@ export const craftToSaltcorn = (nodes) => {
         state: node.props.state,
       };
     }
-    if (node.displayName === Field.name) {
+    if (node.displayName === Field.craft.displayName) {
       columns.push({
         type: "Field",
         field_name: node.props.name,
@@ -302,7 +302,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
       };
     }
-    if (node.displayName === JoinField.name) {
+    if (node.displayName === JoinField.craft.displayName) {
       columns.push({
         type: "JoinField",
         join_field: node.props.name,
@@ -314,7 +314,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
       };
     }
-    if (node.displayName === Aggregation.name) {
+    if (node.displayName === Aggregation.craft.displayName) {
       columns.push({
         type: "Aggregation",
         agg_relation: node.props.agg_relation,
@@ -330,7 +330,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
       };
     }
-    if (node.displayName === ViewLink.name) {
+    if (node.displayName === ViewLink.craft.displayName) {
       columns.push({
         type: "ViewLink",
         view: node.props.name,
@@ -344,7 +344,7 @@ export const craftToSaltcorn = (nodes) => {
         minRole: node.props.minRole,
       };
     }
-    if (node.displayName === Action.name) {
+    if (node.displayName === Action.craft.displayName) {
       columns.push({
         type: "Action",
         action_name: node.props.name,
