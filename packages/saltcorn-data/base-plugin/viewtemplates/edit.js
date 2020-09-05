@@ -225,7 +225,7 @@ const runPost = async (
         const file = await File.from_req_files(
           req.files[field.name],
           req.user ? req.user.id : null,
-          (field.attributes && field.attributes.min_role_read) || 1
+          (field.attributes && +field.attributes.min_role_read) || 1
         );
         row[field.name] = file.id;
       }

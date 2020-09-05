@@ -168,7 +168,10 @@ const init_multi_tenant = async (plugin_loader) => {
       await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
     } catch (err) {
-      console.error(err.message);
+      console.error(
+        `init_multi_tenant error in domain ${domain}: `,
+        err.message
+      );
     }
   }
 };
