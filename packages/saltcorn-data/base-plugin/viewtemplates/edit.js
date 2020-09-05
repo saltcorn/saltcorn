@@ -25,6 +25,8 @@ const configuration_workflow = () =>
           const field_view_options = calcfldViewOptions(fields, true);
 
           const roles = await User.get_roles();
+          const images = await File.find({ mime_super: "image" });
+
           const actions = [
             "Save",
             //"Delete"
@@ -34,6 +36,7 @@ const configuration_workflow = () =>
             field_view_options,
             roles,
             actions,
+            images,
             mode: "edit",
           };
         },

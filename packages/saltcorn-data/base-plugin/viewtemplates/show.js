@@ -2,6 +2,7 @@ const Form = require("../../models/form");
 const User = require("../../models/user");
 const Field = require("../../models/field");
 const View = require("../../models/view");
+const File = require("../../models/file");
 const Table = require("../../models/table");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { mkTable } = require("@saltcorn/markup");
@@ -62,9 +63,11 @@ const configuration_workflow = () =>
               viewrow.name !== context.viewname &&
               state_fields.some((sf) => sf.name === "id")
           );
+          const images = await File.find({ mime_super: "image" });
 
           return {
             fields,
+            images,
             actions,
             field_view_options,
             link_view_opts,
