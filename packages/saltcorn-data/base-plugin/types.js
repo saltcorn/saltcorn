@@ -4,6 +4,7 @@ const {
   select,
   option,
   text,
+  div,
   h3,
   button,
   textarea,
@@ -152,6 +153,47 @@ const int = {
   validate: ({ min, max }) => (x) => {
     if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
     if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+    return true;
+  },
+};
+
+const color = {
+  name: "Color",
+  sql_name: "text",
+  contract: () => is.str,
+  fieldviews: {
+    show: {
+      isEdit: false,
+      run: (s) =>
+        div({
+          height: "10px",
+          width: "20px",
+          style: `background-color: ${s};`,
+        }),
+    },
+    edit: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "color",
+          class: ["form-control", cls],
+          disabled: attrs.disabled,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && { value: text_attr(v) }),
+        }),
+    },
+  },
+  attributes: [],
+  read: (v) => {
+    switch (typeof v) {
+      case "string":
+        return v;
+      default:
+        return undefined;
+    }
+  },
+  validate: () => (x) => {
     return true;
   },
 };
@@ -314,4 +356,4 @@ const bool = {
   validate: () => (x) => true,
 };
 
-module.exports = { string, int, bool, date, float };
+module.exports = { string, int, bool, date, float, color };
