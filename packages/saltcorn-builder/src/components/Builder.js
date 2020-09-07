@@ -70,8 +70,34 @@ const SettingsPanel = () => {
     </div>
   );
 };
+const SaveButton = () => {
+  const { query, actions } = useEditor(() => {});
+  const options = useContext(optionsCtx);
 
-const SaveButton = ({ layout }) => {
+  const onClick = () => {
+    const data = craftToSaltcorn(JSON.parse(query.serialize()));
+    fetch(`/pageedit/savebuilder/${options.page_id}`, {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+      },
+      body: JSON.stringify(data),
+    });
+  };
+  return options.page_id ? (
+    <button
+      className="btn btn-outline-secondary mr-2 builder-save-ajax"
+      onClick={onClick}
+    >
+      Save
+    </button>
+  ) : (
+    ""
+  );
+};
+
+const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   useEffect(() => {
     layoutToNodes(layout, query, actions);
@@ -161,7 +187,8 @@ const Builder = ({ options, layout, mode }) => {
               </div>
               <SettingsPanel />
               <br />
-              <SaveButton layout={layout} />
+              <SaveButton />
+              <NextButton layout={layout} />
             </div>
           </div>
         </div>

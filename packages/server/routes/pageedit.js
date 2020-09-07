@@ -82,6 +82,8 @@ const pageFlow = new Workflow({
         return {
           views,
           images,
+          page_name: context.name,
+          page_id: context.id,
           mode: "page",
         };
       },

@@ -15,6 +15,11 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 
+const addCsrf = (rec, csrf) => {
+  rec.csrfToken = csrf;
+  return rec;
+};
+
 module.exports = (
   { options, context, action, stepName, layout, mode = "show" },
   csrfToken
@@ -36,7 +41,7 @@ module.exports = (
     ),
     script(`builder.renderBuilder(
       "saltcorn-builder", 
-      ${JSON.stringify(options)}, 
+      ${JSON.stringify(addCsrf(options, csrfToken))}, 
       ${JSON.stringify(layout || {})},
       ${JSON.stringify(mode)}
     )`),
