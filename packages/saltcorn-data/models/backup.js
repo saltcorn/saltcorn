@@ -20,6 +20,7 @@ const {
   plugin_pack,
   page_pack,
   install_pack,
+  can_install_pack,
 } = require("./pack");
 const { is_plugin } = require("../contracts");
 
@@ -216,7 +217,10 @@ const restore_config = contract(
 );
 
 const restore = contract(
-  is.fun([is.str, is.fun(is_plugin, is.undefined)], is.promise(is.undefined)),
+  is.fun(
+    [is.str, is.fun(is_plugin, is.undefined)],
+    is.promise(is.or(is.undefined, is.str))
+  ),
   async (fnm, loadAndSaveNewPlugin) => {
     const dir = await tmp.dir({ unsafeCleanup: true });
     //unzip
@@ -226,6 +230,15 @@ const restore = contract(
     const pack = JSON.parse(
       await fs.readFile(path.join(dir.path, "pack.json"))
     );
+
+    const can_restore = await can_install_pack(pack);
+    if (can_restore.error || can_restore.warning) {
+      return `Cannot restore backup, clashing entities: 
+      ${can_restore.error || ""} ${can_restore.warning || ""}
+      Delete these entities or restore to a pristine instance.
+      `;
+    }
+
     await install_pack(pack, undefined, loadAndSaveNewPlugin);
 
     //users
