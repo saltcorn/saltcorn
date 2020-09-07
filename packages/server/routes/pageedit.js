@@ -279,6 +279,22 @@ router.post(
 );
 
 router.post(
+  "/savebuilder/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id && req.body.layout) {
+      await Page.update(+id, { layout: req.body.layout });
+      res.json({ success: "ok" });
+    } else {
+      res.json({ error: "no page or no layout." });
+    }
+  })
+);
+
+router.post(
   "/delete/:id",
   setTenant,
   isAdmin,
