@@ -165,11 +165,12 @@ const color = {
     show: {
       isEdit: false,
       run: (s) =>
-        div({
-          height: "10px",
-          width: "20px",
-          style: `background-color: ${s};`,
-        }),
+        s
+          ? div({
+              class: "color-type-show",
+              style: `background: ${s};`,
+            })
+          : "",
     },
     edit: {
       isEdit: true,

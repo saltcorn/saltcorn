@@ -98,3 +98,10 @@ div.wrap-builder-elem label {
 .builder-sidebar h5 {
   text-decoration: underline;
 }
+
+div.color-type-show {
+  height: 20px;
+  width: 30px;
+  border: 1px solid grey;
+  margin-top: 2px;
+}
