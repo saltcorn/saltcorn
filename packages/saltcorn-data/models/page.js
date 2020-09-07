@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
 const { eachView } = require("./layout");
+const { div } = require("@saltcorn/markup/tags");
 class Page {
   constructor(o) {
     this.name = o.name;
@@ -67,7 +68,15 @@ class Page {
   async run(querystate, extraArgs) {
     await eachView(this.layout, async (segment) => {
       const view = await View.findOne({ name: segment.view });
-      if (segment.state === "shared") {
+      if (!view) {
+        segment.contents = div(
+          { class: "alert alert-danger", role: "alert" },
+          "Page configuration error in embedded view: ",
+          segment.view
+            ? `view "${segment.view}" not found`
+            : "no view specified"
+        );
+      } else if (segment.state === "shared") {
         const mystate = view.combine_state_and_default_state(querystate);
         segment.contents = await view.run(mystate, extraArgs);
       } else {
