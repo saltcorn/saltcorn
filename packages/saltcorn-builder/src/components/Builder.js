@@ -113,7 +113,7 @@ const Builder = ({ options, layout, mode }) => {
               )}
             </div>
           </div>
-          <div className="col">
+          <div id="builder-main-canvas" className="col">
             <div>
               <Frame
                 resolver={{
