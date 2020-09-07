@@ -6,6 +6,7 @@ const {
   text,
   div,
   h3,
+  a,
   button,
   textarea,
   text_attr,
@@ -45,6 +46,7 @@ const string = {
       : is.one_of(options.map((o) => o.name)),
   fieldviews: {
     as_text: { isEdit: false, run: (s) => text(s) },
+    as_link: { isEdit: false, run: (s) => a({ href: text(s) }, text(s)) },
     as_header: { isEdit: false, run: (s) => h3(text(s)) },
     edit: {
       isEdit: true,
