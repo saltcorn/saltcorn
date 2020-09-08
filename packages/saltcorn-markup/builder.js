@@ -20,6 +20,8 @@ const addCsrf = (rec, csrf) => {
   return rec;
 };
 
+const encode = (x) => encodeURIComponent(JSON.stringify(x));
+
 module.exports = (
   { options, context, action, stepName, layout, mode = "show" },
   csrfToken
@@ -41,8 +43,8 @@ module.exports = (
     ),
     script(`builder.renderBuilder(
       "saltcorn-builder", 
-      ${JSON.stringify(addCsrf(options, csrfToken))}, 
-      ${JSON.stringify(layout || {})},
+      "${encode(addCsrf(options, csrfToken))}", 
+      "${encode(layout || {})}",
       ${JSON.stringify(mode)}
     )`),
     style(`
