@@ -9,10 +9,16 @@ const {
   h4,
   span,
   script,
+  style,
   input,
   form,
 } = require("./tags");
 const { contract, is } = require("contractis");
+
+const addCsrf = (rec, csrf) => {
+  rec.csrfToken = csrf;
+  return rec;
+};
 
 module.exports = (
   { options, context, action, stepName, layout, mode = "show" },
@@ -35,8 +41,11 @@ module.exports = (
     ),
     script(`builder.renderBuilder(
       "saltcorn-builder", 
-      ${JSON.stringify(options)}, 
+      ${JSON.stringify(addCsrf(options, csrfToken))}, 
       ${JSON.stringify(layout || {})},
       ${JSON.stringify(mode)}
-    )`)
+    )`),
+    style(`
+#builder-main-canvas {height: calc(100vh - 180px);overflow-y: scroll }
+    `)
   );
