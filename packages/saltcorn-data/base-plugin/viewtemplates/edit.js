@@ -232,7 +232,6 @@ const runPost = async (
         delete row[field.name];
       }
     }
-    console.log(row);
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
