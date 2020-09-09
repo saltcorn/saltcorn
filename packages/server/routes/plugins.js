@@ -109,7 +109,7 @@ const cfg_link = (row) => {
       {
         class: "btn btn-secondary btn-sm d-inline",
         role: "button",
-        href: `/plugins/configure/${row.name}`,
+        href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: "Configure plugin",
       },
       '<i class="fas fa-cog"></i>'
@@ -166,13 +166,18 @@ const store_item_html = (req) => (item) => ({
       item.installed &&
         item.plugin &&
         item.name !== "base" &&
-        post_btn(`/plugins/delete/${item.name}`, "Remove", req.csrfToken(), {
-          klass: "store-install",
-          small: true,
-          btnClass: "danger",
-          formClass: "d-inline",
-          onClick: "press_store_button(this)",
-        })
+        post_btn(
+          `/plugins/delete/${encodeURIComponent(item.name)}`,
+          "Remove",
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            btnClass: "danger",
+            formClass: "d-inline",
+            onClick: "press_store_button(this)",
+          }
+        )
     )
   ),
 });
@@ -323,7 +328,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name });
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${plugin.name}`;
@@ -341,7 +346,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name });
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${plugin.name}`;
@@ -450,7 +455,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
-    const plugin = await Plugin.findOne({ name });
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     const depviews = await plugin.dependant_views();
     if (depviews.length === 0) {
       await plugin.delete();
@@ -472,7 +477,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
-    const plugin = await Plugin.store_by_name(name);
+    const plugin = await Plugin.store_by_name(decodeURIComponent(name));
     await load_plugins.loadAndSaveNewPlugin(plugin);
     const plugin_module = getState().plugins[name];
     if (plugin_module && plugin_module.configuration_workflow) {
