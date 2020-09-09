@@ -175,8 +175,12 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const f = await File.findOne({ id });
-    await f.delete();
-    req.flash("success", `File ${text(f.filename)} deleted`);
+    const result = await f.delete();
+    if (result.error) {
+      req.flash("error", result.error);
+    } else {
+      req.flash("success", `File ${text(f.filename)} deleted`);
+    }
     res.redirect(`/files`);
   })
 );
