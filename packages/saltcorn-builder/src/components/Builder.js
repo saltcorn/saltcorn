@@ -107,7 +107,11 @@ const ViewPageLink = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
   return options.page_id ? (
-    <a target="_blank" className="d-block" href={`/page/${options.page_name}`}>
+    <a
+      target="_blank"
+      className="d-block mt-2"
+      href={`/page/${options.page_name}`}
+    >
       View page
     </a>
   ) : (
