@@ -12,7 +12,7 @@ const { renderForm } = require("@saltcorn/markup");
 const router = new Router();
 module.exports = router;
 
-const files_to_dropdown = async (fields) => {
+const files_to_dropdown = (fields) => {
   return fields.map((f) => {
     if (f.type === "File") f.attributes = { select_file_where: {} };
     return f;
@@ -27,7 +27,7 @@ router.get(
     const { tname } = req.params;
     const table = await Table.findOne({ name: tname });
     const fields = await Field.find({ table_id: table.id });
-    const fields_dropfiles = await files_to_dropdown(fields);
+    const fields_dropfiles = files_to_dropdown(fields);
     const form = new Form({ action: `/edit/${tname}`, fields_dropfiles });
     await form.fill_fkey_options();
     res.sendWrap(`New ${table.name}`, {
@@ -62,7 +62,7 @@ router.get(
 
     const fields = await Field.find({ table_id: table.id });
     const row = await table.getRow({ id });
-    const fields_dropfiles = await files_to_dropdown(fields);
+    const fields_dropfiles = files_to_dropdown(fields);
     const form = new Form({
       action: `/edit/${tname}`,
       values: row,
@@ -102,8 +102,12 @@ router.post(
 
     const fields = await Field.find({ table_id: table.id });
     const v = req.body;
+    const fields_dropfiles = files_to_dropdown(fields);
 
-    const form = new Form({ action: `/edit/${tname}`, fields });
+    const form = new Form({
+      action: `/edit/${tname}`,
+      fields: fields_dropfiles,
+    });
     if (typeof v.id !== "undefined") form.hidden("id");
     form.validate(v);
     if (form.hasErrors) {
