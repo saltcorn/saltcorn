@@ -75,6 +75,14 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/2").expect(toSucceed());
   });
+  it("delete file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/files/delete/2")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/files"));
+  });
 });
 describe("files edit", () => {
   it("creates table and view", async () => {

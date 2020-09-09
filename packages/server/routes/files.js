@@ -176,7 +176,7 @@ router.post(
     const { id } = req.params;
     const f = await File.findOne({ id });
     const result = await f.delete();
-    if (result.error) {
+    if (result && result.error) {
       req.flash("error", result.error);
     } else {
       req.flash("success", `File ${text(f.filename)} deleted`);
