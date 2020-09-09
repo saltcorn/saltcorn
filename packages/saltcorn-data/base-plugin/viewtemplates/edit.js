@@ -228,9 +228,11 @@ const runPost = async (
           (field.attributes && +field.attributes.min_role_read) || 1
         );
         row[field.name] = file.id;
+      } else {
+        delete row[field.name];
       }
     }
-
+    console.log(row);
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
