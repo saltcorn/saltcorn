@@ -171,7 +171,7 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
-    icon="fab fa-mixer"
+    icon="fas fa-ruler-combined"
     title="Join field"
     label="Join"
   >
