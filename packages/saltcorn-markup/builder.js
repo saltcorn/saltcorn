@@ -46,8 +46,5 @@ module.exports = (
       "${encode(addCsrf(options, csrfToken))}", 
       "${encode(layout || {})}",
       ${JSON.stringify(mode)}
-    )`),
-    style(`
-#builder-main-canvas {height: calc(100vh - 180px);overflow-y: scroll }
-    `)
+    )`)
   );

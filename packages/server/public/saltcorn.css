@@ -109,3 +109,8 @@ div.color-type-show {
 input[type="color"].form-control {
   max-width: 80px;
 }
+
+#builder-main-canvas {
+  height: calc(100vh - 70px);
+  overflow-y: scroll;
+}
