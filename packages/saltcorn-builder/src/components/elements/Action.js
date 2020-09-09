@@ -5,17 +5,19 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const Action = ({ name, block }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
-  return (
+  } = useNode((node) => ({ selected: node.events.selected }));
+  const btn = (
     <button
-      className="btn btn-primary"
+      className={`btn btn-primary`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
       {name}
     </button>
   );
+  return selected ? <span className={"selected-node"}>{btn}</span> : btn;
 };
 
 export const ActionSettings = () => {

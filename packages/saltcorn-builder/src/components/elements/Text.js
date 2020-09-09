@@ -20,7 +20,7 @@ export const Text = ({ text, block, textStyle }) => {
 
   return (
     <span
-      className={`${textStyle} is-text`}
+      className={`${textStyle} is-text ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}

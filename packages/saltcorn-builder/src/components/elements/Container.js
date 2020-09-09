@@ -18,8 +18,9 @@ export const Container = ({
   textColor,
 }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -27,7 +28,7 @@ export const Container = ({
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
-      }`}
+      } ${selected ? "selected-node" : ""}`}
       style={{
         padding: "4px",
         minHeight: `${Math.max(minHeight, 15)}px`,

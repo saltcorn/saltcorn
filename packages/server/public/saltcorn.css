@@ -24,7 +24,7 @@ span.is-html-block {
   min-height: 30px;
   min-width: 50px;
   display: inline-block;
-  border: 1px dashed #111111;
+  border: 1px dotted #111111;
 }
 div.settings-panel {
   min-height: 150px;
@@ -108,4 +108,12 @@ div.color-type-show {
 
 input[type="color"].form-control {
   max-width: 80px;
+}
+
+#builder-main-canvas {
+  height: calc(100vh - 70px);
+  overflow-y: scroll;
+}
+#builder-main-canvas .selected-node {
+  border: 1px dashed blue !important;
 }

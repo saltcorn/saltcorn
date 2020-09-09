@@ -5,12 +5,15 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const View = ({ name, view, state }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className="builder-embed-view text-center"
+      className={`builder-embed-view text-center ${
+        selected ? "selected-node" : ""
+      }`}
     >
       {view} view
     </div>

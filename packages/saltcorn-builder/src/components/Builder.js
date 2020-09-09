@@ -33,6 +33,9 @@ const SettingsPanel = () => {
       selected = {
         id: currentNodeId,
         name: state.nodes[currentNodeId].data.name,
+        displayName:
+          state.nodes[currentNodeId].data &&
+          state.nodes[currentNodeId].data.displayName,
         settings:
           state.nodes[currentNodeId].related &&
           state.nodes[currentNodeId].related.settings,
@@ -44,13 +47,17 @@ const SettingsPanel = () => {
       selected,
     };
   });
-
   return (
     <div className="settings-panel card mt-2">
-      <div className="card-header">Settings</div>
+      <div className="card-header">
+        {selected && selected.displayName
+          ? `Settings: ${selected.displayName}`
+          : "Settings"}
+      </div>
       <div className="card-body">
         {selected ? (
           <Fragment>
+            {}
             {selected.settings && React.createElement(selected.settings)}
             {selected.isDeletable && (
               <button
@@ -96,7 +103,21 @@ const SaveButton = () => {
     ""
   );
 };
-
+const ViewPageLink = () => {
+  const { query, actions } = useEditor(() => {});
+  const options = useContext(optionsCtx);
+  return options.page_id ? (
+    <a
+      target="_blank"
+      className="d-block mt-2"
+      href={`/page/${options.page_name}`}
+    >
+      View page
+    </a>
+  ) : (
+    ""
+  );
+};
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   useEffect(() => {
@@ -189,6 +210,7 @@ const Builder = ({ options, layout, mode }) => {
               <br />
               <SaveButton />
               <NextButton layout={layout} />
+              <ViewPageLink />
             </div>
           </div>
         </div>

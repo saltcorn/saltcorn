@@ -11,11 +11,12 @@ export const Aggregation = ({
   textStyle,
 }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <span
-      className={textStyle}
+      className={`${textStyle} ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >

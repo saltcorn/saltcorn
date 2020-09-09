@@ -4,10 +4,14 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const HTMLCode = ({ text }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
-    <span className="is-html-block" ref={(dom) => connect(drag(dom))}>
+    <span
+      className={`is-html-block ${selected ? "selected-node" : ""}`}
+      ref={(dom) => connect(drag(dom))}
+    >
       <div style={{ fontSize: "8px" }}>HTML</div>
       <div dangerouslySetInnerHTML={{ __html: text }}></div>
     </span>

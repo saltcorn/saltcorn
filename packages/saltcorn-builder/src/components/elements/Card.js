@@ -5,11 +5,15 @@ import { Element, useNode } from "@craftjs/core";
 
 export const Card = ({ children, title }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
 
   return (
-    <div className="card builder" ref={(dom) => connect(drag(dom))}>
+    <div
+      className={`card builder ${selected ? "selected-node" : ""}`}
+      ref={(dom) => connect(drag(dom))}
+    >
       {title && title.length > 0 && <div className="card-header">{title}</div>}
       <div className="card-body canvas">{children}</div>
     </div>

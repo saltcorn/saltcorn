@@ -3,11 +3,17 @@ import { useNode } from "@craftjs/core";
 
 export const LineBreak = ({}) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <Fragment>
-      <span ref={(dom) => connect(drag(dom))}>↵</span>
+      <span
+        className={selected ? "selected-node" : ""}
+        ref={(dom) => connect(drag(dom))}
+      >
+        ↵
+      </span>
       <br />
     </Fragment>
   );

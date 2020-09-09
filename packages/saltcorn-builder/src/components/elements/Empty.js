@@ -3,8 +3,9 @@ import { useNode } from "@craftjs/core";
 
 export const Empty = ({}) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <Fragment>
       <span ref={(dom) => connect(drag(dom))}></span>
