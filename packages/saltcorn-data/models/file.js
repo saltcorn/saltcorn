@@ -63,8 +63,12 @@ class File {
     });
   }
   async delete() {
-    await fs.unlink(this.location);
-    await db.deleteWhere("_sc_files", { id: this.id });
+    try {
+      await db.deleteWhere("_sc_files", { id: this.id });
+      await fs.unlink(this.location);
+    } catch (e) {
+      return { error: e.message };
+    }
   }
   get mimetype() {
     return `${this.mime_super}/${this.mime_sub}`;
@@ -91,7 +95,10 @@ File.contract = {
     min_role_read: is.posint,
   },
   methods: {
-    delete: is.fun([], is.promise(is.undefined)),
+    delete: is.fun(
+      [],
+      is.promise(is.or(is.obj({ error: is.str }), is.undefined))
+    ),
     mimetype: is.getter(is.str),
   },
   static_methods: {

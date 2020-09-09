@@ -83,7 +83,11 @@ router.get(
     const table = await Table.findOne({ name: tname });
 
     const fields = await table.getFields();
-    var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
+    var tfields = fields.map((f) =>
+      f.type === "File"
+        ? { label: f.label, key: `${f.name}__filename` }
+        : { label: f.label, key: f.listKey }
+    );
     const joinOpts = { orderBy: "id" };
     if (table.versioned) {
       joinOpts.aggregations = {

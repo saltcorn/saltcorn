@@ -18,6 +18,7 @@ afterAll(db.close);
 beforeAll(async () => {
   await resetToFixtures();
 });
+jest.setTimeout(30000);
 
 const pack = {
   tables: [
