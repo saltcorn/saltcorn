@@ -114,3 +114,6 @@ input[type="color"].form-control {
   height: calc(100vh - 70px);
   overflow-y: scroll;
 }
+#builder-main-canvas .selected-node {
+  border: 1px dashed blue;
+}

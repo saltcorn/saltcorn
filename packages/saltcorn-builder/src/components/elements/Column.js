@@ -5,10 +5,14 @@ import optionsCtx from "../context";
 
 export const Column = ({ children, align }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
-    <div ref={(dom) => connect(drag(dom))}>
+    <div
+      className={selected ? "selected-node" : ""}
+      ref={(dom) => connect(drag(dom))}
+    >
       <div className="canvas">{children}</div>
     </div>
   );

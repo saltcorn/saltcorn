@@ -24,11 +24,15 @@ const getWidth = (widths, colix) =>
 
 export const Columns = ({ widths, contents, ncols }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
 
   return (
-    <div className="row" ref={(dom) => connect(drag(dom))}>
+    <div
+      className={`row ${selected ? "selected-node" : ""}`}
+      ref={(dom) => connect(drag(dom))}
+    >
       {ntimes(ncols, (ix) => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
           <Element canvas id={`Col${ix}`} is={Column}>
