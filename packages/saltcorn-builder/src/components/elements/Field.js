@@ -10,7 +10,7 @@ export const Field = ({ name, fieldview, block, textStyle }) => {
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <span
-      className={`textStyle ${selected ? "selected-node" : ""}`}
+      className={`${textStyle} ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >

@@ -5,13 +5,14 @@ import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
 export const ViewLink = ({ name, block, minRole, label }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   const names = name.split(":");
   const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
-      className="is-builder-link"
+      className={`is-builder-link ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >

@@ -4,11 +4,14 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const Link = ({ text, block, textStyle }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <span
-      className={`${textStyle} is-builder-link`}
+      className={`${textStyle} is-builder-link ${
+        selected ? "selected-node" : ""
+      }`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >

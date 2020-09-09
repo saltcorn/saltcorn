@@ -5,14 +5,19 @@ import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
 export const Image = ({ fileid, block, alt }) => {
   const {
+    selected,
     connectors: { connect, drag },
-  } = useNode();
+  } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
       {fileid === 0 ? (
         "No images Available"
       ) : (
-        <img className="w-100" src={`/files/serve/${fileid}`} alt={alt}></img>
+        <img
+          className={`w-100 ${selected ? "selected-node" : ""}`}
+          src={`/files/serve/${fileid}`}
+          alt={alt}
+        ></img>
       )}
     </span>
   );
