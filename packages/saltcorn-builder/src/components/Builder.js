@@ -103,7 +103,17 @@ const SaveButton = () => {
     ""
   );
 };
-
+const ViewPageLink = () => {
+  const { query, actions } = useEditor(() => {});
+  const options = useContext(optionsCtx);
+  return options.page_id ? (
+    <a target="_blank" className="d-block" href={`/page/${options.page_name}`}>
+      View page
+    </a>
+  ) : (
+    ""
+  );
+};
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   useEffect(() => {
@@ -196,6 +206,7 @@ const Builder = ({ options, layout, mode }) => {
               <br />
               <SaveButton />
               <NextButton layout={layout} />
+              <ViewPageLink />
             </div>
           </div>
         </div>
