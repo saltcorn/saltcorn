@@ -250,8 +250,13 @@ router.get(
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
     const page = await Page.findOne({ name: pagename });
-    const wfres = await pageFlow.run(page);
-    respondWorkflow(page, wfres, req, res);
+    if (!page) {
+      req.flash("error", `Page ${pagename} not found`);
+      res.redirect(`/pageedit`);
+    } else {
+      const wfres = await pageFlow.run(page);
+      respondWorkflow(page, wfres, req, res);
+    }
   })
 );
 
