@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.1.4",
+  "version": "0.2.0-rc.0",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -9,11 +9,11 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/markup": "^0.1.4",
+    "@saltcorn/markup": "^0.2.0-rc.0",
     "adm-zip": "^0.4.16",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
-    "contractis": "^0.0.12",
+    "contractis": "^0.0.13",
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
