@@ -55,46 +55,62 @@ export const ColumnsSettings = () => {
   }));
   return (
     <div>
-      <div>
-        <label>Number of columns</label>
-        <input
-          type="number"
-          value={ncols}
-          step="1"
-          min="1"
-          max="4"
-          onChange={(e) =>
-            setProp((prop) => {
-              prop.ncols = e.target.value;
-              prop.widths = resetWidths(e.target.value);
-            })
-          }
-        />
-      </div>
-      {ntimes(ncols, (ix) => (
-        <div key={ix}>
-          <h5>Column {ix + 1}</h5>
-
-          <div>
-            <label>width</label>
-            {ix < ncols - 1 ? (
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <label>Number of columns</label>
+            </td>
+            <td colspan="2">
               <input
                 type="number"
-                value={widths[ix]}
+                value={ncols}
+                className="w-100 ml-2"
                 step="1"
                 min="1"
-                max={12 - ncols + 1}
+                max="4"
                 onChange={(e) =>
-                  setProp((prop) => (prop.widths[ix] = +e.target.value))
+                  setProp((prop) => {
+                    prop.ncols = e.target.value;
+                    prop.widths = resetWidths(e.target.value);
+                  })
                 }
               />
-            ) : (
-              ` ${12 - sum(widths)}`
-            )}
-            /12
-          </div>
-        </div>
-      ))}
+            </td>
+          </tr>
+          {ntimes(ncols, (ix) => (
+            <Fragment key={ix}>
+              <tr>
+                {" "}
+                <th colspan="3">Column {ix + 1}</th>
+              </tr>
+              <tr>
+                <td>
+                  <label>Width</label>
+                </td>
+                <td align="right">
+                  {ix < ncols - 1 ? (
+                    <input
+                      type="number"
+                      value={widths[ix]}
+                      className="w-100 ml-2"
+                      step="1"
+                      min="1"
+                      max={12 - ncols + 1}
+                      onChange={(e) =>
+                        setProp((prop) => (prop.widths[ix] = +e.target.value))
+                      }
+                    />
+                  ) : (
+                    `${12 - sum(widths)}`
+                  )}
+                </td>
+                <td>/12</td>
+              </tr>
+            </Fragment>
+          ))}{" "}
+        </tbody>
+      </table>
     </div>
   );
 };
