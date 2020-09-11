@@ -118,6 +118,6 @@ input[type="color"].form-control {
   border: 1px dashed blue !important;
 }
 .builder-sidebar .builder-layers {
-  max-height: calc(50vh);
+  max-height: 50vh;
   overflow-y: scroll;
 }
