@@ -180,9 +180,11 @@ function view_post(viewname, route, data, onDone) {
     data: JSON.stringify(data),
   }).done(onDone);
 }
-
+var logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {
-  var data = { message, stack: error.stack };
+  if (logged_errors.includes(message)) return;
+  logged_errors.push(message);
+  var data = { message, stack: error.stack || "" };
   $.ajax("/crashlog/", {
     dataType: "json",
     type: "POST",
