@@ -184,7 +184,7 @@ var logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {
   if (logged_errors.includes(message)) return;
   logged_errors.push(message);
-  var data = { message, stack: error.stack || "" };
+  var data = { message, stack: (error && error.stack) || "" };
   $.ajax("/crashlog/", {
     dataType: "json",
     type: "POST",
