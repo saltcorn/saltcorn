@@ -180,6 +180,21 @@ function view_post(viewname, route, data, onDone) {
     data: JSON.stringify(data),
   }).done(onDone);
 }
+var logged_errors = [];
+function globalErrorCatcher(message, source, lineno, colno, error) {
+  if (logged_errors.includes(message)) return;
+  logged_errors.push(message);
+  var data = { message, stack: error.stack || "" };
+  $.ajax("/crashlog/", {
+    dataType: "json",
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    contentType: "application/json",
+    data: JSON.stringify(data),
+  });
+}
 
 function press_store_button(clicked) {
   //$('button.store-install').prop('disabled', true);

@@ -86,172 +86,249 @@ export const ContainerSettings = () => {
   }));
   const options = useContext(optionsCtx);
   return (
-    <div>
-      <h5>Border</h5>
-      <label>Width</label>
-      <input
-        type="number"
-        value={borderWidth}
-        step="1"
-        min="0"
-        max="20"
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.borderWidth = e.target.value;
-          })
-        }
-      />
-      <br />
-      <label>Style</label>
-      <select
-        value={borderStyle}
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.borderStyle = e.target.value;
-          })
-        }
-      >
-        <option>solid</option>
-        <option>dotted</option>
-        <option>dashed</option>
-        <option>double</option>
-        <option>groove</option>
-        <option>ridge</option>
-        <option>inset</option>
-        <option>outset</option>
-      </select>
-      <h5>Height</h5>
-      <label>Min</label>
-      <input
-        type="number"
-        value={minHeight}
-        step="1"
-        min="0"
-        max="999"
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.minHeight = e.target.value;
-          })
-        }
-      />
-      <h5>Align</h5>
-      <label>Vert</label>
-      <select
-        value={vAlign}
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.vAlign = e.target.value;
-          })
-        }
-      >
-        <option>top</option>
-        <option>middle</option>
-      </select>
-      <br />
-      <label>Horiz</label>
-      <select
-        value={hAlign}
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.hAlign = e.target.value;
-          })
-        }
-      >
-        <option value="left">Left</option>
-        <option value="center">Center</option>
-        <option value="justify">Justify</option>
-        <option value="right">Right</option>
-      </select>
-      <br />
-      <label>Background</label>
-      <select
-        value={bgType}
-        onChange={(e) => {
-          setProp((prop) => {
-            prop.bgType = e.target.value;
-          });
-          setProp((prop) => {
-            prop.bgFileId =
-              prop.bgFileId ||
-              (options.images.length > 0 && options.images[0].id);
-          });
-        }}
-      >
-        <option>None</option>
-        <option>Image</option>
-        <option>Color</option>
-      </select>
-      {bgType === "Image" && (
-        <Fragment>
-          <br />
-          <select
-            value={bgFileId}
-            onChange={(e) =>
-              setProp((prop) => (prop.bgFileId = e.target.value))
-            }
-          >
-            {options.images.map((f, ix) => (
-              <option key={ix} value={f.id}>
-                {f.filename}
-              </option>
-            ))}
-          </select>
-          <br />
-          <label>Size</label>
-          <select
-            value={imageSize}
-            onChange={(e) =>
-              setProp((prop) => {
-                prop.imageSize = e.target.value;
-              })
-            }
-          >
-            <option>contain</option>
-            <option>cover</option>
-          </select>
-        </Fragment>
-      )}
-      {bgType === "Color" && (
-        <Fragment>
-          <br />
-          <input
-            type="color"
-            value={bgColor}
-            onChange={(e) =>
-              setProp((prop) => {
-                prop.bgColor = e.target.value;
-              })
-            }
-          />
-        </Fragment>
-      )}{" "}
-      <br />
-      <label>
-        Set text color
-        <input
-          name="setTextColor"
-          type="checkbox"
-          checked={setTextColor}
-          onChange={(e) =>
-            setProp((prop) => (prop.setTextColor = e.target.checked))
-          }
-        />{" "}
-      </label>
-      {setTextColor && (
-        <Fragment>
-          <br />
-          <input
-            type="color"
-            value={textColor}
-            onChange={(e) =>
-              setProp((prop) => {
-                prop.textColor = e.target.value;
-              })
-            }
-          />
-        </Fragment>
-      )}
-    </div>
+    <table className="w-100">
+      <tbody>
+        <tr>
+          <th colspan="2">Border</th>
+        </tr>
+        <tr>
+          <td>
+            <label>Width</label>
+          </td>
+          <td>
+            <input
+              type="number"
+              value={borderWidth}
+              step="1"
+              className="w-100 ml-2"
+              min="0"
+              max="20"
+              onChange={(e) =>
+                setProp((prop) => {
+                  prop.borderWidth = e.target.value;
+                })
+              }
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Style</label>
+          </td>
+          <td>
+            <select
+              value={borderStyle}
+              className="w-100 ml-2"
+              onChange={(e) =>
+                setProp((prop) => {
+                  prop.borderStyle = e.target.value;
+                })
+              }
+            >
+              <option>solid</option>
+              <option>dotted</option>
+              <option>dashed</option>
+              <option>double</option>
+              <option>groove</option>
+              <option>ridge</option>
+              <option>inset</option>
+              <option>outset</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th colspan="2">Height</th>
+        </tr>
+        <tr>
+          <td>
+            <label>Min</label>
+          </td>
+          <td>
+            <input
+              type="number"
+              value={minHeight}
+              step="1"
+              min="0"
+              max="999"
+              className="w-100 ml-2"
+              onChange={(e) =>
+                setProp((prop) => {
+                  prop.minHeight = e.target.value;
+                })
+              }
+            />
+          </td>
+        </tr>
+        <tr>
+          <th colspan="2">Align</th>
+        </tr>
+        <tr>
+          <td>
+            <label>Vert</label>
+          </td>
+          <td>
+            <select
+              value={vAlign}
+              className="w-100 ml-2"
+              onChange={(e) =>
+                setProp((prop) => {
+                  prop.vAlign = e.target.value;
+                })
+              }
+            >
+              <option>top</option>
+              <option>middle</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Horiz</label>
+          </td>
+          <td>
+            <select
+              value={hAlign}
+              className="w-100 ml-2"
+              onChange={(e) =>
+                setProp((prop) => {
+                  prop.hAlign = e.target.value;
+                })
+              }
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="justify">Justify</option>
+              <option value="right">Right</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th colspan="2">Background</th>
+        </tr>
+        <tr>
+          <td>
+            <label>Type</label>
+          </td>
+          <td>
+            <select
+              className="w-100 ml-2"
+              value={bgType}
+              onChange={(e) => {
+                setProp((prop) => {
+                  prop.bgType = e.target.value;
+                });
+                setProp((prop) => {
+                  prop.bgFileId =
+                    prop.bgFileId ||
+                    (options.images.length > 0 && options.images[0].id);
+                });
+              }}
+            >
+              <option>None</option>
+              <option>Image</option>
+              <option>Color</option>
+            </select>
+          </td>
+        </tr>
+        {bgType === "Image" && (
+          <Fragment>
+            <tr>
+              <td>
+                <label>File</label>
+              </td>
+              <td>
+                <select
+                  value={bgFileId}
+                  className="w-100 ml-2"
+                  onChange={(e) =>
+                    setProp((prop) => (prop.bgFileId = e.target.value))
+                  }
+                >
+                  {options.images.map((f, ix) => (
+                    <option key={ix} value={f.id}>
+                      {f.filename}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label>Size</label>
+              </td>
+
+              <td>
+                <select
+                  value={imageSize}
+                  className="w-100 ml-2"
+                  onChange={(e) =>
+                    setProp((prop) => {
+                      prop.imageSize = e.target.value;
+                    })
+                  }
+                >
+                  <option>contain</option>
+                  <option>cover</option>
+                </select>
+              </td>
+            </tr>
+          </Fragment>
+        )}
+        {bgType === "Color" && (
+          <tr>
+            <td>
+              <label>Color</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={bgColor}
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.bgColor = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+        )}
+        <tr>
+          <td colspan="2">
+            <label>
+              Set text color
+              <input
+                name="setTextColor"
+                type="checkbox"
+                checked={setTextColor}
+                onChange={(e) =>
+                  setProp((prop) => (prop.setTextColor = e.target.checked))
+                }
+              />{" "}
+            </label>
+          </td>
+        </tr>{" "}
+        {setTextColor && (
+          <tr>
+            <td>
+              <label>Text</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={textColor}
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.textColor = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
   );
 };
 Container.craft = {

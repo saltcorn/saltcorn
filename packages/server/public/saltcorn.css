@@ -117,3 +117,7 @@ input[type="color"].form-control {
 #builder-main-canvas .selected-node {
   border: 1px dashed blue !important;
 }
+.builder-sidebar .builder-layers {
+  max-height: 50vh;
+  overflow-y: scroll;
+}

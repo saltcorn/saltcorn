@@ -29,6 +29,7 @@ export const HTMLCodeSettings = () => {
     <div>
       <label>HTML code</label>
       <textarea
+        rows="6"
         type="text"
         className="text-to-display w-100"
         value={text}
