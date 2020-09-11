@@ -122,6 +122,19 @@ describe("user admin", () => {
     const edituser = await User.findOne({ email: "staff2@foo.com" });
     expect(edituser.role_id).toBe(4);
   });
+  it("tries to create new user with existing email", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/useradmin/save")
+      .send("email=staff2@foo.com")
+      .send("password=fidelio")
+      .send("role_id=8")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/useradmin"));
+    const editusers = await User.find({ email: "staff2@foo.com" });
+    expect(editusers.length).toBe(1);
+  });
   it("deletes user", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

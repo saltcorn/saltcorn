@@ -142,13 +142,16 @@ router.post(
   error_catcher(async (req, res) => {
     const { email, password, role_id, id } = req.body;
     if (id) {
-      await db.update("users", { email, role_id }, id);
-
-      req.flash("success", `User ${email} saved`);
+      try {
+        await db.update("users", { email, role_id }, id);
+        req.flash("success", `User ${email} saved`);
+      } catch (e) {
+        req.flash("error", `Error editing user: ${e.message}`);
+      }
     } else {
       const u = await User.create({ email, password, role_id: +role_id });
-
-      req.flash("success", `User ${email} created`);
+      if (u.error) req.flash("error", u.error);
+      else req.flash("success", `User ${email} created`);
     }
     res.redirect(`/useradmin`);
   })

@@ -13,6 +13,8 @@ class User {
   static async create(uo) {
     const u = new User(uo);
     const hashpw = await bcrypt.hash(u.password, 5);
+    const ex = await User.findOne({ email: u.email });
+    if (ex) return { error: `User with this email already exists` };
     const id = await db.insert("users", {
       email: u.email,
       password: hashpw,
@@ -33,8 +35,8 @@ class User {
     return us.map((u) => new User(u));
   }
   static async findOne(where) {
-    const u = await db.selectOne("users", where);
-    return new User(u);
+    const u = await db.selectMaybeOne("users", where);
+    return u ? new User(u) : u;
   }
   static async nonEmpty() {
     const res = await db.count("users");
@@ -62,13 +64,16 @@ User.contract = {
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("User")))),
-    findOne: is.fun(is.obj(), is.promise(is.class("User"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("User")))),
     nonEmpty: is.fun([], is.promise(is.bool)),
     authenticate: is.fun(
       is.obj({ email: is.str, password: is.str }),
       is.promise(is.or(is.class("User"), is.eq(false)))
     ),
-    create: is.fun(is.obj({ email: is.str }), is.promise(is.class("User"))),
+    create: is.fun(
+      is.obj({ email: is.str }),
+      is.promise(is.or(is.obj({ error: is.str }), is.class("User")))
+    ),
     get_roles: is.fun(
       [],
       is.promise(is.array(is.obj({ id: is.posint, role: is.str })))
