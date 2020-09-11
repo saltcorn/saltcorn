@@ -46,5 +46,8 @@ module.exports = (
       "${encode(addCsrf(options, csrfToken))}", 
       "${encode(layout || {})}",
       ${JSON.stringify(mode)}
-    )`)
+    );
+    document.addEventListener('DOMContentLoaded',
+      function(){window.onerror=globalErrorCatcher},false);
+    ;`)
   );

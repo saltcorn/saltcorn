@@ -181,6 +181,19 @@ function view_post(viewname, route, data, onDone) {
   }).done(onDone);
 }
 
+function globalErrorCatcher(message, source, lineno, colno, error) {
+  var data = { message, stack: error.stack };
+  $.ajax("/crashlog/", {
+    dataType: "json",
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    contentType: "application/json",
+    data: JSON.stringify(data),
+  });
+}
+
 function press_store_button(clicked) {
   //$('button.store-install').prop('disabled', true);
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
