@@ -26,27 +26,35 @@ describe("Public auth Endpoints", () => {
 
   it("should allow logout for unauth user", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/auth/logout/");
-    expect(toRedirect("/"));
+    await request(app).get("/auth/logout/").expect(toRedirect("/auth/login"));
   });
 });
 
 describe("login process", () => {
   it("should say Login when not logged in", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/");
-    expect(toInclude("Login"));
+    await request(app).get("/").expect(toInclude("Login"));
   });
 
   it("should say Logout when logged in", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
-    await request(app).get("/").set("Cookie", loginCookie);
-
-    expect(toInclude("Logout"));
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Logout"));
   });
 });
-
+describe("user settings", () => {
+  it("should show user settings", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(">staff@foo.com<"));
+  });
+});
 describe("signup process", () => {
   it("should sign up", async () => {
     const app = await getApp({ disableCsrf: true });
