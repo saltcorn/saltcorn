@@ -37,8 +37,17 @@ const get_menu = (req) => {
   const extra_menu = get_extra_menu(role);
   const authItems = isAuth
     ? [
-        { label: small(req.user.email.split("@")[0]) },
-        { link: "/auth/logout", label: "Logout" },
+        {
+          label: "User",
+          subitems: [
+            { label: small(req.user.email.split("@")[0]) },
+            {
+              label: "User Settings",
+              link: "/auth/settings",
+            },
+            { link: "/auth/logout", label: "Logout" },
+          ],
+        },
       ]
     : [
         ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
