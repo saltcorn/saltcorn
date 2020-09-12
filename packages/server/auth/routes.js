@@ -192,6 +192,7 @@ router.post(
 const changPwForm = () =>
   new Form({
     action: "/auth/settings",
+    submitLabel: "Change",
     fields: [
       {
         label: "Old password",
@@ -202,32 +203,58 @@ const changPwForm = () =>
         label: "New password",
         name: "new_password",
         input_type: "password",
+        validator: (pw) => (pw.length < 6 ? "Too short" : true),
       },
     ],
   });
-
+const userSettings = (req, form) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [{ text: "User" }, { text: "Settings" }],
+    },
+    {
+      type: "card",
+      title: "User",
+      contents: table(tbody(tr(th("Email: "), td(req.user.email)))),
+    },
+    {
+      type: "card",
+      title: "Change password",
+      contents: renderForm(form, req.csrfToken()),
+    },
+  ],
+});
 router.get(
   "/settings",
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    res.sendWrap("User settings", {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: "User" }, { text: "Settings" }],
-        },
-        {
-          type: "card",
-          title: "User",
-          contents: table(tbody(tr(th("Email: "), td(req.user.email)))),
-        },
-        {
-          type: "card",
-          title: "Change password",
-          contents: renderForm(changPwForm(), req.csrfToken()),
-        },
-      ],
-    });
+    res.sendWrap("User settings", userSettings(req, changPwForm()));
+  })
+);
+
+router.post(
+  "/settings",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const form = changPwForm();
+    const user = await User.findOne({ id: req.user.id });
+    form.fields[0].validator = (oldpw) => {
+      const cmp = user.checkPassword(oldpw);
+      if (cmp) return true;
+      else return "Password does not match";
+    };
+
+    form.validate(req.body);
+
+    if (form.hasErrors) {
+      res.sendWrap("User settings", userSettings(req, form));
+    } else {
+      await user.changePasswordTo(form.values.new_password);
+      req.flash("success", "Password changed");
+      res.redirect("/auth/settings");
+    }
   })
 );
