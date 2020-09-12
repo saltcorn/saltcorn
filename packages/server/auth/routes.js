@@ -4,7 +4,7 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant, error_catcher } = require("../routes/utils.js");
+const { setTenant, error_catcher, loggedIn } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 
 const {
@@ -16,6 +16,7 @@ const {
   post_btn,
 } = require("@saltcorn/markup");
 const passport = require("passport");
+const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -185,5 +186,48 @@ router.post(
     }
     req.flash("success", "Login sucessful");
     res.redirect("/");
+  })
+);
+
+const changPwForm = () =>
+  new Form({
+    action: "/auth/settings",
+    fields: [
+      {
+        label: "Old password",
+        name: "password",
+        input_type: "password",
+      },
+      {
+        label: "New password",
+        name: "new_password",
+        input_type: "password",
+      },
+    ],
+  });
+
+router.get(
+  "/settings",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    res.sendWrap("User settings", {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: "User" }, { text: "Settings" }],
+        },
+        {
+          type: "card",
+          title: "User",
+          contents: table(tbody(tr(th("Email: "), td(req.user.email)))),
+        },
+        {
+          type: "card",
+          title: "Change password",
+          contents: renderForm(changPwForm(), req.csrfToken()),
+        },
+      ],
+    });
   })
 );
