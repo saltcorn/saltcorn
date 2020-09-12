@@ -170,6 +170,10 @@ describe("User", () => {
       password: "secret",
     });
     expect(u.email).toBe("foo@bar.com");
+    expect(u.checkPassword("secret")).toBe(true);
+    expect(u.checkPassword("foobar")).toBe(false);
+    const hpw = await User.hashPassword("secret");
+    expect(hpw).not.toBe("secret");
     const u0 = await User.authenticate({
       email: "foo@bar.com",
       password: "secrat",

@@ -72,6 +72,14 @@ describe("user settings", () => {
     expect(user.checkPassword("foobar")).toBe(true);
     expect(user.checkPassword("secret")).toBe(false);
   });
+  it("can login with new password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=foobar")
+      .expect(toRedirect("/"));
+  });
 });
 
 describe("signup process", () => {
