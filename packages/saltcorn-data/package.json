@@ -19,7 +19,7 @@
     "dateformat": "^3.0.3",
     "env-paths": "^2.2.0",
     "moment": "^2.27.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
     "sqlite3": "^5.0.0",
