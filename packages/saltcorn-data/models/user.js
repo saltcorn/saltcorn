@@ -10,9 +10,22 @@ class User {
     this.role_id = o.role_id || 8;
     contract.class(this);
   }
+
+  static async hashPassword(pw) {
+    return await bcrypt.hash(pw, 5);
+  }
+  checkPassword(pw) {
+    return bcrypt.compareSync(pw, this.password);
+  }
+
+  async changePasswordTo(newpw) {
+    const password = await User.hashPassword(newpw);
+    this.password = password;
+    await db.update("users", { password }, this.id);
+  }
   static async create(uo) {
     const u = new User(uo);
-    const hashpw = await bcrypt.hash(u.password, 5);
+    const hashpw = await User.hashPassword(u.password);
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
     const id = await db.insert("users", {
@@ -23,10 +36,11 @@ class User {
     u.id = id;
     return u;
   }
+
   static async authenticate(uo) {
-    const urow = await db.selectMaybeOne("users", { email: uo.email });
+    const urow = await User.findOne({ email: uo.email });
     if (!urow) return false;
-    const cmp = bcrypt.compareSync(uo.password, urow.password);
+    const cmp = urow.checkPassword(uo.password);
     if (cmp) return new User(urow);
     else return false;
   }
@@ -61,11 +75,14 @@ User.contract = {
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
+    changePasswordTo: is.fun(is.str, is.promise(is.undefined)),
+    checkPassword: is.fun(is.str, is.bool),
   },
   static_methods: {
     find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("User")))),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("User")))),
     nonEmpty: is.fun([], is.promise(is.bool)),
+    hashPassword: is.fun(is.str, is.promise(is.str)),
     authenticate: is.fun(
       is.obj({ email: is.str, password: is.str }),
       is.promise(is.or(is.class("User"), is.eq(false)))

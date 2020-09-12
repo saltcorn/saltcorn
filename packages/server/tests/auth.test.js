@@ -26,24 +26,59 @@ describe("Public auth Endpoints", () => {
 
   it("should allow logout for unauth user", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/auth/logout/");
-    expect(toRedirect("/"));
+    await request(app).get("/auth/logout/").expect(toRedirect("/auth/login"));
   });
 });
 
 describe("login process", () => {
   it("should say Login when not logged in", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/");
-    expect(toInclude("Login"));
+    await request(app).get("/").expect(toInclude("Login"));
   });
 
   it("should say Logout when logged in", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
-    await request(app).get("/").set("Cookie", loginCookie);
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Logout"));
+  });
+});
 
-    expect(toInclude("Logout"));
+describe("user settings", () => {
+  it("should show user settings", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(">staff@foo.com<"));
+  });
+  it("should change password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("password=secret")
+      .send("new_password=foobar")
+      .expect(toRedirect("/auth/settings"));
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Password changed"));
+    const user = await User.findOne({ email: "staff@foo.com" });
+    expect(user.checkPassword("foobar")).toBe(true);
+    expect(user.checkPassword("secret")).toBe(false);
+  });
+  it("can login with new password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=foobar")
+      .expect(toRedirect("/"));
   });
 });
 

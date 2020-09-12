@@ -47,6 +47,7 @@ const userForm = contract(
     return form;
   }
 );
+
 const wrap = (cardTitle, response, lastBc) => ({
   above: [
     {
@@ -64,6 +65,7 @@ const wrap = (cardTitle, response, lastBc) => ({
     },
   ],
 });
+
 router.get(
   "/",
   setTenant,
