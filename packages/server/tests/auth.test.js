@@ -45,6 +45,7 @@ describe("login process", () => {
       .expect(toInclude("Logout"));
   });
 });
+
 describe("user settings", () => {
   it("should show user settings", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -54,7 +55,25 @@ describe("user settings", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(">staff@foo.com<"));
   });
+  it("should change password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("password=secret")
+      .send("new_password=foobar")
+      .expect(toRedirect("/auth/settings"));
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Password changed"));
+    const user = await User.findOne({ email: "staff@foo.com" });
+    expect(user.checkPassword("foobar")).toBe(true);
+    expect(user.checkPassword("secret")).toBe(false);
+  });
 });
+
 describe("signup process", () => {
   it("should sign up", async () => {
     const app = await getApp({ disableCsrf: true });
