@@ -8,7 +8,7 @@ const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
   else return s;
 });
 const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
-  const s = nm.replace(/[^A-Za-z_0-9.]*/g, "");
+  const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 });
