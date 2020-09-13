@@ -1,14 +1,14 @@
 {
   "name": "@saltcorn/sbadmin2",
-  "version": "0.2.0-rc.0",
+  "version": "0.2.0-rc.1",
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
   "scripts": {
     "test": "jest"
   },
   "dependencies": {
-    "@saltcorn/data": "^0.2.0-rc.0",
-    "@saltcorn/markup": "^0.2.0-rc.0"
+    "@saltcorn/data": "^0.2.0-rc.1",
+    "@saltcorn/markup": "^0.2.0-rc.1"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
