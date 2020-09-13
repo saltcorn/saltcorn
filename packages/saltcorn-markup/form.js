@@ -270,7 +270,9 @@ const renderForm = (form, csrfToken) => {
     form.formStyle = "vert";
     var collapsedSummary = "";
     Object.entries(form.values).forEach(([k, v]) => {
-      if (k[0] !== "_") collapsedSummary += `${text(k)}:${text_attr(v)} `;
+      if (typeof v === "undefined") return;
+      if (k[0] !== "_") collapsedSummary += ` ${text(k)}:${text_attr(v)} `;
+      if (k === "_fts") collapsedSummary += ` ${v} `;
     });
     return div(
       { class: "dropdown" },

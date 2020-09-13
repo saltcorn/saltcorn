@@ -391,6 +391,30 @@ Pencil, 0.5,2, t`;
   });
 });
 
+describe("Table field uppercase", () => {
+  it("should create by importing", async () => {
+    const csv = `Item,cost,Count,Vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test_uc.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("InvoiceUC", fnm);
+    const fields = await table.getFields();
+    const rows1 = await table.getJoinedRows({
+      where: { Item: { ilike: "East" } },
+    });
+    expect(rows1.length).toBe(0);
+    const rows2 = await table.getJoinedRows({
+      where: { Count: 2 },
+    });
+    expect(rows2.length).toBe(1);
+    const rows3 = await table.getJoinedRows({
+      where: { _fts: { searchTerm: "Book", fields } },
+    });
+    expect(rows3.length).toBe(1);
+  });
+});
+
 describe("Table unique constraint", () => {
   it("should create table", async () => {
     //db.set_sql_logging()

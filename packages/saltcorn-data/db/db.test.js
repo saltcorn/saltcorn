@@ -20,6 +20,9 @@ describe("sqlsanitize", () => {
   it("should allow dots when specified", () => {
     expect(sqlsanitizeAllowDots("ffoo.oo")).toBe("ffoo.oo");
   });
+  it("should allow quotes when dots specified", () => {
+    expect(sqlsanitizeAllowDots('ffoo."oo"')).toBe('ffoo."oo"');
+  });
   it("should allow numbers", () => {
     expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
   });

@@ -437,7 +437,7 @@ class Table {
     if (opts.where) {
       Object.keys(opts.where).forEach((k) => {
         if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
-        else whereObj["a." + k] = opts.where[k];
+        else whereObj[`a."${k}"`] = opts.where[k];
       });
     }
     const { where, values } = mkWhere(whereObj, db.isSQLite);
