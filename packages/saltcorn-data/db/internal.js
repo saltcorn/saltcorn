@@ -19,8 +19,8 @@ const whereFTS = (v, i, is_sqlite) => {
     .filter((f) => f.type && f.type.sql_name === "text")
     .map((f) =>
       table
-        ? `${sqlsanitize(table)}.${sqlsanitize(f.name)}`
-        : sqlsanitize(f.name)
+        ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
+        : `"${sqlsanitize(f.name)}"`
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";

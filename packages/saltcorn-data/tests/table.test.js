@@ -399,7 +399,7 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test_uc.csv";
     await fs.writeFile(fnm, csv);
     const { table } = await Table.create_from_csv("InvoiceUC", fnm);
-    db.set_sql_logging();
+    const fields = await table.getFields();
     const rows1 = await table.getJoinedRows({
       where: { Item: { ilike: "East" } },
     });
@@ -408,6 +408,10 @@ Pencil, 0.5,2, t`;
       where: { Count: 2 },
     });
     expect(rows2.length).toBe(1);
+    const rows3 = await table.getJoinedRows({
+      where: { _fts: { searchTerm: "Book", fields } },
+    });
+    expect(rows3.length).toBe(1);
   });
 });
 
