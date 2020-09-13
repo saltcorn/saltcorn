@@ -6,6 +6,7 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
+  resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -14,6 +15,9 @@ const View = require("@saltcorn/data/models/view");
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
 afterAll(db.close);
+beforeAll(async () => {
+  await resetToFixtures();
+});
 
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
