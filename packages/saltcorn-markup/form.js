@@ -269,7 +269,6 @@ const renderForm = (form, csrfToken) => {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
     var collapsedSummary = "";
-    console.log(form.values);
     Object.entries(form.values).forEach(([k, v]) => {
       if (typeof v === "undefined") return;
       if (k[0] !== "_") collapsedSummary += ` ${text(k)}:${text_attr(v)} `;
