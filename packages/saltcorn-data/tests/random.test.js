@@ -1,8 +1,4 @@
-const {
-  random_table,
-  fill_table_row,
-  random_list_view,
-} = require("../models/random");
+const { random_table, fill_table_row, all_views } = require("../models/random");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -40,9 +36,10 @@ describe("Random table", () => {
       //enable versioning
       if (is.bool.generate()) await table.update({ versioned: true });
       //update a row
+      let id;
       if (rows.length > 0) {
         has_rows = true;
-        const id = one_of(rows.map((r) => r.id));
+        id = one_of(rows.map((r) => r.id));
         const row = await table.getRow({ id });
 
         if (nonFkey.length > 0) {
@@ -66,9 +63,17 @@ describe("Random table", () => {
       const rendered = renderForm(form, "123");
       expect(rendered).toContain("<form");
 
-      const list = await random_list_view(table);
+      const { list, show, edit } = await all_views(table, "List");
       const listres = await list.run({}, mockReqRes);
       expect(listres).toContain("<table");
+      const editres = await edit.run({}, mockReqRes);
+      expect(editres).toContain("<form");
+      if (id) {
+        const showres = await show.run({ id }, mockReqRes);
+        expect(showres).toContain("<div");
+        const editres1 = await edit.run({ id }, mockReqRes);
+        expect(editres1).toContain("<form");
+      }
     }
     expect(has_rows).toBe(true);
   });
