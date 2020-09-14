@@ -33,8 +33,7 @@ describe("Random table", () => {
       const nonFkey = fields.filter((f) => !f.is_fkey);
       expect(rows.length > -1).toBe(true);
       //enable versioning
-      //if(is.bool.generate())
-      await table.update({ versioned: true });
+      if (is.bool.generate()) await table.update({ versioned: true });
       //update a row
       if (rows.length > 0) {
         has_rows = true;
