@@ -401,11 +401,11 @@ Pencil, 0.5,2, t`;
     const { table } = await Table.create_from_csv("InvoiceUC", fnm);
     const fields = await table.getFields();
     const rows1 = await table.getJoinedRows({
-      where: { Item: { ilike: "East" } },
+      where: { item: { ilike: "East" } },
     });
     expect(rows1.length).toBe(0);
     const rows2 = await table.getJoinedRows({
-      where: { Count: 2 },
+      where: { count: 2 },
     });
     expect(rows2.length).toBe(1);
     const rows3 = await table.getJoinedRows({

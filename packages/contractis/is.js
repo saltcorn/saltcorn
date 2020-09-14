@@ -28,9 +28,9 @@ const number = (opts) =>
       isnum((opts || {}).lte) && isnum((opts || {}).lte)
         ? gen.num_between(opts.lte, opts.gte)
         : isnum((opts || {}).lte)
-        ? opts.lte - gen.num_positive
+        ? opts.lte - gen.num_positive()
         : isnum((opts || {}).gte)
-        ? opts.gte + gen.num_positive
+        ? opts.gte + gen.num_positive()
         : gen.any_num(),
   });
 
