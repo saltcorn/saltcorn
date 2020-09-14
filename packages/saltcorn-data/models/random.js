@@ -16,7 +16,7 @@ const random_table = async () => {
     .generate();
   const table = await Table.create(name);
   //fields
-  const nfields = is.integer({ gte: 1, lte: 10 }).generate();
+  const nfields = is.integer({ gte: 2, lte: 10 }).generate();
   const existing_field_names = ["id"];
   for (let index = 0; index < nfields; index++) {
     const field = await random_field(existing_field_names);
@@ -73,6 +73,8 @@ const random_field = async (existing_field_names) => {
       if (reffields.length > 0) {
         const reff = is.one_of(reffields).generate();
         f.attributes.summary_field = reff.name;
+      } else {
+        f.attributes.summary_field = "id";
       }
     }
   }
