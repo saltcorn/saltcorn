@@ -69,4 +69,23 @@ const random_field = async (existing_field_names) => {
   return f;
 };
 
-module.exports = { random_table, fill_table_row };
+const random_list_view = async (table) => {
+  const fields = await table.getFields();
+  const columns = fields.map((f) => ({
+    type: "Field",
+    field_name: f.name,
+    state_field: is.bool.generate(),
+  }));
+  const name = is.str.generate();
+  const view = await View.create({
+    name,
+    configuration: { columns },
+    viewtemplate: "List",
+    table_id: table.id,
+    min_role: 10,
+    on_root_page: false,
+  });
+  return view;
+};
+
+module.exports = { random_table, fill_table_row, random_list_view };

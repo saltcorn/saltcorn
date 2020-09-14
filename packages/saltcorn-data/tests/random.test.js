@@ -1,4 +1,8 @@
-const { random_table, fill_table_row } = require("../models/random");
+const {
+  random_table,
+  fill_table_row,
+  random_list_view,
+} = require("../models/random");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -11,6 +15,7 @@ const { renderForm } = require("@saltcorn/markup");
 const fs = require("fs").promises;
 const { create_backup, restore } = require("../models/backup");
 const reset = require("../db/reset_schema");
+const { mockReqRes } = require("./mocks");
 
 jest.setTimeout(30000);
 
@@ -21,7 +26,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 const seed = set_seed();
-
+const one_of = (xs) => is.one_of(xs).generate();
 describe("Random table", () => {
   it("can create with seed " + seed, async () => {
     let has_rows = false;
@@ -37,12 +42,11 @@ describe("Random table", () => {
       //update a row
       if (rows.length > 0) {
         has_rows = true;
-        const ids = rows.map((r) => r.id);
-        const id = is.one_of(ids).generate();
+        const id = one_of(rows.map((r) => r.id));
         const row = await table.getRow({ id });
 
         if (nonFkey.length > 0) {
-          const f = is.one_of(nonFkey).generate();
+          const f = one_of(nonFkey);
           row[f.name] = await f.generate();
           await table.tryUpdateRow(row, row.id);
         }
@@ -61,6 +65,10 @@ describe("Random table", () => {
       await form.fill_fkey_options();
       const rendered = renderForm(form, "123");
       expect(rendered).toContain("<form");
+
+      const list = await random_list_view(table);
+      const listres = await list.run({}, mockReqRes);
+      expect(listres).toContain("<table");
     }
     expect(has_rows).toBe(true);
   });
