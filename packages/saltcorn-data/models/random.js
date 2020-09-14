@@ -25,7 +25,7 @@ const random_table = async () => {
   }
   //fill rows
   const fields = await table.getFields();
-  for (let index = 0; index < nfields; index++) {
+  for (let index = 0; index < 20; index++) {
     const row = {};
     for (const f of fields) {
       if (f.required || is.bool.generate()) row[f.name] = await f.generate();
