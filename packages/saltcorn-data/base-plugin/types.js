@@ -257,7 +257,14 @@ const date = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: (d) => text(typeof d === "string" ? text(d) : d.toISOString()),
+      run: (d) =>
+        text(
+          typeof d === "string"
+            ? text(d)
+            : d && d.toISOString
+            ? d.toISOString()
+            : ""
+        ),
     },
     relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
     edit: {
