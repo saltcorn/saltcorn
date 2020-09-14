@@ -104,6 +104,7 @@ dist
 .tern-port
 
 plugin_packages/
+packages/saltcorn-random-tests/plugin_packages/
 
 *.sqlc
 
