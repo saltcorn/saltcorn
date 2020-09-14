@@ -1,4 +1,4 @@
-const { random_table } = require("../models/random");
+const { random_table, fill_table_row } = require("../models/random");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -47,6 +47,10 @@ describe("Random table", () => {
           await table.tryUpdateRow(row, row.id);
         }
       }
+
+      //insert
+      await fill_table_row(table);
+
       //toggle bool
       const prels = await table.get_parent_relations();
       const crels = await table.get_child_relations();

@@ -24,16 +24,20 @@ const random_table = async () => {
     await Field.create(field);
   }
   //fill rows
-  const fields = await table.getFields();
   for (let index = 0; index < 20; index++) {
-    const row = {};
-    for (const f of fields) {
-      if (f.required || is.bool.generate()) row[f.name] = await f.generate();
-    }
-    //console.log(fields, row);
-    await table.tryInsertRow(row);
+    await fill_table_row(table);
   }
   return table;
+};
+
+const fill_table_row = async (table) => {
+  const fields = await table.getFields();
+  const row = {};
+  for (const f of fields) {
+    if (f.required || is.bool.generate()) row[f.name] = await f.generate();
+  }
+  //console.log(fields, row);
+  await table.tryInsertRow(row);
 };
 
 const random_field = async (existing_field_names) => {
@@ -65,4 +69,4 @@ const random_field = async (existing_field_names) => {
   return f;
 };
 
-module.exports = { random_table };
+module.exports = { random_table, fill_table_row };
