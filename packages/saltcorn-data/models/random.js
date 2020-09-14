@@ -17,9 +17,10 @@ const random_table = async () => {
   const table = await Table.create(name);
   //fields
   const nfields = is.integer({ gte: 1, lte: 10 }).generate();
-
+  const existing_field_labels = ["id"];
   for (let index = 0; index < nfields; index++) {
-    const field = await random_field();
+    const field = await random_field(existing_field_labels);
+    existing_field_labels.push(field.label);
     field.table_id = table.id;
     await Field.create(field);
   }
@@ -36,7 +37,7 @@ const random_table = async () => {
   return table;
 };
 
-const random_field = async () => {
+const random_field = async (existing_field_labels) => {
   const tables = await Table.find({});
   const fkey_opts = [
     ...tables.map((t) => `Key to ${t.name}`),
@@ -48,7 +49,7 @@ const random_field = async () => {
 
   const label = is
     .and(
-      is.sat((s) => s.length > 0),
+      is.sat((s) => s.length > 0 && !existing_field_labels.includes(s)),
       is.str
     )
     .generate();

@@ -18,7 +18,7 @@ describe("Random table", () => {
   it("can create with seed " + seed, async () => {
     let has_rows = false;
     for (let index = 0; index < 20; index++) {
-      db.set_sql_logging(true);
+      //db.set_sql_logging(true);
       const table = await random_table();
       const rows = await table.getJoinedRows({});
       const fields = await table.getFields();
@@ -36,7 +36,7 @@ describe("Random table", () => {
         if (nonFkey.length > 0) {
           const f = is.one_of(nonFkey).generate();
           row[f.name] = await f.generate();
-          await table.updateRow(row, row.id);
+          await table.tryUpdateRow(row, row.id);
         }
       }
       //toggle bool
