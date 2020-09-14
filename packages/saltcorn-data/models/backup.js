@@ -136,11 +136,12 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
   await backup_files(dir.path);
   await backup_config(dir.path);
 
-  var day = dateFormat(new Date(), "yyyy-mm-dd-hh-MM");
+  var day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
   const ten = db.getTenantSchema();
-  const tens = ten === "public" ? "" : "-" + ten;
-  const zipFileName = `sc-backup${tens}-${day}.zip`;
+  const tens =
+    ten === "public" ? getState().getConfig("site_name", "") : "-" + ten;
+  const zipFileName = `sc-backup-${tens}-${day}.zip`;
 
   var zip = new Zip();
   zip.addLocalFolder(dir.path);
