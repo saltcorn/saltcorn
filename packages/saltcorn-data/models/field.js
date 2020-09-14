@@ -198,7 +198,7 @@ class Field {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table.name
-        )}" add CONSTRAINT ${this.table.name}_${sqlsanitize(
+        )}" add CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
           this.name
         )}_unique UNIQUE ("${sqlsanitize(this.name)}")`
       );
@@ -217,7 +217,7 @@ class Field {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table.name
-        )}" drop CONSTRAINT ${this.table.name}_${sqlsanitize(
+        )}" drop CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
           this.name
         )}_unique;`
       );
