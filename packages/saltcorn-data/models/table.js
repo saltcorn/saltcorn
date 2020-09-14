@@ -77,7 +77,9 @@ class Table {
       min_role_write: options.min_role_write || 1,
     };
     const id = await db.insert("_sc_tables", tblrow);
-    return new Table({ ...tblrow, id });
+    const table = new Table({ ...tblrow, id });
+    if (table.versioned) await table.create_history_table();
+    return table;
   }
   async delete() {
     const schema = db.getTenantSchemaPrefix();
@@ -183,23 +185,16 @@ class Table {
     return this.fields;
   }
 
-  async update(new_table_rec) {
-    //TODO RENAME TABLE
-
+  async create_history_table() {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const existing = await Table.findOne({ id: this.id });
-    await db.update("_sc_tables", new_table_rec, this.id);
-    const new_table = await Table.findOne({ id: this.id });
+    const fields = await this.getFields();
+    const flds = fields.map(
+      (f) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+    );
 
-    if (new_table.versioned && !existing.versioned) {
-      const fields = await new_table.getFields();
-      const flds = fields.map(
-        (f) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
-      );
-
-      await db.query(
-        `create table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history" (
+    await db.query(
+      `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           id integer not null,
           _version integer,
           _time timestamp,
@@ -207,10 +202,26 @@ class Table {
           ${flds.join("")}
           ,PRIMARY KEY(id, _version)
           );`
-      );
+    );
+  }
+  async drop_history_table() {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    await db.query(`
+      drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
+  }
+
+  async update(new_table_rec) {
+    //TODO RENAME TABLE
+
+    const existing = await Table.findOne({ id: this.id });
+    await db.update("_sc_tables", new_table_rec, this.id);
+    const new_table = await Table.findOne({ id: this.id });
+
+    if (new_table.versioned && !existing.versioned) {
+      await new_table.create_history_table();
     } else if (!new_table.versioned && existing.versioned) {
-      await db.query(`
-      drop table ${schemaPrefix}"${sqlsanitize(new_table.name)}__history";`);
+      await new_table.drop_history_table();
     }
   }
 

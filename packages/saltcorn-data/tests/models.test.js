@@ -11,7 +11,7 @@ const Page = require("../models/page");
 const { getViews } = require("../models/layout");
 
 const { getState } = require("../db/state");
-const { rick_file } = require("./mocks");
+const { rick_file, mockReqRes } = require("./mocks");
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -40,8 +40,6 @@ describe("Crash", () => {
     expect(cs0.msg_short).toBe("my error");
   });
 });
-
-const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
 describe("Page", () => {
   it("should create", async () => {

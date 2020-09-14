@@ -9,34 +9,38 @@ const db = require("../db");
 const random_table = async () => {
   const name = is
     .and(
-      is.sat((s) => db.sqlsanitize(s).length > 0),
+      is.sat((s) => db.sqlsanitize(s).length > 1),
       is.str
     )
     .generate();
   const table = await Table.create(name);
   //fields
   const nfields = is.integer({ gte: 1, lte: 10 }).generate();
-  const existing_field_labels = ["id"];
+  const existing_field_names = ["id"];
   for (let index = 0; index < nfields; index++) {
-    const field = await random_field(existing_field_labels);
-    existing_field_labels.push(field.label);
+    const field = await random_field(existing_field_names);
+    existing_field_names.push(field.label);
     field.table_id = table.id;
     await Field.create(field);
   }
   //fill rows
-  const fields = await table.getFields();
   for (let index = 0; index < 20; index++) {
-    const row = {};
-    for (const f of fields) {
-      if (f.required || is.bool.generate()) row[f.name] = await f.generate();
-    }
-    //console.log(fields, row);
-    await table.tryInsertRow(row);
+    await fill_table_row(table);
   }
   return table;
 };
 
-const random_field = async (existing_field_labels) => {
+const fill_table_row = async (table) => {
+  const fields = await table.getFields();
+  const row = {};
+  for (const f of fields) {
+    if (f.required || is.bool.generate()) row[f.name] = await f.generate();
+  }
+  //console.log(fields, row);
+  await table.tryInsertRow(row);
+};
+
+const random_field = async (existing_field_names) => {
   const tables = await Table.find({});
   const fkey_opts = [
     ...tables.map((t) => `Key to ${t.name}`),
@@ -48,7 +52,10 @@ const random_field = async (existing_field_labels) => {
 
   const label = is
     .and(
-      is.sat((s) => s.length > 0 && !existing_field_labels.includes(s)),
+      is.sat(
+        (s) =>
+          s.length > 1 && !existing_field_names.includes(Field.labelToName(s))
+      ),
       is.str
     )
     .generate();
@@ -62,4 +69,23 @@ const random_field = async (existing_field_labels) => {
   return f;
 };
 
-module.exports = { random_table };
+const random_list_view = async (table) => {
+  const fields = await table.getFields();
+  const columns = fields.map((f) => ({
+    type: "Field",
+    field_name: f.name,
+    state_field: is.bool.generate(),
+  }));
+  const name = is.str.generate();
+  const view = await View.create({
+    name,
+    configuration: { columns },
+    viewtemplate: "List",
+    table_id: table.id,
+    min_role: 10,
+    on_root_page: false,
+  });
+  return view;
+};
+
+module.exports = { random_table, fill_table_row, random_list_view };
