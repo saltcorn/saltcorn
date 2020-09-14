@@ -15,8 +15,10 @@ const seed = set_seed();
 describe("Random table", () => {
   it("can create with seed " + seed, async () => {
     for (let index = 0; index < 20; index++) {
-      //db.set_sql_logging(true);
+      db.set_sql_logging(true);
       const table = await random_table();
+      const rows = await table.getJoinedRows({});
+      expect(rows.length > -1).toBe(true);
     }
   });
 });

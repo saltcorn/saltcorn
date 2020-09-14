@@ -414,7 +414,7 @@ class Table {
         joinTables.push(jtNm);
         joinq += ` left join ${schema}"${sqlsanitize(
           reftable
-        )}" ${jtNm} on ${jtNm}.id=a.${sqlsanitize(ref)}`;
+        )}" ${jtNm} on ${jtNm}.id=a."${sqlsanitize(ref)}"`;
       }
       fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
