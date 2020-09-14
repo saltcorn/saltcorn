@@ -28,7 +28,8 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "^25.1.0"
+    "jest": "^25.1.0",
+    "chaos-guinea-pig": "^0.0.15"
   },
   "jest": {
     "testEnvironment": "node"
