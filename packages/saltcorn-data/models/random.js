@@ -9,17 +9,17 @@ const db = require("../db");
 const random_table = async () => {
   const name = is
     .and(
-      is.sat((s) => db.sqlsanitize(s).length > 0),
+      is.sat((s) => db.sqlsanitize(s).length > 1),
       is.str
     )
     .generate();
   const table = await Table.create(name);
   //fields
   const nfields = is.integer({ gte: 1, lte: 10 }).generate();
-  const existing_field_labels = ["id"];
+  const existing_field_names = ["id"];
   for (let index = 0; index < nfields; index++) {
-    const field = await random_field(existing_field_labels);
-    existing_field_labels.push(field.label);
+    const field = await random_field(existing_field_names);
+    existing_field_names.push(field.label);
     field.table_id = table.id;
     await Field.create(field);
   }
@@ -36,7 +36,7 @@ const random_table = async () => {
   return table;
 };
 
-const random_field = async (existing_field_labels) => {
+const random_field = async (existing_field_names) => {
   const tables = await Table.find({});
   const fkey_opts = [
     ...tables.map((t) => `Key to ${t.name}`),
@@ -48,7 +48,10 @@ const random_field = async (existing_field_labels) => {
 
   const label = is
     .and(
-      is.sat((s) => s.length > 0 && !existing_field_labels.includes(s)),
+      is.sat(
+        (s) =>
+          s.length > 1 && !existing_field_names.includes(Field.labelToName(s))
+      ),
       is.str
     )
     .generate();

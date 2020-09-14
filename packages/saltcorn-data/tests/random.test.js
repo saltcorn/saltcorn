@@ -5,7 +5,12 @@ getState().registerPlugin("base", require("../base-plugin"));
 const { set_seed } = require("chaos-guinea-pig");
 const is = require("contractis/is");
 const Form = require("../models/form");
+const User = require("../models/user");
+
 const { renderForm } = require("@saltcorn/markup");
+const fs = require("fs").promises;
+const { create_backup, restore } = require("../models/backup");
+const reset = require("../db/reset_schema");
 
 jest.setTimeout(30000);
 
@@ -28,6 +33,7 @@ describe("Random table", () => {
       const nonFkey = fields.filter((f) => !f.is_fkey);
       expect(rows.length > -1).toBe(true);
       //enable versioning
+      //if(is.bool.generate())
       await table.update({ versioned: true });
       //update a row
       if (rows.length > 0) {
@@ -43,9 +49,10 @@ describe("Random table", () => {
         }
       }
       //toggle bool
-      // get_parent_relations, child
       const prels = await table.get_parent_relations();
       const crels = await table.get_child_relations();
+
+      // add non-required field
 
       const form = new Form({ action: "/", fields });
       await form.fill_fkey_options();
@@ -53,5 +60,19 @@ describe("Random table", () => {
       expect(rendered).toContain("<form");
     }
     expect(has_rows).toBe(true);
+  });
+  let fnm;
+  it("can backup random tables with seed " + seed, async () => {
+    fnm = await create_backup();
+  });
+  it("can restore random tables with seed " + seed, async () => {
+    await reset();
+    await User.create({
+      email: "admin@foo.com",
+      password: "secret",
+      role_id: 1,
+    });
+    await restore(fnm, (p) => {});
+    await fs.unlink(fnm);
   });
 });
