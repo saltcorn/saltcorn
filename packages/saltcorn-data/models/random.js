@@ -4,11 +4,13 @@ const Table = require("./table");
 const { getState } = require("../db/state");
 const { generate_attributes } = require("../plugin-testing");
 const { contract, is } = require("contractis");
+const db = require("../db");
+const { disable } = require("contractis/contract");
 
 const random_table = async () => {
   const name = is
     .and(
-      is.sat((s) => s.length > 0),
+      is.sat((s) => db.sqlsanitize(s).length > 0),
       is.str
     )
     .generate();
@@ -28,6 +30,7 @@ const random_table = async () => {
     for (const f of fields) {
       if (f.required || is.bool.generate()) row[f.name] = await f.generate();
     }
+    //console.log(fields, row);
     await table.tryInsertRow(row);
   }
   return table;
@@ -44,7 +47,7 @@ const random_field = async () => {
   const type = is.one_of(type_options).generate();
   const name = is
     .and(
-      is.sat((s) => s.length > 0),
+      is.sat((s) => db.sqlsanitize(s).length > 0),
       is.str
     )
     .generate();
