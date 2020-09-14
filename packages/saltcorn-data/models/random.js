@@ -70,7 +70,10 @@ const random_field = async (existing_field_names) => {
     } else {
       const reftable = await Table.findOne({ name: f.reftable_name });
       const reffields = await reftable.getFields();
-      f.attributes.summary_field = is.one_of(reffields).generate().name;
+      if (reffields.length > 0) {
+        const reff = is.one_of(reffields).generate();
+        f.attributes.summary_field = reff.name;
+      }
     }
   }
   // unique?
@@ -97,6 +100,11 @@ const initial_view = async (table, viewtemplate) => {
   return view;
 };
 
-const all_views = async (table) => {};
+const all_views = async (table) => {
+  const list = await initial_view(table, "List");
+  const edit = await initial_view(table, "Edit");
+  const show = await initial_view(table, "Show");
+  return { list, show, edit };
+};
 
 module.exports = { random_table, fill_table_row, initial_view, all_views };
