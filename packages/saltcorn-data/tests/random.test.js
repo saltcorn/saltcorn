@@ -1,7 +1,7 @@
 const {
   random_table,
   fill_table_row,
-  random_list_view,
+  initial_view,
 } = require("../models/random");
 const db = require("../db");
 const { getState } = require("../db/state");
@@ -66,7 +66,7 @@ describe("Random table", () => {
       const rendered = renderForm(form, "123");
       expect(rendered).toContain("<form");
 
-      const list = await random_list_view(table);
+      const list = await initial_view(table, "List");
       const listres = await list.run({}, mockReqRes);
       expect(listres).toContain("<table");
     }

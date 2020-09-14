@@ -3,6 +3,7 @@ const Field = require("./field");
 const Table = require("./table");
 const { getState } = require("../db/state");
 const { generate_attributes } = require("../plugin-testing");
+const { initial_config_all_fields } = require("../plugin-helper");
 const { contract, is } = require("contractis");
 const db = require("../db");
 
@@ -61,7 +62,17 @@ const random_field = async (existing_field_names) => {
     .generate();
   const f = new Field({ type, label });
   if (f.type.attributes) f.attributes = generate_attributes(f.type.attributes);
-
+  if (f.is_fkey) {
+    if (f.reftable_name === "users") {
+      f.attributes.summary_field = "email";
+    } else if (f.reftable_name === "_sc_files") {
+      f.attributes.summary_field = "email";
+    } else {
+      const reftable = await Table.findOne({ name: f.reftable_name });
+      const reffields = await reftable.getFields();
+      f.attributes.summary_field = is.one_of(reffields).generate().name;
+    }
+  }
   // unique?
   if (Math.random() < 0.25 && type !== "Bool") f.is_unique = true;
   // required?
@@ -69,18 +80,16 @@ const random_field = async (existing_field_names) => {
   return f;
 };
 
-const random_list_view = async (table) => {
-  const fields = await table.getFields();
-  const columns = fields.map((f) => ({
-    type: "Field",
-    field_name: f.name,
-    state_field: is.bool.generate(),
-  }));
+const initial_view = async (table, viewtemplate) => {
+  const configuration = await initial_config_all_fields(
+    viewtemplate === "Edit"
+  )({ table_id: table.id });
+  //console.log(configuration);
   const name = is.str.generate();
   const view = await View.create({
     name,
-    configuration: { columns },
-    viewtemplate: "List",
+    configuration,
+    viewtemplate,
     table_id: table.id,
     min_role: 10,
     on_root_page: false,
@@ -88,4 +97,6 @@ const random_list_view = async (table) => {
   return view;
 };
 
-module.exports = { random_table, fill_table_row, random_list_view };
+const all_views = async (table) => {};
+
+module.exports = { random_table, fill_table_row, initial_view, all_views };
