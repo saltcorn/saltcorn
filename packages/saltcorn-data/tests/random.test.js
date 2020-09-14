@@ -14,8 +14,8 @@ const seed = set_seed();
 
 describe("Random table", () => {
   it("can create with seed " + seed, async () => {
-    for (let index = 0; index < 10; index++) {
-      db.set_sql_logging(true);
+    for (let index = 0; index < 20; index++) {
+      //db.set_sql_logging(true);
       const table = await random_table();
     }
   });

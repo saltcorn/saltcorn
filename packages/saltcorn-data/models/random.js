@@ -54,7 +54,6 @@ const random_field = async () => {
       is.str
     )
     .generate();
-  console.log({ type, name, label });
   const f = new Field({ type, name, label });
   if (f.type.attributes) f.attributes = generate_attributes(f.type.attributes);
 
