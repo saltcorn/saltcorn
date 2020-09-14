@@ -109,4 +109,4 @@ const auto_test_plugin = async (plugin) => {
   //is each header reachable
 };
 
-module.exports = { auto_test_plugin };
+module.exports = { auto_test_plugin, generate_attributes };
