@@ -4,6 +4,9 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const { set_seed } = require("chaos-guinea-pig");
 const is = require("contractis/is");
+const Form = require("../models/form");
+const { renderForm } = require("@saltcorn/markup");
+
 jest.setTimeout(30000);
 
 afterAll(db.close);
@@ -43,7 +46,11 @@ describe("Random table", () => {
       // get_parent_relations, child
       const prels = await table.get_parent_relations();
       const crels = await table.get_child_relations();
-      //delete table
+
+      const form = new Form({ action: "/", fields });
+      await form.fill_fkey_options();
+      const rendered = renderForm(form, "123");
+      expect(rendered).toContain("<form");
     }
     expect(has_rows).toBe(true);
   });

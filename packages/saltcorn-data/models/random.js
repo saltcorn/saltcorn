@@ -5,7 +5,6 @@ const { getState } = require("../db/state");
 const { generate_attributes } = require("../plugin-testing");
 const { contract, is } = require("contractis");
 const db = require("../db");
-const { disable } = require("contractis/contract");
 
 const random_table = async () => {
   const name = is
