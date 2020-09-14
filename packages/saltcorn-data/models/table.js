@@ -253,7 +253,7 @@ class Table {
 
       //can fail here if: non integer id, duplicate headers, invalid name
       const fld = new Field({
-        name: k,
+        name: Field.labelToName(k),
         required,
         type,
         table,

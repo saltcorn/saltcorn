@@ -45,19 +45,14 @@ const random_field = async () => {
   ];
   const type_options = getState().type_names.concat(fkey_opts || []);
   const type = is.one_of(type_options).generate();
-  const name = is
-    .and(
-      is.sat((s) => db.sqlsanitize(s).length > 0),
-      is.str
-    )
-    .generate();
+
   const label = is
     .and(
       is.sat((s) => s.length > 0),
       is.str
     )
     .generate();
-  const f = new Field({ type, name, label });
+  const f = new Field({ type, label });
   if (f.type.attributes) f.attributes = generate_attributes(f.type.attributes);
 
   // unique?
