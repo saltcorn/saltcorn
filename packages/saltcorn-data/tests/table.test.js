@@ -1,5 +1,6 @@
 const Table = require("../models/table");
 const Field = require("../models/field");
+const View = require("../models/view");
 const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -507,5 +508,38 @@ describe("Table with users and files", () => {
     const joined = await table.getJoinedRows();
     // expect(joined).toEqual("rick.png")
     expect(joined[0].mugshot__filename).toEqual("rick.png");
+  });
+});
+
+describe("Table and view deletion ", () => {
+  it("should setup", async () => {
+    const tc = await Table.create("mytable19");
+    await Field.create({
+      table: tc,
+      name: "name",
+      type: "String",
+      is_unique: true,
+    });
+    const v = await View.create({
+      table_id: tc.id,
+      name: "anewview",
+      viewtemplate: "List",
+      configuration: { columns: [], default_state: {} },
+      min_role: 10,
+      on_root_page: true,
+    });
+    let error;
+    try {
+      await tc.delete();
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(Error);
+    await v.delete();
+  });
+  it("should delete table after view delete", async () => {
+    const tc = await Table.findOne({ name: "mytable19" });
+
+    await tc.delete();
   });
 });
