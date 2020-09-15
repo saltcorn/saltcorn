@@ -83,12 +83,27 @@ class Table {
   }
   async delete() {
     const schema = db.getTenantSchemaPrefix();
-    await db.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
-    await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
-      this.id,
-    ]);
+    const is_sqlite = db.isSQLite;
 
-    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
+    const client = is_sqlite ? db : await db.getClient();
+    await client.query(`BEGIN`);
+    try {
+      await client.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
+      await client.query(
+        `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
+        [this.id]
+      );
+
+      await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
+        this.id,
+      ]);
+      await client.query(`COMMIT`);
+    } catch (e) {
+      await client.query(`ROLLBACK`);
+      if (!is_sqlite) client.release(true);
+      throw e;
+    }
+    if (!is_sqlite) client.release(true);
   }
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
