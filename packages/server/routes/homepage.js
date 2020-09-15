@@ -4,7 +4,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
-const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
+const { ul, li, div, small, a, h5, p } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 
@@ -36,57 +36,96 @@ const viewTable = (views) =>
 
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
-  const packs_installed = getState().getConfig("installed_packs", []);
+  const packlist = [
+    ...packs_available.slice(0, 5),
+    { name: "More...", description: "" },
+  ];
   return {
     above: [
       {
         type: "pageHeader",
         title: "Quick Start",
+        blurb: "Four different ways to get started using Saltcorn",
       },
       {
-        type: "card",
-        title: link("/table", "Tables"),
-        contents: div(
-          div("You have no tables and no views!"),
-          div(
-            a(
-              { href: `/table/new`, class: "btn btn-primary" },
-              "Create a table »"
+        besides: [
+          {
+            type: "card",
+            title: "Build",
+            contents: div(
+              p("Start by creating the tables to hold your data"),
+              a(
+                { href: `/table/new`, class: "btn btn-primary" },
+                "Create a table »"
+              ),
+              p(
+                "When you have created the tables, you can create views so users can interact with the data."
+              ),
+              p("You can also create a page now."),
+              a(
+                { href: `/pageedit/new`, class: "btn btn-primary" },
+                "Create a page »"
+              )
             ),
-            a(
-              {
-                href: `/table/create-from-csv`,
-                class: "btn btn-secondary mx-3",
-              },
-              "Create table from CSV upload"
-            )
-          )
-        ),
+          },
+          {
+            type: "card",
+            title: "Upload",
+            contents: div(
+              p(
+                "You can create a table by uploading a CSV file from a spreadsheet."
+              ),
+              a(
+                {
+                  href: `/table/create-from-csv`,
+                  class: "btn btn-secondary",
+                },
+                "Create table from CSV upload"
+              ),
+              p(
+                "If you have a backup from a previous Saltcorn instance, you can also restore it."
+              ),
+              a(
+                {
+                  href: `/admin`,
+                },
+                "Restore backup »"
+              )
+            ),
+          },
+        ],
       },
       {
-        type: "card",
-        title: "Packs",
-        contents: [
-          div(
-            "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-          ),
-          mkTable(
-            [
-              { label: "Name", key: "name" },
-              {
-                label: "Install",
-                key: (r) =>
-                  packs_installed.includes(r.name)
-                    ? "Installed"
-                    : post_btn(
-                        `/packs/install-named/${encodeURIComponent(r.name)}`,
-                        "Install",
-                        req.csrfToken()
-                      ),
-              },
+        besides: [
+          {
+            type: "card",
+            title: "Install pack",
+            contents: [
+              div(
+                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+              ),
+              mkTable(
+                [
+                  { label: "Name", key: "name" },
+                  {
+                    label: "Description",
+                    key: "description",
+                  },
+                ],
+                packlist,
+                { noHeader: true }
+              ),
+              a(
+                { href: `/plugins?set=packs`, class: "btn btn-primary" },
+                "Go to pack store »"
+              ),
             ],
-            packs_available
-          ),
+          },
+          {
+            type: "card",
+            title: "Learn",
+            contents: "",
+          },
         ],
       },
     ],
