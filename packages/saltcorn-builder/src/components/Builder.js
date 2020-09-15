@@ -40,6 +40,9 @@ const SettingsPanel = () => {
           state.nodes[currentNodeId].related &&
           state.nodes[currentNodeId].related.settings,
         isDeletable: query.node(currentNodeId).isDeletable(),
+        children:
+          state.nodes[currentNodeId].data &&
+          state.nodes[currentNodeId].data.nodes,
       };
     }
 
@@ -47,6 +50,16 @@ const SettingsPanel = () => {
       selected,
     };
   });
+  const deleteThis = () => {
+    actions.delete(selected.id);
+  };
+  const hasChildren =
+    selected && selected.children && selected.children.length > 0;
+  const deleteChildren = () => {
+    selected.children.forEach((child) => {
+      actions.delete(child);
+    });
+  };
   return (
     <div className="settings-panel card mt-2">
       <div className="card-header">
@@ -60,13 +73,13 @@ const SettingsPanel = () => {
             {}
             {selected.settings && React.createElement(selected.settings)}
             {selected.isDeletable && (
-              <button
-                className="btn btn-danger mt-2"
-                onClick={() => {
-                  actions.delete(selected.id);
-                }}
-              >
+              <button className="btn btn-danger mt-2" onClick={deleteThis}>
                 Delete
+              </button>
+            )}
+            {hasChildren && !selected.isDeletable && (
+              <button className="btn btn-danger mt-2" onClick={deleteChildren}>
+                Delete contents
               </button>
             )}
           </Fragment>
