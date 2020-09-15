@@ -68,6 +68,7 @@ const mkTable = contract(
               get_page_link: is.fun(),
             })
           ),
+          noHeader: is.maybe(is.bool),
         })
       ),
     ],
@@ -78,7 +79,7 @@ const mkTable = contract(
       { class: "table-responsive" },
       table(
         { class: ["table table-sm", opts.onRowSelect && "table-hover"] },
-        thead(tr(hdrs.map((hdr) => headerCell(hdr)))),
+        !opts.noHeader && thead(tr(hdrs.map((hdr) => headerCell(hdr)))),
         tbody(
           (vs || []).map((v) =>
             tr(

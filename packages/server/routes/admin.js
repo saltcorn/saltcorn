@@ -12,6 +12,7 @@ const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
+const { restore_backup } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -39,28 +40,11 @@ router.get(
 
             post_btn("/admin/backup", "Backup", req.csrfToken()),
             hr(),
-            form(
-              {
-                method: "post",
-                action: `/admin/restore`,
-                encType: "multipart/form-data",
-              },
-              input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-              label(
-                { class: "btn-link", for: "upload_to_restore" },
-                i({ class: "fas fa-2x fa-upload" }),
-                "<br/>",
-                "Restore"
-              ),
-              input({
-                id: "upload_to_restore",
-                class: "d-none",
-                name: "file",
-                type: "file",
-                accept: "application/zip,.zip",
-                onchange: "this.form.submit();",
-              })
-            )
+            restore_backup(req.csrfToken(), [
+              i({ class: "fas fa-2x fa-upload" }),
+              "<br/>",
+              "Restore",
+            ])
           ),
         },
       ],

@@ -127,7 +127,7 @@ describe("homepage", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/config/"));
   });
-  it("shows empty quick start", async () => {
+  it("resets", async () => {
     await reset();
   });
   it("redirects to create first user", async () => {
@@ -148,7 +148,7 @@ describe("homepage", () => {
       .get("/")
       .set("Cookie", loginCookie)
       .expect(toInclude("Quick Start"))
-      .expect(toInclude("You have no tables and no views!"));
+      .expect(toInclude("Four different ways to get started"));
   });
   it("shows no-view quick start", async () => {
     await Table.create("mytable");

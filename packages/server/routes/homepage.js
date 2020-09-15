@@ -4,9 +4,10 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
-const { ul, li, div, small, a, h5 } = require("@saltcorn/markup/tags");
+const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { restore_backup } = require("../markup/admin");
 
 const tableTable = (tables) =>
   mkTable(
@@ -34,6 +35,133 @@ const viewTable = (views) =>
     views
   );
 
+const welcome_page = async (req) => {
+  const packs_available = await fetch_available_packs();
+  const packlist = [
+    ...packs_available.slice(0, 5),
+    { name: "More...", description: "" },
+  ];
+  return {
+    above: [
+      {
+        type: "pageHeader",
+        title: "Quick Start",
+        blurb: "Four different ways to get started using Saltcorn",
+      },
+      {
+        besides: [
+          {
+            type: "card",
+            title: "Build",
+            contents: div(
+              p("Start by creating the tables to hold your data"),
+              a(
+                { href: `/table/new`, class: "btn btn-primary" },
+                "Create a table »"
+              ),
+              p(
+                "When you have created the tables, you can create views so users can interact with the data."
+              ),
+              p("You can also start by creating a page."),
+              a(
+                { href: `/pageedit/new`, class: "btn btn-primary" },
+                "Create a page »"
+              )
+            ),
+          },
+          {
+            type: "card",
+            title: "Upload",
+            contents: div(
+              p(
+                "You can skip creating a table by hand by uploading a CSV file from a spreadsheet."
+              ),
+              a(
+                {
+                  href: `/table/create-from-csv`,
+                  class: "btn btn-secondary",
+                },
+                "Create table with CSV upload"
+              ),
+              p(
+                "If you have a backup from a previous Saltcorn instance, you can also restore it."
+              ),
+              restore_backup(req.csrfToken(), [
+                i({ class: "fas fa-upload" }),
+                "&nbsp;Restore",
+              ])
+            ),
+          },
+        ],
+      },
+      {
+        besides: [
+          {
+            type: "card",
+            title: "Install pack",
+            contents: [
+              p(
+                "Instead of building, get up and running in no time with packs"
+              ),
+              p(
+                { class: "font-italic" },
+                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+              ),
+              mkTable(
+                [
+                  { label: "Name", key: "name" },
+                  {
+                    label: "Description",
+                    key: "description",
+                  },
+                ],
+                packlist,
+                { noHeader: true }
+              ),
+              a(
+                { href: `/plugins?set=packs`, class: "btn btn-primary" },
+                "Go to pack store »"
+              ),
+            ],
+          },
+          {
+            type: "card",
+            title: "Learn",
+            contents: [
+              p("Confused?"),
+              p(
+                "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+              ),
+              a(
+                {
+                  href: `https://wiki.saltcorn.com/`,
+                  class: "btn btn-primary",
+                },
+                "Go to Wiki »"
+              ),
+              p("The YouTube channel has some video tutorials"),
+              a(
+                {
+                  href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+                  class: "btn btn-secondary",
+                },
+                "Go to YouTube »"
+              ),
+              div(
+                { class: "mt-3" },
+                a(
+                  { href: `https://blog.saltcorn.com/` },
+                  "What's new? Read the blog »"
+                )
+              ),
+            ],
+          },
+        ],
+      },
+    ],
+  };
+};
+
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
@@ -42,65 +170,7 @@ const no_views_logged_in = async (req, res) => {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
     if (tables.length === 0) {
-      const packs_available = await fetch_available_packs();
-      const packs_installed = getState().getConfig("installed_packs", []);
-
-      res.sendWrap("Hello", {
-        above: [
-          {
-            type: "pageHeader",
-            title: "Quick Start",
-          },
-          {
-            type: "card",
-            title: link("/table", "Tables"),
-            contents: div(
-              div("You have no tables and no views!"),
-              div(
-                a(
-                  { href: `/table/new`, class: "btn btn-primary" },
-                  "Create a table »"
-                ),
-                a(
-                  {
-                    href: `/table/create-from-csv`,
-                    class: "btn btn-secondary mx-3",
-                  },
-                  "Create table from CSV upload"
-                )
-              )
-            ),
-          },
-          {
-            type: "card",
-            title: "Packs",
-            contents: [
-              div(
-                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-              ),
-              mkTable(
-                [
-                  { label: "Name", key: "name" },
-                  {
-                    label: "Install",
-                    key: (r) =>
-                      packs_installed.includes(r.name)
-                        ? "Installed"
-                        : post_btn(
-                            `/packs/install-named/${encodeURIComponent(
-                              r.name
-                            )}`,
-                            "Install",
-                            req.csrfToken()
-                          ),
-                  },
-                ],
-                packs_available
-              ),
-            ],
-          },
-        ],
-      });
+      res.sendWrap("Hello", await welcome_page(req));
     } else if (views.length === 0) {
       res.sendWrap("Hello", {
         above: [
