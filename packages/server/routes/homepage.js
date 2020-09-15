@@ -34,6 +34,65 @@ const viewTable = (views) =>
     views
   );
 
+const welcome_page = async (req) => {
+  const packs_available = await fetch_available_packs();
+  const packs_installed = getState().getConfig("installed_packs", []);
+  return {
+    above: [
+      {
+        type: "pageHeader",
+        title: "Quick Start",
+      },
+      {
+        type: "card",
+        title: link("/table", "Tables"),
+        contents: div(
+          div("You have no tables and no views!"),
+          div(
+            a(
+              { href: `/table/new`, class: "btn btn-primary" },
+              "Create a table »"
+            ),
+            a(
+              {
+                href: `/table/create-from-csv`,
+                class: "btn btn-secondary mx-3",
+              },
+              "Create table from CSV upload"
+            )
+          )
+        ),
+      },
+      {
+        type: "card",
+        title: "Packs",
+        contents: [
+          div(
+            "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+          ),
+          mkTable(
+            [
+              { label: "Name", key: "name" },
+              {
+                label: "Install",
+                key: (r) =>
+                  packs_installed.includes(r.name)
+                    ? "Installed"
+                    : post_btn(
+                        `/packs/install-named/${encodeURIComponent(r.name)}`,
+                        "Install",
+                        req.csrfToken()
+                      ),
+              },
+            ],
+            packs_available
+          ),
+        ],
+      },
+    ],
+  };
+};
+
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
@@ -42,65 +101,7 @@ const no_views_logged_in = async (req, res) => {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
     if (tables.length === 0) {
-      const packs_available = await fetch_available_packs();
-      const packs_installed = getState().getConfig("installed_packs", []);
-
-      res.sendWrap("Hello", {
-        above: [
-          {
-            type: "pageHeader",
-            title: "Quick Start",
-          },
-          {
-            type: "card",
-            title: link("/table", "Tables"),
-            contents: div(
-              div("You have no tables and no views!"),
-              div(
-                a(
-                  { href: `/table/new`, class: "btn btn-primary" },
-                  "Create a table »"
-                ),
-                a(
-                  {
-                    href: `/table/create-from-csv`,
-                    class: "btn btn-secondary mx-3",
-                  },
-                  "Create table from CSV upload"
-                )
-              )
-            ),
-          },
-          {
-            type: "card",
-            title: "Packs",
-            contents: [
-              div(
-                "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-              ),
-              mkTable(
-                [
-                  { label: "Name", key: "name" },
-                  {
-                    label: "Install",
-                    key: (r) =>
-                      packs_installed.includes(r.name)
-                        ? "Installed"
-                        : post_btn(
-                            `/packs/install-named/${encodeURIComponent(
-                              r.name
-                            )}`,
-                            "Install",
-                            req.csrfToken()
-                          ),
-                  },
-                ],
-                packs_available
-              ),
-            ],
-          },
-        ],
-      });
+      res.sendWrap("Hello", await welcome_page(req));
     } else if (views.length === 0) {
       res.sendWrap("Hello", {
         above: [
