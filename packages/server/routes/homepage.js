@@ -102,6 +102,7 @@ const welcome_page = async (req) => {
             title: "Install pack",
             contents: [
               div(
+                { class: "font-italic" },
                 "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
               ),
               mkTable(
@@ -124,7 +125,33 @@ const welcome_page = async (req) => {
           {
             type: "card",
             title: "Learn",
-            contents: "",
+            contents: [
+              p(
+                "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+              ),
+              a(
+                {
+                  href: `https://wiki.saltcorn.com/`,
+                  class: "btn btn-primary",
+                },
+                "Go to Wiki »"
+              ),
+              p("The YouTube channel has some video tutorials"),
+              a(
+                {
+                  href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+                  class: "btn btn-secondary",
+                },
+                "Go to YouTube »"
+              ),
+              div(
+                { class: "mt-3" },
+                a(
+                  { href: `https://blog.saltcorn.com/` },
+                  "What's new? Read the blog »"
+                )
+              ),
+            ],
           },
         ],
       },
