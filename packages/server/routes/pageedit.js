@@ -103,20 +103,22 @@ const pageFlow = new Workflow({
         const fields = [];
         for (const vseg of fixedvs) {
           const v = await View.findOne({ name: vseg.view });
-          const fs = await v.get_state_fields();
-          if (fs.length > 0)
-            fields.push({
-              label: `Fixed state for ${v.name} view`,
-              input_type: "section_header",
-            });
-          for (const frec of fs) {
-            const f = new Field(frec);
-            f.required = false;
-            if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-            f.parent_field = vseg.name;
+          if (v) {
+            const fs = await v.get_state_fields();
+            if (fs.length > 0)
+              fields.push({
+                label: `Fixed state for ${v.name} view`,
+                input_type: "section_header",
+              });
+            for (const frec of fs) {
+              const f = new Field(frec);
+              f.required = false;
+              if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+              f.parent_field = vseg.name;
 
-            await f.fill_fkey_options(true);
-            fields.push(f);
+              await f.fill_fkey_options(true);
+              fields.push(f);
+            }
           }
         }
         return new Form({
