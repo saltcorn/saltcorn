@@ -4,9 +4,10 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
-const { ul, li, div, small, a, h5, p } = require("@saltcorn/markup/tags");
+const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { restore_backup } = require("../markup/admin");
 
 const tableTable = (tables) =>
   mkTable(
@@ -73,24 +74,22 @@ const welcome_page = async (req) => {
             title: "Upload",
             contents: div(
               p(
-                "You can create a table by uploading a CSV file from a spreadsheet."
+                "You can skip creating a table by hand by uploading a CSV file from a spreadsheet."
               ),
               a(
                 {
                   href: `/table/create-from-csv`,
                   class: "btn btn-secondary",
                 },
-                "Create table from CSV upload"
+                "Create table with CSV upload"
               ),
               p(
                 "If you have a backup from a previous Saltcorn instance, you can also restore it."
               ),
-              a(
-                {
-                  href: `/admin`,
-                },
-                "Restore backup »"
-              )
+              restore_backup(req.csrfToken(), [
+                i({ class: "fas fa-upload" }),
+                "&nbsp;Restore",
+              ])
             ),
           },
         ],
@@ -101,7 +100,10 @@ const welcome_page = async (req) => {
             type: "card",
             title: "Install pack",
             contents: [
-              div(
+              p(
+                "Instead of building, get up and running in no time with packs"
+              ),
+              p(
                 { class: "font-italic" },
                 "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
               ),
@@ -126,6 +128,7 @@ const welcome_page = async (req) => {
             type: "card",
             title: "Learn",
             contents: [
+              p("Confused?"),
               p(
                 "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
               ),
