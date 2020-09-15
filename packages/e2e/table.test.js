@@ -14,7 +14,7 @@ describe("Table create", () => {
     await browser.create_tenant("sub4");
     await browser.goto("/");
     const page = await browser.page.content();
-    expect(page).toContain("You have no tables and no views!");
+    expect(page).toContain("Four different ways to get started");
   });
   it("creates table", async () => {
     await browser.goto("/table/new");
