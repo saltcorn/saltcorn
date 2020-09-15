@@ -62,7 +62,7 @@ const welcome_page = async (req) => {
               p(
                 "When you have created the tables, you can create views so users can interact with the data."
               ),
-              p("You can also create a page now."),
+              p("You can also start by creating a page."),
               a(
                 { href: `/pageedit/new`, class: "btn btn-primary" },
                 "Create a page »"
