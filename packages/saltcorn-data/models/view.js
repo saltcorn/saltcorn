@@ -233,7 +233,10 @@ class View {
 
       await View.update({ configuration }, this.id);
 
-      return { redirect: `/viewedit` };
+      return {
+        redirect: `/viewedit`,
+        flash: ["success", `View ${ctx.viewname || ""} saved`],
+      };
     };
     return configFlow;
   }

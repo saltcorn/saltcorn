@@ -233,6 +233,7 @@ const respondWorkflow = (page, wfres, req, res) => {
       },
     ],
   });
+  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
   if (wfres.renderForm)
     res.sendWrap(
       `Page attributes`,
