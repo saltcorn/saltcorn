@@ -434,8 +434,15 @@ router.post(
     } else {
       const { id, _csrf, ...rest } = v;
       const table = await Table.findOne({ id: parseInt(id) });
+      const old_versioned = table.versioned;
       if (!rest.versioned) rest.versioned = false;
       await table.update(rest);
+      if (!old_versioned && rest.versioned)
+        req.flash("success", "Table saved with version history enabled");
+      else if (old_versioned && !rest.versioned)
+        req.flash("success", "Table saved with version history disabled");
+      else req.flash("success", "Table saved");
+
       res.redirect(`/table/${id}`);
     }
   })
