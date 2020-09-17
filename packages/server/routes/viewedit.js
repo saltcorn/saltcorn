@@ -325,6 +325,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     await View.delete({ id });
+    req.flash("success", "View deleted");
     res.redirect(`/viewedit`);
   })
 );
