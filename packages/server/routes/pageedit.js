@@ -65,7 +65,8 @@ const pageFlow = new Workflow({
             }),
             {
               name: "min_role",
-              label: "Role required to access page",
+              label: "Minimum role",
+              sublabel: "Role required to access page",
               input_type: "select",
               options: roles.map((r) => ({ value: r.id, label: r.role })),
             },
