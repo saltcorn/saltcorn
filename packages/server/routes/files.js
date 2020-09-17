@@ -148,6 +148,16 @@ router.post(
     const { id } = req.params;
     const role = req.body.role;
     await File.update(+id, { min_role_read: role });
+    const file = await File.findOne({ id });
+    const roles = await User.get_roles();
+    const roleRow = roles.find((r) => r.id === +role);
+    if (roleRow && file)
+      req.flash(
+        "success",
+        `Minimum role for ${file.filename} updated to ${roleRow.role} `
+      );
+    else req.flash("success", `Minimum role updated`);
+
     res.redirect("/files");
   })
 );

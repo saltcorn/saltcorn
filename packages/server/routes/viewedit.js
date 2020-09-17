@@ -110,7 +110,8 @@ const viewForm = (tableOptions, roles, values) =>
       }),
       new Field({
         name: "min_role",
-        label: "Role required to run view",
+        label: "Minimum role",
+        sublabel: "Role required to run view",
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
@@ -272,7 +273,7 @@ const respondWorkflow = (view, wfres, req, res) => {
       },
     ],
   });
-
+  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
   if (wfres.renderForm)
     res.sendWrap(
       `View configuration`,
@@ -324,6 +325,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     await View.delete({ id });
+    req.flash("success", "View deleted");
     res.redirect(`/viewedit`);
   })
 );
