@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/markup",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "index.js",
@@ -10,7 +10,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "contractis": "^0.0.13",
+    "contractis": "^0.0.14",
     "escape-html": "^1.0.3",
     "xss": "^1.0.6"
   },
