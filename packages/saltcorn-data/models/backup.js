@@ -5,6 +5,7 @@ const Table = require("./table");
 const View = require("./view");
 const File = require("./file");
 const Plugin = require("./plugin");
+const User = require("./user");
 const Page = require("./page");
 const Zip = require("adm-zip");
 const tmp = require("tmp-promise");
@@ -188,7 +189,7 @@ const restore_users = contract(
       path.join(dirpath, "users.csv")
     );
     for (const user of user_rows) {
-      if (user.id > 1) await db.insert("users", user);
+      if (user.id > 1) await db.insert("users", new User(user));
     }
   }
 );

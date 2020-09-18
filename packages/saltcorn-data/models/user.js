@@ -7,10 +7,10 @@ class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
-    this.id = o.id;
-    this.resetPasswordToken = o.resetPasswordToken;
-    this.resetPasswordExpiry = o.resetPasswordExpiry;
-    this.role_id = o.role_id || 8;
+    this.id = o.id ? +o.id : o.id;
+    this.reset_password_token = o.reset_password_token || null;
+    this.reset_password_expiry = o.reset_password_expiry || null;
+    this.role_id = o.role_id ? +o.role_id : 8;
     contract.class(this);
   }
 
@@ -65,20 +65,24 @@ class User {
   }
 
   async getNewResetToken() {
-    const resetPasswordToken = uuidv4();
-    const resetPasswordExpiry = new Date();
-    resetPasswordExpiry.setDate(new Date().getDate() + 1);
+    const reset_password_token = uuidv4();
+    const reset_password_expiry = new Date();
+    reset_password_expiry.setDate(new Date().getDate() + 1);
     await db.update(
       "users",
-      { resetPasswordToken, resetPasswordExpiry },
+      { reset_password_token, reset_password_expiry },
       this.id
     );
-    return resetPasswordToken;
+    return reset_password_token;
   }
 
-  static async resetPasswordWithToken({ email, resetPasswordToken, password }) {
-    const u = await User.findOne({ resetPasswordToken, email });
-    if (u && new Date() < u.resetPasswordExpiry) {
+  static async resetPasswordWithToken({
+    email,
+    reset_password_token,
+    password,
+  }) {
+    const u = await User.findOne({ reset_password_token, email });
+    if (u && new Date() < u.reset_password_expiry) {
       await u.changePasswordTo(password);
       return { success: true };
     } else {
@@ -98,13 +102,13 @@ User.contract = {
     email: is.str,
     password: is.str,
     role_id: is.posint,
-    resetPasswordToken: is.maybe(
+    reset_password_token: is.maybe(
       is.and(
         is.str,
         is.sat((s) => s.length > 10)
       )
     ),
-    resetPasswordExpiry: is.maybe(is.class("Date")),
+    reset_password_expiry: is.maybe(is.class("Date")),
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),

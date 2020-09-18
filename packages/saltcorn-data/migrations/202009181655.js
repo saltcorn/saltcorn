@@ -1,6 +1,6 @@
 const sql = `
-alter table users add column resetPasswordToken text;
-alter table users add column resetPasswordExpiry timestamp;
+alter table users add column reset_password_token text;
+alter table users add column reset_password_expiry timestamp;
 `;
 
 module.exports = { sql };
