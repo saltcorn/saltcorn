@@ -1,12 +1,15 @@
 const db = require("../db");
 const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
+const { v4: uuidv4 } = require("uuid");
 
 class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
     this.id = o.id;
+    this.resetPasswordToken = o.resetPasswordToken;
+    this.resetPasswordExpiry = o.resetPasswordExpiry;
     this.role_id = o.role_id || 8;
     contract.class(this);
   }
@@ -60,6 +63,29 @@ class User {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
+
+  async getNewResetToken() {
+    const resetPasswordToken = uuidv4();
+    const resetPasswordExpiry = new Date();
+    resetPasswordExpiry.setDate(new Date().getDate() + 1);
+    await db.update(
+      "users",
+      { resetPasswordToken, resetPasswordExpiry },
+      this.id
+    );
+    return resetPasswordToken;
+  }
+
+  static async resetPasswordWithToken({ email, resetPasswordToken, password }) {
+    const u = await User.findOne({ resetPasswordToken, email });
+    if (u && new Date() < u.resetPasswordExpiry) {
+      await u.changePasswordTo(password);
+      return { success: true };
+    } else {
+      return { error: "User not found or expired token" };
+    }
+  }
+
   static async get_roles() {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
@@ -72,6 +98,13 @@ User.contract = {
     email: is.str,
     password: is.str,
     role_id: is.posint,
+    resetPasswordToken: is.maybe(
+      is.and(
+        is.str,
+        is.sat((s) => s.length > 10)
+      )
+    ),
+    resetPasswordExpiry: is.maybe(is.class("Date")),
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
