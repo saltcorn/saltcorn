@@ -24,11 +24,21 @@ const migrate = async (schema = "public") => {
 
   const fudge = is_sqlite
     ? (s) =>
-        s
-          .replace("id serial primary", "id integer primary")
-          .replace("jsonb", "json")
+        Array.isArray(s)
+          ? s.map(fudge)
+          : s
+              .replace("id serial primary", "id integer primary")
+              .replace("jsonb", "json")
     : (s) => s;
-
+  const execMany = async (sqls) => {
+    if (Array.isArray(sqls)) {
+      for (const sql of sqls) {
+        await client.query(sql);
+      }
+    } else {
+      return await client.query(sqls);
+    }
+  };
   for (const file of files) {
     const name = file.replace(".js", "");
     if (!dbmigrations.includes(name)) {
@@ -36,13 +46,13 @@ const migrate = async (schema = "public") => {
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
         if (!(is_sqlite && contents.sql.includes("DROP COLUMN")))
-          await client.query(fudge(contents.sql));
+          await execMany(fudge(contents.sql));
       }
       if (contents.sql_pg && !is_sqlite) {
-        await client.query(contents.sql_pg);
+        await execMany(contents.sql_pg);
       }
       if (contents.sql_sqlite && is_sqlite) {
-        await client.query(contents.sql_sqlite);
+        await execMany(contents.sql_sqlite);
       }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
