@@ -39,6 +39,12 @@ const configTypes = {
     },
   },
   development_mode: { type: "Bool", label: "Development mode", default: false },
+  smtp_host: { type: "String", label: "SMTP host", default: "" },
+  smtp_username: { type: "String", label: "SMTP username", default: "" },
+  smtp_password: { type: "String", label: "SMTP password", default: "" },
+  smtp_port: { type: "Integer", label: "SMTP port", default: "25" },
+  smtp_secure: { type: "Bool", label: "SMTP secure", default: false },
+  email_from: { type: "String", label: "Email from address", default: "" },
 };
 
 const getConfig = contract(

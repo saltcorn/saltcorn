@@ -8,19 +8,17 @@ const { port, secure } = (() => {
   return { port, secure };
 })();
 
-const transporter = nodemailer.createTransport({
-  host: getState().getConfig("smtp_host"),
-  port,
-  secure,
-  auth: {
-    user: getState().getConfig("smtp_username"),
-    pass: getState().getConfig("smtp_password"),
-  },
-});
-
 const send_reset_email = async (user, req) => {
   const link = await get_reset_link(user, req);
-
+  const transporter = nodemailer.createTransport({
+    host: getState().getConfig("smtp_host"),
+    port,
+    secure,
+    auth: {
+      user: getState().getConfig("smtp_username"),
+      pass: getState().getConfig("smtp_password"),
+    },
+  });
   let info = await transporter.sendMail({
     from: getState().getConfig("email_from"), // sender address
     to: user.email, // list of receivers
