@@ -7,6 +7,8 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
+const { send_reset_email } = require("./resetpw");
+const { getState } = require("@saltcorn/data/db/state");
 
 const router = new Router();
 module.exports = router;
@@ -77,6 +79,7 @@ router.get(
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
+    const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
       "Users",
       wrap("Users", [
@@ -86,6 +89,20 @@ router.get(
             { label: "Email", key: "email" },
             { label: "Role", key: (r) => roleMap[r.role_id] },
             { label: "View", key: (r) => link(`/useradmin/${r.id}`, "Edit") },
+            ...(can_reset
+              ? [
+                  {
+                    label: "Reset password",
+                    key: (r) =>
+                      post_btn(
+                        `/useradmin/reset-password/${r.id}`,
+                        "Send",
+                        req.csrfToken(),
+                        { small: true }
+                      ),
+                  },
+                ]
+              : []),
             {
               label: "Delete",
               key: (r) =>
@@ -93,7 +110,8 @@ router.get(
                   ? post_btn(
                       `/useradmin/delete/${r.id}`,
                       "Delete",
-                      req.csrfToken()
+                      req.csrfToken(),
+                      { small: true }
                     )
                   : "",
             },
@@ -155,6 +173,20 @@ router.post(
       if (u.error) req.flash("error", u.error);
       else req.flash("success", `User ${email} created`);
     }
+    res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/reset-password/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await send_reset_email(u, req);
+    req.flash("success", `Reset password link sent to ${u.email}`);
+
     res.redirect(`/useradmin`);
   })
 );

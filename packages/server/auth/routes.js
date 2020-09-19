@@ -6,7 +6,7 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { setTenant, error_catcher, loggedIn } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-
+const { send_reset_email } = require("./resetpw");
 const {
   mkTable,
   renderForm,
@@ -17,6 +17,7 @@ const {
 } = require("@saltcorn/markup");
 const passport = require("passport");
 const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
+const { resetPasswordWithToken } = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
@@ -40,16 +41,64 @@ const loginForm = () =>
     submitLabel: "Login",
   });
 
+const forgotForm = () =>
+  new Form({
+    blurb:
+      "Enter your email address below and we'll send you a link to reset your password.",
+    fields: [
+      new Field({
+        label: "E-mail",
+        name: "email",
+        input_type: "text",
+        validator: (s) => s.length < 128,
+      }),
+    ],
+    action: "/auth/forgot",
+    submitLabel: "Reset password",
+  });
+
+const resetForm = (body) => {
+  const form = new Form({
+    blurb: "Enter your new password below",
+    fields: [
+      new Field({
+        label: "Password",
+        name: "password",
+        input_type: "password",
+      }),
+      new Field({
+        name: "token",
+        input_type: "hidden",
+      }),
+      new Field({
+        name: "email",
+        input_type: "hidden",
+      }),
+    ],
+    action: "/auth/reset",
+    submitLabel: "Set password",
+  });
+  form.values.email = body && body.email;
+  form.values.token = body && body.token;
+  return form;
+};
+const getAuthLinks = (current) => {
+  const links = {};
+  const state = getState();
+  if (current !== "login") links.login = "/auth/login";
+  if (current !== "signup" && state.getConfig("allow_signup"))
+    links.signup = "/auth/signup";
+  if (current !== "forgot" && state.getConfig("allow_forgot"))
+    links.forgot = "/auth/forgot";
+
+  return links;
+};
+
 router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
-    const allow_signup = getState().getConfig("allow_signup");
-    res.sendAuthWrap(
-      `Login`,
-      loginForm(),
-      allow_signup ? { signup: "/auth/signup" } : {}
-    );
+    res.sendAuthWrap(`Login`, loginForm(), getAuthLinks("login"));
   })
 );
 
@@ -63,6 +112,76 @@ router.get("/logout", setTenant, (req, res) => {
 });
 
 router.get(
+  "/forgot",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_forgot", false)) {
+      res.sendAuthWrap(`Reset password`, forgotForm(), getAuthLinks("forgot"));
+    } else {
+      req.flash(
+        "danger",
+        "Password reset not enabled. Contact your administrator."
+      );
+      res.redirect("/auth/login");
+    }
+  })
+);
+
+router.get(
+  "/reset",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const form = resetForm(req.query);
+    res.sendAuthWrap(`Reset password`, form, {});
+  })
+);
+
+router.post(
+  "/reset",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const result = await User.resetPasswordWithToken({
+      email: req.body.email,
+      reset_password_token: req.body.token,
+      password: req.body.password,
+    });
+    if (result.success) {
+      req.flash("success", "Password reset. Log in with your new password");
+    } else {
+      req.flash("danger", result.error);
+    }
+    res.redirect("/auth/login");
+  })
+);
+router.post(
+  "/forgot",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_forgot")) {
+      const { email } = req.body;
+      const u = await User.findOne({ email });
+      const respond = () => {
+        req.flash("success", "Email with password reset link sent");
+        res.redirect("/auth/login");
+      };
+      if (!u) {
+        respond();
+        return;
+      }
+      //send email
+      await send_reset_email(u, req);
+
+      respond();
+    } else {
+      req.flash(
+        "danger",
+        "Password reset not enabled. Contact your administrator."
+      );
+      res.redirect("/auth/login");
+    }
+  })
+);
+router.get(
   "/signup",
   setTenant,
   error_catcher(async (req, res) => {
@@ -70,7 +189,7 @@ router.get(
       const form = loginForm();
       form.action = "/auth/signup";
       form.submitLabel = "Sign up";
-      res.sendAuthWrap(`Sign up`, form, { login: "/auth/login" });
+      res.sendAuthWrap(`Sign up`, form, getAuthLinks("signup"));
     } else {
       req.flash("danger", "Signups not enabled");
       res.redirect("/auth/login");

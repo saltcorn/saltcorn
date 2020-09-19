@@ -27,6 +27,7 @@ const configTypes = {
   staff_home: { type: "String", label: "Staff home page", default: "" },
   admin_home: { type: "String", label: "Admin home page", default: "" },
   allow_signup: { type: "Bool", label: "Allow signups", default: true },
+  allow_forgot: { type: "Bool", label: "Allow password reset", default: false },
   login_menu: { type: "Bool", label: "Login in menu", default: true },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
@@ -38,6 +39,12 @@ const configTypes = {
     },
   },
   development_mode: { type: "Bool", label: "Development mode", default: false },
+  smtp_host: { type: "String", label: "SMTP host", default: "" },
+  smtp_username: { type: "String", label: "SMTP username", default: "" },
+  smtp_password: { type: "String", label: "SMTP password", default: "" },
+  smtp_port: { type: "Integer", label: "SMTP port", default: "25" },
+  smtp_secure: { type: "Bool", label: "SMTP secure", default: false },
+  email_from: { type: "String", label: "Email from address", default: "" },
 };
 
 const getConfig = contract(

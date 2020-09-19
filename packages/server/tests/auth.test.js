@@ -10,6 +10,8 @@ const {
   toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
+const { get_reset_link } = require("../auth/resetpw");
 
 afterAll(db.close);
 
@@ -89,6 +91,47 @@ describe("signup process", () => {
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
       .send("password=secret")
+      .expect(toRedirect("/"));
+  });
+});
+
+describe("forgot password", () => {
+  it("should show form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/auth/forgot/").expect(toRedirect("/auth/login"));
+    await getState().setConfig("allow_forgot", true);
+    await request(app)
+      .get("/auth/forgot/")
+      .expect(toSucceed())
+      .expect(toInclude("send you a link to reset your password"));
+  });
+
+  it("load reset form", async () => {
+    const u = await User.findOne({ email: "staff1@foo.com" });
+    await getState().setConfig("base_url", "/");
+
+    const link = await get_reset_link(u, {});
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get(link)
+      .expect(toSucceed())
+      .expect(toInclude("Enter your new password below"));
+    const token = await u.getNewResetToken();
+    await request(app)
+      .post("/auth/reset")
+      .send("email=staff1@foo.com")
+      .send("password=bazzzoo")
+      .send("token=" + token)
+      .expect(toRedirect("/auth/login"));
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff1@foo.com")
+      .send("password=secret")
+      .expect(toRedirect("/auth/login"));
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff1@foo.com")
+      .send("password=bazzzoo")
       .expect(toRedirect("/"));
   });
 });

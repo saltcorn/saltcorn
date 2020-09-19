@@ -1,13 +1,20 @@
 const db = require("../db");
 const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
+const { v4: uuidv4 } = require("uuid");
 
 class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
-    this.id = o.id;
-    this.role_id = o.role_id || 8;
+    this.id = o.id ? +o.id : o.id;
+    this.reset_password_token = o.reset_password_token || null;
+    this.reset_password_expiry =
+      typeof o.reset_password_expiry === "string" &&
+      o.reset_password_expiry.length > 0
+        ? new Date(o.reset_password_expiry)
+        : o.reset_password_expiry || null;
+    this.role_id = o.role_id ? +o.role_id : 8;
     contract.class(this);
   }
 
@@ -18,10 +25,12 @@ class User {
     return bcrypt.compareSync(pw, this.password);
   }
 
-  async changePasswordTo(newpw) {
+  async changePasswordTo(newpw, expireToken) {
     const password = await User.hashPassword(newpw);
     this.password = password;
-    await db.update("users", { password }, this.id);
+    const upd = { password };
+    if (expireToken) upd.reset_password_token = null;
+    await db.update("users", upd, this.id);
   }
   static async create(uo) {
     const u = new User(uo);
@@ -60,6 +69,38 @@ class User {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
+
+  async getNewResetToken() {
+    const reset_password_token = uuidv4();
+    const reset_password_expiry = new Date();
+    reset_password_expiry.setDate(new Date().getDate() + 1);
+    await db.update(
+      "users",
+      { reset_password_token, reset_password_expiry },
+      this.id
+    );
+    return reset_password_token;
+  }
+
+  static async resetPasswordWithToken({
+    email,
+    reset_password_token,
+    password,
+  }) {
+    if (
+      typeof reset_password_token !== "string" ||
+      reset_password_token.length < 10
+    )
+      return { error: "Invalid token" };
+    const u = await User.findOne({ reset_password_token, email });
+    if (u && new Date() < u.reset_password_expiry) {
+      await u.changePasswordTo(password, true);
+      return { success: true };
+    } else {
+      return { error: "User not found or expired token" };
+    }
+  }
+
   static async get_roles() {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
@@ -72,6 +113,13 @@ User.contract = {
     email: is.str,
     password: is.str,
     role_id: is.posint,
+    reset_password_token: is.maybe(
+      is.and(
+        is.str,
+        is.sat((s) => s.length > 10)
+      )
+    ),
+    reset_password_expiry: is.maybe(is.class("Date")),
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
