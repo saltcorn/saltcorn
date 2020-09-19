@@ -33,15 +33,15 @@ If you did not request this, please ignore this email.
 
 Your password will not change until you access the link above and set a new one.
 `,
-    html: `Hi ${user.email},
+    html: `Hi ${user.email},<br />
     
-You have requested a link to change your password. You can do this through this link:
-
-<a href="${link}">Change my password</a>
-
-If you did not request this, please ignore this email.
-
-Your password will not change until you access the link above and set a new one.
+You have requested a link to change your password. You can do this through this link:<br />
+<br />
+<a href="${link}">Change my password</a><br />
+<br />
+If you did not request this, please ignore this email.<br />
+<br />
+Your password will not change until you access the link above and set a new one.<br />
 `,
   });
   console.log(link, info);
