@@ -56,6 +56,32 @@ const forgotForm = () =>
     action: "/auth/forgot",
     submitLabel: "Reset password",
   });
+
+const resetForm = (body) => {
+  const form = new Form({
+    blurb: "Enter your new password below",
+    fields: [
+      new Field({
+        label: "Password",
+        name: "password",
+        input_type: "password",
+      }),
+      new Field({
+        name: "token",
+        input_type: "hidden",
+      }),
+      new Field({
+        name: "email",
+        input_type: "hidden",
+      }),
+    ],
+    action: "/auth/reset",
+    submitLabel: "Set password",
+  });
+  form.values.email = body && body.email;
+  form.values.token = body && body.token;
+  return form;
+};
 const getAuthLinks = (current) => {
   const links = {};
   const state = getState();
@@ -72,7 +98,6 @@ router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
-    const allow_signup = getState().getConfig("allow_signup");
     res.sendAuthWrap(`Login`, loginForm(), getAuthLinks("login"));
   })
 );
@@ -90,7 +115,6 @@ router.get(
   "/forgot",
   setTenant,
   error_catcher(async (req, res) => {
-    const allow_signup = getState().getConfig("allow_signup");
     if (getState().getConfig("allow_forgot", false)) {
       res.sendAuthWrap(`Reset password`, forgotForm(), getAuthLinks("forgot"));
     } else {
@@ -100,6 +124,33 @@ router.get(
       );
       res.redirect("/auth/login");
     }
+  })
+);
+
+router.get(
+  "/reset",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const form = resetForm(req.query);
+    res.sendAuthWrap(`Reset password`, form, {});
+  })
+);
+
+router.post(
+  "/reset",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const result = await User.resetPasswordWithToken({
+      email: req.body.email,
+      reset_password_token: req.body.token,
+      password: req.body.password,
+    });
+    if (result.success) {
+      req.flash("success", "Password reset. Log in with your new password");
+    } else {
+      req.flash("danger", result.error);
+    }
+    res.redirect("/auth/login");
   })
 );
 router.post(

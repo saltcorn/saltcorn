@@ -21,10 +21,12 @@ class User {
     return bcrypt.compareSync(pw, this.password);
   }
 
-  async changePasswordTo(newpw) {
+  async changePasswordTo(newpw, expireToken) {
     const password = await User.hashPassword(newpw);
     this.password = password;
-    await db.update("users", { password }, this.id);
+    const upd = { password };
+    if (expireToken) upd.reset_password_token = null;
+    await db.update("users", upd, this.id);
   }
   static async create(uo) {
     const u = new User(uo);
@@ -81,9 +83,14 @@ class User {
     reset_password_token,
     password,
   }) {
+    if (
+      typeof reset_password_token !== "string" ||
+      reset_password_token.length < 10
+    )
+      return { error: "Invalid token" };
     const u = await User.findOne({ reset_password_token, email });
     if (u && new Date() < u.reset_password_expiry) {
-      await u.changePasswordTo(password);
+      await u.changePasswordTo(password, true);
       return { success: true };
     } else {
       return { error: "User not found or expired token" };
