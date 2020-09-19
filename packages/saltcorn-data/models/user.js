@@ -9,7 +9,11 @@ class User {
     this.password = o.password;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
-    this.reset_password_expiry = o.reset_password_expiry || null;
+    this.reset_password_expiry =
+      typeof o.reset_password_expiry === "string" &&
+      o.reset_password_expiry.length > 0
+        ? new Date(o.reset_password_expiry.length)
+        : o.reset_password_expiry || null;
     this.role_id = o.role_id ? +o.role_id : 8;
     contract.class(this);
   }
