@@ -12,7 +12,7 @@ class User {
     this.reset_password_expiry =
       typeof o.reset_password_expiry === "string" &&
       o.reset_password_expiry.length > 0
-        ? new Date(o.reset_password_expiry.length)
+        ? new Date(o.reset_password_expiry)
         : o.reset_password_expiry || null;
     this.role_id = o.role_id ? +o.role_id : 8;
     contract.class(this);
