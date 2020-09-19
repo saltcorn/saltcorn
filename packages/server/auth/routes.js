@@ -6,7 +6,7 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { setTenant, error_catcher, loggedIn } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-
+const { send_reset_email } = require("./resetpw");
 const {
   mkTable,
   renderForm,
@@ -17,6 +17,7 @@ const {
 } = require("@saltcorn/markup");
 const passport = require("passport");
 const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
+const { resetPasswordWithToken } = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
@@ -101,7 +102,34 @@ router.get(
     }
   })
 );
+router.post(
+  "/forgot",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_forgot")) {
+      const { email } = req.body;
+      const u = await User.findOne({ email });
+      const respond = () => {
+        req.flash("success", "Email with password reset link sent");
+        res.redirect("/auth/login");
+      };
+      if (!u) {
+        respond();
+        return;
+      }
+      //send email
+      await send_reset_email(u, req);
 
+      respond();
+    } else {
+      req.flash(
+        "danger",
+        "Password reset not enabled. Contact your administrator."
+      );
+      res.redirect("/auth/login");
+    }
+  })
+);
 router.get(
   "/signup",
   setTenant,
