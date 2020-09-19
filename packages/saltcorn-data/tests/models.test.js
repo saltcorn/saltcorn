@@ -6,7 +6,6 @@ const Field = require("../models/field");
 const Crash = require("../models/crash");
 const File = require("../models/file");
 const View = require("../models/view");
-const User = require("../models/user");
 const Page = require("../models/page");
 const { getViews } = require("../models/layout");
 
@@ -153,43 +152,6 @@ describe("File", () => {
   });
 });
 
-describe("User", () => {
-  it("should create", async () => {
-    await User.create({ email: "foo@bar.com", password: "secret" });
-    const u = await User.findOne({ email: "foo@bar.com" });
-    expect(u.email).toBe("foo@bar.com");
-    expect(u.password === "secret").toBe(false);
-    const hasu = await User.nonEmpty();
-    expect(hasu).toBe(true);
-  });
-  it("should authenticate", async () => {
-    const u = await User.authenticate({
-      email: "foo@bar.com",
-      password: "secret",
-    });
-    expect(u.email).toBe("foo@bar.com");
-    expect(u.checkPassword("secret")).toBe(true);
-    expect(u.checkPassword("foobar")).toBe(false);
-    const hpw = await User.hashPassword("secret");
-    expect(hpw).not.toBe("secret");
-    const u0 = await User.authenticate({
-      email: "foo@bar.com",
-      password: "secrat",
-    });
-    expect(u0).toBe(false);
-    const u00 = await User.authenticate({
-      email: "foo@baz.com",
-      password: "secret",
-    });
-    expect(u00).toBe(false);
-  });
-  it("should delete", async () => {
-    const u = await User.findOne({ email: "foo@bar.com" });
-    await u.delete();
-    const us = await User.find({ email: "foo@bar.com" });
-    expect(us.length).toBe(0);
-  });
-});
 describe("Form new", () => {
   it("should retain field class", () => {
     const form = new Form({
