@@ -10,7 +10,7 @@ const db = require("../db");
 const random_table = async () => {
   const name = is
     .and(
-      is.sat((s) => db.sqlsanitize(s).length > 1),
+      is.sat((s) => db.sqlsanitize(s).length > 2),
       is.str
     )
     .generate();
@@ -55,7 +55,7 @@ const random_field = async (existing_field_names) => {
     .and(
       is.sat(
         (s) =>
-          s.length > 1 && !existing_field_names.includes(Field.labelToName(s))
+          s.length > 2 && !existing_field_names.includes(Field.labelToName(s))
       ),
       is.str
     )
