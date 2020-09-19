@@ -27,6 +27,7 @@ const configTypes = {
   staff_home: { type: "String", label: "Staff home page", default: "" },
   admin_home: { type: "String", label: "Admin home page", default: "" },
   allow_signup: { type: "Bool", label: "Allow signups", default: true },
+  allow_forgot: { type: "Bool", label: "Allow password reset", default: true },
   login_menu: { type: "Bool", label: "Login in menu", default: true },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {

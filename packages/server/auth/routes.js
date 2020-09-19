@@ -40,16 +40,39 @@ const loginForm = () =>
     submitLabel: "Login",
   });
 
+const forgotForm = () =>
+  new Form({
+    blurb:
+      "Enter your email address below and we'll send you a link to reset your password.",
+    fields: [
+      new Field({
+        label: "E-mail",
+        name: "email",
+        input_type: "text",
+        validator: (s) => s.length < 128,
+      }),
+    ],
+    action: "/auth/forgot",
+    submitLabel: "Reset password",
+  });
+const getAuthLinks = (current) => {
+  const links = {};
+  const state = getState();
+  if (current !== "login") links.login = "/auth/login";
+  if (current !== "signup" && state.getConfig("allow_signup"))
+    links.signup = "/auth/signup";
+  if (current !== "forgot" && state.getConfig("allow_forgot"))
+    links.forgot = "/auth/forgot";
+
+  return links;
+};
+
 router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
     const allow_signup = getState().getConfig("allow_signup");
-    res.sendAuthWrap(
-      `Login`,
-      loginForm(),
-      allow_signup ? { signup: "/auth/signup" } : {}
-    );
+    res.sendAuthWrap(`Login`, loginForm(), getAuthLinks("login"));
   })
 );
 
@@ -63,6 +86,23 @@ router.get("/logout", setTenant, (req, res) => {
 });
 
 router.get(
+  "/forgot",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const allow_signup = getState().getConfig("allow_signup");
+    if (getState().getConfig("allow_forgot", false)) {
+      res.sendAuthWrap(`Reset password`, forgotForm(), getAuthLinks("forgot"));
+    } else {
+      req.flash(
+        "danger",
+        "Password reset not enabled. Contact your administrator."
+      );
+      res.redirect("/auth/login");
+    }
+  })
+);
+
+router.get(
   "/signup",
   setTenant,
   error_catcher(async (req, res) => {
@@ -70,7 +110,7 @@ router.get(
       const form = loginForm();
       form.action = "/auth/signup";
       form.submitLabel = "Sign up";
-      res.sendAuthWrap(`Sign up`, form, { login: "/auth/login" });
+      res.sendAuthWrap(`Sign up`, form, getAuthLinks("signup"));
     } else {
       req.flash("danger", "Signups not enabled");
       res.redirect("/auth/login");
