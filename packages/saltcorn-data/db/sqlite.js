@@ -54,8 +54,10 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
   return tq.rows;
 };
-const mkVal = ([k, v]) =>
-  typeof v === "object" && v !== null ? JSON.stringify(v) : v;
+
+const reprAsJson = (v) =>
+  typeof v === "object" && v !== null && !(v instanceof Date);
+const mkVal = ([k, v]) => (reprAsJson(v) ? JSON.stringify(v) : v);
 
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
@@ -79,9 +81,7 @@ const insert = async (tbl, obj, noid = false) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
-    .map(([k, v], ix) =>
-      v && v.sql ? v.sql : typeof v === "object" ? "json(?)" : "?"
-    )
+    .map(([k, v], ix) => (v && v.sql ? v.sql : reprAsJson(v) ? "json(?)" : "?"))
     .join();
   const valList = kvs.filter(([k, v]) => !(v && v.sql)).map(mkVal);
   const sql = `insert into "${sqlsanitize(
