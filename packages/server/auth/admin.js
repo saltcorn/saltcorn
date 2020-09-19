@@ -8,6 +8,7 @@ const Form = require("@saltcorn/data/models/form");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
+const { getState } = require("@saltcorn/data/db/state");
 
 const router = new Router();
 module.exports = router;
@@ -78,6 +79,7 @@ router.get(
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
+    const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
       "Users",
       wrap("Users", [
@@ -87,16 +89,20 @@ router.get(
             { label: "Email", key: "email" },
             { label: "Role", key: (r) => roleMap[r.role_id] },
             { label: "View", key: (r) => link(`/useradmin/${r.id}`, "Edit") },
-            {
-              label: "Reset password",
-              key: (r) =>
-                post_btn(
-                  `/useradmin/reset-password/${r.id}`,
-                  "Send",
-                  req.csrfToken(),
-                  { small: true }
-                ),
-            },
+            ...(can_reset
+              ? [
+                  {
+                    label: "Reset password",
+                    key: (r) =>
+                      post_btn(
+                        `/useradmin/reset-password/${r.id}`,
+                        "Send",
+                        req.csrfToken(),
+                        { small: true }
+                      ),
+                  },
+                ]
+              : []),
             {
               label: "Delete",
               key: (r) =>
