@@ -54,4 +54,4 @@ const get_reset_link = async (user, req) => {
   )}`;
 };
 
-module.exports = { send_reset_email };
+module.exports = { send_reset_email, get_reset_link };
