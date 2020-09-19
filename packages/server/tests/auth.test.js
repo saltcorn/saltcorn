@@ -97,8 +97,9 @@ describe("signup process", () => {
 
 describe("forgot password", () => {
   it("should show form", async () => {
-    await getState().setConfig("allow_forgot", true);
     const app = await getApp({ disableCsrf: true });
+    await request(app).get("/auth/forgot/").expect(toRedirect("/auth/login"));
+    await getState().setConfig("allow_forgot", true);
     await request(app)
       .get("/auth/forgot/")
       .expect(toSucceed())
