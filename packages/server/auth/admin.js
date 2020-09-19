@@ -7,6 +7,7 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
+const { send_reset_email } = require("./resetpw");
 
 const router = new Router();
 module.exports = router;
@@ -87,6 +88,15 @@ router.get(
             { label: "Role", key: (r) => roleMap[r.role_id] },
             { label: "View", key: (r) => link(`/useradmin/${r.id}`, "Edit") },
             {
+              label: "Reset password",
+              key: (r) =>
+                post_btn(
+                  `/useradmin/reset-password/${r.id}`,
+                  "Send",
+                  req.csrfToken()
+                ),
+            },
+            {
               label: "Delete",
               key: (r) =>
                 r.id !== req.user.id
@@ -155,6 +165,20 @@ router.post(
       if (u.error) req.flash("error", u.error);
       else req.flash("success", `User ${email} created`);
     }
+    res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/reset-password/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await send_reset_email(u, req);
+    req.flash("success", `Reset password link sent to ${u.email}`);
+
     res.redirect(`/useradmin`);
   })
 );
