@@ -93,7 +93,8 @@ router.get(
                 post_btn(
                   `/useradmin/reset-password/${r.id}`,
                   "Send",
-                  req.csrfToken()
+                  req.csrfToken(),
+                  { small: true }
                 ),
             },
             {
@@ -103,7 +104,8 @@ router.get(
                   ? post_btn(
                       `/useradmin/delete/${r.id}`,
                       "Delete",
-                      req.csrfToken()
+                      req.csrfToken(),
+                      { small: true }
                     )
                   : "",
             },
