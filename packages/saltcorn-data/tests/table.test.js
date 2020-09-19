@@ -556,6 +556,6 @@ describe("Table with date", () => {
     const rows = await table.getRows();
     var dif = new Date(rows[0].time).getTime() - new Date().getTime();
 
-    expect(dif).toBeLessThanOrEqual(1000);
+    expect(Math.abs(dif)).toBeLessThanOrEqual(1000);
   });
 });
