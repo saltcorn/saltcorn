@@ -542,3 +542,20 @@ describe("Table and view deletion ", () => {
     if (tc) await tc.delete();
   });
 });
+
+describe("Table with date", () => {
+  it("should create table", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithDates");
+    await Field.create({
+      table,
+      name: "time",
+      type: "Date",
+    });
+    await table.insertRow({ time: new Date() });
+    const rows = await table.getRows();
+    var dif = new Date(rows[0].time).getTime() - new Date().getTime();
+
+    expect(dif).toBeLessThanOrEqual(1000);
+  });
+});
