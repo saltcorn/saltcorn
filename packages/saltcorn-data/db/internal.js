@@ -26,28 +26,34 @@ const whereFTS = (v, i, is_sqlite) => {
   if (flds === "") flds = "''";
   if (is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
   else
-    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${
-      i + 1
-    })`;
+    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i})`;
 };
 
-const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i + 1}`);
+const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i}`);
 
-const whereClause = (is_sqlite) => ([k, v], i) =>
+const mkCounter = () => {
+  let i = 0;
+  return () => {
+    i += 1;
+    return i;
+  };
+};
+
+const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
-    ? whereFTS(v, i, is_sqlite)
+    ? whereFTS(v, i(), is_sqlite)
     : typeof (v || {}).in !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} = ${is_sqlite ? "" : "ANY"} (${placeHolder(
         is_sqlite,
-        i
+        i()
       )})`
     : typeof (v || {}).ilike !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
-      } '%' || ${placeHolder(is_sqlite, i)} || '%'`
+      } '%' || ${placeHolder(is_sqlite, i())} || '%'`
     : v === null
     ? `${sqlsanitizeAllowDots(k)} is null`
-    : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
+    : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
 
 const getVal = ([k, v]) =>
   k === "_fts"
@@ -62,7 +68,7 @@ const mkWhere = (whereObj, is_sqlite) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
   const where =
     whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause(is_sqlite)).join(" and ")
+      ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")
       : "";
   const values = wheres.map(getVal).filter((v) => v !== null);
   return { where, values };

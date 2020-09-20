@@ -43,11 +43,23 @@ describe("mkWhere", () => {
       values: [5],
       where: "where id=$1",
     });
+    expect(mkWhere({ id: 5, hello: "world" })).toStrictEqual({
+      values: [5, "world"],
+      where: "where id=$1 and hello=$2",
+    });
   });
   it("should query null", () => {
     expect(mkWhere({ id: null })).toStrictEqual({
       values: [],
       where: "where id is null",
+    });
+    expect(mkWhere({ id: null, foo: 1 })).toStrictEqual({
+      values: [1],
+      where: "where id is null and foo=$1",
+    });
+    expect(mkWhere({ foo: 1, id: null })).toStrictEqual({
+      values: [1],
+      where: "where foo=$1 and id is null",
     });
   });
 });

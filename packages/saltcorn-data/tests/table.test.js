@@ -483,10 +483,16 @@ describe("Table not null constraint", () => {
   it("should query null", async () => {
     const table = await Table.findOne({ name: "TableWithNotNulls" });
     await table.insertRow({ name: "Ageless", age: null });
-    db.set_sql_logging();
+
     const rows = await table.getRows({ age: null });
     expect(rows.length).toBe(1);
     expect(rows[0].name).toBe("Ageless");
+    const rows1 = await table.getRows({ age: null, name: "Ageless" });
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].name).toBe("Ageless");
+    const rows2 = await table.getRows({ name: "Ageless", age: null });
+    expect(rows2.length).toBe(1);
+    expect(rows2[0].name).toBe("Ageless");
   });
 });
 describe("Table with users and files", () => {
