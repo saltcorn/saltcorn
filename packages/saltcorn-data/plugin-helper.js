@@ -440,6 +440,18 @@ const initial_config_all_fields = contract(
   }
 );
 
+const readState = (state, fields) => {
+  fields.forEach((f) => {
+    const current = state[f.name];
+    if (typeof current !== "undefined") {
+      if (f.type.read) state[f.name] = f.type.read(current);
+      else if (f.type === "Key")
+        state[f.name] = current === "null" ? null : +current;
+    }
+  });
+  return state;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -450,4 +462,5 @@ module.exports = {
   calcfldViewOptions,
   get_link_view_opts,
   is_column,
+  readState,
 };
