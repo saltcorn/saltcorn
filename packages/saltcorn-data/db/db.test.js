@@ -44,6 +44,12 @@ describe("mkWhere", () => {
       where: "where id=$1",
     });
   });
+  it("should query null", () => {
+    expect(mkWhere({ id: null })).toStrictEqual({
+      values: [],
+      where: "where id is null",
+    });
+  });
 });
 
 describe("where", () => {
