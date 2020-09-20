@@ -45,6 +45,8 @@ const whereClause = (is_sqlite) => ([k, v], i) =>
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
       } '%' || ${placeHolder(is_sqlite, i)} || '%'`
+    : v === null
+    ? `${sqlsanitizeAllowDots(k)} is null`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i)}`;
 
 const getVal = ([k, v]) =>
@@ -62,7 +64,7 @@ const mkWhere = (whereObj, is_sqlite) => {
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite)).join(" and ")
       : "";
-  const values = wheres.map(getVal);
+  const values = wheres.map(getVal).filter((v) => v !== null);
   return { where, values };
 };
 

@@ -480,6 +480,14 @@ describe("Table not null constraint", () => {
       expect(!!ins_res1.error).toBe(true);
     }
   });
+  it("should query null", async () => {
+    const table = await Table.findOne({ name: "TableWithNotNulls" });
+    await table.insertRow({ name: "Ageless", age: null });
+    db.set_sql_logging();
+    const rows = await table.getRows({ age: null });
+    expect(rows.length).toBe(1);
+    expect(rows[0].name).toBe("Ageless");
+  });
 });
 describe("Table with users and files", () => {
   it("should create table", async () => {
