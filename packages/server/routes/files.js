@@ -114,7 +114,7 @@ router.get(
       res.type(file.mimetype);
       res.download(file.location, file.filename);
     } else {
-      req.flash("warning", "Not authorized");
+      req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
     }
   })
@@ -134,7 +134,7 @@ router.get(
       res.set("Cache-Control", `${cacheability}, max-age=3600`);
       res.sendFile(file.location);
     } else {
-      req.flash("warning", "Not authorized");
+      req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
     }
   })

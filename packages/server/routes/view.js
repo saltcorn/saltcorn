@@ -18,10 +18,10 @@ router.get(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
 
     if (!view) {
-      req.flash("danger", `No such view: ${text(viewname)}`);
+      req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
     } else if (role > view.min_role) {
-      req.flash("danger", "Not authorized");
+      req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
     } else {
       const state = view.combine_state_and_default_state(req.query);
@@ -44,10 +44,10 @@ router.post(
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
-      req.flash("danger", `No such view: ${text(viewname)}`);
+      req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
     } else if (role > view.min_role) {
-      req.flash("danger", "Not authorized");
+      req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
     } else {
       await view.runRoute(route, req.body, res, { res, req });
@@ -64,10 +64,10 @@ router.post(
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
-      req.flash("danger", `No such view: ${text(viewname)}`);
+      req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
     } else if (role > view.min_role) {
-      req.flash("danger", "Not authorized");
+      req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
     } else {
       await view.runPost(req.query, req.body, { res, req });

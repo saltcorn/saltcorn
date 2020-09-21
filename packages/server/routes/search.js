@@ -112,7 +112,7 @@ const runSearch = async (q, req, res) => {
   const cfg = getState().getConfig("globalSearch");
 
   if (!cfg) {
-    req.flash("warning", "Search not configured");
+    req.flash("warning", req.__("Search not configured"));
     res.redirect("/");
     return;
   }
@@ -134,8 +134,10 @@ const runSearch = async (q, req, res) => {
   form.validate({ q });
 
   const searchResult =
-    resp.length === 0 ? [{ type: "card", contents: "Not found" }] : resp;
-  res.sendWrap(`Search all tables`, {
+    resp.length === 0
+      ? [{ type: "card", contents: req.__("Not found") }]
+      : resp;
+  res.sendWrap(req.__("Search all tables"), {
     above: [
       {
         type: "card",
@@ -158,15 +160,15 @@ router.get(
       if (!cfg) {
         const role = (req.user || {}).role_id || 10;
 
-        req.flash("warning", "Search not configured");
+        req.flash("warning", req.__("Search not configured"));
         res.redirect(role === 1 ? "/search/config" : "/");
         return;
       }
 
       const form = searchForm();
       form.noSubmitButton = false;
-      form.submitLabel = "Search";
-      res.sendWrap(`Search all tables`, renderForm(form, false));
+      form.submitLabel = req.__("Search");
+      res.sendWrap(req.__("Search all tables"), renderForm(form, false));
     }
   })
 );

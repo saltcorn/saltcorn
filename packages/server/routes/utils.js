@@ -7,7 +7,7 @@ function loggedIn(req, res, next) {
   if (req.user && req.user.tenant === db.getTenantSchema()) {
     next();
   } else {
-    req.flash("danger", "Must be logged in first");
+    req.flash("danger", req.__("Must be logged in first"));
     res.redirect("/auth/login");
   }
 }
@@ -20,7 +20,7 @@ function isAdmin(req, res, next) {
   ) {
     next();
   } else {
-    req.flash("danger", "Must be admin");
+    req.flash("danger", req.__("Must be admin"));
     res.redirect(req.user ? "/" : "/auth/login");
   }
 }
@@ -34,7 +34,7 @@ const setTenant = (req, res, next) => {
     else {
       const ten = req.subdomains[0];
       const state = getTenant(ten);
-      if (!state) res.status(404).send("Subdomain not found");
+      if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(ten, () => {
           next();

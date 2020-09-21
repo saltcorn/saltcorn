@@ -165,7 +165,7 @@ const welcome_page = async (req) => {
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
-    res.sendWrap("Hello", "Welcome to saltcorn!");
+    res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
@@ -314,6 +314,6 @@ module.exports = async (req, res) => {
     );
   } else {
     const viewlis = views.map((v) => li(link(`/view/${v.name}`, v.name)));
-    res.sendWrap("Hello", ul(viewlis));
+    res.sendWrap(req.__("Hello"), ul(viewlis));
   }
 };
