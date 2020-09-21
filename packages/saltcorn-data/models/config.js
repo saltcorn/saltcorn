@@ -189,6 +189,8 @@ const remove_from_menu = contract(
     is.promise(is.undefined)
   ),
   async (item) => {
+    const { getState } = require("../db/state");
+
     const current_menu = getState().getConfig("menu_items", []);
     const new_menu = current_menu.filter(
       (menuitem) =>

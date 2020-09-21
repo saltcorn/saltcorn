@@ -117,15 +117,7 @@ const can_install_pack = contract(
 );
 
 const uninstall_pack = contract(
-  is.fun(
-    [is_pack, is.str],
-    is.promise(
-      is.or(
-        is.eq(true),
-        is.obj({ error: is.maybe(is.str), warning: is.maybe(is.str) })
-      )
-    )
-  ),
+  is.fun([is_pack, is.str], is.promise(is.undefined)),
   async (pack, name) => {
     for (const pageSpec of pack.pages || []) {
       const page = await Page.findOne({ name: pageSpec.name });
@@ -143,7 +135,7 @@ const uninstall_pack = contract(
       }
     }
     for (const tableSpec of pack.tables) {
-      const table = await Table.find({ name: tableSpec.name });
+      const table = await Table.findOne({ name: tableSpec.name });
       if (table) await table.delete();
     }
 
