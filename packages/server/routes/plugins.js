@@ -387,7 +387,7 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Settings" },
+            { text: req.__("Settings") },
             { text: "Plugins", href: "/plugins" },
             { text: "New" },
           ],

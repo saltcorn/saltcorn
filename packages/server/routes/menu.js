@@ -113,7 +113,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Menu" }],
+          crumbs: [{ text: req.__("Settings") }, { text: "Menu" }],
         },
         {
           type: "card",
@@ -138,7 +138,7 @@ router.post(
         above: [
           {
             type: "breadcrumbs",
-            crumbs: [{ text: "Settings" }, { text: "Menu" }],
+            crumbs: [{ text: req.__("Settings") }, { text: "Menu" }],
           },
           {
             type: "card",

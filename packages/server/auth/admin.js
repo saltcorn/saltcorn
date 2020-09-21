@@ -50,13 +50,13 @@ const userForm = contract(
   }
 );
 
-const wrap = (cardTitle, response, lastBc) => ({
+const wrap = (req, cardTitle, response, lastBc) => ({
   above: [
     {
       type: "breadcrumbs",
       crumbs: [
-        { text: "Settings" },
-        { text: "Users", href: lastBc && "/useradmin" },
+        { text: req.__("Settings") },
+        { text: req.__("Users"), href: lastBc && "/useradmin" },
         ...(lastBc ? [lastBc] : []),
       ],
     },
@@ -82,7 +82,7 @@ router.get(
     const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
       req.__("Users"),
-      wrap(req.__("Users"), [
+      wrap(req, req.__("Users"), [
         mkTable(
           [
             { label: req.__("ID"), key: "id" },
@@ -135,7 +135,7 @@ router.get(
     const form = await userForm();
     res.sendWrap(
       req.__("New user"),
-      wrap(req.__("New user"), renderForm(form, req.csrfToken()), {
+      wrap(req, req.__("New user"), renderForm(form, req.csrfToken()), {
         text: req.__("New"),
       })
     );
@@ -154,6 +154,7 @@ router.get(
     res.sendWrap(
       req.__("Edit user"),
       wrap(
+        req,
         req.__("Edit user %s", user.email),
         renderForm(form, req.csrfToken()),
         {

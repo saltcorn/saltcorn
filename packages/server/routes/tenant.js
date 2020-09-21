@@ -151,7 +151,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Tenants" }],
+          crumbs: [{ text: req.__("Settings") }, { text: "Tenants" }],
         },
         {
           type: "card",
