@@ -20,6 +20,7 @@ const {
   deleteConfig,
   configTypes,
 } = require("@saltcorn/data/models/config");
+const { table, tbody, tr, th, td, div } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -41,7 +42,65 @@ const wrap = (cardTitle, response, lastBc) => ({
     },
   ],
 });
-//create -- new
+
+const show_section = ({ name, keys }, cfgs, files, req) => {
+  const canEdit = (key) =>
+    getState().types[configTypes[key].type] || configTypes[key].type === "File";
+  const hideValue = (key) =>
+    configTypes[key] ? configTypes[key].type === "hidden" : true;
+  const showFile = (r) => {
+    const file = files.find((f) => f.id == r.value);
+    return file ? file.filename : "Unknown file";
+  };
+  const showValue = (key) =>
+    hideValue(key)
+      ? "..."
+      : configTypes[key].type === "File"
+      ? showFile(cfgs[key])
+      : JSON.stringify(cfgs[key].value);
+  const showkey = (key) =>
+    tr(
+      td(cfgs[key].label || key),
+      td(showValue(key)),
+      td(canEdit(key) ? link(`/config/edit/${key}`, "Edit") : ""),
+      td(post_delete_btn(`/config/delete/${key}`, req.csrfToken()))
+    );
+  return (
+    tr(th({ colspan: 4, class: "pt-4" }, name)) + keys.map(showkey).join("")
+  );
+};
+const sections = [
+  {
+    name: "Site identity",
+    keys: ["site_name", "site_logo_id", "base_url"],
+  },
+  {
+    name: "Authentication",
+    keys: ["allow_signup", "login_menu", "allow_forgot"],
+  },
+  {
+    name: "E-mail",
+    keys: [
+      "smtp_host",
+      "smtp_username",
+      "smtp_password",
+      "smtp_port",
+      "smtp_secure",
+      "email_from",
+    ],
+  },
+  {
+    name: "Development",
+    keys: ["development_mode", "log_sql"],
+  },
+];
+
+const miscSection = (cfgs) => ({
+  name: "Other",
+  keys: Object.keys(cfgs).filter(
+    (key) => !sections.some((section) => section.keys.includes(key))
+  ),
+});
 router.get(
   "/",
   setTenant,
@@ -49,41 +108,18 @@ router.get(
   error_catcher(async (req, res) => {
     const cfgs = await getAllConfigOrDefaults();
     const files = await File.find({ min_role_read: 10 });
-    const canEdit = (key) =>
-      getState().types[configTypes[key].type] ||
-      configTypes[key].type === "File";
-    const hideValue = (key) =>
-      configTypes[key] ? configTypes[key].type === "hidden" : true;
-    const showFile = (r) => {
-      const file = files.find((f) => f.id == r.value);
-      return file ? file.filename : "Unknown file";
-    };
-    const showValue = (r) =>
-      hideValue(r.key)
-        ? "..."
-        : configTypes[r.key].type === "File"
-        ? showFile(r)
-        : JSON.stringify(r.value);
-    const configTable = mkTable(
-      [
-        { label: "Key", key: (r) => r.label || r.key },
-        {
-          label: "Value",
-          key: showValue,
-        },
-        {
-          label: "Edit",
-          key: (r) =>
-            canEdit(r.key) ? link(`/config/edit/${r.key}`, "Edit") : "",
-        },
-        {
-          label: "Delete",
-          key: (r) =>
-            post_delete_btn(`/config/delete/${r.key}`, req.csrfToken()),
-        },
-      ],
-      Object.entries(cfgs).map(([k, v]) => ({ key: k, ...v }))
+
+    const configTable = div(
+      { class: "table-responsive" },
+      table(
+        { class: "table table-sm" },
+        tbody(
+          sections.map((section) => show_section(section, cfgs, files, req)),
+          show_section(miscSection(cfgs), cfgs, files, req)
+        )
+      )
     );
+
     res.sendWrap(`Configuration`, wrap("Configuration", configTable));
   })
 );
