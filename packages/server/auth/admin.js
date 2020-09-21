@@ -81,22 +81,25 @@ router.get(
     });
     const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
-      "Users",
-      wrap("Users", [
+      req.__("Users"),
+      wrap(req.__("Users"), [
         mkTable(
           [
-            { label: "ID", key: "id" },
-            { label: "Email", key: "email" },
-            { label: "Role", key: (r) => roleMap[r.role_id] },
-            { label: "View", key: (r) => link(`/useradmin/${r.id}`, "Edit") },
+            { label: req.__("ID"), key: "id" },
+            { label: req.__("Email"), key: "email" },
+            { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+            {
+              label: req.__("View"),
+              key: (r) => link(`/useradmin/${r.id}`, "Edit"),
+            },
             ...(can_reset
               ? [
                   {
-                    label: "Reset password",
+                    label: req.__("Reset password"),
                     key: (r) =>
                       post_btn(
                         `/useradmin/reset-password/${r.id}`,
-                        "Send",
+                        req.__("Send"),
                         req.csrfToken(),
                         { small: true }
                       ),
@@ -104,12 +107,12 @@ router.get(
                 ]
               : []),
             {
-              label: "Delete",
+              label: req.__("Delete"),
               key: (r) =>
                 r.id !== req.user.id
                   ? post_btn(
                       `/useradmin/delete/${r.id}`,
-                      "Delete",
+                      req.__("Delete"),
                       req.csrfToken(),
                       { small: true }
                     )
@@ -118,7 +121,7 @@ router.get(
           ],
           users
         ),
-        link(`/useradmin/new`, "Add user"),
+        link(`/useradmin/new`, req.__("Add user")),
       ])
     );
   })
@@ -131,8 +134,10 @@ router.get(
   error_catcher(async (req, res) => {
     const form = await userForm();
     res.sendWrap(
-      "New user",
-      wrap("New user", renderForm(form, req.csrfToken()), { text: "New" })
+      req.__("New user"),
+      wrap(req.__("New user"), renderForm(form, req.csrfToken()), {
+        text: req.__("New"),
+      })
     );
   })
 );
@@ -147,10 +152,14 @@ router.get(
     const form = await userForm(user);
 
     res.sendWrap(
-      "Edit user",
-      wrap(`Edit user ${user.email}`, renderForm(form, req.csrfToken()), {
-        text: user.email,
-      })
+      req.__("Edit user"),
+      wrap(
+        req.__("Edit user %s", user.email),
+        renderForm(form, req.csrfToken()),
+        {
+          text: user.email,
+        }
+      )
     );
   })
 );
@@ -164,14 +173,14 @@ router.post(
     if (id) {
       try {
         await db.update("users", { email, role_id }, id);
-        req.flash("success", `User ${email} saved`);
+        req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
-        req.flash("error", `Error editing user: ${e.message}`);
+        req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {
       const u = await User.create({ email, password, role_id: +role_id });
       if (u.error) req.flash("error", u.error);
-      else req.flash("success", `User ${email} created`);
+      else req.flash("success", req.__(`User %s created`, email));
     }
     res.redirect(`/useradmin`);
   })
@@ -185,7 +194,7 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     await send_reset_email(u, req);
-    req.flash("success", `Reset password link sent to ${u.email}`);
+    req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
     res.redirect(`/useradmin`);
   })
@@ -199,7 +208,7 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     await u.delete();
-    req.flash("success", `User ${u.email} deleted`);
+    req.flash("success", req.__(`User %s deleted`, u.email));
 
     res.redirect(`/useradmin`);
   })

@@ -11,7 +11,9 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
-const { get_reset_link } = require("../auth/resetpw");
+const { get_reset_link, generate_email } = require("../auth/resetpw");
+const i18n = require("i18n");
+const path = require("path");
 
 afterAll(db.close);
 
@@ -111,6 +113,13 @@ describe("forgot password", () => {
     await getState().setConfig("base_url", "/");
 
     const link = await get_reset_link(u, {});
+
+    i18n.configure({
+      locales: ["en"],
+      directory: path.join(__dirname, "..", "/locales"),
+    });
+    const email = generate_email(link, u, i18n);
+    expect(email.text).toContain(link);
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get(link)

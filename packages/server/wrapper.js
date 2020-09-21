@@ -38,41 +38,47 @@ const get_menu = (req) => {
   const authItems = isAuth
     ? [
         {
-          label: "User",
+          label: req.__("User"),
           subitems: [
             { label: small(req.user.email.split("@")[0]) },
             {
-              label: "User Settings",
+              label: req.__("User Settings"),
               link: "/auth/settings",
             },
-            { link: "/auth/logout", label: "Logout" },
+            { link: "/auth/logout", label: req.__("Logout") },
           ],
         },
       ]
     : [
-        ...(allow_signup ? [{ link: "/auth/signup", label: "Sign up" }] : []),
-        ...(login_menu ? [{ link: "/auth/login", label: "Login" }] : []),
+        ...(allow_signup
+          ? [{ link: "/auth/signup", label: req.__("Sign up") }]
+          : []),
+        ...(login_menu
+          ? [{ link: "/auth/login", label: req.__("Login") }]
+          : []),
       ];
   const schema = db.getTenantSchema();
   const tenant_list = db.is_it_multi_tenant() && schema === "public";
   const isAdmin = role === 1;
   const adminItems = [
-    { link: "/table", label: "Tables" },
-    { link: "/viewedit", label: "Views" },
-    { link: "/pageedit", label: "Pages" },
-    { link: "/files", label: "Files" },
+    { link: "/table", label: req.__("Tables") },
+    { link: "/viewedit", label: req.__("Views") },
+    { link: "/pageedit", label: req.__("Pages") },
+    { link: "/files", label: req.__("Files") },
     {
-      label: "Settings",
+      label: req.__("Settings"),
       subitems: [
-        { link: "/plugins", label: "Plugins" },
-        { link: "/menu", label: "Menu" },
-        { link: "/useradmin", label: "Users" },
-        { link: "/search/config", label: "Search" },
-        { link: "/config", label: "Configuration" },
-        { link: "/admin", label: "Admin" },
-        ...(tenant_list ? [{ link: "/tenant/list", label: "Tenants" }] : []),
+        { link: "/plugins", label: req.__("Plugins") },
+        { link: "/menu", label: req.__("Menu") },
+        { link: "/useradmin", label: req.__("Users") },
+        { link: "/search/config", label: req.__("Search") },
+        { link: "/config", label: req.__("Configuration") },
+        { link: "/admin", label: req.__("Admin") },
+        ...(tenant_list
+          ? [{ link: "/tenant/list", label: req.__("Tenants") }]
+          : []),
         ...(schema === "public"
-          ? [{ link: "/crashlog", label: "Crash log" }]
+          ? [{ link: "/crashlog", label: req.__("Crash log") }]
           : []),
       ],
     },
@@ -80,15 +86,15 @@ const get_menu = (req) => {
 
   const menu = [
     extra_menu.length > 0 && {
-      section: "Menu",
+      section: req.__("Menu"),
       items: extra_menu,
     },
     isAdmin && {
-      section: "Admin",
+      section: req.__("Admin"),
       items: adminItems,
     },
     {
-      section: "User",
+      section: req.__("User"),
       items: authItems,
     },
   ].filter((s) => s);
@@ -151,11 +157,13 @@ module.exports = function (req, res, next) {
     } else {
       var links = [];
       if (authLinks.login)
-        links.push(link(authLinks.login, "Already have an account? Login!"));
+        links.push(
+          link(authLinks.login, req.__("Already have an account? Login"))
+        );
       if (authLinks.forgot)
-        links.push(link(authLinks.forgot, "Forgot password?"));
+        links.push(link(authLinks.forgot, req.__("Forgot password?")));
       if (authLinks.signup)
-        links.push(link(authLinks.signup, "Create an account!"));
+        links.push(link(authLinks.signup, req.__("Create an account")));
       const body = div(
         h3(title),
         renderForm(form, req.csrfToken()),
