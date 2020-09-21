@@ -2,14 +2,28 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const configTypes = {
-  site_name: { type: "String", label: "Site name", default: "Saltcorn" },
+  site_name: {
+    type: "String",
+    label: "Site name",
+    default: "Saltcorn",
+    blurb: "A short string which is the name of your site",
+  },
   site_logo_id: {
     type: "File",
     label: "Site logo",
     default: 0,
-    attributes: { select_file_where: { min_role_read: 10 } },
+    attributes: {
+      select_file_where: { min_role_read: 10, mime_super: "image" },
+    },
+    blurb: "Select a publicly accessible image file",
   },
-  base_url: { type: "String", label: "Base URL", default: "" },
+  base_url: {
+    type: "String",
+    label: "Base URL",
+    default: "",
+    blurb:
+      "The URL at which your site is available. For instance, https://example.com/",
+  },
   menu_items: { type: "hidden", label: "Menu items" },
   globalSearch: { type: "hidden", label: "Global search" },
   available_packs: { type: "hidden", label: "Available packs" },
@@ -26,9 +40,25 @@ const configTypes = {
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },
   admin_home: { type: "String", label: "Admin home page", default: "" },
-  allow_signup: { type: "Bool", label: "Allow signups", default: true },
-  allow_forgot: { type: "Bool", label: "Allow password reset", default: false },
-  login_menu: { type: "Bool", label: "Login in menu", default: true },
+  allow_signup: {
+    type: "Bool",
+    label: "Allow signups",
+    default: true,
+    blurb: "Allow users to sign up for a new user account",
+  },
+  allow_forgot: {
+    type: "Bool",
+    label: "Allow password reset",
+    default: false,
+    blurb:
+      "Allow users to request a password reset email. Email must be configured.",
+  },
+  login_menu: {
+    type: "Bool",
+    label: "Login in menu",
+    default: true,
+    blurb: "Show the login link in the menu",
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
@@ -37,14 +67,39 @@ const configTypes = {
     onChange(val) {
       db.set_sql_logging(val);
     },
+    blurb: "Print all SQL statements to the standard output",
   },
-  development_mode: { type: "Bool", label: "Development mode", default: false },
-  smtp_host: { type: "String", label: "SMTP host", default: "" },
+  development_mode: {
+    type: "Bool",
+    label: "Development mode",
+    default: false,
+    blurb:
+      "Disable JS/CSS asset caching, show full error to user on crash, enable editing field type",
+  },
+  smtp_host: {
+    type: "String",
+    label: "SMTP host",
+    default: "",
+    blurb:
+      "The host address of your SMTP server. For instance, smtp.postmarkapp.com",
+  },
   smtp_username: { type: "String", label: "SMTP username", default: "" },
   smtp_password: { type: "String", label: "SMTP password", default: "" },
   smtp_port: { type: "Integer", label: "SMTP port", default: "25" },
-  smtp_secure: { type: "Bool", label: "SMTP secure", default: false },
-  email_from: { type: "String", label: "Email from address", default: "" },
+  smtp_secure: {
+    type: "Bool",
+    label: "SMTP secure",
+    default: false,
+    blurb:
+      "Is the connection to the SMTP server over a secure transport protocol?",
+  },
+  email_from: {
+    type: "String",
+    label: "Email from address",
+    default: "",
+    blurb:
+      "The email address from which emails are sent. For instance, hello@saltcorn.com",
+  },
 };
 
 const getConfig = contract(

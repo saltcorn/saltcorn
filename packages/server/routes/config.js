@@ -127,6 +127,7 @@ router.get(
 const formForKey = async (key, value) => {
   const form = new Form({
     action: `/config/edit/${key}`,
+    blurb: configTypes[key].blurb,
     fields: [
       {
         name: key,
