@@ -179,6 +179,29 @@ const deleteConfig = contract(
     await db.deleteWhere("_sc_config", { key });
   }
 );
+
+const remove_from_menu = contract(
+  is.fun(
+    is.obj({
+      name: is.str,
+      type: is.one_of(["View", "Page"]),
+    }),
+    is.promise(is.undefined)
+  ),
+  async (item) => {
+    const current_menu = getState().getConfig("menu_items", []);
+    const new_menu = current_menu.filter(
+      (menuitem) =>
+        !(
+          item.type === menuitem.type &&
+          (item.type === "View"
+            ? menuitem.viewname === item.name
+            : menuitem.pagename === item.name)
+        )
+    );
+    await getState().setConfig("menu_items", new_menu);
+  }
+);
 module.exports = {
   getConfig,
   getAllConfig,
@@ -186,4 +209,5 @@ module.exports = {
   getAllConfigOrDefaults,
   deleteConfig,
   configTypes,
+  remove_from_menu,
 };
