@@ -250,5 +250,18 @@
 	"Root pages": "Root pages",
 	"The root page is the page that is served when the user visits the home location (/). This can be set for each user role.": "The root page is the page that is served when the user visits the home location (/). This can be set for each user role.",
 	"Root pages updated": "Root pages updated",
-	"Page deleted": "Page deleted"
+	"Page deleted": "Page deleted",
+	"Basic properties": "Basic properties",
+	"Attributes": "Attributes",
+	"Summary": "Summary",
+	"Default": "Default",
+	"Edit field": "Edit field",
+	"Edit %s field": "Edit %s field",
+	"New field": "New field",
+	"New field:": "New field:",
+	"Field attributes": "Field attributes",
+	"Field %s created": "Field %s created",
+	"Field $%s deleted": "Field $%s deleted",
+	"Summary field": "Summary field",
+	"A default value is required when adding required fields to nonempty tables": "A default value is required when adding required fields to nonempty tables"
 }
