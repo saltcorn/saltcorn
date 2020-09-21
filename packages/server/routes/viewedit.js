@@ -34,20 +34,24 @@ router.get(
       views.length > 0
         ? mkTable(
             [
-              { label: "Name", key: "name" },
-              { label: "Template", key: "viewtemplate" },
-              { label: "Table", key: (r) => getTable(r.table_id) },
+              { label: req.__("Name"), key: "name" },
+              { label: req.__("Template"), key: "viewtemplate" },
+              { label: req.__("Table"), key: (r) => getTable(r.table_id) },
               {
-                label: "Run",
-                key: (r) => link(`/view/${encodeURIComponent(r.name)}`, "Run"),
-              },
-              {
-                label: "Edit",
+                label: req.__("Run"),
                 key: (r) =>
-                  link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+                  link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
               },
               {
-                label: "Delete",
+                label: req.__("Edit"),
+                key: (r) =>
+                  link(
+                    `/viewedit/edit/${encodeURIComponent(r.name)}`,
+                    req.__("Edit")
+                  ),
+              },
+              {
+                label: req.__("Delete"),
                 key: (r) =>
                   post_delete_btn(
                     `/viewedit/delete/${encodeURIComponent(r.id)}`,
@@ -58,27 +62,29 @@ router.get(
             views
           )
         : div(
-            h4("No views defined"),
-            p("Views define how table rows are displayed to the user")
+            h4(req.__("No views defined")),
+            p(req.__("Views define how table rows are displayed to the user"))
           );
-    res.sendWrap(`Views`, {
+    res.sendWrap(req.__(`Views`), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Views" }],
+          crumbs: [{ text: req.__("Views") }],
         },
         {
           type: "card",
-          title: "Your views",
+          title: req.__("Your views"),
           contents: [
             viewMarkup,
             tables.length > 0
               ? a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
-                  "Add view"
+                  req.__("Add view")
                 )
               : p(
-                  "You must create at least one table before you can create views."
+                  req.__(
+                    "You must create at least one table before you can create views."
+                  )
                 ),
           ],
         },
@@ -87,37 +93,37 @@ router.get(
   })
 );
 
-const viewForm = (tableOptions, roles, values) =>
+const viewForm = (req, tableOptions, roles, values) =>
   new Form({
     action: "/viewedit/save",
-    submitLabel: "Configure &raquo;",
-    blurb: "First, please give some basic information about the view.",
+    submitLabel: req.__("Configure") + " &raquo;",
+    blurb: req.__("First, please give some basic information about the view."),
     fields: [
-      new Field({ label: "View name", name: "name", type: "String" }),
+      new Field({ label: req.__("View name"), name: "name", type: "String" }),
       new Field({
-        label: "Template",
+        label: req.__("Template"),
         name: "viewtemplate",
         input_type: "select",
-        sublabel: "Views are based on a view template",
+        sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
       }),
       new Field({
-        label: "Table",
+        label: req.__("Table"),
         name: "table_name",
         input_type: "select",
-        sublabel: "Display data from this table",
+        sublabel: req.__("Display data from this table"),
         options: tableOptions,
       }),
       new Field({
         name: "min_role",
-        label: "Minimum role",
-        sublabel: "Role required to run view",
+        label: req.__("Minimum role"),
+        sublabel: req.__("Role required to run view"),
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       }),
       new Field({
-        label: "On root page",
+        label: req.__("On root page"),
         name: "on_root_page",
         type: "Bool",
       }),
@@ -139,20 +145,20 @@ router.get(
     viewrow.table_name = currentTable.name;
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(tableOptions, roles, viewrow);
+    const form = viewForm(req, tableOptions, roles, viewrow);
     form.hidden("id");
-    res.sendWrap(`Edit view`, {
+    res.sendWrap(req.__(`Edit view`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Views", href: "/viewedit" },
+            { text: req.__("Views"), href: "/viewedit" },
             { text: `${viewname}` },
           ],
         },
         {
           type: "card",
-          title: `Edit ${viewname} view`,
+          title: req.__(`Edit %s view`, viewname),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -168,19 +174,22 @@ router.get(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(tableOptions, roles);
+    const form = viewForm(req, tableOptions, roles);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
-    res.sendWrap(`Create view`, {
+    res.sendWrap(req.__(`Create view`), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Views", href: "/viewedit" }, { text: "Create" }],
+          crumbs: [
+            { text: req.__("Views"), href: "/viewedit" },
+            { text: req.__("Create") },
+          ],
         },
         {
           type: "card",
-          title: `Create view`,
+          title: req.__(`Create view`),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -196,19 +205,22 @@ router.post(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(tableOptions, roles);
+    const form = viewForm(req, tableOptions, roles);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {
-      res.sendWrap(`Edit view`, {
+      res.sendWrap(req.__(`Edit view`), {
         above: [
           {
             type: "breadcrumbs",
-            crumbs: [{ text: "Views", href: "/viewedit" }, { text: "Edit" }],
+            crumbs: [
+              { text: req.__("Views"), href: "/viewedit" },
+              { text: req.__("Edit") },
+            ],
           },
           {
             type: "card",
-            title: `Edit view`,
+            title: req.__(`Edit view`),
             contents: renderForm(form, req.csrfToken()),
           },
         ],
@@ -217,7 +229,7 @@ router.post(
 
     if (result.success) {
       if (result.success.name.replace(" ", "") === "") {
-        form.errors.name = "Name required";
+        form.errors.name = req.__("Name required");
         form.hasErrors = true;
         sendForm(form);
       } else {
@@ -225,7 +237,7 @@ router.post(
           const existing_views = await View.find();
           const view_names = existing_views.map((v) => v.name);
           if (view_names.includes(result.success.name)) {
-            form.errors.name = "A view with this name already exists";
+            form.errors.name = req.__("A view with this name already exists");
             form.hasErrors = true;
             sendForm(form);
             return;
@@ -261,7 +273,7 @@ const respondWorkflow = (view, wfres, req, res) => {
       {
         type: "breadcrumbs",
         crumbs: [
-          { text: "Views", href: "/viewedit" },
+          { text: req.__("Views"), href: "/viewedit" },
           { href: `/viewedit/edit/${view.name}`, text: view.name },
           { text: wfres.stepName },
         ],
@@ -276,12 +288,12 @@ const respondWorkflow = (view, wfres, req, res) => {
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
   if (wfres.renderForm)
     res.sendWrap(
-      `View configuration`,
+      req.__(`View configuration`),
       wrap(renderForm(wfres.renderForm, req.csrfToken()))
     );
   else if (wfres.renderBuilder)
     res.sendWrap(
-      `View configuration`,
+      req.__(`View configuration`),
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   else res.redirect(wfres.redirect);
@@ -325,7 +337,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     await View.delete({ id });
-    req.flash("success", "View deleted");
+    req.flash("success", req.__("View deleted"));
     res.redirect(`/viewedit`);
   })
 );

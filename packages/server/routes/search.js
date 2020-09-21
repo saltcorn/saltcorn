@@ -11,7 +11,7 @@ const { renderForm } = require("@saltcorn/markup");
 const router = new Router();
 module.exports = router;
 
-const searchConfigForm = (tables, views) => {
+const searchConfigForm = (tables, views, req) => {
   var fields = [];
   var tbls_noviews = [];
   for (const t of tables) {
@@ -22,34 +22,36 @@ const searchConfigForm = (tables, views) => {
     else
       fields.push({
         name: t.name,
-        label: "Result preview for " + t.name,
+        label: req.__("Result preview for ") + t.name,
         required: false,
         type: "String",
         attributes: { options: ok_views.map((v) => v.name).join() },
       });
   }
-  const blurb1 = `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`;
+  const blurb1 = req.__(
+    `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`
+  );
   return new Form({
     action: "/search/config",
     blurb:
       blurb1 +
       (tbls_noviews.length > 0
-        ? `<br/><br/>These tables lack suitable views: ${tbls_noviews.join(
-            ", "
-          )}.`
+        ? `<br/><br/>${req.__(
+            "These tables lack suitable views: "
+          )}${tbls_noviews.join(", ")}.`
         : ""),
     fields,
   });
 };
-const wrap = (response) => ({
+const wrap = (response, req) => ({
   above: [
     {
       type: "breadcrumbs",
-      crumbs: [{ text: "Settings" }, { text: "Search" }],
+      crumbs: [{ text: req.__("Settings") }, { text: req.__("Search") }],
     },
     {
       type: "card",
-      title: "Search configuration",
+      title: req.__("Search configuration"),
       contents: response,
     },
   ],
@@ -61,11 +63,11 @@ router.get(
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
-    const form = searchConfigForm(tables, views);
+    const form = searchConfigForm(tables, views, req);
     form.values = getState().getConfig("globalSearch");
     res.sendWrap(
-      `Search configuration`,
-      wrap(renderForm(form, req.csrfToken()))
+      req.__(`Search configuration`),
+      wrap(renderForm(form, req.csrfToken()), req)
     );
   })
 );
@@ -77,7 +79,7 @@ router.post(
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
-    const form = searchConfigForm(tables, views);
+    const form = searchConfigForm(tables, views, req);
     const result = form.validate(req.body);
 
     if (result.success) {
@@ -85,8 +87,8 @@ router.post(
       res.redirect("/search/config");
     } else {
       res.sendWrap(
-        `Search configuration`,
-        wrap(renderForm(form, req.csrfToken()))
+        req.__(`Search configuration`),
+        wrap(renderForm(form, req.csrfToken()), req)
       );
     }
   })

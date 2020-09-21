@@ -47,32 +47,33 @@ const apiOptions = [
   { value: "Read and write", label: "Read and write" },
 ];
 
-const tableForm = (table) => {
+const tableForm = (table, req) => {
   const form = new Form({
     action: "/table",
     fields: [
       {
-        label: "API access",
-        sublabel:
-          "APIs allow developers access to your data without using a user interface",
+        label: req.__("API access"),
+        sublabel: req.__(
+          "APIs allow developers access to your data without using a user interface"
+        ),
         name: "api_access",
         input_type: "select",
         options: apiOptions,
       },
       {
-        label: "Minimum role for read",
+        label: req.__("Minimum role for read"),
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
       },
       {
-        label: "Minimum role for writing",
+        label: req.__("Minimum role for writing"),
         name: "min_role_write",
         input_type: "select",
         options: roleOptions,
       },
       {
-        label: "Version history",
+        label: req.__("Version history"),
         name: "versioned",
         type: "Bool",
       },
@@ -94,22 +95,25 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`New table`, {
+    res.sendWrap(req.__(`New table`), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables", href: "/table" }, { text: "Create" }],
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { text: req.__("Create") },
+          ],
         },
         {
           type: "card",
-          title: `New table`,
+          title: req.__(`New table`),
           contents: renderForm(
             new Form({
               action: "/table",
-              submitLabel: "Create",
+              submitLabel: req.__("Create"),
               fields: [
                 {
-                  label: "Table name",
+                  label: req.__("Table name"),
                   name: "name",
                   input_type: "text",
                   required: true,
@@ -129,25 +133,29 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`Create table from CSV file`, {
+    res.sendWrap(req.__(`Create table from CSV file`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Tables", href: "/table" },
-            { text: "Create from CSV" },
+            { text: req.__("Tables"), href: "/table" },
+            { text: req.__("Create from CSV") },
           ],
         },
         {
           type: "card",
-          title: `Create table from CSV file`,
+          title: req.__(`Create table from CSV file`),
           contents: renderForm(
             new Form({
               action: "/table/create-from-csv",
-              submitLabel: "Create",
+              submitLabel: req.__("Create"),
               fields: [
-                { label: "Table name", name: "name", input_type: "text" },
-                { label: "File", name: "file", input_type: "file" },
+                {
+                  label: req.__("Table name"),
+                  name: "name",
+                  input_type: "text",
+                },
+                { label: req.__("File"), name: "file", input_type: "file" },
               ],
             }),
             req.csrfToken()
@@ -171,11 +179,11 @@ router.post(
         ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
-        req.flash("error", `Table ${name} already exists`);
+        req.flash("error", req.__(`Table %s already exists`, name));
         res.redirect(`/table/create-from-csv`);
         return;
       } else if (db.sqlsanitize(name) === "") {
-        req.flash("error", `Invalid table name ${name}`);
+        req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/create-from-csv`);
         return;
       }
@@ -189,12 +197,12 @@ router.post(
       } else {
         req.flash(
           "success",
-          `Created table ${parse_res.table.name}. ${parse_res.success}`
+          req.__(`Created table %s.`, parse_res.table.name) + parse_res.success
         );
         res.redirect(`/table/${parse_res.table.id}`);
       }
     } else {
-      req.flash("error", "Error: missing name or file");
+      req.flash("error", req.__("Error: missing name or file"));
       res.redirect(`/table/create-from-csv`);
     }
   })
@@ -212,31 +220,34 @@ router.get(
     var fieldCard;
     if (fields.length === 0) {
       fieldCard = [
-        h4(`No fields defined in ${table.name} table`),
-        p("Fields define the columns in your table."),
+        h4(req.__(`No fields defined in %s table`, table.name)),
+        p(req.__("Fields define the columns in your table.")),
         a(
           {
             href: `/field/new/${table.id}`,
             class: "btn btn-primary add-field",
           },
-          "Add field to table"
+          req.__("Add field to table")
         ),
       ];
     } else {
       const tableHtml = mkTable(
         [
-          { label: "Label", key: "label" },
-          { label: "Required", key: (r) => (r.required ? "true" : "false") },
+          { label: req.__("Label"), key: "label" },
           {
-            label: "Type",
+            label: req.__("Required"),
+            key: (r) => (r.required ? "true" : "false"),
+          },
+          {
+            label: req.__("Type"),
             key: (r) =>
               r.type === "Key"
                 ? `Key to ${r.reftable_name}`
                 : r.type.name || r.type,
           },
-          { label: "Edit", key: (r) => link(`/field/${r.id}`, "Edit") },
+          { label: req.__("Edit"), key: (r) => link(`/field/${r.id}`, "Edit") },
           {
-            label: "Delete",
+            label: req.__("Delete"),
             key: (r) =>
               post_delete_btn(`/field/delete/${r.id}`, req.csrfToken()),
           },
@@ -250,7 +261,7 @@ router.get(
             href: `/field/new/${table.id}`,
             class: "btn btn-primary add-field",
           },
-          "Add field"
+          req.__("Add field")
         ),
       ];
     }
@@ -261,19 +272,23 @@ router.get(
       if (views.length > 0) {
         viewCardContents = mkTable(
           [
-            { label: "Name", key: "name" },
-            { label: "Template", key: "viewtemplate" },
+            { label: req.__("Name"), key: "name" },
+            { label: req.__("Template"), key: "viewtemplate" },
             {
-              label: "Run",
-              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, "Run"),
-            },
-            {
-              label: "Edit",
+              label: req.__("Run"),
               key: (r) =>
-                link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+                link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
             },
             {
-              label: "Delete",
+              label: req.__("Edit"),
+              key: (r) =>
+                link(
+                  `/viewedit/edit/${encodeURIComponent(r.name)}`,
+                  req.__("Edit")
+                ),
+            },
+            {
+              label: req.__("Delete"),
               key: (r) =>
                 post_delete_btn(
                   `/viewedit/delete/${encodeURIComponent(r.id)}`,
@@ -285,13 +300,13 @@ router.get(
         );
       } else {
         viewCardContents = div(
-          h4("No views defined"),
-          p("Views define how table rows are displayed to the user")
+          h4(req.__("No views defined")),
+          p(req.__("Views define how table rows are displayed to the user"))
         );
       }
       viewCard = {
         type: "card",
-        title: "Views of this table",
+        title: req.__("Views of this table"),
         contents:
           viewCardContents +
           a(
@@ -299,20 +314,20 @@ router.get(
               href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
               class: "btn btn-primary",
             },
-            "Add view"
+            req.__("Add view")
           ),
       };
     }
     const dataCard = div(
       { class: "d-flex text-center" },
-      div({ class: "mx-auto" }, h4(`${nrows}`), "Rows"),
+      div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
       div(
         { class: "mx-auto" },
         a(
           { href: `/list/${table.name}` },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
-          "Edit"
+          req.__("Edit")
         )
       ),
       div(
@@ -321,7 +336,7 @@ router.get(
           { href: `/table/download/${table.name}` },
           i({ class: "fas fa-2x fa-download" }),
           "<br/>",
-          "Download CSV"
+          req.__("Download CSV")
         )
       ),
       div(
@@ -337,7 +352,7 @@ router.get(
             { class: "btn-link", for: "upload_to_table" },
             i({ class: "fas fa-2x fa-upload" }),
             "<br/>",
-            "Upload CSV"
+            req.__("Upload CSV")
           ),
           input({
             id: "upload_to_table",
@@ -349,26 +364,29 @@ router.get(
         )
       )
     );
-    res.sendWrap(`${table.name} table`, {
+    res.sendWrap(req.__(`%s table`, table.name), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables", href: "/table" }, { text: table.name }],
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { text: table.name },
+          ],
         },
         {
           type: "pageHeader",
-          title: `${table.name} table`,
+          title: req.__(`%s table`, table.name),
         },
         {
           type: "card",
-          title: "Fields",
+          title: req.__("Fields"),
           contents: fieldCard,
         },
         ...(fields.length > 0
           ? [
               {
                 type: "card",
-                title: "Table data",
+                title: req.__("Table data"),
                 contents: dataCard,
               },
             ]
@@ -376,8 +394,8 @@ router.get(
         ...(viewCard ? [viewCard] : []),
         {
           type: "card",
-          title: "Edit table properties",
-          contents: renderForm(tableForm(table), req.csrfToken()),
+          title: req.__("Edit table properties"),
+          contents: renderForm(tableForm(table, req), req.csrfToken()),
         },
       ],
     });
@@ -421,14 +439,14 @@ router.post(
         ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
-        req.flash("error", `Table ${name} already exists`);
+        req.flash("error", req.__(`Table %s already exists`, name));
         res.redirect(`/table/new`);
       } else if (db.sqlsanitize(name) === "") {
-        req.flash("error", `Invalid table name ${name}`);
+        req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
       } else {
         const table = await Table.create(name, rest);
-        req.flash("success", `Table ${name} created`);
+        req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
     } else {
@@ -438,10 +456,16 @@ router.post(
       if (!rest.versioned) rest.versioned = false;
       await table.update(rest);
       if (!old_versioned && rest.versioned)
-        req.flash("success", "Table saved with version history enabled");
+        req.flash(
+          "success",
+          req.__("Table saved with version history enabled")
+        );
       else if (old_versioned && !rest.versioned)
-        req.flash("success", "Table saved with version history disabled");
-      else req.flash("success", "Table saved");
+        req.flash(
+          "success",
+          req.__("Table saved with version history disabled")
+        );
+      else req.flash("success", req.__("Table saved"));
 
       res.redirect(`/table/${id}`);
     }
@@ -457,7 +481,7 @@ router.post(
     const t = await Table.findOne({ id });
     try {
       await t.delete();
-      req.flash("success", `Table ${t.name} deleted`);
+      req.flash("success", req.__(`Table %s deleted`, t.name));
       res.redirect(`/table`);
     } catch (err) {
       req.flash("error", err.message);
@@ -476,10 +500,13 @@ router.get(
       rows.length > 0
         ? mkTable(
             [
-              { label: "Name", key: "name" },
-              { label: "Edit", key: (r) => link(`/table/${r.id}`, "Edit") },
+              { label: req.__("Name"), key: "name" },
               {
-                label: "Delete",
+                label: req.__("Edit"),
+                key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+              },
+              {
+                label: req.__("Delete"),
                 key: (r) =>
                   post_delete_btn(`/table/delete/${r.id}`, req.csrfToken()),
               },
@@ -487,30 +514,30 @@ router.get(
             rows
           )
         : div(
-            h4("No tables defined"),
-            p("Tables hold collections of similar data")
+            h4(req.__("No tables defined")),
+            p(req.__("Tables hold collections of similar data"))
           );
     const createCard = div(
-      a({ href: `/table/new`, class: "btn btn-primary" }, "New table"),
+      a({ href: `/table/new`, class: "btn btn-primary" }, req.__("New table")),
       a(
         { href: `/table/create-from-csv`, class: "btn btn-secondary mx-3" },
-        "Create from CSV upload"
+        req.__("Create from CSV upload")
       )
     );
-    res.sendWrap("Tables", {
+    res.sendWrap(req.__("Tables"), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Tables" }],
+          crumbs: [{ text: req.__("Tables") }],
         },
         {
           type: "card",
-          title: "Your tables",
+          title: req.__("Your tables"),
           contents: mainCard,
         },
         {
           type: "card",
-          title: "Create table",
+          title: req.__("Create table"),
           contents: createCard,
         },
       ],
