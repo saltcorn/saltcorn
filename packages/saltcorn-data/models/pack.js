@@ -116,6 +116,48 @@ const can_install_pack = contract(
   }
 );
 
+const uninstall_pack = contract(
+  is.fun(
+    [is_pack, is.str],
+    is.promise(
+      is.or(
+        is.eq(true),
+        is.obj({ error: is.maybe(is.str), warning: is.maybe(is.str) })
+      )
+    )
+  ),
+  async (pack, name) => {
+    for (const pageSpec of pack.pages || []) {
+      const page = await Page.findOne({ name: pageSpec.name });
+      if (page) await page.delete();
+    }
+    for (const viewSpec of pack.views) {
+      const view = await View.findOne({ name: viewSpec.name });
+      if (view) await view.delete();
+    }
+    for (const tableSpec of pack.tables) {
+      const table = await Table.findOne({ name: tableSpec.name });
+      const fields = await table.getFields();
+      for (const field of fields) {
+        await field.delete();
+      }
+    }
+    for (const tableSpec of pack.tables) {
+      const table = await Table.find({ name: tableSpec.name });
+      if (table) await table.delete();
+    }
+
+    if (name) {
+      const existPacks = getState().getConfig("installed_packs", []);
+
+      await getState().setConfig(
+        "installed_packs",
+        existPacks.filter((p) => p !== name)
+      );
+    }
+  }
+);
+
 const add_to_menu = contract(
   is.fun(
     is.obj({ label: is.str, type: is.one_of(["View", "Page"]) }),
@@ -247,4 +289,5 @@ module.exports = {
   fetch_pack_by_name,
   is_stale,
   can_install_pack,
+  uninstall_pack,
 };
