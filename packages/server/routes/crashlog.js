@@ -18,13 +18,13 @@ const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 
 const router = new Router();
 module.exports = router;
-const wrap = (cardTitle, response, lastBc) => ({
+const wrap = (req, cardTitle, response, lastBc) => ({
   above: [
     {
       type: "breadcrumbs",
       crumbs: [
-        { text: "Settings" },
-        { text: "Crash log", href: lastBc && "/crashlog" },
+        { text: req.__("Settings") },
+        { text: req.__("Crash log"), href: lastBc && "/crashlog" },
         ...(lastBc ? [lastBc] : []),
       ],
     },
@@ -42,23 +42,24 @@ router.get(
   error_catcher(async (req, res) => {
     const crashes = await Crash.find({});
     res.sendWrap(
-      "Crash log",
+      req.__("Crash log"),
       wrap(
-        "Crash log",
+        req,
+        req.__("Crash log"),
         crashes.length === 0
           ? div(
-              h3("No errors reported"),
-              p("Everything is going extremely well.")
+              h3(req.__("No errors reported")),
+              p(req.__("Everything is going extremely well."))
             )
           : mkTable(
               [
                 {
-                  label: "Show",
+                  label: req.__("Show"),
                   key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
                 },
-                { label: "When", key: (r) => r.reltime },
+                { label: req.__("When"), key: (r) => r.reltime },
                 ...(db.is_it_multi_tenant()
-                  ? [{ label: "Tenant", key: "tenant" }]
+                  ? [{ label: req.__("Tenant"), key: "tenant" }]
                   : []),
               ],
               crashes
@@ -90,9 +91,10 @@ router.get(
     const { id } = req.params;
     const crash = await Crash.findOne({ id });
     res.sendWrap(
-      "Crash log",
+      req.__("Crash log"),
       wrap(
-        "Crash log entry " + id,
+        req,
+        req.__("Crash log entry %s", id),
         table(
           { class: "table" },
           tbody(

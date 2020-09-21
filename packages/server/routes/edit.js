@@ -33,21 +33,21 @@ router.get(
       fields: fields_dropfiles,
     });
     await form.fill_fkey_options();
-    res.sendWrap(`New ${table.name}`, {
+    res.sendWrap(req.__(`New %s`, table.name), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Tables", href: "/table" },
+            { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: "Data", href: `/list/${table.name}` },
-            { text: "Add row" },
+            { text: req.__("Data"), href: `/list/${table.name}` },
+            { text: req.__("Add row") },
           ],
         },
         ,
         {
           type: "card",
-          title: `Add ${pluralize(table.name, 1)}`,
+          title: req.__(`Add %s`, pluralize(table.name, 1)),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -79,15 +79,15 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Tables", href: "/table" },
+            { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: "Data", href: `/list/${table.name}` },
-            { text: "Edit row" },
+            { text: req.__("Data"), href: `/list/${table.name}` },
+            { text: req.__("Edit row") },
           ],
         },
         {
           type: "card",
-          title: `Edit ${pluralize(table.name, 1)}`,
+          title: req.__(`Edit %s`, pluralize(table.name, 1)),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -115,7 +115,7 @@ router.post(
     form.validate(v);
     if (form.hasErrors) {
       res.sendWrap(
-        `${table.name} create new`,
+        req.__(`Create new %s`, table.name),
         renderForm(form, req.csrfToken())
       ); // vres.errors.join("\n"));
     } else {
@@ -127,7 +127,7 @@ router.post(
         if (ins_res.error) {
           req.flash("error", ins_res.error);
           res.sendWrap(
-            `${table.name} create new`,
+            req.__(`Create new %s`, table.name),
             renderForm(form, req.csrfToken())
           );
         } else res.redirect(`/list/${table.name}`);
@@ -141,7 +141,7 @@ router.post(
         if (upd_res.error) {
           req.flash("error", upd_res.error);
           res.sendWrap(
-            `${table.name} create new`,
+            req.__(`Create new %s`, table.name),
             renderForm(form, req.csrfToken())
           );
         } else res.redirect(`/list/${table.name}`);
@@ -159,7 +159,11 @@ router.post(
     const table = await Table.findOne({ name });
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
-    else req.flash("error", `Not allowed to write to table ${table.name}`);
+    else
+      req.flash(
+        "error",
+        req.__("Not allowed to write to table %s", table.name)
+      );
     if (req.get("referer")) res.redirect(req.get("referer"));
     else res.redirect(redirect || `/list/${table.name}`);
   })
