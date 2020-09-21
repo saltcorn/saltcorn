@@ -261,7 +261,15 @@
 	"New field:": "New field:",
 	"Field attributes": "Field attributes",
 	"Field %s created": "Field %s created",
-	"Field $%s deleted": "Field $%s deleted",
 	"Summary field": "Summary field",
-	"A default value is required when adding required fields to nonempty tables": "A default value is required when adding required fields to nonempty tables"
+	"A default value is required when adding required fields to nonempty tables": "A default value is required when adding required fields to nonempty tables",
+	"Create user": "Create user",
+	"Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.": "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
+	"Create first user": "Create first user",
+	"Create an account": "Create an account",
+	"No views defined": "No views defined",
+	"Views define how table rows are displayed to the user": "Views define how table rows are displayed to the user",
+	"Field %s saved": "Field %s saved",
+	"View configuration": "View configuration",
+	"Field %s deleted": "Field %s deleted"
 }

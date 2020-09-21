@@ -293,7 +293,7 @@ router.post(
     const table_id = f.table_id;
 
     await f.delete();
-    req.flash("success", req.__(`Field $%s deleted`, f.label));
+    req.flash("success", req.__(`Field %s deleted`, f.label));
     res.redirect(`/table/${table_id}`);
   })
 );
