@@ -20,6 +20,13 @@ const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
 const wrapper = require("./wrapper");
 const csrf = require("csurf");
+const { I18n } = require("i18n");
+const { h1 } = require("@saltcorn/markup/tags");
+
+const i18n = new I18n({
+  locales: ["en", "fr", "de", "da", "es", "no", "sv", "ru", "nl", "pt"],
+  directory: path.join(__dirname, "locales"),
+});
 
 const getApp = async (opts = {}) => {
   const app = express();
@@ -31,7 +38,6 @@ const getApp = async (opts = {}) => {
   await loadAllPlugins();
 
   app.use(helmet());
-
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(
@@ -42,6 +48,7 @@ const getApp = async (opts = {}) => {
     })
   );
   app.use(require("cookie-parser")());
+  app.use(i18n.init);
 
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins);
@@ -109,7 +116,7 @@ const getApp = async (opts = {}) => {
             return done(
               null,
               false,
-              req.flash("danger", "Incorrect user or password")
+              req.flash("danger", req.__("Incorrect user or password"))
             );
           }
         }
@@ -169,7 +176,7 @@ Sitemap: ${base}sitemap.xml
   await File.ensure_file_store();
 
   app.get("*", function (req, res) {
-    res.status(404).sendWrap("Not found", "<h1>Page not found</h1>");
+    res.status(404).sendWrap(res.__("Not found"), h1(res.__("Page not found")));
   });
   return app;
 };

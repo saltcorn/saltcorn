@@ -24,32 +24,32 @@ router.get(
     var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
 
     tfields.push({
-      label: "Version",
+      label: req.__("Version"),
       key: (r) => r._version,
     });
     tfields.push({
-      label: "Saved",
+      label: req.__("Saved"),
       key: (r) => moment(r._time).fromNow(),
     });
     tfields.push({
-      label: "By user ID",
+      label: req.__("By user ID"),
       key: (r) => r._userid,
     });
     tfields.push({
-      label: "Restore",
+      label: req.__("Restore"),
       key: (r) =>
         post_btn(
           `/list/_restore/${table.name}/${r.id}/${r._version}`,
-          "Restore",
+          req.__("Restore"),
           req.csrfToken()
         ),
     });
     const rows = await table.get_history(+id);
 
     res.sendWrap(
-      `${table.name} History`,
+      req.__(`%s History`, table.name),
       mkTable(tfields, rows),
-      link(`/list/${table.name}`, "&laquo; back to table list")
+      link(`/list/${table.name}`, "&laquo;" + req.__("back to table list"))
     );
   })
 );
@@ -70,6 +70,7 @@ router.post(
     var r = {};
     fields.forEach((f) => (r[f.name] = row[f.name]));
     await table.updateRow(r, +id);
+    req.flash("success", req.__("Version %s restored", _version));
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
 );
@@ -99,7 +100,7 @@ router.get(
         },
       };
       tfields.push({
-        label: "Versions",
+        label: req.__("Versions"),
         key: (r) =>
           r._versions > 0
             ? a(
@@ -110,31 +111,35 @@ router.get(
       });
     }
     tfields.push({
-      label: "Edit",
-      key: (r) => link(`/edit/${table.name}/${r.id}`, "Edit"),
+      label: req.__("Edit"),
+      key: (r) => link(`/edit/${table.name}/${r.id}`, req.__("Edit")),
     });
     tfields.push({
-      label: "Delete",
+      label: req.__("Delete"),
       key: (r) =>
-        post_btn(`/delete/${table.name}/${r.id}`, "Delete", req.csrfToken()),
+        post_btn(
+          `/delete/${table.name}/${r.id}`,
+          req.__("Delete"),
+          req.csrfToken()
+        ),
     });
     const rows = await table.getJoinedRows(joinOpts);
-    res.sendWrap(`${table.name} data table`, {
+    res.sendWrap(req.__(`%s data table`, table.name), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Tables", href: "/table" },
+            { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { text: "Data" },
+            { text: req.__("Data") },
           ],
         },
         {
           type: "card",
-          title: `${table.name} data table`,
+          title: req.__(`%s data table`, table.name),
           contents: [
             mkTable(tfields, rows),
-            link(`/edit/${table.name}`, "Add row"),
+            link(`/edit/${table.name}`, req.__("Add row")),
           ],
         },
       ],

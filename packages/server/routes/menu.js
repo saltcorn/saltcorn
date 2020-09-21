@@ -22,7 +22,7 @@ const {
 const router = new Router();
 module.exports = router;
 
-const menuForm = async () => {
+const menuForm = async (req) => {
   const imageFiles = await File.find(
     { mime_super: "image" },
     { orderBy: "filename" }
@@ -40,12 +40,12 @@ const menuForm = async () => {
     fields: [
       {
         name: "site_name",
-        label: "Site name",
+        label: req.__("Site name"),
         input_type: "text",
       },
       {
         name: "site_logo_id",
-        label: "Site logo",
+        label: req.__("Site logo"),
         input_type: "select",
         options: images,
       },
@@ -54,7 +54,7 @@ const menuForm = async () => {
         fields: [
           {
             name: "type",
-            label: "Type",
+            label: req.__("Type"),
             input_type: "select",
             class: "menutype",
             required: true,
@@ -62,32 +62,32 @@ const menuForm = async () => {
           },
           {
             name: "label",
-            label: "Text label",
+            label: req.__("Text label"),
             input_type: "text",
             required: true,
           },
           {
             name: "min_role",
-            label: "Minimum role",
+            label: req.__("Minimum role"),
             input_type: "select",
             options: roles.map((r) => ({ label: r.role, value: r.id })),
           },
           {
             name: "url",
-            label: "URL",
+            label: req.__("URL"),
             input_type: "text",
             showIf: { ".menutype": "Link" },
           },
           {
             name: "pagename",
-            label: "Page",
+            label: req.__("Page"),
             input_type: "select",
             options: pages.map((r) => r.name),
             showIf: { ".menutype": "Page" },
           },
           {
             name: "viewname",
-            label: "Views",
+            label: req.__("Views"),
             input_type: "select",
             options: views.map((r) => r.name),
             showIf: { ".menutype": "View" },
@@ -104,20 +104,20 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await menuForm();
+    const form = await menuForm(req);
     const state = getState();
     form.values.site_name = state.getConfig("site_name");
     form.values.site_logo_id = state.getConfig("site_logo_id");
     form.values.menu_items = state.getConfig("menu_items");
-    res.sendWrap(`Menu editor`, {
+    res.sendWrap(req.__(`Menu editor`), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Menu" }],
+          crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
         },
         {
           type: "card",
-          title: `Menu editor`,
+          title: req.__(`Menu editor`),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -130,19 +130,19 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await menuForm();
+    const form = await menuForm(req);
 
     const valres = form.validate(req.body);
     if (valres.errors)
-      res.sendWrap(`Menu editor`, {
+      res.sendWrap(req.__(`Menu editor`), {
         above: [
           {
             type: "breadcrumbs",
-            crumbs: [{ text: "Settings" }, { text: "Menu" }],
+            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
           },
           {
             type: "card",
-            title: `Menu editor`,
+            title: req.__(`Menu editor`),
             contents: renderForm(form, req.csrfToken()),
           },
         ],
@@ -151,7 +151,7 @@ router.post(
       await getState().setConfig("site_name", valres.success.site_name);
       await getState().setConfig("site_logo_id", valres.success.site_logo_id);
       await getState().setConfig("menu_items", valres.success.menu_items);
-      req.flash("success", `Menu updated`);
+      req.flash("success", req.__(`Menu updated`));
 
       res.redirect(`/menu`);
     }

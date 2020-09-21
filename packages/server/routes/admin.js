@@ -22,28 +22,30 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`Admin`, {
+    res.sendWrap(req.__(`Admin`), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: "Settings" }, { text: "Admin" }],
+          crumbs: [{ text: req.__("Settings") }, { text: req.__("Admin") }],
         },
         {
           type: "card",
-          title: "Admin",
+          title: req.__("Admin"),
           contents: div(
             div(
-              "Restart server. Try reloading the page after a few seconds after pressing this button.",
-              post_btn("/admin/restart", "Restart", req.csrfToken())
+              req.__(
+                "Restart server. Try reloading the page after a few seconds after pressing this button."
+              ),
+              post_btn("/admin/restart", req.__("Restart"), req.csrfToken())
             ),
             hr(),
 
-            post_btn("/admin/backup", "Backup", req.csrfToken()),
+            post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
             hr(),
             restore_backup(req.csrfToken(), [
               i({ class: "fas fa-2x fa-upload" }),
               "<br/>",
-              "Restore",
+              req.__("Restore"),
             ])
           ),
         },
@@ -61,7 +63,7 @@ router.post(
       process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
-      req.flash("success", "Restart complete");
+      req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }
   })
@@ -94,7 +96,7 @@ router.post(
       load_plugins.loadAndSaveNewPlugin(p)
     );
     if (err) req.flash("error", err);
-    else req.flash("success", "Successfully restored backup");
+    else req.flash("success", req.__("Successfully restored backup"));
     fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
   })

@@ -101,7 +101,7 @@ const get_store_items = async () => {
   );
 };
 
-const cfg_link = (row) => {
+const cfg_link = (req, row) => {
   const plugin = getState().plugins[row.name];
   if (!plugin) return "";
   if (plugin.configuration_workflow)
@@ -110,7 +110,7 @@ const cfg_link = (row) => {
         class: "btn btn-secondary btn-sm d-inline",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
-        title: "Configure plugin",
+        title: req.__("Configure plugin"),
       },
       '<i class="fas fa-cog"></i>'
     );
@@ -125,12 +125,12 @@ const store_item_html = (req) => (item) => ({
   title: item.name,
   contents: div(
     div(
-      item.plugin && badge("Plugin"),
-      item.pack && badge("Pack"),
-      item.has_theme && badge("Theme"),
+      item.plugin && badge(req.__("Plugin")),
+      item.pack && badge(req.__("Pack")),
+      item.has_theme && badge(req.__("Theme")),
       item.github && badge("GitHub"),
-      item.local && badge("Local"),
-      item.installed && badge("Installed")
+      item.local && badge(req.__("Local")),
+      item.installed && badge(req.__("Installed"))
     ),
     div(item.description || "")
   ),
@@ -140,7 +140,7 @@ const store_item_html = (req) => (item) => ({
         item.plugin &&
         post_btn(
           `/plugins/install/${encodeURIComponent(item.name)}`,
-          "Install",
+          req.__("Install"),
           req.csrfToken(),
           {
             klass: "store-install",
@@ -152,7 +152,7 @@ const store_item_html = (req) => (item) => ({
         item.pack &&
         post_btn(
           `/packs/install-named/${encodeURIComponent(item.name)}`,
-          "Install",
+          req.__("Install"),
           req.csrfToken(),
           {
             klass: "store-install",
@@ -161,12 +161,12 @@ const store_item_html = (req) => (item) => ({
           }
         ),
 
-      item.installed && item.plugin && cfg_link(item),
+      item.installed && item.plugin && cfg_link(req, item),
       item.installed &&
         item.pack &&
         post_btn(
           `/packs/uninstall/${encodeURIComponent(item.name)}`,
-          "Uninstall",
+          req.__("Uninstall"),
           req.csrfToken(),
           {
             klass: "store-install",
@@ -181,7 +181,7 @@ const store_item_html = (req) => (item) => ({
         item.name !== "base" &&
         post_btn(
           `/plugins/delete/${encodeURIComponent(item.name)}`,
-          "Remove",
+          req.__("Remove"),
           req.csrfToken(),
           {
             klass: "store-install",
@@ -213,11 +213,11 @@ const storeNavPills = (req) => {
     );
   return ul(
     { class: "nav nav-pills" },
-    link("All"),
-    link("Plugins"),
-    link("Packs"),
-    link("Themes"),
-    link("Installed")
+    link(req.__("All")),
+    link(req.__("Plugins")),
+    link(req.__("Packs")),
+    link(req.__("Themes")),
+    link(req.__("Installed"))
   );
 };
 
@@ -236,84 +236,86 @@ const filter_items = (items, query) => {
   }
 };
 
-const store_actions_dropdown = div(
-  { class: "dropdown" },
-  button(
-    {
-      class: "btn btn-outline-secondary",
-      type: "button",
-      id: "dropdownMenuButton",
-      "data-toggle": "dropdown",
-      "aria-haspopup": "true",
-      "aria-expanded": "false",
-    },
-    '<i class="fas fa-ellipsis-h"></i>'
-  ),
+const store_actions_dropdown = (req) =>
   div(
-    {
-      class: "dropdown-menu dropdown-menu-right",
-      "aria-labelledby": "dropdownMenuButton",
-    },
-    a(
+    { class: "dropdown" },
+    button(
       {
-        class: "dropdown-item",
-        href: `/plugins/refresh`,
+        class: "btn btn-outline-secondary",
+        type: "button",
+        id: "dropdownMenuButton",
+        "data-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
       },
-      '<i class="fas fa-sync"></i>&nbsp;Refresh'
+      '<i class="fas fa-ellipsis-h"></i>'
     ),
-    db.getTenantSchema() === "public" &&
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-right",
+        "aria-labelledby": "dropdownMenuButton",
+      },
       a(
         {
           class: "dropdown-item",
-          href: `/plugins/upgrade`,
+          href: `/plugins/refresh`,
         },
-        '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;Upgrade installed plugins'
+        '<i class="fas fa-sync"></i>&nbsp;' + req.__("Refresh")
       ),
-    db.getTenantSchema() === "public" &&
-      a(
-        {
-          class: "dropdown-item",
-          href: `/plugins/new`,
-        },
-        '<i class="fas fa-plus"></i>&nbsp;Add another plugin'
-      ),
+      db.getTenantSchema() === "public" &&
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/upgrade`,
+          },
+          '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
+            req.__("Upgrade installed plugins")
+        ),
+      db.getTenantSchema() === "public" &&
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/new`,
+          },
+          '<i class="fas fa-plus"></i>&nbsp;' + req.__("Add another plugin")
+        ),
 
-    a(
-      {
-        class: "dropdown-item",
-        href: `/packs/install`,
-      },
-      '<i class="fas fa-box-open"></i>&nbsp;Add another pack'
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/packs/create`,
-      },
-      '<i class="fas fa-plus-square"></i>&nbsp;Create pack'
+      a(
+        {
+          class: "dropdown-item",
+          href: `/packs/install`,
+        },
+        '<i class="fas fa-box-open"></i>&nbsp;' + req.__("Add another pack")
+      ),
+      a(
+        {
+          class: "dropdown-item",
+          href: `/packs/create`,
+        },
+        '<i class="fas fa-plus-square"></i>&nbsp;' + req.__("Create pack")
+      )
+
+      //another pack
+      //create pack
     )
-
-    //another pack
-    //create pack
-  )
-);
+  );
 const plugin_store_html = (items, req) => {
   return {
     above: [
       {
         type: "breadcrumbs",
-        crumbs: [{ text: "Settings" }, { text: "Plugins" }],
+        crumbs: [{ text: req.__("Settings") }, { text: req.__("Plugins") }],
       },
       {
         type: "pageHeader",
-        title: "Plugin and pack store",
+        title: req.__("Plugin and pack store"),
       },
       {
         type: "card",
         contents: div(
           { class: "d-flex" },
           storeNavPills(req),
-          div({ class: "ml-auto" }, store_actions_dropdown)
+          div({ class: "ml-auto" }, store_actions_dropdown(req))
         ),
       },
       {
@@ -331,7 +333,7 @@ router.get(
   error_catcher(async (req, res) => {
     const items = await get_store_items();
     const relevant_items = filter_items(items, req.query);
-    res.sendWrap("Plugins", plugin_store_html(relevant_items, req));
+    res.sendWrap(req.__("Plugins"), plugin_store_html(relevant_items, req));
   })
 );
 
@@ -387,7 +389,7 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Settings" },
+            { text: req.__("Settings") },
             { text: "Plugins", href: "/plugins" },
             { text: "New" },
           ],

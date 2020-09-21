@@ -25,13 +25,13 @@ const { table, tbody, tr, th, td, div } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
-const wrap = (cardTitle, response, lastBc) => ({
+const wrap = (req, cardTitle, response, lastBc) => ({
   above: [
     {
       type: "breadcrumbs",
       crumbs: [
-        { text: "Settings" },
-        { text: "Configuration", href: lastBc && "/config" },
+        { text: req.__("Settings") },
+        { text: req.__("Configuration"), href: lastBc && "/config" },
         ...(lastBc ? [lastBc] : []),
       ],
     },
@@ -50,7 +50,7 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
     configTypes[key] ? configTypes[key].type === "hidden" : true;
   const showFile = (r) => {
     const file = files.find((f) => f.id == r.value);
-    return file ? file.filename : "Unknown file";
+    return file ? file.filename : req.__("Unknown file");
   };
   const showValue = (key) =>
     hideValue(key)
@@ -62,24 +62,24 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
     tr(
       td(cfgs[key].label || key),
       td(showValue(key)),
-      td(canEdit(key) ? link(`/config/edit/${key}`, "Edit") : ""),
+      td(canEdit(key) ? link(`/config/edit/${key}`, req.__("Edit")) : ""),
       td(post_delete_btn(`/config/delete/${key}`, req.csrfToken()))
     );
   return (
     tr(th({ colspan: 4, class: "pt-4" }, name)) + keys.map(showkey).join("")
   );
 };
-const sections = [
+const sections = (req) => [
   {
-    name: "Site identity",
+    name: req.__("Site identity"),
     keys: ["site_name", "site_logo_id", "base_url"],
   },
   {
-    name: "Authentication",
+    name: req.__("Authentication"),
     keys: ["allow_signup", "login_menu", "allow_forgot"],
   },
   {
-    name: "E-mail",
+    name: req.__("E-mail"),
     keys: [
       "smtp_host",
       "smtp_username",
@@ -90,15 +90,15 @@ const sections = [
     ],
   },
   {
-    name: "Development",
+    name: req.__("Development"),
     keys: ["development_mode", "log_sql"],
   },
 ];
 
-const miscSection = (cfgs) => ({
-  name: "Other",
+const miscSection = (cfgs, req) => ({
+  name: req.__("Other"),
   keys: Object.keys(cfgs).filter(
-    (key) => !sections.some((section) => section.keys.includes(key))
+    (key) => !sections(req).some((section) => section.keys.includes(key))
   ),
 });
 router.get(
@@ -114,13 +114,18 @@ router.get(
       table(
         { class: "table table-sm" },
         tbody(
-          sections.map((section) => show_section(section, cfgs, files, req)),
-          show_section(miscSection(cfgs), cfgs, files, req)
+          sections(req).map((section) =>
+            show_section(section, cfgs, files, req)
+          ),
+          show_section(miscSection(cfgs, req), cfgs, files, req)
         )
       )
     );
 
-    res.sendWrap(`Configuration`, wrap("Configuration", configTable));
+    res.sendWrap(
+      req.__(`Configuration`),
+      wrap(req, req.__("Configuration"), configTable)
+    );
   })
 );
 
@@ -152,10 +157,15 @@ router.get(
     const value = await getConfig(key);
     const form = await formForKey(key, value);
     res.sendWrap(
-      `Edit configuration key ${key}`,
-      wrap(`Edit configuration key ${key}`, renderForm(form, req.csrfToken()), {
-        text: key,
-      })
+      req.__(`Edit configuration key %s`, key),
+      wrap(
+        req,
+        req.__(`Edit configuration key %s`, key),
+        renderForm(form, req.csrfToken()),
+        {
+          text: key,
+        }
+      )
     );
   })
 );
@@ -171,16 +181,17 @@ router.post(
     const valres = form.validate(req.body);
     if (valres.errors)
       res.sendWrap(
-        `Edit configuration key ${key}`,
+        req.__(`Edit configuration key %s`, key),
         wrap(
-          `Edit configuration key ${key}`,
+          req,
+          req.__(`Edit configuration key %s`, key),
           renderForm(form, req.csrfToken()),
           { text: key }
         )
       );
     else {
       await getState().setConfig(key, valres.success[key]);
-      req.flash("success", `Configuration key ${key} saved`);
+      req.flash("success", req.__(`Configuration key %s saved`, key));
 
       res.redirect(`/config/`);
     }
@@ -194,7 +205,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { key } = req.params;
     await getState().deleteConfig(key);
-    req.flash("success", `Configuration key ${key} deleted`);
+    req.flash("success", req.__(`Configuration key %s deleted`, key));
     res.redirect(`/config/`);
   })
 );

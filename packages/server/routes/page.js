@@ -36,7 +36,7 @@ router.get(
       } else
         res
           .status(404)
-          .sendWrap(`${pagename} page`, `Page ${pagename} not found`);
+          .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
     }
   })
 );

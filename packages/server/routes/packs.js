@@ -60,19 +60,19 @@ router.get(
       action: "/packs/create",
       fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields],
     });
-    res.sendWrap(`Create Pack`, {
+    res.sendWrap(req.__(`Create Pack`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Settings" },
-            { text: "Plugins", href: "/plugins" },
-            { text: "Create pack" },
+            { text: req.__("Settings") },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Create pack") },
           ],
         },
         {
           type: "card",
-          title: `Create pack`,
+          title: req.__(`Create pack`),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -106,22 +106,24 @@ router.post(
           break;
       }
     }
-    res.sendWrap(`Pack`, {
+    res.sendWrap(req.__(`Pack`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Settings" },
-            { text: "Plugins", href: "/plugins" },
-            { text: "Create pack" },
+            { text: req.__("Settings") },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Create pack") },
           ],
         },
         {
           type: "card",
-          title: `Pack`,
+          title: req.__(`Pack`),
           contents: [
             p(
-              "You can copy the pack contents below to another Saltcorn installation."
+              req.__(
+                "You can copy the pack contents below to another Saltcorn installation."
+              )
             ),
             pre({ class: "pack-display" }, code(JSON.stringify(pack))),
           ],
@@ -131,13 +133,14 @@ router.post(
   })
 );
 
-const install_pack_form = () =>
+const install_pack_form = (req) =>
   new Form({
     action: "/packs/install",
-    submitLabel: "Install",
+    submitLabel: req.__("Install"),
     fields: [
       {
         name: "pack",
+        label: req.__("Pack"),
         type: "String",
         fieldview: "textarea",
       },
@@ -149,20 +152,20 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`Install Pack`, {
+    res.sendWrap(req.__(`Install Pack`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: "Settings" },
-            { text: "Plugins", href: "/plugins" },
-            { text: "Install pack" },
+            { text: req.__("Settings") },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Install pack") },
           ],
         },
         {
           type: "card",
-          title: `Install Pack`,
-          contents: renderForm(install_pack_form(), req.csrfToken()),
+          title: req.__(`Install Pack`),
+          contents: renderForm(install_pack_form(req), req.csrfToken()),
         },
       ],
     });
@@ -181,7 +184,7 @@ router.post(
       error = e.message;
     }
     if (!error && !is_pack.check(pack)) {
-      error = "Not a valid pack";
+      error = req.__("Not a valid pack");
     }
     if (!error) {
       const can_install = await can_install_pack(pack);
@@ -192,22 +195,22 @@ router.post(
       }
     }
     if (error) {
-      const form = install_pack_form();
+      const form = install_pack_form(req);
       form.values = { pack: req.body.pack };
       req.flash("error", error);
-      res.sendWrap(`Install Pack`, {
+      res.sendWrap(req.__(`Install Pack`), {
         above: [
           {
             type: "breadcrumbs",
             crumbs: [
-              { text: "Settings" },
-              { text: "Plugins", href: "/plugins" },
-              { text: "Install pack" },
+              { text: req.__("Settings") },
+              { text: req.__("Plugins"), href: "/plugins" },
+              { text: req.__("Install pack") },
             ],
           },
           {
             type: "card",
-            title: `Install Pack`,
+            title: req.__(`Install Pack`),
             contents: renderForm(form, req.csrfToken()),
           },
         ],
@@ -243,7 +246,7 @@ router.post(
     await install_pack(pack.pack, name, (p) =>
       load_plugins.loadAndSaveNewPlugin(p)
     );
-
+    req.flash("success", req.__(`Pack %s installed`, text(name)));
     res.redirect(`/`);
   })
 );
@@ -258,7 +261,7 @@ router.post(
     const pack = await fetch_pack_by_name(name);
     await uninstall_pack(pack.pack, name);
 
-    req.flash("success", `Pack ${text(name)} uninstalled`);
+    req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
 
     res.redirect(`/`);
   })

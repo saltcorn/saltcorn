@@ -17,52 +17,52 @@ const {
 } = require("@saltcorn/markup");
 const passport = require("passport");
 const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
-const { resetPasswordWithToken } = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
 
-const loginForm = () =>
+const loginForm = (req) =>
   new Form({
     fields: [
       new Field({
-        label: "E-mail",
+        label: req.__("E-mail"),
         name: "email",
         input_type: "text",
         validator: (s) => s.length < 128,
       }),
       new Field({
-        label: "Password",
+        label: req.__("Password"),
         name: "password",
         input_type: "password",
       }),
     ],
     action: "/auth/login",
-    submitLabel: "Login",
+    submitLabel: req.__("Login"),
   });
 
-const forgotForm = () =>
+const forgotForm = (req) =>
   new Form({
-    blurb:
-      "Enter your email address below and we'll send you a link to reset your password.",
+    blurb: req.__(
+      "Enter your email address below and we'll send you a link to reset your password."
+    ),
     fields: [
       new Field({
-        label: "E-mail",
+        label: req.__("E-mail"),
         name: "email",
         input_type: "text",
         validator: (s) => s.length < 128,
       }),
     ],
     action: "/auth/forgot",
-    submitLabel: "Reset password",
+    submitLabel: req.__("Reset password"),
   });
 
-const resetForm = (body) => {
+const resetForm = (body, req) => {
   const form = new Form({
-    blurb: "Enter your new password below",
+    blurb: req.__("Enter your new password below"),
     fields: [
       new Field({
-        label: "Password",
+        label: req.__("Password"),
         name: "password",
         input_type: "password",
       }),
@@ -76,7 +76,7 @@ const resetForm = (body) => {
       }),
     ],
     action: "/auth/reset",
-    submitLabel: "Set password",
+    submitLabel: req.__("Set password"),
   });
   form.values.email = body && body.email;
   form.values.token = body && body.token;
@@ -98,7 +98,7 @@ router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
-    res.sendAuthWrap(`Login`, loginForm(), getAuthLinks("login"));
+    res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
   })
 );
 
@@ -116,11 +116,15 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot", false)) {
-      res.sendAuthWrap(`Reset password`, forgotForm(), getAuthLinks("forgot"));
+      res.sendAuthWrap(
+        req.__(`Reset password`),
+        forgotForm(req),
+        getAuthLinks("forgot")
+      );
     } else {
       req.flash(
         "danger",
-        "Password reset not enabled. Contact your administrator."
+        req.__("Password reset not enabled. Contact your administrator.")
       );
       res.redirect("/auth/login");
     }
@@ -131,8 +135,8 @@ router.get(
   "/reset",
   setTenant,
   error_catcher(async (req, res) => {
-    const form = resetForm(req.query);
-    res.sendAuthWrap(`Reset password`, form, {});
+    const form = resetForm(req.query, req);
+    res.sendAuthWrap(req.__(`Reset password`), form, {});
   })
 );
 
@@ -146,7 +150,10 @@ router.post(
       password: req.body.password,
     });
     if (result.success) {
-      req.flash("success", "Password reset. Log in with your new password");
+      req.flash(
+        "success",
+        req.__("Password reset. Log in with your new password")
+      );
     } else {
       req.flash("danger", result.error);
     }
@@ -161,7 +168,7 @@ router.post(
       const { email } = req.body;
       const u = await User.findOne({ email });
       const respond = () => {
-        req.flash("success", "Email with password reset link sent");
+        req.flash("success", req.__("Email with password reset link sent"));
         res.redirect("/auth/login");
       };
       if (!u) {
@@ -175,7 +182,7 @@ router.post(
     } else {
       req.flash(
         "danger",
-        "Password reset not enabled. Contact your administrator."
+        req.__("Password reset not enabled. Contact your administrator.")
       );
       res.redirect("/auth/login");
     }
@@ -186,12 +193,12 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
-      const form = loginForm();
+      const form = loginForm(req);
       form.action = "/auth/signup";
-      form.submitLabel = "Sign up";
-      res.sendAuthWrap(`Sign up`, form, getAuthLinks("signup"));
+      form.submitLabel = req.__("Sign up");
+      res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
     } else {
-      req.flash("danger", "Signups not enabled");
+      req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
     }
   })
@@ -203,14 +210,15 @@ router.get(
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
-      const form = loginForm();
+      const form = loginForm(req);
       form.action = "/auth/create_first_user";
-      form.submitLabel = "Create user";
-      form.blurb =
-        "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.";
-      res.sendAuthWrap(`Create first user`, form, {});
+      form.submitLabel = req.__("Create user");
+      form.blurb = req.__(
+        "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
+      );
+      res.sendAuthWrap(req.__(`Create first user`), form, {});
     } else {
-      req.flash("danger", "Users already present");
+      req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
     }
   })
@@ -240,7 +248,7 @@ router.post(
         }
       );
     } else {
-      req.flash("danger", "Users already present");
+      req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
     }
   })
@@ -252,14 +260,14 @@ router.post(
     if (getState().getConfig("allow_signup")) {
       const { email, password } = req.body;
       if (email.length > 127) {
-        req.flash("danger", "E-mail too long");
+        req.flash("danger", req.__("E-mail too long"));
         res.redirect("/auth/signup");
         return;
       }
 
       const us = await User.find({ email });
       if (us.length > 0) {
-        req.flash("danger", "Account already exists");
+        req.flash("danger", req.__("Account already exists"));
         res.redirect("/auth/signup");
         return;
       }
@@ -283,7 +291,7 @@ router.post(
         }
       );
     } else {
-      req.flash("danger", "Signups not enabled");
+      req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
     }
   })
@@ -303,26 +311,26 @@ router.post(
     } else {
       req.session.cookie.expires = false; // Cookie expires at end of session
     }
-    req.flash("success", "Login sucessful");
+    req.flash("success", req.__("Login sucessful"));
     res.redirect("/");
   })
 );
 
-const changPwForm = () =>
+const changPwForm = (req) =>
   new Form({
     action: "/auth/settings",
-    submitLabel: "Change",
+    submitLabel: req.__("Change"),
     fields: [
       {
-        label: "Old password",
+        label: req.__("Old password"),
         name: "password",
         input_type: "password",
       },
       {
-        label: "New password",
+        label: req.__("New password"),
         name: "new_password",
         input_type: "password",
-        validator: (pw) => (pw.length < 6 ? "Too short" : true),
+        validator: (pw) => (pw.length < 6 ? req.__("Too short") : true),
       },
     ],
   });
@@ -330,16 +338,16 @@ const userSettings = (req, form) => ({
   above: [
     {
       type: "breadcrumbs",
-      crumbs: [{ text: "User" }, { text: "Settings" }],
+      crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
     },
     {
       type: "card",
-      title: "User",
-      contents: table(tbody(tr(th("Email: "), td(req.user.email)))),
+      title: req.__("User"),
+      contents: table(tbody(tr(th(req.__("Email: ")), td(req.user.email)))),
     },
     {
       type: "card",
-      title: "Change password",
+      title: req.__("Change password"),
       contents: renderForm(form, req.csrfToken()),
     },
   ],
@@ -349,7 +357,7 @@ router.get(
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    res.sendWrap("User settings", userSettings(req, changPwForm()));
+    res.sendWrap(req.__("User settings"), userSettings(req, changPwForm(req)));
   })
 );
 
@@ -358,21 +366,21 @@ router.post(
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    const form = changPwForm();
+    const form = changPwForm(req);
     const user = await User.findOne({ id: req.user.id });
     form.fields[0].validator = (oldpw) => {
       const cmp = user.checkPassword(oldpw);
       if (cmp) return true;
-      else return "Password does not match";
+      else return req.__("Password does not match");
     };
 
     form.validate(req.body);
 
     if (form.hasErrors) {
-      res.sendWrap("User settings", userSettings(req, form));
+      res.sendWrap(req.__("User settings"), userSettings(req, form));
     } else {
       await user.changePasswordTo(form.values.new_password);
-      req.flash("success", "Password changed");
+      req.flash("success", req.__("Password changed"));
       res.redirect("/auth/settings");
     }
   })

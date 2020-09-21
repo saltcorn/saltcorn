@@ -63,20 +63,23 @@ router.get(
       "Files",
       mkTable(
         [
-          { label: "Filename", key: "filename" },
-          { label: "Size (KiB)", key: "size_kb" },
-          { label: "Media type", key: (r) => r.mimetype },
-          { label: "Role to access", key: (r) => editRoleForm(r, roles, req) },
+          { label: req.__("Filename"), key: "filename" },
+          { label: req.__("Size (KiB)"), key: "size_kb" },
+          { label: req.__("Media type"), key: (r) => r.mimetype },
           {
-            label: "Link",
-            key: (r) => link(`/files/serve/${r.id}`, "Link"),
+            label: req.__("Role to access"),
+            key: (r) => editRoleForm(r, roles, req),
           },
           {
-            label: "Download",
-            key: (r) => link(`/files/download/${r.id}`, "Download"),
+            label: req.__("Link"),
+            key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
           },
           {
-            label: "Delete",
+            label: req.__("Download"),
+            key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+          },
+          {
+            label: req.__("Delete"),
             key: (r) =>
               post_delete_btn(`/files/delete/${r.id}`, req.csrfToken()),
           },
@@ -90,7 +93,7 @@ router.get(
           encType: "multipart/form-data",
         },
         csrfField(req),
-        label("Upload file "),
+        label(req.__("Upload file ")),
         input({
           name: "file",
           class: "form-control-file",
@@ -114,7 +117,7 @@ router.get(
       res.type(file.mimetype);
       res.download(file.location, file.filename);
     } else {
-      req.flash("warning", "Not authorized");
+      req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
     }
   })
@@ -134,7 +137,7 @@ router.get(
       res.set("Cache-Control", `${cacheability}, max-age=3600`);
       res.sendFile(file.location);
     } else {
-      req.flash("warning", "Not authorized");
+      req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
     }
   })
@@ -154,9 +157,9 @@ router.post(
     if (roleRow && file)
       req.flash(
         "success",
-        `Minimum role for ${file.filename} updated to ${roleRow.role} `
+        req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
       );
-    else req.flash("success", `Minimum role updated`);
+    else req.flash("success", req.__(`Minimum role updated`));
 
     res.redirect("/files");
   })
@@ -168,10 +171,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (!req.files && !req.files.file) {
-      req.flash("warning", "No file found");
+      req.flash("warning", req.__("No file found"));
     } else {
       const f = await File.from_req_files(req.files.file, req.user.id);
-      req.flash("success", `File ${text(f.filename)} uploaded`);
+      req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
     }
 
     res.redirect("/files");
@@ -189,7 +192,7 @@ router.post(
     if (result && result.error) {
       req.flash("error", result.error);
     } else {
-      req.flash("success", `File ${text(f.filename)} deleted`);
+      req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files`);
   })

@@ -65,7 +65,7 @@ describe("Table create", () => {
     await browser.clickNav("tr:nth-child(3) button");
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).not.toContain(">Useless<");
-    expect(await browser.content()).toContain('Field "Useless" deleted');
+    expect(await browser.content()).toContain("Field Useless deleted");
   });
   it("shows data", async () => {
     await browser.goto("/list/Persons");

@@ -32,7 +32,7 @@ router.get(
     const { fields, ...req_query } = req.query;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
-      res.status(404).json({ error: "Not found" });
+      res.status(404).json({ error: req.__("Not found") });
       return;
     }
     const role = req.isAuthenticated() ? req.user.role_id : 10;
@@ -51,7 +51,7 @@ router.get(
       }
       res.json({ success: rows.map(limitFields(fields)) });
     } else {
-      res.status(401).json({ error: "Not authorized" });
+      res.status(401).json({ error: req.__("Not authorized") });
     }
   })
 );

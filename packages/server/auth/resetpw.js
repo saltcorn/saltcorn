@@ -7,7 +7,39 @@ const { port, secure } = (() => {
   const secure = getState().getConfig("smtp_secure", port === 465);
   return { port, secure };
 })();
+const generate_email = (link, user, req) => ({
+  from: getState().getConfig("email_from"),
+  to: user.email,
+  subject: req.__("Reset password instructions"),
+  text: `${req.__("Hi %s", user.email)},
 
+${req.__(
+  "You have requested a link to change your password. You can do this through this link:"
+)}
+
+${link}
+
+${req.__("If you did not request this, please ignore this email.")}
+
+${req.__(
+  "Your password will not change until you access the link above and set a new one."
+)}
+`,
+  html: `${req.__("Hi %s", user.email)},<br />
+    
+  ${req.__(
+    "You have requested a link to change your password. You can do this through this link:"
+  )}<br />
+<br />
+<a href="${link}">${req.__("Change my password")}</a><br />
+<br />
+${req.__("If you did not request this, please ignore this email.")}<br />
+<br />
+${req.__(
+  "Your password will not change until you access the link above and set a new one."
+)}<br />
+`,
+});
 const send_reset_email = async (user, req) => {
   const link = await get_reset_link(user, req);
   const transporter = nodemailer.createTransport({
@@ -19,31 +51,7 @@ const send_reset_email = async (user, req) => {
       pass: getState().getConfig("smtp_password"),
     },
   });
-  await transporter.sendMail({
-    from: getState().getConfig("email_from"),
-    to: user.email,
-    subject: "Reset password instructions",
-    text: `Hi ${user.email},
-
-You have requested a link to change your password. You can do this through this link:
-
-${link}
-
-If you did not request this, please ignore this email.
-
-Your password will not change until you access the link above and set a new one.
-`,
-    html: `Hi ${user.email},<br />
-    
-You have requested a link to change your password. You can do this through this link:<br />
-<br />
-<a href="${link}">Change my password</a><br />
-<br />
-If you did not request this, please ignore this email.<br />
-<br />
-Your password will not change until you access the link above and set a new one.<br />
-`,
-  });
+  await transporter.sendMail(generate_email(link, user, req));
 };
 
 const get_reset_link = async (user, req) => {
@@ -54,4 +62,4 @@ const get_reset_link = async (user, req) => {
   )}`;
 };
 
-module.exports = { send_reset_email, get_reset_link };
+module.exports = { send_reset_email, get_reset_link, generate_email };
