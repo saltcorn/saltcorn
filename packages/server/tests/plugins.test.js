@@ -212,6 +212,16 @@ describe("Pack Endpoints", () => {
       .expect(toRedirect("/"));
   });
 
+  it("should uninstall named", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/packs/uninstall/Project%20management")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/"));
+  });
+
   itShouldRedirectUnauthToLogin("/plugins/new");
 });
 

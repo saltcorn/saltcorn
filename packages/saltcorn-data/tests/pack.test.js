@@ -11,6 +11,7 @@ const {
   is_stale,
   install_pack,
   can_install_pack,
+  uninstall_pack,
 } = require("../models/pack");
 const { getState } = require("../db/state");
 const Table = require("../models/table.js");
@@ -342,5 +343,10 @@ describe("pack install", () => {
       warning:
         "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage.",
     });
+  });
+  it("uninstalls pack", async () => {
+    await uninstall_pack(todoPack, "Todo list", () => {});
+    const tbl = await Table.findOne({ name: "TodoItems" });
+    expect(!!tbl).toBe(false);
   });
 });

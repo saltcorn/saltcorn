@@ -3,6 +3,7 @@ const Form = require("../models/form");
 const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate } = require("../contracts");
 const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
+const { remove_from_menu } = require("./config");
 
 class View {
   constructor(o) {
@@ -107,6 +108,7 @@ class View {
   }
   async delete() {
     await View.delete({ id: this.id });
+    await remove_from_menu({ name: this.name, type: "View" });
   }
   static async delete(where) {
     await db.deleteWhere("_sc_views", where);

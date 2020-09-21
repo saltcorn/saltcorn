@@ -3,6 +3,8 @@ const { contract, is } = require("contractis");
 const View = require("./view");
 const { eachView } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
+const { remove_from_menu } = require("./config");
+
 class Page {
   constructor(o) {
     this.name = o.name;
@@ -46,6 +48,7 @@ class Page {
       const { getState } = require("../db/state");
       await getState().setConfig(role + "_home", "");
     }
+    await remove_from_menu({ name: this.name, type: "Page" });
   }
 
   async is_root_page_for_roles() {

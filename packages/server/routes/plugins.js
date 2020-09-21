@@ -162,7 +162,20 @@ const store_item_html = (req) => (item) => ({
         ),
 
       item.installed && item.plugin && cfg_link(item),
-      item.installed && item.pack && "Installed",
+      item.installed &&
+        item.pack &&
+        post_btn(
+          `/packs/uninstall/${encodeURIComponent(item.name)}`,
+          "Uninstall",
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            btnClass: "danger",
+            formClass: "d-inline",
+            onClick: "press_store_button(this)",
+          }
+        ),
       item.installed &&
         item.plugin &&
         item.name !== "base" &&
