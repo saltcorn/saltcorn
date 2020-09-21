@@ -20,8 +20,9 @@ const {
   install_pack,
   fetch_pack_by_name,
   can_install_pack,
+  uninstall_pack,
 } = require("@saltcorn/data/models/pack");
-const { h5, pre, code, p } = require("@saltcorn/markup/tags");
+const { h5, pre, code, p, text } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -242,6 +243,22 @@ router.post(
     await install_pack(pack.pack, name, (p) =>
       load_plugins.loadAndSaveNewPlugin(p)
     );
+
+    res.redirect(`/`);
+  })
+);
+
+router.post(
+  "/uninstall/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+
+    const pack = await fetch_pack_by_name(name);
+    await uninstall_pack(pack.pack, name);
+
+    req.flash("success", `Pack ${text(name)} uninstalled`);
 
     res.redirect(`/`);
   })
