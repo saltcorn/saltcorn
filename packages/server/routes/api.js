@@ -150,7 +150,7 @@ router.delete(
     if (role <= table.min_role_write) {
       await table.deleteRows({ id });
 
-      res.json({ success: "ok" });
+      res.json({ success: true });
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }

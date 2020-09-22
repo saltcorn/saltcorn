@@ -35,7 +35,7 @@ const notAuthorized = (res) => {
   }
 };
 
-describe("API Endpoints", () => {
+describe("API read", () => {
   it("should get books for public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -48,8 +48,6 @@ describe("API Endpoints", () => {
             rows[0].pages === 967
         )
       );
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with only some fields", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -63,8 +61,6 @@ describe("API Endpoints", () => {
             !rows[0].pages
         )
       );
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with two fields", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -78,8 +74,6 @@ describe("API Endpoints", () => {
             rows[0].pages
         )
       );
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with search", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -93,8 +87,6 @@ describe("API Endpoints", () => {
             rows[0].pages === 967
         )
       );
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should get books for public with search and one field", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -108,14 +100,10 @@ describe("API Endpoints", () => {
             !rows[0].pages
         )
       );
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should not allow public access to patients", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/api/patients/").expect(notAuthorized);
-
-    //expect(res.statusCode).toEqual(302);
   });
   it("should allow staff access to patients", async () => {
     const loginCookie = await getStaffLoginCookie();
@@ -125,7 +113,64 @@ describe("API Endpoints", () => {
       .get("/api/patients/")
       .set("Cookie", loginCookie)
       .expect(succeedJsonWith((rows) => rows.length == 2));
+  });
+});
+describe("API post", () => {
+  it("should post books", async () => {
+    const loginCookie = await getAdminLoginCookie();
 
-    //expect(res.statusCode).toEqual(302);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/books/")
+      .set("Cookie", loginCookie)
+      .send({
+        author: "Karl Marx",
+        pages: 1285,
+      })
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWith((resp) => resp && typeof resp === "number"));
+  });
+  it("should not post books as staff", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/books/")
+      .set("Cookie", loginCookie)
+      .send({
+        author: "Karl Marx",
+        pages: 1285,
+      })
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(notAuthorized);
+  });
+  it("should edit books", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/books/3")
+      .set("Cookie", loginCookie)
+      .send({
+        author: "Karl Marx",
+        pages: 1286,
+      })
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWith((resp) => resp === true));
+  });
+  it("should delete books", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .delete("/api/books/3")
+      .set("Cookie", loginCookie)
+
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWith((resp) => resp === true));
   });
 });
