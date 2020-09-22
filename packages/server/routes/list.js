@@ -187,7 +187,6 @@ router.get(
               script(domReady(versionsField(table.name))),
               script(
                 domReady(`$("#jsGrid").jsGrid({
-                height: "70vh",
                 width: "100%",
                 sorting: true,
                 paging: true,
