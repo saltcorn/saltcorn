@@ -202,13 +202,13 @@ function press_store_button(clicked) {
 }
 
 function jsgrid_controller(table_name, vc) {
-  var url = "/api/" + table_name;
+  var url = "/api/" + table_name + "/";
   return {
     loadData: function (filter) {
       var data = $.Deferred();
       $.ajax({
         type: "GET",
-        url: url + (vc ? "/?versioncount=on" : ""),
+        url: url + (vc ? "?versioncount=on" : ""),
         data: filter,
       }).done(function (resp) {
         data.resolve(resp.success);
@@ -235,7 +235,21 @@ function jsgrid_controller(table_name, vc) {
       });
       return data.promise();
     },
-    updateItem: $.noop,
+    updateItem: function (item) {
+      var data = $.Deferred();
+      $.ajax({
+        type: "POST",
+        url: url + item.id,
+        data: item,
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+      }).done(function (resp) {
+        if (item._versions) item._versions = +item._versions + 1;
+        data.resolve(item);
+      });
+      return data.promise();
+    },
     deleteItem: function (item) {
       console.log(item);
       return $.ajax({

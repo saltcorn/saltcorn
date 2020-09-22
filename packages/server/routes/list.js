@@ -173,6 +173,7 @@ router.get(
                 paging: true,
                 autoload: true,
                 inserting: true,
+                editing: true,
                          
                 controller: 
                   jsgrid_controller("${table.name}", ${JSON.stringify(
