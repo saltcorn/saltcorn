@@ -80,6 +80,12 @@ const typeToJsGridType = (t, field) => {
     jsgField.type = "select";
     jsgField.items = field.attributes.options.split(",").map((o) => o.trim());
     if (!field.required) jsgField.items.unshift("");
+  } else if (t === "Key") {
+    jsgField.type = "select";
+    //console.log(field.options);
+    jsgField.items = field.options;
+    jsgField.valueField = "value";
+    jsgField.textField = "label";
   } else
     jsgField.type =
       t.name === "String"
@@ -121,12 +127,15 @@ router.get(
     const table = await Table.findOne({ name: tname });
 
     const fields = await table.getFields();
+    for (const f of fields) {
+      await f.fill_fkey_options();
+    }
     var tfields = fields.map((f) =>
       f.type === "File"
         ? { label: f.label, key: `${f.name}__filename` }
         : { label: f.label, key: f.listKey }
     );
-
+    //console.log(fields);
     const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
     if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });

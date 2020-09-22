@@ -6,7 +6,10 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const load_plugins = require("../load_plugins");
-const { stateFieldsToWhere } = require("@saltcorn/data/plugin-helper");
+const {
+  stateFieldsToWhere,
+  readState,
+} = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
@@ -81,6 +84,9 @@ router.post(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) {
       const { _versions, ...row } = req.body;
+      const fields = await table.getFields();
+      readState(row, fields);
+
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined
@@ -105,6 +111,9 @@ router.post(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) {
       const { _versions, ...row } = req.body;
+      const fields = await table.getFields();
+      readState(row, fields);
+
       const ins_res = await table.tryUpdateRow(
         row,
         +id,
