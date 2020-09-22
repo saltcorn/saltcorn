@@ -80,8 +80,9 @@ router.post(
     }
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) {
+      const { _versions, ...row } = req.body;
       const ins_res = await table.tryInsertRow(
-        req.body,
+        row,
         req.user ? +req.user.id : undefined
       );
       if (ins_res.error) {

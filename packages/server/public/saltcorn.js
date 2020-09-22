@@ -202,13 +202,13 @@ function press_store_button(clicked) {
 }
 
 function jsgrid_controller(table_name, vc) {
-  var url = "/api/" + table_name + (vc ? "/?versioncount=on" : "");
+  var url = "/api/" + table_name;
   return {
     loadData: function (filter) {
       var data = $.Deferred();
       $.ajax({
         type: "GET",
-        url: url,
+        url: url + (vc ? "/?versioncount=on" : ""),
         data: filter,
       }).done(function (resp) {
         data.resolve(resp.success);
@@ -216,15 +216,18 @@ function jsgrid_controller(table_name, vc) {
       return data.promise();
     },
     insertItem: function (item) {
-      console.log(item);
-      return $.ajax({
+      var data = $.Deferred();
+      $.ajax({
         type: "POST",
         url: url,
         data: item,
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
+      }).done(function (resp) {
+        data.resolve(item);
       });
+      return data.promise();
     },
     updateItem: $.noop,
     deleteItem: function (item) {
