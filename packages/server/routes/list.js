@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
-const { a } = require("@saltcorn/markup/tags");
+const { a, script, domReady, div } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
@@ -74,7 +74,14 @@ router.post(
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
 );
-
+const typeToJsGridType = (t) =>
+  t.name === "String"
+    ? "text"
+    : t.name === "Integer"
+    ? "number"
+    : t.name === "Bool"
+    ? "checkbox"
+    : "text";
 router.get(
   "/:tname",
   setTenant,
@@ -124,6 +131,10 @@ router.get(
         ),
     });
     const rows = await table.getJoinedRows(joinOpts);
+    const jsfields = fields.map((f) => ({
+      name: f.name,
+      type: typeToJsGridType(f.type),
+    }));
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -136,9 +147,15 @@ router.get(
           },
           {
             css:
-              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.css",
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css",
             integrity:
-              "sha512-fz1HF9fyPeFY4eK3GvDxWRjAnpUdoCZq+c96Gnt4kX4SCN/+r/iPyUiYE9iPMSrkXMZoqZ00YHPGy7SzdxYImA==",
+              "sha512-3Epqkjaaaxqq/lt5RLJsTzP6cCIFyipVRcY4BcPfjOiGM1ZyFCv4HHeWS7eCPVaAigY3Ha3rhRgOsWaWIClqQQ==",
+          },
+          {
+            css:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css",
+            integrity:
+              "sha512-jx8R09cplZpW0xiMuNFEyJYiGXJM85GUL+ax5G3NlZT3w6qE7QgxR4/KE1YXhKxijdVTDNcQ7y6AJCtSpRnpGg==",
           },
         ],
       },
@@ -156,7 +173,23 @@ router.get(
             type: "card",
             title: req.__(`%s data table`, table.name),
             contents: [
-              mkTable(tfields, rows),
+              script(`var edit_data=${JSON.stringify(rows)};`),
+              script(`var edit_fields=${JSON.stringify(jsfields)};`),
+              script(
+                domReady(`$("#jsGrid").jsGrid({
+                height: "70vh",
+                width: "100%",
+         
+                sorting: true,
+                paging: true,
+         
+                data: edit_data,
+         
+                fields: edit_fields
+            });
+         `)
+              ),
+              div({ id: "jsGrid" }),
               link(`/edit/${table.name}`, req.__("Add row")),
             ],
           },
