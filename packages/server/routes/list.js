@@ -78,7 +78,6 @@ const typeToJsGridType = (t, field) => {
   var jsgField = { name: field.name, title: field.label };
   if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.type = "select";
-    console.log(field);
     jsgField.items = field.attributes.options.split(",").map((o) => o.trim());
     if (!field.required) jsgField.items.unshift("");
   } else
@@ -87,6 +86,8 @@ const typeToJsGridType = (t, field) => {
         ? "text"
         : t.name === "Integer"
         ? "number"
+        : t.name === "Float"
+        ? "decimal"
         : t.name === "Bool"
         ? "checkbox"
         : "text";
@@ -142,6 +143,9 @@ router.get(
               "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
           },
           {
+            script: "/gridedit.js",
+          },
+          {
             css:
               "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css",
             integrity:
@@ -172,7 +176,7 @@ router.get(
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
               script(domReady(versionsField(table.name))),
               script(
-                domReady(`$("#jsGrid").jsGrid({
+                domReady(`console.log("running");$("#jsGrid").jsGrid({
                 height: "70vh",
                 width: "100%",
                 sorting: true,
