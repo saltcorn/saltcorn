@@ -24,7 +24,7 @@ const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 
 const i18n = new I18n({
-  locales: ["en", "fr", "de", "da", "es", "no", "sv", "ru", "nl", "pt"],
+  locales: ["en", "fr", "de", "da", "es", "no", "sv", "ru", "nl", "pt", "ar"],
   directory: path.join(__dirname, "locales"),
 });
 
