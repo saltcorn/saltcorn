@@ -1,5 +1,11 @@
-function jsgrid_controller(table_name, vc) {
+function jsgrid_controller(table_name, vc, keyfields) {
   var url = "/api/" + table_name + "/";
+  var fixKeys = function (item) {
+    keyfields.forEach((kf) => {
+      item[kf] = +item[kf];
+    });
+    return item;
+  };
   return {
     loadData: function (filter) {
       var data = $.Deferred();
@@ -25,7 +31,7 @@ function jsgrid_controller(table_name, vc) {
         item._versions = 1;
         if (resp.success) {
           item.id = resp.success;
-          data.resolve(item);
+          data.resolve(fixKeys(item));
         } else {
           data.resolve();
         }
@@ -43,7 +49,7 @@ function jsgrid_controller(table_name, vc) {
         },
       }).done(function (resp) {
         if (item._versions) item._versions = +item._versions + 1;
-        data.resolve(item);
+        data.resolve(fixKeys(item));
       });
       return data.promise();
     },
@@ -62,7 +68,6 @@ function jsgrid_controller(table_name, vc) {
 function DecimalField(config) {
   jsGrid.fields.number.call(this, config);
 }
-console.log("defining", jsGrid);
 DecimalField.prototype = new jsGrid.fields.number({
   filterValue: function () {
     return this.filterControl.val()

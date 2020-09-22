@@ -6,6 +6,7 @@ const { a, script, domReady, div } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
+const { readState } = require("@saltcorn/data/plugin-helper");
 
 const router = new Router();
 
@@ -136,6 +137,7 @@ router.get(
         : { label: f.label, key: f.listKey }
     );
     //console.log(fields);
+    const keyfields = fields.filter((f) => f.type === "Key").map((f) => f.name);
     const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
     if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
@@ -185,7 +187,7 @@ router.get(
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
               script(domReady(versionsField(table.name))),
               script(
-                domReady(`console.log("running");$("#jsGrid").jsGrid({
+                domReady(`$("#jsGrid").jsGrid({
                 height: "70vh",
                 width: "100%",
                 sorting: true,
@@ -197,7 +199,7 @@ router.get(
                 controller: 
                   jsgrid_controller("${table.name}", ${JSON.stringify(
                   table.versioned
-                )}),
+                )}, ${JSON.stringify(keyfields)}),
          
                 fields: edit_fields
             });
