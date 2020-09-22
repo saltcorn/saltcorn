@@ -129,15 +129,11 @@ router.get(
 
     const fields = await table.getFields();
     for (const f of fields) {
-      if (f.type === "File") console.log(2);
+      if (f.type === "File") f.attributes = { select_file_where: {} };
       await f.fill_fkey_options();
     }
-    var tfields = fields.map((f) =>
-      f.type === "File"
-        ? { label: f.label, key: `${f.name}__filename` }
-        : { label: f.label, key: f.listKey }
-    );
-    console.log(fields);
+
+    //console.log(fields);
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => f.name);

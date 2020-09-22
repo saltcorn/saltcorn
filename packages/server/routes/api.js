@@ -86,7 +86,12 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-
+      const allfields = fields.map((f) => f.name);
+      Object.keys(row).forEach((k) => {
+        if (!allfields.includes(k)) {
+          delete row[k];
+        }
+      });
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined
@@ -113,7 +118,12 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-
+      const allfields = fields.map((f) => f.name);
+      Object.keys(row).forEach((k) => {
+        if (!allfields.includes(k)) {
+          delete row[k];
+        }
+      });
       const ins_res = await table.tryUpdateRow(
         row,
         +id,
