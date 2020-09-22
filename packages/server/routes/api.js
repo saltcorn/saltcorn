@@ -28,7 +28,7 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     const { tableName } = req.params;
-    const { fields, ...req_query } = req.query;
+    const { fields, versioncount, ...req_query } = req.query;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
       res.status(404).json({ error: req.__("Not found") });
@@ -37,7 +37,20 @@ router.get(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_read) {
       var rows;
-      if (req_query && req_query !== {}) {
+      if (versioncount === "on") {
+        const joinOpts = {
+          orderBy: "id",
+          aggregations: {
+            _versions: {
+              table: table.name + "__history",
+              ref: "id",
+              field: "id",
+              aggregate: "count",
+            },
+          },
+        };
+        rows = await table.getJoinedRows(joinOpts);
+      } else if (req_query && req_query !== {}) {
         const tbl_fields = await table.getFields();
         const qstate = await stateFieldsToWhere({
           fields: tbl_fields,

@@ -82,6 +82,25 @@ const typeToJsGridType = (t) =>
     : t.name === "Bool"
     ? "checkbox"
     : "text";
+
+const versionsField = (tname) => `
+var VersionsField = function(config) {
+  jsGrid.Field.call(this, config);
+};
+VersionsField.prototype = new jsGrid.Field({
+  align: "right",
+  itemTemplate: function(value, item) {
+      if(value) {
+        //return +value+1;
+        return '<a href="/list/_versions/${tname}/'+item.id+'">'+
+        value+'&nbsp;<i class="fa-sm fas fa-list"></i></a>';      
+      } else return ''
+  },
+
+});
+jsGrid.fields.versions = VersionsField;
+`;
+
 router.get(
   "/:tname",
   setTenant,
@@ -96,48 +115,15 @@ router.get(
         ? { label: f.label, key: `${f.name}__filename` }
         : { label: f.label, key: f.listKey }
     );
-    const joinOpts = { orderBy: "id" };
+
+    const jsfields = fields.map((f) => ({
+      name: f.name,
+      type: typeToJsGridType(f.type),
+    }));
     if (table.versioned) {
-      joinOpts.aggregations = {
-        _versions: {
-          table: table.name + "__history",
-          ref: "id",
-          field: "id",
-          aggregate: "count",
-        },
-      };
-      tfields.push({
-        label: req.__("Versions"),
-        key: (r) =>
-          r._versions > 0
-            ? a(
-                { href: `/list/_versions/${table.name}/${r.id}` },
-                `${r._versions}&nbsp;<i class="fa-sm fas fa-list"></i>`
-              )
-            : "0",
-      });
+      jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
-    tfields.push({
-      label: req.__("Edit"),
-      key: (r) => link(`/edit/${table.name}/${r.id}`, req.__("Edit")),
-    });
-    tfields.push({
-      label: req.__("Delete"),
-      key: (r) =>
-        post_btn(
-          `/delete/${table.name}/${r.id}`,
-          req.__("Delete"),
-          req.csrfToken()
-        ),
-    });
-    //const rows = await table.getJoinedRows(joinOpts);
-    const jsfields = [
-      ...fields.map((f) => ({
-        name: f.name,
-        type: typeToJsGridType(f.type),
-      })),
-      { type: "control" },
-    ];
+    jsfields.push({ type: "control" });
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -177,6 +163,7 @@ router.get(
             title: req.__(`%s data table`, table.name),
             contents: [
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
+              script(domReady(versionsField(table.name))),
               script(
                 domReady(`$("#jsGrid").jsGrid({
                 height: "70vh",
@@ -187,14 +174,16 @@ router.get(
                 autoload: true,
                 inserting: true,
                          
-                controller: jsgrid_controller("${table.name}"),
+                controller: 
+                  jsgrid_controller("${table.name}", ${JSON.stringify(
+                  table.versioned
+                )}),
          
                 fields: edit_fields
             });
          `)
               ),
               div({ id: "jsGrid" }),
-              link(`/edit/${table.name}`, req.__("Add row")),
             ],
           },
         ],

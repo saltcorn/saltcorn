@@ -201,8 +201,8 @@ function press_store_button(clicked) {
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }
 
-function jsgrid_controller(table_name) {
-  var url = "/api/" + table_name + "/";
+function jsgrid_controller(table_name, vc) {
+  var url = "/api/" + table_name + (vc ? "/?versioncount=on" : "");
   return {
     loadData: function (filter) {
       var data = $.Deferred();
