@@ -131,10 +131,13 @@ router.get(
         ),
     });
     //const rows = await table.getJoinedRows(joinOpts);
-    const jsfields = fields.map((f) => ({
-      name: f.name,
-      type: typeToJsGridType(f.type),
-    }));
+    const jsfields = [
+      ...fields.map((f) => ({
+        name: f.name,
+        type: typeToJsGridType(f.type),
+      })),
+      { type: "control" },
+    ];
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -182,6 +185,7 @@ router.get(
                 sorting: true,
                 paging: true,
                 autoload: true,
+                inserting: true,
                          
                 controller: jsgrid_controller("${table.name}"),
          

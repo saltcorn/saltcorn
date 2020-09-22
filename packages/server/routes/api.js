@@ -54,3 +54,28 @@ router.get(
     }
   })
 );
+
+router.post(
+  "/:tableName/",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) {
+      const ins_res = await table.tryInsertRow(
+        req.body,
+        req.user ? +req.user.id : undefined
+      );
+      if (ins_res.error) {
+        res.json({ error: ins_res.error });
+      } else res.json({ success: "ok" });
+    } else {
+      res.status(401).json({ error: req.__("Not authorized") });
+    }
+  })
+);

@@ -273,5 +273,6 @@
 	"View configuration": "View configuration",
 	"Field %s deleted": "Field %s deleted",
 	"No tables defined": "No tables defined",
-	"Tables hold collections of similar data": "Tables hold collections of similar data"
+	"Tables hold collections of similar data": "Tables hold collections of similar data",
+	"Invalid form data, try again": "Invalid form data, try again"
 }

@@ -202,19 +202,30 @@ function press_store_button(clicked) {
 }
 
 function jsgrid_controller(table_name) {
+  var url = "/api/" + table_name + "/";
   return {
     loadData: function (filter) {
       var data = $.Deferred();
       $.ajax({
         type: "GET",
-        url: "/api/" + table_name + "/",
+        url: url,
         data: filter,
       }).done(function (resp) {
         data.resolve(resp.success);
       });
       return data.promise();
     },
-    insertItem: $.noop,
+    insertItem: function (item) {
+      console.log(item);
+      return $.ajax({
+        type: "POST",
+        url: url,
+        data: item,
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+      });
+    },
     updateItem: $.noop,
     deleteItem: $.noop,
   };
