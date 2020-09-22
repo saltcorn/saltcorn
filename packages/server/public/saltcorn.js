@@ -227,6 +227,15 @@ function jsgrid_controller(table_name) {
       });
     },
     updateItem: $.noop,
-    deleteItem: $.noop,
+    deleteItem: function (item) {
+      console.log(item);
+      return $.ajax({
+        type: "DELETE",
+        url: url + item.id,
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+      });
+    },
   };
 }

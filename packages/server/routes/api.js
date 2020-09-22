@@ -79,3 +79,24 @@ router.post(
     }
   })
 );
+
+router.delete(
+  "/:tableName/:id",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName, id } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) {
+      await table.deleteRows({ id });
+
+      res.json({ success: "ok" });
+    } else {
+      res.status(401).json({ error: req.__("Not authorized") });
+    }
+  })
+);
