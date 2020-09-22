@@ -83,6 +83,24 @@ const resetToFixtures = async () => {
   await fixtures();
 };
 
+const succeedJsonWith = (pred) => (res) => {
+  if (res.statusCode !== 200) {
+    console.log(res.text);
+    throw new Error(`Expected status 200, received ${res.statusCode}`);
+  }
+
+  if (!pred(res.body.success)) {
+    console.log(res.body);
+    throw new Error(`Not satisfied`);
+  }
+};
+
+const notAuthorized = (res) => {
+  if (res.statusCode !== 401) {
+    console.log(res.text);
+    throw new Error(`Expected status 401, received ${res.statusCode}`);
+  }
+};
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -92,4 +110,6 @@ module.exports = {
   toNotInclude,
   toSucceed,
   resetToFixtures,
+  succeedJsonWith,
+  notAuthorized,
 };
