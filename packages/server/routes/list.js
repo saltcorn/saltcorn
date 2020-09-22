@@ -130,7 +130,7 @@ router.get(
           req.csrfToken()
         ),
     });
-    const rows = await table.getJoinedRows(joinOpts);
+    //const rows = await table.getJoinedRows(joinOpts);
     const jsfields = fields.map((f) => ({
       name: f.name,
       type: typeToJsGridType(f.type),
@@ -173,17 +173,17 @@ router.get(
             type: "card",
             title: req.__(`%s data table`, table.name),
             contents: [
-              script(`var edit_data=${JSON.stringify(rows)};`),
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
               script(
                 domReady(`$("#jsGrid").jsGrid({
                 height: "70vh",
                 width: "100%",
-         
+                noDataContent: "Not founde",
                 sorting: true,
                 paging: true,
-         
-                data: edit_data,
+                autoload: true,
+                         
+                controller: jsgrid_controller("${table.name}"),
          
                 fields: edit_fields
             });

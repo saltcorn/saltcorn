@@ -1,3 +1,4 @@
+"use strict";
 //https://stackoverflow.com/a/698386
 jQuery.fn.swapWith = function (to) {
   return this.each(function () {
@@ -197,6 +198,24 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function press_store_button(clicked) {
-  //$('button.store-install').prop('disabled', true);
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
+}
+
+function jsgrid_controller(table_name) {
+  return {
+    loadData: function (filter) {
+      var data = $.Deferred();
+      $.ajax({
+        type: "GET",
+        url: "/api/" + table_name + "/",
+        data: filter,
+      }).done(function (resp) {
+        data.resolve(resp.success);
+      });
+      return data.promise();
+    },
+    insertItem: $.noop,
+    updateItem: $.noop,
+    deleteItem: $.noop,
+  };
 }
