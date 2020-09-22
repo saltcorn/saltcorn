@@ -6,7 +6,10 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const load_plugins = require("../load_plugins");
-const { stateFieldsToWhere } = require("@saltcorn/data/plugin-helper");
+const {
+  stateFieldsToWhere,
+  readState,
+} = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
@@ -19,8 +22,7 @@ const limitFields = (fields) => (r) => {
     });
     return res;
   } else {
-    const { id, ...rest } = r;
-    return rest;
+    return r;
   }
 };
 
@@ -29,16 +31,29 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     const { tableName } = req.params;
-    const { fields, ...req_query } = req.query;
+    const { fields, versioncount, ...req_query } = req.query;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
     const role = req.isAuthenticated() ? req.user.role_id : 10;
-    if (table.expose_api_read && role <= table.min_role_read) {
+    if (role <= table.min_role_read) {
       var rows;
-      if (req_query && req_query !== {}) {
+      if (versioncount === "on") {
+        const joinOpts = {
+          orderBy: "id",
+          aggregations: {
+            _versions: {
+              table: table.name + "__history",
+              ref: "id",
+              field: "id",
+              aggregate: "count",
+            },
+          },
+        };
+        rows = await table.getJoinedRows(joinOpts);
+      } else if (req_query && req_query !== {}) {
         const tbl_fields = await table.getFields();
         const qstate = await stateFieldsToWhere({
           fields: tbl_fields,
@@ -50,6 +65,92 @@ router.get(
         rows = await table.getRows();
       }
       res.json({ success: rows.map(limitFields(fields)) });
+    } else {
+      res.status(401).json({ error: req.__("Not authorized") });
+    }
+  })
+);
+
+router.post(
+  "/:tableName/",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) {
+      const { _versions, ...row } = req.body;
+      const fields = await table.getFields();
+      readState(row, fields);
+      const allfields = fields.map((f) => f.name);
+      Object.keys(row).forEach((k) => {
+        if (!allfields.includes(k)) {
+          delete row[k];
+        }
+      });
+      const ins_res = await table.tryInsertRow(
+        row,
+        req.user ? +req.user.id : undefined
+      );
+      res.json(ins_res);
+    } else {
+      res.status(401).json({ error: req.__("Not authorized") });
+    }
+  })
+);
+
+router.post(
+  "/:tableName/:id",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName, id } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) {
+      const { _versions, ...row } = req.body;
+      const fields = await table.getFields();
+      readState(row, fields);
+      const allfields = fields.map((f) => f.name);
+      Object.keys(row).forEach((k) => {
+        if (!allfields.includes(k)) {
+          delete row[k];
+        }
+      });
+      const ins_res = await table.tryUpdateRow(
+        row,
+        +id,
+        req.user ? +req.user.id : undefined
+      );
+
+      res.json(ins_res);
+    } else {
+      res.status(401).json({ error: req.__("Not authorized") });
+    }
+  })
+);
+router.delete(
+  "/:tableName/:id",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { tableName, id } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role <= table.min_role_write) {
+      await table.deleteRows({ id });
+
+      res.json({ success: true });
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }

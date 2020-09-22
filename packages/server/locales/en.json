@@ -271,5 +271,10 @@
 	"Views define how table rows are displayed to the user": "Views define how table rows are displayed to the user",
 	"Field %s saved": "Field %s saved",
 	"View configuration": "View configuration",
-	"Field %s deleted": "Field %s deleted"
+	"Field %s deleted": "Field %s deleted",
+	"No tables defined": "No tables defined",
+	"Tables hold collections of similar data": "Tables hold collections of similar data",
+	"Invalid form data, try again": "Invalid form data, try again",
+	"Role required to access added files": "Role required to access added files",
+	"The user uploading the file has access irrespective of their role": "The user uploading the file has access irrespective of their role"
 }

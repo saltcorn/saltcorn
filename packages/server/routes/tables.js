@@ -41,25 +41,10 @@ const roleOptions = [
   { value: 10, label: "Public" },
 ];
 
-const apiOptions = [
-  { value: "No API", label: "No API" },
-  { value: "Read only", label: "Read only" },
-  { value: "Read and write", label: "Read and write" },
-];
-
 const tableForm = (table, req) => {
   const form = new Form({
     action: "/table",
     fields: [
-      {
-        label: req.__("API access"),
-        sublabel: req.__(
-          "APIs allow developers access to your data without using a user interface"
-        ),
-        name: "api_access",
-        input_type: "select",
-        options: apiOptions,
-      },
       {
         label: req.__("Minimum role for read"),
         name: "min_role_read",
@@ -82,10 +67,6 @@ const tableForm = (table, req) => {
   if (table) {
     if (table.id) form.hidden("id");
     form.values = table;
-    if (table.expose_api_read && table.expose_api_write)
-      form.values.api_access = "Read and write";
-    else if (table.expose_api_read) form.values.api_access = "Read only";
-    else form.values.api_access = "No API";
   }
   return form;
 };
@@ -407,29 +388,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const set_api_access = (v) => {
-      switch (v.api_access) {
-        case "No API":
-          v.expose_api_read = false;
-          v.expose_api_write = false;
-          break;
-        case "Read only":
-          v.expose_api_read = true;
-          v.expose_api_write = false;
-          break;
-        case "Read and write":
-          v.expose_api_read = true;
-          v.expose_api_write = true;
-          break;
-        default:
-          v.expose_api_read = false;
-          v.expose_api_write = false;
-          break;
-      }
-      delete v.api_access;
-      return v;
-    };
-    const v = set_api_access(req.body);
+    const v = req.body;
     if (typeof v.id === "undefined") {
       // insert
       const { name, ...rest } = v;

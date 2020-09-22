@@ -101,7 +101,7 @@ const get_menu = (req) => {
   return menu;
 };
 
-const get_headers = (req, description) => {
+const get_headers = (req, description, extras = []) => {
   const state = getState();
   const favicon = state.favicon;
 
@@ -126,7 +126,13 @@ const get_headers = (req, description) => {
     { css: "/saltcorn.css" },
     { script: "/saltcorn.js" },
   ];
-  return [...stdHeaders, ...iconHeader, ...meta_description, ...state.headers];
+  return [
+    ...stdHeaders,
+    ...iconHeader,
+    ...meta_description,
+    ...state.headers,
+    ...extras,
+  ];
 };
 const get_brand = (state) => {
   const logo_id = state.getConfig("site_logo_id", "");
@@ -191,6 +197,7 @@ module.exports = function (req, res, next) {
     const currentUrl = req.originalUrl.split("?")[0];
 
     const title = typeof opts === "string" ? opts : opts.title;
+    const pageHeaders = typeof opts === "string" ? [] : opts.headers;
     res.send(
       state.layout.wrap({
         title,
@@ -199,7 +206,7 @@ module.exports = function (req, res, next) {
         currentUrl,
         alerts: getFlashes(req),
         body: html.length === 1 ? html[0] : html.join(""),
-        headers: get_headers(req, opts.description),
+        headers: get_headers(req, opts.description, pageHeaders),
       })
     );
   };

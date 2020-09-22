@@ -297,8 +297,6 @@ const todoPack = {
       ],
       min_role_read: 1,
       min_role_write: 1,
-      expose_api_read: false,
-      expose_api_write: false,
     },
   ],
   pages: [

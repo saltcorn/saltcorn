@@ -197,6 +197,5 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function press_store_button(clicked) {
-  //$('button.store-install').prop('disabled', true);
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }
