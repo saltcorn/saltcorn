@@ -74,14 +74,24 @@ router.post(
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
 );
-const typeToJsGridType = (t) =>
-  t.name === "String"
-    ? "text"
-    : t.name === "Integer"
-    ? "number"
-    : t.name === "Bool"
-    ? "checkbox"
-    : "text";
+const typeToJsGridType = (t, field) => {
+  var jsgField = { name: field.name, title: field.label };
+  if (t.name === "String" && field.attributes && field.attributes.options) {
+    jsgField.type = "select";
+    console.log(field);
+    jsgField.items = field.attributes.options.split(",").map((o) => o.trim());
+    if (!field.required) jsgField.items.unshift("");
+  } else
+    jsgField.type =
+      t.name === "String"
+        ? "text"
+        : t.name === "Integer"
+        ? "number"
+        : t.name === "Bool"
+        ? "checkbox"
+        : "text";
+  return jsgField;
+};
 
 const versionsField = (tname) => `
 var VersionsField = function(config) {
@@ -116,10 +126,7 @@ router.get(
         : { label: f.label, key: f.listKey }
     );
 
-    const jsfields = fields.map((f) => ({
-      name: f.name,
-      type: typeToJsGridType(f.type),
-    }));
+    const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
     if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
@@ -168,7 +175,6 @@ router.get(
                 domReady(`$("#jsGrid").jsGrid({
                 height: "70vh",
                 width: "100%",
-                noDataContent: "Not founde",
                 sorting: true,
                 paging: true,
                 autoload: true,
