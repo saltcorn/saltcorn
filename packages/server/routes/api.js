@@ -87,7 +87,9 @@ router.post(
       );
       if (ins_res.error) {
         res.json({ error: ins_res.error });
-      } else res.json({ success: "ok" });
+      } else {
+        res.json(ins_res);
+      }
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }

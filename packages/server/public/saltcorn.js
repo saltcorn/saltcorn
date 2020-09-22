@@ -225,7 +225,13 @@ function jsgrid_controller(table_name, vc) {
           "CSRF-Token": _sc_globalCsrf,
         },
       }).done(function (resp) {
-        data.resolve(item);
+        item._versions = 1;
+        if (resp.success) {
+          item.id = resp.success;
+          data.resolve(item);
+        } else {
+          data.resolve();
+        }
       });
       return data.promise();
     },
