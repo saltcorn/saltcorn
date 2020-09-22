@@ -1,4 +1,3 @@
-"use strict";
 //https://stackoverflow.com/a/698386
 jQuery.fn.swapWith = function (to) {
   return this.each(function () {

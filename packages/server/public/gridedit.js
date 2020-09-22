@@ -54,7 +54,6 @@ function jsgrid_controller(table_name, vc, keyfields) {
       return data.promise();
     },
     deleteItem: function (item) {
-      console.log(item);
       return $.ajax({
         type: "DELETE",
         url: url + item.id,

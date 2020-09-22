@@ -44,8 +44,6 @@ class Table {
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
-    //this.expose_api_read = o.expose_api_read;
-    //this.expose_api_write = o.expose_api_write;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
     this.versioned = !!o.versioned;
