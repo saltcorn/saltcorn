@@ -124,25 +124,44 @@ router.get(
         ),
     });
     const rows = await table.getJoinedRows(joinOpts);
-    res.sendWrap(req.__(`%s data table`, table.name), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Tables"), href: "/table" },
-            { href: `/table/${table.id}`, text: table.name },
-            { text: req.__("Data") },
-          ],
-        },
-        {
-          type: "card",
-          title: req.__(`%s data table`, table.name),
-          contents: [
-            mkTable(tfields, rows),
-            link(`/edit/${table.name}`, req.__("Add row")),
-          ],
-        },
-      ],
-    });
+    res.sendWrap(
+      {
+        title: req.__(`%s data table`, table.name),
+        headers: [
+          {
+            script:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js",
+            integrity:
+              "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
+          },
+          {
+            css:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.css",
+            integrity:
+              "sha512-fz1HF9fyPeFY4eK3GvDxWRjAnpUdoCZq+c96Gnt4kX4SCN/+r/iPyUiYE9iPMSrkXMZoqZ00YHPGy7SzdxYImA==",
+          },
+        ],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Tables"), href: "/table" },
+              { href: `/table/${table.id}`, text: table.name },
+              { text: req.__("Data") },
+            ],
+          },
+          {
+            type: "card",
+            title: req.__(`%s data table`, table.name),
+            contents: [
+              mkTable(tfields, rows),
+              link(`/edit/${table.name}`, req.__("Add row")),
+            ],
+          },
+        ],
+      }
+    );
   })
 );
