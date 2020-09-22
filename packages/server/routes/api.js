@@ -19,8 +19,7 @@ const limitFields = (fields) => (r) => {
     });
     return res;
   } else {
-    const { id, ...rest } = r;
-    return rest;
+    return r;
   }
 };
 
@@ -36,7 +35,7 @@ router.get(
       return;
     }
     const role = req.isAuthenticated() ? req.user.role_id : 10;
-    if (table.expose_api_read && role <= table.min_role_read) {
+    if (role <= table.min_role_read) {
       var rows;
       if (req_query && req_query !== {}) {
         const tbl_fields = await table.getFields();

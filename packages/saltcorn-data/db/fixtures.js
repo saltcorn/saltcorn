@@ -11,7 +11,6 @@ const fs = require("fs").promises;
 module.exports = async () => {
   getState().registerPlugin("base", require("../base-plugin"));
   const table = await Table.create("books", {
-    expose_api_read: true,
     min_role_read: 10,
   });
   await Field.create({
@@ -30,7 +29,6 @@ module.exports = async () => {
     attributes: { min: 0 },
   });
   const patients = await Table.create("patients", {
-    expose_api_read: true,
     min_role_read: 4,
   });
   await Field.create({

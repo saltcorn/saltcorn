@@ -44,8 +44,8 @@ class Table {
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
-    this.expose_api_read = o.expose_api_read;
-    this.expose_api_write = o.expose_api_write;
+    //this.expose_api_read = o.expose_api_read;
+    //this.expose_api_write = o.expose_api_write;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
     this.versioned = !!o.versioned;
@@ -71,8 +71,6 @@ class Table {
     const tblrow = {
       name,
       versioned: options.versioned || false,
-      expose_api_read: options.expose_api_read || false,
-      expose_api_write: options.expose_api_write || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
     };

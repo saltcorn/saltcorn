@@ -24,8 +24,6 @@ const pack = {
   tables: [
     {
       name: "cats",
-      expose_api_read: false,
-      expose_api_write: false,
       min_role_read: 1,
       min_role_write: 1,
       versioned: false,
