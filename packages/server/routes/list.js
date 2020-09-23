@@ -97,6 +97,10 @@ const typeToJsGridType = (t, field) => {
         ? "decimal"
         : t.name === "Bool"
         ? "checkbox"
+        : t.name === "Color"
+        ? "color"
+        : t.name === "Date"
+        ? "date"
         : "text";
   return jsgField;
 };
@@ -153,6 +157,12 @@ router.get(
               "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
           },
           {
+            script:
+              "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.js",
+            integrity:
+              "sha512-Nc36QpQAS2BOjt0g/CqfIi54O6+UWTI3fmqJsnXoU6rNYRq8vIQQkZmkrRnnk4xKgMC3ESWp69ilLpDm6Zu8wQ==",
+          },
+          {
             script: "/gridedit.js",
           },
           {
@@ -166,6 +176,12 @@ router.get(
               "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css",
             integrity:
               "sha512-jx8R09cplZpW0xiMuNFEyJYiGXJM85GUL+ax5G3NlZT3w6qE7QgxR4/KE1YXhKxijdVTDNcQ7y6AJCtSpRnpGg==",
+          },
+          {
+            css:
+              "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.css",
+            integrity:
+              "sha512-OtwMKauYE8gmoXusoKzA/wzQoh7WThXJcJVkA29fHP58hBF7osfY0WLCIZbwkeL9OgRCxtAfy17Pn3mndQ4PZQ==",
           },
         ],
       },
