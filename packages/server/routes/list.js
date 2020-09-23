@@ -2,10 +2,11 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
-const { a } = require("@saltcorn/markup/tags");
+const { a, script, domReady, div } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
+const { readState } = require("@saltcorn/data/plugin-helper");
 
 const router = new Router();
 
@@ -74,6 +75,49 @@ router.post(
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
 );
+const typeToJsGridType = (t, field) => {
+  var jsgField = { name: field.name, title: field.label };
+  if (t.name === "String" && field.attributes && field.attributes.options) {
+    jsgField.type = "select";
+    jsgField.items = field.attributes.options.split(",").map((o) => o.trim());
+    if (!field.required) jsgField.items.unshift("");
+  } else if (t === "Key" || t === "File") {
+    jsgField.type = "select";
+    //console.log(field.options);
+    jsgField.items = field.options;
+    jsgField.valueField = "value";
+    jsgField.textField = "label";
+  } else
+    jsgField.type =
+      t.name === "String"
+        ? "text"
+        : t.name === "Integer"
+        ? "number"
+        : t.name === "Float"
+        ? "decimal"
+        : t.name === "Bool"
+        ? "checkbox"
+        : "text";
+  return jsgField;
+};
+
+const versionsField = (tname) => `
+var VersionsField = function(config) {
+  jsGrid.Field.call(this, config);
+};
+VersionsField.prototype = new jsGrid.Field({
+  align: "right",
+  itemTemplate: function(value, item) {
+      if(value) {
+        //return +value+1;
+        return '<a href="/list/_versions/${tname}/'+item.id+'">'+
+        value+'&nbsp;<i class="fa-sm fas fa-list"></i></a>';      
+      } else return ''
+  },
+
+});
+jsGrid.fields.versions = VersionsField;
+`;
 
 router.get(
   "/:tname",
@@ -84,65 +128,86 @@ router.get(
     const table = await Table.findOne({ name: tname });
 
     const fields = await table.getFields();
-    var tfields = fields.map((f) =>
-      f.type === "File"
-        ? { label: f.label, key: `${f.name}__filename` }
-        : { label: f.label, key: f.listKey }
-    );
-    const joinOpts = { orderBy: "id" };
-    if (table.versioned) {
-      joinOpts.aggregations = {
-        _versions: {
-          table: table.name + "__history",
-          ref: "id",
-          field: "id",
-          aggregate: "count",
-        },
-      };
-      tfields.push({
-        label: req.__("Versions"),
-        key: (r) =>
-          r._versions > 0
-            ? a(
-                { href: `/list/_versions/${table.name}/${r.id}` },
-                `${r._versions}&nbsp;<i class="fa-sm fas fa-list"></i>`
-              )
-            : "0",
-      });
+    for (const f of fields) {
+      if (f.type === "File") f.attributes = { select_file_where: {} };
+      await f.fill_fkey_options();
     }
-    tfields.push({
-      label: req.__("Edit"),
-      key: (r) => link(`/edit/${table.name}/${r.id}`, req.__("Edit")),
-    });
-    tfields.push({
-      label: req.__("Delete"),
-      key: (r) =>
-        post_btn(
-          `/delete/${table.name}/${r.id}`,
-          req.__("Delete"),
-          req.csrfToken()
-        ),
-    });
-    const rows = await table.getJoinedRows(joinOpts);
-    res.sendWrap(req.__(`%s data table`, table.name), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Tables"), href: "/table" },
-            { href: `/table/${table.id}`, text: table.name },
-            { text: req.__("Data") },
-          ],
-        },
-        {
-          type: "card",
-          title: req.__(`%s data table`, table.name),
-          contents: [
-            mkTable(tfields, rows),
-            link(`/edit/${table.name}`, req.__("Add row")),
-          ],
-        },
-      ],
-    });
+
+    //console.log(fields);
+    const keyfields = fields
+      .filter((f) => f.type === "Key" || f.type === "File")
+      .map((f) => f.name);
+    const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
+    if (table.versioned) {
+      jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
+    }
+    jsfields.push({ type: "control" });
+    res.sendWrap(
+      {
+        title: req.__(`%s data table`, table.name),
+        headers: [
+          {
+            script:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js",
+            integrity:
+              "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
+          },
+          {
+            script: "/gridedit.js",
+          },
+          {
+            css:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css",
+            integrity:
+              "sha512-3Epqkjaaaxqq/lt5RLJsTzP6cCIFyipVRcY4BcPfjOiGM1ZyFCv4HHeWS7eCPVaAigY3Ha3rhRgOsWaWIClqQQ==",
+          },
+          {
+            css:
+              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css",
+            integrity:
+              "sha512-jx8R09cplZpW0xiMuNFEyJYiGXJM85GUL+ax5G3NlZT3w6qE7QgxR4/KE1YXhKxijdVTDNcQ7y6AJCtSpRnpGg==",
+          },
+        ],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Tables"), href: "/table" },
+              { href: `/table/${table.id}`, text: table.name },
+              { text: req.__("Data") },
+            ],
+          },
+          {
+            type: "card",
+            title: req.__(`%s data table`, table.name),
+            contents: [
+              script(`var edit_fields=${JSON.stringify(jsfields)};`),
+              script(domReady(versionsField(table.name))),
+              script(
+                domReady(`$("#jsGrid").jsGrid({
+                width: "100%",
+                sorting: true,
+                paging: true,
+                autoload: true,
+                inserting: true,
+                editing: true,
+                         
+                controller: 
+                  jsgrid_controller("${table.name}", ${JSON.stringify(
+                  table.versioned
+                )}, ${JSON.stringify(keyfields)}),
+         
+                fields: edit_fields
+            });
+         `)
+              ),
+              div({ id: "jsGrid" }),
+            ],
+          },
+        ],
+      }
+    );
   })
 );
