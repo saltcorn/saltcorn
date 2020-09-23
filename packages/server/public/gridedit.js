@@ -130,3 +130,39 @@ ColorField.prototype = new jsGrid.Field({
 });
 
 jsGrid.fields.color = ColorField;
+
+var DateField = function (config) {
+  jsGrid.Field.call(this, config);
+};
+
+DateField.prototype = new jsGrid.Field({
+  itemTemplate: function (value) {
+    console.log(value, typeof value);
+    var v = typeof value === "string" && value !== "" ? new Date(value) : value;
+    return v && v.toLocaleString ? v.toLocaleString() : v;
+  },
+
+  insertTemplate: function (value) {
+    var insertPicker = (this._insertPicker = $("<input>").attr("type", "text"));
+
+    return insertPicker;
+  },
+
+  editTemplate: function (value) {
+    var editPicker = (this._editPicker = $("<input>")
+      .attr("type", "text")
+      .val(value));
+
+    return editPicker;
+  },
+
+  insertValue: function () {
+    return this._insertPicker.val();
+  },
+
+  editValue: function () {
+    return this._editPicker.val();
+  },
+});
+
+jsGrid.fields.date = DateField;
