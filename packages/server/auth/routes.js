@@ -400,13 +400,32 @@ router.post(
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+    const u = await User.findOne({ id: req.user.id });
     const newlang = available_languages[req.body.locale];
     if (newlang) {
-      await user.set_language(req.body.locale);
-      req.flash("success", req.__("Language changed to %s", newlang));
+      await u.set_language(req.body.locale);
+      req.login(
+        {
+          email: u.email,
+          id: u.id,
+          role_id: u.role_id,
+          language: req.body.locale,
+          tenant: db.getTenantSchema(),
+        },
+        function (err) {
+          if (!err) {
+            req.flash("success", req.__("Language changed to %s", newlang));
+            res.redirect("/auth/settings");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/auth/settings");
+          }
+        }
+      );
+    } else {
+      req.flash("danger", req.__("Language not found"));
+      res.redirect("/auth/settings");
     }
-    res.redirect("/auth/settings");
   })
 );
 router.get(
