@@ -7,6 +7,7 @@ class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
+    this.language = o.language;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry =
@@ -112,6 +113,7 @@ User.contract = {
     id: is.maybe(is.posint),
     email: is.str,
     password: is.str,
+    language: is.maybe(is.str),
     role_id: is.posint,
     reset_password_token: is.maybe(
       is.and(
