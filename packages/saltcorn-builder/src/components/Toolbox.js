@@ -179,6 +179,7 @@ const JoinFieldElem = ({ connectors, options }) => (
     icon="fas fa-ruler-combined"
     title="Join field"
     label="Join"
+    disable={options.parent_field_list.length === 0}
   >
     <JoinField
       name={options.parent_field_list[0]}
@@ -221,6 +222,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
     label="Calc"
     bold
     fontSize="16px"
+    disable={child_field_list.length === 0}
   >
     <Aggregation
       agg_relation={child_field_list[0]}
