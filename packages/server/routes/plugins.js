@@ -493,6 +493,7 @@ router.post(
     const { name } = req.params;
 
     const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    delete plugin.id;
     await load_plugins.loadAndSaveNewPlugin(plugin);
     const plugin_module = getState().plugins[name];
     if (plugin_module && plugin_module.configuration_workflow) {
