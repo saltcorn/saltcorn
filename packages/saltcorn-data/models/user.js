@@ -71,6 +71,10 @@ class User {
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
+  async set_language(language) {
+    await db.update("users", { language }, this.id);
+  }
+
   async getNewResetToken() {
     const reset_password_token = uuidv4();
     const reset_password_expiry = new Date();

@@ -279,5 +279,7 @@
   "The user uploading the file has access irrespective of their role": "The user uploading the file has access irrespective of their role",
   "Already have an account? Login": "Already have an account? Login",
   "Subdomain not found": "Subdomain not found",
-  "You must create at least one table before you can create views.": "You must create at least one table before you can create views."
+  "You must create at least one table before you can create views.": "You must create at least one table before you can create views.",
+  "Language: ": "Language: ",
+  "Language changed to %s": "Language changed to %s"
 }

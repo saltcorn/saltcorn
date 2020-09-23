@@ -13,7 +13,10 @@ const { loadAllPlugins } = require("./load_plugins");
 const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
 const errors = require("./errors");
-const { getConfig } = require("@saltcorn/data/models/config");
+const {
+  getConfig,
+  available_languages,
+} = require("@saltcorn/data/models/config");
 const { setTenant, get_base_url, error_catcher } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -23,8 +26,10 @@ const csrf = require("csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 
+const locales = Object.keys(available_languages);
+
 const i18n = new I18n({
-  locales: ["en", "fr", "de", "da", "es", "no", "sv", "ru", "nl", "pt", "ar"],
+  locales,
   directory: path.join(__dirname, "locales"),
 });
 

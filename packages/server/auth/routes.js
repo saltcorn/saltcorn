@@ -4,7 +4,12 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant, error_catcher, loggedIn } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  loggedIn,
+  csrfField,
+} = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
 const {
@@ -16,7 +21,18 @@ const {
   post_btn,
 } = require("@saltcorn/markup");
 const passport = require("passport");
-const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
+const {
+  div,
+  table,
+  tbody,
+  th,
+  td,
+  tr,
+  form,
+  select,
+  option,
+} = require("@saltcorn/markup/tags");
+const { available_languages } = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
@@ -334,6 +350,27 @@ const changPwForm = (req) =>
       },
     ],
   });
+const setLanguageForm = (req) =>
+  form(
+    {
+      action: `/auth/setlanguage/`,
+      method: "post",
+    },
+    csrfField(req.csrfToken()),
+    select(
+      { name: "locale", onchange: "form.submit()" },
+      Object.entries(available_languages).map(([locale, language]) =>
+        option(
+          {
+            value: locale,
+            ...(req.user.language === locale && { selected: true }),
+          },
+          language
+        )
+      )
+    )
+  );
+
 const userSettings = (req, form) => ({
   above: [
     {
@@ -343,7 +380,12 @@ const userSettings = (req, form) => ({
     {
       type: "card",
       title: req.__("User"),
-      contents: table(tbody(tr(th(req.__("Email: ")), td(req.user.email)))),
+      contents: table(
+        tbody(
+          tr(th(req.__("Email: ")), td(req.user.email)),
+          tr(th(req.__("Language: ")), td(setLanguageForm(req)))
+        )
+      ),
     },
     {
       type: "card",
@@ -352,6 +394,21 @@ const userSettings = (req, form) => ({
     },
   ],
 });
+
+router.post(
+  "/setlanguage",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    const newlang = available_languages[req.body.locale];
+    if (newlang) {
+      await user.set_language(req.body.locale);
+      req.flash("success", req.__("Language changed to %s", newlang));
+    }
+    res.redirect("/auth/settings");
+  })
+);
 router.get(
   "/settings",
   setTenant,
