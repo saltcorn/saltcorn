@@ -282,5 +282,6 @@
 	"You must create at least one table before you can create views.": "You must create at least one table before you can create views.",
 	"Language: ": "Language: ",
 	"Language changed to %s": "Language changed to %s",
-	"Table saved with version history disabled": "Table saved with version history disabled"
+	"Table saved with version history disabled": "Table saved with version history disabled",
+	"Missing name": "Missing name"
 }

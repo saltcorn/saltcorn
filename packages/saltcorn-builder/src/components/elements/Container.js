@@ -296,7 +296,7 @@ export const ContainerSettings = () => {
         <tr>
           <td colspan="2">
             <label>
-              Set text color
+              Set text color{" "}
               <input
                 name="setTextColor"
                 type="checkbox"

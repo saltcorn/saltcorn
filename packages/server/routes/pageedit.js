@@ -49,8 +49,12 @@ const pageFlow = (req) =>
               new Field({
                 label: req.__("Name"),
                 name: "name",
+                required: true,
+                validator(s) {
+                  if (s.length < 1) return req.__("Missing name");
+                },
                 sublabel: req.__("A short name that will be in your URL"),
-                input_type: "text",
+                type: "String",
               }),
               new Field({
                 label: req.__("Title"),

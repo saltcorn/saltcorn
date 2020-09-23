@@ -1,7 +1,7 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
+import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
 export const Field = ({ name, fieldview, block, textStyle }) => {
   const {
@@ -35,43 +35,56 @@ export const FieldSettings = () => {
   const options = useContext(optionsCtx);
   const fvs = options.field_view_options[name];
   return (
-    <div>
-      <div>
-        <label>Field</label>
-        <select
-          value={name}
-          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
-        >
-          {options.fields.map((f, ix) => (
-            <option key={ix} value={f.name}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        {fvs && (
-          <Fragment>
-            <label>Field view</label>
-
+    <table className="w-100">
+      <tbody>
+        <tr>
+          <td>
+            <label>Field</label>
+          </td>
+          <td>
             <select
-              value={fieldview}
-              onChange={(e) =>
-                setProp((prop) => (prop.fieldview = e.target.value))
-              }
+              value={name}
+              onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
             >
-              {(fvs || []).map((fvnm, ix) => (
-                <option key={ix} value={fvnm}>
-                  {fvnm}
+              {options.fields.map((f, ix) => (
+                <option key={ix} value={f.name}>
+                  {f.label}
                 </option>
               ))}
             </select>
-          </Fragment>
+          </td>
+        </tr>
+        {fvs && (
+          <tr>
+            <td>
+              <label>Field view</label>
+            </td>
+
+            <td>
+              <select
+                value={fieldview}
+                onChange={(e) =>
+                  setProp((prop) => (prop.fieldview = e.target.value))
+                }
+              >
+                {(fvs || []).map((fvnm, ix) => (
+                  <option key={ix} value={fvnm}>
+                    {fvnm}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
         )}
-      </div>
-      <BlockSetting block={block} setProp={setProp} />
-      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
-    </div>
+        <tr>
+          <td></td>
+          <td>
+            <BlockSetting block={block} setProp={setProp} />
+          </td>
+        </tr>
+        <TextStyleRow textStyle={textStyle} setProp={setProp} />
+      </tbody>
+    </table>
   );
 };
 
