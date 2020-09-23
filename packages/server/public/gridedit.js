@@ -137,14 +137,18 @@ var DateField = function (config) {
 
 DateField.prototype = new jsGrid.Field({
   itemTemplate: function (value) {
-    console.log(value, typeof value);
     var v = typeof value === "string" && value !== "" ? new Date(value) : value;
     return v && v.toLocaleString ? v.toLocaleString() : v;
   },
 
   insertTemplate: function (value) {
     var insertPicker = (this._insertPicker = $("<input>").attr("type", "text"));
-
+    setTimeout(function () {
+      flatpickr(insertPicker, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+      });
+    });
     return insertPicker;
   },
 
@@ -152,7 +156,12 @@ DateField.prototype = new jsGrid.Field({
     var editPicker = (this._editPicker = $("<input>")
       .attr("type", "text")
       .val(value));
-
+    setTimeout(function () {
+      flatpickr(editPicker, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+      });
+    });
     return editPicker;
   },
 
