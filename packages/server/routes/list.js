@@ -97,6 +97,8 @@ const typeToJsGridType = (t, field) => {
         ? "decimal"
         : t.name === "Bool"
         ? "checkbox"
+        : t.name === "Color"
+        ? "color"
         : "text";
   return jsgField;
 };
