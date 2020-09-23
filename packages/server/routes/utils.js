@@ -25,10 +25,17 @@ function isAdmin(req, res, next) {
   }
 }
 
+const setLanguage = (req) => {
+  if (req.user && req.user.language) {
+    req.setLocale(req.user.language);
+  }
+};
+
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
     if (req.subdomains.length === 0 || req.subdomains[0] === "www")
       db.runWithTenant("public", () => {
+        setLanguage(req);
         next();
       });
     else {
@@ -37,11 +44,13 @@ const setTenant = (req, res, next) => {
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(ten, () => {
+          setLanguage(req);
           next();
         });
       }
     }
   } else {
+    setLanguage(req);
     next();
   }
 };

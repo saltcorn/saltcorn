@@ -4,7 +4,12 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant, error_catcher, loggedIn } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  loggedIn,
+  csrfField,
+} = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
 const {
@@ -16,7 +21,18 @@ const {
   post_btn,
 } = require("@saltcorn/markup");
 const passport = require("passport");
-const { div, table, tbody, th, td, tr } = require("@saltcorn/markup/tags");
+const {
+  div,
+  table,
+  tbody,
+  th,
+  td,
+  tr,
+  form,
+  select,
+  option,
+} = require("@saltcorn/markup/tags");
+const { available_languages } = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
@@ -334,7 +350,28 @@ const changPwForm = (req) =>
       },
     ],
   });
-const userSettings = (req, form) => ({
+const setLanguageForm = (req, user) =>
+  form(
+    {
+      action: `/auth/setlanguage/`,
+      method: "post",
+    },
+    csrfField(req.csrfToken()),
+    select(
+      { name: "locale", onchange: "form.submit()" },
+      Object.entries(available_languages).map(([locale, language]) =>
+        option(
+          {
+            value: locale,
+            ...(user && user.language === locale && { selected: true }),
+          },
+          language
+        )
+      )
+    )
+  );
+
+const userSettings = (req, form, user) => ({
   above: [
     {
       type: "breadcrumbs",
@@ -343,7 +380,12 @@ const userSettings = (req, form) => ({
     {
       type: "card",
       title: req.__("User"),
-      contents: table(tbody(tr(th(req.__("Email: ")), td(req.user.email)))),
+      contents: table(
+        tbody(
+          tr(th(req.__("Email: ")), td(req.user.email)),
+          tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
+        )
+      ),
     },
     {
       type: "card",
@@ -352,12 +394,50 @@ const userSettings = (req, form) => ({
     },
   ],
 });
+
+router.post(
+  "/setlanguage",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const u = await User.findOne({ id: req.user.id });
+    const newlang = available_languages[req.body.locale];
+    if (newlang) {
+      await u.set_language(req.body.locale);
+      req.login(
+        {
+          email: u.email,
+          id: u.id,
+          role_id: u.role_id,
+          language: req.body.locale,
+          tenant: db.getTenantSchema(),
+        },
+        function (err) {
+          if (!err) {
+            req.flash("success", req.__("Language changed to %s", newlang));
+            res.redirect("/auth/settings");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/auth/settings");
+          }
+        }
+      );
+    } else {
+      req.flash("danger", req.__("Language not found"));
+      res.redirect("/auth/settings");
+    }
+  })
+);
 router.get(
   "/settings",
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    res.sendWrap(req.__("User settings"), userSettings(req, changPwForm(req)));
+    const user = await User.findOne({ id: req.user.id });
+    res.sendWrap(
+      req.__("User settings"),
+      userSettings(req, changPwForm(req), user)
+    );
   })
 );
 
@@ -377,7 +457,7 @@ router.post(
     form.validate(req.body);
 
     if (form.hasErrors) {
-      res.sendWrap(req.__("User settings"), userSettings(req, form));
+      res.sendWrap(req.__("User settings"), userSettings(req, form, user));
     } else {
       await user.changePasswordTo(form.values.new_password);
       req.flash("success", req.__("Password changed"));

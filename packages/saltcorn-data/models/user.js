@@ -7,6 +7,7 @@ class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
+    this.language = o.language;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry =
@@ -70,6 +71,10 @@ class User {
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
+  async set_language(language) {
+    await db.update("users", { language }, this.id);
+  }
+
   async getNewResetToken() {
     const reset_password_token = uuidv4();
     const reset_password_expiry = new Date();
@@ -112,6 +117,7 @@ User.contract = {
     id: is.maybe(is.posint),
     email: is.str,
     password: is.str,
+    language: is.maybe(is.str),
     role_id: is.posint,
     reset_password_token: is.maybe(
       is.and(
