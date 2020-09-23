@@ -193,7 +193,7 @@ const ViewLinkElem = ({ connectors, options }) => (
     connectors={connectors}
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
-    label="Link"
+    label="ViewLink"
   >
     <ViewLink
       name={options.link_view_opts[0].name}
