@@ -115,6 +115,7 @@ const getApp = async (opts = {}) => {
               email: mu.email,
               id: mu.id,
               role_id: mu.role_id,
+              language: mu.language,
               tenant: db.getTenantSchema(),
             });
           else {

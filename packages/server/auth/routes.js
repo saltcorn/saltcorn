@@ -350,7 +350,7 @@ const changPwForm = (req) =>
       },
     ],
   });
-const setLanguageForm = (req) =>
+const setLanguageForm = (req, user) =>
   form(
     {
       action: `/auth/setlanguage/`,
@@ -363,7 +363,7 @@ const setLanguageForm = (req) =>
         option(
           {
             value: locale,
-            ...(req.user.language === locale && { selected: true }),
+            ...(user && user.language === locale && { selected: true }),
           },
           language
         )
@@ -371,7 +371,7 @@ const setLanguageForm = (req) =>
     )
   );
 
-const userSettings = (req, form) => ({
+const userSettings = (req, form, user) => ({
   above: [
     {
       type: "breadcrumbs",
@@ -383,7 +383,7 @@ const userSettings = (req, form) => ({
       contents: table(
         tbody(
           tr(th(req.__("Email: ")), td(req.user.email)),
-          tr(th(req.__("Language: ")), td(setLanguageForm(req)))
+          tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
         )
       ),
     },
@@ -414,7 +414,11 @@ router.get(
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    res.sendWrap(req.__("User settings"), userSettings(req, changPwForm(req)));
+    const user = await User.findOne({ id: req.user.id });
+    res.sendWrap(
+      req.__("User settings"),
+      userSettings(req, changPwForm(req), user)
+    );
   })
 );
 
@@ -434,7 +438,7 @@ router.post(
     form.validate(req.body);
 
     if (form.hasErrors) {
-      res.sendWrap(req.__("User settings"), userSettings(req, form));
+      res.sendWrap(req.__("User settings"), userSettings(req, form, user));
     } else {
       await user.changePasswordTo(form.values.new_password);
       req.flash("success", req.__("Password changed"));
