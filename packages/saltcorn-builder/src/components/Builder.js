@@ -67,7 +67,7 @@ const SettingsPanel = () => {
           ? `Settings: ${selected.displayName}`
           : "Settings"}
       </div>
-      <div className="card-body">
+      <div className="card-body p-2">
         {selected ? (
           <Fragment>
             {}
