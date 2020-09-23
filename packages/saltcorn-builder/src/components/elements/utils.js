@@ -5,15 +5,16 @@ export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
 
 export const BlockSetting = ({ block, setProp }) => (
-  <label>
-    Block{" "}
+  <div className="form-check">
     <input
+      className="form-check-input"
       name="block"
       type="checkbox"
       checked={block}
       onChange={(e) => setProp((prop) => (prop.block = e.target.checked))}
     />
-  </label>
+    <label className="form-check-label">Block</label>
+  </div>
 );
 
 export const MinRoleSetting = ({ minRole, setProp }) => {
