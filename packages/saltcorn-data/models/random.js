@@ -61,7 +61,11 @@ const random_field = async (existing_field_names) => {
     )
     .generate();
   const f = new Field({ type, label });
-  if (f.type.attributes) f.attributes = generate_attributes(f.type.attributes);
+  if (f.type.attributes)
+    f.attributes = generate_attributes(
+      f.type.attributes,
+      f.type.validate_attributes
+    );
   if (f.is_fkey) {
     if (f.reftable_name === "users") {
       f.attributes.summary_field = "email";

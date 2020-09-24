@@ -12,6 +12,7 @@ const fs = require("fs").promises;
 const { create_backup, restore } = require("../models/backup");
 const reset = require("../db/reset_schema");
 const { mockReqRes } = require("./mocks");
+const Table = require("../models/table");
 
 jest.setTimeout(30000);
 
@@ -24,6 +25,8 @@ beforeAll(async () => {
 const seed = set_seed();
 const one_of = (xs) => is.one_of(xs).generate();
 describe("Random table", () => {
+  let fnm;
+  let tableCounts = [];
   it("can create with seed " + seed, async () => {
     let has_rows = false;
     for (let index = 0; index < 20; index++) {
@@ -77,8 +80,14 @@ describe("Random table", () => {
     }
     expect(has_rows).toBe(true);
   });
-  let fnm;
+
   it("can backup random tables with seed " + seed, async () => {
+    const tables = await Table.find({});
+    for (const table of tables) {
+      const count = await table.countRows();
+      tableCounts.push([table.name, count]);
+    }
+
     fnm = await create_backup();
   });
   it("can restore random tables with seed " + seed, async () => {
@@ -89,6 +98,13 @@ describe("Random table", () => {
       role_id: 1,
     });
     const restoreres = await restore(fnm, (p) => {});
+    for (const [name, n] of tableCounts) {
+      const table = await Table.findOne({ name });
+      expect(!!table).toBe(true);
+      const count = await table.countRows();
+      expect([table.name, count]).toEqual([name, n]);
+    }
+
     expect(restoreres).toBe(undefined);
     await fs.unlink(fnm);
   });
