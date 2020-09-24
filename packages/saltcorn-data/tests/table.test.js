@@ -398,14 +398,16 @@ Pencil, 0.5,, t`;
     await fs.writeFile(fnm, csv);
     const { table, error } = await Table.create_from_csv("InvoiceMissing", fnm);
     expect(error).toBe(undefined);
-    expect(!table).toBe(true);
+    expect(!!table).toBe(true);
     const fields = await table.getFields();
     const countField = fields.find((f) => f.name === "count");
     expect(countField.type.name).toBe("Integer");
     expect(countField.required).toBe(false);
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
-    expect(rows[0].vatable).toBe(true);
+    expect(rows[0].count).toBe(null);
+    const brows = await table.getRows({ item: "Book" });
+    expect(brows[0].count).toBe(4);
   });
 });
 
