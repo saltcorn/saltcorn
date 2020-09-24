@@ -272,4 +272,4 @@ const restore = contract(
   }
 );
 
-module.exports = { create_backup, restore };
+module.exports = { create_backup, restore, create_csv_from_rows };
