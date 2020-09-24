@@ -206,6 +206,9 @@ const restore_tables = contract(
         if (res.error) err = (err || "") + res.error;
       }
     }
+    for (const table of tables) {
+      await table.enable_fkey_constraints();
+    }
     return err;
   }
 );
@@ -246,7 +249,7 @@ const restore = contract(
       `;
     }
 
-    await install_pack(pack, undefined, loadAndSaveNewPlugin);
+    await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
     //users
     await restore_users(dir.path);

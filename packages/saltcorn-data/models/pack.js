@@ -165,7 +165,7 @@ const install_pack = contract(
     [is_pack, is.maybe(is.str), is.fun(is_plugin, is.undefined)],
     is.promise(is.undefined)
   ),
-  async (pack, name, loadAndSaveNewPlugin) => {
+  async (pack, name, loadAndSaveNewPlugin, bare_tables = false) => {
     const Plugin = require("./plugin");
     const existingPlugins = await Plugin.find({});
     for (const plugin of pack.plugins) {
@@ -180,7 +180,7 @@ const install_pack = contract(
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
       for (const field of tableSpec.fields)
-        await Field.create({ table, ...field });
+        await Field.create({ table, ...field }, bare_tables);
     }
     for (const viewSpec of pack.views) {
       const { table, on_menu, menu_label, ...viewNoTable } = viewSpec;

@@ -297,7 +297,21 @@ class Field {
     }
   }
 
-  static async create(fld) {
+  async enable_fkey_constraint() {
+    if (this.is_fkey && !db.isSQLite) {
+      const schema = db.getTenantSchemaPrefix();
+      const q = `alter table ${schema}"${sqlsanitize(
+        this.table.name
+      )}" ADD CONSTRAINT "fkey_${sqlsanitize(this.table.name)}_${sqlsanitize(
+        this.name
+      )}" FOREIGN KEY ("${sqlsanitize(
+        this.name
+      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)`;
+      await db.query(q);
+    }
+  }
+
+  static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 
@@ -306,11 +320,13 @@ class Field {
     //const tables = await Table.find();
     //console.log({ tables, fld });
 
+    const sql_type = bare ? f.sql_bare_type : f.sql_type;
+
     const table = await Table.findOne({ id: f.table_id });
     if (typeof f.attributes.default === "undefined") {
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
-      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
         f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
       }`;
       await db.query(q);
@@ -318,7 +334,7 @@ class Field {
       //warning: not safe but sqlite so we don't care
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
-      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
         f.required
           ? `not null default ${JSON.stringify(f.attributes.default)}`
           : ""
@@ -332,7 +348,7 @@ class Field {
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
         table.name
-      )}" add column "${sqlsanitize(f.name)}" ${f.sql_type} ${
+      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);
       END;

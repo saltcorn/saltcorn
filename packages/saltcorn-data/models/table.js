@@ -191,8 +191,12 @@ class Table {
   }
 
   async getFields() {
-    if (!this.fields)
+    if (!this.fields) {
       this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
+      this.fields.forEach((f) => {
+        f.table = this;
+      });
+    }
     return this.fields;
   }
 
@@ -242,6 +246,11 @@ class Table {
       { id },
       { orderBy: "_version" }
     );
+  }
+
+  async enable_fkey_constraints() {
+    const fields = await this.getFields();
+    for (const f of fields) await f.enable_fkey_constraint();
   }
 
   static async create_from_csv(name, filePath) {
