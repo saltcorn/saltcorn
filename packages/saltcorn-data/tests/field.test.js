@@ -86,7 +86,17 @@ describe("validate field", () => {
   const res = field.validate({ age: 17 });
   expect(res).toStrictEqual({ success: 17 });
 });
-
+describe("generate color", () => {
+  it("is not nan", async () => {
+    const field = new Field({
+      name: "col",
+      label: "col",
+      type: "Color",
+    });
+    const rnd = await field.generate();
+    expect(typeof rnd).toBe("string");
+  });
+});
 describe("validate fkey field", () => {
   const field = new Field({
     name: "age",
