@@ -195,13 +195,18 @@ const restore_users = contract(
 );
 
 const restore_tables = contract(
-  is.fun(is.str, is.promise(is.undefined)),
+  is.fun(is.str, is.promise(is.maybe(is.str))),
   async (dirpath) => {
+    var err;
     const tables = await Table.find();
     for (const table of tables) {
       const fnm = path.join(dirpath, "tables", table.name + ".csv");
-      if (existsSync(fnm)) await table.import_csv_file(fnm);
+      if (existsSync(fnm)) {
+        const res = await table.import_csv_file(fnm);
+        if (res.error) err = (err || "") + res.error;
+      }
     }
+    return err;
   }
 );
 
@@ -227,7 +232,7 @@ const restore = contract(
     const dir = await tmp.dir({ unsafeCleanup: true });
     //unzip
     await extract(fnm, dir.path);
-
+    var err;
     //install pack
     const pack = JSON.parse(
       await fs.readFile(path.join(dir.path, "pack.json"))
@@ -250,12 +255,13 @@ const restore = contract(
     await restore_files(dir.path);
 
     //table csvs
-    await restore_tables(dir.path);
-
+    const tabres = await restore_tables(dir.path);
+    if (tabres) err = (err || "") + tabres;
     //config
     await restore_config(dir.path);
 
     await dir.cleanup();
+    return err;
   }
 );
 
