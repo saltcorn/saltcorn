@@ -390,6 +390,25 @@ Pencil, 0.5,2, t`;
     const table = await Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
   });
+  it("should import with missing", async () => {
+    const csv = `item,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const { table, error } = await Table.create_from_csv("InvoiceMissing", fnm);
+    expect(error).toBe(undefined);
+    expect(!!table).toBe(true);
+    const fields = await table.getFields();
+    const countField = fields.find((f) => f.name === "count");
+    expect(countField.type.name).toBe("Integer");
+    expect(countField.required).toBe(false);
+    const rows = await table.getRows({ item: "Pencil" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].count).toBe(null);
+    const brows = await table.getRows({ item: "Book" });
+    expect(brows[0].count).toBe(4);
+  });
 });
 
 describe("Table field uppercase", () => {

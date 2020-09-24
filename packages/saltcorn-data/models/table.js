@@ -317,6 +317,7 @@ class Table {
 
   async import_csv_file(filePath) {
     var headers;
+    const { readState } = require("../plugin-helper");
     try {
       [headers] = await csvtojson({
         output: "csv",
@@ -357,6 +358,7 @@ class Table {
           rec[to] = rec[from];
           delete rec[from];
         });
+        readState(rec, fields);
         await db.insert(this.name, rec, true, client);
       } catch (e) {
         await client.query("ROLLBACK");
