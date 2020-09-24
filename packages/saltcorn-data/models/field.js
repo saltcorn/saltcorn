@@ -297,12 +297,13 @@ class Field {
     }
   }
 
-  async enable_fkey_constraint() {
+  async enable_fkey_constraint(table) {
     if (this.is_fkey && !db.isSQLite) {
       const schema = db.getTenantSchemaPrefix();
+
       const q = `alter table ${schema}"${sqlsanitize(
-        this.table.name
-      )}" ADD CONSTRAINT "fkey_${sqlsanitize(this.table.name)}_${sqlsanitize(
+        table.name
+      )}" ADD CONSTRAINT "fkey_${sqlsanitize(table.name)}_${sqlsanitize(
         this.name
       )}" FOREIGN KEY ("${sqlsanitize(
         this.name
