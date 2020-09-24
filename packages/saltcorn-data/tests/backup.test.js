@@ -38,8 +38,8 @@ describe("Backup and restore", () => {
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
 
-    await restore(fnm, (p) => {});
-
+    const restore_res = await restore(fnm, (p) => {});
+    expect(restore_res).toBe(undefined);
     const t3 = await Table.findOne({ name: "books" });
     expect(!!t3).toBe(true);
     const t3c = await t3.countRows();
