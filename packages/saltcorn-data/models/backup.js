@@ -68,22 +68,25 @@ const create_csv_from_rows = contract(
   }
 );
 
-const create_table_csv = contract(
+const create_table_json = contract(
   is.fun([is.class("Table"), is.str], is.promise(is.undefined)),
   async (table, dirpath) => {
     const rows = await table.getRows();
-    await create_csv_from_rows(rows, path.join(dirpath, table.name + ".csv"));
+    await fs.writeFile(
+      path.join(dirpath, table.name + ".json"),
+      JSON.stringify(rows)
+    );
   }
 );
 
-const create_table_csvs = contract(
+const create_table_jsons = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
     const dirpath = path.join(root_dirpath, "tables");
     await fs.mkdir(dirpath);
     const tables = await Table.find({});
     for (const t of tables) {
-      await create_table_csv(t, dirpath);
+      await create_table_json(t, dirpath);
     }
   }
 );
@@ -132,7 +135,7 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
   const dir = await tmp.dir({ unsafeCleanup: true });
 
   await create_pack(dir.path);
-  await create_table_csvs(dir.path);
+  await create_table_jsons(dir.path);
   await create_users_csv(dir.path);
   await backup_files(dir.path);
   await backup_config(dir.path);
@@ -200,9 +203,13 @@ const restore_tables = contract(
     var err;
     const tables = await Table.find();
     for (const table of tables) {
-      const fnm = path.join(dirpath, "tables", table.name + ".csv");
-      if (existsSync(fnm)) {
-        const res = await table.import_csv_file(fnm);
+      const fnm_csv = path.join(dirpath, "tables", table.name + ".csv");
+      const fnm_json = path.join(dirpath, "tables", table.name + ".json");
+      if (existsSync(fnm_json)) {
+        const res = await table.import_json_file(fnm_json);
+        if (res.error) err = (err || "") + res.error;
+      } else if (existsSync(fnm_csv)) {
+        const res = await table.import_csv_file(fnm_csv);
         if (res.error) err = (err || "") + res.error;
       }
     }
