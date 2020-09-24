@@ -1,5 +1,7 @@
 const { contract, is, auto_test } = require(".");
 const { ContractViolation } = require("./util.js");
+const gen = require("./generators");
+
 describe("disable", () => {
   it("should exist", () => {
     expect(typeof contract.disable).toBe("function");
@@ -418,5 +420,24 @@ describe("contract names", () => {
   });
   it("should be or", () => {
     expect(is.or(is.str, is.num).contract_name).toBe("or(str,num)");
+  });
+});
+
+describe("generate", () => {
+  it("gen pos not nan", () => {
+    const rnd = gen.num_positive();
+    expect(typeof rnd).toBe("number");
+    expect(isNaN(rnd)).toBe(false);
+  });
+
+  it("num not nan", () => {
+    const rnd = is.number({ lte: 5.0 }).generate();
+    expect(typeof rnd).toBe("number");
+    expect(isNaN(rnd)).toBe(false);
+  });
+  it("int not nan", () => {
+    const rnd = is.integer({ lte: 5 }).generate();
+    expect(typeof rnd).toBe("number");
+    expect(isNaN(rnd)).toBe(false);
   });
 });

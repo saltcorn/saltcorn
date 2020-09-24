@@ -25,7 +25,7 @@ const number = (opts) =>
       (isnum((opts || {}).lte) ? x <= opts.lte : true) &&
       (isnum((opts || {}).gte) ? x >= opts.gte : true),
     generate: () =>
-      isnum((opts || {}).lte) && isnum((opts || {}).lte)
+      isnum((opts || {}).gte) && isnum((opts || {}).lte)
         ? gen.num_between(opts.lte, opts.gte)
         : isnum((opts || {}).lte)
         ? opts.lte - gen.num_positive()
