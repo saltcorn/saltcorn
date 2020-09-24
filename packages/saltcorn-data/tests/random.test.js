@@ -105,18 +105,18 @@ describe("Random tables", () => {
       role_id: 1,
     });
     const restoreres = await restore(fnm, (p) => {});
-    /*for (const [name, n] of tableCounts) {
+    for (const [name, n] of tableCounts) {
       const table = await Table.findOne({ name });
       expect(!!table).toBe(true);
       const count = await table.countRows();
       expect([table.name, count]).toEqual([name, n]);
     }
 
-    expect(restoreres).toBe(undefined);*/
+    expect(restoreres).toBe(undefined);
     await fs.unlink(fnm);
   });
 });
-describe("Random table io", () => {
+describe("Random table CSV io", () => {
   it("can create with seed " + seed, async () => {
     for (let index = 0; index < 20; index++) {
       const dir = await tmp.dir({ unsafeCleanup: false });
