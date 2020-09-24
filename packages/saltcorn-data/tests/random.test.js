@@ -88,7 +88,8 @@ describe("Random table", () => {
       password: "secret",
       role_id: 1,
     });
-    await restore(fnm, (p) => {});
+    const restoreres = await restore(fnm, (p) => {});
+    expect(restoreres).toBe(undefined);
     await fs.unlink(fnm);
   });
 });
