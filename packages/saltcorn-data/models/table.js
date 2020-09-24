@@ -384,7 +384,6 @@ class Table {
   }
   async import_json_file(filePath) {
     const file_rows = JSON.parse(await fs.readFile(filePath));
-    console.log(file_rows);
     const fields = await this.getFields();
     const { readState } = require("../plugin-helper");
 
@@ -406,8 +405,6 @@ class Table {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
-    const dbrows = await this.getRows();
-    console.log(dbrows);
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };

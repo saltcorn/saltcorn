@@ -446,7 +446,10 @@ const readState = (state, fields) => {
     if (typeof current !== "undefined") {
       if (f.type.read) state[f.name] = f.type.read(current);
       else if (f.type === "Key" || f.type === "File")
-        state[f.name] = current === "null" || current === "" ? null : +current;
+        state[f.name] =
+          current === "null" || current === "" || current === null
+            ? null
+            : +current;
     }
   });
   return state;
