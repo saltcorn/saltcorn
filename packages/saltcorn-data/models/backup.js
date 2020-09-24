@@ -207,7 +207,11 @@ const restore_tables = contract(
       }
     }
     for (const table of tables) {
-      await table.enable_fkey_constraints();
+      try {
+        await table.enable_fkey_constraints();
+      } catch (e) {
+        err = (err || "") + e.message;
+      }
     }
     return err;
   }
