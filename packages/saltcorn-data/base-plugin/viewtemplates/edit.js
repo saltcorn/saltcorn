@@ -176,7 +176,6 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;
-      field.input_type = "hidden";
     }
   });
   return renderForm(form, req.csrfToken());
