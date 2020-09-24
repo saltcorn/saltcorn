@@ -206,6 +206,13 @@ const restore_tables = contract(
         if (res.error) err = (err || "") + res.error;
       }
     }
+    for (const table of tables) {
+      try {
+        await table.enable_fkey_constraints();
+      } catch (e) {
+        err = (err || "") + e.message;
+      }
+    }
     return err;
   }
 );
@@ -246,7 +253,7 @@ const restore = contract(
       `;
     }
 
-    await install_pack(pack, undefined, loadAndSaveNewPlugin);
+    await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
     //users
     await restore_users(dir.path);
@@ -265,4 +272,4 @@ const restore = contract(
   }
 );
 
-module.exports = { create_backup, restore };
+module.exports = { create_backup, restore, create_csv_from_rows };

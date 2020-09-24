@@ -7,7 +7,7 @@ const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
-const generate_attributes = (attrs) => {
+const generate_attributes = (attrs, validate) => {
   var res = {};
   (attrs || []).forEach((a) => {
     if (a.required || is.bool.generate()) {
@@ -16,7 +16,8 @@ const generate_attributes = (attrs) => {
       if (gen) res[a.name] = gen();
     }
   });
-  return res;
+  if (validate && !validate(res)) return generate_attributes(attrs, validate);
+  else return res;
 };
 
 const auto_test_type = (t) => {
@@ -25,7 +26,7 @@ const auto_test_type = (t) => {
   //run edit field views without a value
   Object.values(fvs).forEach((fv) => {
     if (fv.isEdit) {
-      const attr = generate_attributes(t.attributes);
+      const attr = generate_attributes(t.attributes, t.validate_attributes);
       is.str(fv.run("foo", undefined, attr, "myclass", true));
       is.str(fv.run("foo", undefined, attr, "myclass", false));
     }
@@ -37,7 +38,7 @@ const auto_test_type = (t) => {
   for (let index = 0; index < numex; index++) {
     const x = has_contract ? t.contract.generate() : t.read(is.any.generate());
 
-    const attribs = generate_attributes(t.attributes);
+    const attribs = generate_attributes(t.attributes, t.validate_attributes);
     if (has_contract || (typeof x !== "undefined" && x !== null))
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
         Object.values(fvs).forEach((fv) => {

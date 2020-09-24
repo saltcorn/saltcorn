@@ -9,11 +9,19 @@ const User = require("../models/user");
 
 const { renderForm } = require("@saltcorn/markup");
 const fs = require("fs").promises;
-const { create_backup, restore } = require("../models/backup");
+const {
+  create_backup,
+  restore,
+  create_csv_from_rows,
+} = require("../models/backup");
 const reset = require("../db/reset_schema");
 const { mockReqRes } = require("./mocks");
+const Table = require("../models/table");
+const tmp = require("tmp-promise");
+const path = require("path");
+const { logit } = require("@saltcorn/markup/layout_utils");
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 afterAll(db.close);
 
@@ -23,7 +31,9 @@ beforeAll(async () => {
 });
 const seed = set_seed();
 const one_of = (xs) => is.one_of(xs).generate();
-describe("Random table", () => {
+describe("Random tables", () => {
+  let fnm;
+  let tableCounts = [];
   it("can create with seed " + seed, async () => {
     let has_rows = false;
     for (let index = 0; index < 20; index++) {
@@ -77,8 +87,14 @@ describe("Random table", () => {
     }
     expect(has_rows).toBe(true);
   });
-  let fnm;
+
   it("can backup random tables with seed " + seed, async () => {
+    const tables = await Table.find({});
+    for (const table of tables) {
+      const count = await table.countRows();
+      tableCounts.push([table.name, count]);
+    }
+
     fnm = await create_backup();
   });
   it("can restore random tables with seed " + seed, async () => {
@@ -88,7 +104,40 @@ describe("Random table", () => {
       password: "secret",
       role_id: 1,
     });
-    await restore(fnm, (p) => {});
+    const restoreres = await restore(fnm, (p) => {});
+    /*for (const [name, n] of tableCounts) {
+      const table = await Table.findOne({ name });
+      expect(!!table).toBe(true);
+      const count = await table.countRows();
+      expect([table.name, count]).toEqual([name, n]);
+    }
+
+    expect(restoreres).toBe(undefined);*/
     await fs.unlink(fnm);
+  });
+});
+describe("Random table io", () => {
+  it("can create with seed " + seed, async () => {
+    for (let index = 0; index < 20; index++) {
+      const dir = await tmp.dir({ unsafeCleanup: false });
+      await reset();
+      await User.create({
+        email: "admin@foo.com",
+        password: "secret",
+        role_id: 1,
+      });
+      await random_table();
+      const table = await random_table();
+      const rows1 = await table.getRows({}, { orderBy: "id" });
+      if (rows1.length > 0) {
+        const fnm = path.join(dir.path, table.name + ".csv");
+        await create_csv_from_rows(rows1, fnm);
+        const crres = await Table.create_from_csv("replica", fnm);
+        expect(crres.error).toBe(undefined);
+        const rows2 = await crres.table.getRows({}, { orderBy: "id" });
+        expect(rows2.length).toBe(rows1.length);
+        //expect(rows2).toEqual(rows1);
+      }
+    }
   });
 });

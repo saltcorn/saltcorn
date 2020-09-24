@@ -141,6 +141,8 @@ const int = {
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false },
   ],
+  validate_attributes: ({ min, max }) =>
+    !isdef(min) || !isdef(max) || max > min,
   read: (v) => {
     switch (typeof v) {
       case "number":
