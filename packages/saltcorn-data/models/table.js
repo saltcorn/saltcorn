@@ -5,6 +5,7 @@ const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
+const fs = require("fs").promises;
 
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -279,7 +280,7 @@ class Table {
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
-      //can fail here if: non integer id, duplicate headers, invalid name
+      //can fail here if: non integer i d, duplicate headers, invalid name
       const fld = new Field({
         name: Field.labelToName(k),
         required,
@@ -377,6 +378,36 @@ class Table {
 
     if (!db.isSQLite) await client.release(true);
 
+    return {
+      success: `Imported ${file_rows.length} rows into table ${this.name}`,
+    };
+  }
+  async import_json_file(filePath) {
+    const file_rows = JSON.parse(await fs.readFile(filePath));
+    console.log(file_rows);
+    const fields = await this.getFields();
+    const { readState } = require("../plugin-helper");
+
+    var i = 1;
+    const client = db.isSQLite ? db : await db.getClient();
+    await client.query("BEGIN");
+    for (const rec of file_rows) {
+      i += 1;
+      try {
+        readState(rec, fields);
+        await db.insert(this.name, rec, true, client);
+      } catch (e) {
+        await client.query("ROLLBACK");
+
+        if (!db.isSQLite) await client.release(true);
+        return { error: `${e.message} in row ${i}` };
+      }
+    }
+    await client.query("COMMIT");
+
+    if (!db.isSQLite) await client.release(true);
+    const dbrows = await this.getRows();
+    console.log(dbrows);
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };
