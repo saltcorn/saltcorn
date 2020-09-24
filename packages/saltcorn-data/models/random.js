@@ -43,8 +43,13 @@ const fill_table_row = async (table) => {
 
 const random_field = async (existing_field_names) => {
   const tables = await Table.find({});
+  const tables_with_data = [];
+  for (const t of tables) {
+    const n = await t.countRows();
+    if (n > 0) tables_with_data.push(t);
+  }
   const fkey_opts = [
-    ...tables.map((t) => `Key to ${t.name}`),
+    ...tables_with_data.map((t) => `Key to ${t.name}`),
     "Key to users",
     "File",
   ];
