@@ -93,8 +93,10 @@ router.get(
   })
 );
 
-const viewForm = (req, tableOptions, roles, values) =>
-  new Form({
+const viewForm = (req, tableOptions, roles, values) => {
+  const isEdit =
+    values && values.id && !getState().getConfig("development_mode", false);
+  return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
@@ -106,6 +108,7 @@ const viewForm = (req, tableOptions, roles, values) =>
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
+        disabled: isEdit,
       }),
       new Field({
         label: req.__("Table"),
@@ -113,6 +116,7 @@ const viewForm = (req, tableOptions, roles, values) =>
         input_type: "select",
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
+        disabled: isEdit,
       }),
       new Field({
         name: "min_role",
@@ -127,10 +131,22 @@ const viewForm = (req, tableOptions, roles, values) =>
         name: "on_root_page",
         type: "Bool",
       }),
+      ...(isEdit
+        ? [
+            new Field({
+              name: "viewtemplate",
+              input_type: "hidden",
+            }),
+            new Field({
+              name: "table_name",
+              input_type: "hidden",
+            }),
+          ]
+        : []),
     ],
     values,
   });
-
+};
 router.get(
   "/edit/:viewname",
   setTenant,
