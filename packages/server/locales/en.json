@@ -284,5 +284,6 @@
 	"Language changed to %s": "Language changed to %s",
 	"Table saved with version history disabled": "Table saved with version history disabled",
 	"Missing name": "Missing name",
-	"Successfully restored backup": "Successfully restored backup"
+	"Successfully restored backup": "Successfully restored backup",
+	"Welcome to Saltcorn!": "Welcome to Saltcorn!"
 }
