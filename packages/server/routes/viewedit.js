@@ -106,6 +106,10 @@ const viewForm = (req, tableOptions, roles, values) =>
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
+        disabled:
+          values &&
+          values.id &&
+          !getState().getConfig("development_mode", false),
       }),
       new Field({
         label: req.__("Table"),
@@ -113,6 +117,10 @@ const viewForm = (req, tableOptions, roles, values) =>
         input_type: "select",
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
+        disabled:
+          values &&
+          values.id &&
+          !getState().getConfig("development_mode", false),
       }),
       new Field({
         name: "min_role",
