@@ -285,5 +285,6 @@
 	"Table saved with version history disabled": "Table saved with version history disabled",
 	"Missing name": "Missing name",
 	"Successfully restored backup": "Successfully restored backup",
-	"Welcome to Saltcorn!": "Welcome to Saltcorn!"
+	"Welcome to Saltcorn!": "Welcome to Saltcorn!",
+	"File %s uploaded": "File %s uploaded"
 }
