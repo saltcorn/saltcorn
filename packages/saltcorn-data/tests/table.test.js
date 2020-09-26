@@ -12,6 +12,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(30000);
 
 describe("TableIO", () => {
   it("should store attributes", async () => {
@@ -378,6 +379,9 @@ Pencil, 0.5,2, t`;
     const table = await Table.findOne({ name: "Invoice3" });
     const rows = await table.getRows();
     expect(rows.length).toBe(2);
+    await table.insertRow({ cost: 0.2, count: 1, vatable: true });
+    const rows3 = await table.getRows();
+    expect(rows3.length).toBe(3);
   });
   it("should fail on repeat id", async () => {
     const csv = `id,cost,count, vatable
