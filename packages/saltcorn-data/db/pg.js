@@ -123,6 +123,15 @@ const selectMaybeOne = async (tbl, where) => {
 
 const getClient = async () => await pool.connect();
 
+const reset_sequence = async (tblname) => {
+  const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
+    tblname
+  )}"', 'id'), coalesce(max(id),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
+    tblname
+  )}";`;
+  await pool.query(sql);
+};
+
 module.exports = {
   pool,
   query: (text, params) => {
@@ -143,4 +152,5 @@ module.exports = {
   getClient,
   mkWhere,
   drop_reset_schema,
+  reset_sequence,
 };

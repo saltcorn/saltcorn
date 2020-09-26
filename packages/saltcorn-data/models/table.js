@@ -374,10 +374,12 @@ class Table {
         return { error: `${e.message} in row ${i}` };
       }
     }
+
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
 
+    if (db.reset_sequence) await db.reset_sequence(this.name);
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };
@@ -403,8 +405,9 @@ class Table {
       }
     }
     await client.query("COMMIT");
-
     if (!db.isSQLite) await client.release(true);
+    if (db.reset_sequence) await db.reset_sequence(this.name);
+
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };
