@@ -39,6 +39,7 @@ const get_menu = (req) => {
     ? [
         {
           label: req.__("User"),
+          isUser: true,
           subitems: [
             { label: small(req.user.email.split("@")[0]) },
             {
@@ -95,6 +96,7 @@ const get_menu = (req) => {
     },
     {
       section: req.__("User"),
+      isUser: true,
       items: authItems,
     },
   ].filter((s) => s);
