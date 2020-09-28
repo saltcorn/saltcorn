@@ -166,4 +166,35 @@ const breadcrumbs = (crumbs) =>
     )
   );
 
-module.exports = { navbar, alert, logit, navbarSolidOnScroll, breadcrumbs };
+const headersInHead = (headers) =>
+  headers
+    .filter((h) => h.css)
+    .map((h) => `<link href="${h.css}" rel="stylesheet">`)
+    .join("") +
+  headers
+    .filter((h) => h.headerTag)
+    .map((h) => h.headerTag)
+    .join("");
+
+const headersInBody = (headers) =>
+  headers
+    .filter((h) => h.script)
+    .map(
+      (h) =>
+        `<script src="${h.script}" ${
+          h.integrity
+            ? `integrity="${h.integrity}" crossorigin="anonymous"`
+            : ""
+        }></script>`
+    )
+    .join("");
+
+module.exports = {
+  navbar,
+  alert,
+  logit,
+  navbarSolidOnScroll,
+  breadcrumbs,
+  headersInHead,
+  headersInBody,
+};
