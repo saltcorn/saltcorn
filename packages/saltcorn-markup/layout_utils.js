@@ -172,6 +172,10 @@ const headersInHead = (headers) =>
     .map((h) => `<link href="${h.css}" rel="stylesheet">`)
     .join("") +
   headers
+    .filter((h) => h.style)
+    .map((h) => `<style>${h.style}</style>`)
+    .join("") +
+  headers
     .filter((h) => h.headerTag)
     .map((h) => h.headerTag)
     .join("");
