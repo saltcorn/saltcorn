@@ -286,5 +286,7 @@
 	"Missing name": "Missing name",
 	"Successfully restored backup": "Successfully restored backup",
 	"Welcome to Saltcorn!": "Welcome to Saltcorn!",
-	"File %s uploaded": "File %s uploaded"
+	"File %s uploaded": "File %s uploaded",
+	"Local": "Local",
+	"Name required": "Name required"
 }

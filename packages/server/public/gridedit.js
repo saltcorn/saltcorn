@@ -175,3 +175,17 @@ DateField.prototype = new jsGrid.Field({
 });
 
 jsGrid.fields.date = DateField;
+
+var HtmlField = function (config) {
+  jsGrid.Field.call(this, config);
+};
+HtmlField.prototype = new jsGrid.Field({
+  align: "left",
+  itemTemplate: function (value, item) {
+    if (value) {
+      //return +value+1;
+      return value;
+    } else return "";
+  },
+});
+jsGrid.fields.html = HtmlField;

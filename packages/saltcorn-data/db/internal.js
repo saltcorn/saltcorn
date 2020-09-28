@@ -51,6 +51,16 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
       } '%' || ${placeHolder(is_sqlite, i())} || '%'`
+    : typeof (v || {}).gt !== "undefined"
+    ? `${sqlsanitizeAllowDots(k)}>${v.equal ? "=" : ""}${placeHolder(
+        is_sqlite,
+        i()
+      )}`
+    : typeof (v || {}).lt !== "undefined"
+    ? `${sqlsanitizeAllowDots(k)}<${v.equal ? "=" : ""}${placeHolder(
+        is_sqlite,
+        i()
+      )}`
     : v === null
     ? `${sqlsanitizeAllowDots(k)} is null`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
@@ -62,6 +72,10 @@ const getVal = ([k, v]) =>
     ? v.in
     : typeof (v || {}).ilike !== "undefined"
     ? v.ilike
+    : typeof (v || {}).lt !== "undefined"
+    ? v.lt
+    : typeof (v || {}).gt !== "undefined"
+    ? v.gt
     : v;
 
 const mkWhere = (whereObj, is_sqlite) => {
