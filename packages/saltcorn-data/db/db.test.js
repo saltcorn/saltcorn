@@ -62,6 +62,24 @@ describe("mkWhere", () => {
       where: "where foo=$1 and id is null",
     });
   });
+  it("should query lt/gt", () => {
+    expect(mkWhere({ id: { lt: 5 } })).toStrictEqual({
+      values: [5],
+      where: "where id<$1",
+    });
+    expect(mkWhere({ id: { gt: 8 } })).toStrictEqual({
+      values: [8],
+      where: "where id>$1",
+    });
+    expect(mkWhere({ id: { lt: 5, equal: true } })).toStrictEqual({
+      values: [5],
+      where: "where id<=$1",
+    });
+    expect(mkWhere({ id: { gt: 8, equal: true } })).toStrictEqual({
+      values: [8],
+      where: "where id>=$1",
+    });
+  });
 });
 
 describe("where", () => {
