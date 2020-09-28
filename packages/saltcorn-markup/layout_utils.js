@@ -187,6 +187,10 @@ const headersInBody = (headers) =>
             : ""
         }></script>`
     )
+    .join("") +
+  headers
+    .filter((h) => h.scriptBody)
+    .map((h) => `<script>${h.scriptBody}</script>`)
     .join("");
 
 module.exports = {
