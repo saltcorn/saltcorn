@@ -172,12 +172,20 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     }
     form.hidden("id");
   }
+  console.log({ nonUniques });
   Object.entries(nonUniques).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;
+    } else {
+      const tbl_field = fields.find((f) => f.name === k);
+      if (tbl_field && !field) {
+        form.fields.push(new Field({ name: k, input_type: "hidden" }));
+        form.values[k] = tbl_field.type.read ? tbl_field.type.read(v) : v;
+      }
     }
   });
+  console.log(form);
   return renderForm(form, req.csrfToken());
 };
 
@@ -205,7 +213,15 @@ const runPost = async (
   { res, req }
 ) => {
   const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id);
+  Object.entries(body).forEach(([k, v]) => {
+    const form_field = form.fields.find((f) => f.name === k);
+    const tbl_field = fields.find((f) => f.name === k);
+    if (tbl_field && !form_field) {
+      form.fields.push(new Field({ name: k, input_type: "hidden" }));
+    }
+  });
   form.validate(body);
   if (form.hasErrors) {
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
