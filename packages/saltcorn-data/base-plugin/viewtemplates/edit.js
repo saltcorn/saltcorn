@@ -172,7 +172,6 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     }
     form.hidden("id");
   }
-  console.log({ nonUniques });
   Object.entries(nonUniques).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -185,7 +184,6 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
       }
     }
   });
-  console.log(form);
   return renderForm(form, req.csrfToken());
 };
 
