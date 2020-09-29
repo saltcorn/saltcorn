@@ -46,6 +46,7 @@ class State {
     this.configs = await getAllConfigOrDefaults();
     const favicons = await File.find({ filename: "favicon.png" });
     if (favicons && favicons.length > 0) this.favicon = favicons[0];
+    else this.favicon = null;
   }
 
   getConfig(key, def) {
@@ -129,6 +130,7 @@ class State {
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
+    this.refresh();
   }
 }
 
