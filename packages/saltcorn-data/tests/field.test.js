@@ -198,14 +198,14 @@ describe("calculated", () => {
       label: "y",
       type: "Integer",
     });
-    await Field.create({
+    const fz = await Field.create({
       table,
       label: "z",
       type: "Integer",
       calculated: true,
       expression: "x+y",
     });
-    await Field.create({
+    const fw = await Field.create({
       table,
       label: "w",
       type: "Integer",
@@ -227,5 +227,12 @@ describe("calculated", () => {
     const row2 = await table.getRow({});
     expect(row2.z).toBe(14);
     expect(row2.w).toBe(4);
+    await table.update({ versioned: true });
+    const newid = await table.insertRow({ x: 2, y: 4 });
+    const row3 = await table.getRow({ id: newid });
+    expect(row3.z).toBe(6);
+    expect(row3.w).toBe(2);
+    await fz.delete();
+    await fw.delete();
   });
 });

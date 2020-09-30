@@ -284,7 +284,7 @@ class Field {
     const table = await Table.findOne({ id: this.table_id });
     const schema = db.getTenantSchemaPrefix();
 
-    if (!db.isSQLite) {
+    if (!db.isSQLite && (!this.calculated || this.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
