@@ -192,6 +192,7 @@ const run = async (
         `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
+    }
   }
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
