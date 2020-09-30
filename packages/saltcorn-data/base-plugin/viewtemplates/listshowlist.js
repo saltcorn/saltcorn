@@ -124,6 +124,8 @@ const run = async (
   var lresp;
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
+    if (!lview)
+      return `View ${viewname} incorrectly configured: cannot find view ${list_view}`;
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
@@ -134,6 +136,8 @@ const run = async (
   var sresp = "";
   if (show_view) {
     const sview = await View.findOne({ name: show_view });
+    if (!sview)
+      return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
     sresp = await sview.run(state, extraArgs);
   }
   var reltbls = {};
