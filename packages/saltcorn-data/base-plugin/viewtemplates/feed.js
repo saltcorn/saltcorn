@@ -4,7 +4,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr } = require("@saltcorn/markup/tags");
+const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { stateToQueryString } = require("./viewable_fields");
@@ -57,7 +57,7 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: "Link,Embedded",
+                  options: "Link,Embedded,Popup",
                 },
               },
             ],
@@ -185,6 +185,16 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraArgs);
+    } else if (create_view_display === "Popup") {
+      create_link = button(
+        {
+          class: "btn btn-secondary btn-sm",
+          onClick: `ajax_modal('/view/${view_to_create}${stateToQueryString(
+            state
+          )}')`,
+        },
+        `Add ${pluralize(table.name, 1)}`
+      );
     } else
       create_link = link(
         `/view/${view_to_create}${stateToQueryString(state)}`,
