@@ -113,6 +113,7 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.view}
           label={segment.view_label}
           block={segment.block || false}
+          inModal={segment.in_modal || false}
           minRole={segment.minRole || 10}
         />
       );
@@ -334,11 +335,13 @@ export const craftToSaltcorn = (nodes) => {
       columns.push({
         type: "ViewLink",
         view: node.props.name,
+        in_modal: node.props.inModal,
         minRole: node.props.minRole,
       });
       return {
         type: "view_link",
         block: node.props.block,
+        in_modal: node.props.inModal,
         view_label: node.props.label,
         view: node.props.name,
         minRole: node.props.minRole,
