@@ -41,6 +41,7 @@ export const ViewLinkSettings = () => {
         <label>View to link to</label>
         <select
           value={name}
+          className="w-100"
           onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.link_view_opts.map((f, ix) => (
