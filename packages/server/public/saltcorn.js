@@ -199,3 +199,56 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 function press_store_button(clicked) {
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }
+
+function ajax_modal(url) {
+  if ($("#scmodal").length === 0) {
+    $("body").append(`<div id="scmodal", class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Modal body text goes here.</p>
+        </div>
+      </div>
+    </div>
+  </div>`);
+  }
+  $.ajax(url, {
+    success: function (res, textStatus, request) {
+      var title = request.getResponseHeader("Page-Title");
+      if (title) $("#scmodal .modal-title").html(title);
+      $("#scmodal .modal-body").html(res);
+      $("#scmodal").modal();
+    },
+  });
+}
+function ajaxSubmitForm(e) {
+  var form = $(e).closest("form");
+  var url = form.attr("action");
+  var form_data = form.serialize();
+  console.log(url);
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function () {
+      $("#scmodal").modal("hide");
+      location.reload();
+    },
+    error: function (request) {
+      var title = request.getResponseHeader("Page-Title");
+      if (title) $("#scmodal .modal-title").html(title);
+      var body = request.responseText;
+      if (body) $("#scmodal .modal-body").html(body);
+    },
+  });
+
+  return false;
+}

@@ -184,6 +184,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
       }
     }
   });
+  if (req.xhr) form.xhrSubmit = true;
   return renderForm(form, req.csrfToken());
 };
 
@@ -222,6 +223,10 @@ const runPost = async (
   });
   form.validate(body);
   if (form.hasErrors) {
+    if (req.xhr) {
+      form.xhrSubmit = true;
+      res.status(400);
+    }
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;

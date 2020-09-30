@@ -22,6 +22,7 @@ class Form {
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
     this.hasErrors = false;
+    this.xhrSubmit = !!o.xhrSubmit;
     if (o.validate) this.validate(o.validate);
     contract.class(this);
   }
