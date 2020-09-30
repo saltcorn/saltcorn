@@ -118,13 +118,33 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return this.readFromDB(row);
+    return this.apply_calculated_fields([this.readFromDB(row)])[0];
+  }
+
+  apply_calculated_fields(rows) {
+    let hasExprs = false;
+    let transform = (x) => x;
+    for (const field of this.fields) {
+      if (field.calculated) {
+        hasExprs = true;
+        const f = field.get_expression_function(this.fields);
+        const oldf = transform;
+        transform = (row) => {
+          const x = f(row);
+          row[field.name] = x;
+          return oldf(row);
+        };
+      }
+    }
+    if (hasExprs) {
+      return rows.map(transform);
+    } else return rows;
   }
 
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return rows.map((r) => this.readFromDB(r));
+    return this.apply_calculated_fields(rows.map((r) => this.readFromDB(r)));
   }
 
   async countRows(where) {

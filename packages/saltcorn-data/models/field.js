@@ -313,7 +313,10 @@ class Field {
       await db.query(q);
     }
   }
-
+  get_expression_function(fields) {
+    const args = `{${fields.map((f) => f.name).join()}}`;
+    return new Function(args, "return " + this.expression);
+  }
   static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
@@ -324,44 +327,44 @@ class Field {
     //console.log({ tables, fld });
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
-
     const table = await Table.findOne({ id: f.table_id });
-    if (typeof f.attributes.default === "undefined") {
-      const q = `alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
-      }`;
-      await db.query(q);
-    } else if (is_sqlite) {
-      //warning: not safe but sqlite so we don't care
-      const q = `alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required
-          ? `not null default ${JSON.stringify(f.attributes.default)}`
-          : ""
-      }`;
-      await db.query(q);
-    } else {
-      const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
+    if (!f.calculated) {
+      if (typeof f.attributes.default === "undefined") {
+        const q = `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
+        }`;
+        await db.query(q);
+      } else if (is_sqlite) {
+        //warning: not safe but sqlite so we don't care
+        const q = `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required
+            ? `not null default ${JSON.stringify(f.attributes.default)}`
+            : ""
+        }`;
+        await db.query(q);
+      } else {
+        const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
-        f.sql_bare_type
-      }) RETURNS void AS $$
+          f.sql_bare_type
+        }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required ? "not null" : ""
-      } default %L', thedef);
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required ? "not null" : ""
+        } default %L', thedef);
       END;
       $$ LANGUAGE plpgsql;`;
-      await db.query(q);
-      await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
-        f.attributes.default,
-      ]);
+        await db.query(q);
+        await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
+          f.attributes.default,
+        ]);
+      }
     }
-
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
       name: f.name,
@@ -371,9 +374,11 @@ class Field {
       required: f.required,
       is_unique: f.is_unique,
       attributes: f.attributes,
+      calculated: f.calculated,
+      expression: f.expression,
     });
 
-    if (table.versioned) {
+    if (table.versioned && !f.calculated) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
@@ -381,7 +386,7 @@ class Field {
       );
     }
 
-    if (f.is_unique) await f.add_unique_constraint();
+    if (f.is_unique && !f.calculated) await f.add_unique_constraint();
 
     return f;
   }
