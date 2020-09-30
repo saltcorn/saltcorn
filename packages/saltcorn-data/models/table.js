@@ -499,7 +499,7 @@ class Table {
       }
       fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
-    for (const f of fields) {
+    for (const f of fields.filter((f) => !f.calculated)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
@@ -534,7 +534,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return res.rows;
+    return this.apply_calculated_fields(res.rows);
   }
 }
 

@@ -208,5 +208,7 @@ describe("calculated", () => {
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
     expect(row.z).toBe(13);
+    const [row1] = await table.getJoinedRows();
+    expect(row1.z).toBe(13);
   });
 });
