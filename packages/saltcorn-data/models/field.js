@@ -31,6 +31,8 @@ class Field {
     this.is_unique = o.is_unique ? true : false;
     this.hidden = o.hidden || false;
     this.disabled = !!o.disabled;
+    this.calculated = !!o.calculated;
+    this.expression = o.expression;
 
     this.is_fkey =
       o.type === "Key" ||
