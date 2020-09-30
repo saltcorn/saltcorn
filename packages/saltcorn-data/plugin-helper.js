@@ -4,6 +4,20 @@ const Table = require("./models/table");
 const { getState } = require("./db/state");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
+const { link } = require("@saltcorn/markup");
+const { button } = require("@saltcorn/markup/tags");
+
+const link_view = (url, label, popup) => {
+  if (popup) {
+    return button(
+      {
+        class: "btn btn-secondary btn-sm",
+        onClick: `ajax_modal('${url}')`,
+      },
+      label
+    );
+  } else return link(url, label);
+};
 
 const calcfldViewOptions = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
@@ -466,4 +480,5 @@ module.exports = {
   get_link_view_opts,
   is_column,
   readState,
+  link_view,
 };

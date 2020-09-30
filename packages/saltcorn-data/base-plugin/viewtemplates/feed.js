@@ -9,6 +9,7 @@ const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { stateToQueryString } = require("./viewable_fields");
 const pluralize = require("pluralize");
+const { link_view } = require("../../plugin-helper");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -185,20 +186,11 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraArgs);
-    } else if (create_view_display === "Popup") {
-      create_link = button(
-        {
-          class: "btn btn-secondary btn-sm",
-          onClick: `ajax_modal('/view/${view_to_create}${stateToQueryString(
-            state
-          )}')`,
-        },
-        `Add ${pluralize(table.name, 1)}`
-      );
-    } else
-      create_link = link(
+    } else {
+      create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
+        `Add ${pluralize(table.name, 1)}`,
+        create_view_display === "Popup"
       );
   }
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
