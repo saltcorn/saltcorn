@@ -223,5 +223,9 @@ describe("calculated", () => {
     const row0 = await table.getRow({});
     expect(row0.z).toBe(13);
     expect(row0.w).toBe(3);
+    await table.updateRow({ y: 9 }, row.id);
+    const row2 = await table.getRow({});
+    expect(row2.z).toBe(14);
+    expect(row2.w).toBe(4);
   });
 });

@@ -154,10 +154,17 @@ class Table {
     return await db.count(this.name, where);
   }
 
-  async updateRow(v, id, _userid) {
+  async updateRow(v_in, id, _userid) {
+    let existing;
+    let v;
+    const fields = await this.getFields();
+    if (fields.some((f) => f.calculated && f.stored)) {
+      existing = await db.selectOne(this.name, { id });
+      v = this.apply_calculated_fields([{ ...existing, ...v_in }], true)[0];
+    } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
-      const existing = await this.getRow({ id });
+      if (!existing) existing = await db.selectOne(this.name, { id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,
