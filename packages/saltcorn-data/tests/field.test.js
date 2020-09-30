@@ -180,3 +180,33 @@ describe("user presets", () => {
   const presets = field.presets;
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
+
+describe("calculated", () => {
+  it("how to use functions", () => {
+    const f = new Function("{x,y}", "return x+y");
+    expect(f({ x: 1, y: 2 })).toBe(3);
+  });
+  it("build table", async () => {
+    const table = await Table.create("withcalcs");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "x+y",
+    });
+    await table.insertRow({ x: 5, y: 8 });
+    const [row] = await table.getRows();
+    expect(row.z).toBe(13);
+  });
+});
