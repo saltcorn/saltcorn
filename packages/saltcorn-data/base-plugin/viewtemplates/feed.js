@@ -169,6 +169,8 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const sview = await View.findOne({ name: show_view });
+  if (!sview)
+    return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     orderBy: order_field,
