@@ -239,5 +239,7 @@ function ajaxSubmitForm(e) {
     },
     data: form_data,
   });
+  $("#scmodal").modal("hide");
+  location.reload();
   return false;
 }
