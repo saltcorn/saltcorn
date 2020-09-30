@@ -192,6 +192,7 @@ const render = (row, fields, layout, viewname, table, role, req) => {
     field({ field_name, fieldview }) {
       const val = row[field_name];
       const field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
       if (fieldview && field.type === "File") {
         return val ? getState().fileviews[fieldview].run(val) : "";
       } else if (fieldview && field.type.fieldviews[fieldview])
