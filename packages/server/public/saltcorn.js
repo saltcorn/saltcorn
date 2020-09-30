@@ -199,3 +199,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 function press_store_button(clicked) {
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }
+
+function ajax_modal(url) {
+  console.log(url);
+}
