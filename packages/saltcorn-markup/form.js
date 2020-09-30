@@ -256,7 +256,10 @@ const renderFormLayout = (form) => {
       else return "";
     },
     action({ action_name }) {
-      return `<button type="submit" class="btn btn-primary">${text(
+      const submitAttr = form.xhrSubmit
+        ? 'onClick="ajaxSubmitForm(this)" type="button"'
+        : 'type="submit"';
+      return `<button ${submitAttr} class="btn btn-primary">${text(
         form.submitLabel || "Save"
       )}</button>`;
     },

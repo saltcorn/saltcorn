@@ -184,6 +184,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
       }
     }
   });
+  if (req.xhr) form.xhrSubmit = true;
   return renderForm(form, req.csrfToken());
 };
 

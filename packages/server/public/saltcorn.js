@@ -227,3 +227,17 @@ function ajax_modal(url) {
     },
   });
 }
+function ajaxSubmitForm(e) {
+  var form = $(e).closest("form");
+  var url = form.attr("action");
+  var form_data = form.serialize();
+  console.log(url);
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+  });
+  return false;
+}
