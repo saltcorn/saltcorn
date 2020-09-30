@@ -222,8 +222,12 @@ function ajax_modal(url) {
     </div>
   </div>`);
   }
-  $.ajax(url).done(function (res) {
-    $("#scmodal .modal-body").html(res);
-    $("#scmodal").modal();
+  $.ajax(url, {
+    success: function (res, textStatus, request) {
+      var title = request.getResponseHeader("Page-Title");
+      if (title) $("#scmodal .modal-title").html(title);
+      $("#scmodal .modal-body").html(res);
+      $("#scmodal").modal();
+    },
   });
 }
