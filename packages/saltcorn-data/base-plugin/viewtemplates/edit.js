@@ -223,6 +223,10 @@ const runPost = async (
   });
   form.validate(body);
   if (form.hasErrors) {
+    if (req.xhr) {
+      form.xhrSubmit = true;
+      res.status(400);
+    }
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;

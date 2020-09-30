@@ -238,8 +238,17 @@ function ajaxSubmitForm(e) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: form_data,
+    success: function () {
+      $("#scmodal").modal("hide");
+      location.reload();
+    },
+    error: function (request) {
+      var title = request.getResponseHeader("Page-Title");
+      if (title) $("#scmodal .modal-title").html(title);
+      var body = request.responseText;
+      if (body) $("#scmodal .modal-body").html(body);
+    },
   });
-  $("#scmodal").modal("hide");
-  location.reload();
+
   return false;
 }
