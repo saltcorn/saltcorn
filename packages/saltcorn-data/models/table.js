@@ -118,14 +118,14 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return this.apply_calculated_fields([this.readFromDB(row)])[0];
+    return this.apply_calculated_fields([this.readFromDB(row)], false)[0];
   }
 
-  apply_calculated_fields(rows) {
+  apply_calculated_fields(rows, stored) {
     let hasExprs = false;
     let transform = (x) => x;
     for (const field of this.fields) {
-      if (field.calculated) {
+      if (field.calculated && field.stored === stored) {
         hasExprs = true;
         const f = field.get_expression_function(this.fields);
         const oldf = transform;
@@ -144,7 +144,10 @@ class Table {
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return this.apply_calculated_fields(rows.map((r) => this.readFromDB(r)));
+    return this.apply_calculated_fields(
+      rows.map((r) => this.readFromDB(r)),
+      false
+    );
   }
 
   async countRows(where) {
@@ -189,7 +192,9 @@ class Table {
     );
   }
 
-  async insertRow(v, _userid) {
+  async insertRow(v_in, _userid) {
+    await this.getFields();
+    const v = this.apply_calculated_fields([v_in], true)[0];
     const id = await db.insert(this.name, v);
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -499,7 +504,7 @@ class Table {
       }
       fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
-    for (const f of fields.filter((f) => !f.calculated)) {
+    for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
@@ -534,7 +539,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return this.apply_calculated_fields(res.rows);
+    return this.apply_calculated_fields(res.rows, false);
   }
 }
 

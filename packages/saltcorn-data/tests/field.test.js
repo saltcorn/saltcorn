@@ -205,10 +205,23 @@ describe("calculated", () => {
       calculated: true,
       expression: "x+y",
     });
+    await Field.create({
+      table,
+      label: "w",
+      type: "Integer",
+      calculated: true,
+      expression: "y-x",
+      stored: true,
+    });
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
     expect(row.z).toBe(13);
+    expect(row.w).toBe(3);
     const [row1] = await table.getJoinedRows();
     expect(row1.z).toBe(13);
+    expect(row1.w).toBe(3);
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(13);
+    expect(row0.w).toBe(3);
   });
 });

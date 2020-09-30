@@ -32,6 +32,7 @@ class Field {
     this.hidden = o.hidden || false;
     this.disabled = !!o.disabled;
     this.calculated = !!o.calculated;
+    this.stored = !!o.stored;
     this.expression = o.expression;
 
     this.is_fkey =
@@ -328,7 +329,7 @@ class Field {
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
     const table = await Table.findOne({ id: f.table_id });
-    if (!f.calculated) {
+    if (!f.calculated || f.stored) {
       if (typeof f.attributes.default === "undefined") {
         const q = `alter table ${schema}"${sqlsanitize(
           table.name
@@ -376,6 +377,7 @@ class Field {
       attributes: f.attributes,
       calculated: f.calculated,
       expression: f.expression,
+      stored: f.stored,
     });
 
     if (table.versioned && !f.calculated) {
