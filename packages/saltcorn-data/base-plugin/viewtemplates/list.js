@@ -191,7 +191,7 @@ const run = async (
     } else if (create_view_display === "Popup") {
       create_link = button(
         {
-          class: "btn btn-secondary",
+          class: "btn btn-secondary btn-sm",
           onClick: `ajax_modal('/view/${view_to_create}${stateToQueryString(
             state
           )}')`,
