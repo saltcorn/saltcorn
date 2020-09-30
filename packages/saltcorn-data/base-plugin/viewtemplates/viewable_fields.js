@@ -3,6 +3,7 @@ const { text } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
+const { link_view } = require("../../plugin-helper");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
@@ -30,7 +31,7 @@ const view_linker = contract(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  ({ view, view_label }, fields) => {
+  ({ view, view_label, in_modal }, fields) => {
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
@@ -39,9 +40,10 @@ const view_linker = contract(
         return {
           label: vnm,
           key: (r) =>
-            link(
+            link_view(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
-              view_label || vnm
+              view_label || vnm,
+              in_modal
             ),
         };
       case "ChildList":
@@ -49,9 +51,10 @@ const view_linker = contract(
         return {
           label: viewnm,
           key: (r) =>
-            link(
+            link_view(
               `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
-              view_label || viewnm
+              view_label || viewnm,
+              in_modal
             ),
         };
       case "ParentShow":
@@ -62,12 +65,13 @@ const view_linker = contract(
           key: (r) => {
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             return r[pfld]
-              ? link(
+              ? link_view(
                   `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
                   view_label ||
                     (typeof summary_field === "undefined"
                       ? pviewnm
-                      : summary_field)
+                      : summary_field),
+                  in_modal
                 )
               : "";
           },

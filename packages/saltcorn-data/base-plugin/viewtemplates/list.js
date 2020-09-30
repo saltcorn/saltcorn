@@ -13,6 +13,7 @@ const {
   picked_fields_to_query,
   stateFieldsToWhere,
   initial_config_all_fields,
+  link_view,
 } = require("../../plugin-helper");
 const {
   get_viewable_fields,
@@ -188,21 +189,13 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraOpts);
-    } else if (create_view_display === "Popup") {
-      create_link = button(
-        {
-          class: "btn btn-secondary btn-sm",
-          onClick: `ajax_modal('/view/${view_to_create}${stateToQueryString(
-            state
-          )}')`,
-        },
-        `Add ${pluralize(table.name, 1)}`
-      );
-    } else
-      create_link = link(
+    } else {
+      create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
+        `Add ${pluralize(table.name, 1)}`,
+        create_view_display === "Popup"
       );
+    }
   }
 
   return mkTable(tfields, rows, page_opts) + create_link;

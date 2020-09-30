@@ -4,11 +4,12 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr } = require("@saltcorn/markup/tags");
+const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const { stateToQueryString } = require("./viewable_fields");
 const pluralize = require("pluralize");
+const { link_view } = require("../../plugin-helper");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -57,7 +58,7 @@ const configuration_workflow = () =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: "Link,Embedded",
+                  options: "Link,Embedded,Popup",
                 },
               },
             ],
@@ -185,11 +186,13 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraArgs);
-    } else
-      create_link = link(
+    } else {
+      create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
+        `Add ${pluralize(table.name, 1)}`,
+        create_view_display === "Popup"
       );
+    }
   }
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
