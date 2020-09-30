@@ -176,6 +176,13 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "ViewLink" },
       },
       {
+        name: "in_modal",
+        label: "Open in popup modal?",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
         name: "join_field",
         label: "Join Field",
         type: "String",
