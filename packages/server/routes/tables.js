@@ -521,6 +521,7 @@ router.get(
       header: true,
       cast: {
         date: (value) => value.toISOString(),
+        boolean: (v) => (v ? "true" : "false"),
       },
     }).pipe(res);
   })
