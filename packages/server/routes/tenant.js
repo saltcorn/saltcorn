@@ -7,11 +7,24 @@ const {
   deleteTenant,
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
-const { div, nbsp, p, a, h4, text } = require("@saltcorn/markup/tags");
+const {
+  div,
+  nbsp,
+  p,
+  a,
+  h4,
+  text,
+  i,
+  table,
+  tr,
+  th,
+  td,
+} = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const User = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
@@ -165,12 +178,21 @@ router.get(
                     link(getNewURL(req, r.subdomain), text(r.subdomain)),
                 },
                 {
+                  label: "Information",
+                  key: (r) =>
+                    a(
+                      { href: `/tenant/info/${text(r.subdomain)}` },
+                      i({ class: "fas fa-lg fa-info-circle" })
+                    ),
+                },
+                {
                   label: "Delete",
                   key: (r) =>
                     post_btn(
                       `/tenant/delete/${r.subdomain}`,
                       "Delete",
-                      req.csrfToken()
+                      req.csrfToken(),
+                      { small: true }
                     ),
                 },
               ],
@@ -178,6 +200,65 @@ router.get(
             ),
             div(`Found ${tens.length} tenants`),
             div(link("/tenant/create", "Create new tenant")),
+          ],
+        },
+      ],
+    });
+  })
+);
+const get_tenant_info = async (subdomain) => {
+  const saneDomain = domain_sanitize(subdomain);
+
+  return await db.runWithTenant(saneDomain, async () => {
+    let info = {};
+    const firstUser = await User.find({}, { orderBy: "id", limit: 1 });
+    if (firstUser && firstUser.length > 0) {
+      info.first_user_email = firstUser[0].email;
+    }
+    info.nusers = await db.count("users");
+    info.ntables = await db.count("_sc_tables");
+    info.nviews = await db.count("_sc_views");
+    info.nfiles = await db.count("_sc_files");
+    info.npages = await db.count("_sc_pages");
+    return info;
+  });
+};
+router.get(
+  "/info/:subdomain",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    const { subdomain } = req.params;
+    const info = await get_tenant_info(subdomain);
+    res.sendWrap(`${text(subdomain)} tenant`, {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: "Tenants", href: "/tenant/list" },
+            { text: text(subdomain) },
+          ],
+        },
+        {
+          type: "card",
+          title: `${text(subdomain)} tenant`,
+          contents: [
+            table(
+              tr(th(req.__("E-mail")), td(info.first_user_email)),
+              tr(th(req.__("Users")), td(info.nusers)),
+              tr(th(req.__("Tables")), td(info.ntables)),
+              tr(th(req.__("Views")), td(info.nviews)),
+              tr(th(req.__("Pages")), td(info.npages)),
+              tr(th(req.__("Files")), td(info.nfiles))
+            ),
           ],
         },
       ],
