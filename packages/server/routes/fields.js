@@ -52,6 +52,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
       new Field({
         label: "Calculated",
         name: "calculated",
+        sublabel: "Experimental",
         type: "Bool",
         class: "iscalc",
       }),
