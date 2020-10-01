@@ -86,9 +86,9 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-      const allfields = fields.map((f) => f.name);
       Object.keys(row).forEach((k) => {
-        if (!allfields.includes(k)) {
+        const field = fields.find((f) => f.name === k);
+        if (!field || field.calculated) {
           delete row[k];
         }
       });
@@ -118,9 +118,9 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-      const allfields = fields.map((f) => f.name);
       Object.keys(row).forEach((k) => {
-        if (!allfields.includes(k)) {
+        const field = fields.find((f) => f.name === k);
+        if (!field || field.calculated) {
           delete row[k];
         }
       });
