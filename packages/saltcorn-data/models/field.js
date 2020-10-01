@@ -2,7 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
-
+const vm = require("vm");
 const readKey = (v) => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -85,15 +85,6 @@ class Field {
       attributes: this.attributes,
       required: this.required,
     };
-  }
-
-  static expressionValidator(s) {
-    try {
-      const f = new Function("", "return " + s);
-      return true;
-    } catch (e) {
-      return e.message;
-    }
   }
 
   static labelToName(label) {
@@ -326,9 +317,18 @@ class Field {
       await db.query(q);
     }
   }
+
+  static expressionValidator(s) {
+    try {
+      const f = new Function("", "return " + s);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
+  }
   get_expression_function(fields) {
     const args = `{${fields.map((f) => f.name).join()}}`;
-    return new Function(args, "return " + this.expression);
+    return vm.runInNewContext(`(${args})=>(${this.expression})`);
   }
   static async create(fld, bare = false) {
     const f = new Field(fld);

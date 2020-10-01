@@ -213,6 +213,9 @@ describe("calculated", () => {
       expression: "y-x",
       stored: true,
     });
+    const fields = await table.getFields();
+    const fzf = fz.get_expression_function(fields);
+    expect(fzf({ x: 4, y: 2 })).toBe(6);
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
     expect(row.z).toBe(13);
@@ -234,5 +237,30 @@ describe("calculated", () => {
     expect(row3.w).toBe(2);
     await fz.delete();
     await fw.delete();
+  });
+  it("cannot exit", async () => {
+    const table = await Table.create("withcalcs2");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "process.exit(0)",
+    });
+    const fields = await table.getFields();
+    const fzf = fz.get_expression_function(fields);
+    let error;
+    try {
+      fzf({ x: 4 });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.constructor.name).toBe("ReferenceError");
   });
 });
