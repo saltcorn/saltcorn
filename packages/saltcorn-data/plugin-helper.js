@@ -369,7 +369,9 @@ const initial_config_all_fields = contract(
   (isEdit) => async ({ table_id }) => {
     const table = await Table.findOne({ id: table_id });
 
-    const fields = await table.getFields();
+    const fields = (await table.getFields()).filter(
+      (f) => !isEdit || !f.calculated
+    );
     var cfg = { columns: [] };
     var aboves = [null];
     fields.forEach((f) => {
