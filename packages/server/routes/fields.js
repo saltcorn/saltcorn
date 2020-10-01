@@ -43,6 +43,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "calculated",
         type: "Bool",
         class: "iscalc",
+        disabled: !!id,
       }),
       new Field({
         label: "Required",
@@ -62,6 +63,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         label: "Stored",
         name: "sored",
         type: "Bool",
+        disabled: !!id,
         showIf: { ".iscalc": true },
       }),
     ],
