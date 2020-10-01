@@ -19,9 +19,9 @@ const random_table = async () => {
   const nfields = is.integer({ gte: 2, lte: 10 }).generate();
   const existing_field_names = ["id"];
   for (let index = 0; index < nfields; index++) {
-    const field = await random_field(existing_field_names);
+    const field = await random_field(existing_field_names, table);
     existing_field_names.push(field.label);
-    field.table_id = table.id;
+
     await Field.create(field);
   }
   //fill rows
@@ -35,13 +35,25 @@ const fill_table_row = async (table) => {
   const fields = await table.getFields();
   const row = {};
   for (const f of fields) {
-    if (f.required || is.bool.generate()) row[f.name] = await f.generate();
+    if (!f.calculated && (f.required || is.bool.generate()))
+      row[f.name] = await f.generate();
   }
   //console.log(fields, row);
   await table.tryInsertRow(row);
 };
-
-const random_field = async (existing_field_names) => {
+const random_expression = (type, existing_fields) => {
+  switch (type) {
+    case "Bool":
+      return is.one_of(["true", "false"]).generate();
+    case "Float":
+      return "1.3";
+    case "Integer":
+      return "7";
+    default:
+      throw new Error("random_expression: unknown type " + type);
+  }
+};
+const random_field = async (existing_field_names, table) => {
   const tables = await Table.find({});
   const tables_with_data = [];
   for (const t of tables) {
@@ -54,8 +66,6 @@ const random_field = async (existing_field_names) => {
     "File",
   ];
   const type_options = getState().type_names.concat(fkey_opts || []);
-  const type = is.one_of(type_options).generate();
-
   const label = is
     .and(
       is.sat(
@@ -65,7 +75,20 @@ const random_field = async (existing_field_names) => {
       is.str
     )
     .generate();
+
+  const type = is.one_of(type_options).generate();
+
+  if (Math.random() < 0.2 && ["Integer", "Float", "Bool"].includes(type)) {
+    const stored = Math.random() < 0.5;
+    const existing_fields = await Field.find({ table_id: table.id });
+    const expression = random_expression(type, existing_fields);
+    const f = new Field({ type, label, calculated: true, stored, expression });
+    f.table_id = table.id;
+    return f;
+  }
+
   const f = new Field({ type, label });
+  f.table_id = table.id;
   if (f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
@@ -78,7 +101,9 @@ const random_field = async (existing_field_names) => {
       f.attributes.summary_field = "email";
     } else {
       const reftable = await Table.findOne({ name: f.reftable_name });
-      const reffields = await reftable.getFields();
+      const reffields = (await reftable.getFields()).filter(
+        (f) => !f.calculated || f.stored
+      );
       if (reffields.length > 0) {
         const reff = is.one_of(reffields).generate();
         f.attributes.summary_field = reff.name;
