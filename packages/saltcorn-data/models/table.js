@@ -458,9 +458,11 @@ class Table {
         } else {
           const table = await Table.findOne({ name: f.reftable_name });
           await table.getFields();
-          table.fields.forEach((pf) => {
-            parent_field_list.push(`${f.name}.${pf.name}`);
-          });
+          table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .forEach((pf) => {
+              parent_field_list.push(`${f.name}.${pf.name}`);
+            });
           parent_relations.push({ key_field: f, table });
         }
       }

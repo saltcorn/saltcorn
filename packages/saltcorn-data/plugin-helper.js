@@ -98,7 +98,10 @@ const field_picker_fields = contract(
       type: "String",
       required: true,
       attributes: {
-        options: table.fields.map((f) => f.name).join(),
+        options: table.fields
+          .filter((f) => !f.calculated || f.stored)
+          .map((f) => f.name)
+          .join(),
       },
       showIf: {
         ".agg_relation": `${table.name}.${key_field.name}`,
