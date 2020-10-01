@@ -12,6 +12,12 @@ module.exports = async function (err, req, res, next) {
     req.flash("error", res.__("Invalid form data, try again"));
     if (req.url && req.url.includes("/auth/login")) res.redirect("/auth/login");
     else res.redirect("/");
+  } else if (req.xhr) {
+    res
+      .status(500)
+      .send(
+        devmode || role === 1 ? text(err.message) : res.__("An error occurred")
+      );
   } else
     res
       .status(500)

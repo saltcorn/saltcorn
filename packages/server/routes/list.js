@@ -223,6 +223,7 @@ router.get(
             });
          `)
               ),
+              div({ id: "jsGridNotify" }),
               div({ id: "jsGrid" }),
             ],
           },

@@ -6,6 +6,15 @@ function jsgrid_controller(table_name, vc, keyfields) {
     });
     return item;
   };
+  var errorHandler = function (request) {
+    console.log(request);
+    $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
+    ${request.responseText}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  </div>`);
+  };
   return {
     loadData: function (filter) {
       var data = $.Deferred();
@@ -13,6 +22,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         type: "GET",
         url: url + (vc ? "?versioncount=on" : ""),
         data: filter,
+        error: errorHandler,
       }).done(function (resp) {
         data.resolve(resp.success);
       });
@@ -27,6 +37,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
+        error: errorHandler,
       }).done(function (resp) {
         item._versions = 1;
         if (resp.success) {
@@ -47,6 +58,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
+        error: errorHandler,
       }).done(function (resp) {
         if (item._versions) item._versions = +item._versions + 1;
         data.resolve(fixKeys(item));
@@ -60,6 +72,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
+        error: errorHandler,
       });
     },
   };
