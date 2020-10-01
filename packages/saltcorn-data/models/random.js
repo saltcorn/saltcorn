@@ -42,13 +42,19 @@ const fill_table_row = async (table) => {
   await table.tryInsertRow(row);
 };
 const random_expression = (type, existing_fields) => {
+  const numField = existing_fields.find((f) =>
+    ["Integer", "Float"].includes(f.type)
+  );
   switch (type) {
     case "Bool":
-      return is.one_of(["true", "false"]).generate();
+      if (numField) return `${numField.name}>0`;
+      else return is.one_of(["true", "false"]).generate();
     case "Float":
-      return "1.3";
+      if (numField) return `${numField.name}+1.5`;
+      else return "1.3";
     case "Integer":
-      return "7";
+      if (numField) return `${numField.name}+3`;
+      else return "7";
     default:
       throw new Error("random_expression: unknown type " + type);
   }
@@ -80,7 +86,15 @@ const random_field = async (existing_field_names, table) => {
 
   if (Math.random() < 0.2 && ["Integer", "Float", "Bool"].includes(type)) {
     const stored = Math.random() < 0.5;
-    const existing_fields = await Field.find({ table_id: table.id });
+    const existing_fields = await Field.find(
+      {
+        table_id: table.id,
+        calculated: false,
+      },
+      {
+        orderBy: "RANDOM()",
+      }
+    );
     const expression = random_expression(type, existing_fields);
     const f = new Field({ type, label, calculated: true, stored, expression });
     f.table_id = table.id;
