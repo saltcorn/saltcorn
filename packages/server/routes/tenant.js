@@ -177,6 +177,7 @@ router.get(
               tens
             ),
             div(`Found ${tens.length} tenants`),
+            div(link("/tenant/create", "Create new tenant")),
           ],
         },
       ],
