@@ -18,7 +18,7 @@ module.exports = async function (err, req, res, next) {
       .sendWrap(
         res.__("Internal Error"),
         devmode ? pre(text(err.stack)) : h3(res.__("An error occurred")),
-        role === 1 && !devmode && pre(text(err.message)),
+        role === 1 && !devmode ? pre(text(err.message)) : "",
         p(
           res.__(
             `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
