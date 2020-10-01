@@ -7,7 +7,7 @@ const {
   deleteTenant,
 } = require("@saltcorn/data/models/tenant");
 const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
-const { div, nbsp, p, a, h4 } = require("@saltcorn/markup/tags");
+const { div, nbsp, p, a, h4, text } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
@@ -159,8 +159,11 @@ router.get(
           contents: [
             mkTable(
               [
-                { label: "Subdomain", key: "subdomain" },
-                { label: "email", key: "email" },
+                {
+                  label: "Subdomain",
+                  key: (r) =>
+                    link(getNewURL(req, r.subdomain), text(r.subdomain)),
+                },
                 {
                   label: "Delete",
                   key: (r) =>
