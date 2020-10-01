@@ -75,6 +75,9 @@ class Field {
       name: this.name,
       label: this.label,
       is_unique: this.is_unique,
+      calculated: this.calculated,
+      stored: this.stored,
+      expression: this.expression,
       sublabel: this.sublabel,
       fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type.name,
@@ -82,6 +85,15 @@ class Field {
       attributes: this.attributes,
       required: this.required,
     };
+  }
+
+  static expressionValidator(s) {
+    try {
+      const f = new Function("", "return " + s);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
   }
 
   static labelToName(label) {

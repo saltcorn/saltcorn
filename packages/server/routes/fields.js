@@ -77,7 +77,16 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
-      const { table_id, name, label, required, is_unique } = context;
+      const {
+        table_id,
+        name,
+        label,
+        required,
+        is_unique,
+        calculated,
+        expression,
+        stored,
+      } = context;
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -88,6 +97,9 @@ const fieldFlow = (req) =>
         is_unique,
         reftable_name,
         attributes,
+        calculated,
+        expression,
+        stored,
       };
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
@@ -171,6 +183,21 @@ const fieldFlow = (req) =>
             });
           }
         },
+      },
+      {
+        name: req.__("Expression"),
+        onlyWhen: (context) => context.calculated,
+        form: (context) =>
+          new Form({
+            fields: [
+              new Field({
+                name: "expression",
+                label: req.__("Formula"),
+                type: "String",
+                validator: Field.expressionValidator,
+              }),
+            ],
+          }),
       },
       {
         name: req.__("Summary"),
