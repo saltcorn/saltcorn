@@ -39,23 +39,25 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         disabled: !!id && !getState().getConfig("development_mode", false),
       }),
       new Field({
+        label: "Calculated (Experimental)",
+        name: "calculated",
+        type: "Bool",
+        class: "iscalc",
+      }),
+      new Field({
         label: "Required",
         name: "required",
         type: "Bool",
         disabled: !!id && db.isSQLite,
+        showIf: { ".iscalc": false },
       }),
       new Field({
         label: "Unique",
         name: "is_unique",
+        showIf: { ".iscalc": false },
         type: "Bool",
       }),
-      new Field({
-        label: "Calculated",
-        name: "calculated",
-        sublabel: "Experimental",
-        type: "Bool",
-        class: "iscalc",
-      }),
+
       new Field({
         label: "Stored",
         name: "sored",
@@ -102,6 +104,10 @@ const fieldFlow = (req) =>
         expression,
         stored,
       };
+      if (fldRow.calculated) {
+        fldRow.is_unique = false;
+        fldRow.required = false;
+      }
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
         try {
@@ -231,7 +237,8 @@ const fieldFlow = (req) =>
         name: req.__("Default"),
         onlyWhen: async (context) => {
           if (context.type === "Key to users") context.summary_field = "email";
-          if (!context.required || context.id) return false;
+          if (!context.required || context.id || context.calculated)
+            return false;
           const table = await Table.findOne({ id: context.table_id });
           const nrows = await table.countRows();
           return nrows > 0;
