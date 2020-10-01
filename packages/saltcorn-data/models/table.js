@@ -426,6 +426,13 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      fields
+        .filter((f) => f.calculated && !f.stored)
+        .forEach((f) => {
+          if (typeof rec[f.name] !== "undefined") {
+            delete rec[f.name];
+          }
+        });
       try {
         readState(rec, fields);
         await db.insert(this.name, rec, true, client);
