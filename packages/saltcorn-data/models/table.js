@@ -365,7 +365,7 @@ class Table {
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
-    const fields = await this.getFields();
+    const fields = (await this.getFields()).filter((f) => !f.calculated);
     const okHeaders = {};
     const renames = [];
     for (const f of fields) {
