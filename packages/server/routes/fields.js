@@ -41,13 +41,25 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
       new Field({
         label: "Required",
         name: "required",
-        type: getState().types["Bool"],
+        type: "Bool",
         disabled: !!id && db.isSQLite,
       }),
       new Field({
         label: "Unique",
         name: "is_unique",
-        type: getState().types["Bool"],
+        type: "Bool",
+      }),
+      new Field({
+        label: "Calculated",
+        name: "calculated",
+        type: "Bool",
+        class: "iscalc",
+      }),
+      new Field({
+        label: "Stored",
+        name: "sored",
+        type: "Bool",
+        showIf: { ".iscalc": true },
       }),
     ],
   });

@@ -15,9 +15,12 @@ const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
-    .map(
-      ([target, value]) =>
-        `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+    .map(([target, value]) =>
+      typeof value === "boolean"
+        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
+            value
+          )}`
+        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
     )
     .join(" && ");
 
