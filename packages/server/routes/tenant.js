@@ -29,7 +29,7 @@ const tenant_form = (req) =>
         name: "subdomain",
         label: req.__("Application name"),
         input_type: "text",
-        postText: ".saltcorn.com",
+        postText: text(req.hostname),
       },
     ],
   });
