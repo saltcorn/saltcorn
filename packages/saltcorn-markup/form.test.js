@@ -69,4 +69,30 @@ describe("form render", () => {
 </span><br /></form>`;
     expect(nolines(renderForm(form, ""))).toBe(nolines(want));
   });
+  it("renders a simple form with errors", () => {
+    const form = new Form({
+      action: "/",
+      errors: { name: "Not a foo" },
+      values: { name: "Bar" },
+      fields: [
+        {
+          name: "name",
+          label: "Name",
+          input_type: "text",
+          form_name: "name",
+        },
+      ],
+    });
+    const want = `<form action="/" class="form-namespace  " method="post" >
+<input type="hidden" name="_csrf" value=""><div class="form-group">
+<label for="inputname" >Name</label>
+<div><input type="text" class="form-control is-invalid "  name="name" id="inputname" value="Bar"><div>Not a foo</div>
+</div></div><div class="form-group row">
+  <div class="col-sm-12">
+    <button type="submit" class="btn btn-primary">Save</button>
+  </div>
+</div>
+</form>`;
+    expect(nolines(renderForm(form, ""))).toBe(nolines(want));
+  });
 });

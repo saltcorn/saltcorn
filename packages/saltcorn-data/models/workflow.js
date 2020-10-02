@@ -35,10 +35,9 @@ class Workflow {
       const valres = form.validate(stepBody);
       if (valres.errors) {
         form.hidden("stepName", "contextEnc");
-        form.values = {
-          stepName: step.name,
-          contextEnc,
-        };
+        form.values.stepName = step.name;
+        form.values.contextEnc = contextEnc;
+
         if (this.action) form.action = this.action;
         if (!form.submitLabel)
           form.submitLabel =
