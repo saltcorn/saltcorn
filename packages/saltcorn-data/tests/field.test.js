@@ -180,3 +180,87 @@ describe("user presets", () => {
   const presets = field.presets;
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
+
+describe("calculated", () => {
+  it("how to use functions", () => {
+    const f = new Function("{x,y}", "return x+y");
+    expect(f({ x: 1, y: 2 })).toBe(3);
+  });
+  it("build table", async () => {
+    const table = await Table.create("withcalcs");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "x+y",
+    });
+    const fw = await Field.create({
+      table,
+      label: "w",
+      type: "Integer",
+      calculated: true,
+      expression: "y-x",
+      stored: true,
+    });
+    const fields = await table.getFields();
+    const fzf = fz.get_expression_function(fields);
+    expect(fzf({ x: 4, y: 2 })).toBe(6);
+    await table.insertRow({ x: 5, y: 8 });
+    const [row] = await table.getRows();
+    expect(row.z).toBe(13);
+    expect(row.w).toBe(3);
+    const [row1] = await table.getJoinedRows();
+    expect(row1.z).toBe(13);
+    expect(row1.w).toBe(3);
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(13);
+    expect(row0.w).toBe(3);
+    await table.updateRow({ y: 9 }, row.id);
+    const row2 = await table.getRow({});
+    expect(row2.z).toBe(14);
+    expect(row2.w).toBe(4);
+    await table.update({ versioned: true });
+    const newid = await table.insertRow({ x: 2, y: 4 });
+    const row3 = await table.getRow({ id: newid });
+    expect(row3.z).toBe(6);
+    expect(row3.w).toBe(2);
+    await fz.delete();
+    await fw.delete();
+  });
+  it("cannot exit", async () => {
+    const table = await Table.create("withcalcs2");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "process.exit(0)",
+    });
+    const fields = await table.getFields();
+    const fzf = fz.get_expression_function(fields);
+    let error;
+    try {
+      fzf({ x: 4 });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.constructor.name).toBe("ReferenceError");
+  });
+});

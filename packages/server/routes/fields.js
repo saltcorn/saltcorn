@@ -10,21 +10,26 @@ const User = require("@saltcorn/data/models/user");
 const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
-const { disable } = require("contractis/contract");
-const { table } = require("@saltcorn/markup/tags");
-
+const expressionBlurb = require("../markup/expression_blurb");
 const router = new Router();
 module.exports = router;
 
 const fieldForm = (req, fkey_opts, existing_names, id) =>
   new Form({
     action: "/field",
+    validator: (vs) => {
+      if (vs.calculated && vs.type == "File")
+        return "Calculated fields cannot have File type";
+      if (vs.calculated && vs.type.startsWith("Key to"))
+        return "Calculated fields cannot have Key type";
+    },
     fields: [
       new Field({
         label: "Label",
         name: "label",
         input_type: "text",
         validator(s) {
+          if (!s || s === "") return "Missing label";
           if (s.toLowerCase() === "id")
             return `Column '${s}' already exists (but is hidden)`;
           if (!id && existing_names.includes(Field.labelToName(s)))
@@ -39,15 +44,32 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         disabled: !!id && !getState().getConfig("development_mode", false),
       }),
       new Field({
+        label: "Calculated (Experimental)",
+        name: "calculated",
+        type: "Bool",
+        class: "iscalc",
+        disabled: !!id,
+      }),
+      new Field({
         label: "Required",
         name: "required",
-        type: getState().types["Bool"],
+        type: "Bool",
         disabled: !!id && db.isSQLite,
+        showIf: { ".iscalc": false },
       }),
       new Field({
         label: "Unique",
         name: "is_unique",
-        type: getState().types["Bool"],
+        showIf: { ".iscalc": false },
+        type: "Bool",
+      }),
+
+      new Field({
+        label: "Stored",
+        name: "sored",
+        type: "Bool",
+        disabled: !!id,
+        showIf: { ".iscalc": true },
       }),
     ],
   });
@@ -65,7 +87,16 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
-      const { table_id, name, label, required, is_unique } = context;
+      const {
+        table_id,
+        name,
+        label,
+        required,
+        is_unique,
+        calculated,
+        expression,
+        stored,
+      } = context;
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -76,7 +107,14 @@ const fieldFlow = (req) =>
         is_unique,
         reftable_name,
         attributes,
+        calculated,
+        expression,
+        stored,
       };
+      if (fldRow.calculated) {
+        fldRow.is_unique = false;
+        fldRow.required = false;
+      }
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
         try {
@@ -132,6 +170,7 @@ const fieldFlow = (req) =>
         name: req.__("Attributes"),
         contextField: "attributes",
         onlyWhen: (context) => {
+          if (context.calculated) return false;
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
           const type = getState().types[context.type];
@@ -161,6 +200,25 @@ const fieldFlow = (req) =>
         },
       },
       {
+        name: req.__("Expression"),
+        onlyWhen: (context) => context.calculated,
+        form: async (context) => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          return new Form({
+            blurb: expressionBlurb(context.type, fields),
+            fields: [
+              new Field({
+                name: "expression",
+                label: req.__("Formula"),
+                type: "String",
+                validator: Field.expressionValidator,
+              }),
+            ],
+          });
+        },
+      },
+      {
         name: req.__("Summary"),
         onlyWhen: (context) =>
           context.type !== "Key to users" &&
@@ -170,11 +228,13 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const fld = new Field(context);
           const table = await Table.findOne({ name: fld.reftable_name });
-          const fields = await Field.find({ table_id: table.id });
-          const keyfields = fields.map((f) => ({
-            value: f.name,
-            label: f.label,
-          }));
+          const fields = await table.getFields();
+          const keyfields = fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
+              value: f.name,
+              label: f.label,
+            }));
           return new Form({
             fields: [
               new Field({
@@ -191,7 +251,8 @@ const fieldFlow = (req) =>
         name: req.__("Default"),
         onlyWhen: async (context) => {
           if (context.type === "Key to users") context.summary_field = "email";
-          if (!context.required || context.id) return false;
+          if (!context.required || context.id || context.calculated)
+            return false;
           const table = await Table.findOne({ id: context.table_id });
           const nrows = await table.countRows();
           return nrows > 0;

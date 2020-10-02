@@ -98,7 +98,10 @@ const field_picker_fields = contract(
       type: "String",
       required: true,
       attributes: {
-        options: table.fields.map((f) => f.name).join(),
+        options: table.fields
+          .filter((f) => !f.calculated || f.stored)
+          .map((f) => f.name)
+          .join(),
       },
       showIf: {
         ".agg_relation": `${table.name}.${key_field.name}`,
@@ -369,7 +372,9 @@ const initial_config_all_fields = contract(
   (isEdit) => async ({ table_id }) => {
     const table = await Table.findOne({ id: table_id });
 
-    const fields = await table.getFields();
+    const fields = (await table.getFields()).filter(
+      (f) => !isEdit || !f.calculated
+    );
     var cfg = { columns: [] };
     var aboves = [null];
     fields.forEach((f) => {

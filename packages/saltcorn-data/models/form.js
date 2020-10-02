@@ -21,6 +21,7 @@ class Form {
     this.submitLabel = o.submitLabel;
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
+    this.validator = o.validator;
     this.hasErrors = false;
     this.xhrSubmit = !!o.xhrSubmit;
     if (o.validate) this.validate(o.validate);
@@ -75,6 +76,14 @@ class Form {
     if (Object.keys(this.errors).length > 0) {
       return { errors: this.errors };
     } else {
+      if (this.validator) {
+        const fvalres = this.validator(this.values);
+        if (typeof fvalres === "string") {
+          this.hasErrors = true;
+          this.errors._form = fvalres;
+          return { errors: this.errors };
+        }
+      }
       return { success: this.values };
     }
   }
@@ -89,7 +98,7 @@ Form.contract = {
     labelCols: is.maybe(is.posint),
     hasErrors: is.bool,
     submitLabel: is.maybe(is.str),
-    blurb: is.maybe(is.str),
+    blurb: is.maybe(is.or(is.str, is.array(is.str))),
     class: is.maybe(is.str),
     isStateForm: is.bool,
     formStyle: is.str,

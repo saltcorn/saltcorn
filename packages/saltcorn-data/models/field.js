@@ -2,7 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 
 const { sqlsanitize } = require("../db/internal.js");
-
+const vm = require("vm");
 const readKey = (v) => {
   const parsed = parseInt(v);
   return isNaN(parsed) ? null : parsed;
@@ -31,6 +31,9 @@ class Field {
     this.is_unique = o.is_unique ? true : false;
     this.hidden = o.hidden || false;
     this.disabled = !!o.disabled;
+    this.calculated = !!o.calculated;
+    this.stored = !!o.stored;
+    this.expression = o.expression;
 
     this.is_fkey =
       o.type === "Key" ||
@@ -72,6 +75,9 @@ class Field {
       name: this.name,
       label: this.label,
       is_unique: this.is_unique,
+      calculated: this.calculated,
+      stored: this.stored,
+      expression: this.expression,
       sublabel: this.sublabel,
       fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type.name,
@@ -281,7 +287,7 @@ class Field {
     const table = await Table.findOne({ id: this.table_id });
     const schema = db.getTenantSchemaPrefix();
 
-    if (!db.isSQLite) {
+    if (!db.isSQLite && (!this.calculated || this.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
@@ -312,6 +318,18 @@ class Field {
     }
   }
 
+  static expressionValidator(s) {
+    try {
+      const f = new Function("", "return " + s);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
+  }
+  get_expression_function(fields) {
+    const args = `{${fields.map((f) => f.name).join()}}`;
+    return vm.runInNewContext(`(${args})=>(${this.expression})`);
+  }
   static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
@@ -322,44 +340,44 @@ class Field {
     //console.log({ tables, fld });
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
-
     const table = await Table.findOne({ id: f.table_id });
-    if (typeof f.attributes.default === "undefined") {
-      const q = `alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
-      }`;
-      await db.query(q);
-    } else if (is_sqlite) {
-      //warning: not safe but sqlite so we don't care
-      const q = `alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required
-          ? `not null default ${JSON.stringify(f.attributes.default)}`
-          : ""
-      }`;
-      await db.query(q);
-    } else {
-      const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
+    if (!f.calculated || f.stored) {
+      if (typeof f.attributes.default === "undefined") {
+        const q = `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
+        }`;
+        await db.query(q);
+      } else if (is_sqlite) {
+        //warning: not safe but sqlite so we don't care
+        const q = `alter table ${schema}"${sqlsanitize(
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required
+            ? `not null default ${JSON.stringify(f.attributes.default)}`
+            : ""
+        }`;
+        await db.query(q);
+      } else {
+        const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
-        f.sql_bare_type
-      }) RETURNS void AS $$
+          f.sql_bare_type
+        }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
-        table.name
-      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-        f.required ? "not null" : ""
-      } default %L', thedef);
+          table.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required ? "not null" : ""
+        } default %L', thedef);
       END;
       $$ LANGUAGE plpgsql;`;
-      await db.query(q);
-      await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
-        f.attributes.default,
-      ]);
+        await db.query(q);
+        await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
+          f.attributes.default,
+        ]);
+      }
     }
-
     f.id = await db.insert("_sc_fields", {
       table_id: f.table_id,
       name: f.name,
@@ -369,9 +387,12 @@ class Field {
       required: f.required,
       is_unique: f.is_unique,
       attributes: f.attributes,
+      calculated: f.calculated,
+      expression: f.expression,
+      stored: f.stored,
     });
 
-    if (table.versioned) {
+    if (table.versioned && !f.calculated) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
@@ -379,7 +400,7 @@ class Field {
       );
     }
 
-    if (f.is_unique) await f.add_unique_constraint();
+    if (f.is_unique && !f.calculated) await f.add_unique_constraint();
 
     return f;
   }

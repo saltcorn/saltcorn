@@ -288,5 +288,8 @@
 	"Welcome to Saltcorn!": "Welcome to Saltcorn!",
 	"File %s uploaded": "File %s uploaded",
 	"Local": "Local",
-	"Name required": "Name required"
+	"Name required": "Name required",
+	"Expression": "Expression",
+	"Formula": "Formula",
+	"new": "new"
 }

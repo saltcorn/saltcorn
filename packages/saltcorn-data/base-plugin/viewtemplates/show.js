@@ -55,7 +55,9 @@ const configuration_workflow = () =>
           child_relations.forEach(({ table, key_field }) => {
             agg_field_opts[
               `${table.name}.${key_field.name}`
-            ] = table.fields.map((f) => f.name);
+            ] = table.fields
+              .filter((f) => !f.calculated || f.stored)
+              .map((f) => f.name);
           });
           const views = await View.find_table_views_where(
             context.table_id,

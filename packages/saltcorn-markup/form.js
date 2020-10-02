@@ -15,9 +15,12 @@ const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
-    .map(
-      ([target, value]) =>
-        `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+    .map(([target, value]) =>
+      typeof value === "boolean"
+        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
+            value
+          )}`
+        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
     )
     .join(" && ");
 
@@ -308,13 +311,31 @@ const mkFormWithLayout = (form, csrfToken) => {
   }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
   const hiddens = form.fields
     .filter((f) => f.input_type === "hidden")
     .map((f) => innerField(form.values, form.errors)(f))
     .join("");
+  const fullFormError = form.errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${form.errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   return (
-    blurbp + top + csrfField + hiddens + renderFormLayout(form) + "</form>"
+    blurbp +
+    top +
+    csrfField +
+    hiddens +
+    renderFormLayout(form) +
+    fullFormError +
+    "</form>"
   );
 };
 
@@ -340,7 +361,19 @@ const mkForm = (form, csrfToken, errors = {}) => {
       )
     )
     .join("");
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
+  const fullFormError = errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
     <button type="submit" class="btn ${
@@ -353,6 +386,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
     top +
     csrfField +
     flds +
+    fullFormError +
     (form.noSubmitButton ? "" : bot) +
     "</form>"
   );

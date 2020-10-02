@@ -102,6 +102,10 @@ const typeToJsGridType = (t, field) => {
         : t.name === "Date"
         ? "date"
         : "text";
+  if (field.calculated) {
+    jsgField.editing = false;
+    jsgField.inserting = false;
+  }
   return jsgField;
 };
 
@@ -219,6 +223,7 @@ router.get(
             });
          `)
               ),
+              div({ id: "jsGridNotify" }),
               div({ id: "jsGrid" }),
             ],
           },

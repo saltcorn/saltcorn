@@ -118,23 +118,53 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return this.readFromDB(row);
+    return this.apply_calculated_fields([this.readFromDB(row)], false)[0];
+  }
+
+  apply_calculated_fields(rows, stored) {
+    let hasExprs = false;
+    let transform = (x) => x;
+    for (const field of this.fields) {
+      if (field.calculated && field.stored === stored) {
+        hasExprs = true;
+        const f = field.get_expression_function(this.fields);
+        const oldf = transform;
+        transform = (row) => {
+          const x = f(row);
+          row[field.name] = x;
+          return oldf(row);
+        };
+      }
+    }
+    if (hasExprs) {
+      return rows.map(transform);
+    } else return rows;
   }
 
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return rows.map((r) => this.readFromDB(r));
+    return this.apply_calculated_fields(
+      rows.map((r) => this.readFromDB(r)),
+      false
+    );
   }
 
   async countRows(where) {
     return await db.count(this.name, where);
   }
 
-  async updateRow(v, id, _userid) {
+  async updateRow(v_in, id, _userid) {
+    let existing;
+    let v;
+    const fields = await this.getFields();
+    if (fields.some((f) => f.calculated && f.stored)) {
+      existing = await db.selectOne(this.name, { id });
+      v = this.apply_calculated_fields([{ ...existing, ...v_in }], true)[0];
+    } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
-      const existing = await this.getRow({ id });
+      if (!existing) existing = await db.selectOne(this.name, { id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,
@@ -169,7 +199,9 @@ class Table {
     );
   }
 
-  async insertRow(v, _userid) {
+  async insertRow(v_in, _userid) {
+    await this.getFields();
+    const v = this.apply_calculated_fields([v_in], true)[0];
     const id = await db.insert(this.name, v);
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -333,7 +365,7 @@ class Table {
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
-    const fields = await this.getFields();
+    const fields = (await this.getFields()).filter((f) => !f.calculated);
     const okHeaders = {};
     const renames = [];
     for (const f of fields) {
@@ -394,6 +426,13 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      fields
+        .filter((f) => f.calculated && !f.stored)
+        .forEach((f) => {
+          if (typeof rec[f.name] !== "undefined") {
+            delete rec[f.name];
+          }
+        });
       try {
         readState(rec, fields);
         await db.insert(this.name, rec, true, client);
@@ -426,9 +465,11 @@ class Table {
         } else {
           const table = await Table.findOne({ name: f.reftable_name });
           await table.getFields();
-          table.fields.forEach((pf) => {
-            parent_field_list.push(`${f.name}.${pf.name}`);
-          });
+          table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .forEach((pf) => {
+              parent_field_list.push(`${f.name}.${pf.name}`);
+            });
           parent_relations.push({ key_field: f, table });
         }
       }
@@ -479,7 +520,7 @@ class Table {
       }
       fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
-    for (const f of fields) {
+    for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
@@ -514,7 +555,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return res.rows;
+    return this.apply_calculated_fields(res.rows, false);
   }
 }
 

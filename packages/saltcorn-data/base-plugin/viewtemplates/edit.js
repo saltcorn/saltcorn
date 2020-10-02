@@ -20,7 +20,7 @@ const configuration_workflow = () =>
         name: "Layout",
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
 
@@ -48,14 +48,16 @@ const configuration_workflow = () =>
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
-          return fields.some((f) => !in_form_fields.includes(f.name));
+          return fields.some(
+            (f) => !in_form_fields.includes(f.name) && !f.calculated
+          );
         },
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
-            (f) => !in_form_fields.includes(f.name)
+            (f) => !in_form_fields.includes(f.name) && !f.calculated
           );
           var formFields = [];
           omitted_fields.forEach((f) => {
