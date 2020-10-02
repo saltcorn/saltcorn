@@ -321,7 +321,7 @@ class Field {
   static expressionValidator(s) {
     if (!s || s.length == 0) return "Missing formula";
     try {
-      const f = new Function("", "return " + s);
+      const f = vm.runInNewContext(`()=>(${s})`);
       return true;
     } catch (e) {
       return e.message;

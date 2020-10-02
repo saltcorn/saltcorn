@@ -127,11 +127,22 @@ class Table {
     for (const field of this.fields) {
       if (field.calculated && field.stored === stored) {
         hasExprs = true;
-        const f = field.get_expression_function(this.fields);
+        let f;
+        try {
+          f = field.get_expression_function(this.fields);
+        } catch (e) {
+          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        }
         const oldf = transform;
         transform = (row) => {
-          const x = f(row);
-          row[field.name] = x;
+          try {
+            const x = f(row);
+            row[field.name] = x;
+          } catch (e) {
+            throw new Error(
+              `Error in calculating "${field.name}": ${e.message}`
+            );
+          }
           return oldf(row);
         };
       }
