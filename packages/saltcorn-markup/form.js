@@ -311,13 +311,31 @@ const mkFormWithLayout = (form, csrfToken) => {
   }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
   const hiddens = form.fields
     .filter((f) => f.input_type === "hidden")
     .map((f) => innerField(form.values, form.errors)(f))
     .join("");
+  const fullFormError = errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   return (
-    blurbp + top + csrfField + hiddens + renderFormLayout(form) + "</form>"
+    blurbp +
+    top +
+    csrfField +
+    hiddens +
+    renderFormLayout(form) +
+    fullFormError +
+    "</form>"
   );
 };
 
@@ -343,8 +361,11 @@ const mkForm = (form, csrfToken, errors = {}) => {
       )
     )
     .join("");
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
-  console.log({ errors });
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
   const fullFormError = errors._form
     ? `<div class="form-group row">
   <div class="col-sm-12">

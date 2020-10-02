@@ -10,9 +10,7 @@ const User = require("@saltcorn/data/models/user");
 const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
-const { disable } = require("contractis/contract");
-const { table } = require("@saltcorn/markup/tags");
-
+const expressionBlurb = require("../markup/expression_blurb");
 const router = new Router();
 module.exports = router;
 
@@ -80,9 +78,7 @@ const calcFieldType = (ctxType) =>
   ctxType.startsWith("Key to")
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
-const expressionBlurb = (type) => {
-  return `Please enter the formula for the new field as a JavaScript expression`;
-};
+
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -206,9 +202,11 @@ const fieldFlow = (req) =>
       {
         name: req.__("Expression"),
         onlyWhen: (context) => context.calculated,
-        form: (context) =>
-          new Form({
-            blurb: expressionBlurb(context.type),
+        form: async (context) => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          return new Form({
+            blurb: expressionBlurb(context.type, fields),
             fields: [
               new Field({
                 name: "expression",
@@ -217,7 +215,8 @@ const fieldFlow = (req) =>
                 validator: Field.expressionValidator,
               }),
             ],
-          }),
+          });
+        },
       },
       {
         name: req.__("Summary"),
@@ -229,11 +228,13 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const fld = new Field(context);
           const table = await Table.findOne({ name: fld.reftable_name });
-          const fields = await Field.find({ table_id: table.id });
-          const keyfields = fields.map((f) => ({
-            value: f.name,
-            label: f.label,
-          }));
+          const fields = await table.getFields();
+          const keyfields = fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
+              value: f.name,
+              label: f.label,
+            }));
           return new Form({
             fields: [
               new Field({

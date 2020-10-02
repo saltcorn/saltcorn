@@ -99,7 +99,7 @@ Form.contract = {
     labelCols: is.maybe(is.posint),
     hasErrors: is.bool,
     submitLabel: is.maybe(is.str),
-    blurb: is.maybe(is.str),
+    blurb: is.maybe(is.or(is.str, is.array(is.str))),
     class: is.maybe(is.str),
     isStateForm: is.bool,
     formStyle: is.str,
