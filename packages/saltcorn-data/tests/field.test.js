@@ -315,15 +315,23 @@ describe("calculated", () => {
       type: "Integer",
     });
     getState().registerPlugin("mock_plugin", plugin_with_routes);
-    const fz = await Field.create({
+    await Field.create({
       table,
       label: "z",
       type: "Integer",
       calculated: true,
       expression: "add3(x)",
     });
+    await Field.create({
+      table,
+      label: "w",
+      type: "Integer",
+      calculated: true,
+      expression: "add5(x)",
+    });
     await table.insertRow({ x: 13 });
     const row0 = await table.getRow({});
     expect(row0.z).toBe(16);
+    expect(row0.w).toBe(18);
   });
 });

@@ -184,7 +184,9 @@ const is_maybe_cfg_fun = (a) => is.or(is.fun(is.obj, a), a, is.undefined);
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
-  functions: is_maybe_cfg_fun(is.objVals(is_plugin_function)),
+  functions: is_maybe_cfg_fun(
+    is.objVals(is.or(is_plugin_function, is.fun(is.any, is.any)))
+  ),
   layout: is_maybe_cfg_fun(is_plugin_layout),
   types: is_maybe_cfg_fun(is.array(is_plugin_type)),
   pages: is_maybe_cfg_fun(

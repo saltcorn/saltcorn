@@ -89,7 +89,7 @@ class State {
     });
     Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
       this.functions[k] = v;
-      this.function_context[k] = v.run;
+      this.function_context[k] = typeof v === "function" ? v : v.run;
     });
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
