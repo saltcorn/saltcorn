@@ -263,4 +263,27 @@ describe("calculated", () => {
     }
     expect(error.constructor.name).toBe("ReferenceError");
   });
+  it("stored existing", async () => {
+    const table = await Table.create("withcalcs3");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+    await table.insertRow({ x: 6, y: 9 });
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "x+y",
+    });
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(undefined);
+  });
 });
