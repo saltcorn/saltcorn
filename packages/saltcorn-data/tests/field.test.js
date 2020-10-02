@@ -2,6 +2,8 @@ const Table = require("../models/table");
 const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
+const { plugin_with_routes } = require("./mocks");
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -304,5 +306,24 @@ describe("calculated", () => {
     const rowlast = await table.getRow({ id: id201 });
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
+  });
+  it("use supplied function", async () => {
+    const table = await Table.create("withcalcs5");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "add3(x)",
+    });
+    await table.insertRow({ x: 13 });
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(16);
   });
 });

@@ -172,12 +172,19 @@ const is_viewtemplate = is.obj({
     is.promise(is.str)
   ),
 });
+const is_plugin_function = is.obj({
+  run: is.fun(is.any, is.any),
+  returns: is.maybe(is.str),
+  arguments: is.maybe(is.array(is.str)),
+  isAsync: is.maybe(is.bool),
+});
 
 const is_maybe_cfg_fun = (a) => is.or(is.fun(is.obj, a), a, is.undefined);
 
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
+  functions: is_maybe_cfg_fun(is.objVals(is_plugin_function)),
   layout: is_maybe_cfg_fun(is_plugin_layout),
   types: is_maybe_cfg_fun(is.array(is_plugin_type)),
   pages: is_maybe_cfg_fun(

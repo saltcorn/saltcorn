@@ -50,6 +50,7 @@ const configuration_workflow = () =>
 
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
+  functions: { add3: { run: (x) => x + 3 } },
   viewtemplates: [
     {
       name: "ViewWithRoutes",

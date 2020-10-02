@@ -39,6 +39,7 @@ class State {
     this.layout = { wrap: emergency_layout };
     this.headers = [];
     this.function_context = {};
+    this.functions = {};
     contract.class(this);
   }
 
@@ -85,6 +86,10 @@ class State {
     });
     Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
       this.pages[k] = v;
+    });
+    Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
+      this.functions[k] = v;
+      this.function_context[k] = v.run;
     });
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
