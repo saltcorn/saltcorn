@@ -197,7 +197,7 @@ class Table {
     do {
       rows = await this.getRows(
         { id: { gt: maxid } },
-        { orderBy: "id", limit: 50 }
+        { orderBy: "id", limit: 20 }
       );
       for (const row of rows) {
         try {
@@ -207,7 +207,7 @@ class Table {
         }
       }
       if (rows.length > 0) maxid = rows[rows.length - 1].id;
-    } while (rows.length === 50);
+    } while (rows.length === 20);
   }
 
   async toggleBool(id, field_name) {

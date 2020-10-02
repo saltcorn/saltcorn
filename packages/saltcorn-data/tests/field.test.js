@@ -2,6 +2,8 @@ const Table = require("../models/table");
 const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
+const { plugin_with_routes } = require("./mocks");
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -278,7 +280,7 @@ describe("calculated", () => {
       type: "Integer",
     });
     const id1 = await table.insertRow({ x: 6, y: 9 });
-    for (let index = 0; index < 60; index++) {
+    for (let index = 0; index < 25; index++) {
       await table.insertRow({ x: 1, y: 1 });
     }
     const id201 = await table.insertRow({ x: 7, y: 2 });
@@ -297,12 +299,39 @@ describe("calculated", () => {
     const row201 = await table.getRow({ id: id201 });
     expect(row201.x).toBe(7);
     expect(row201.z).toBe(null);
-    await sleep(1500);
+    await sleep(3000);
     const row1 = await table.getRow({ id: id1 });
     expect(row1.x).toBe(6);
     expect(row1.z).toBe(15);
     const rowlast = await table.getRow({ id: id201 });
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
+  });
+  it("use supplied function", async () => {
+    const table = await Table.create("withcalcs5");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "add3(x)",
+    });
+    await Field.create({
+      table,
+      label: "w",
+      type: "Integer",
+      calculated: true,
+      expression: "add5(x)",
+    });
+    await table.insertRow({ x: 13 });
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(16);
+    expect(row0.w).toBe(18);
   });
 });
