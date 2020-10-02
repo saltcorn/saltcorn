@@ -320,10 +320,10 @@ const mkFormWithLayout = (form, csrfToken) => {
     .filter((f) => f.input_type === "hidden")
     .map((f) => innerField(form.values, form.errors)(f))
     .join("");
-  const fullFormError = errors._form
+  const fullFormError = form.errors._form
     ? `<div class="form-group row">
   <div class="col-sm-12">
-  <p class="text-danger">${errors._form}
+  <p class="text-danger">${form.errors._form}
   </p>
   </div>
   </div>`

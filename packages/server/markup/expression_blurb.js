@@ -26,6 +26,29 @@ const intExamples = (type, fields) => {
   return exs;
 };
 
+const colorExamples = (type, fields) => {
+  const boolFields = fields.filter((f) => f.type.name === "Bool");
+  const exs = [`"#06ab6d1"`];
+  if (boolFields.length > 0) {
+    const b = is.one_of(boolFields).generate();
+    exs.push(`${b.name} ? "#000000" : "#ffffff"`);
+  }
+  return exs;
+};
+const stringExamples = (type, fields) => {
+  const boolFields = fields.filter((f) => f.type.name === "Bool");
+  const strFields = fields.filter((f) => f.type.name === "String");
+  const exs = [`"Hello world!"`];
+  if (boolFields.length > 0) {
+    const b = is.one_of(boolFields).generate();
+    exs.push(`${b.name} ? "Squish" : "Squash"`);
+  }
+  if (strFields.length > 0) {
+    const b = is.one_of(strFields).generate();
+    exs.push(`${b.name}.toUpperCase()`);
+  }
+  return exs;
+};
 const floatExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type.name === "Bool");
   const numFields = fields.filter(
@@ -83,6 +106,8 @@ const expressionBlurb = (type, allFields) => {
       Integer: () => intExamples(type, fields),
       Float: () => floatExamples(type, fields),
       Bool: () => boolExamples(type, fields),
+      Color: () => colorExamples(type, fields),
+      String: () => stringExamples(type, fields),
     }[type] || (() => [])
   )();
   return [
