@@ -280,7 +280,7 @@ describe("calculated", () => {
       type: "Integer",
     });
     const id1 = await table.insertRow({ x: 6, y: 9 });
-    for (let index = 0; index < 60; index++) {
+    for (let index = 0; index < 25; index++) {
       await table.insertRow({ x: 1, y: 1 });
     }
     const id201 = await table.insertRow({ x: 7, y: 2 });
