@@ -38,6 +38,7 @@ class State {
     this.plugin_cfgs = {};
     this.layout = { wrap: emergency_layout };
     this.headers = [];
+    this.function_context = {};
     contract.class(this);
   }
 

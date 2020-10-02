@@ -329,7 +329,11 @@ class Field {
   }
   get_expression_function(fields) {
     const args = `{${fields.map((f) => f.name).join()}}`;
-    return vm.runInNewContext(`(${args})=>(${this.expression})`);
+    const { getState } = require("../db/state");
+    return vm.runInNewContext(
+      `(${args})=>(${this.expression})`,
+      getState().function_context
+    );
   }
   static async create(fld, bare = false) {
     const f = new Field(fld);
