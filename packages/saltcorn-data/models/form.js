@@ -78,7 +78,6 @@ class Form {
     } else {
       if (this.validator) {
         const fvalres = this.validator(this.values);
-        console.log({ fvalres });
         if (typeof fvalres === "string") {
           this.hasErrors = true;
           this.errors._form = fvalres;
