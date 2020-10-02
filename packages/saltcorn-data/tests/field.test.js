@@ -299,7 +299,7 @@ describe("calculated", () => {
     const row201 = await table.getRow({ id: id201 });
     expect(row201.x).toBe(7);
     expect(row201.z).toBe(null);
-    await sleep(1500);
+    await sleep(3000);
     const row1 = await table.getRow({ id: id1 });
     expect(row1.x).toBe(6);
     expect(row1.z).toBe(15);
