@@ -402,6 +402,12 @@ class Field {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
 
+    if (f.calculated && f.stored) {
+      const nrows = await table.countRows({});
+      if (nrows > 0) {
+        table.recalculate_for_stored(f);
+      }
+    }
     return f;
   }
 }

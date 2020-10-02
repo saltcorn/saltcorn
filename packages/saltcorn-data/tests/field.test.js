@@ -180,7 +180,9 @@ describe("user presets", () => {
   const presets = field.presets;
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
-
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 describe("calculated", () => {
   it("how to use functions", () => {
     const f = new Function("{x,y}", "return x+y");
@@ -275,15 +277,32 @@ describe("calculated", () => {
       label: "y",
       type: "Integer",
     });
-    await table.insertRow({ x: 6, y: 9 });
+    const id1 = await table.insertRow({ x: 6, y: 9 });
+    for (let index = 0; index < 60; index++) {
+      await table.insertRow({ x: 1, y: 1 });
+    }
+    const id201 = await table.insertRow({ x: 7, y: 2 });
+
     const fz = await Field.create({
       table,
       label: "z",
       type: "Integer",
       calculated: true,
       expression: "x+y",
+      stored: true,
     });
-    const row0 = await table.getRow({});
-    expect(row0.z).toBe(undefined);
+    const row0 = await table.getRow({ id: id1 });
+    expect(row0.x).toBe(6);
+    expect(row0.z).toBe(null);
+    const row201 = await table.getRow({ id: id201 });
+    expect(row201.x).toBe(7);
+    expect(row201.z).toBe(null);
+    await sleep(500);
+    const row1 = await table.getRow({ id: id1 });
+    expect(row1.x).toBe(6);
+    expect(row1.z).toBe(15);
+    const rowlast = await table.getRow({ id: id201 });
+    expect(rowlast.z).toBe(9);
+    expect(rowlast.x).toBe(7);
   });
 });
