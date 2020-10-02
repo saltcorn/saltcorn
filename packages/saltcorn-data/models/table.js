@@ -189,6 +189,27 @@ class Table {
     }
   }
 
+  async recalculate_for_stored(field) {
+    let rows = [];
+    let maxid = 0;
+    const fields = await this.getFields();
+    const f = field.get_expression_function(fields);
+    do {
+      rows = await this.getRows(
+        { id: { gt: maxid } },
+        { orderBy: "id", limit: 50 }
+      );
+      for (const row of rows) {
+        try {
+          await this.updateRow({}, row.id);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      if (rows.length > 0) maxid = rows[rows.length - 1].id;
+    } while (rows.length === 50);
+  }
+
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(

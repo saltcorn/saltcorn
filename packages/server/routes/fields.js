@@ -66,7 +66,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
 
       new Field({
         label: "Stored",
-        name: "sored",
+        name: "stored",
         type: "Bool",
         disabled: !!id,
         showIf: { ".iscalc": true },
