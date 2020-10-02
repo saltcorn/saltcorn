@@ -344,6 +344,15 @@ const mkForm = (form, csrfToken, errors = {}) => {
     )
     .join("");
   const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  console.log({ errors });
+  const fullFormError = errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
     <button type="submit" class="btn ${
@@ -356,6 +365,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
     top +
     csrfField +
     flds +
+    fullFormError +
     (form.noSubmitButton ? "" : bot) +
     "</form>"
   );

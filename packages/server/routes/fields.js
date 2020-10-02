@@ -19,12 +19,19 @@ module.exports = router;
 const fieldForm = (req, fkey_opts, existing_names, id) =>
   new Form({
     action: "/field",
+    validator: (vs) => {
+      if (vs.calculated && vs.type == "File")
+        return "Calculated fields cannot have File type";
+      if (vs.calculated && vs.type.startsWith("Key to"))
+        return "Calculated fields cannot have Key type";
+    },
     fields: [
       new Field({
         label: "Label",
         name: "label",
         input_type: "text",
         validator(s) {
+          if (!s || s === "") return "Missing label";
           if (s.toLowerCase() === "id")
             return `Column '${s}' already exists (but is hidden)`;
           if (!id && existing_names.includes(Field.labelToName(s)))
@@ -73,7 +80,9 @@ const calcFieldType = (ctxType) =>
   ctxType.startsWith("Key to")
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
-
+const expressionBlurb = (type) => {
+  return `Please enter the formula for the new field as a JavaScript expression`;
+};
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -199,6 +208,7 @@ const fieldFlow = (req) =>
         onlyWhen: (context) => context.calculated,
         form: (context) =>
           new Form({
+            blurb: expressionBlurb(context.type),
             fields: [
               new Field({
                 name: "expression",
