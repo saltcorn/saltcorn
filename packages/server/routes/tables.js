@@ -189,6 +189,25 @@ router.post(
   })
 );
 
+const badge = (col, lbl) =>
+  `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+const typeBadges = (f) => {
+  let s = "";
+  if (f.required) s += badge("primary", "Required");
+  if (f.is_unique) s += badge("success", "Unique");
+  if (f.calculated) s += badge("info", "Calculated");
+  if (f.stored) s += badge("warning", "Stored");
+  return s;
+};
+const attribBadges = (f) => {
+  let s = "";
+  if (f.attributes) {
+    Object.entries(f.attributes).forEach(([k, v]) => {
+      if (v || v === 0) s += badge("secondary", k);
+    });
+  }
+  return s;
+};
 router.get(
   "/:id",
   setTenant,
@@ -215,16 +234,21 @@ router.get(
       const tableHtml = mkTable(
         [
           { label: req.__("Label"), key: "label" },
-          {
-            label: req.__("Required"),
-            key: (r) => (r.required ? "true" : "false"),
-          },
+
           {
             label: req.__("Type"),
             key: (r) =>
               r.type === "Key"
                 ? `Key to ${r.reftable_name}`
                 : r.type.name || r.type,
+          },
+          {
+            label: "",
+            key: (r) => typeBadges(r),
+          },
+          {
+            label: "Attributes",
+            key: (r) => attribBadges(r),
           },
           { label: req.__("Edit"), key: (r) => link(`/field/${r.id}`, "Edit") },
           {

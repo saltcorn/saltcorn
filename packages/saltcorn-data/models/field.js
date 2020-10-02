@@ -319,6 +319,7 @@ class Field {
   }
 
   static expressionValidator(s) {
+    if (!s || s.length == 0) return "Missing formula";
     try {
       const f = new Function("", "return " + s);
       return true;
