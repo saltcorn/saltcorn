@@ -1,6 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-
+const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const vm = require("vm");
 const readKey = (v) => {
@@ -393,7 +393,7 @@ class Field {
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
-        table.recalculate_for_stored(f);
+        recalculate_for_stored(table, f);
       }
     }
     return f;
