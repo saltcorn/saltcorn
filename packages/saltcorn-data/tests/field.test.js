@@ -3,6 +3,7 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 const { plugin_with_routes } = require("./mocks");
+const { get_expression_function } = require("../models/expression");
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -218,7 +219,7 @@ describe("calculated", () => {
       stored: true,
     });
     const fields = await table.getFields();
-    const fzf = fz.get_expression_function(fields);
+    const fzf = get_expression_function(fz.expression, fields);
     expect(fzf({ x: 4, y: 2 })).toBe(6);
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
@@ -258,7 +259,7 @@ describe("calculated", () => {
       expression: "process.exit(0)",
     });
     const fields = await table.getFields();
-    const fzf = fz.get_expression_function(fields);
+    const fzf = get_expression_function(fz.expression, fields);
     let error;
     try {
       fzf({ x: 4 });

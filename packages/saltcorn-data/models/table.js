@@ -1,6 +1,7 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const { get_expression_function } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
@@ -129,7 +130,7 @@ class Table {
         hasExprs = true;
         let f;
         try {
-          f = field.get_expression_function(this.fields);
+          f = get_expression_function(field.expression, this.fields);
         } catch (e) {
           throw new Error(`Error in calculating "${field.name}": ${e.message}`);
         }
@@ -204,7 +205,7 @@ class Table {
     let rows = [];
     let maxid = 0;
     const fields = await this.getFields();
-    const f = field.get_expression_function(fields);
+    const f = get_expression_function(field.expression, this.fields);
     do {
       rows = await this.getRows(
         { id: { gt: maxid } },

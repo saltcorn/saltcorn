@@ -318,23 +318,6 @@ class Field {
     }
   }
 
-  static expressionValidator(s) {
-    if (!s || s.length == 0) return "Missing formula";
-    try {
-      const f = vm.runInNewContext(`()=>(${s})`);
-      return true;
-    } catch (e) {
-      return e.message;
-    }
-  }
-  get_expression_function(fields) {
-    const args = `{${fields.map((f) => f.name).join()}}`;
-    const { getState } = require("../db/state");
-    return vm.runInNewContext(
-      `(${args})=>(${this.expression})`,
-      getState().function_context
-    );
-  }
   static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();

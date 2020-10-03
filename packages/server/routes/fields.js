@@ -7,6 +7,7 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const { expressionValidator } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -212,7 +213,7 @@ const fieldFlow = (req) =>
                 name: "expression",
                 label: req.__("Formula"),
                 type: "String",
-                validator: Field.expressionValidator,
+                validator: expressionValidator,
               }),
             ],
           });
