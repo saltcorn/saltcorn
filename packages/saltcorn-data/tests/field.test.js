@@ -3,7 +3,10 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 const { plugin_with_routes } = require("./mocks");
-const { get_expression_function } = require("../models/expression");
+const {
+  get_expression_function,
+  transform_for_async,
+} = require("../models/expression");
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -343,6 +346,8 @@ describe("calculated", () => {
       type: "Integer",
     });
     getState().registerPlugin("mock_plugin", plugin_with_routes);
+    const xres = transform_for_async("1+ asyncAdd2(x)");
+    expect(xres).toBe(1);
     await Field.create({
       table,
       label: "z",

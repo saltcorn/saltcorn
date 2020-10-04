@@ -1,5 +1,7 @@
 const vm = require("vm");
-
+let acorn = require("acorn");
+const estraverse = require("estraverse");
+const astring = require("astring");
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
@@ -8,6 +10,30 @@ function expressionValidator(s) {
   } catch (e) {
     return e.message;
   }
+}
+
+function transform_for_async(expression) {
+  const { getState } = require("../db/state");
+  var isAsync = false;
+  const statefuns = getState().functions;
+  const ast = acorn.parseExpressionAt(expression, 0, {
+    ecmaVersion: 2020,
+    allowAwaitOutsideFunction: true,
+    locations: false,
+  });
+  result = estraverse.replace(ast, {
+    leave: function (node) {
+      if (node.type === "CallExpression") {
+        const sf = statefuns[node.callee.name];
+        if (sf) {
+          isAsync = true;
+          return { type: "AwaitExpression", argument: node };
+        }
+      }
+    },
+  });
+
+  return { isAsync, expr_string: astring.generate(ast) };
 }
 
 function get_expression_function(expression, fields) {
@@ -70,4 +96,5 @@ module.exports = {
   apply_calculated_fields,
   get_expression_function,
   recalculate_for_stored,
+  transform_for_async,
 };
