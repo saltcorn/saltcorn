@@ -346,7 +346,7 @@ describe("calculated", () => {
       type: "Integer",
     });
     getState().registerPlugin("mock_plugin", plugin_with_routes);
-    const xres = transform_for_async("1+ asyncAdd2(x)");
+    const xres = transform_for_async("add5(1)+ add3(4)+asyncAdd2(x)");
     expect(xres).toBe(1);
     await Field.create({
       table,

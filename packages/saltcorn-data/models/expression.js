@@ -25,7 +25,7 @@ function transform_for_async(expression) {
     leave: function (node) {
       if (node.type === "CallExpression") {
         const sf = statefuns[node.callee.name];
-        if (sf) {
+        if (sf && sf.isAsync) {
           isAsync = true;
           return { type: "AwaitExpression", argument: node };
         }
