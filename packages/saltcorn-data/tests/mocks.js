@@ -50,7 +50,16 @@ const configuration_workflow = () =>
 
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
-  functions: { add3: { run: (x) => x + 3 }, add5: (x) => x + 5 },
+  functions: {
+    add3: { run: (x) => x + 3 },
+    add5: (x) => x + 5,
+    asyncAdd2: {
+      run: async (x) => {
+        return x + 2;
+      },
+      isAsync: true,
+    },
+  },
   viewtemplates: [
     {
       name: "ViewWithRoutes",

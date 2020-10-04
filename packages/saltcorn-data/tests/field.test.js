@@ -335,4 +335,25 @@ describe("calculated", () => {
     expect(row0.z).toBe(16);
     expect(row0.w).toBe(18);
   });
+  it("use supplied function", async () => {
+    const table = await Table.create("withcalcs7");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "1+asyncAdd2(x)",
+      stored: true,
+    });
+
+    await table.insertRow({ x: 14 });
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(17);
+  });
 });
