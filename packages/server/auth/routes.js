@@ -365,6 +365,7 @@ router.post(
   setTenant,
   globalBruteforce.prevent,
   userBruteforce.getMiddleware({
+    ignoreIP: true,
     key: function (req, res, next) {
       next(req.body.email);
     },
