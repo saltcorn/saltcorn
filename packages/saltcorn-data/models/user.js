@@ -2,6 +2,7 @@ const db = require("../db");
 const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
+const dumbPasswords = require("dumb-passwords");
 
 class User {
   constructor(o) {
@@ -100,6 +101,7 @@ class User {
   static unacceptable_password_reason(pw) {
     if (typeof pw !== "string") return "Not a string";
     if (pw.length < 8) return "Too short";
+    if (dumbPasswords.check(pw)) return "Too common";
   }
 
   static async resetPasswordWithToken({

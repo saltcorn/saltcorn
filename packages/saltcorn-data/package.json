@@ -19,6 +19,7 @@
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
+    "dumb-passwords": "^0.2.1",
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
     "moment": "^2.27.0",
