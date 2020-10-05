@@ -393,7 +393,7 @@ class Field {
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
-        recalculate_for_stored(table, f);
+        recalculate_for_stored(table);
       }
     }
     return f;

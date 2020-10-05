@@ -363,8 +363,11 @@ describe("calculated", () => {
       stored: true,
     });
 
-    await table.insertRow({ x: 14 });
+    const id = await table.insertRow({ x: 14 });
     const row0 = await table.getRow({});
     expect(row0.z).toBe(17);
+    await table.updateRow({ x: 15 }, id);
+    const rows = await table.getRows({});
+    expect(rows[0].z).toBe(18);
   });
 });

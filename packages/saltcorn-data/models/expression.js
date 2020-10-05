@@ -15,7 +15,6 @@ function expressionValidator(s) {
 }
 
 function transform_for_async(expression, statefuns) {
-  const { getState } = require("../db/state");
   var isAsync = false;
   const ast = acorn.parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
@@ -110,7 +109,7 @@ const apply_calculated_fields_stored = async (row, fields) => {
     return await transform(row);
   } else return row;
 };
-const recalculate_for_stored = async (table, field) => {
+const recalculate_for_stored = async (table) => {
   let rows = [];
   let maxid = 0;
   do {
