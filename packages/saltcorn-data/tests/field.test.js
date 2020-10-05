@@ -346,8 +346,14 @@ describe("calculated", () => {
       type: "Integer",
     });
     getState().registerPlugin("mock_plugin", plugin_with_routes);
-    const xres = transform_for_async("add5(1)+ add3(4)+asyncAdd2(x)");
-    expect(xres).toBe(1);
+    const xres = transform_for_async(
+      "add5(1)+ add3(4)+asyncAdd2(x)",
+      getState().functions
+    );
+    expect(xres).toEqual({
+      expr_string: "add5(1) + add3(4) + (await asyncAdd2(x))",
+      isAsync: true,
+    });
     await Field.create({
       table,
       label: "z",

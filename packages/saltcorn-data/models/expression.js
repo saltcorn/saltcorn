@@ -2,6 +2,8 @@ const vm = require("vm");
 let acorn = require("acorn");
 const estraverse = require("estraverse");
 const astring = require("astring");
+const { asyncMap } = require("../utils");
+
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
@@ -12,16 +14,15 @@ function expressionValidator(s) {
   }
 }
 
-function transform_for_async(expression) {
+function transform_for_async(expression, statefuns) {
   const { getState } = require("../db/state");
   var isAsync = false;
-  const statefuns = getState().functions;
   const ast = acorn.parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
     allowAwaitOutsideFunction: true,
     locations: false,
   });
-  result = estraverse.replace(ast, {
+  estraverse.replace(ast, {
     leave: function (node) {
       if (node.type === "CallExpression") {
         const sf = statefuns[node.callee.name];
@@ -44,12 +45,20 @@ function get_expression_function(expression, fields) {
     getState().function_context
   );
 }
-
-function apply_calculated_fields(rows, fields, stored) {
+function get_async_expression_function(expression, fields) {
+  const args = `{${fields.map((f) => f.name).join()}}`;
+  const { getState } = require("../db/state");
+  const { expr_string } = transform_for_async(expression, getState().functions);
+  return vm.runInNewContext(
+    `async (${args})=>(${expr_string})`,
+    getState().function_context
+  );
+}
+function apply_calculated_fields(rows, fields) {
   let hasExprs = false;
   let transform = (x) => x;
   for (const field of fields) {
-    if (field.calculated && field.stored === stored) {
+    if (field.calculated && !field.stored) {
       hasExprs = true;
       let f;
       try {
@@ -73,6 +82,34 @@ function apply_calculated_fields(rows, fields, stored) {
     return rows.map(transform);
   } else return rows;
 }
+const apply_calculated_fields_stored = async (row, fields) => {
+  let hasExprs = false;
+  let transform = (x) => x;
+  for (const field of fields) {
+    if (field.calculated && field.stored) {
+      hasExprs = true;
+      let f;
+      try {
+        f = get_async_expression_function(field.expression, fields);
+      } catch (e) {
+        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+      }
+      const oldf = transform;
+      transform = async (row) => {
+        try {
+          const x = await f(row);
+          row[field.name] = x;
+        } catch (e) {
+          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        }
+        return await oldf(row);
+      };
+    }
+  }
+  if (hasExprs) {
+    return await transform(row);
+  } else return row;
+};
 const recalculate_for_stored = async (table, field) => {
   let rows = [];
   let maxid = 0;
@@ -94,7 +131,9 @@ const recalculate_for_stored = async (table, field) => {
 module.exports = {
   expressionValidator,
   apply_calculated_fields,
+  get_async_expression_function,
   get_expression_function,
   recalculate_for_stored,
   transform_for_async,
+  apply_calculated_fields_stored,
 };

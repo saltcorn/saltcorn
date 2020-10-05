@@ -2,8 +2,8 @@ const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
 const {
-  get_expression_function,
   apply_calculated_fields,
+  apply_calculated_fields_stored,
 } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
@@ -122,11 +122,7 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return apply_calculated_fields(
-      [this.readFromDB(row)],
-      this.fields,
-      false
-    )[0];
+    return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
   async getRows(where, selopts) {
@@ -134,8 +130,7 @@ class Table {
     const rows = await db.select(this.name, where, selopts);
     return apply_calculated_fields(
       rows.map((r) => this.readFromDB(r)),
-      this.fields,
-      false
+      this.fields
     );
   }
 
@@ -149,11 +144,10 @@ class Table {
     const fields = await this.getFields();
     if (fields.some((f) => f.calculated && f.stored)) {
       existing = await db.selectOne(this.name, { id });
-      v = apply_calculated_fields(
-        [{ ...existing, ...v_in }],
-        this.fields,
-        true
-      )[0];
+      v = await apply_calculated_fields_stored(
+        { ...existing, ...v_in },
+        this.fields
+      );
     } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
@@ -194,7 +188,7 @@ class Table {
 
   async insertRow(v_in, _userid) {
     await this.getFields();
-    const v = apply_calculated_fields([v_in], this.fields, true)[0];
+    const v = await apply_calculated_fields_stored(v_in, this.fields);
     const id = await db.insert(this.name, v);
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -548,7 +542,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return apply_calculated_fields(res.rows, this.fields, false);
+    return apply_calculated_fields(res.rows, this.fields);
   }
 }
 
