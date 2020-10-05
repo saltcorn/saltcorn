@@ -291,5 +291,6 @@
 	"Name required": "Name required",
 	"Expression": "Expression",
 	"Formula": "Formula",
-	"new": "new"
+	"new": "new",
+	"Password does not match": "Password does not match"
 }

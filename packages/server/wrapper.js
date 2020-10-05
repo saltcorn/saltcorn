@@ -41,7 +41,7 @@ const get_menu = (req) => {
           label: req.__("User"),
           isUser: true,
           subitems: [
-            { label: small(req.user.email.split("@")[0]) },
+            { label: small((req.user.email || "").split("@")[0]) },
             {
               label: req.__("User Settings"),
               link: "/auth/settings",

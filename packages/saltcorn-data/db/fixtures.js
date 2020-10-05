@@ -179,15 +179,19 @@ module.exports = async () => {
     patient_id: michael_id,
     normalised: false,
   });
-  await User.create({ email: "admin@foo.com", password: "secret", role_id: 1 });
+  await User.create({
+    email: "admin@foo.com",
+    password: "AhGGr6rhu45",
+    role_id: 1,
+  });
   await User.create({
     email: "staff@foo.com",
-    password: "secret",
+    password: "ghrarhr54hg",
     role_id: 4,
   });
   await User.create({
     email: "user@foo.com",
-    password: "secret",
+    password: "GFeggwrwq45fjn",
     role_id: 8,
   });
   await File.ensure_file_store();

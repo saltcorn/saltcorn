@@ -221,7 +221,7 @@ describe("Table create", () => {
   it("Signs up", async () => {
     await browser.goto("/auth/signup");
     await browser.page.type("#inputemail", "fredthedragon@foo.fi");
-    await browser.page.type("#inputpassword", "fidelio");
+    await browser.page.type("#inputpassword", "fidGEG57elio");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Logout");
     expect(await browser.content()).not.toContain("Sign up");
@@ -232,7 +232,7 @@ describe("Table create", () => {
   it("Login", async () => {
     await browser.goto("/auth/login");
     await browser.page.type("#inputemail", "fredthedragon@foo.fi");
-    await browser.page.type("#inputpassword", "fidelio");
+    await browser.page.type("#inputpassword", "fidGEG57elio");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Logout");
     expect(await browser.content()).not.toContain("Sign up");

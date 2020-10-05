@@ -33,11 +33,13 @@ const {
   option,
 } = require("@saltcorn/markup/tags");
 const { available_languages } = require("@saltcorn/data/models/config");
+const ExpressBrute = require("express-brute");
+const moment = require("moment");
 
 const router = new Router();
 module.exports = router;
 
-const loginForm = (req) =>
+const loginForm = (req, isCreating) =>
   new Form({
     fields: [
       new Field({
@@ -50,6 +52,9 @@ const loginForm = (req) =>
         label: req.__("Password"),
         name: "password",
         input_type: "password",
+        validator: isCreating
+          ? (pw) => User.unacceptable_password_reason(pw)
+          : undefined,
       }),
     ],
     action: "/auth/login",
@@ -209,7 +214,7 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
-      const form = loginForm(req);
+      const form = loginForm(req, true);
       form.action = "/auth/signup";
       form.submitLabel = req.__("Sign up");
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
@@ -226,7 +231,7 @@ router.get(
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
-      const form = loginForm(req);
+      const form = loginForm(req, true);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
       form.blurb = req.__(
@@ -245,24 +250,36 @@ router.post(
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
-      const { email, password } = req.body;
-      const u = await User.create({ email, password, role_id: 1 });
-      req.login(
-        {
-          email: u.email,
-          id: u.id,
-          role_id: u.role_id,
-          tenant: db.getTenantSchema(),
-        },
-        function (err) {
-          if (!err) {
-            res.redirect("/");
-          } else {
-            req.flash("danger", err);
-            res.redirect("/auth/signup");
+      const form = loginForm(req, true);
+      form.validate(req.body);
+
+      if (form.hasErrors) {
+        form.action = "/auth/create_first_user";
+        form.submitLabel = req.__("Create user");
+        form.blurb = req.__(
+          "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
+        );
+        res.sendAuthWrap(req.__(`Create first user`), form, {});
+      } else {
+        const { email, password } = form.values;
+        const u = await User.create({ email, password, role_id: 1 });
+        req.login(
+          {
+            email: u.email,
+            id: u.id,
+            role_id: u.role_id,
+            tenant: db.getTenantSchema(),
+          },
+          function (err) {
+            if (!err) {
+              res.redirect("/");
+            } else {
+              req.flash("danger", err);
+              res.redirect("/auth/signup");
+            }
           }
-        }
-      );
+        );
+      }
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
@@ -274,38 +291,47 @@ router.post(
   setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
-      const { email, password } = req.body;
-      if (email.length > 127) {
-        req.flash("danger", req.__("E-mail too long"));
-        res.redirect("/auth/signup");
-        return;
-      }
+      const form = loginForm(req, true);
+      form.validate(req.body);
 
-      const us = await User.find({ email });
-      if (us.length > 0) {
-        req.flash("danger", req.__("Account already exists"));
-        res.redirect("/auth/signup");
-        return;
-      }
-
-      const u = await User.create({ email, password });
-
-      req.login(
-        {
-          email: u.email,
-          id: u.id,
-          role_id: u.role_id,
-          tenant: db.getTenantSchema(),
-        },
-        function (err) {
-          if (!err) {
-            res.redirect("/");
-          } else {
-            req.flash("danger", err);
-            res.redirect("/auth/signup");
-          }
+      if (form.hasErrors) {
+        form.action = "/auth/signup";
+        form.submitLabel = req.__("Sign up");
+        res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+      } else {
+        const { email, password } = form.values;
+        if (email.length > 127) {
+          req.flash("danger", req.__("E-mail too long"));
+          res.redirect("/auth/signup");
+          return;
         }
-      );
+
+        const us = await User.find({ email });
+        if (us.length > 0) {
+          req.flash("danger", req.__("Account already exists"));
+          res.redirect("/auth/signup");
+          return;
+        }
+
+        const u = await User.create({ email, password });
+
+        req.login(
+          {
+            email: u.email,
+            id: u.id,
+            role_id: u.role_id,
+            tenant: db.getTenantSchema(),
+          },
+          function (err) {
+            if (!err) {
+              res.redirect("/");
+            } else {
+              req.flash("danger", err);
+              res.redirect("/auth/signup");
+            }
+          }
+        );
+      }
     } else {
       req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
@@ -313,9 +339,37 @@ router.post(
   })
 );
 
+const failCallback = function (req, res, next, nextValidRequestDate) {
+  req.flash(
+    "error",
+    "You've made too many failed attempts in a short period of time, please try again " +
+      moment(nextValidRequestDate).fromNow()
+  );
+  res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
+};
+
+const store = new ExpressBrute.MemoryStore();
+const globalBruteforce = new ExpressBrute(store, {
+  failCallback,
+});
+
+const userBruteforce = new ExpressBrute(store, {
+  freeRetries: 3,
+  minWait: 60 * 1000, // 1 minute
+  maxWait: 60 * 60 * 1000, // 1 hour,
+  failCallback,
+});
+
 router.post(
   "/login",
   setTenant,
+  globalBruteforce.prevent,
+  userBruteforce.getMiddleware({
+    ignoreIP: true,
+    key: function (req, res, next) {
+      next(req.body.email);
+    },
+  }),
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/auth/login",
@@ -346,7 +400,7 @@ const changPwForm = (req) =>
         label: req.__("New password"),
         name: "new_password",
         input_type: "password",
-        validator: (pw) => (pw.length < 6 ? req.__("Too short") : true),
+        validator: (pw) => User.unacceptable_password_reason(pw),
       },
     ],
   });
