@@ -197,7 +197,11 @@ const render = (row, fields, layout, viewname, table, role, req) => {
       if (!field) return "";
       if (fieldview && field.type === "File") {
         return val ? getState().fileviews[fieldview].run(val) : "";
-      } else if (fieldview && field.type.fieldviews[fieldview])
+      } else if (
+        fieldview &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      )
         return field.type.fieldviews[fieldview].run(val);
       else return text(val);
     },

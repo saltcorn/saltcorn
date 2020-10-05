@@ -157,24 +157,34 @@ const run = async (
         switch (reltype) {
           case "ChildList":
             const [vname, reltblnm, relfld] = rel.split(".");
-            const subview = await View.findOne({ name: vname });
-            const subresp = await subview.run({ [relfld]: id }, extraArgs);
-
             const tab_name = reltblnm;
-            reltbls[tab_name] = subresp;
+            const subview = await View.findOne({ name: vname });
+            if (!subview)
+              reltbls[
+                tab_name
+              ] = `View ${viewname} incorrectly configured: cannot find view ${vname}`;
+            else {
+              const subresp = await subview.run({ [relfld]: id }, extraArgs);
+              reltbls[tab_name] = subresp;
+            }
             break;
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
-            const psubview = await View.findOne({ name: pvname });
             if (!myrow) myrow = await table.getRow({ id });
-
-            const psubresp = await psubview.run(
-              { id: myrow[prelfld] },
-              extraArgs
-            );
-
             const ptab_name = prelfld;
-            reltbls[ptab_name] = psubresp;
+            const psubview = await View.findOne({ name: pvname });
+            if (!psubview)
+              reltbls[
+                ptab_name
+              ] = `View ${viewname} incorrectly configured: cannot find view ${pvname}`;
+            else {
+              const psubresp = await psubview.run(
+                { id: myrow[prelfld] },
+                extraArgs
+              );
+
+              reltbls[ptab_name] = psubresp;
+            }
             break;
           default:
             break;
