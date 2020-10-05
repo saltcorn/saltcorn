@@ -432,6 +432,7 @@ const initial_config_all_fields = contract(
           field_name: f.name,
           type: "Field",
           fieldview: fvNm,
+          state_field: true,
         });
         aboves.push({
           widths: [2, 10],
