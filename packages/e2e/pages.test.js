@@ -13,7 +13,7 @@ describe("Dotcom and db page page", () => {
     await browser.delete_tenant("sub4");
     await browser.goto("/auth/login");
     await browser.page.type("#inputemail", "admin@foo.com");
-    await browser.page.type("#inputpassword", "secret");
+    await browser.page.type("#inputpassword", "AhGGr6rhu45");
     await browser.clickNav("button[type=submit]", true);
   });
   it("sets home page", async () => {
@@ -42,7 +42,7 @@ describe("Dotcom and db page page", () => {
   it("logs back in", async () => {
     await browser.goto("/auth/login");
     await browser.page.type("#inputemail", "admin@foo.com");
-    await browser.page.type("#inputpassword", "secret");
+    await browser.page.type("#inputpassword", "AhGGr6rhu45");
     await browser.clickNav("button[type=submit]");
 
     await browser.goto("/");

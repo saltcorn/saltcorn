@@ -346,7 +346,7 @@ const changPwForm = (req) =>
         label: req.__("New password"),
         name: "new_password",
         input_type: "password",
-        validator: (pw) => (pw.length < 6 ? req.__("Too short") : true),
+        validator: (pw) => User.unacceptable_password_reason(pw),
       },
     ],
   });

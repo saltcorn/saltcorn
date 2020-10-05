@@ -101,7 +101,7 @@ describe("Random tables", () => {
     await reset();
     await User.create({
       email: "admin@foo.com",
-      password: "secret",
+      password: "AhGGr6rhu45",
       role_id: 1,
     });
     const restoreres = await restore(fnm, (p) => {});
@@ -123,7 +123,7 @@ describe("Random table CSV io", () => {
       await reset();
       await User.create({
         email: "admin@foo.com",
-        password: "secret",
+        password: "AhGGr6rhu45",
         role_id: 1,
       });
       await random_table();

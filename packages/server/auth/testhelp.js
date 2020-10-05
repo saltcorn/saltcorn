@@ -50,7 +50,7 @@ const getStaffLoginCookie = async () => {
   const res = await request(app)
     .post("/auth/login/")
     .send("email=staff@foo.com")
-    .send("password=secret");
+    .send("password=ghrarhr54hg");
   if (res.statusCode !== 302) console.log(res.text);
   return res.headers["set-cookie"][0];
 };
@@ -60,7 +60,7 @@ const getAdminLoginCookie = async () => {
   const res = await request(app)
     .post("/auth/login/")
     .send("email=admin@foo.com")
-    .send("password=secret");
+    .send("password=AhGGr6rhu45");
   if (res.statusCode !== 302) console.log(res.text);
 
   return res.headers["set-cookie"][0];

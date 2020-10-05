@@ -30,7 +30,7 @@ describe("Backup and restore", () => {
     await reset();
     await User.create({
       email: "admin@foo.com",
-      password: "secret",
+      password: "AhGGr6rhu45",
       role_id: 1,
     });
     const t2 = await Table.findOne({ name: "books" });

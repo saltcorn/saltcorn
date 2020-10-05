@@ -95,7 +95,7 @@ describe("homepage", () => {
     await request(app)
       .post("/auth/create_first_user")
       .send("email=admin@foo.com")
-      .send("password=secret")
+      .send("password=AhGGr6rhu45")
       .expect(toRedirect("/"));
   });
   it("shows empty quick start", async () => {

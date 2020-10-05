@@ -35,6 +35,12 @@ class User {
   }
   static async create(uo) {
     const u = new User(uo);
+    if (User.unacceptable_password_reason(u.password))
+      return {
+        error:
+          "Password not accepted: " +
+          User.unacceptable_password_reason(u.password),
+      };
     const hashpw = await User.hashPassword(u.password);
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
@@ -91,6 +97,11 @@ class User {
     return reset_password_token_uuid;
   }
 
+  static unacceptable_password_reason(pw) {
+    if (typeof pw !== "string") return "Not a string";
+    if (pw.length < 8) return "Too short";
+  }
+
   static async resetPasswordWithToken({
     email,
     reset_password_token,
@@ -108,6 +119,12 @@ class User {
         u.reset_password_token
       );
       if (match) {
+        if (User.unacceptable_password_reason(password))
+          return {
+            error:
+              "Password not accepted: " +
+              User.unacceptable_password_reason(password),
+          };
         await u.changePasswordTo(password, true);
         return { success: true };
       } else return { error: "User not found or expired token" };
