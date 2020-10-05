@@ -65,23 +65,23 @@ describe("user settings", () => {
     await request(app)
       .post("/auth/settings")
       .set("Cookie", loginCookie)
-      .send("password=secret")
-      .send("new_password=foobar")
+      .send("password=ghrarhr54hg")
+      .send("new_password=foHRrr46obar")
       .expect(toRedirect("/auth/settings"));
     await request(app)
       .get("/auth/settings")
       .set("Cookie", loginCookie)
       .expect(toInclude("Password changed"));
     const user = await User.findOne({ email: "staff@foo.com" });
-    expect(user.checkPassword("foobar")).toBe(true);
-    expect(user.checkPassword("secret")).toBe(false);
+    expect(user.checkPassword("foHRrr46obar")).toBe(true);
+    expect(user.checkPassword("ghrarhr54hg")).toBe(false);
   });
   it("can login with new password", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/auth/login/")
       .send("email=staff@foo.com")
-      .send("password=foobar")
+      .send("password=foHRrr46obar")
       .expect(toRedirect("/"));
   });
 });
@@ -92,7 +92,7 @@ describe("signup process", () => {
     await request(app)
       .post("/auth/signup/")
       .send("email=staff1@foo.com")
-      .send("password=secret")
+      .send("password=seCERGERG45et")
       .expect(toRedirect("/"));
   });
 });
@@ -129,18 +129,18 @@ describe("forgot password", () => {
     await request(app)
       .post("/auth/reset")
       .send("email=staff1@foo.com")
-      .send("password=bazzzoo")
+      .send("password=bazzRGGR65zoo")
       .send("token=" + token)
       .expect(toRedirect("/auth/login"));
     await request(app)
       .post("/auth/login/")
       .send("email=staff1@foo.com")
-      .send("password=secret")
+      .send("password=seCERGERG45et")
       .expect(toRedirect("/auth/login"));
     await request(app)
       .post("/auth/login/")
       .send("email=staff1@foo.com")
-      .send("password=bazzzoo")
+      .send("password=bazzRGGR65zoo")
       .expect(toRedirect("/"));
   });
 });
@@ -169,7 +169,7 @@ describe("user admin", () => {
     await request(app)
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
-      .send("password=fidelio")
+      .send("password=fideRGE54lio")
       .send("role_id=8")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
@@ -180,7 +180,7 @@ describe("user admin", () => {
     await request(app)
       .post("/auth/login/")
       .send("email=staff2@foo.com")
-      .send("password=fidelio")
+      .send("password=fideRGE54lio")
       .expect(toRedirect("/"));
   });
 
@@ -215,7 +215,7 @@ describe("user admin", () => {
     await request(app)
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
-      .send("password=fidelio")
+      .send("password=fideRGE54lio")
       .send("role_id=8")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
