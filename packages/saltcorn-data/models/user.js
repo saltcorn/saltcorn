@@ -76,15 +76,19 @@ class User {
   }
 
   async getNewResetToken() {
-    const reset_password_token = uuidv4();
+    const reset_password_token_uuid = uuidv4();
     const reset_password_expiry = new Date();
     reset_password_expiry.setDate(new Date().getDate() + 1);
+    const reset_password_token = await bcrypt.hash(
+      reset_password_token_uuid,
+      5
+    );
     await db.update(
       "users",
       { reset_password_token, reset_password_expiry },
       this.id
     );
-    return reset_password_token;
+    return reset_password_token_uuid;
   }
 
   static async resetPasswordWithToken({
@@ -97,10 +101,16 @@ class User {
       reset_password_token.length < 10
     )
       return { error: "Invalid token" };
-    const u = await User.findOne({ reset_password_token, email });
+    const u = await User.findOne({ email });
     if (u && new Date() < u.reset_password_expiry) {
-      await u.changePasswordTo(password, true);
-      return { success: true };
+      const match = bcrypt.compareSync(
+        reset_password_token,
+        u.reset_password_token
+      );
+      if (match) {
+        await u.changePasswordTo(password, true);
+        return { success: true };
+      } else return { error: "User not found or expired token" };
     } else {
       return { error: "User not found or expired token" };
     }
