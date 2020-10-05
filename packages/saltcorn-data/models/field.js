@@ -1,6 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-
+const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const vm = require("vm");
 const readKey = (v) => {
@@ -318,23 +318,6 @@ class Field {
     }
   }
 
-  static expressionValidator(s) {
-    if (!s || s.length == 0) return "Missing formula";
-    try {
-      const f = vm.runInNewContext(`()=>(${s})`);
-      return true;
-    } catch (e) {
-      return e.message;
-    }
-  }
-  get_expression_function(fields) {
-    const args = `{${fields.map((f) => f.name).join()}}`;
-    const { getState } = require("../db/state");
-    return vm.runInNewContext(
-      `(${args})=>(${this.expression})`,
-      getState().function_context
-    );
-  }
   static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
@@ -410,7 +393,7 @@ class Field {
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
-        table.recalculate_for_stored(f);
+        recalculate_for_stored(table); //not waiting as there could be a lot of data
       }
     }
     return f;

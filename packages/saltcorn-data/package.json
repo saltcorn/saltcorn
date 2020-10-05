@@ -10,7 +10,9 @@
   "license": "MIT",
   "dependencies": {
     "@saltcorn/markup": "^0.2.1",
+    "acorn": "^8.0.3",
     "adm-zip": "^0.4.16",
+    "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.15-alpha.0",
@@ -18,6 +20,7 @@
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
     "env-paths": "^2.2.0",
+    "estraverse": "^5.2.0",
     "moment": "^2.27.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.2.1",

@@ -1,6 +1,10 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const {
+  apply_calculated_fields,
+  apply_calculated_fields_stored,
+} = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
@@ -118,46 +122,15 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return this.apply_calculated_fields([this.readFromDB(row)], false)[0];
-  }
-
-  apply_calculated_fields(rows, stored) {
-    let hasExprs = false;
-    let transform = (x) => x;
-    for (const field of this.fields) {
-      if (field.calculated && field.stored === stored) {
-        hasExprs = true;
-        let f;
-        try {
-          f = field.get_expression_function(this.fields);
-        } catch (e) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
-        }
-        const oldf = transform;
-        transform = (row) => {
-          try {
-            const x = f(row);
-            row[field.name] = x;
-          } catch (e) {
-            throw new Error(
-              `Error in calculating "${field.name}": ${e.message}`
-            );
-          }
-          return oldf(row);
-        };
-      }
-    }
-    if (hasExprs) {
-      return rows.map(transform);
-    } else return rows;
+    return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return this.apply_calculated_fields(
+    return apply_calculated_fields(
       rows.map((r) => this.readFromDB(r)),
-      false
+      this.fields
     );
   }
 
@@ -171,7 +144,10 @@ class Table {
     const fields = await this.getFields();
     if (fields.some((f) => f.calculated && f.stored)) {
       existing = await db.selectOne(this.name, { id });
-      v = this.apply_calculated_fields([{ ...existing, ...v_in }], true)[0];
+      v = await apply_calculated_fields_stored(
+        { ...existing, ...v_in },
+        this.fields
+      );
     } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
@@ -200,27 +176,6 @@ class Table {
     }
   }
 
-  async recalculate_for_stored(field) {
-    let rows = [];
-    let maxid = 0;
-    const fields = await this.getFields();
-    const f = field.get_expression_function(fields);
-    do {
-      rows = await this.getRows(
-        { id: { gt: maxid } },
-        { orderBy: "id", limit: 20 }
-      );
-      for (const row of rows) {
-        try {
-          await this.updateRow({}, row.id);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      if (rows.length > 0) maxid = rows[rows.length - 1].id;
-    } while (rows.length === 20);
-  }
-
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
@@ -233,7 +188,7 @@ class Table {
 
   async insertRow(v_in, _userid) {
     await this.getFields();
-    const v = this.apply_calculated_fields([v_in], true)[0];
+    const v = await apply_calculated_fields_stored(v_in, this.fields);
     const id = await db.insert(this.name, v);
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -587,7 +542,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return this.apply_calculated_fields(res.rows, false);
+    return apply_calculated_fields(res.rows, this.fields);
   }
 }
 

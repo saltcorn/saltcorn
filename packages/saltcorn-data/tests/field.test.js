@@ -3,6 +3,10 @@ const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
 const { plugin_with_routes } = require("./mocks");
+const {
+  get_expression_function,
+  transform_for_async,
+} = require("../models/expression");
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -218,7 +222,7 @@ describe("calculated", () => {
       stored: true,
     });
     const fields = await table.getFields();
-    const fzf = fz.get_expression_function(fields);
+    const fzf = get_expression_function(fz.expression, fields);
     expect(fzf({ x: 4, y: 2 })).toBe(6);
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
@@ -258,7 +262,7 @@ describe("calculated", () => {
       expression: "process.exit(0)",
     });
     const fields = await table.getFields();
-    const fzf = fz.get_expression_function(fields);
+    const fzf = get_expression_function(fz.expression, fields);
     let error;
     try {
       fzf({ x: 4 });
@@ -333,5 +337,37 @@ describe("calculated", () => {
     const row0 = await table.getRow({});
     expect(row0.z).toBe(16);
     expect(row0.w).toBe(18);
+  });
+  it("use supplied function", async () => {
+    const table = await Table.create("withcalcs7");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    const xres = transform_for_async(
+      "add5(1)+ add3(4)+asyncAdd2(x)",
+      getState().functions
+    );
+    expect(xres).toEqual({
+      expr_string: "add5(1) + add3(4) + (await asyncAdd2(x))",
+      isAsync: true,
+    });
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression: "1+asyncAdd2(x)",
+      stored: true,
+    });
+
+    const id = await table.insertRow({ x: 14 });
+    const row0 = await table.getRow({});
+    expect(row0.z).toBe(17);
+    await table.updateRow({ x: 15 }, id);
+    const rows = await table.getRows({});
+    expect(rows[0].z).toBe(18);
   });
 });
