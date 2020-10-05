@@ -33,6 +33,8 @@ const {
   option,
 } = require("@saltcorn/markup/tags");
 const { available_languages } = require("@saltcorn/data/models/config");
+const ExpressBrute = require("express-brute");
+const moment = require("moment");
 
 const router = new Router();
 module.exports = router;
@@ -337,9 +339,36 @@ router.post(
   })
 );
 
+const failCallback = function (req, res, next, nextValidRequestDate) {
+  req.flash(
+    "error",
+    "You've made too many failed attempts in a short period of time, please try again " +
+      moment(nextValidRequestDate).fromNow()
+  );
+  res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
+};
+
+const store = new ExpressBrute.MemoryStore();
+const globalBruteforce = new ExpressBrute(store, {
+  failCallback,
+});
+
+const userBruteforce = new ExpressBrute(store, {
+  freeRetries: 3,
+  minWait: 60 * 1000, // 1 minute
+  maxWait: 60 * 60 * 1000, // 1 hour,
+  failCallback,
+});
+
 router.post(
   "/login",
   setTenant,
+  globalBruteforce.prevent,
+  userBruteforce.getMiddleware({
+    key: function (req, res, next) {
+      next(req.body.email);
+    },
+  }),
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/auth/login",
