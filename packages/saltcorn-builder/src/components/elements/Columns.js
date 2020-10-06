@@ -53,6 +53,7 @@ export const ColumnsSettings = () => {
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
   }));
+  console.log(widths);
   return (
     <div>
       <table>
@@ -96,7 +97,7 @@ export const ColumnsSettings = () => {
                       className="w-100 ml-2"
                       step="1"
                       min="1"
-                      max={12 - ncols + 1}
+                      max={12 - (sum(widths) - widths[ix]) - 1}
                       onChange={(e) =>
                         setProp((prop) => (prop.widths[ix] = +e.target.value))
                       }
