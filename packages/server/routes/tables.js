@@ -152,7 +152,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (req.body.name && req.files.file) {
+    if (req.body.name && req.files && req.files.file) {
       const name = req.body.name;
       const alltables = await Table.find({});
       const existing_tables = [

@@ -295,5 +295,6 @@
 	"Password does not match": "Password does not match",
 	"Not allowed to write to table %s": "Not allowed to write to table %s",
 	"Login sucessful": "Login sucessful",
-	"Welcome, %s!": "Welcome, %s!"
+	"Welcome, %s!": "Welcome, %s!",
+	"Error: missing name or file": "Error: missing name or file"
 }
