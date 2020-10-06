@@ -27,16 +27,38 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    var views = await View.find({}, { orderBy: "name" });
+    var orderBy = "name";
+    if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
+
+    var views = await View.find({}, { orderBy, nocase: true });
     const tables = await Table.find();
     const getTable = (tid) => tables.find((t) => t.id === tid).name;
+    views.forEach((v) => {
+      v.table = getTable(v.table_id);
+    });
+    if (req.query._sortby === "table")
+      views.sort((a, b) =>
+        a.table.toLowerCase() > b.table.toLowerCase() ? 1 : -1
+      );
     const viewMarkup =
       views.length > 0
         ? mkTable(
             [
-              { label: req.__("Name"), key: "name" },
-              { label: req.__("Template"), key: "viewtemplate" },
-              { label: req.__("Table"), key: (r) => getTable(r.table_id) },
+              {
+                label: req.__("Name"),
+                key: "name",
+                sortlink: `javascript:set_state_field('_sortby', 'name')`,
+              },
+              {
+                label: req.__("Template"),
+                key: "viewtemplate",
+                sortlink: `javascript:set_state_field('_sortby', 'viewtemplate')`,
+              },
+              {
+                label: req.__("Table"),
+                key: (r) => r.table,
+                sortlink: `javascript:set_state_field('_sortby', 'table')`,
+              },
               {
                 label: req.__("Run"),
                 key: (r) =>

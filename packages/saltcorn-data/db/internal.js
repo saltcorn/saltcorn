@@ -99,6 +99,10 @@ const mkSelectOptions = (selopts) => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
+      : selopts.orderBy && selopts.nocase
+      ? `order by lower(${sqlsanitizeAllowDots(selopts.orderBy)})${
+          selopts.orderDesc ? " DESC" : ""
+        }`
       : selopts.orderBy
       ? `order by ${sqlsanitizeAllowDots(selopts.orderBy)}${
           selopts.orderDesc ? " DESC" : ""
