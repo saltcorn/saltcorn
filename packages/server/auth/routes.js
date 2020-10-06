@@ -33,9 +33,8 @@ const {
   option,
 } = require("@saltcorn/markup/tags");
 const { available_languages } = require("@saltcorn/data/models/config");
-const ExpressBrute = require("express-brute");
+const rateLimit = require("express-rate-limit");
 const moment = require("moment");
-
 const router = new Router();
 module.exports = router;
 
@@ -338,50 +337,51 @@ router.post(
     }
   })
 );
-
-const failCallback = function (req, res, next, nextValidRequestDate) {
+function handler(req, res) {
+  console.log(
+    `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
+      "User-Agent"
+    )}`
+  );
   req.flash(
     "error",
     "You've made too many failed attempts in a short period of time, please try again " +
-      moment(nextValidRequestDate).fromNow()
+      moment(req.rateLimit.resetTime).fromNow()
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
-};
-
-const store = new ExpressBrute.MemoryStore();
-const globalBruteforce = new ExpressBrute(store, {
-  failCallback,
+}
+const ipLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 60 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  handler,
 });
 
-const userBruteforce = new ExpressBrute(store, {
-  freeRetries: 3,
-  minWait: 60 * 1000, // 1 minute
-  maxWait: 60 * 60 * 1000, // 1 hour,
-  failCallback,
+const userLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 3, // limit each IP to 100 requests per windowMs
+  keyGenerator: (req) => req.body.email,
+  handler,
 });
 
 router.post(
   "/login",
   setTenant,
-  globalBruteforce.prevent,
-  userBruteforce.getMiddleware({
-    ignoreIP: true,
-    key: function (req, res, next) {
-      next(req.body.email);
-    },
-  }),
+  ipLimiter,
+  userLimiter,
   passport.authenticate("local", {
-    successRedirect: "/",
+    //successRedirect: "/",
     failureRedirect: "/auth/login",
     failureFlash: true,
   }),
   error_catcher(async (req, res) => {
+    ipLimiter.resetKey(req.ip);
+    userLimiter.resetKey(req.body.email);
     if (req.body.remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
     } else {
       req.session.cookie.expires = false; // Cookie expires at end of session
     }
-    req.flash("success", req.__("Login sucessful"));
+    req.flash("success", req.__("Welcome, %s!", req.body.email));
     res.redirect("/");
   })
 );
