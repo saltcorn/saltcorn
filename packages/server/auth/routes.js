@@ -33,7 +33,8 @@ const {
   option,
 } = require("@saltcorn/markup/tags");
 const { available_languages } = require("@saltcorn/data/models/config");
-
+const rateLimit = require("express-rate-limit");
+const moment = require("moment");
 const router = new Router();
 module.exports = router;
 
@@ -336,22 +337,51 @@ router.post(
     }
   })
 );
+function handler(req, res) {
+  console.log(
+    `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
+      "User-Agent"
+    )}`
+  );
+  req.flash(
+    "error",
+    "You've made too many failed attempts in a short period of time, please try again " +
+      moment(req.rateLimit.resetTime).fromNow()
+  );
+  res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
+}
+const ipLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 60 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  handler,
+});
+
+const userLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 3, // limit each IP to 100 requests per windowMs
+  keyGenerator: (req) => req.body.email,
+  handler,
+});
 
 router.post(
   "/login",
   setTenant,
+  ipLimiter,
+  userLimiter,
   passport.authenticate("local", {
-    successRedirect: "/",
+    //successRedirect: "/",
     failureRedirect: "/auth/login",
     failureFlash: true,
   }),
   error_catcher(async (req, res) => {
+    ipLimiter.resetKey(req.ip);
+    userLimiter.resetKey(req.body.email);
     if (req.body.remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
     } else {
       req.session.cookie.expires = false; // Cookie expires at end of session
     }
-    req.flash("success", req.__("Login sucessful"));
+    req.flash("success", req.__("Welcome, %s!", req.body.email));
     res.redirect("/");
   })
 );
