@@ -47,7 +47,7 @@ const configuration_workflow = () =>
   });
 const get_state_fields = () => [];
 
-const initial_config = initial_config_all_fields(false);
+const initial_config = async () => ({ layout: {} });
 
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
@@ -55,6 +55,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   if (!columns || !layout) return "View not yet built";
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
+  const role = extra.req.user ? extra.req.user.role_id : 10;
 
   const blockDispatch = {};
   return renderLayout({ blockDispatch, layout, role });
@@ -65,7 +66,6 @@ module.exports = {
   get_state_fields,
   configuration_workflow,
   run,
-  renderRows,
   initial_config,
   display_state_form: false,
 };
