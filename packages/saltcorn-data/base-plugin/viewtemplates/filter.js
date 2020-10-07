@@ -92,9 +92,10 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
-          onClick: active
-            ? `unset_state_field('${field_name}')`
-            : `set_state_field('${field_name}', '${value}')`,
+          onClick:
+            active || value === undefined
+              ? `unset_state_field('${field_name}')`
+              : `set_state_field('${field_name}', '${value || ""}')`,
         },
         value
       );
