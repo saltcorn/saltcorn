@@ -9,6 +9,7 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
+import { DropDownFilter } from "./elements/DropDownFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Container } from "./elements/Container";
@@ -173,6 +174,16 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
     />
   </WrapElem>
 );
+const DropDownFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="far fa-caret-square-down"
+    title="Dropdown filter"
+    label="Dropdown"
+  >
+    <DropDownFilter name={fields[0].name} block={false} />
+  </WrapElem>
+);
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
@@ -284,7 +295,7 @@ export const ToolboxFilter = () => {
       <ColumnsElem connectors={connectors} />
 
       <LineBreakElem connectors={connectors} />
-
+      <DropDownFilterElem connectors={connectors} fields={fields} />
       <ContainerElem connectors={connectors} />
     </Fragment>
   );
