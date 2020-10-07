@@ -137,7 +137,13 @@ class Field {
       await this.fill_fkey_options();
       return this.options || [];
     }
-    return []; // fill
+    await this.fill_table();
+    const rows = await db.select(this.table.name);
+    const dbOpts = rows.map((r) => ({
+      label: r[this.name],
+      value: r[this.name],
+    }));
+    return [...new Set([{ label: "", value: "" }, ...dbOpts])];
   }
 
   get sql_type() {
