@@ -268,6 +268,28 @@ export const ToolboxShow = () => {
   );
 };
 
+export const ToolboxFilter = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const {
+    fields,
+    field_view_options,
+    child_field_list,
+    agg_field_opts,
+    views,
+  } = options;
+  return (
+    <Fragment>
+      <TextElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
+
+      <LineBreakElem connectors={connectors} />
+
+      <ContainerElem connectors={connectors} />
+    </Fragment>
+  );
+};
+
 export const ToolboxEdit = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);

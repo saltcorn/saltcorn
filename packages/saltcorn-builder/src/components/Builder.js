@@ -13,7 +13,12 @@ import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
 import { Empty } from "./elements/Empty";
 import optionsCtx from "./context";
-import { ToolboxShow, ToolboxEdit, ToolboxPage } from "./Toolbox";
+import {
+  ToolboxShow,
+  ToolboxEdit,
+  ToolboxPage,
+  ToolboxFilter,
+} from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
@@ -162,15 +167,12 @@ const Builder = ({ options, layout, mode }) => {
         <div className="row">
           <div className="col-sm-auto">
             <div className="card">
-              {mode === "show" ? (
-                <ToolboxShow />
-              ) : mode === "edit" ? (
-                <ToolboxEdit />
-              ) : mode === "page" ? (
-                <ToolboxPage />
-              ) : (
-                <div>Missing mode</div>
-              )}
+              {{
+                show: <ToolboxShow />,
+                edit: <ToolboxEdit />,
+                page: <ToolboxPage />,
+                filter: <ToolboxFilter />,
+              }[mode] || <div>Missing mode</div>}
             </div>
           </div>
           <div id="builder-main-canvas" className="col">
