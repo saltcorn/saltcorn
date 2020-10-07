@@ -120,6 +120,22 @@ class Field {
       this.options = [...new Set(allOpts)];
     }
   }
+  async distinct_values() {
+    if (
+      this.type.name === "String" &&
+      this.attributes &&
+      this.attributes.options
+    ) {
+      return this.attributes.options
+        .split(",")
+        .map((o) => ({ label: o.trim(), value: o.trim() }));
+    }
+    if (this.is_fkey) {
+      await this.fill_fkey_options();
+      return this.options || [];
+    }
+    return []; // fill
+  }
 
   get sql_type() {
     if (this.is_fkey) {

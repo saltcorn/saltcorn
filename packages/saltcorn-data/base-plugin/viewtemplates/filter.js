@@ -11,7 +11,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span } = require("@saltcorn/markup/tags");
+const { div, text, span, option, select } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -23,7 +23,7 @@ const {
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
-const { asyncMap } = require("../../utils");
+const { relativeTimeRounding } = require("moment");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -47,7 +47,7 @@ const configuration_workflow = () =>
   });
 const get_state_fields = () => [];
 
-const initial_config = async () => ({ layout: {} });
+const initial_config = async () => ({ layout: {}, columns: [] });
 
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
@@ -56,8 +56,27 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const role = extra.req.user ? extra.req.user.role_id : 10;
-
-  const blockDispatch = {};
+  const distinct_values = {};
+  for (const col of columns) {
+    if (col.type === "DropDownFilter") {
+      const field = fields.find((f) => f.name === col.field_name);
+      if (field)
+        distinct_values[col.field_name] = await field.distinct_values();
+    }
+  }
+  const blockDispatch = {
+    dropdown_filter({ field_name }) {
+      return select(
+        {
+          name: "role",
+          onchange: `set_state_field('${field_name}', this.value)`,
+        },
+        distinct_values[field_name].map(({ label, value }) =>
+          option({ value, selected: state[field_name] === value }, label)
+        )
+      );
+    },
+  };
   return renderLayout({ blockDispatch, layout, role });
 };
 

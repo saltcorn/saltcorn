@@ -16,6 +16,7 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
+import { DropDownFilter } from "./elements/DropDownFilter";
 
 const getColWidths = (segment) => {
   if (!segment.widths)
@@ -84,6 +85,14 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "dropdown_filter") {
+      return (
+        <DropDownFilter
+          key={ix}
+          name={segment.field_name}
+          block={segment.block || false}
         />
       );
     } else if (segment.type === "join_field") {
@@ -301,6 +310,17 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
+      };
+    }
+    if (node.displayName === DropDownFilter.craft.displayName) {
+      columns.push({
+        type: "DropDownFilter",
+        field_name: node.props.name,
+      });
+      return {
+        type: "dropdown_filter",
+        block: node.props.block,
+        field_name: node.props.name,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {

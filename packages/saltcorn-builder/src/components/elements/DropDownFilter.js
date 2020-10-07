@@ -14,12 +14,8 @@ export const DropDownFilter = ({ name, block }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <select>
-        <option>Any</option>
-        <option>Anne</option>
-        <option>Ben</option>
-        <option>Carol</option>
-        <option>...</option>
+      <select disabled={true}>
+        <option>{name}</option>
       </select>
     </span>
   );
