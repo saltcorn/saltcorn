@@ -73,8 +73,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         distinct_values[col.field_name] = await field.distinct_values();
     }
   }
-  console.log(state);
-  console.log(distinct_values);
+
   const blockDispatch = {
     dropdown_filter({ field_name }) {
       return select(
