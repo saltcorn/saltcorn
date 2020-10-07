@@ -10,6 +10,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Container } from "./elements/Container";
@@ -184,6 +185,16 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     <DropDownFilter name={fields[0].name} block={false} />
   </WrapElem>
 );
+const ToggleFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-toggle-on"
+    title="Toggle filter"
+    label="Toggle"
+  >
+    <ToggleFilter name={fields[0].name} value={""} block={false} />
+  </WrapElem>
+);
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
@@ -282,13 +293,7 @@ export const ToolboxShow = () => {
 export const ToolboxFilter = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const {
-    fields,
-    field_view_options,
-    child_field_list,
-    agg_field_opts,
-    views,
-  } = options;
+  const { fields } = options;
   return (
     <Fragment>
       <TextElem connectors={connectors} />
@@ -296,6 +301,7 @@ export const ToolboxFilter = () => {
 
       <LineBreakElem connectors={connectors} />
       <DropDownFilterElem connectors={connectors} fields={fields} />
+      <ToggleFilterElem connectors={connectors} fields={fields} />
       <ContainerElem connectors={connectors} />
     </Fragment>
   );

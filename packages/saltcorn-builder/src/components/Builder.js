@@ -12,6 +12,8 @@ import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
 import { Empty } from "./elements/Empty";
+import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 import optionsCtx from "./context";
 import {
   ToolboxShow,
@@ -196,6 +198,8 @@ const Builder = ({ options, layout, mode }) => {
                   SearchBar,
                   Container,
                   Column,
+                  DropDownFilter,
+                  ToggleFilter,
                 }}
               >
                 <Element canvas is={Column}></Element>
