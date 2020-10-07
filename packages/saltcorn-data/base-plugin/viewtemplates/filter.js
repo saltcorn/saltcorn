@@ -11,7 +11,14 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span, option, select } = require("@saltcorn/markup/tags");
+const {
+  div,
+  text,
+  span,
+  option,
+  select,
+  button,
+} = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -78,6 +85,18 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         distinct_values[field_name].map(({ label, value }) =>
           option({ value, selected: state[field_name] === value }, label)
         )
+      );
+    },
+    toggle_filter({ field_name, value }) {
+      const active = state[field_name] === value;
+      return button(
+        {
+          class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
+          onClick: active
+            ? `unset_state_field('${field_name}')`
+            : `set_state_field('${field_name}', '${value}')`,
+        },
+        value
       );
     },
   };

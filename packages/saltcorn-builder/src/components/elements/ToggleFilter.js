@@ -14,7 +14,9 @@ export const ToggleFilter = ({ name, value, block }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <button className="btn btn-outline-primary">{value || name}</button>
+      <button className="btn btn-outline-primary">
+        {value || "Set value"}
+      </button>
     </span>
   );
 };
@@ -31,6 +33,7 @@ export const ToggleFilterSettings = () => {
     block: node.data.props.block,
   }));
   const options = useContext(optionsCtx);
+  const field = options.fields.find((f) => f.name === name);
   return (
     <table className="w-100">
       <tbody>

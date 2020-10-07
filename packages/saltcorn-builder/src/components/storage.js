@@ -17,6 +17,7 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 
 const getColWidths = (segment) => {
   if (!segment.widths)
@@ -92,6 +93,15 @@ export const layoutToNodes = (layout, query, actions) => {
         <DropDownFilter
           key={ix}
           name={segment.field_name}
+          block={segment.block || false}
+        />
+      );
+    } else if (segment.type === "toggle_filter") {
+      return (
+        <ToggleFilter
+          key={ix}
+          name={segment.field_name}
+          value={segment.value}
           block={segment.block || false}
         />
       );
@@ -321,6 +331,19 @@ export const craftToSaltcorn = (nodes) => {
         type: "dropdown_filter",
         block: node.props.block,
         field_name: node.props.name,
+      };
+    }
+    if (node.displayName === ToggleFilter.craft.displayName) {
+      columns.push({
+        type: "ToggleFilter",
+        field_name: node.props.name,
+        value: node.props.value,
+      });
+      return {
+        type: "toggle_filter",
+        block: node.props.block,
+        field_name: node.props.name,
+        value: node.props.value,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {
