@@ -20,6 +20,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  readState,
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
@@ -55,6 +56,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   if (!columns || !layout) return "View not yet built";
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
+  readState(state, fields);
   const role = extra.req.user ? extra.req.user.role_id : 10;
   const distinct_values = {};
   for (const col of columns) {
@@ -64,12 +66,14 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         distinct_values[col.field_name] = await field.distinct_values();
     }
   }
+  console.log(state);
+  console.log(distinct_values);
   const blockDispatch = {
     dropdown_filter({ field_name }) {
       return select(
         {
           name: "role",
-          onchange: `set_state_field('${field_name}', this.value)`,
+          onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
         distinct_values[field_name].map(({ label, value }) =>
           option({ value, selected: state[field_name] === value }, label)

@@ -126,9 +126,12 @@ class Field {
       this.attributes &&
       this.attributes.options
     ) {
-      return this.attributes.options
-        .split(",")
-        .map((o) => ({ label: o.trim(), value: o.trim() }));
+      return [
+        { label: "", value: "" },
+        ...this.attributes.options
+          .split(",")
+          .map((o) => ({ label: o.trim(), value: o.trim() })),
+      ];
     }
     if (this.is_fkey) {
       await this.fill_fkey_options();
