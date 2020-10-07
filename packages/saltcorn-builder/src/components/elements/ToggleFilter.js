@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({ name, value, block }) => {
+export const ToggleFilter = ({ name, value, block, label }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -15,7 +15,7 @@ export const ToggleFilter = ({ name, value, block }) => {
       ref={(dom) => connect(drag(dom))}
     >
       <button className="btn btn-outline-primary">
-        {value || "Set value"}
+        {label || value || "Set label"}
       </button>
     </span>
   );
@@ -27,10 +27,12 @@ export const ToggleFilterSettings = () => {
     name,
     value,
     block,
+    label,
   } = useNode((node) => ({
     name: node.data.props.name,
     value: node.data.props.value,
     block: node.data.props.block,
+    label: node.data.props.label,
   }));
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
@@ -63,6 +65,18 @@ export const ToggleFilterSettings = () => {
               value={value}
               className="w-100"
               onChange={(e) => setProp((prop) => (prop.value = e.target.value))}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Label</label>
+          </td>
+          <td>
+            <input
+              value={label}
+              className="w-100"
+              onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
             />
           </td>
         </tr>

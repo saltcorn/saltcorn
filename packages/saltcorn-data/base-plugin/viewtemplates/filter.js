@@ -87,7 +87,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
-    toggle_filter({ field_name, value }) {
+    toggle_filter({ field_name, value, label }) {
       const active = state[field_name] === value;
       return button(
         {
@@ -97,7 +97,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
               ? `unset_state_field('${field_name}')`
               : `set_state_field('${field_name}', '${value || ""}')`,
         },
-        value
+        label || value
       );
     },
   };
