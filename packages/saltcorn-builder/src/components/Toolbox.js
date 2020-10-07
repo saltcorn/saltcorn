@@ -192,7 +192,7 @@ const ToggleFilterElem = ({ connectors, fields }) => (
     title="Toggle filter"
     label="Toggle"
   >
-    <ToggleFilter name={fields[0].name} value={""} block={false} />
+    <ToggleFilter name={fields[0].name} value={""} label={""} block={false} />
   </WrapElem>
 );
 const JoinFieldElem = ({ connectors, options }) => (
