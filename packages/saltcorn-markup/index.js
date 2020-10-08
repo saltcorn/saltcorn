@@ -19,17 +19,20 @@ const post_btn = (
     reload_delay,
     klass = "",
     formClass,
+    spinner,
   } = {}
 ) =>
   `<form action="${text(href)}" method="post"${
     formClass ? `class="${formClass}"` : ""
   }>
   <input type="hidden" name="_csrf" value="${csrfToken}">
-<button type="submit" ${
+<button ${ajax || onClick ? 'type="button"' : 'type="submit"'} ${
     onClick
-      ? `onclick="${onClick}"`
+      ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
       : ajax
-      ? `onclick="ajax_post_btn(this, ${reload_on_done}, ${reload_delay})"`
+      ? `onclick="${
+          spinner ? "press_store_button(this);" : ""
+        }ajax_post_btn(this, ${reload_on_done}, ${reload_delay})"`
       : ""
   } class="${klass} btn ${
     small ? "btn-sm" : ""

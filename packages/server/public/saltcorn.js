@@ -264,11 +264,12 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     success: function () {
       if (reload_on_done) location.reload();
     },
-  }).done(function () {
-    if (reload_delay)
-      setTimeout(function () {
-        location.reload();
-      }, reload_delay);
+    complete: function () {
+      if (reload_delay)
+        setTimeout(function () {
+          location.reload();
+        }, reload_delay);
+    },
   });
 
   return false;
