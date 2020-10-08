@@ -231,7 +231,6 @@ function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");
   var form_data = form.serialize();
-  console.log(url);
   $.ajax(url, {
     type: "POST",
     headers: {
@@ -247,6 +246,29 @@ function ajaxSubmitForm(e) {
       if (title) $("#scmodal .modal-title").html(title);
       var body = request.responseText;
       if (body) $("#scmodal .modal-body").html(body);
+    },
+  });
+
+  return false;
+}
+function ajax_post_btn(e, reload_on_done, reload_delay) {
+  var form = $(e).closest("form");
+  var url = form.attr("action");
+  var form_data = form.serialize();
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function () {
+      if (reload_on_done) location.reload();
+    },
+    complete: function () {
+      if (reload_delay)
+        setTimeout(function () {
+          location.reload();
+        }, reload_delay);
     },
   });
 

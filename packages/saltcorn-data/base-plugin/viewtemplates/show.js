@@ -107,7 +107,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     where: qstate,
     joinFields,
     aggregations,
-    limit: 1,
+    limit: 2,
   });
   if (rows.length !== 1) return "No record selected";
 

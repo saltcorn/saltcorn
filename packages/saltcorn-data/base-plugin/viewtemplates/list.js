@@ -62,10 +62,19 @@ const configuration_workflow = () =>
                       name: "create_view_display",
                       label: "Display create view as",
                       type: "String",
+                      class: "create_view_display",
                       required: true,
                       attributes: {
                         options: "Link,Embedded,Popup",
                       },
+                    },
+                    {
+                      name: "create_view_label",
+                      label: "Label for create",
+                      sublabel:
+                        "Label in link or button to create. Leave blank for a default label",
+                      type: "String",
+                      showIf: { ".create_view_display": ["Link", "Popup"] },
                     },
                   ]
                 : []),
@@ -133,7 +142,7 @@ const initial_config = initial_config_all_fields(false);
 const run = async (
   table_id,
   viewname,
-  { columns, view_to_create, create_view_display },
+  { columns, view_to_create, create_view_display, create_view_label },
   stateWithId,
   extraOpts
 ) => {
@@ -192,7 +201,7 @@ const run = async (
     } else {
       create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`,
+        create_view_label || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
     }

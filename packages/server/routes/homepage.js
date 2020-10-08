@@ -322,7 +322,7 @@ module.exports = async (req, res) => {
     const state_form = await view.get_state_form(state);
 
     res.sendWrap(
-      `${view.name} view`,
+      `${view.name}`,
       div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
     );
   } else {

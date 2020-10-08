@@ -33,10 +33,12 @@ router.get(
           title: req.__("Admin"),
           contents: div(
             div(
-              req.__(
-                "Restart server. Try reloading the page after a few seconds after pressing this button."
-              ),
-              post_btn("/admin/restart", req.__("Restart"), req.csrfToken())
+              req.__("Restart server."),
+              post_btn("/admin/restart", req.__("Restart"), req.csrfToken(), {
+                ajax: true,
+                reload_delay: 4000,
+                spinner: true,
+              })
             ),
             hr(),
 

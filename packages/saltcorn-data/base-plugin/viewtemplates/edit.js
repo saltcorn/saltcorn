@@ -77,7 +77,8 @@ const configuration_workflow = () =>
             }
           });
           const form = new Form({
-            blurb: "These fields were missing, you can give values here",
+            blurb:
+              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list.",
             fields: formFields,
           });
           await form.fill_fkey_options();
@@ -105,6 +106,8 @@ const configuration_workflow = () =>
           const done_view_opts = done_views.map((v) => v.name);
 
           return new Form({
+            blurb:
+              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.",
             fields: [
               {
                 name: "view_when_done",

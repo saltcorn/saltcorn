@@ -296,5 +296,6 @@
 	"Not allowed to write to table %s": "Not allowed to write to table %s",
 	"Login sucessful": "Login sucessful",
 	"Welcome, %s!": "Welcome, %s!",
-	"Error: missing name or file": "Error: missing name or file"
+	"Error: missing name or file": "Error: missing name or file",
+	"Restart server.": "Restart server."
 }

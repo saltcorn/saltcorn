@@ -161,6 +161,12 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "Action" },
       },
       {
+        name: "action_label",
+        label: "Action Label",
+        type: "String",
+        showIf: { ".coltype": "Action" },
+      },
+      {
         name: "view",
         label: "View",
         type: "String",

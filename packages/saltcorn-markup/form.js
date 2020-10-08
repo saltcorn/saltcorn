@@ -20,6 +20,10 @@ const mkShowIf = (sIf) =>
         ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
             value
           )}`
+        : Array.isArray(value)
+        ? `[${value
+            .map((v) => `'${v}'`)
+            .join()}].includes(e.closest('.form-namespace').find('${target}').val())`
         : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
     )
     .join(" && ");
