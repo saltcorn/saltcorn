@@ -36,6 +36,7 @@ export const ToggleFilterSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
+  const isBool = field && field.type.name === "Bool";
   return (
     <table className="w-100">
       <tbody>
@@ -46,7 +47,14 @@ export const ToggleFilterSettings = () => {
           <td>
             <select
               value={name}
-              onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
+              onChange={(e) => {
+                setProp((prop) => (prop.name = e.target.value));
+                const field = options.fields.find(
+                  (f) => f.name === e.target.value
+                );
+                const isBool = field && field.type.name === "Bool";
+                if (isBool) setProp((prop) => (prop.value = "on"));
+              }}
             >
               {options.fields.map((f, ix) => (
                 <option key={ix} value={f.name}>
@@ -61,11 +69,27 @@ export const ToggleFilterSettings = () => {
             <label>Value</label>
           </td>
           <td>
-            <input
-              value={value}
-              className="w-100"
-              onChange={(e) => setProp((prop) => (prop.value = e.target.value))}
-            />
+            {isBool ? (
+              <select
+                value={value}
+                className="w-100"
+                onChange={(e) =>
+                  setProp((prop) => (prop.value = e.target.value))
+                }
+              >
+                <option value="on">True</option>
+                <option value="off">False</option>
+                <option value="?">Both</option>
+              </select>
+            ) : (
+              <input
+                value={value}
+                className="w-100"
+                onChange={(e) =>
+                  setProp((prop) => (prop.value = e.target.value))
+                }
+              />
+            )}
           </td>
         </tr>
         <tr>

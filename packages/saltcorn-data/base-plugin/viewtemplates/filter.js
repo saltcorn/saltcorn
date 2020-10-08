@@ -74,7 +74,6 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         distinct_values[col.field_name] = await field.distinct_values();
     }
   }
-
   const blockDispatch = {
     search_bar() {
       return search_bar(
@@ -95,14 +94,25 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       );
     },
     toggle_filter({ field_name, value, label }) {
-      const active = state[field_name] === value;
+      const field = fields.find((f) => f.name === field_name);
+      const isBool = field && field.type.name === "Bool";
+
+      const active = isBool
+        ? {
+            on: state[field_name],
+            off: state[field_name] === false,
+            "?": state[field_name] === null,
+          }[value]
+        : state[field_name] === value;
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
           onClick:
             active || value === undefined
               ? `unset_state_field('${field_name}')`
-              : `set_state_field('${field_name}', '${value || ""}')`,
+              : `set_state_field('${field_name}', encodeURIComponent('${
+                  value || ""
+                }'))`,
         },
         label || value
       );
