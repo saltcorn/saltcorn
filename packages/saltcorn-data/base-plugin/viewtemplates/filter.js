@@ -32,6 +32,7 @@ const {
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
 const { relativeTimeRounding } = require("moment");
+const { search_bar } = require("@saltcorn/markup/helpers");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -75,6 +76,13 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   }
 
   const blockDispatch = {
+    search_bar() {
+      return search_bar(
+        "_fts",
+        state["_fts"],
+        "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())"
+      );
+    },
     dropdown_filter({ field_name }) {
       return select(
         {

@@ -302,6 +302,8 @@ export const ToolboxFilter = () => {
       <LineBreakElem connectors={connectors} />
       <DropDownFilterElem connectors={connectors} fields={fields} />
       <ToggleFilterElem connectors={connectors} fields={fields} />
+      <SearchElem connectors={connectors} />
+
       <ContainerElem connectors={connectors} />
     </Fragment>
   );
