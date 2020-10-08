@@ -86,7 +86,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonList");
     await browser.goto("/view/PersonList");
-    expect(await browser.content()).toContain("<title>PersonList</title>");
+    expect(await browser.content()).toContain("PersonList view");
   });
 
   it("creates edit view", async () => {
@@ -118,7 +118,7 @@ describe("Table create", () => {
     await browser.page.select("#inputview_to_create", "PersonEdit");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/view/PersonList");
-    expect(await browser.content()).toContain("<title>PersonList</title>");
+    expect(await browser.content()).toContain("PersonList view");
   });
   it("creates row with edit view", async () => {
     await browser.goto("/view/PersonEdit");
@@ -127,7 +127,7 @@ describe("Table create", () => {
     await browser.page.type("#inputfull_name", "TomNook");
     await browser.page.type("#inputage", "19");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("<title>PersonList</title>");
+    expect(await browser.content()).toContain("PersonList view");
     expect(await browser.content()).toContain("TomNook");
   });
   it("edits row with edit view", async () => {
@@ -137,7 +137,7 @@ describe("Table create", () => {
     await browser.erase_input("#inputfull_name");
     await browser.page.type("#inputfull_name", "TerryTheBeaver");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("<title>PersonList</title>");
+    expect(await browser.content()).toContain("PersonList view");
     expect(await browser.content()).toContain("TerryTheBeaver");
     expect(await browser.content()).not.toContain("TomNook");
   });
