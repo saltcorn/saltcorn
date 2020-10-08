@@ -105,11 +105,11 @@ const get_viewable_fields = contract(
       .map((column) => {
         if (column.type === "Action")
           return {
-            label: column.action_name,
+            label: "",
             key: (r) =>
               post_btn(
                 action_url(viewname, table, column.action_name, r),
-                column.action_name,
+                column.action_label || column.action_name,
                 csrfToken,
                 { small: true, ajax: true, reload_on_done: true }
               ),
