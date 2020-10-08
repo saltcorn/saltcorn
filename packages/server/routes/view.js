@@ -29,7 +29,7 @@ router.get(
       const state_form = await view.get_state_form(state);
 
       res.sendWrap(
-        `${view.name}`,
+        `${view.name} view`,
         div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
       );
     }
