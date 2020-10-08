@@ -26,6 +26,7 @@ router.post(
     } catch (e) {
       req.flash("error", e.message);
     }
-    res.redirect(redirect || `/list/${table.name}`);
+    if (req.xhr) res.send("OK");
+    else res.redirect(redirect || `/list/${table.name}`);
   })
 );

@@ -10,14 +10,27 @@ const post_btn = (
   href,
   s,
   csrfToken,
-  { btnClass = "primary", onClick, small, klass = "", formClass } = {}
+  {
+    btnClass = "primary",
+    onClick,
+    small,
+    ajax,
+    reload_on_done,
+    reload_delay,
+    klass = "",
+    formClass,
+  } = {}
 ) =>
   `<form action="${text(href)}" method="post"${
     formClass ? `class="${formClass}"` : ""
   }>
   <input type="hidden" name="_csrf" value="${csrfToken}">
 <button type="submit" ${
-    onClick ? `onclick="${onClick}"` : ""
+    onClick
+      ? `onclick="${onClick}"`
+      : ajax
+      ? `onclick="ajax_post_btn(this, ${reload_on_done}, ${reload_delay})"`
+      : ""
   } class="${klass} btn ${
     small ? "btn-sm" : ""
   } btn-${btnClass}">${s}</button></form>`;
