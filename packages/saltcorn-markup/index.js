@@ -26,7 +26,7 @@ const post_btn = (
     formClass ? `class="${formClass}"` : ""
   }>
   <input type="hidden" name="_csrf" value="${csrfToken}">
-<button ${ajax || onClick ? 'type="button"' : 'type="submit"'} ${
+<button ${ajax ? 'type="button"' : 'type="submit"'} ${
     onClick
       ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
       : ajax
