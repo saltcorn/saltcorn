@@ -120,6 +120,31 @@ class Field {
       this.options = [...new Set(allOpts)];
     }
   }
+  async distinct_values() {
+    if (
+      this.type.name === "String" &&
+      this.attributes &&
+      this.attributes.options
+    ) {
+      return [
+        { label: "", value: "" },
+        ...this.attributes.options
+          .split(",")
+          .map((o) => ({ label: o.trim(), value: o.trim() })),
+      ];
+    }
+    if (this.is_fkey) {
+      await this.fill_fkey_options();
+      return this.options || [];
+    }
+    await this.fill_table();
+    const rows = await db.select(this.table.name);
+    const dbOpts = rows.map((r) => ({
+      label: r[this.name],
+      value: r[this.name],
+    }));
+    return [...new Set([{ label: "", value: "" }, ...dbOpts])];
+  }
 
   get sql_type() {
     if (this.is_fkey) {

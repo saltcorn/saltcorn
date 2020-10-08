@@ -21,14 +21,17 @@ const select_options = (v, hdr) => {
     .join(""));
 };
 
-const search_bar = (name, v) => `<div class="input-group">
-<input type="text" class="form-control bg-light" placeholder="Search for..." 
+const search_bar = (name, v, onClick) => `<div class="input-group">
+<input type="text" class="form-control bg-light search-bar" placeholder="Search for..." 
        id="input${text_attr(name)}" name="${name}" 
+       ${onClick ? `onChange="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
 <div class="input-group-append">
-  <button class="btn btn-primary" type="submit" id="button-search-submit">
+  <button class="btn btn-primary" ${
+    onClick ? `onClick="${onClick}"` : ""
+  } btype="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
   </button>
 </div>

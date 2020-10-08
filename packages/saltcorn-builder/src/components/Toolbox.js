@@ -9,6 +9,8 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
+import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Container } from "./elements/Container";
@@ -173,6 +175,26 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
     />
   </WrapElem>
 );
+const DropDownFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="far fa-caret-square-down"
+    title="Dropdown filter"
+    label="Dropdown"
+  >
+    <DropDownFilter name={fields[0].name} block={false} />
+  </WrapElem>
+);
+const ToggleFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-toggle-on"
+    title="Toggle filter"
+    label="Toggle"
+  >
+    <ToggleFilter name={fields[0].name} value={""} label={""} block={false} />
+  </WrapElem>
+);
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
@@ -263,6 +285,25 @@ export const ToolboxShow = () => {
         agg_field_opts={agg_field_opts}
       />
       <ViewElem connectors={connectors} views={views} />
+      <ContainerElem connectors={connectors} />
+    </Fragment>
+  );
+};
+
+export const ToolboxFilter = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const { fields } = options;
+  return (
+    <Fragment>
+      <TextElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
+
+      <LineBreakElem connectors={connectors} />
+      <DropDownFilterElem connectors={connectors} fields={fields} />
+      <ToggleFilterElem connectors={connectors} fields={fields} />
+      <SearchElem connectors={connectors} />
+
       <ContainerElem connectors={connectors} />
     </Fragment>
   );
