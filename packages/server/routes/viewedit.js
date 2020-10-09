@@ -28,6 +28,7 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const router = new Router();
 module.exports = router;
@@ -50,7 +51,7 @@ const view_dropdown = (view, req) =>
       {
         class: "dropdown-menu dropdown-menu-right",
         "aria-labelledby": `dropdownMenuButton${view.id}`,
-      }, // run, edit, clone, add to menu, delete
+      }, // add to menu, delete
       a(
         {
           class: "dropdown-item",
@@ -64,6 +65,11 @@ const view_dropdown = (view, req) =>
           href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
         },
         '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
+      post_dropdown_item(
+        `/viewedit/add-to-menu/${encodeURIComponent(view.id)}`,
+        '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+        req.csrfToken()
       ),
       div({ class: "dropdown-divider" }),
       post_dropdown_item(
@@ -408,6 +414,24 @@ router.post(
     const configFlow = await view.get_config_flow();
     const wfres = await configFlow.run(req.body);
     respondWorkflow(view, wfres, req, res);
+  })
+);
+router.post(
+  "/add-to-menu/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const view = await View.findOne({ id });
+    await add_to_menu({ label: view.name, type: "View", min_role: 10 });
+    req.flash(
+      "success",
+      req.__(
+        "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+        view.name
+      )
+    );
+    res.redirect(`/viewedit`);
   })
 );
 
