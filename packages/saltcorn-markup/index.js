@@ -44,6 +44,11 @@ const post_delete_btn = (href, csrfToken) =>
     small: true,
   });
 
+const post_dropdown_item = (href, s, csrfToken) =>
+  `<form action="${text(href)}" method="post" class="">
+    <input type="hidden" name="_csrf" value="${csrfToken}">
+  <button type="submit" class="dropdown-item btn btn-link">${s}</button></form>`;
+
 module.exports = {
   mkTable,
   renderForm,
@@ -51,5 +56,6 @@ module.exports = {
   link,
   post_btn,
   post_delete_btn,
+  post_dropdown_item,
   tabs,
 };

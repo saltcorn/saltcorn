@@ -106,6 +106,24 @@ class View {
     await require("../db/state").getState().refresh();
     return new View({ id, ...v });
   }
+
+  async clone() {
+    const basename = this.name + " copy";
+    let newname;
+    for (let i = 0; i < 100; i++) {
+      newname = i ? `${basename} (${i})` : basename;
+      const existing = await View.findOne({ name: newname });
+      if (!existing) break;
+    }
+    const createObj = {
+      ...this,
+      name: newname,
+    };
+    delete createObj.viewtemplateObj;
+    delete createObj.id;
+    return await View.create(createObj);
+  }
+
   async delete() {
     await View.delete({ id: this.id });
     await remove_from_menu({ name: this.name, type: "View" });

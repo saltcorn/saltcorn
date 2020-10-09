@@ -280,4 +280,5 @@ module.exports = {
   is_stale,
   can_install_pack,
   uninstall_pack,
+  add_to_menu,
 };
