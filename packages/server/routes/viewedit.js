@@ -6,9 +6,19 @@ const {
   link,
   post_btn,
   post_delete_btn,
+  post_dropdown_item,
   renderBuilder,
 } = require("@saltcorn/markup");
-const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+const {
+  span,
+  h5,
+  h4,
+  nbsp,
+  p,
+  a,
+  div,
+  button,
+} = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -22,6 +32,47 @@ const User = require("@saltcorn/data/models/user");
 const router = new Router();
 module.exports = router;
 
+const view_dropdown = (view, req) =>
+  div(
+    { class: "dropdown" },
+    button(
+      {
+        class: "btn btn-outline-secondary",
+        type: "button",
+        id: `dropdownMenuButton${view.id}`,
+        "data-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      },
+      '<i class="fas fa-ellipsis-h"></i>'
+    ),
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-right",
+        "aria-labelledby": `dropdownMenuButton${view.id}`,
+      }, // run, edit, clone, add to menu, delete
+      a(
+        {
+          class: "dropdown-item",
+          href: `/view/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
+      a(
+        {
+          class: "dropdown-item",
+          href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
+      div({ class: "dropdown-divider" }),
+      post_dropdown_item(
+        `/viewedit/delete/${encodeURIComponent(view.id)}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+        req.csrfToken()
+      )
+    )
+  );
 router.get(
   "/",
   setTenant,
@@ -69,20 +120,8 @@ router.get(
                 },
               },
               {
-                label: req.__("Edit"),
-                key: (r) =>
-                  link(
-                    `/viewedit/edit/${encodeURIComponent(r.name)}`,
-                    req.__("Edit")
-                  ),
-              },
-              {
-                label: req.__("Delete"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                    req.csrfToken()
-                  ),
+                label: "",
+                key: (r) => view_dropdown(r, req),
               },
             ],
             views
