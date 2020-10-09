@@ -51,7 +51,7 @@ const view_dropdown = (view, req) =>
       {
         class: "dropdown-menu dropdown-menu-right",
         "aria-labelledby": `dropdownMenuButton${view.id}`,
-      }, // add to menu, delete
+      }, // clone
       a(
         {
           class: "dropdown-item",
@@ -67,13 +67,18 @@ const view_dropdown = (view, req) =>
         '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
       ),
       post_dropdown_item(
-        `/viewedit/add-to-menu/${encodeURIComponent(view.id)}`,
+        `/viewedit/add-to-menu/${view.id}`,
         '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+        req.csrfToken()
+      ),
+      post_dropdown_item(
+        `/viewedit/clone/${view.id}`,
+        '<i class="far fa-clone"></i>&nbsp;' + req.__("Clone"),
         req.csrfToken()
       ),
       div({ class: "dropdown-divider" }),
       post_dropdown_item(
-        `/viewedit/delete/${encodeURIComponent(view.id)}`,
+        `/viewedit/delete/${view.id}`,
         '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
         req.csrfToken()
       )
@@ -430,6 +435,22 @@ router.post(
         "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
         view.name
       )
+    );
+    res.redirect(`/viewedit`);
+  })
+);
+
+router.post(
+  "/clone/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const view = await View.findOne({ id });
+    const newview = await view.clone();
+    req.flash(
+      "success",
+      req.__("View %s cloned as %s", view.name, newview.name)
     );
     res.redirect(`/viewedit`);
   })

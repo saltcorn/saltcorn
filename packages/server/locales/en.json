@@ -299,5 +299,7 @@
 	"Error: missing name or file": "Error: missing name or file",
 	"Restart server.": "Restart server.",
 	"Add to menu": "Add to menu",
-	"View %s added to menu. Adjust access permissions in Settings &raquo; Menu": "View %s added to menu. Adjust access permissions in Settings &raquo; Menu"
+	"View %s added to menu. Adjust access permissions in Settings &raquo; Menu": "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+	"Clone": "Clone",
+	"View %s cloned as %s": "View %s cloned as %s"
 }
