@@ -46,7 +46,7 @@ router.get(
             [
               {
                 label: req.__("Name"),
-                key: "name",
+                key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
                 sortlink: `javascript:set_state_field('_sortby', 'name')`,
               },
               {
@@ -58,11 +58,6 @@ router.get(
                 label: req.__("Table"),
                 key: (r) => r.table,
                 sortlink: `javascript:set_state_field('_sortby', 'table')`,
-              },
-              {
-                label: req.__("Run"),
-                key: (r) =>
-                  link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
               },
               {
                 label: req.__("Edit"),
