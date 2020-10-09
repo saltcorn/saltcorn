@@ -8,7 +8,7 @@
     "test": "echo No tests"
   },
   "dependencies": {
-    "@saltcorn/data": "^0.2.2-beta.0"
+    "@saltcorn/data": "^0.2.0"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
