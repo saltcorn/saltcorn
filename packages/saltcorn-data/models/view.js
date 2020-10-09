@@ -108,7 +108,7 @@ class View {
   }
 
   async clone() {
-    const basename = this.name + " clone";
+    const basename = this.name + " copy";
     let newname;
     for (let i = 0; i < 100; i++) {
       newname = i ? `${basename} (${i})` : basename;

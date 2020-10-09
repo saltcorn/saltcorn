@@ -73,7 +73,7 @@ const view_dropdown = (view, req) =>
       ),
       post_dropdown_item(
         `/viewedit/clone/${view.id}`,
-        '<i class="far fa-clone"></i>&nbsp;' + req.__("Clone"),
+        '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
         req.csrfToken()
       ),
       div({ class: "dropdown-divider" }),
@@ -450,7 +450,7 @@ router.post(
     const newview = await view.clone();
     req.flash(
       "success",
-      req.__("View %s cloned as %s", view.name, newview.name)
+      req.__("View %s duplicated as %s", view.name, newview.name)
     );
     res.redirect(`/viewedit`);
   })

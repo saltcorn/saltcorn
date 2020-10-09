@@ -301,5 +301,7 @@
 	"Add to menu": "Add to menu",
 	"View %s added to menu. Adjust access permissions in Settings &raquo; Menu": "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
 	"Clone": "Clone",
-	"View %s cloned as %s": "View %s cloned as %s"
+	"View %s cloned as %s": "View %s cloned as %s",
+	"Duplicate": "Duplicate",
+	"View %s duplicated as %s": "View %s duplicated as %s"
 }
