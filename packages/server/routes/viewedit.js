@@ -40,6 +40,8 @@ router.get(
       views.sort((a, b) =>
         a.table.toLowerCase() > b.table.toLowerCase() ? 1 : -1
       );
+    const roles = await User.get_roles();
+
     const viewMarkup =
       views.length > 0
         ? mkTable(
@@ -58,6 +60,13 @@ router.get(
                 label: req.__("Table"),
                 key: (r) => r.table,
                 sortlink: `javascript:set_state_field('_sortby', 'table')`,
+              },
+              {
+                label: req.__("Role to access"),
+                key: (row) => {
+                  const role = roles.find((r) => r.id === row.min_role);
+                  return role ? role.role : "?";
+                },
               },
               {
                 label: req.__("Edit"),
