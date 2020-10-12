@@ -177,7 +177,14 @@ const viewForm = (req, tableOptions, roles, values) => {
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
     fields: [
-      new Field({ label: req.__("View name"), name: "name", type: "String" }),
+      new Field({
+        label: req.__("View name"),
+        name: "name",
+        type: "String",
+        sublabel: req.__(
+          "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
+        ),
+      }),
       new Field({
         label: req.__("Template"),
         name: "viewtemplate",
