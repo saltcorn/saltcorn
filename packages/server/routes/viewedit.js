@@ -39,6 +39,7 @@ const view_dropdown = (view, req) =>
     button(
       {
         class: "btn btn-outline-secondary",
+        "data-boundary": "viewport",
         type: "button",
         id: `dropdownMenuButton${view.id}`,
         "data-toggle": "dropdown",

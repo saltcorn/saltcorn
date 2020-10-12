@@ -78,7 +78,14 @@ const mkTable = contract(
     div(
       { class: "table-responsive" },
       table(
-        { class: ["table table-sm", opts.onRowSelect && "table-hover"] },
+        {
+          class: [
+            "table table-sm",
+            opts.class,
+            opts.onRowSelect && "table-hover",
+          ],
+          style: opts.style,
+        },
         !opts.noHeader && thead(tr(hdrs.map((hdr) => headerCell(hdr)))),
         tbody(
           (vs || []).map((v) =>
