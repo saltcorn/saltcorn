@@ -32,7 +32,7 @@ router.get(
         resp
       );
       const showThis =
-        role === 1
+        role === 1 && !req.xhr
           ? {
               type: "card",
               title: [

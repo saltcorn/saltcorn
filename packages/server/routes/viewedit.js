@@ -39,6 +39,7 @@ const view_dropdown = (view, req) =>
     button(
       {
         class: "btn btn-outline-secondary",
+        "data-boundary": "viewport",
         type: "button",
         id: `dropdownMenuButton${view.id}`,
         "data-toggle": "dropdown",
@@ -177,7 +178,14 @@ const viewForm = (req, tableOptions, roles, values) => {
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
     fields: [
-      new Field({ label: req.__("View name"), name: "name", type: "String" }),
+      new Field({
+        label: req.__("View name"),
+        name: "name",
+        type: "String",
+        sublabel: req.__(
+          "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
+        ),
+      }),
       new Field({
         label: req.__("Template"),
         name: "viewtemplate",
@@ -428,7 +436,12 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const view = await View.findOne({ id });
-    await add_to_menu({ label: view.name, type: "View", min_role: 10 });
+    await add_to_menu({
+      label: view.name,
+      type: "View",
+      min_role: 10,
+      viewname: view.name,
+    });
     req.flash(
       "success",
       req.__(
