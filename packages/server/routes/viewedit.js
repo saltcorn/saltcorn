@@ -436,7 +436,12 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const view = await View.findOne({ id });
-    await add_to_menu({ label: view.name, type: "View", min_role: 10 });
+    await add_to_menu({
+      label: view.name,
+      type: "View",
+      min_role: 10,
+      viewname: view.name,
+    });
     req.flash(
       "success",
       req.__(
