@@ -124,8 +124,12 @@ const field_picker_fields = contract(
             },
             { name: "Action", label: "Action on row" },
             { name: "ViewLink", label: "Link to other view" },
-            { name: "JoinField", label: "Join Field" },
-            { name: "Aggregation", label: "Aggregation" },
+            ...(parent_field_list.length > 0
+              ? [{ name: "JoinField", label: "Join Field" }]
+              : []),
+            ...(child_field_list.length > 0
+              ? [{ name: "Aggregation", label: "Aggregation" }]
+              : []),
           ],
         },
       },
