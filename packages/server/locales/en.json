@@ -304,5 +304,7 @@
 	"View %s cloned as %s": "View %s cloned as %s",
 	"Duplicate": "Duplicate",
 	"View %s duplicated as %s": "View %s duplicated as %s",
-	"The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.": "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
+	"The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.": "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.",
+	"Saltcorn version": "Saltcorn version",
+	"Node.js version": "Node.js version"
 }

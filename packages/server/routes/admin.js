@@ -5,7 +5,20 @@ const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 
 const { post_btn } = require("@saltcorn/markup");
-const { div, hr, form, input, label, i } = require("@saltcorn/markup/tags");
+const {
+  div,
+  hr,
+  form,
+  input,
+  label,
+  i,
+  h4,
+  table,
+  tbody,
+  td,
+  th,
+  tr,
+} = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { getState, restart_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
@@ -13,7 +26,7 @@ const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const { restore_backup } = require("../markup/admin.js");
-
+var packagejson = require("../package.json");
 const router = new Router();
 module.exports = router;
 
@@ -48,7 +61,15 @@ router.get(
               i({ class: "fas fa-2x fa-upload" }),
               "<br/>",
               req.__("Restore"),
-            ])
+            ]),
+            hr(),
+            h4("About saltcorn"),
+            table(
+              tbody(
+                tr(th(req.__("Saltcorn version")), td(packagejson.version)),
+                tr(th(req.__("Node.js version")), td(process.version))
+              )
+            )
           ),
         },
       ],
