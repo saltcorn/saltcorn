@@ -497,7 +497,9 @@ class Table {
       });
 
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
-      const reftable = fields.find((f) => f.name === ref).reftable_name;
+      const reffield = fields.find((f) => f.name === ref);
+      if (!reffield) throw new Error(`Key field not found: ${ref}`);
+      const reftable = reffield.reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
