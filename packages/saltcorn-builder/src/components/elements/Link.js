@@ -19,29 +19,51 @@ export const Link = ({ text, block, textStyle }) => {
     </span>
   );
 };
-
+const OrFormula = ({ setProp, isFormula, value, key, children }) => (
+  <div className="input-group  input-group-sm w-100">
+    {children}
+    <div className="input-group-append">
+      <button
+        className={`btn ${
+          isFormula[key] ? "btn-secondary" : "btn-outline-secondary"
+        }`}
+        title="Calculated formula"
+        type="button"
+        onClick={(e) =>
+          setProp((prop) => (prop.isFormula[key] = !isFormula[key]))
+        }
+      >
+        <i className="fas fa-calculator"></i>
+      </button>
+    </div>
+  </div>
+);
 export const LinkSettings = () => {
   const {
     actions: { setProp },
     text,
     url,
     block,
+    isFormula,
     textStyle,
   } = useNode((node) => ({
     text: node.data.props.text,
     url: node.data.props.url,
     block: node.data.props.block,
+    isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
   }));
   return (
     <div>
       <label>Text to display</label>
-      <input
-        type="text"
-        className="text-to-display w-100"
-        value={text}
-        onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
-      />
+      <OrFormula {...{ setProp, isFormula }} value={text} key="text">
+        <input
+          type="text"
+          className="form-control text-to-display"
+          value={text}
+          onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
+        />
+      </OrFormula>
       <label>URL</label>
       <input
         type="text"
@@ -60,6 +82,7 @@ Link.craft = {
     text: "Click here",
     url: "https://saltcorn.com/",
     block: false,
+    isFormula: {},
     textStyle: "",
   },
   displayName: "Link",
