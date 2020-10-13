@@ -1,5 +1,6 @@
 const { p, code, li, ul, pre } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
+const { getState } = require("@saltcorn/data/db/state");
 
 const toJsType = (type) =>
   ({
@@ -99,8 +100,12 @@ const boolExamples = (type, fields) => {
   return exs;
 };
 
-const expressionBlurb = (type, allFields) => {
+const expressionBlurb = (type, stored, allFields) => {
   const fields = allFields.filter((f) => !f.is_fkey && !f.calculated);
+  const funs = getState().functions;
+  const funNames = Object.entries(funs)
+    .filter(([k, v]) => !(!stored && v.isAsync))
+    .map(([k, v]) => k);
   const examples = (
     {
       Integer: () => intExamples(type, fields),
@@ -120,6 +125,9 @@ as a JavaScript expression. The expression must result in a <strong>${toJsType(
         .map((f) => code(f.name))
         .join(", ")}`
     ),
+    funNames.length > 0
+      ? p(`Functions you can use: ${funNames.map((f) => code(f)).join(", ")}`)
+      : "",
     examples && examples.length > 0 ? p("Examples:") : "",
     examples ? ul(examples.map((e) => li(code(e)))) : "",
   ];

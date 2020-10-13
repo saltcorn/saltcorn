@@ -207,7 +207,7 @@ const fieldFlow = (req) =>
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           return new Form({
-            blurb: expressionBlurb(context.type, fields),
+            blurb: expressionBlurb(context.type, context.stored, fields),
             fields: [
               new Field({
                 name: "expression",
