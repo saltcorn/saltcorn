@@ -115,7 +115,11 @@ const expressionBlurb = (type, allFields) => {
 as a JavaScript expression. The expression must result in a <strong>${toJsType(
       type
     )}</strong> type.`),
-    p(`Variables you can use: ${fields.map((f) => code(f.name)).join(", ")}`),
+    p(
+      `Fields you can use as variables: ${fields
+        .map((f) => code(f.name))
+        .join(", ")}`
+    ),
     examples && examples.length > 0 ? p("Examples:") : "",
     examples ? ul(examples.map((e) => li(code(e)))) : "",
   ];
