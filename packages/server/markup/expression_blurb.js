@@ -126,7 +126,11 @@ as a JavaScript expression. The expression must result in a <strong>${toJsType(
         .join(", ")}`
     ),
     funNames.length > 0
-      ? p(`Functions you can use: ${funNames.map((f) => code(f)).join(", ")}`)
+      ? p(
+          `Functions you can use (in addition to standard JavaScript functions): ${funNames
+            .map((f) => code(f))
+            .join(", ")}`
+        )
       : "",
     examples && examples.length > 0 ? p("Examples:") : "",
     examples ? ul(examples.map((e) => li(code(e)))) : "",
