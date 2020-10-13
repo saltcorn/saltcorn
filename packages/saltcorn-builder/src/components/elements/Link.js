@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
 
@@ -20,23 +20,30 @@ export const Link = ({ text, block, textStyle }) => {
   );
 };
 const OrFormula = ({ setProp, isFormula, value, key, children }) => (
-  <div className="input-group  input-group-sm w-100">
-    {children}
-    <div className="input-group-append">
-      <button
-        className={`btn ${
-          isFormula[key] ? "btn-secondary" : "btn-outline-secondary"
-        }`}
-        title="Calculated formula"
-        type="button"
-        onClick={(e) =>
-          setProp((prop) => (prop.isFormula[key] = !isFormula[key]))
-        }
-      >
-        <i className="fas fa-calculator"></i>
-      </button>
+  <Fragment>
+    <div className="input-group  input-group-sm w-100">
+      {children}
+      <div className="input-group-append">
+        <button
+          className={`btn activate-formula ${
+            isFormula[key] ? "btn-secondary" : "btn-outline-secondary"
+          }`}
+          title="Calculated formula"
+          type="button"
+          onClick={(e) =>
+            setProp((prop) => (prop.isFormula[key] = !isFormula[key]))
+          }
+        >
+          <i className="fas fa-calculator"></i>
+        </button>
+      </div>
     </div>
-  </div>
+    {isFormula[key] && (
+      <div style={{ marginTop: "-5px" }}>
+        <small className="text-muted text-monospace">FORMULA</small>
+      </div>
+    )}
+  </Fragment>
 );
 export const LinkSettings = () => {
   const {
