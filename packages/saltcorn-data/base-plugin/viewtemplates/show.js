@@ -190,15 +190,11 @@ const runMany = async (
 
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
-const isExpression = (s) =>
-  typeof s === "string" && s[0] === "{" && s[s.length - 1] === "}";
-
-const getExpression = (s) => s.slice(1, -1);
 
 const render = (row, fields, layout, viewname, table, role, req) => {
   const evalMaybeExpr = (segment, key) => {
-    if (isExpression(segment[key])) {
-      const f = get_expression_function(getExpression(segment[key]), fields);
+    if (segment.isFormula && segment.isFormula[key]) {
+      const f = get_expression_function(segment[key], fields);
       segment[key] = f(row);
     }
   };
