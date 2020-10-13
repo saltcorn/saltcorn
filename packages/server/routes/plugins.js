@@ -63,7 +63,6 @@ const local_has_theme = (name) => {
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
-
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
   const schema = db.getTenantSchema();
@@ -74,6 +73,7 @@ const get_store_items = async () => {
     installed: installed_plugin_names.includes(plugin.name),
     plugin: true,
     description: plugin.description,
+    documentation_link: plugin.documentation_link,
     has_theme: plugin.has_theme,
   }));
 
@@ -132,7 +132,10 @@ const store_item_html = (req) => (item) => ({
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed"))
     ),
-    div(item.description || "")
+    div(item.description || ""),
+    item.documentation_link
+      ? div(link(item.documentation_link, "Documentation"))
+      : ""
   ),
   footer: div(
     div(

@@ -13,6 +13,7 @@ class Plugin {
     this.location = o.location;
     this.version = o.version;
     this.description = o.description;
+    this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
@@ -107,6 +108,7 @@ Plugin.contract = {
     location: is.str,
     name: is.str,
     version: is.maybe(is.str),
+    documentation_link: is.maybe(is.str),
     configuration: is.maybe(is.obj()),
     source: is.one_of(["npm", "github", "local"]),
   },
