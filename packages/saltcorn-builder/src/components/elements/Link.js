@@ -19,26 +19,35 @@ export const Link = ({ text, block, textStyle }) => {
     </span>
   );
 };
-const OrFormula = ({ setProp, isFormula, value, key, children }) => (
+const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => (
   <Fragment>
     <div className="input-group  input-group-sm w-100">
-      {children}
+      {isFormula[nodekey] ? (
+        <input
+          type="text"
+          className="form-control text-to-display"
+          value={node[nodekey]}
+          onChange={(e) => setProp((prop) => (prop[nodekey] = e.target.value))}
+        />
+      ) : (
+        children
+      )}
       <div className="input-group-append">
         <button
           className={`btn activate-formula ${
-            isFormula[key] ? "btn-secondary" : "btn-outline-secondary"
+            isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
           }`}
           title="Calculated formula"
           type="button"
           onClick={(e) =>
-            setProp((prop) => (prop.isFormula[key] = !isFormula[key]))
+            setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
           }
         >
           <i className="fas fa-calculator"></i>
         </button>
       </div>
     </div>
-    {isFormula[key] && (
+    {isFormula[nodekey] && (
       <div style={{ marginTop: "-5px" }}>
         <small className="text-muted text-monospace">FORMULA</small>
       </div>
@@ -46,6 +55,13 @@ const OrFormula = ({ setProp, isFormula, value, key, children }) => (
   </Fragment>
 );
 export const LinkSettings = () => {
+  const node = useNode((node) => ({
+    text: node.data.props.text,
+    url: node.data.props.url,
+    block: node.data.props.block,
+    isFormula: node.data.props.isFormula,
+    textStyle: node.data.props.textStyle,
+  }));
   const {
     actions: { setProp },
     text,
@@ -53,17 +69,11 @@ export const LinkSettings = () => {
     block,
     isFormula,
     textStyle,
-  } = useNode((node) => ({
-    text: node.data.props.text,
-    url: node.data.props.url,
-    block: node.data.props.block,
-    isFormula: node.data.props.isFormula,
-    textStyle: node.data.props.textStyle,
-  }));
+  } = node;
   return (
     <div>
       <label>Text to display</label>
-      <OrFormula {...{ setProp, isFormula }} value={text} key="text">
+      <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
         <input
           type="text"
           className="form-control text-to-display"
@@ -72,12 +82,14 @@ export const LinkSettings = () => {
         />
       </OrFormula>
       <label>URL</label>
-      <input
-        type="text"
-        className="w-100"
-        value={url}
-        onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
-      />
+      <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
+        <input
+          type="text"
+          className="form-control "
+          value={url}
+          onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
+        />
+      </OrFormula>
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
