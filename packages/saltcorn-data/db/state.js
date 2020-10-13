@@ -133,6 +133,8 @@ class State {
     this.favicon = null;
     this.layout = { wrap: emergency_layout };
     this.headers = [];
+    this.function_context = {};
+    this.functions = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });

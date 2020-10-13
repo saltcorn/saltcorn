@@ -27,6 +27,7 @@ const {
   form,
   label,
   input,
+  text,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const fs = require("fs").promises;
@@ -484,10 +485,9 @@ router.get(
       rows.length > 0
         ? mkTable(
             [
-              { label: req.__("Name"), key: "name" },
               {
-                label: req.__("Edit"),
-                key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+                label: req.__("Name"),
+                key: (r) => link(`/table/${r.id}`, text(r.name)),
               },
               {
                 label: req.__("Delete"),
