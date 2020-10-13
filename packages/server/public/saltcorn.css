@@ -121,3 +121,6 @@ input[type="color"].form-control {
   max-height: 50vh;
   overflow-y: scroll;
 }
+button.btn.activate-formula.btn-outline-secondary:hover {
+  background-color: unset;
+}

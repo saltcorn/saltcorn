@@ -1,8 +1,31 @@
-const eachView = async (layout, f) => {
+const traverseSync = (layout, visitors) => {
   const go = async (segment) => {
     if (!segment) return;
-    if (segment.type === "view") {
-      await f(segment);
+    if (visitors[segment.type]) {
+      visitors[segment.type](segment);
+      return;
+    }
+    if (segment.contents) {
+      if (typeof contents !== "string") go(segment.contents);
+      return;
+    }
+    if (segment.above) {
+      for (const seg of segment.above) go(seg);
+      return;
+    }
+    if (segment.besides) {
+      for (const seg of segment.besides) go(seg);
+      return;
+    }
+  };
+  go(layout);
+};
+
+const traverse = async (layout, visitors) => {
+  const go = async (segment) => {
+    if (!segment) return;
+    if (visitors[segment.type]) {
+      await visitors[segment.type](segment);
       return;
     }
     if (segment.contents) {
@@ -21,6 +44,8 @@ const eachView = async (layout, f) => {
   await go(layout);
 };
 
+const eachView = (layout, f) => traverse(layout, { view: f });
+
 const getViews = async (layout) => {
   const views = [];
   await eachView(layout, (segment) => {
@@ -30,4 +55,4 @@ const getViews = async (layout) => {
 };
 //getViews: is.fun([], is.promise(is.array(is.obj()))),
 //eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
-module.exports = { eachView, getViews };
+module.exports = { eachView, getViews, traverse, traverseSync };

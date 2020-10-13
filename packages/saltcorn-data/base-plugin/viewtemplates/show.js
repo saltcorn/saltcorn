@@ -24,6 +24,8 @@ const {
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
 const { asyncMap } = require("../../utils");
+const { traverseSync } = require("../../models/layout");
+const { get_expression_function } = require("../../models/expression");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -190,6 +192,18 @@ const runMany = async (
 };
 
 const render = (row, fields, layout, viewname, table, role, req) => {
+  const evalMaybeExpr = (segment, key) => {
+    if (segment.isFormula && segment.isFormula[key]) {
+      const f = get_expression_function(segment[key], fields);
+      segment[key] = f(row);
+    }
+  };
+  traverseSync(layout, {
+    link(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "text");
+    },
+  });
   const blockDispatch = {
     field({ field_name, fieldview }) {
       const val = row[field_name];
