@@ -134,7 +134,12 @@ const store_item_html = (req) => (item) => ({
     ),
     div(item.description || ""),
     item.documentation_link
-      ? div(link(item.documentation_link, "Documentation"))
+      ? div(
+          a(
+            { href: item.documentation_link, target: "_blank" },
+            "Documentation"
+          )
+        )
       : ""
   ),
   footer: div(
