@@ -279,6 +279,7 @@ export const ToolboxShow = () => {
       <JoinFieldElem connectors={connectors} options={options} />
       <ViewLinkElem connectors={connectors} options={options} />
       <ActionElem connectors={connectors} options={options} />
+      <LinkElem connectors={connectors} />
       <AggregationElem
         connectors={connectors}
         child_field_list={child_field_list}
