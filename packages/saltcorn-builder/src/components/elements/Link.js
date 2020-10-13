@@ -1,8 +1,9 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
+import optionsCtx from "../context";
 
-export const Link = ({ text, block, textStyle }) => {
+export const Link = ({ text, block, isFormula, textStyle }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -11,49 +12,59 @@ export const Link = ({ text, block, textStyle }) => {
     <span
       className={`${textStyle} is-builder-link ${
         selected ? "selected-node" : ""
-      }`}
+      } ${isFormula.text ? "text-monospace" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      {text}
+      {isFormula.text ? `=${text}` : text}
     </span>
   );
 };
-const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => (
-  <Fragment>
-    <div className="input-group  input-group-sm w-100">
-      {isFormula[nodekey] ? (
-        <input
-          type="text"
-          className="form-control text-to-display"
-          value={node[nodekey]}
-          onChange={(e) => setProp((prop) => (prop[nodekey] = e.target.value))}
-        />
-      ) : (
-        children
+
+const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
+  const { mode } = useContext(optionsCtx);
+
+  return mode !== "show" ? (
+    children
+  ) : (
+    <Fragment>
+      <div className="input-group  input-group-sm w-100">
+        {isFormula[nodekey] ? (
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={node[nodekey]}
+            onChange={(e) =>
+              setProp((prop) => (prop[nodekey] = e.target.value))
+            }
+          />
+        ) : (
+          children
+        )}
+        <div className="input-group-append">
+          <button
+            className={`btn activate-formula ${
+              isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
+            }`}
+            title="Calculated formula"
+            type="button"
+            onClick={(e) =>
+              setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
+            }
+          >
+            <i className="fas fa-calculator"></i>
+          </button>
+        </div>
+      </div>
+      {isFormula[nodekey] && (
+        <div style={{ marginTop: "-5px" }}>
+          <small className="text-muted text-monospace">FORMULA</small>
+        </div>
       )}
-      <div className="input-group-append">
-        <button
-          className={`btn activate-formula ${
-            isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
-          }`}
-          title="Calculated formula"
-          type="button"
-          onClick={(e) =>
-            setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
-          }
-        >
-          <i className="fas fa-calculator"></i>
-        </button>
-      </div>
-    </div>
-    {isFormula[nodekey] && (
-      <div style={{ marginTop: "-5px" }}>
-        <small className="text-muted text-monospace">FORMULA</small>
-      </div>
-    )}
-  </Fragment>
-);
+    </Fragment>
+  );
+};
+
 export const LinkSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
@@ -70,6 +81,7 @@ export const LinkSettings = () => {
     isFormula,
     textStyle,
   } = node;
+
   return (
     <div>
       <label>Text to display</label>
