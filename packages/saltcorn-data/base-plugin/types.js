@@ -288,7 +288,10 @@ const date = {
             : ""
         ),
     },
-    relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
+    relative: {
+      isEdit: false,
+      run: (d) => (d ? text(moment(d).fromNow()) : ""),
+    },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
