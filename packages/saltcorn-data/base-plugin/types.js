@@ -250,6 +250,10 @@ const float = {
     return true;
   },
 };
+const locale = (req) => {
+  console.log(req && req.getLocale ? req.getLocale() : undefined);
+  return req && req.getLocale ? req.getLocale() : undefined;
+};
 
 const date = {
   name: "Date",
@@ -259,23 +263,23 @@ const date = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: (d) =>
+      run: (d, req) =>
         text(
           typeof d === "string"
             ? text(d)
             : d && d.toLocaleString
-            ? d.toLocaleString()
+            ? d.toLocaleString(locale(req))
             : ""
         ),
     },
     showDay: {
       isEdit: false,
-      run: (d) =>
+      run: (d, req) =>
         text(
           typeof d === "string"
             ? text(d)
             : d && d.toLocaleDateString
-            ? d.toLocaleDateString()
+            ? d.toLocaleDateString(locale(req))
             : ""
         ),
     },
@@ -290,7 +294,9 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toLocaleString()),
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleString(locale(req))
+            ),
           }),
         }),
     },
@@ -305,7 +311,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleDateString()
+              typeof v === "string" ? v : v.toLocaleDateString(locale(req))
             ),
           }),
         }),
