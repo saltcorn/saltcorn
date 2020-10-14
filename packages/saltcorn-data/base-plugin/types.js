@@ -251,8 +251,13 @@ const float = {
   },
 };
 const locale = (req) => {
-  console.log(req && req.getLocale ? req.getLocale() : undefined);
+  //console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req && req.getLocale ? req.getLocale() : undefined;
+};
+
+const logit = (x) => {
+  console.log(x);
+  return x;
 };
 
 const date = {
@@ -294,7 +299,9 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toLocaleString()),
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleString(attrs.locale)
+            ),
           }),
         }),
     },
@@ -309,7 +316,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleDateString()
+              typeof v === "string" ? v : v.toLocaleDateString(attrs.locale)
             ),
           }),
         }),

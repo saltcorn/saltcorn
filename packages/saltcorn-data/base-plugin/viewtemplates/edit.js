@@ -156,6 +156,14 @@ const getForm = async (table, viewname, columns, layout, id) => {
   return form;
 };
 
+const setDateLocales = (form, locale) => {
+  form.fields.forEach((f) => {
+    if (f.type && f.type.name === "Date") {
+      f.attributes.locale = locale;
+    }
+  });
+};
+
 const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state, { res, req }) => {
@@ -190,6 +198,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     }
   });
   if (req.xhr) form.xhrSubmit = true;
+  setDateLocales(form, req.getLocale());
   return renderForm(form, req.csrfToken());
 };
 
@@ -226,6 +235,7 @@ const runPost = async (
       form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
+  setDateLocales(form, req.getLocale());
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) {
