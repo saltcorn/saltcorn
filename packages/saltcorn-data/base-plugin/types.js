@@ -251,7 +251,7 @@ const float = {
   },
 };
 const locale = (req) => {
-  //console.log(req && req.getLocale ? req.getLocale() : undefined);
+  console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req && req.getLocale ? req.getLocale() : undefined;
 };
 
@@ -294,9 +294,7 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(
-              typeof v === "string" ? v : v.toLocaleString(locale(req))
-            ),
+            value: text_attr(typeof v === "string" ? v : v.toLocaleString()),
           }),
         }),
     },
@@ -311,7 +309,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleDateString(locale(req))
+              typeof v === "string" ? v : v.toLocaleDateString()
             ),
           }),
         }),
