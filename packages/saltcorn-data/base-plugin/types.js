@@ -268,6 +268,17 @@ const date = {
             : ""
         ),
     },
+    showDay: {
+      isEdit: false,
+      run: (d) =>
+        text(
+          typeof d === "string"
+            ? text(d)
+            : d && d.toLocaleDateString
+            ? d.toLocaleDateString()
+            : ""
+        ),
+    },
     relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
     edit: {
       isEdit: true,
