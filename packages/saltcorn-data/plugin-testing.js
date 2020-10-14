@@ -2,6 +2,7 @@ const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
+const { mockReqRes } = require("./tests/mocks");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -71,8 +72,6 @@ const auto_test_workflow = async (wf, initialCtx) => {
   };
   return await step(wf, initialCtx);
 };
-
-const mockReqRes = { req: { csrfToken: () => "" }, res: {} };
 
 const auto_test_viewtemplate = async (vt) => {
   const wf = vt.configuration_workflow();
