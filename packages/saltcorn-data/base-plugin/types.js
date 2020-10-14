@@ -290,7 +290,12 @@ const date = {
     },
     relative: {
       isEdit: false,
-      run: (d) => (d ? text(moment(d).fromNow()) : ""),
+      run: (d, req) => {
+        if (!d) return "";
+        const loc = locale(req);
+        if (loc) return text(moment(d).locale(loc).fromNow());
+        else return text(moment(d).fromNow());
+      },
     },
     edit: {
       isEdit: true,
