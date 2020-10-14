@@ -325,10 +325,14 @@ const date = {
   presets: {
     Now: () => new Date(),
   },
-  read: (v) => {
+  read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
-
     if (typeof v === "string") {
+      if (attrs && attrs.locale) {
+        const d = moment(v, "L LT", attrs.locale).toDate();
+        if (d instanceof Date && !isNaN(d)) return d;
+        else return null;
+      }
       const d = new Date(v);
       if (d instanceof Date && !isNaN(d)) return d;
       else return null;
