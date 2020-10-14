@@ -111,7 +111,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     aggregations,
     limit: 2,
   });
-  if (rows.length !== 1) return "No record selected";
+  if (rows.length !== 1) return extra.req.__("No record selected");
 
   return (await renderRows(tbl, viewname, { columns, layout }, extra, rows))[0];
 };

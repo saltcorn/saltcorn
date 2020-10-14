@@ -44,11 +44,13 @@ const post_delete_btn = (href, csrfToken) =>
     small: true,
   });
 
-const post_dropdown_item = (href, s, csrfToken) =>
-  `<form action="${text(href)}" method="post" class="">
+const post_dropdown_item = (href, s, csrfToken) => {
+  const id = href.split("/").join("");
+  return `<a class="dropdown-item" onclick="$('#${id}').submit()">${s}</a>
+  <form id="${id}" action="${text(href)}" method="post" class="">
     <input type="hidden" name="_csrf" value="${csrfToken}">
-  <button type="submit" class="dropdown-item btn btn-link">${s}</button></form>`;
-
+  </form>`;
+};
 module.exports = {
   mkTable,
   renderForm,

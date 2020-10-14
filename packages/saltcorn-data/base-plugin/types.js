@@ -288,7 +288,15 @@ const date = {
             : ""
         ),
     },
-    relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
+    relative: {
+      isEdit: false,
+      run: (d, req) => {
+        if (!d) return "";
+        const loc = locale(req);
+        if (loc) return text(moment(d).locale(loc).fromNow());
+        else return text(moment(d).fromNow());
+      },
+    },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
