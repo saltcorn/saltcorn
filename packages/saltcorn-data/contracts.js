@@ -120,16 +120,13 @@ const is_plugin_type = is.obj({
   sql_name: is.str,
   contract: is.maybe(is.fun(is.obj(), is.contract)),
   fieldviews: is.objVals(
-    is.obj(
-      {
-        isEdit: is.bool,
-        run: is.or(
-          is.fun(is.any, is.str),
-          is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
-        ),
-      },
-      (o) => (o.isEdit && o.run.length >= 2) || (!o.isEdit && o.run.length == 1)
-    )
+    is.obj({
+      isEdit: is.bool,
+      run: is.or(
+        is.fun(is.any, is.str),
+        is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
+      ),
+    })
   ),
   attributes: is.maybe(is.array(is_attribute)),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),

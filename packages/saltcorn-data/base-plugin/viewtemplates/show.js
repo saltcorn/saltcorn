@@ -210,13 +210,18 @@ const render = (row, fields, layout, viewname, table, role, req) => {
       const field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
       if (fieldview && field.type === "File") {
-        return val ? getState().fileviews[fieldview].run(val) : "";
+        return val
+          ? getState().fileviews[fieldview].run(
+              val,
+              row[`${field_name}__filename`]
+            )
+          : "";
       } else if (
         fieldview &&
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val);
+        return field.type.fieldviews[fieldview].run(val, req);
       else return text(val);
     },
     join_field({ join_field }) {

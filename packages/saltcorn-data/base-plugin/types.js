@@ -250,6 +250,15 @@ const float = {
     return true;
   },
 };
+const locale = (req) => {
+  //console.log(req && req.getLocale ? req.getLocale() : undefined);
+  return req && req.getLocale ? req.getLocale() : undefined;
+};
+
+const logit = (x) => {
+  console.log(x);
+  return x;
+};
 
 const date = {
   name: "Date",
@@ -259,23 +268,23 @@ const date = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: (d) =>
+      run: (d, req) =>
         text(
           typeof d === "string"
             ? text(d)
             : d && d.toLocaleString
-            ? d.toLocaleString()
+            ? d.toLocaleString(locale(req))
             : ""
         ),
     },
     showDay: {
       isEdit: false,
-      run: (d) =>
+      run: (d, req) =>
         text(
           typeof d === "string"
             ? text(d)
             : d && d.toLocaleDateString
-            ? d.toLocaleDateString()
+            ? d.toLocaleDateString(locale(req))
             : ""
         ),
     },
@@ -290,7 +299,9 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toLocaleString()),
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleString(attrs.locale)
+            ),
           }),
         }),
     },
@@ -305,7 +316,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleDateString()
+              typeof v === "string" ? v : v.toLocaleDateString(attrs.locale)
             ),
           }),
         }),
@@ -314,10 +325,13 @@ const date = {
   presets: {
     Now: () => new Date(),
   },
-  read: (v) => {
+  read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
-
     if (typeof v === "string") {
+      if (attrs && attrs.locale) {
+        const d = moment(v, "L LT", attrs.locale).toDate();
+        if (d instanceof Date && !isNaN(d)) return d;
+      }
       const d = new Date(v);
       if (d instanceof Date && !isNaN(d)) return d;
       else return null;

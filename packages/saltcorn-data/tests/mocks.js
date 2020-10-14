@@ -82,7 +82,7 @@ const plugin_with_routes = {
   ],
 };
 const mockReqRes = {
-  req: { csrfToken: () => "" },
+  req: { csrfToken: () => "", getLocale: () => "en" },
   res: { redirect() {}, json() {}, send() {} },
 };
 
