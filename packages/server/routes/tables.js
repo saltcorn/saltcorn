@@ -217,6 +217,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", req.__(`Table not found`));
+      res.redirect(`/table`);
+      return;
+    }
     const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
     var fieldCard;
