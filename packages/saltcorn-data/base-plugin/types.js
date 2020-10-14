@@ -331,7 +331,6 @@ const date = {
       if (attrs && attrs.locale) {
         const d = moment(v, "L LT", attrs.locale).toDate();
         if (d instanceof Date && !isNaN(d)) return d;
-        else return null;
       }
       const d = new Date(v);
       if (d instanceof Date && !isNaN(d)) return d;

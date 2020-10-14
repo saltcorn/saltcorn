@@ -276,5 +276,6 @@
 	"Add to menu": "Add to menu",
 	"Duplicate": "Duplicate",
 	"The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.": "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.",
-	"Local": "Local"
+	"Local": "Local",
+	"Password does not match": "Password does not match"
 }
