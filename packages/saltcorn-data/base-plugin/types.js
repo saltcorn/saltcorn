@@ -263,8 +263,8 @@ const date = {
         text(
           typeof d === "string"
             ? text(d)
-            : d && d.toISOString
-            ? d.toISOString()
+            : d && d.toLocaleString
+            ? d.toLocaleString()
             : ""
         ),
     },
