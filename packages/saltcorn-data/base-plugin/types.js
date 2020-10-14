@@ -290,7 +290,23 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toISOString()),
+            value: text_attr(typeof v === "string" ? v : v.toLocaleString()),
+          }),
+        }),
+    },
+    editDay: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "text",
+          class: ["form-control", cls],
+          name: text_attr(nm),
+          disabled: attrs.disabled,
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && {
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleDateString()
+            ),
           }),
         }),
     },
