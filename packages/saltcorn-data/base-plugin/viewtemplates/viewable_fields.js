@@ -90,7 +90,7 @@ const get_viewable_fields = contract(
       is.array(is.class("Field")),
       is.array(is_column),
       is.bool,
-      is.str,
+      is.obj({ csrfToken: is.fun([], is.str) }),
     ],
 
     is.array(
@@ -100,7 +100,7 @@ const get_viewable_fields = contract(
       })
     )
   ),
-  (viewname, table, fields, columns, isShow, csrfToken) =>
+  (viewname, table, fields, columns, isShow, req) =>
     columns
       .map((column) => {
         if (column.type === "Action")
@@ -110,7 +110,7 @@ const get_viewable_fields = contract(
               post_btn(
                 action_url(viewname, table, column.action_name, r),
                 column.action_label || column.action_name,
-                csrfToken,
+                req.csrfToken(),
                 { small: true, ajax: true, reload_on_done: true }
               ),
           };
@@ -157,10 +157,7 @@ const get_viewable_fields = contract(
                     f.type.fieldviews &&
                     f.type.fieldviews[column.fieldview]
                   ? (row) =>
-                      f.type.fieldviews[column.fieldview].run(
-                        row[f.name],
-                        row[`${f.name}__filename`]
-                      )
+                      f.type.fieldviews[column.fieldview].run(row[f.name])
                   : isShow
                   ? f.type.showAs
                     ? (row) => f.type.showAs(row[f.name])
