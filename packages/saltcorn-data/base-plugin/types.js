@@ -251,7 +251,7 @@ const float = {
   },
 };
 const locale = (req) => {
-  console.log(req && req.getLocale ? req.getLocale() : undefined);
+  //console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req && req.getLocale ? req.getLocale() : undefined;
 };
 
