@@ -295,6 +295,11 @@ const field_picker_fields = contract(
         type: "Bool",
         showIf: { ".coltype": "Field" },
       },
+      {
+        name: "header_label",
+        label: "Header label",
+        type: "String",
+      },
     ];
   }
 );

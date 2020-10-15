@@ -146,7 +146,7 @@ const get_viewable_fields = contract(
       .map((column) => {
         if (column.type === "Action")
           return {
-            label: "",
+            label: column.header_label ? text(column.header_label) : "",
             key: (r) =>
               post_btn(
                 action_url(viewname, table, column.action_name, r),
@@ -156,13 +156,19 @@ const get_viewable_fields = contract(
               ),
           };
         else if (column.type === "ViewLink") {
-          return view_linker(column, fields);
+          const r = view_linker(column, fields);
+          if (column.header_label) r.label = text(column.header_label);
+          return r;
         } else if (column.type === "Link") {
-          return make_link(column, fields);
+          const r = make_link(column, fields);
+          if (column.header_label) r.label = text(column.header_label);
+          return r;
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {
-            label: text(targetNm),
+            label: column.header_label
+              ? text(column.header_label)
+              : text(targetNm),
             key: text(targetNm),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
@@ -178,7 +184,9 @@ const get_viewable_fields = contract(
           ).toLowerCase();
 
           return {
-            label: text(column.stat + " " + table),
+            label: column.header_label
+              ? text(column.header_label)
+              : text(column.stat + " " + table),
             key: text(targetNm),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
@@ -187,7 +195,9 @@ const get_viewable_fields = contract(
 
           return (
             f && {
-              label: text(f.label),
+              label: column.header_label
+                ? text(column.header_label)
+                : text(f.label),
               key:
                 column.fieldview && f.type === "File"
                   ? (row) =>

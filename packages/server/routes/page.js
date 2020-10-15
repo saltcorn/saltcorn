@@ -1,14 +1,33 @@
 const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
-const { div } = require("@saltcorn/markup/tags");
+const { div, a, i } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, error_catcher } = require("../routes/utils.js");
 
 const router = new Router();
 module.exports = router;
+const add_edit_bar = (role, page, contents) => {
+  if (role > 1) return contents;
+  const bar = div(
+    { class: "alert alert-light" },
+    page.name,
+    a(
+      {
+        class: "ml-4",
+        href: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+      },
+      "Edit&nbsp;",
+      i({ class: "fas fa-edit" })
+    )
+  );
 
+  if (contents.above) {
+    contents.above.unshift(bar);
+    return contents;
+  } else return { above: [bar, contents] };
+};
 router.get(
   "/:pagename",
   setTenant,
@@ -31,7 +50,7 @@ router.get(
         res.sendWrap(
           { title: db_page.title, description: db_page.description } ||
             `${pagename} page`,
-          contents
+          add_edit_bar(role, db_page, contents)
         );
       } else
         res
