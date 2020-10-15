@@ -189,6 +189,13 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "ViewLink" },
       },
       {
+        name: "view_label_formula",
+        label: "View label is a formula?",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
         name: "in_modal",
         label: "Open in popup modal?",
         type: "Bool",
