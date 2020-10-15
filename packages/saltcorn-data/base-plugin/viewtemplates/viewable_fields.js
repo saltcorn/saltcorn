@@ -1,5 +1,5 @@
 const { post_btn, link } = require("@saltcorn/markup");
-const { text } = require("@saltcorn/markup/tags");
+const { text, a } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
@@ -24,6 +24,38 @@ const get_view_link_query = contract(
     if (fUnique)
       return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
     else return (r) => `?id=${r.id}`;
+  }
+);
+
+const make_link = contract(
+  is.fun(
+    [is.obj({ link_text: is.str }), is.array(is.class("Field"))],
+    is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
+  ),
+  (
+    {
+      link_text,
+      link_text_formula,
+      link_url,
+      link_url_formula,
+      link_target_blank,
+    },
+    fields
+  ) => {
+    return {
+      label: "",
+      key: (r) => {
+        const txt = link_text_formula
+          ? get_expression_function(link_text, fields)(r)
+          : link_text;
+        const href = link_url_formula
+          ? get_expression_function(link_url, fields)(r)
+          : link_url;
+        const attrs = { href };
+        if (link_target_blank) attrs.target = "_blank";
+        return a(attrs, txt);
+      },
+    };
   }
 );
 
@@ -125,6 +157,8 @@ const get_viewable_fields = contract(
           };
         else if (column.type === "ViewLink") {
           return view_linker(column, fields);
+        } else if (column.type === "Link") {
+          return make_link(column, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {
