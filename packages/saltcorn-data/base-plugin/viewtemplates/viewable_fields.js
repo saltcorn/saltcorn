@@ -1,9 +1,10 @@
 const { post_btn, link } = require("@saltcorn/markup");
-const { text } = require("@saltcorn/markup/tags");
+const { text, a } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
 const { link_view } = require("../../plugin-helper");
+const { get_expression_function } = require("../../models/expression");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
@@ -26,12 +27,50 @@ const get_view_link_query = contract(
   }
 );
 
+const make_link = contract(
+  is.fun(
+    [is.obj({ link_text: is.str }), is.array(is.class("Field"))],
+    is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
+  ),
+  (
+    {
+      link_text,
+      link_text_formula,
+      link_url,
+      link_url_formula,
+      link_target_blank,
+    },
+    fields
+  ) => {
+    return {
+      label: "",
+      key: (r) => {
+        const txt = link_text_formula
+          ? get_expression_function(link_text, fields)(r)
+          : link_text;
+        const href = link_url_formula
+          ? get_expression_function(link_url, fields)(r)
+          : link_url;
+        const attrs = { href };
+        if (link_target_blank) attrs.target = "_blank";
+        return a(attrs, txt);
+      },
+    };
+  }
+);
+
 const view_linker = contract(
   is.fun(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  ({ view, view_label, in_modal }, fields) => {
+  ({ view, view_label, in_modal, view_label_formula }, fields) => {
+    const get_label = (def, row) => {
+      if (!view_label || view_label.length === 0) return def;
+      if (!view_label_formula) return view_label;
+      const f = get_expression_function(view_label, fields);
+      return f(row);
+    };
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
@@ -42,7 +81,7 @@ const view_linker = contract(
           key: (r) =>
             link_view(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
-              view_label || vnm,
+              get_label(vnm, r),
               in_modal
             ),
         };
@@ -53,7 +92,7 @@ const view_linker = contract(
           key: (r) =>
             link_view(
               `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
-              view_label || viewnm,
+              get_label(viewnm, r),
               in_modal
             ),
         };
@@ -67,10 +106,12 @@ const view_linker = contract(
             return r[pfld]
               ? link_view(
                   `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
-                  view_label ||
-                    (typeof summary_field === "undefined"
+                  get_label(
+                    typeof summary_field === "undefined"
                       ? pviewnm
-                      : summary_field),
+                      : summary_field,
+                    r
+                  ),
                   in_modal
                 )
               : "";
@@ -116,6 +157,8 @@ const get_viewable_fields = contract(
           };
         else if (column.type === "ViewLink") {
           return view_linker(column, fields);
+        } else if (column.type === "Link") {
+          return make_link(column, fields);
         } else if (column.type === "JoinField") {
           const [refNm, targetNm] = column.join_field.split(".");
           return {

@@ -26,6 +26,11 @@ const db = require("../../db");
 const { asyncMap } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
+const v8 = require("v8");
+
+const structuredClone = (obj) => {
+  return v8.deserialize(v8.serialize(obj));
+};
 
 const configuration_workflow = () =>
   new Workflow({
@@ -191,13 +196,14 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
-const render = (row, fields, layout, viewname, table, role, req) => {
+const render = (row, fields, layout0, viewname, table, role, req) => {
   const evalMaybeExpr = (segment, key) => {
     if (segment.isFormula && segment.isFormula[key]) {
       const f = get_expression_function(segment[key], fields);
       segment[key] = f(row);
     }
   };
+  const layout = structuredClone(layout0);
   traverseSync(layout, {
     link(segment) {
       evalMaybeExpr(segment, "url");

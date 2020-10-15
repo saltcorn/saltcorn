@@ -124,6 +124,7 @@ const field_picker_fields = contract(
             },
             { name: "Action", label: "Action on row" },
             { name: "ViewLink", label: "Link to other view" },
+            { name: "Link", label: "Link to anywhere" },
             ...(parent_field_list.length > 0
               ? [{ name: "JoinField", label: "Join Field" }]
               : []),
@@ -189,11 +190,53 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "ViewLink" },
       },
       {
+        name: "view_label_formula",
+        label: "View label is a formula?",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
         name: "in_modal",
         label: "Open in popup modal?",
         type: "Bool",
         required: false,
         showIf: { ".coltype": "ViewLink" },
+      },
+      {
+        name: "link_text",
+        label: "Link text",
+        type: "String",
+        required: true,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_text_formula",
+        label: "Link text is a formula?",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_url",
+        label: "Link URL",
+        type: "String",
+        required: true,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_url_formula",
+        label: "Link URL is a formula?",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_target_blank",
+        label: "Open in new tab",
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
       },
       {
         name: "join_field",
