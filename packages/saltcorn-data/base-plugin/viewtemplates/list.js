@@ -83,21 +83,14 @@ const configuration_workflow = () =>
       {
         name: "Default state",
         contextField: "default_state",
-        onlyWhen: async (context) =>
-          context.columns.filter(
-            (column) => column.type === "Field" && column.state_field
-          ).length > 0,
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const table_fields = await table.getFields();
-          const formfields = context.columns
-            .filter((column) => column.type === "Field" && column.state_field)
-            .map((column) => {
-              const f = new Field(
-                table_fields.find((f) => f.name == column.field_name)
-              );
+          const formfields = table_fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => {
               return {
-                name: column.field_name,
+                name: f.name,
                 label: f.label,
                 type: f.type,
                 reftable_name: f.reftable_name,
@@ -107,6 +100,12 @@ const configuration_workflow = () =>
                 required: false,
               };
             });
+          formfields.push({
+            name: "_omit_state_form",
+            label: "Omit search form",
+            sublabel: "Do not display the search filter form",
+            type: "Bool",
+          });
           const form = new Form({
             fields: formfields,
             blurb: "Default search form values when first loaded",
@@ -216,7 +215,8 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
-  display_state_form: true,
+  display_state_form: (opts) =>
+    !(opts && opts.default_state && opts.default_state._omit_state_form),
   default_state_form: ({ default_state }) =>
     default_state && removeEmptyStrings(default_state),
 };
