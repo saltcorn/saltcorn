@@ -140,18 +140,16 @@ const getPageList = (rows, roles, req) => {
   return div(
     mkTable(
       [
-        { label: req.__("Name"), key: "name" },
+        {
+          label: req.__("Name"),
+          key: (r) => link(`/page/${r.name}`, r.name),
+        },
         {
           label: req.__("Role to access"),
           key: (row) => {
             const role = roles.find((r) => r.id === row.min_role);
             return role ? role.role : "?";
           },
-        },
-
-        {
-          label: req.__("Run"),
-          key: (r) => link(`/page/${r.name}`, req.__("Run")),
         },
         {
           label: req.__("Edit"),
