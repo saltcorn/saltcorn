@@ -19,6 +19,25 @@ const link_view = (url, label, popup) => {
   } else return link(url, label);
 };
 
+const stateToQueryString = contract(
+  is.fun(is.maybe(is.obj()), is.str),
+  (state) => {
+    if (!state || Object.keys(state).length === 0) return "";
+
+    return (
+      "?" +
+      Object.entries(state)
+        .map(([k, v]) =>
+          k === "id"
+            ? null
+            : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        )
+        .filter((s) => !!s)
+        .join("&")
+    );
+  }
+);
+
 const calcfldViewOptions = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
   (fields, isEdit) => {
@@ -546,5 +565,6 @@ module.exports = {
   get_link_view_opts,
   is_column,
   readState,
+  stateToQueryString,
   link_view,
 };

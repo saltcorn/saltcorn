@@ -214,25 +214,6 @@ const get_viewable_fields = contract(
       .filter((v) => !!v)
 );
 
-const stateToQueryString = contract(
-  is.fun(is.maybe(is.obj()), is.str),
-  (state) => {
-    if (!state || Object.keys(state).length === 0) return "";
-
-    return (
-      "?" +
-      Object.entries(state)
-        .map(([k, v]) =>
-          k === "id"
-            ? null
-            : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
-        )
-        .filter((s) => !!s)
-        .join("&")
-    );
-  }
-);
-
 const splitUniques = contract(
   is.fun(
     [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
@@ -262,7 +243,6 @@ const splitUniques = contract(
 module.exports = {
   get_viewable_fields,
   action_url,
-  stateToQueryString,
   view_linker,
   splitUniques,
 };

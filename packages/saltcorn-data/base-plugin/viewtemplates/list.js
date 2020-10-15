@@ -13,12 +13,10 @@ const {
   picked_fields_to_query,
   stateFieldsToWhere,
   initial_config_all_fields,
+  stateToQueryString,
   link_view,
 } = require("../../plugin-helper");
-const {
-  get_viewable_fields,
-  stateToQueryString,
-} = require("./viewable_fields");
+const { get_viewable_fields } = require("./viewable_fields");
 
 const configuration_workflow = () =>
   new Workflow({

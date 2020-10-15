@@ -7,9 +7,9 @@ const Workflow = require("../../models/workflow");
 const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const { stateToQueryString } = require("./viewable_fields");
+const {} = require("./viewable_fields");
 const pluralize = require("pluralize");
-const { link_view } = require("../../plugin-helper");
+const { link_view, stateToQueryString } = require("../../plugin-helper");
 const configuration_workflow = () =>
   new Workflow({
     steps: [
