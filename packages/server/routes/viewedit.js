@@ -18,6 +18,7 @@ const {
   a,
   div,
   button,
+  text,
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -241,7 +242,12 @@ router.get(
     const { viewname } = req.params;
 
     var viewrow = await View.findOne({ name: viewname });
-
+    if (!viewrow) {
+      console.log("not found:", viewname);
+      req.flash("error", `View not found: ${text(viewname)}`);
+      res.redirect("/viewedit");
+      return;
+    }
     const tables = await Table.find();
     const currentTable = tables.find((t) => t.id === viewrow.table_id);
     viewrow.table_name = currentTable.name;
