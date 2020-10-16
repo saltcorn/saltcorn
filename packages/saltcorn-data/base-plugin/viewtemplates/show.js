@@ -232,7 +232,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
     join_field({ join_field }) {
       const [refNm, targetNm] = join_field.split(".");
-      const val = row[targetNm];
+      const val = row[`${refNm}_${targetNm}`];
       return text(val);
     },
     aggregation({ agg_relation, stat }) {

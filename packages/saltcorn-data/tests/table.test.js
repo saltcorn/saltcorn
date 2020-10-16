@@ -655,4 +655,29 @@ describe("Tables with name clashes", () => {
     expect(res).toContain("Mustang");
     expect(res).toContain("Sally");
   });
+  it("should show show view", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+    const v = await View.create({
+      table_id: cars.id,
+      name: "patientlist",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name" },
+          { type: "JoinField", join_field: "owner.name" },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            { type: "join_field", join_field: "owner.name" },
+          ],
+        },
+      },
+      min_role: 10,
+      on_root_page: true,
+    });
+    const res = await v.run({ id: 1 }, mockReqRes);
+    expect(res).toContain("Mustang");
+    expect(res).toContain("Sally");
+  });
 });
