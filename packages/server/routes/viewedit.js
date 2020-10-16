@@ -52,7 +52,7 @@ const view_dropdown = (view, req) =>
       {
         class: "dropdown-menu dropdown-menu-right",
         "aria-labelledby": `dropdownMenuButton${view.id}`,
-      }, // clone
+      },
       a(
         {
           class: "dropdown-item",
