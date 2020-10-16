@@ -596,3 +596,42 @@ describe("Table with date", () => {
     expect(Math.abs(dif)).toBeLessThanOrEqual(1000);
   });
 });
+describe("Tables with name clashes", () => {
+  it("should create tables", async () => {
+    //db.set_sql_logging()
+    const cars = await Table.create("TableClashCar");
+    const persons = await Table.create("TableClashPerson");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: cars,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: cars,
+      name: "owner",
+      type: "Key to TableClashPerson",
+    });
+    const sally = await persons.insertRow({ name: "Sally" });
+    await cars.insertRow({ name: "Mustang", owner: sally });
+  });
+  it("should query", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+
+    const rows = await cars.getJoinedRows({
+      joinFields: {
+        owner_name: { ref: "owner", target: "name" },
+      },
+    });
+    expect(rows[0]).toEqual({
+      id: 1,
+      name: "Mustang",
+      owner: 1,
+      owner_name: "Sally",
+    });
+  });
+});
