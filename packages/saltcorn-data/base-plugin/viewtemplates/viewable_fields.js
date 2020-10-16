@@ -169,7 +169,7 @@ const get_viewable_fields = contract(
             label: column.header_label
               ? text(column.header_label)
               : text(targetNm),
-            key: text(targetNm),
+            key: `${refNm}_${targetNm}`,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {

@@ -376,7 +376,8 @@ const picked_fields_to_query = contract(
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         const [refNm, targetNm] = column.join_field.split(".");
-        joinFields[targetNm] = { ref: refNm, target: targetNm };
+        //joinFields[targetNm] = { ref: refNm, target: targetNm };
+        joinFields[`${refNm}_${targetNm}`] = { ref: refNm, target: targetNm };
       }
       if (column.type === "ViewLink") {
         const [vtype, vrest] = column.view.split(":");
