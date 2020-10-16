@@ -63,6 +63,8 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).toContain(">Useless<");
     await browser.clickNav("tr:nth-child(3) button");
+    await browser.page.waitFor(500);
+    await browser.page.keyboard.press(String.fromCharCode(13)); //confirm
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).not.toContain(">Useless<");
     expect(await browser.content()).toContain("Field Useless deleted");
