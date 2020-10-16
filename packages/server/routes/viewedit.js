@@ -18,6 +18,7 @@ const {
   a,
   div,
   button,
+  text,
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -52,7 +53,7 @@ const view_dropdown = (view, req) =>
       {
         class: "dropdown-menu dropdown-menu-right",
         "aria-labelledby": `dropdownMenuButton${view.id}`,
-      }, // clone
+      },
       a(
         {
           class: "dropdown-item",
@@ -81,7 +82,9 @@ const view_dropdown = (view, req) =>
       post_dropdown_item(
         `/viewedit/delete/${view.id}`,
         '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-        req.csrfToken()
+        req.csrfToken(),
+        true,
+        view.name
       )
     )
   );
@@ -239,7 +242,12 @@ router.get(
     const { viewname } = req.params;
 
     var viewrow = await View.findOne({ name: viewname });
-
+    if (!viewrow) {
+      console.log("not found:", viewname);
+      req.flash("error", `View not found: ${text(viewname)}`);
+      res.redirect("/viewedit");
+      return;
+    }
     const tables = await Table.find();
     const currentTable = tables.find((t) => t.id === viewrow.table_id);
     viewrow.table_name = currentTable.name;

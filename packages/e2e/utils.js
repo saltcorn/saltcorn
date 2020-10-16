@@ -23,6 +23,9 @@ class Browser {
       theTempValue = err.toString();
       throw new Error("Error: " + theTempValue);
     });
+    b.page.on("dialog", async (dialog) => {
+      await dialog.accept();
+    });
     return b;
   }
 
