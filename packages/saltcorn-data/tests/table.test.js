@@ -6,6 +6,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file } = require("./mocks");
+const { mockReqRes } = require("./mocks");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -633,5 +634,25 @@ describe("Tables with name clashes", () => {
       owner: 1,
       owner_name: "Sally",
     });
+  });
+
+  it("should show list view", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+    const v = await View.create({
+      table_id: cars.id,
+      name: "patientlist",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name" },
+          { type: "JoinField", join_field: "owner.name" },
+        ],
+      },
+      min_role: 10,
+      on_root_page: true,
+    });
+    const res = await v.run({}, mockReqRes);
+    expect(res).toContain("Mustang");
+    expect(res).toContain("Sally");
   });
 });
