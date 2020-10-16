@@ -81,7 +81,9 @@ const view_dropdown = (view, req) =>
       post_dropdown_item(
         `/viewedit/delete/${view.id}`,
         '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-        req.csrfToken()
+        req.csrfToken(),
+        true,
+        view.name
       )
     )
   );

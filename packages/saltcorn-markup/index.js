@@ -50,9 +50,15 @@ const post_delete_btn = (href, csrfToken, what) =>
     </button>
   </form>`;
 
-const post_dropdown_item = (href, s, csrfToken) => {
+const post_dropdown_item = (href, s, csrfToken, confirm, what) => {
   const id = href.split("/").join("");
-  return `<a class="dropdown-item" onclick="$('#${id}').submit()">${s}</a>
+  return `<a class="dropdown-item" onclick="${
+    confirm
+      ? `if(confirm('Are you sure${
+          what ? ` you want to delete ${what}` : ""
+        }?')) `
+      : ""
+  }$('#${id}').submit()">${s}</a>
   <form id="${id}" action="${text(href)}" method="post">
     <input type="hidden" name="_csrf" value="${csrfToken}">
   </form>`;
