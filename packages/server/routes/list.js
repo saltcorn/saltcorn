@@ -79,7 +79,11 @@ const typeToJsGridType = (t, field) => {
   var jsgField = { name: field.name, title: field.label };
   if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.type = "select";
-    jsgField.items = field.attributes.options.split(",").map((o) => o.trim());
+    jsgField.items = field.attributes.options
+      .split(",")
+      .map((o) => ({ value: o.trim(), label: o.trim() }));
+    jsgField.valueField = "value";
+    jsgField.textField = "label";
     if (!field.required) jsgField.items.unshift("");
   } else if (t === "Key" || t === "File") {
     jsgField.type = "select";
