@@ -513,14 +513,25 @@ class Table {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
-      ([fldnm, { table, ref, field, aggregate }]) => {
-        fldNms.push(
-          `(select ${sqlsanitize(aggregate)}(${
-            sqlsanitize(field) || "*"
-          }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
-            ref
-          )}=a.id) ${sqlsanitize(fldnm)}`
-        );
+      ([fldnm, { table, ref, field, aggregate, subselect }]) => {
+        if (subselect)
+          fldNms.push(
+            `(select ${sqlsanitize(aggregate)}(${
+              sqlsanitize(field) || "*"
+            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+              ref
+            )} in (select "${subselect.field}" from ${schema}"${
+              subselect.table.name
+            }" where "${subselect.whereField}"=a.id)) ${sqlsanitize(fldnm)}`
+          );
+        else
+          fldNms.push(
+            `(select ${sqlsanitize(aggregate)}(${
+              sqlsanitize(field) || "*"
+            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+              ref
+            )}=a.id) ${sqlsanitize(fldnm)}`
+          );
       }
     );
 
