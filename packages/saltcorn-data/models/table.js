@@ -138,6 +138,13 @@ class Table {
     return await db.count(this.name, where);
   }
 
+  async distinctValues(fieldnm) {
+    const res = await db.query(
+      `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
+    );
+    return res.rows.map((r) => r[fieldnm]);
+  }
+
   async updateRow(v_in, id, _userid) {
     let existing;
     let v;
