@@ -7,8 +7,10 @@ const {
   div,
   h3,
   a,
+  i,
   button,
   textarea,
+  span,
   text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
@@ -354,6 +356,28 @@ const bool = {
   contract: () => is.bool,
   fieldviews: {
     show: {
+      isEdit: false,
+      run: (v) =>
+        v === true
+          ? i({
+              class: "fas fa-lg fa-check-circle text-success",
+            })
+          : v === false
+          ? i({
+              class: "fas fa-lg fa-times-circle text-danger",
+            })
+          : "",
+    },
+    checkboxes: {
+      isEdit: false,
+      run: (v) =>
+        v === true
+          ? input({ disabled: true, type: "checkbox", checked: true })
+          : v === false
+          ? input({ type: "checkbox", disabled: true })
+          : "",
+    },
+    TrueFalse: {
       isEdit: false,
       run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },
