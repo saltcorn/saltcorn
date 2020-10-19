@@ -114,6 +114,7 @@ const available_languages = {
   nl: "Nederlands",
   pt: "Português",
   ar: "العربية",
+  it: "Italiano",
 };
 
 const getConfig = contract(
