@@ -20,9 +20,9 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
     action: "/field",
     validator: (vs) => {
       if (vs.calculated && vs.type == "File")
-        return "Calculated fields cannot have File type";
+        return req.__("Calculated fields cannot have File type");
       if (vs.calculated && vs.type.startsWith("Key to"))
-        return "Calculated fields cannot have Key type";
+        return req.__("Calculated fields cannot have Key type");
     },
     fields: [
       new Field({
@@ -301,10 +301,13 @@ router.get(
     const { id } = req.params;
     const field = await Field.findOne({ id });
     const table = await Table.findOne({ id: field.table_id });
-    const wfres = await fieldFlow(req).run({
-      ...field.toJson,
-      ...field.attributes,
-    });
+    const wfres = await fieldFlow(req).run(
+      {
+        ...field.toJson,
+        ...field.attributes,
+      },
+      req
+    );
     res.sendWrap(req.__(`Edit field`), {
       above: [
         {
@@ -318,7 +321,7 @@ router.get(
         },
         {
           type: "card",
-          title: `${field.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: `${field.label}: ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -334,7 +337,7 @@ router.get(
     const { table_id } = req.params;
     const table = await Table.findOne({ id: table_id });
 
-    const wfres = await fieldFlow(req).run({ table_id: +table_id });
+    const wfres = await fieldFlow(req).run({ table_id: +table_id }, req);
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -348,9 +351,7 @@ router.get(
         },
         {
           type: "card",
-          title:
-            req.__(`New field:`) +
-            ` ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: req.__(`New field:`) + ` ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -378,7 +379,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await fieldFlow(req).run(req.body);
+    const wfres = await fieldFlow(req).run(req.body, req);
     if (wfres.renderForm) {
       const table = await Table.findOne({ id: wfres.context.table_id });
       res.sendWrap(req.__(`Field attributes`), {
@@ -400,8 +401,8 @@ router.post(
           {
             type: "card",
             title: `${wfres.context.label || req.__("New field")}: ${
-              wfres.stepName
-            } (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+              wfres.title
+            }`,
             contents: renderForm(wfres.renderForm, req.csrfToken()),
           },
         ],

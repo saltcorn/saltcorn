@@ -43,7 +43,7 @@ router.get(
                     class: "ml-4",
                     href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
                   },
-                  "Edit&nbsp;",
+                  req.__("Edit") + "&nbsp;",
                   i({ class: "fas fa-edit" })
                 ),
               ],

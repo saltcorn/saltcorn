@@ -216,16 +216,16 @@ const storeNavPills = (req) => {
               "active",
           ],
         },
-        txt
+        req.__(txt)
       )
     );
   return ul(
     { class: "nav nav-pills" },
-    link(req.__("All")),
-    link(req.__("Plugins")),
-    link(req.__("Packs")),
-    link(req.__("Themes")),
-    link(req.__("Installed"))
+    link("All"),
+    link("Plugins"),
+    link("Packs"),
+    link("Themes"),
+    link("Installed")
   );
 };
 

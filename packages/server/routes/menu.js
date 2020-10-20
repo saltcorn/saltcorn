@@ -37,6 +37,7 @@ const menuForm = async (req) => {
 
   return new Form({
     action: "/menu/",
+    submitLabel: req.__("Save"),
     fields: [
       {
         name: "site_name",

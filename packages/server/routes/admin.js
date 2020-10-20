@@ -63,7 +63,7 @@ router.get(
               req.__("Restore"),
             ]),
             hr(),
-            h4("About saltcorn"),
+            h4(req.__("About Saltcorn")),
             table(
               tbody(
                 tr(th(req.__("Saltcorn version")), td(packagejson.version)),

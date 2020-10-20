@@ -388,7 +388,7 @@ const respondWorkflow = (view, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        title: wfres.title,
         contents,
       },
     ],
@@ -415,11 +415,14 @@ router.get(
 
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
-    const wfres = await configFlow.run({
-      table_id: view.table_id,
-      viewname: name,
-      ...view.configuration,
-    });
+    const wfres = await configFlow.run(
+      {
+        table_id: view.table_id,
+        viewname: name,
+        ...view.configuration,
+      },
+      req
+    );
     respondWorkflow(view, wfres, req, res);
   })
 );
@@ -433,7 +436,7 @@ router.post(
 
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
-    const wfres = await configFlow.run(req.body);
+    const wfres = await configFlow.run(req.body, req);
     respondWorkflow(view, wfres, req, res);
   })
 );

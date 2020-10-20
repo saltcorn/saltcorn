@@ -192,12 +192,12 @@ router.post(
 
 const badge = (col, lbl) =>
   `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
-const typeBadges = (f) => {
+const typeBadges = (f, req) => {
   let s = "";
-  if (f.required) s += badge("primary", "Required");
-  if (f.is_unique) s += badge("success", "Unique");
-  if (f.calculated) s += badge("info", "Calculated");
-  if (f.stored) s += badge("warning", "Stored");
+  if (f.required) s += badge("primary", req.__("Required"));
+  if (f.is_unique) s += badge("success", req.__("Unique"));
+  if (f.calculated) s += badge("info", req.__("Calculated"));
+  if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
 const attribBadges = (f) => {
@@ -251,13 +251,16 @@ router.get(
           },
           {
             label: "",
-            key: (r) => typeBadges(r),
+            key: (r) => typeBadges(r, req),
           },
           {
-            label: "Attributes",
+            label: req.__("Attributes"),
             key: (r) => attribBadges(r),
           },
-          { label: req.__("Edit"), key: (r) => link(`/field/${r.id}`, "Edit") },
+          {
+            label: req.__("Edit"),
+            key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+          },
           {
             label: req.__("Delete"),
             key: (r) =>
