@@ -80,6 +80,16 @@ const calcFieldType = (ctxType) =>
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
 
+const translateAttributes = (attrs, req) =>
+  Array.isArray(attrs)
+    ? attrs.map((attr) => translateAttribute(attr, req))
+    : attrs;
+
+const translateAttribute = (attr, req) => {
+  const res = { ...attr };
+  res.sublabel = req.__(res.sublabel);
+  return res;
+};
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -195,7 +205,10 @@ const fieldFlow = (req) =>
             });
           } else {
             return new Form({
-              fields: getState().types[context.type].attributes,
+              fields: translateAttributes(
+                getState().types[context.type].attributes,
+                req
+              ),
             });
           }
         },

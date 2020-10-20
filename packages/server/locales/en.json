@@ -317,5 +317,6 @@
 	"Examples:": "Examples:",
 	"Missing label": "Missing label",
 	"Column %s already exists (but is hidden)": "Column %s already exists (but is hidden)",
-	"Column %s already exists": "Column %s already exists"
+	"Column %s already exists": "Column %s already exists",
+	"Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value.": "Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value."
 }
