@@ -376,5 +376,7 @@
 	"Relation": "Relation",
 	"Statistic": "Statistic",
 	"In search form": "In search form",
-	"Header label": "Header label"
+	"Header label": "Header label",
+	"step": "step",
+	"max": "max"
 }

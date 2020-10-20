@@ -321,7 +321,7 @@ router.get(
         },
         {
           type: "card",
-          title: `${field.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: `${field.label}: ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -351,9 +351,7 @@ router.get(
         },
         {
           type: "card",
-          title:
-            req.__(`New field:`) +
-            ` ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: req.__(`New field:`) + ` ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -403,8 +401,8 @@ router.post(
           {
             type: "card",
             title: `${wfres.context.label || req.__("New field")}: ${
-              wfres.stepName
-            } (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+              wfres.title
+            }`,
             contents: renderForm(wfres.renderForm, req.csrfToken()),
           },
         ],

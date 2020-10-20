@@ -240,7 +240,7 @@ const respondWorkflow = (page, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        title: wfres.title,
         contents,
       },
     ],

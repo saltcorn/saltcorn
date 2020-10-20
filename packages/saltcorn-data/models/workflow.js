@@ -53,6 +53,7 @@ class Workflow {
           stepName: step.name,
           currentStep: stepIx + 1,
           maxSteps: this.steps.length,
+          title: this.title(step, stepIx),
         };
       }
       const toCtx = step.contextField
@@ -114,6 +115,7 @@ class Workflow {
         stepName: step.name,
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
+        title: this.title(step, stepIx),
       };
     } else if (step.builder) {
       const options = await applyAsync(step.builder, context);
@@ -130,8 +132,15 @@ class Workflow {
         stepName: step.name,
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
+        title: this.title(step, stepIx),
       };
     }
+  }
+
+  title(step, stepIx) {
+    return `${step.name} (${this.__("step")} ${stepIx + 1} / ${
+      this.steps.length > stepIx + 1 ? this.__("max") + " " : ""
+    }${this.steps.length})`;
   }
 }
 
