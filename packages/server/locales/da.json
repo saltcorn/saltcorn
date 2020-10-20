@@ -278,5 +278,13 @@
 	"The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.": "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone.",
 	"Local": "Local",
 	"Password does not match": "Password does not match",
-	"No record selected": "No record selected"
+	"No record selected": "No record selected",
+	"Expression": "Expression",
+	"Calculated": "Calculated",
+	"Unique": "Unique",
+	"Stored": "Stored",
+	"Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type": "Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type",
+	"Fields you can use as variables: ": "Fields you can use as variables: ",
+	"Examples:": "Examples:",
+	"Formula": "Formula"
 }

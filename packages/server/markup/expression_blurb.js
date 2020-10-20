@@ -100,7 +100,7 @@ const boolExamples = (type, fields) => {
   return exs;
 };
 
-const expressionBlurb = (type, stored, allFields) => {
+const expressionBlurb = (type, stored, allFields, req) => {
   const fields = allFields.filter((f) => !f.is_fkey && !f.calculated);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
@@ -116,23 +116,25 @@ const expressionBlurb = (type, stored, allFields) => {
     }[type] || (() => [])
   )();
   return [
-    p(`Please enter the formula for the new field 
-as a JavaScript expression. The expression must result in a <strong>${toJsType(
-      type
-    )}</strong> type.`),
     p(
-      `Fields you can use as variables: ${fields
-        .map((f) => code(f.name))
-        .join(", ")}`
+      req.__(
+        "Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type",
+        `<strong>${toJsType(type)}</strong>`
+      )
+    ),
+    p(
+      req.__(`Fields you can use as variables: `),
+      fields.map((f) => code(f.name)).join(", ")
     ),
     funNames.length > 0
       ? p(
-          `Functions you can use (in addition to standard JavaScript functions): ${funNames
-            .map((f) => code(f))
-            .join(", ")}`
+          req.__(
+            `Functions you can use (in addition to standard JavaScript functions): `
+          ),
+          funNames.map((f) => code(f)).join(", ")
         )
       : "",
-    examples && examples.length > 0 ? p("Examples:") : "",
+    examples && examples.length > 0 ? p(req.__("Examples:")) : "",
     examples ? ul(examples.map((e) => li(code(e)))) : "",
   ];
 };

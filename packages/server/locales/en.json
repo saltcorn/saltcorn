@@ -308,5 +308,11 @@
 	"Saltcorn version": "Saltcorn version",
 	"Node.js version": "Node.js version",
 	"Table not found": "Table not found",
-	"No record selected": "No record selected"
+	"No record selected": "No record selected",
+	"Calculated": "Calculated",
+	"Unique": "Unique",
+	"Stored": "Stored",
+	"Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type": "Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type",
+	"Fields you can use as variables: ": "Fields you can use as variables: ",
+	"Examples:": "Examples:"
 }

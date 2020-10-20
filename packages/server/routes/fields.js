@@ -26,47 +26,47 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
     },
     fields: [
       new Field({
-        label: "Label",
+        label: req.__("Label"),
         name: "label",
         input_type: "text",
         validator(s) {
-          if (!s || s === "") return "Missing label";
+          if (!s || s === "") return req.__("Missing label");
           if (s.toLowerCase() === "id")
-            return `Column '${s}' already exists (but is hidden)`;
+            return req.__("Column %s already exists (but is hidden)", s);
           if (!id && existing_names.includes(Field.labelToName(s)))
-            return `Column '${s}' already exists`;
+            return req.__("Column %s already exists", s);
         },
       }),
       new Field({
-        label: "Type",
+        label: req.__("Type"),
         name: "type",
         input_type: "select",
         options: getState().type_names.concat(fkey_opts || []),
         disabled: !!id && !getState().getConfig("development_mode", false),
       }),
       new Field({
-        label: "Calculated (Experimental)",
+        label: req.__("Calculated"),
         name: "calculated",
         type: "Bool",
         class: "iscalc",
         disabled: !!id,
       }),
       new Field({
-        label: "Required",
+        label: req.__("Required"),
         name: "required",
         type: "Bool",
         disabled: !!id && db.isSQLite,
         showIf: { ".iscalc": false },
       }),
       new Field({
-        label: "Unique",
+        label: req.__("Unique"),
         name: "is_unique",
         showIf: { ".iscalc": false },
         type: "Bool",
       }),
 
       new Field({
-        label: "Stored",
+        label: req.__("Stored"),
         name: "stored",
         type: "Bool",
         disabled: !!id,
@@ -207,7 +207,7 @@ const fieldFlow = (req) =>
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           return new Form({
-            blurb: expressionBlurb(context.type, context.stored, fields),
+            blurb: expressionBlurb(context.type, context.stored, fields, req),
             fields: [
               new Field({
                 name: "expression",
