@@ -320,5 +320,8 @@
 	"Columns large screen": "Kolonner stor skærm",
 	"Columns extra-large screen": "Kolonner extra-stor skærm",
 	"Each in card?": "Hver i kort?",
-	"File %s uploaded": "Fil %s uploadet"
+	"File %s uploaded": "Fil %s uploadet",
+	"Next": "Næste",
+	"Calculated fields cannot have File type": "Calculated fields cannot have File type",
+	"Calculated fields cannot have Key type": "Calculated fields cannot have Key type"
 }

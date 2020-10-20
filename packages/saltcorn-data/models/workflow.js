@@ -15,9 +15,11 @@ class Workflow {
     this.steps = o.steps || [];
     this.onDone = o.onDone || ((c) => c);
     this.action = o.action;
+    this.__ = (s) => s;
     contract.class(this);
   }
-  async run(body) {
+  async run(body, req) {
+    if (req) this.__ = (s) => req.__(s);
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
     }
@@ -41,7 +43,9 @@ class Workflow {
         if (this.action) form.action = this.action;
         if (!form.submitLabel)
           form.submitLabel =
-            stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
+            stepIx === this.steps.length - 1
+              ? this.__("Save")
+              : this.__("Next") + " &raquo;";
 
         return {
           renderForm: form,
@@ -101,7 +105,9 @@ class Workflow {
       if (this.action) form.action = this.action;
       if (!form.submitLabel)
         form.submitLabel =
-          stepIx === this.steps.length - 1 ? "Save" : "Next &raquo;";
+          stepIx === this.steps.length - 1
+            ? this.__("Save")
+            : this.__("Next") + " &raquo;";
       return {
         renderForm: form,
         context,

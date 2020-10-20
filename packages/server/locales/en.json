@@ -348,5 +348,9 @@
 	"Each in card?": "Each in card?",
 	"Omit search form": "Omit search form",
 	"Do not display the search filter form": "Do not display the search filter form",
-	"Default search form values when first loaded": "Default search form values when first loaded"
+	"Default search form values when first loaded": "Default search form values when first loaded",
+	"Next": "Next",
+	"Save": "Save",
+	"Calculated fields cannot have File type": "Calculated fields cannot have File type",
+	"Calculated fields cannot have Key type": "Calculated fields cannot have Key type"
 }

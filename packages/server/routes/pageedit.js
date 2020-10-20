@@ -270,7 +270,7 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
-      const wfres = await pageFlow(req).run(page);
+      const wfres = await pageFlow(req).run(page, req);
       respondWorkflow(page, wfres, req, res);
     }
   })
@@ -281,7 +281,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run({});
+    const wfres = await pageFlow(req).run({}, req);
     respondWorkflow(null, wfres, req, res);
   })
 );
@@ -291,7 +291,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run(req.body);
+    const wfres = await pageFlow(req).run(req.body, req);
     const page =
       wfres.context && (await Page.findOne({ name: wfres.context.name }));
 
