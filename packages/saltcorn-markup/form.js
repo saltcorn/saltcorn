@@ -160,8 +160,12 @@ const mkFormRow = (v, errors, formStyle, labelCols) => (hdr) =>
 
 const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   const adder = a(
-    { href: `javascript:add_repeater('${hdr.form_name}')` },
-    "Add"
+    {
+      class: "btn btn-sm btn-outline-primary",
+      href: `javascript:add_repeater('${hdr.form_name}')`,
+      title: "Add",
+    },
+    i({ class: "fas fa-plus" })
   );
   const icons = div(
     { class: "float-right" },
