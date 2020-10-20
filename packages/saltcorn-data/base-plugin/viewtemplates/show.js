@@ -32,11 +32,11 @@ const structuredClone = (obj) => {
   return v8.deserialize(v8.serialize(obj));
 };
 
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Layout",
+        name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
@@ -130,7 +130,7 @@ const renderRows = async (
 ) => {
   //console.log(columns);
   //console.log(layout);
-  if (!columns || !layout) return "View not yet built";
+  if (!columns || !layout) return req.__("View not yet built");
 
   const fields = await table.getFields();
 

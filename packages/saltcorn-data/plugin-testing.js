@@ -74,7 +74,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
 };
 
 const auto_test_viewtemplate = async (vt) => {
-  const wf = vt.configuration_workflow();
+  const wf = vt.configuration_workflow({ __: (s) => s });
   is.class("Workflow")(wf);
   for (let index = 0; index < 10; index++) {
     var cfg;

@@ -10,11 +10,11 @@ const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Views",
+        name: req.__("Views"),
         form: async (context) => {
           const list_views = await View.find_table_views_where(
             context.table_id,
@@ -36,7 +36,7 @@ const configuration_workflow = () =>
             fields: [
               {
                 name: "list_view",
-                label: "List View",
+                label: req.__("List View"),
                 type: "String",
                 required: false,
                 attributes: {
@@ -45,7 +45,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "show_view",
-                label: "Show View",
+                label: req.__("Show View"),
                 type: "String",
                 required: false,
                 attributes: {
@@ -57,7 +57,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Subtables",
+        name: req.__("Subtables"),
         contextField: "subtables",
         form: async (context) => {
           const tbl = await Table.findOne({ id: context.table_id });
@@ -84,8 +84,9 @@ const configuration_workflow = () =>
           }
           return new Form({
             fields,
-            blurb:
-              "Which related tables would you like to show in sub-lists below the selected item?",
+            blurb: req.__(
+              "Which related tables would you like to show in sub-lists below the selected item?"
+            ),
           });
         },
       },
