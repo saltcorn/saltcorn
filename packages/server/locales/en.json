@@ -314,5 +314,8 @@
 	"Stored": "Stored",
 	"Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type": "Please enter the formula for the new field as a JavaScript expression. The expression must result in a %s type",
 	"Fields you can use as variables: ": "Fields you can use as variables: ",
-	"Examples:": "Examples:"
+	"Examples:": "Examples:",
+	"Missing label": "Missing label",
+	"Column %s already exists (but is hidden)": "Column %s already exists (but is hidden)",
+	"Column %s already exists": "Column %s already exists"
 }
