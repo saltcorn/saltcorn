@@ -87,7 +87,7 @@ const translateAttributes = (attrs, req) =>
 
 const translateAttribute = (attr, req) => {
   const res = { ...attr };
-  res.sublabel = req.__(res.sublabel);
+  if (res.sublabel) res.sublabel = req.__(res.sublabel);
   return res;
 };
 const fieldFlow = (req) =>
