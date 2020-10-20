@@ -14,10 +14,13 @@ const router = new Router();
 module.exports = router;
 
 const userForm = contract(
-  is.fun(is.maybe(is.class("User")), is.promise(is.class("Form"))),
-  async (user) => {
+  is.fun(
+    [is.obj({}), is.maybe(is.class("User"))],
+    is.promise(is.class("Form"))
+  ),
+  async (req, user) => {
     const roleField = new Field({
-      label: "Role",
+      label: req.__("Role"),
       name: "role_id",
       type: "Key",
       reftable_name: "roles",
@@ -27,15 +30,19 @@ const userForm = contract(
 
     const form = new Form({
       fields: [
-        new Field({ label: "E-mail", name: "email", input_type: "text" }),
+        new Field({
+          label: req.__("E-mail"),
+          name: "email",
+          input_type: "text",
+        }),
       ],
       action: "/useradmin/save",
-      submitLabel: user ? "Save" : "Create",
+      submitLabel: user ? req.__("Save") : req.__("Create"),
     });
     if (!user)
       form.fields.push(
         new Field({
-          label: "Password",
+          label: req.__("Password"),
           name: "password",
           input_type: "password",
         })
@@ -90,7 +97,7 @@ router.get(
             { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
             {
               label: req.__("View"),
-              key: (r) => link(`/useradmin/${r.id}`, "Edit"),
+              key: (r) => link(`/useradmin/${r.id}`, req.__("Edit")),
             },
             ...(can_reset
               ? [
@@ -132,7 +139,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await userForm();
+    const form = await userForm(req);
     res.sendWrap(
       req.__("New user"),
       wrap(req, req.__("New user"), renderForm(form, req.csrfToken()), {
@@ -149,7 +156,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const user = await User.findOne({ id });
-    const form = await userForm(user);
+    const form = await userForm(req, user);
 
     res.sendWrap(
       req.__("Edit user"),

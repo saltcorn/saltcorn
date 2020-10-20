@@ -33,6 +33,7 @@ const searchConfigForm = (tables, views, req) => {
   );
   return new Form({
     action: "/search/config",
+    submitLabel: req.__("Save"),
     blurb:
       blurb1 +
       (tbls_noviews.length > 0
