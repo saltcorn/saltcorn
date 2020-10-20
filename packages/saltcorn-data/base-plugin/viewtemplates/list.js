@@ -29,6 +29,7 @@ const configuration_workflow = (req) =>
           const field_picker_repeat = await field_picker_fields({
             table,
             viewname: context.viewname,
+            req,
           });
           const create_views = await View.find_table_views_where(
             context.table_id,

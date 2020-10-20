@@ -97,7 +97,8 @@ const field_picker_fields = contract(
     is.obj({ table: is.class("Table"), viewname: is.str }),
     is.promise(is.array(fieldlike))
   ),
-  async ({ table, viewname }) => {
+  async ({ table, viewname, req }) => {
+    const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
     const actions = ["Delete", ...boolfields.map((f) => `Toggle ${f.name}`)];
@@ -113,7 +114,7 @@ const field_picker_fields = contract(
     } = await table.get_child_relations();
     const agg_field_opts = child_relations.map(({ table, key_field }) => ({
       name: `agg_field`,
-      label: "On Field",
+      label: __("On Field"),
       type: "String",
       required: true,
       attributes: {
@@ -130,7 +131,7 @@ const field_picker_fields = contract(
     return [
       {
         name: "type",
-        label: "Type",
+        label: __("Type"),
         type: "String",
         class: "coltype",
         required: true,
@@ -139,16 +140,16 @@ const field_picker_fields = contract(
           options: [
             {
               name: "Field",
-              label: `Field in ${table.name} table`,
+              label: __(`Field in %s table`, table.name),
             },
-            { name: "Action", label: "Action on row" },
-            { name: "ViewLink", label: "Link to other view" },
-            { name: "Link", label: "Link to anywhere" },
+            { name: "Action", label: __("Action on row") },
+            { name: "ViewLink", label: __("Link to other view") },
+            { name: "Link", label: __("Link to anywhere") },
             ...(parent_field_list.length > 0
-              ? [{ name: "JoinField", label: "Join Field" }]
+              ? [{ name: "JoinField", label: __("Join Field") }]
               : []),
             ...(child_field_list.length > 0
-              ? [{ name: "Aggregation", label: "Aggregation" }]
+              ? [{ name: "Aggregation", label: __("Aggregation") }]
               : []),
           ],
         },
@@ -156,7 +157,7 @@ const field_picker_fields = contract(
       {
         name: "field_name",
         class: "field_name",
-        label: "Field",
+        label: __("Field"),
         type: "String",
         required: true,
         attributes: {
@@ -166,7 +167,7 @@ const field_picker_fields = contract(
       },
       {
         name: "fieldview",
-        label: "Field view",
+        label: __("Field view"),
         type: "String",
         required: false,
         attributes: {
@@ -176,7 +177,7 @@ const field_picker_fields = contract(
       },
       {
         name: "action_name",
-        label: "Action",
+        label: __("Action"),
         type: "String",
         required: true,
         attributes: {
@@ -186,13 +187,13 @@ const field_picker_fields = contract(
       },
       {
         name: "action_label",
-        label: "Action Label",
+        label: __("Action Label"),
         type: "String",
         showIf: { ".coltype": "Action" },
       },
       {
         name: "view",
-        label: "View",
+        label: __("View"),
         type: "String",
         required: true,
         attributes: {
@@ -202,64 +203,64 @@ const field_picker_fields = contract(
       },
       {
         name: "view_label",
-        label: "View label",
-        sublabel: "Leave blank for default label.",
+        label: __("View label"),
+        sublabel: __("Leave blank for default label."),
         type: "String",
         required: false,
         showIf: { ".coltype": "ViewLink" },
       },
       {
         name: "view_label_formula",
-        label: "View label is a formula?",
+        label: __("View label is a formula?"),
         type: "Bool",
         required: false,
         showIf: { ".coltype": "ViewLink" },
       },
       {
         name: "in_modal",
-        label: "Open in popup modal?",
+        label: __("Open in popup modal?"),
         type: "Bool",
         required: false,
         showIf: { ".coltype": "ViewLink" },
       },
       {
         name: "link_text",
-        label: "Link text",
+        label: __("Link text"),
         type: "String",
         required: true,
         showIf: { ".coltype": "Link" },
       },
       {
         name: "link_text_formula",
-        label: "Link text is a formula?",
+        label: __("Link text is a formula?"),
         type: "Bool",
         required: false,
         showIf: { ".coltype": "Link" },
       },
       {
         name: "link_url",
-        label: "Link URL",
+        label: __("Link URL"),
         type: "String",
         required: true,
         showIf: { ".coltype": "Link" },
       },
       {
         name: "link_url_formula",
-        label: "Link URL is a formula?",
+        label: __("Link URL is a formula?"),
         type: "Bool",
         required: false,
         showIf: { ".coltype": "Link" },
       },
       {
         name: "link_target_blank",
-        label: "Open in new tab",
+        label: __("Open in new tab"),
         type: "Bool",
         required: false,
         showIf: { ".coltype": "Link" },
       },
       {
         name: "join_field",
-        label: "Join Field",
+        label: __("Join Field"),
         type: "String",
         required: true,
         attributes: {
@@ -269,7 +270,7 @@ const field_picker_fields = contract(
       },
       {
         name: "agg_relation",
-        label: "Relation",
+        label: __("Relation"),
         type: "String",
         class: "agg_relation",
         required: true,
@@ -281,7 +282,7 @@ const field_picker_fields = contract(
       ...agg_field_opts,
       {
         name: "stat",
-        label: "Statistic",
+        label: __("Statistic"),
         type: "String",
         required: true,
         attributes: {
@@ -291,13 +292,13 @@ const field_picker_fields = contract(
       },
       {
         name: "state_field",
-        label: "In search form",
+        label: __("In search form"),
         type: "Bool",
         showIf: { ".coltype": "Field" },
       },
       {
         name: "header_label",
-        label: "Header label",
+        label: __("Header label"),
         type: "String",
       },
     ];
