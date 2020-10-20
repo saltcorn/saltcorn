@@ -13,11 +13,11 @@ const {
   calcfldViewOptions,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Layout",
+        name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = (await table.getFields()).filter((f) => !f.calculated);
@@ -42,7 +42,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Fixed fields",
+        name: req.__("Fixed fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
@@ -77,8 +77,9 @@ const configuration_workflow = () =>
             }
           });
           const form = new Form({
-            blurb:
-              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list.",
+            blurb: req.__(
+              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
+            ),
             fields: formFields,
           });
           await form.fill_fkey_options();
@@ -86,7 +87,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Edit options",
+        name: req.__("Edit options"),
         onlyWhen: async (context) => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
@@ -106,12 +107,13 @@ const configuration_workflow = () =>
           const done_view_opts = done_views.map((v) => v.name);
 
           return new Form({
-            blurb:
-              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.",
+            blurb: req.__(
+              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
+            ),
             fields: [
               {
                 name: "view_when_done",
-                label: "View when done",
+                label: req.__("View when done"),
                 type: "String",
                 required: true,
                 attributes: {
