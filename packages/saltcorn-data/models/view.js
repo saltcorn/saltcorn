@@ -244,8 +244,8 @@ class View {
     } else return null;
   }
 
-  async get_config_flow() {
-    const configFlow = this.viewtemplateObj.configuration_workflow();
+  async get_config_flow(req) {
+    const configFlow = this.viewtemplateObj.configuration_workflow(req);
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || ((c) => c);
     configFlow.onDone = async (ctx) => {
@@ -274,7 +274,10 @@ View.contract = {
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
     get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
-    get_config_flow: is.fun([], is.promise(is.class("Workflow"))),
+    get_config_flow: is.fun(
+      is.obj({ __: is.fun(is.str, is.str) }),
+      is.promise(is.class("Workflow"))
+    ),
     delete: is.fun([], is.promise(is.undefined)),
     menu_label: is.getter(is.maybe(is.str)),
     run: is.fun(

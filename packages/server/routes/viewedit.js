@@ -414,7 +414,7 @@ router.get(
     const { name } = req.params;
 
     const view = await View.findOne({ name });
-    const configFlow = await view.get_config_flow();
+    const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run({
       table_id: view.table_id,
       viewname: name,
@@ -432,7 +432,7 @@ router.post(
     const { name } = req.params;
 
     const view = await View.findOne({ name });
-    const configFlow = await view.get_config_flow();
+    const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(req.body);
     respondWorkflow(view, wfres, req, res);
   })

@@ -45,7 +45,7 @@ describe("View", () => {
   });
   it("should get config flow", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.get_config_flow();
+    const res = await v.get_config_flow({ __: (s) => s });
     expect(res.constructor.name).toBe("Workflow");
     expect(res.steps.length > 0).toBe(true);
   });
