@@ -291,5 +291,14 @@
 	"new": "new",
 	"Column %s already exists": "Column %s already exists",
 	"Missing label": "Missing label",
-	"Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value.": "Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value."
+	"Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value.": "Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are \"Red\", \"Green\" and \"Blue\", enter \"Red, Green, Blue\" here. Leave blank if the string can hold any value.",
+	"Columns": "Columns",
+	"Default state": "Default state",
+	"A view with this name already exists": "A view with this name already exists",
+	"Specify the fields in the table to show": "Specify the fields in the table to show",
+	"Use view to create": "Use view to create",
+	"If user has write permission. Leave blank to have no link to create a new item": "If user has write permission. Leave blank to have no link to create a new item",
+	"Display create view as": "Display create view as",
+	"Label for create": "Label for create",
+	"Label in link or button to create. Leave blank for a default label": "Label in link or button to create. Leave blank for a default label"
 }

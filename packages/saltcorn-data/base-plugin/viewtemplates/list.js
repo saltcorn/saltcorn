@@ -18,11 +18,11 @@ const {
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Columns",
+        name: req.__("Columns"),
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           //console.log(context);
@@ -38,7 +38,7 @@ const configuration_workflow = () =>
           );
           const create_view_opts = create_views.map((v) => v.name);
           return new Form({
-            blurb: "Specify the fields in the table to show",
+            blurb: req.__("Specify the fields in the table to show"),
             fields: [
               new FieldRepeat({
                 name: "columns",
@@ -48,9 +48,10 @@ const configuration_workflow = () =>
                 ? [
                     {
                       name: "view_to_create",
-                      label: "Use view to create",
-                      sublabel:
-                        "If user has write permission. Leave blank to have no link to create a new item",
+                      label: req.__("Use view to create"),
+                      sublabel: req.__(
+                        "If user has write permission. Leave blank to have no link to create a new item"
+                      ),
                       type: "String",
                       attributes: {
                         options: create_view_opts.join(),
@@ -58,7 +59,7 @@ const configuration_workflow = () =>
                     },
                     {
                       name: "create_view_display",
-                      label: "Display create view as",
+                      label: req.__("Display create view as"),
                       type: "String",
                       class: "create_view_display",
                       required: true,
@@ -68,9 +69,10 @@ const configuration_workflow = () =>
                     },
                     {
                       name: "create_view_label",
-                      label: "Label for create",
-                      sublabel:
-                        "Label in link or button to create. Leave blank for a default label",
+                      label: req.__("Label for create"),
+                      sublabel: req.__(
+                        "Label in link or button to create. Leave blank for a default label"
+                      ),
                       type: "String",
                       showIf: { ".create_view_display": ["Link", "Popup"] },
                     },
@@ -81,7 +83,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Default state",
+        name: req.__("Default state"),
         contextField: "default_state",
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
@@ -102,13 +104,13 @@ const configuration_workflow = () =>
             });
           formfields.push({
             name: "_omit_state_form",
-            label: "Omit search form",
-            sublabel: "Do not display the search filter form",
+            label: req.__("Omit search form"),
+            sublabel: req.__("Do not display the search filter form"),
             type: "Bool",
           });
           const form = new Form({
             fields: formfields,
-            blurb: "Default search form values when first loaded",
+            blurb: req.__("Default search form values when first loaded"),
           });
           await form.fill_fkey_options(true);
           return form;
