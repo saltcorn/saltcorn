@@ -92,7 +92,6 @@ router.post(
           delete row[k];
         }
       });
-      console.log(row);
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined
@@ -132,7 +131,8 @@ router.post(
         req.user ? +req.user.id : undefined
       );
 
-      res.json(ins_res);
+      if (ins_res.error) res.status(400).json(ins_res);
+      else res.json(ins_res);
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }
