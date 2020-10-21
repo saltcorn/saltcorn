@@ -226,6 +226,8 @@ class View {
 
       fields.forEach((f) => {
         f.required = false;
+        if (f.label === "Anywhere" && f.name === "_fts")
+          f.label = req.__(f.label);
         if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
         if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
           query[f.name] = f.type.read(query[f.name]);
@@ -237,6 +239,7 @@ class View {
         fields,
         submitLabel: req.__("Apply"),
         isStateForm: true,
+        __: req.__,
         values: removeEmptyStrings(query),
       });
       await form.fill_fkey_options(true);

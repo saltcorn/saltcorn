@@ -377,5 +377,7 @@
 	"Omit search form": "Omit search form",
 	"Do not display the search filter form": "Do not display the search filter form",
 	"Default search form values when first loaded": "Default search form values when first loaded",
-	"Apply": "Apply"
+	"Apply": "Apply",
+	"Anywhere": "Anywhere",
+	"Search filter": "Search filter"
 }
