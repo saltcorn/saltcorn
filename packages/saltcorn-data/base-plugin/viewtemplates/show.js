@@ -139,6 +139,7 @@ const renderRows = async (
   const getView = async (nm) => {
     if (views[nm]) return views[nm];
     const view = await View.findOne({ name: nm });
+    if (!view) return false;
     view.table = await Table.findOne({ id: view.table_id });
     views[nm] = view;
     return view;
@@ -147,8 +148,9 @@ const renderRows = async (
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
       const view = await getView(segment.view);
-
-      if (view.viewtemplateObj.renderRows) {
+      if (!view)
+        segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+      else if (view.viewtemplateObj.renderRows) {
         segment.contents = (
           await view.viewtemplateObj.renderRows(
             view.table,
