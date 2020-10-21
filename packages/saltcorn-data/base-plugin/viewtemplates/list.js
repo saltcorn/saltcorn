@@ -129,6 +129,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
       if (tbl_fld) {
         const f = new Field(tbl_fld);
         f.required = false;
+        if (column.header_label) f.label = column.header_label;
         state_fields.push(f);
       }
     }
