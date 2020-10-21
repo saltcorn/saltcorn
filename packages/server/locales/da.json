@@ -373,5 +373,13 @@
 	"User home page": "User home page",
 	"Staff home page": "Staff home page",
 	"Admin home page": "Admin home page",
-	"Installed packs": "Installed packs"
+	"Installed packs": "Installed packs",
+	"Omit search form": "Omit search form",
+	"Do not display the search filter form": "Do not display the search filter form",
+	"Default search form values when first loaded": "Default search form values when first loaded",
+	"Apply": "Apply",
+	"Anywhere": "Anywhere",
+	"Search filter": "Search filter",
+	"Are you sure you want to delete %s?": "Are you sure you want to delete %s?",
+	"Are you sure?": "Are you sure?"
 }

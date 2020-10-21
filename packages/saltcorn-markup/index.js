@@ -39,28 +39,32 @@ const post_btn = (
     small ? "btn-sm" : ""
   } btn-${btnClass}">${s}</button></form>`;
 
-const post_delete_btn = (href, csrfToken, what) =>
+const post_delete_btn = (href, req, what) =>
   `<form action="${text(href)}" method="post" >
-    <input type="hidden" name="_csrf" value="${csrfToken}">
+    <input type="hidden" name="_csrf" value="${req.csrfToken()}">
     <button type="submit" class="btn btn-danger btn-sm" 
-      onclick="return confirm('Are you sure${
-        what ? ` you want to delete ${what}` : ""
-      }?')" />
+      onclick="return confirm('${
+        what
+          ? req.__("Are you sure you want to delete %s?", what)
+          : req.__("Are you sure?")
+      }')" />
       <i class="fas fa-trash-alt"></i>
     </button>
   </form>`;
 
-const post_dropdown_item = (href, s, csrfToken, confirm, what) => {
+const post_dropdown_item = (href, s, req, confirm, what) => {
   const id = href.split("/").join("");
   return `<a class="dropdown-item" onclick="${
     confirm
-      ? `if(confirm('Are you sure${
-          what ? ` you want to delete ${what}` : ""
-        }?')) `
+      ? `if(confirm('${
+          what
+            ? req.__("Are you sure you want to delete %s?", what)
+            : req.__("Are you sure?")
+        }')) `
       : ""
   }$('#${id}').submit()">${s}</a>
   <form id="${id}" action="${text(href)}" method="post">
-    <input type="hidden" name="_csrf" value="${csrfToken}">
+    <input type="hidden" name="_csrf" value="${req.csrfToken()}">
   </form>`;
 };
 module.exports = {

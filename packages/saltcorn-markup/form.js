@@ -299,7 +299,8 @@ const renderForm = (form, csrfToken) => {
           "aria-haspopup": "true",
           "aria-expanded": "false",
         },
-        collapsedSummary || "Search filter"
+        collapsedSummary ||
+          (form.__ ? form.__("Search filter") : "Search filter")
       ),
 
       div(

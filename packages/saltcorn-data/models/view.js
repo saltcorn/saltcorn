@@ -215,7 +215,7 @@ class View {
     });
     return state;
   }
-  async get_state_form(query) {
+  async get_state_form(query, req) {
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
     const display_state_form =
       typeof vt_display_state_form === "function"
@@ -226,6 +226,8 @@ class View {
 
       fields.forEach((f) => {
         f.required = false;
+        if (f.label === "Anywhere" && f.name === "_fts")
+          f.label = req.__(f.label);
         if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
         if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
           query[f.name] = f.type.read(query[f.name]);
@@ -235,8 +237,9 @@ class View {
         methodGET: true,
         action: `/view/${encodeURIComponent(this.name)}`,
         fields,
-        submitLabel: "Apply",
+        submitLabel: req.__("Apply"),
         isStateForm: true,
+        __: req.__,
         values: removeEmptyStrings(query),
       });
       await form.fill_fkey_options(true);
@@ -273,7 +276,10 @@ View.contract = {
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
-    get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
+    get_state_form: is.fun(
+      [is.obj(), is.obj({ __: is.fun(is.str, is.str) })],
+      is.promise(is.maybe(is.class("Form")))
+    ),
     get_config_flow: is.fun(
       is.obj({ __: is.fun(is.str, is.str) }),
       is.promise(is.class("Workflow"))

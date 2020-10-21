@@ -82,11 +82,7 @@ router.get(
           {
             label: req.__("Delete"),
             key: (r) =>
-              post_delete_btn(
-                `/files/delete/${r.id}`,
-                req.csrfToken(),
-                r.filename
-              ),
+              post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
           },
         ],
         rows

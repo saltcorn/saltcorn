@@ -24,6 +24,7 @@ class Form {
     this.validator = o.validator;
     this.hasErrors = false;
     this.xhrSubmit = !!o.xhrSubmit;
+    this.__ = o.__;
     if (o.validate) this.validate(o.validate);
     contract.class(this);
   }

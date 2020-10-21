@@ -63,7 +63,7 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
       td(req.__(cfgs[key].label || key)),
       td(showValue(key)),
       td(canEdit(key) ? link(`/config/edit/${key}`, req.__("Edit")) : ""),
-      td(post_delete_btn(`/config/delete/${key}`, req.csrfToken()))
+      td(post_delete_btn(`/config/delete/${key}`, req))
     );
   return (
     tr(th({ colspan: 4, class: "pt-4" }, name)) + keys.map(showkey).join("")

@@ -71,18 +71,18 @@ const view_dropdown = (view, req) =>
       post_dropdown_item(
         `/viewedit/add-to-menu/${view.id}`,
         '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
-        req.csrfToken()
+        req
       ),
       post_dropdown_item(
         `/viewedit/clone/${view.id}`,
         '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-        req.csrfToken()
+        req
       ),
       div({ class: "dropdown-divider" }),
       post_dropdown_item(
         `/viewedit/delete/${view.id}`,
         '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-        req.csrfToken(),
+        req,
         true,
         view.name
       )

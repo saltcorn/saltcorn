@@ -263,8 +263,7 @@ router.get(
           },
           {
             label: req.__("Delete"),
-            key: (r) =>
-              post_delete_btn(`/field/delete/${r.id}`, req.csrfToken(), r.name),
+            key: (r) => post_delete_btn(`/field/delete/${r.id}`, req, r.name),
           },
         ],
         fields
@@ -307,7 +306,7 @@ router.get(
               key: (r) =>
                 post_delete_btn(
                   `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                  req.csrfToken()
+                  req
                 ),
             },
           ],
@@ -500,11 +499,7 @@ router.get(
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  post_delete_btn(
-                    `/table/delete/${r.id}`,
-                    req.csrfToken(),
-                    r.name
-                  ),
+                  post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },
             ],
             rows

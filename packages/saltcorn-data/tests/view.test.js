@@ -39,7 +39,7 @@ describe("View", () => {
   });
   it("should render list state form", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.get_state_form({});
+    const res = await v.get_state_form({}, mockReqRes.req);
     expect(res.constructor.name).toBe("Form");
     expect(res.fields.length > 0).toBe(true);
   });
@@ -117,7 +117,7 @@ describe("View with routes", () => {
     expect(json).toEqual({ success: "ok" });
     expect(html).toEqual("<div>Hello</div>");
 
-    const sf = await v.get_state_form({});
+    const sf = await v.get_state_form({}, mockReqRes.req);
     expect(sf).toBe(null);
   });
 });

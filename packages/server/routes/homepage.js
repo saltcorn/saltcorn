@@ -319,7 +319,7 @@ module.exports = async (req, res) => {
     const view = views[0];
     const state = view.combine_state_and_default_state(req.query);
     const resp = await view.run(state, { res, req });
-    const state_form = await view.get_state_form(state);
+    const state_form = await view.get_state_form(state, req);
 
     res.sendWrap(
       `${view.name}`,
