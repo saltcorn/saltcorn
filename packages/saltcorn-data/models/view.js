@@ -215,7 +215,7 @@ class View {
     });
     return state;
   }
-  async get_state_form(query) {
+  async get_state_form(query, req) {
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
     const display_state_form =
       typeof vt_display_state_form === "function"
@@ -235,7 +235,7 @@ class View {
         methodGET: true,
         action: `/view/${encodeURIComponent(this.name)}`,
         fields,
-        submitLabel: "Apply",
+        submitLabel: req.__("Apply"),
         isStateForm: true,
         values: removeEmptyStrings(query),
       });
@@ -273,7 +273,10 @@ View.contract = {
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
-    get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
+    get_state_form: is.fun(
+      [is.obj(), is.obj({ __: is.fun(is.str, is.str) })],
+      is.promise(is.maybe(is.class("Form")))
+    ),
     get_config_flow: is.fun(
       is.obj({ __: is.fun(is.str, is.str) }),
       is.promise(is.class("Workflow"))

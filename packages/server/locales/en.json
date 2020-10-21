@@ -413,5 +413,6 @@
 	"Print all SQL statements to the standard output": "Print all SQL statements to the standard output",
 	"The email address from which emails are sent. For instance, hello@saltcorn.com": "The email address from which emails are sent. For instance, hello@saltcorn.com",
 	"Is the connection to the SMTP server over a secure transport protocol?": "Is the connection to the SMTP server over a secure transport protocol?",
-	"About Saltcorn": "About Saltcorn"
+	"About Saltcorn": "About Saltcorn",
+	"Apply": "Apply"
 }
