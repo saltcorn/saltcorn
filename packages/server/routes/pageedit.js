@@ -157,12 +157,7 @@ const getPageList = (rows, roles, req) => {
         },
         {
           label: req.__("Delete"),
-          key: (r) =>
-            post_delete_btn(
-              `/pageedit/delete/${r.id}`,
-              req.csrfToken(),
-              r.name
-            ),
+          key: (r) => post_delete_btn(`/pageedit/delete/${r.id}`, req, r.name),
         },
       ],
       rows
