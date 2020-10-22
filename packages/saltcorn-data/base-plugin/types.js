@@ -32,6 +32,8 @@ const string = {
   sql_name: "text",
   attributes: [
     //{ name: "match", type: "String", required: false },
+    { name: "max_length", type: "Integer", required: false },
+    { name: "min_length", type: "Integer", required: false },
     {
       name: "options",
       type: "String",
@@ -114,7 +116,14 @@ const string = {
         return undefined;
     }
   },
-  validate: () => (x) => true,
+  validate: ({ min_length, max_length }) => (x) => {
+    if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
+    if (isdef(min_length) && x.length < min_length)
+      return { error: `Must be at least ${min_length} characters` };
+    if (isdef(max_length) && x.length > max_length)
+      return { error: `Must be at most ${max_length} characters` };
+    return true;
+  },
 };
 
 const int = {
