@@ -92,6 +92,7 @@ router.post(
         const field = fields.find((f) => f.name === k);
         if (!field || field.calculated) {
           delete row[k];
+          return;
         }
         if (field.required && typeof row[k] === "undefined") {
           hasErrors = true;
