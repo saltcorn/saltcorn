@@ -124,7 +124,9 @@ const expressionBlurb = (type, stored, allFields, req) => {
     ),
     p(
       req.__(`Fields you can use as variables: `),
-      fields.map((f) => code(f.name)).join(", ")
+      stored
+        ? fields.map((f) => code(f.name)).join(", ")
+        : [code("id"), ...fields.map((f) => code(f.name))].join(", ")
     ),
     funNames.length > 0
       ? p(

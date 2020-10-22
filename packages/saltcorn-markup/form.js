@@ -262,9 +262,14 @@ const renderFormLayout = (form) => {
   const blockDispatch = {
     field(segment) {
       const field = form.fields.find((f) => f.name === segment.field_name);
-      if (field && field.input_type !== "hidden")
-        return innerField(form.values, form.errors)(field);
-      else return "";
+      if (field && field.input_type !== "hidden") {
+        const errorFeedback = form.errors[field.name]
+          ? `<div class="invalid-feedback">${text(
+              form.errors[field.name]
+            )}</div>`
+          : "";
+        return innerField(form.values, form.errors)(field) + errorFeedback;
+      } else return "";
     },
     action({ action_name }) {
       const submitAttr = form.xhrSubmit
