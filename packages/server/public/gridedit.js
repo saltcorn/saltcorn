@@ -6,18 +6,20 @@ function jsgrid_controller(table_name, vc, keyfields) {
     });
     return item;
   };
-  var errorHandler = function (request) {
-    console.log(request);
-    $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
-    ${
-      request.responseJSON && request.responseJSON.error
-        ? request.responseJSON.error
-        : request.responseText
-    }
+  var errorHandler = function (prom) {
+    return function (request) {
+      var errtxt =
+        request.responseJSON && request.responseJSON.error
+          ? request.responseJSON.error
+          : request.responseText;
+      $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
+    ${errtxt}
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
   </div>`);
+      if (prom) prom.reject(errtxt);
+    };
   };
   return {
     loadData: function (filter) {
@@ -26,7 +28,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         type: "GET",
         url: url + (vc ? "?versioncount=on" : ""),
         data: filter,
-        error: errorHandler,
+        error: errorHandler(data),
       }).done(function (resp) {
         data.resolve(resp.success);
       });
@@ -41,7 +43,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
-        error: errorHandler,
+        error: errorHandler(data),
       }).done(function (resp) {
         item._versions = 1;
         if (resp.success) {
@@ -62,7 +64,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
-        error: errorHandler,
+        error: errorHandler(data),
       }).done(function (resp) {
         if (item._versions) item._versions = +item._versions + 1;
         data.resolve(fixKeys(item));
@@ -76,7 +78,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },
-        error: errorHandler,
+        error: errorHandler(),
       });
     },
   };
