@@ -412,5 +412,11 @@
   "User home page": "Home page utente",
   "The URL at which your site is available. For instance, https://example.com/": "L'URL a cui il tuo sito è disponibile. Ad esempio, https://example.com/",
   "The email address from which emails are sent. For instance, hello@saltcorn.com": "L'indirizzo email da cui le email sono inviate. Ad esempio, hello@saltorn.com",
-  "The host address of your SMTP server. For instance, smtp.postmarkapp.com": "L'indirizzo dell'host del tuo serer SMTP. Ad esempio, smtp.postmarkapp.com"
+  "The host address of your SMTP server. For instance, smtp.postmarkapp.com": "L'indirizzo dell'host del tuo serer SMTP. Ad esempio, smtp.postmarkapp.com",
+  "About Saltcorn": "Su Saltcorn",
+  "Anywhere": "Dovunque",
+  "Apply": "Applica",
+  "Are you sure?": "Sicuro?",
+  "Search filter": "Filtro di ricerca",
+  "Are you sure you want to delete %s?": "Sicuro di voler cancellare %s?"
 }
