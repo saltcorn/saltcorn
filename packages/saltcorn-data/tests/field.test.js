@@ -213,6 +213,13 @@ describe("calculated", () => {
       calculated: true,
       expression: "x+y",
     });
+    const fzid = await Field.create({
+      table,
+      label: "zid",
+      type: "Integer",
+      calculated: true,
+      expression: "x+y+id",
+    });
     const fw = await Field.create({
       table,
       label: "w",
@@ -227,6 +234,7 @@ describe("calculated", () => {
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
     expect(row.z).toBe(13);
+    expect(row.zid).toBe(14);
     expect(row.w).toBe(3);
     const [row1] = await table.getJoinedRows();
     expect(row1.z).toBe(13);
