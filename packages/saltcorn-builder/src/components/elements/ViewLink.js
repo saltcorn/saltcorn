@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const ViewLink = ({ name, block, minRole, label }) => {
+export const ViewLink = ({ name, block, minRole, inModal, label }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -12,7 +12,9 @@ export const ViewLink = ({ name, block, minRole, label }) => {
   const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
-      className={`is-builder-link ${selected ? "selected-node" : ""}`}
+      className={`${inModal ? "btn btn-secondary btn-sm" : ""} ${
+        selected ? "selected-node" : "is-builder-link"
+      }`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
@@ -28,11 +30,13 @@ export const ViewLinkSettings = () => {
     block,
     minRole,
     label,
+    inModal,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     label: node.data.props.label,
+    inModal: node.data.props.inModal,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -41,6 +45,7 @@ export const ViewLinkSettings = () => {
         <label>View to link to</label>
         <select
           value={name}
+          className="w-100"
           onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.link_view_opts.map((f, ix) => (
@@ -58,6 +63,16 @@ export const ViewLinkSettings = () => {
           value={label}
           onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
         />
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={inModal}
+          onChange={(e) => setProp((prop) => (prop.inModal = e.target.checked))}
+        />
+        <label className="form-check-label">Open in popup modal?</label>
       </div>
       <BlockSetting block={block} setProp={setProp} />
       <MinRoleSetting minRole={minRole} setProp={setProp} />

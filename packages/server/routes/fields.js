@@ -7,47 +7,70 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const { expressionValidator } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
-const { disable } = require("contractis/contract");
-const { table } = require("@saltcorn/markup/tags");
-
+const expressionBlurb = require("../markup/expression_blurb");
 const router = new Router();
 module.exports = router;
 
 const fieldForm = (req, fkey_opts, existing_names, id) =>
   new Form({
     action: "/field",
+    validator: (vs) => {
+      if (vs.calculated && vs.type == "File")
+        return req.__("Calculated fields cannot have File type");
+      if (vs.calculated && vs.type.startsWith("Key to"))
+        return req.__("Calculated fields cannot have Key type");
+    },
     fields: [
       new Field({
-        label: "Label",
+        label: req.__("Label"),
         name: "label",
         input_type: "text",
         validator(s) {
+          if (!s || s === "") return req.__("Missing label");
           if (s.toLowerCase() === "id")
-            return `Column '${s}' already exists (but is hidden)`;
+            return req.__("Column %s already exists (but is hidden)", s);
           if (!id && existing_names.includes(Field.labelToName(s)))
-            return `Column '${s}' already exists`;
+            return req.__("Column %s already exists", s);
         },
       }),
       new Field({
-        label: "Type",
+        label: req.__("Type"),
         name: "type",
         input_type: "select",
         options: getState().type_names.concat(fkey_opts || []),
         disabled: !!id && !getState().getConfig("development_mode", false),
       }),
       new Field({
-        label: "Required",
-        name: "required",
-        type: getState().types["Bool"],
-        disabled: !!id && db.isSQLite,
+        label: req.__("Calculated"),
+        name: "calculated",
+        type: "Bool",
+        class: "iscalc",
+        disabled: !!id,
       }),
       new Field({
-        label: "Unique",
+        label: req.__("Required"),
+        name: "required",
+        type: "Bool",
+        disabled: !!id && db.isSQLite,
+        showIf: { ".iscalc": false },
+      }),
+      new Field({
+        label: req.__("Unique"),
         name: "is_unique",
-        type: getState().types["Bool"],
+        showIf: { ".iscalc": false },
+        type: "Bool",
+      }),
+
+      new Field({
+        label: req.__("Stored"),
+        name: "stored",
+        type: "Bool",
+        disabled: !!id,
+        showIf: { ".iscalc": true },
       }),
     ],
   });
@@ -57,6 +80,16 @@ const calcFieldType = (ctxType) =>
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
 
+const translateAttributes = (attrs, req) =>
+  Array.isArray(attrs)
+    ? attrs.map((attr) => translateAttribute(attr, req))
+    : attrs;
+
+const translateAttribute = (attr, req) => {
+  const res = { ...attr };
+  if (res.sublabel) res.sublabel = req.__(res.sublabel);
+  return res;
+};
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -65,7 +98,16 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
-      const { table_id, name, label, required, is_unique } = context;
+      const {
+        table_id,
+        name,
+        label,
+        required,
+        is_unique,
+        calculated,
+        expression,
+        stored,
+      } = context;
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -76,7 +118,14 @@ const fieldFlow = (req) =>
         is_unique,
         reftable_name,
         attributes,
+        calculated,
+        expression,
+        stored,
       };
+      if (fldRow.calculated) {
+        fldRow.is_unique = false;
+        fldRow.required = false;
+      }
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
         try {
@@ -132,6 +181,7 @@ const fieldFlow = (req) =>
         name: req.__("Attributes"),
         contextField: "attributes",
         onlyWhen: (context) => {
+          if (context.calculated) return false;
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
           const type = getState().types[context.type];
@@ -155,9 +205,31 @@ const fieldFlow = (req) =>
             });
           } else {
             return new Form({
-              fields: getState().types[context.type].attributes,
+              fields: translateAttributes(
+                getState().types[context.type].attributes,
+                req
+              ),
             });
           }
+        },
+      },
+      {
+        name: req.__("Expression"),
+        onlyWhen: (context) => context.calculated,
+        form: async (context) => {
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
+          return new Form({
+            blurb: expressionBlurb(context.type, context.stored, fields, req),
+            fields: [
+              new Field({
+                name: "expression",
+                label: req.__("Formula"),
+                type: "String",
+                validator: expressionValidator,
+              }),
+            ],
+          });
         },
       },
       {
@@ -170,11 +242,13 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const fld = new Field(context);
           const table = await Table.findOne({ name: fld.reftable_name });
-          const fields = await Field.find({ table_id: table.id });
-          const keyfields = fields.map((f) => ({
-            value: f.name,
-            label: f.label,
-          }));
+          const fields = await table.getFields();
+          const keyfields = fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
+              value: f.name,
+              label: f.label,
+            }));
           return new Form({
             fields: [
               new Field({
@@ -191,7 +265,8 @@ const fieldFlow = (req) =>
         name: req.__("Default"),
         onlyWhen: async (context) => {
           if (context.type === "Key to users") context.summary_field = "email";
-          if (!context.required || context.id) return false;
+          if (!context.required || context.id || context.calculated)
+            return false;
           const table = await Table.findOne({ id: context.table_id });
           const nrows = await table.countRows();
           return nrows > 0;
@@ -226,10 +301,13 @@ router.get(
     const { id } = req.params;
     const field = await Field.findOne({ id });
     const table = await Table.findOne({ id: field.table_id });
-    const wfres = await fieldFlow(req).run({
-      ...field.toJson,
-      ...field.attributes,
-    });
+    const wfres = await fieldFlow(req).run(
+      {
+        ...field.toJson,
+        ...field.attributes,
+      },
+      req
+    );
     res.sendWrap(req.__(`Edit field`), {
       above: [
         {
@@ -243,7 +321,7 @@ router.get(
         },
         {
           type: "card",
-          title: `${field.label}: ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: `${field.label}: ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -259,7 +337,7 @@ router.get(
     const { table_id } = req.params;
     const table = await Table.findOne({ id: table_id });
 
-    const wfres = await fieldFlow(req).run({ table_id: +table_id });
+    const wfres = await fieldFlow(req).run({ table_id: +table_id }, req);
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -273,9 +351,7 @@ router.get(
         },
         {
           type: "card",
-          title:
-            req.__(`New field:`) +
-            ` ${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+          title: req.__(`New field:`) + ` ${wfres.title}`,
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -303,7 +379,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await fieldFlow(req).run(req.body);
+    const wfres = await fieldFlow(req).run(req.body, req);
     if (wfres.renderForm) {
       const table = await Table.findOne({ id: wfres.context.table_id });
       res.sendWrap(req.__(`Field attributes`), {
@@ -325,8 +401,8 @@ router.post(
           {
             type: "card",
             title: `${wfres.context.label || req.__("New field")}: ${
-              wfres.stepName
-            } (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+              wfres.title
+            }`,
             contents: renderForm(wfres.renderForm, req.csrfToken()),
           },
         ],

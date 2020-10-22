@@ -27,6 +27,7 @@ const {
   form,
   label,
   input,
+  text,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const fs = require("fs").promises;
@@ -152,7 +153,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (req.body.name && req.files.file) {
+    if (req.body.name && req.files && req.files.file) {
       const name = req.body.name;
       const alltables = await Table.find({});
       const existing_tables = [
@@ -189,6 +190,26 @@ router.post(
   })
 );
 
+const badge = (col, lbl) =>
+  `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+const typeBadges = (f, req) => {
+  let s = "";
+  if (f.required) s += badge("primary", req.__("Required"));
+  if (f.is_unique) s += badge("success", req.__("Unique"));
+  if (f.calculated) s += badge("info", req.__("Calculated"));
+  if (f.stored) s += badge("warning", req.__("Stored"));
+  return s;
+};
+const attribBadges = (f) => {
+  let s = "";
+  if (f.attributes) {
+    Object.entries(f.attributes).forEach(([k, v]) => {
+      if (["summary_field", "default"].includes(k)) return;
+      if (v || v === 0) s += badge("secondary", k);
+    });
+  }
+  return s;
+};
 router.get(
   "/:id",
   setTenant,
@@ -196,6 +217,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", req.__(`Table not found`));
+      res.redirect(`/table`);
+      return;
+    }
     const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
     var fieldCard;
@@ -215,10 +241,7 @@ router.get(
       const tableHtml = mkTable(
         [
           { label: req.__("Label"), key: "label" },
-          {
-            label: req.__("Required"),
-            key: (r) => (r.required ? "true" : "false"),
-          },
+
           {
             label: req.__("Type"),
             key: (r) =>
@@ -226,11 +249,21 @@ router.get(
                 ? `Key to ${r.reftable_name}`
                 : r.type.name || r.type,
           },
-          { label: req.__("Edit"), key: (r) => link(`/field/${r.id}`, "Edit") },
+          {
+            label: "",
+            key: (r) => typeBadges(r, req),
+          },
+          {
+            label: req.__("Attributes"),
+            key: (r) => attribBadges(r),
+          },
+          {
+            label: req.__("Edit"),
+            key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+          },
           {
             label: req.__("Delete"),
-            key: (r) =>
-              post_delete_btn(`/field/delete/${r.id}`, req.csrfToken()),
+            key: (r) => post_delete_btn(`/field/delete/${r.id}`, req, r.name),
           },
         ],
         fields
@@ -273,7 +306,7 @@ router.get(
               key: (r) =>
                 post_delete_btn(
                   `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                  req.csrfToken()
+                  req
                 ),
             },
           ],
@@ -459,15 +492,14 @@ router.get(
       rows.length > 0
         ? mkTable(
             [
-              { label: req.__("Name"), key: "name" },
               {
-                label: req.__("Edit"),
-                key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+                label: req.__("Name"),
+                key: (r) => link(`/table/${r.id}`, text(r.name)),
               },
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  post_delete_btn(`/table/delete/${r.id}`, req.csrfToken()),
+                  post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },
             ],
             rows
@@ -521,6 +553,7 @@ router.get(
       header: true,
       cast: {
         date: (value) => value.toISOString(),
+        boolean: (v) => (v ? "true" : "false"),
       },
     }).pipe(res);
   })

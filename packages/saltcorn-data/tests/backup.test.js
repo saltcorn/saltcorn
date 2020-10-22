@@ -30,16 +30,16 @@ describe("Backup and restore", () => {
     await reset();
     await User.create({
       email: "admin@foo.com",
-      password: "secret",
+      password: "AhGGr6rhu45",
       role_id: 1,
     });
     const t2 = await Table.findOne({ name: "books" });
     expect(t2).toBe(null);
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
-
-    await restore(fnm, (p) => {});
-
+    const restore_res = await restore(fnm, (p) => {});
+    await fs.unlink(fnm);
+    expect(restore_res).toBe(undefined);
     const t3 = await Table.findOne({ name: "books" });
     expect(!!t3).toBe(true);
     const t3c = await t3.countRows();
@@ -48,7 +48,6 @@ describe("Backup and restore", () => {
     expect(v1.length).toBe(v2.length);
     const sn = await getConfig("site_name");
     expect(sn).toBe("backups rule!");
-
-    await fs.unlink(fnm);
+    await t3.insertRow({ author: "Marcus Rediker", pages: 224 });
   });
 });

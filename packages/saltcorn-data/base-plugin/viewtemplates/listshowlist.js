@@ -10,11 +10,11 @@ const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Views",
+        name: req.__("Views"),
         form: async (context) => {
           const list_views = await View.find_table_views_where(
             context.table_id,
@@ -36,7 +36,7 @@ const configuration_workflow = () =>
             fields: [
               {
                 name: "list_view",
-                label: "List View",
+                label: req.__("List View"),
                 type: "String",
                 required: false,
                 attributes: {
@@ -45,7 +45,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "show_view",
-                label: "Show View",
+                label: req.__("Show View"),
                 type: "String",
                 required: false,
                 attributes: {
@@ -57,7 +57,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Subtables",
+        name: req.__("Subtables"),
         contextField: "subtables",
         form: async (context) => {
           const tbl = await Table.findOne({ id: context.table_id });
@@ -84,8 +84,9 @@ const configuration_workflow = () =>
           }
           return new Form({
             fields,
-            blurb:
-              "Which related tables would you like to show in sub-lists below the selected item?",
+            blurb: req.__(
+              "Which related tables would you like to show in sub-lists below the selected item?"
+            ),
           });
         },
       },
@@ -124,6 +125,8 @@ const run = async (
   var lresp;
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
+    if (!lview)
+      return `View ${viewname} incorrectly configured: cannot find view ${list_view}`;
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
@@ -134,6 +137,8 @@ const run = async (
   var sresp = "";
   if (show_view) {
     const sview = await View.findOne({ name: show_view });
+    if (!sview)
+      return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
     sresp = await sview.run(state, extraArgs);
   }
   var reltbls = {};
@@ -153,24 +158,34 @@ const run = async (
         switch (reltype) {
           case "ChildList":
             const [vname, reltblnm, relfld] = rel.split(".");
-            const subview = await View.findOne({ name: vname });
-            const subresp = await subview.run({ [relfld]: id }, extraArgs);
-
             const tab_name = reltblnm;
-            reltbls[tab_name] = subresp;
+            const subview = await View.findOne({ name: vname });
+            if (!subview)
+              reltbls[
+                tab_name
+              ] = `View ${viewname} incorrectly configured: cannot find view ${vname}`;
+            else {
+              const subresp = await subview.run({ [relfld]: id }, extraArgs);
+              reltbls[tab_name] = subresp;
+            }
             break;
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
-            const psubview = await View.findOne({ name: pvname });
             if (!myrow) myrow = await table.getRow({ id });
-
-            const psubresp = await psubview.run(
-              { id: myrow[prelfld] },
-              extraArgs
-            );
-
             const ptab_name = prelfld;
-            reltbls[ptab_name] = psubresp;
+            const psubview = await View.findOne({ name: pvname });
+            if (!psubview)
+              reltbls[
+                ptab_name
+              ] = `View ${viewname} incorrectly configured: cannot find view ${pvname}`;
+            else {
+              const psubresp = await psubview.run(
+                { id: myrow[prelfld] },
+                extraArgs
+              );
+
+              reltbls[ptab_name] = psubresp;
+            }
             break;
           default:
             break;

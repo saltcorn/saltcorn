@@ -9,6 +9,8 @@ import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
+import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Container } from "./elements/Container";
@@ -30,11 +32,14 @@ const WrapElem = ({
   title,
   bold,
   label,
+  disable,
 }) => (
   <div
-    className="wrap-builder-elem d-flex align-items-center justify-content-center"
+    className={`${
+      disable ? "text-muted" : ""
+    } wrap-builder-elem d-flex align-items-center justify-content-center`}
     title={title}
-    ref={(ref) => connectors.create(ref, children)}
+    ref={disable ? undefined : (ref) => connectors.create(ref, children)}
   >
     <div className="inner" style={fontSize ? { fontSize } : {}}>
       {(text && (bold ? <strong>{text}</strong> : text)) ||
@@ -105,6 +110,7 @@ const ImageElem = ({ connectors, images }) => (
     icon="fas fa-image"
     title="Image"
     label="Image"
+    disable={images.length === 0}
   >
     <Image fileid={images.length > 0 ? images[0].id : 0} />
   </WrapElem>
@@ -125,6 +131,7 @@ const ViewElem = ({ connectors, views }) => (
     icon="fas fa-eye"
     title="Embed a view"
     label="View"
+    disable={views.length === 0}
   >
     <View
       name={"not_assigned"}
@@ -168,12 +175,33 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
     />
   </WrapElem>
 );
+const DropDownFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="far fa-caret-square-down"
+    title="Dropdown filter"
+    label="Dropdown"
+  >
+    <DropDownFilter name={fields[0].name} block={false} />
+  </WrapElem>
+);
+const ToggleFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-toggle-on"
+    title="Toggle filter"
+    label="Toggle"
+  >
+    <ToggleFilter name={fields[0].name} value={""} label={""} block={false} />
+  </WrapElem>
+);
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
     icon="fas fa-ruler-combined"
     title="Join field"
     label="Join"
+    disable={options.parent_field_list.length === 0}
   >
     <JoinField
       name={options.parent_field_list[0]}
@@ -187,7 +215,7 @@ const ViewLinkElem = ({ connectors, options }) => (
     connectors={connectors}
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
-    label="Link"
+    label="ViewLink"
   >
     <ViewLink
       name={options.link_view_opts[0].name}
@@ -216,6 +244,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
     label="Calc"
     bold
     fontSize="16px"
+    disable={child_field_list.length === 0}
   >
     <Aggregation
       agg_relation={child_field_list[0]}
@@ -250,12 +279,32 @@ export const ToolboxShow = () => {
       <JoinFieldElem connectors={connectors} options={options} />
       <ViewLinkElem connectors={connectors} options={options} />
       <ActionElem connectors={connectors} options={options} />
+      <LinkElem connectors={connectors} />
       <AggregationElem
         connectors={connectors}
         child_field_list={child_field_list}
         agg_field_opts={agg_field_opts}
       />
       <ViewElem connectors={connectors} views={views} />
+      <ContainerElem connectors={connectors} />
+    </Fragment>
+  );
+};
+
+export const ToolboxFilter = () => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const { fields } = options;
+  return (
+    <Fragment>
+      <TextElem connectors={connectors} />
+      <ColumnsElem connectors={connectors} />
+
+      <LineBreakElem connectors={connectors} />
+      <DropDownFilterElem connectors={connectors} fields={fields} />
+      <ToggleFilterElem connectors={connectors} fields={fields} />
+      <SearchElem connectors={connectors} />
+
       <ContainerElem connectors={connectors} />
     </Fragment>
   );

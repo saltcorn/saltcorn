@@ -24,12 +24,19 @@ const {
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
 const { asyncMap } = require("../../utils");
+const { traverseSync } = require("../../models/layout");
+const { get_expression_function } = require("../../models/expression");
+const v8 = require("v8");
 
-const configuration_workflow = () =>
+const structuredClone = (obj) => {
+  return v8.deserialize(v8.serialize(obj));
+};
+
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Layout",
+        name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
@@ -55,7 +62,9 @@ const configuration_workflow = () =>
           child_relations.forEach(({ table, key_field }) => {
             agg_field_opts[
               `${table.name}.${key_field.name}`
-            ] = table.fields.map((f) => f.name);
+            ] = table.fields
+              .filter((f) => !f.calculated || f.stored)
+              .map((f) => f.name);
           });
           const views = await View.find_table_views_where(
             context.table_id,
@@ -105,9 +114,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     where: qstate,
     joinFields,
     aggregations,
-    limit: 1,
+    limit: 2,
   });
-  if (rows.length !== 1) return "No record selected";
+  if (rows.length !== 1) return extra.req.__("No record selected");
 
   return (await renderRows(tbl, viewname, { columns, layout }, extra, rows))[0];
 };
@@ -121,7 +130,7 @@ const renderRows = async (
 ) => {
   //console.log(columns);
   //console.log(layout);
-  if (!columns || !layout) return "View not yet built";
+  if (!columns || !layout) return req.__("View not yet built");
 
   const fields = await table.getFields();
 
@@ -130,6 +139,7 @@ const renderRows = async (
   const getView = async (nm) => {
     if (views[nm]) return views[nm];
     const view = await View.findOne({ name: nm });
+    if (!view) return false;
     view.table = await Table.findOne({ id: view.table_id });
     views[nm] = view;
     return view;
@@ -138,8 +148,9 @@ const renderRows = async (
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
       const view = await getView(segment.view);
-
-      if (view.viewtemplateObj.renderRows) {
+      if (!view)
+        segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+      else if (view.viewtemplateObj.renderRows) {
         segment.contents = (
           await view.viewtemplateObj.renderRows(
             view.table,
@@ -187,20 +198,43 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
-const render = (row, fields, layout, viewname, table, role, req) => {
+const render = (row, fields, layout0, viewname, table, role, req) => {
+  const evalMaybeExpr = (segment, key) => {
+    if (segment.isFormula && segment.isFormula[key]) {
+      const f = get_expression_function(segment[key], fields);
+      segment[key] = f(row);
+    }
+  };
+  const layout = structuredClone(layout0);
+  traverseSync(layout, {
+    link(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "text");
+    },
+  });
   const blockDispatch = {
     field({ field_name, fieldview }) {
       const val = row[field_name];
       const field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
       if (fieldview && field.type === "File") {
-        return val ? getState().fileviews[fieldview].run(val) : "";
-      } else if (fieldview && field.type.fieldviews[fieldview])
-        return field.type.fieldviews[fieldview].run(val);
+        return val
+          ? getState().fileviews[fieldview].run(
+              val,
+              row[`${field_name}__filename`]
+            )
+          : "";
+      } else if (
+        fieldview &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      )
+        return field.type.fieldviews[fieldview].run(val, req);
       else return text(val);
     },
     join_field({ join_field }) {
       const [refNm, targetNm] = join_field.split(".");
-      const val = row[targetNm];
+      const val = row[`${refNm}_${targetNm}`];
       return text(val);
     },
     aggregation({ agg_relation, stat }) {

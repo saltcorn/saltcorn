@@ -13,14 +13,14 @@ const {
   calcfldViewOptions,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Layout",
+        name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
 
@@ -42,20 +42,22 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Fixed fields",
+        name: req.__("Fixed fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
-          return fields.some((f) => !in_form_fields.includes(f.name));
+          return fields.some(
+            (f) => !in_form_fields.includes(f.name) && !f.calculated
+          );
         },
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
-            (f) => !in_form_fields.includes(f.name)
+            (f) => !in_form_fields.includes(f.name) && !f.calculated
           );
           var formFields = [];
           omitted_fields.forEach((f) => {
@@ -75,7 +77,9 @@ const configuration_workflow = () =>
             }
           });
           const form = new Form({
-            blurb: "These fields were missing, you can give values here",
+            blurb: req.__(
+              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
+            ),
             fields: formFields,
           });
           await form.fill_fkey_options();
@@ -83,7 +87,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Edit options",
+        name: req.__("Edit options"),
         onlyWhen: async (context) => {
           const done_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
@@ -103,10 +107,13 @@ const configuration_workflow = () =>
           const done_view_opts = done_views.map((v) => v.name);
 
           return new Form({
+            blurb: req.__(
+              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
+            ),
             fields: [
               {
                 name: "view_when_done",
-                label: "View when done",
+                label: req.__("View when done"),
                 type: "String",
                 required: true,
                 attributes: {
@@ -151,6 +158,14 @@ const getForm = async (table, viewname, columns, layout, id) => {
   return form;
 };
 
+const setDateLocales = (form, locale) => {
+  form.fields.forEach((f) => {
+    if (f.type && f.type.name === "Date") {
+      f.attributes.locale = locale;
+    }
+  });
+};
+
 const initial_config = initial_config_all_fields(true);
 
 const run = async (table_id, viewname, config, state, { res, req }) => {
@@ -176,9 +191,16 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;
-      field.input_type = "hidden";
+    } else {
+      const tbl_field = fields.find((f) => f.name === k);
+      if (tbl_field && !field) {
+        form.fields.push(new Field({ name: k, input_type: "hidden" }));
+        form.values[k] = tbl_field.type.read ? tbl_field.type.read(v) : v;
+      }
     }
   });
+  if (req.xhr) form.xhrSubmit = true;
+  setDateLocales(form, req.getLocale());
   return renderForm(form, req.csrfToken());
 };
 
@@ -206,9 +228,22 @@ const runPost = async (
   { res, req }
 ) => {
   const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id);
+  Object.entries(body).forEach(([k, v]) => {
+    const form_field = form.fields.find((f) => f.name === k);
+    const tbl_field = fields.find((f) => f.name === k);
+    if (tbl_field && !form_field) {
+      form.fields.push(new Field({ name: k, input_type: "hidden" }));
+    }
+  });
+  setDateLocales(form, req.getLocale());
   form.validate(body);
   if (form.hasErrors) {
+    if (req.xhr) {
+      form.xhrSubmit = true;
+      res.status(400);
+    }
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;

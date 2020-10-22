@@ -4,6 +4,39 @@ const Table = require("./models/table");
 const { getState } = require("./db/state");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
+const { link } = require("@saltcorn/markup");
+const { button } = require("@saltcorn/markup/tags");
+
+const link_view = (url, label, popup) => {
+  if (popup) {
+    return button(
+      {
+        class: "btn btn-secondary btn-sm",
+        onClick: `ajax_modal('${url}')`,
+      },
+      label
+    );
+  } else return link(url, label);
+};
+
+const stateToQueryString = contract(
+  is.fun(is.maybe(is.obj()), is.str),
+  (state) => {
+    if (!state || Object.keys(state).length === 0) return "";
+
+    return (
+      "?" +
+      Object.entries(state)
+        .map(([k, v]) =>
+          k === "id"
+            ? null
+            : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        )
+        .filter((s) => !!s)
+        .join("&")
+    );
+  }
+);
 
 const calcfldViewOptions = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
@@ -64,7 +97,8 @@ const field_picker_fields = contract(
     is.obj({ table: is.class("Table"), viewname: is.str }),
     is.promise(is.array(fieldlike))
   ),
-  async ({ table, viewname }) => {
+  async ({ table, viewname, req }) => {
+    const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
     const actions = ["Delete", ...boolfields.map((f) => `Toggle ${f.name}`)];
@@ -80,11 +114,14 @@ const field_picker_fields = contract(
     } = await table.get_child_relations();
     const agg_field_opts = child_relations.map(({ table, key_field }) => ({
       name: `agg_field`,
-      label: "On Field",
+      label: __("On Field"),
       type: "String",
       required: true,
       attributes: {
-        options: table.fields.map((f) => f.name).join(),
+        options: table.fields
+          .filter((f) => !f.calculated || f.stored)
+          .map((f) => f.name)
+          .join(),
       },
       showIf: {
         ".agg_relation": `${table.name}.${key_field.name}`,
@@ -94,7 +131,7 @@ const field_picker_fields = contract(
     return [
       {
         name: "type",
-        label: "Type",
+        label: __("Type"),
         type: "String",
         class: "coltype",
         required: true,
@@ -103,19 +140,24 @@ const field_picker_fields = contract(
           options: [
             {
               name: "Field",
-              label: `Field in ${table.name} table`,
+              label: __(`Field in %s table`, table.name),
             },
-            { name: "Action", label: "Action on row" },
-            { name: "ViewLink", label: "Link to other view" },
-            { name: "JoinField", label: "Join Field" },
-            { name: "Aggregation", label: "Aggregation" },
+            { name: "Action", label: __("Action on row") },
+            { name: "ViewLink", label: __("Link to other view") },
+            { name: "Link", label: __("Link to anywhere") },
+            ...(parent_field_list.length > 0
+              ? [{ name: "JoinField", label: __("Join Field") }]
+              : []),
+            ...(child_field_list.length > 0
+              ? [{ name: "Aggregation", label: __("Aggregation") }]
+              : []),
           ],
         },
       },
       {
         name: "field_name",
         class: "field_name",
-        label: "Field",
+        label: __("Field"),
         type: "String",
         required: true,
         attributes: {
@@ -125,7 +167,7 @@ const field_picker_fields = contract(
       },
       {
         name: "fieldview",
-        label: "Field view",
+        label: __("Field view"),
         type: "String",
         required: false,
         attributes: {
@@ -135,7 +177,7 @@ const field_picker_fields = contract(
       },
       {
         name: "action_name",
-        label: "Action",
+        label: __("Action"),
         type: "String",
         required: true,
         attributes: {
@@ -144,8 +186,14 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "Action" },
       },
       {
+        name: "action_label",
+        label: __("Action Label"),
+        type: "String",
+        showIf: { ".coltype": "Action" },
+      },
+      {
         name: "view",
-        label: "View",
+        label: __("View"),
         type: "String",
         required: true,
         attributes: {
@@ -155,15 +203,64 @@ const field_picker_fields = contract(
       },
       {
         name: "view_label",
-        label: "View label",
-        sublabel: "Leave blank for default label.",
+        label: __("View label"),
+        sublabel: __("Leave blank for default label."),
         type: "String",
         required: false,
         showIf: { ".coltype": "ViewLink" },
       },
       {
+        name: "view_label_formula",
+        label: __("View label is a formula?"),
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
+        name: "in_modal",
+        label: __("Open in popup modal?"),
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
+        name: "link_text",
+        label: __("Link text"),
+        type: "String",
+        required: true,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_text_formula",
+        label: __("Link text is a formula?"),
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_url",
+        label: __("Link URL"),
+        type: "String",
+        required: true,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_url_formula",
+        label: __("Link URL is a formula?"),
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
+      },
+      {
+        name: "link_target_blank",
+        label: __("Open in new tab"),
+        type: "Bool",
+        required: false,
+        showIf: { ".coltype": "Link" },
+      },
+      {
         name: "join_field",
-        label: "Join Field",
+        label: __("Join Field"),
         type: "String",
         required: true,
         attributes: {
@@ -173,7 +270,7 @@ const field_picker_fields = contract(
       },
       {
         name: "agg_relation",
-        label: "Relation",
+        label: __("Relation"),
         type: "String",
         class: "agg_relation",
         required: true,
@@ -185,7 +282,7 @@ const field_picker_fields = contract(
       ...agg_field_opts,
       {
         name: "stat",
-        label: "Statistic",
+        label: __("Statistic"),
         type: "String",
         required: true,
         attributes: {
@@ -195,9 +292,14 @@ const field_picker_fields = contract(
       },
       {
         name: "state_field",
-        label: "In search form",
+        label: __("In search form"),
         type: "Bool",
         showIf: { ".coltype": "Field" },
+      },
+      {
+        name: "header_label",
+        label: __("Header label"),
+        type: "String",
       },
     ];
   }
@@ -275,7 +377,8 @@ const picked_fields_to_query = contract(
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         const [refNm, targetNm] = column.join_field.split(".");
-        joinFields[targetNm] = { ref: refNm, target: targetNm };
+        //joinFields[targetNm] = { ref: refNm, target: targetNm };
+        joinFields[`${refNm}_${targetNm}`] = { ref: refNm, target: targetNm };
       }
       if (column.type === "ViewLink") {
         const [vtype, vrest] = column.view.split(":");
@@ -348,7 +451,9 @@ const initial_config_all_fields = contract(
   (isEdit) => async ({ table_id }) => {
     const table = await Table.findOne({ id: table_id });
 
-    const fields = await table.getFields();
+    const fields = (await table.getFields()).filter(
+      (f) => !isEdit || !f.calculated
+    );
     var cfg = { columns: [] };
     var aboves = [null];
     fields.forEach((f) => {
@@ -406,6 +511,7 @@ const initial_config_all_fields = contract(
           field_name: f.name,
           type: "Field",
           fieldview: fvNm,
+          state_field: true,
         });
         aboves.push({
           widths: [2, 10],
@@ -446,7 +552,10 @@ const readState = (state, fields) => {
     if (typeof current !== "undefined") {
       if (f.type.read) state[f.name] = f.type.read(current);
       else if (f.type === "Key" || f.type === "File")
-        state[f.name] = current === "null" || current === "" ? null : +current;
+        state[f.name] =
+          current === "null" || current === "" || current === null
+            ? null
+            : +current;
     }
   });
   return state;
@@ -463,4 +572,6 @@ module.exports = {
   get_link_view_opts,
   is_column,
   readState,
+  stateToQueryString,
+  link_view,
 };

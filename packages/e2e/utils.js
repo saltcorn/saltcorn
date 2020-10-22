@@ -23,6 +23,9 @@ class Browser {
       theTempValue = err.toString();
       throw new Error("Error: " + theTempValue);
     });
+    b.page.on("dialog", async (dialog) => {
+      await dialog.accept();
+    });
     return b;
   }
 
@@ -101,7 +104,7 @@ class Browser {
     this.tenant = nm;
     await this.goto("/");
     await page.type("#inputemail", "tomtheuser@foo.bar");
-    await page.type("#inputpassword", "secret");
+    await page.type("#inputpassword", "seGIOpilo67t");
     await this.clickNav("button[type=submit]");
     await page.waitForSelector('a[href="/table/new"]');
   }

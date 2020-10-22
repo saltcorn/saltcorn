@@ -2,11 +2,13 @@ const db = require("../db");
 const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
+const dumbPasswords = require("dumb-passwords");
 
 class User {
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
+    this.language = o.language;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry =
@@ -34,6 +36,12 @@ class User {
   }
   static async create(uo) {
     const u = new User(uo);
+    if (User.unacceptable_password_reason(u.password))
+      return {
+        error:
+          "Password not accepted: " +
+          User.unacceptable_password_reason(u.password),
+      };
     const hashpw = await User.hashPassword(u.password);
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
@@ -70,16 +78,30 @@ class User {
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
+  async set_language(language) {
+    await db.update("users", { language }, this.id);
+  }
+
   async getNewResetToken() {
-    const reset_password_token = uuidv4();
+    const reset_password_token_uuid = uuidv4();
     const reset_password_expiry = new Date();
     reset_password_expiry.setDate(new Date().getDate() + 1);
+    const reset_password_token = await bcrypt.hash(
+      reset_password_token_uuid,
+      5
+    );
     await db.update(
       "users",
       { reset_password_token, reset_password_expiry },
       this.id
     );
-    return reset_password_token;
+    return reset_password_token_uuid;
+  }
+
+  static unacceptable_password_reason(pw) {
+    if (typeof pw !== "string") return "Not a string";
+    if (pw.length < 8) return "Too short";
+    if (dumbPasswords.check(pw)) return "Too common";
   }
 
   static async resetPasswordWithToken({
@@ -92,10 +114,22 @@ class User {
       reset_password_token.length < 10
     )
       return { error: "Invalid token" };
-    const u = await User.findOne({ reset_password_token, email });
+    const u = await User.findOne({ email });
     if (u && new Date() < u.reset_password_expiry) {
-      await u.changePasswordTo(password, true);
-      return { success: true };
+      const match = bcrypt.compareSync(
+        reset_password_token,
+        u.reset_password_token
+      );
+      if (match) {
+        if (User.unacceptable_password_reason(password))
+          return {
+            error:
+              "Password not accepted: " +
+              User.unacceptable_password_reason(password),
+          };
+        await u.changePasswordTo(password, true);
+        return { success: true };
+      } else return { error: "User not found or expired token" };
     } else {
       return { error: "User not found or expired token" };
     }
@@ -112,6 +146,7 @@ User.contract = {
     id: is.maybe(is.posint),
     email: is.str,
     password: is.str,
+    language: is.maybe(is.str),
     role_id: is.posint,
     reset_password_token: is.maybe(
       is.and(

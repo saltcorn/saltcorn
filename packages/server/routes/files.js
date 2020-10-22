@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const { getState } = require("@saltcorn/data/db/state");
 
 const {
   mkTable,
@@ -81,7 +82,7 @@ router.get(
           {
             label: req.__("Delete"),
             key: (r) =>
-              post_delete_btn(`/files/delete/${r.id}`, req.csrfToken()),
+              post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
           },
         ],
         rows
@@ -175,6 +176,7 @@ router.post(
     } else {
       const f = await File.from_req_files(req.files.file, req.user.id);
       req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
+      if (f.filename === "favicon.png") await getState().refresh();
     }
 
     res.redirect("/files");
@@ -192,6 +194,7 @@ router.post(
     if (result && result.error) {
       req.flash("error", result.error);
     } else {
+      if (f.filename === "favicon.png") await getState().refresh();
       req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files`);

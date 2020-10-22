@@ -16,6 +16,8 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
+import { DropDownFilter } from "./elements/DropDownFilter";
+import { ToggleFilter } from "./elements/ToggleFilter";
 
 const getColWidths = (segment) => {
   if (!segment.widths)
@@ -60,6 +62,7 @@ export const layoutToNodes = (layout, query, actions) => {
           url={segment.url}
           text={segment.text}
           block={segment.block || false}
+          isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
         />
       );
@@ -84,6 +87,24 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+        />
+      );
+    } else if (segment.type === "dropdown_filter") {
+      return (
+        <DropDownFilter
+          key={ix}
+          name={segment.field_name}
+          block={segment.block || false}
+        />
+      );
+    } else if (segment.type === "toggle_filter") {
+      return (
+        <ToggleFilter
+          key={ix}
+          name={segment.field_name}
+          value={segment.value}
+          label={segment.label}
+          block={segment.block || false}
         />
       );
     } else if (segment.type === "join_field") {
@@ -113,6 +134,7 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.view}
           label={segment.view_label}
           block={segment.block || false}
+          inModal={segment.in_modal || false}
           minRole={segment.minRole || 10}
         />
       );
@@ -276,6 +298,7 @@ export const craftToSaltcorn = (nodes) => {
         text: node.props.text,
         url: node.props.url,
         block: node.props.block,
+        isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
       };
     }
@@ -300,6 +323,31 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
+      };
+    }
+    if (node.displayName === DropDownFilter.craft.displayName) {
+      columns.push({
+        type: "DropDownFilter",
+        field_name: node.props.name,
+      });
+      return {
+        type: "dropdown_filter",
+        block: node.props.block,
+        field_name: node.props.name,
+      };
+    }
+    if (node.displayName === ToggleFilter.craft.displayName) {
+      columns.push({
+        type: "ToggleFilter",
+        field_name: node.props.name,
+        value: node.props.value,
+      });
+      return {
+        type: "toggle_filter",
+        block: node.props.block,
+        field_name: node.props.name,
+        value: node.props.value,
+        label: node.props.label,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {
@@ -334,11 +382,13 @@ export const craftToSaltcorn = (nodes) => {
       columns.push({
         type: "ViewLink",
         view: node.props.name,
+        in_modal: node.props.inModal,
         minRole: node.props.minRole,
       });
       return {
         type: "view_link",
         block: node.props.block,
+        in_modal: node.props.inModal,
         view_label: node.props.label,
         view: node.props.name,
         minRole: node.props.minRole,

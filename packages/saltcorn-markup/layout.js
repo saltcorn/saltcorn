@@ -96,10 +96,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           segment.title &&
             div(
               { class: "card-header" },
-              h6(
-                { class: "m-0 font-weight-bold text-primary" },
-                text(segment.title)
-              )
+              h6({ class: "m-0 font-weight-bold text-primary" }, segment.title)
             ),
           div({ class: "card-body" }, go(segment.contents)),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))

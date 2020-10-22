@@ -1,8 +1,8 @@
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
-const { div, text } = require("@saltcorn/markup/tags");
-const { renderForm } = require("@saltcorn/markup");
+const { div, text, i, a } = require("@saltcorn/markup/tags");
+const { renderForm, link } = require("@saltcorn/markup");
 const { setTenant, error_catcher } = require("../routes/utils.js");
 
 const router = new Router();
@@ -26,12 +26,31 @@ router.get(
     } else {
       const state = view.combine_state_and_default_state(req.query);
       const resp = await view.run(state, { res, req });
-      const state_form = await view.get_state_form(state);
-
-      res.sendWrap(
-        `${view.name} view`,
-        div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
+      const state_form = await view.get_state_form(state, req);
+      const rendered = div(
+        state_form ? renderForm(state_form, req.csrfToken()) : "",
+        resp
       );
+      const showThis =
+        role === 1 && !req.xhr
+          ? {
+              type: "card",
+              title: [
+                view.name,
+
+                a(
+                  {
+                    class: "ml-4",
+                    href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+                  },
+                  req.__("Edit") + "&nbsp;",
+                  i({ class: "fas fa-edit" })
+                ),
+              ],
+              contents: rendered,
+            }
+          : rendered;
+      res.sendWrap(view.name, showThis);
     }
   })
 );

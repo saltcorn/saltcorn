@@ -50,6 +50,16 @@ const configuration_workflow = () =>
 
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
+  functions: {
+    add3: { run: (x) => x + 3 },
+    add5: (x) => x + 5,
+    asyncAdd2: {
+      run: async (x) => {
+        return x + 2;
+      },
+      isAsync: true,
+    },
+  },
   viewtemplates: [
     {
       name: "ViewWithRoutes",
@@ -72,8 +82,8 @@ const plugin_with_routes = {
   ],
 };
 const mockReqRes = {
-  req: { csrfToken: () => "" },
-  res: { redirect() {}, json() {}, send() {} },
+  req: { csrfToken: () => "", getLocale: () => "en", __: (s) => s },
+  res: { redirect() {}, json() {}, send() {}, __: (s) => s },
 };
 
 module.exports = {

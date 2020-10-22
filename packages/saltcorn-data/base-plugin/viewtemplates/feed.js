@@ -4,16 +4,17 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr } = require("@saltcorn/markup/tags");
+const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const { stateToQueryString } = require("./viewable_fields");
+const {} = require("./viewable_fields");
 const pluralize = require("pluralize");
-const configuration_workflow = () =>
+const { link_view, stateToQueryString } = require("../../plugin-helper");
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Views",
+        name: req.__("Views"),
         form: async (context) => {
           const show_views = await View.find_table_views_where(
             context.table_id,
@@ -34,7 +35,7 @@ const configuration_workflow = () =>
             fields: [
               {
                 name: "show_view",
-                label: "Item View",
+                label: req.__("Item View"),
                 type: "String",
                 required: true,
                 attributes: {
@@ -43,9 +44,10 @@ const configuration_workflow = () =>
               },
               {
                 name: "view_to_create",
-                label: "Use view to create",
-                sublabel:
-                  "If user has write permission.  Leave blank to have no link to create a new item",
+                label: req.__("Use view to create"),
+                sublabel: req.__(
+                  "If user has write permission.  Leave blank to have no link to create a new item"
+                ),
                 type: "String",
                 attributes: {
                   options: create_view_opts.join(),
@@ -53,11 +55,11 @@ const configuration_workflow = () =>
               },
               {
                 name: "create_view_display",
-                label: "Display create view as",
+                label: req.__("Display create view as"),
                 type: "String",
                 required: true,
                 attributes: {
-                  options: "Link,Embedded",
+                  options: "Link,Embedded,Popup",
                 },
               },
             ],
@@ -65,7 +67,7 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Order and layout",
+        name: req.__("Order and layout"),
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
@@ -73,7 +75,7 @@ const configuration_workflow = () =>
             fields: [
               {
                 name: "order_field",
-                label: "Order by",
+                label: req.__("Order by"),
                 type: "String",
                 required: true,
                 attributes: {
@@ -82,13 +84,13 @@ const configuration_workflow = () =>
               },
               {
                 name: "descending",
-                label: "Descending",
+                label: req.__("Descending"),
                 type: "Bool",
                 required: true,
               },
               {
                 name: "cols_sm",
-                label: "Columns small screen",
+                label: req.__("Columns small screen"),
                 type: "Integer",
                 attributes: {
                   min: 1,
@@ -99,7 +101,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "cols_md",
-                label: "Columns medium screen",
+                label: req.__("Columns medium screen"),
                 type: "Integer",
                 attributes: {
                   min: 1,
@@ -110,7 +112,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "cols_lg",
-                label: "Columns large screen",
+                label: req.__("Columns large screen"),
                 type: "Integer",
                 attributes: {
                   min: 1,
@@ -121,7 +123,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "cols_xl",
-                label: "Columns extra-large screen",
+                label: req.__("Columns extra-large screen"),
                 type: "Integer",
                 attributes: {
                   min: 1,
@@ -132,7 +134,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "in_card",
-                label: "Each in card?",
+                label: req.__("Each in card?"),
                 type: "Bool",
                 required: true,
               },
@@ -169,6 +171,8 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
 
   const sview = await View.findOne({ name: show_view });
+  if (!sview)
+    return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     orderBy: order_field,
@@ -183,11 +187,13 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraArgs);
-    } else
-      create_link = link(
+    } else {
+      create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
+        `Add ${pluralize(table.name, 1)}`,
+        create_view_display === "Popup"
       );
+    }
   }
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 

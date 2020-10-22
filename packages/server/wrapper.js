@@ -39,8 +39,9 @@ const get_menu = (req) => {
     ? [
         {
           label: req.__("User"),
+          isUser: true,
           subitems: [
-            { label: small(req.user.email.split("@")[0]) },
+            { label: small((req.user.email || "").split("@")[0]) },
             {
               label: req.__("User Settings"),
               link: "/auth/settings",
@@ -95,6 +96,7 @@ const get_menu = (req) => {
     },
     {
       section: req.__("User"),
+      isUser: true,
       items: authItems,
     },
   ].filter((s) => s);
@@ -192,11 +194,17 @@ module.exports = function (req, res, next) {
     }
   };
   res.sendWrap = function (opts, ...html) {
+    const title = typeof opts === "string" ? opts : opts.title;
+    if (req.xhr) {
+      res.set("Page-Title", title);
+      res.send(html.length === 1 ? html[0] : html.join(""));
+      return;
+    }
+
     const state = getState();
 
     const currentUrl = req.originalUrl.split("?")[0];
 
-    const title = typeof opts === "string" ? opts : opts.title;
     const pageHeaders = typeof opts === "string" ? [] : opts.headers;
     res.send(
       state.layout.wrap({

@@ -49,8 +49,12 @@ const pageFlow = (req) =>
               new Field({
                 label: req.__("Name"),
                 name: "name",
+                required: true,
+                validator(s) {
+                  if (s.length < 1) return req.__("Missing name");
+                },
                 sublabel: req.__("A short name that will be in your URL"),
-                input_type: "text",
+                type: "String",
               }),
               new Field({
                 label: req.__("Title"),
@@ -136,7 +140,10 @@ const getPageList = (rows, roles, req) => {
   return div(
     mkTable(
       [
-        { label: req.__("Name"), key: "name" },
+        {
+          label: req.__("Name"),
+          key: (r) => link(`/page/${r.name}`, r.name),
+        },
         {
           label: req.__("Role to access"),
           key: (row) => {
@@ -144,19 +151,13 @@ const getPageList = (rows, roles, req) => {
             return role ? role.role : "?";
           },
         },
-
-        {
-          label: req.__("Run"),
-          key: (r) => link(`/page/${r.name}`, req.__("Run")),
-        },
         {
           label: req.__("Edit"),
           key: (r) => link(`/pageedit/edit/${r.name}`, req.__("Edit")),
         },
         {
           label: req.__("Delete"),
-          key: (r) =>
-            post_delete_btn(`/pageedit/delete/${r.id}`, req.csrfToken()),
+          key: (r) => post_delete_btn(`/pageedit/delete/${r.id}`, req, r.name),
         },
       ],
       rows
@@ -234,7 +235,7 @@ const respondWorkflow = (page, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        title: wfres.title,
         contents,
       },
     ],
@@ -264,7 +265,7 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
-      const wfres = await pageFlow(req).run(page);
+      const wfres = await pageFlow(req).run(page, req);
       respondWorkflow(page, wfres, req, res);
     }
   })
@@ -275,7 +276,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run({});
+    const wfres = await pageFlow(req).run({}, req);
     respondWorkflow(null, wfres, req, res);
   })
 );
@@ -285,7 +286,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run(req.body);
+    const wfres = await pageFlow(req).run(req.body, req);
     const page =
       wfres.context && (await Page.findOne({ name: wfres.context.name }));
 

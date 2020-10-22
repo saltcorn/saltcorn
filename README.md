@@ -31,12 +31,16 @@ For a recent version (v14) of Node.js:
 
 ```
 wget -qO - https://deb.nodesource.com/setup_14.x | sudo -E bash -
-sudo apt-get install -y nodejs libpq-dev
+sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
 ### Install saltcorn
 
 `npm install -g @saltcorn/cli`
+
+If this fails, you may need to tell npm to disregard file permissions during compilation:
+
+`npm install -g @saltcorn/cli --unsafe`
 
 ### Setup (automated)
 

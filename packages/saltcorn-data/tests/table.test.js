@@ -6,12 +6,14 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file } = require("./mocks");
+const { mockReqRes } = require("./mocks");
 
 afterAll(db.close);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(30000);
 
 describe("TableIO", () => {
   it("should store attributes", async () => {
@@ -378,6 +380,9 @@ Pencil, 0.5,2, t`;
     const table = await Table.findOne({ name: "Invoice3" });
     const rows = await table.getRows();
     expect(rows.length).toBe(2);
+    await table.insertRow({ cost: 0.2, count: 1, vatable: true });
+    const rows3 = await table.getRows();
+    expect(rows3.length).toBe(3);
   });
   it("should fail on repeat id", async () => {
     const csv = `id,cost,count, vatable
@@ -389,6 +394,25 @@ Pencil, 0.5,2, t`;
     expect(res.error).toContain("Invoice4");
     const table = await Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
+  });
+  it("should import with missing", async () => {
+    const csv = `item,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,, t`;
+    const fnm = "/tmp/test2.csv";
+    await fs.writeFile(fnm, csv);
+    const { table, error } = await Table.create_from_csv("InvoiceMissing", fnm);
+    expect(error).toBe(undefined);
+    expect(!!table).toBe(true);
+    const fields = await table.getFields();
+    const countField = fields.find((f) => f.name === "count");
+    expect(countField.type.name).toBe("Integer");
+    expect(countField.required).toBe(false);
+    const rows = await table.getRows({ item: "Pencil" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].count).toBe(null);
+    const brows = await table.getRows({ item: "Book" });
+    expect(brows[0].count).toBe(4);
   });
 });
 
@@ -571,5 +595,89 @@ describe("Table with date", () => {
     var dif = new Date(rows[0].time).getTime() - new Date().getTime();
 
     expect(Math.abs(dif)).toBeLessThanOrEqual(1000);
+  });
+});
+describe("Tables with name clashes", () => {
+  it("should create tables", async () => {
+    //db.set_sql_logging()
+    const cars = await Table.create("TableClashCar");
+    const persons = await Table.create("TableClashPerson");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: cars,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: cars,
+      name: "owner",
+      type: "Key to TableClashPerson",
+    });
+    const sally = await persons.insertRow({ name: "Sally" });
+    await cars.insertRow({ name: "Mustang", owner: sally });
+  });
+  it("should query", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+
+    const rows = await cars.getJoinedRows({
+      joinFields: {
+        owner_name: { ref: "owner", target: "name" },
+      },
+    });
+    expect(rows[0]).toEqual({
+      id: 1,
+      name: "Mustang",
+      owner: 1,
+      owner_name: "Sally",
+    });
+  });
+
+  it("should show list view", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+    const v = await View.create({
+      table_id: cars.id,
+      name: "patientlist",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name" },
+          { type: "JoinField", join_field: "owner.name" },
+        ],
+      },
+      min_role: 10,
+      on_root_page: true,
+    });
+    const res = await v.run({}, mockReqRes);
+    expect(res).toContain("Mustang");
+    expect(res).toContain("Sally");
+  });
+  it("should show show view", async () => {
+    const cars = await Table.findOne({ name: "TableClashCar" });
+    const v = await View.create({
+      table_id: cars.id,
+      name: "patientlist",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name" },
+          { type: "JoinField", join_field: "owner.name" },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            { type: "join_field", join_field: "owner.name" },
+          ],
+        },
+      },
+      min_role: 10,
+      on_root_page: true,
+    });
+    const res = await v.run({ id: 1 }, mockReqRes);
+    expect(res).toContain("Mustang");
+    expect(res).toContain("Sally");
   });
 });

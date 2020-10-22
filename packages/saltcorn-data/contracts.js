@@ -120,16 +120,13 @@ const is_plugin_type = is.obj({
   sql_name: is.str,
   contract: is.maybe(is.fun(is.obj(), is.contract)),
   fieldviews: is.objVals(
-    is.obj(
-      {
-        isEdit: is.bool,
-        run: is.or(
-          is.fun(is.any, is.str),
-          is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
-        ),
-      },
-      (o) => (o.isEdit && o.run.length >= 2) || (!o.isEdit && o.run.length == 1)
-    )
+    is.obj({
+      isEdit: is.bool,
+      run: is.or(
+        is.fun(is.any, is.str),
+        is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
+      ),
+    })
   ),
   attributes: is.maybe(is.array(is_attribute)),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
@@ -162,7 +159,10 @@ const is_viewtemplate = is.obj({
   name: is.str,
   get_state_fields: is.fun([is.posint, is.str, is.any], is.promise(fieldlike)),
   display_state_form: is.maybe(is.or(is.bool, is.fun(is.any, is.bool))),
-  configuration_workflow: is.fun([], is.class("Workflow")),
+  configuration_workflow: is.fun(
+    is.obj({ __: is.fun(is.str, is.str) }),
+    is.class("Workflow")
+  ),
   view_quantity: is.maybe(is.one_of("Many", "ZeroOrOne", "One")),
   initial_config: is.maybe(
     is.fun(is.obj({ table_id: is.posint }), is.promise(is.obj()))
@@ -172,12 +172,21 @@ const is_viewtemplate = is.obj({
     is.promise(is.str)
   ),
 });
+const is_plugin_function = is.obj({
+  run: is.fun(is.any, is.any),
+  returns: is.maybe(is.str),
+  arguments: is.maybe(is.array(is.str)),
+  isAsync: is.maybe(is.bool),
+});
 
 const is_maybe_cfg_fun = (a) => is.or(is.fun(is.obj, a), a, is.undefined);
 
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
+  functions: is_maybe_cfg_fun(
+    is.objVals(is.or(is_plugin_function, is.fun(is.any, is.any)))
+  ),
   layout: is_maybe_cfg_fun(is_plugin_layout),
   types: is_maybe_cfg_fun(is.array(is_plugin_type)),
   pages: is_maybe_cfg_fun(
@@ -215,7 +224,14 @@ const is_pack = is.obj({
   plugins: is.array(is.obj({ name: is.str, source: is.str, location: is.str })),
 });
 const is_column = is.obj({
-  type: is.one_of(["Action", "ViewLink", "JoinField", "Aggregation", "Field"]),
+  type: is.one_of([
+    "Action",
+    "ViewLink",
+    "Link",
+    "JoinField",
+    "Aggregation",
+    "Field",
+  ]),
 });
 module.exports = {
   is_table_query,

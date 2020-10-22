@@ -84,7 +84,7 @@ class Page {
         segment.contents = await view.run(mystate, extraArgs);
       } else {
         const state = this.fixed_states[segment.name];
-        const mystate = view.combine_state_and_default_state(state);
+        const mystate = view.combine_state_and_default_state(state || {});
         segment.contents = await view.run(mystate, extraArgs);
       }
     });

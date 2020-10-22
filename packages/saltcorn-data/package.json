@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.2.1-beta.0",
+  "version": "0.2.3-beta.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -9,15 +9,19 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/markup": "^0.2.0",
+    "@saltcorn/markup": "^0.2.3-beta.0",
+    "acorn": "^8.0.3",
     "adm-zip": "^0.4.16",
+    "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^6.1.0",
-    "contractis": "^0.0.14",
+    "contractis": "^0.0.15-alpha.0",
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
+    "dumb-passwords": "^0.2.1",
     "env-paths": "^2.2.0",
+    "estraverse": "^5.2.0",
     "moment": "^2.27.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.2.1",
@@ -28,7 +32,7 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "chaos-guinea-pig": "^0.0.16",
+    "chaos-guinea-pig": "^0.0.17-alpha.0",
     "jest": "^25.1.0"
   },
   "jest": {

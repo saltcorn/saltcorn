@@ -15,9 +15,16 @@ const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
-    .map(
-      ([target, value]) =>
-        `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+    .map(([target, value]) =>
+      typeof value === "boolean"
+        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
+            value
+          )}`
+        : Array.isArray(value)
+        ? `[${value
+            .map((v) => `'${v}'`)
+            .join()}].includes(e.closest('.form-namespace').find('${target}').val())`
+        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
     )
     .join(" && ");
 
@@ -153,8 +160,12 @@ const mkFormRow = (v, errors, formStyle, labelCols) => (hdr) =>
 
 const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   const adder = a(
-    { href: `javascript:add_repeater('${hdr.form_name}')` },
-    "Add"
+    {
+      class: "btn btn-sm btn-outline-primary",
+      href: `javascript:add_repeater('${hdr.form_name}')`,
+      title: "Add",
+    },
+    i({ class: "fas fa-plus" })
   );
   const icons = div(
     { class: "float-right" },
@@ -251,12 +262,20 @@ const renderFormLayout = (form) => {
   const blockDispatch = {
     field(segment) {
       const field = form.fields.find((f) => f.name === segment.field_name);
-      if (field && field.input_type !== "hidden")
-        return innerField(form.values, form.errors)(field);
-      else return "";
+      if (field && field.input_type !== "hidden") {
+        const errorFeedback = form.errors[field.name]
+          ? `<div class="invalid-feedback">${text(
+              form.errors[field.name]
+            )}</div>`
+          : "";
+        return innerField(form.values, form.errors)(field) + errorFeedback;
+      } else return "";
     },
     action({ action_name }) {
-      return `<button type="submit" class="btn btn-primary">${text(
+      const submitAttr = form.xhrSubmit
+        ? 'onClick="ajaxSubmitForm(this)" type="button"'
+        : 'type="submit"';
+      return `<button ${submitAttr} class="btn btn-primary">${text(
         form.submitLabel || "Save"
       )}</button>`;
     },
@@ -285,7 +304,8 @@ const renderForm = (form, csrfToken) => {
           "aria-haspopup": "true",
           "aria-expanded": "false",
         },
-        collapsedSummary || "Search filter"
+        collapsedSummary ||
+          (form.__ ? form.__("Search filter") : "Search filter")
       ),
 
       div(
@@ -305,13 +325,31 @@ const mkFormWithLayout = (form, csrfToken) => {
   }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
   const hiddens = form.fields
     .filter((f) => f.input_type === "hidden")
     .map((f) => innerField(form.values, form.errors)(f))
     .join("");
+  const fullFormError = form.errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${form.errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   return (
-    blurbp + top + csrfField + hiddens + renderFormLayout(form) + "</form>"
+    blurbp +
+    top +
+    csrfField +
+    hiddens +
+    renderFormLayout(form) +
+    fullFormError +
+    "</form>"
   );
 };
 
@@ -337,7 +375,19 @@ const mkForm = (form, csrfToken, errors = {}) => {
       )
     )
     .join("");
-  const blurbp = form.blurb ? p(text(form.blurb)) : "";
+  const blurbp = form.blurb
+    ? Array.isArray(form.blurb)
+      ? form.blurb.join("")
+      : p(text(form.blurb))
+    : "";
+  const fullFormError = errors._form
+    ? `<div class="form-group row">
+  <div class="col-sm-12">
+  <p class="text-danger">${errors._form}
+  </p>
+  </div>
+  </div>`
+    : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
     <button type="submit" class="btn ${
@@ -350,6 +400,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
     top +
     csrfField +
     flds +
+    fullFormError +
     (form.noSubmitButton ? "" : bot) +
     "</form>"
   );

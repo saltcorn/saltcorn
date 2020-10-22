@@ -38,6 +38,8 @@ class State {
     this.plugin_cfgs = {};
     this.layout = { wrap: emergency_layout };
     this.headers = [];
+    this.function_context = {};
+    this.functions = {};
     contract.class(this);
   }
 
@@ -46,6 +48,7 @@ class State {
     this.configs = await getAllConfigOrDefaults();
     const favicons = await File.find({ filename: "favicon.png" });
     if (favicons && favicons.length > 0) this.favicon = favicons[0];
+    else this.favicon = null;
   }
 
   getConfig(key, def) {
@@ -83,6 +86,10 @@ class State {
     });
     Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
       this.pages[k] = v;
+    });
+    Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
+      this.functions[k] = v;
+      this.function_context[k] = typeof v === "function" ? v : v.run;
     });
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
@@ -126,9 +133,12 @@ class State {
     this.favicon = null;
     this.layout = { wrap: emergency_layout };
     this.headers = [];
+    this.function_context = {};
+    this.functions = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
+    this.refresh();
   }
 }
 

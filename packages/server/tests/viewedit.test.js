@@ -86,7 +86,7 @@ describe("viewedit new List", () => {
       .send("field_name_1=pages")
       .send("create_view_display=Link")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit"));
+      .expect(toInclude("Default state"));
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -168,7 +168,7 @@ describe("viewedit new List with one field", () => {
       .send("field_name_0=author")
       .send("create_view_display=Link")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/viewedit"));
+      .expect(toInclude("Default state"));
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();

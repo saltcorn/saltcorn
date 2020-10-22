@@ -102,6 +102,21 @@ const configTypes = {
   },
 };
 
+const available_languages = {
+  en: "English",
+  fr: "français",
+  de: "Deutsch",
+  da: "dansk",
+  es: "Español",
+  no: "Norsk",
+  sv: "Svenska",
+  ru: "русский",
+  nl: "Nederlands",
+  pt: "Português",
+  ar: "العربية",
+  it: "Italiano",
+};
+
 const getConfig = contract(
   is.fun([is.str, is.maybe(is.any)], is.promise(is.any)),
   async (key, def) => {
@@ -212,4 +227,5 @@ module.exports = {
   deleteConfig,
   configTypes,
   remove_from_menu,
+  available_languages,
 };

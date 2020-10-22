@@ -11,6 +11,7 @@ const manager = new PluginManager({
     "@saltcorn/markup/layout": require("@saltcorn/markup/layout"),
     "@saltcorn/markup/layout_utils": require("@saltcorn/markup/layout_utils"),
     "@saltcorn/data/db": require("@saltcorn/data/db"),
+    "@saltcorn/data/utils": require("@saltcorn/data/utils"),
     "@saltcorn/data/db/state": require("@saltcorn/data/db/state"),
     "@saltcorn/data/plugin-helper": require("@saltcorn/data/plugin-helper"),
     "@saltcorn/data/plugin-testing": require("@saltcorn/data/plugin-testing"),
@@ -21,6 +22,9 @@ const manager = new PluginManager({
     "@saltcorn/data/models/view": require("@saltcorn/data/models/view"),
     "@saltcorn/data/models/page": require("@saltcorn/data/models/page"),
     "@saltcorn/data/models/file": require("@saltcorn/data/models/file"),
+    "@saltcorn/data/models/user": require("@saltcorn/data/models/user"),
+    "@saltcorn/data/models/layout": require("@saltcorn/data/models/layout"),
+    "@saltcorn/data/models/expression": require("@saltcorn/data/models/expression"),
     "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
   },
 });

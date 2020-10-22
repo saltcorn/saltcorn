@@ -42,8 +42,9 @@ const input = (kvs) => {
   return `<input ${attribs}>`;
 };
 
+//https://stackoverflow.com/a/59220393
 const domReady = (js) =>
-  `document.addEventListener('DOMContentLoaded',function(){${js}},false);`;
+  `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',f,false)})(function(){${js}});`;
 
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));

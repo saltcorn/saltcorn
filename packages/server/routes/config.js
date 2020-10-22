@@ -60,10 +60,10 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
       : JSON.stringify(cfgs[key].value);
   const showkey = (key) =>
     tr(
-      td(cfgs[key].label || key),
+      td(req.__(cfgs[key].label || key)),
       td(showValue(key)),
       td(canEdit(key) ? link(`/config/edit/${key}`, req.__("Edit")) : ""),
-      td(post_delete_btn(`/config/delete/${key}`, req.csrfToken()))
+      td(post_delete_btn(`/config/delete/${key}`, req))
     );
   return (
     tr(th({ colspan: 4, class: "pt-4" }, name)) + keys.map(showkey).join("")
@@ -129,16 +129,17 @@ router.get(
   })
 );
 
-const formForKey = async (key, value) => {
+const formForKey = async (req, key, value) => {
   const form = new Form({
     action: `/config/edit/${key}`,
-    blurb: configTypes[key].blurb,
+    blurb: req.__(configTypes[key].blurb),
+    submitLabel: req.__("Save"),
     fields: [
       {
         name: key,
-        label: configTypes[key].label || key,
+        label: req.__(configTypes[key].label || key),
         type: configTypes[key].type,
-        sublabel: configTypes[key].sublabel,
+        sublabel: req.__(configTypes[key].sublabel),
         attributes: configTypes[key].attributes,
       },
     ],
@@ -155,7 +156,7 @@ router.get(
     const { key } = req.params;
 
     const value = await getConfig(key);
-    const form = await formForKey(key, value);
+    const form = await formForKey(req, key, value);
     res.sendWrap(
       req.__(`Edit configuration key %s`, key),
       wrap(
@@ -177,7 +178,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { key } = req.params;
 
-    const form = await formForKey(key);
+    const form = await formForKey(req, key);
     const valres = form.validate(req.body);
     if (valres.errors)
       res.sendWrap(

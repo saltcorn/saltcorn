@@ -7,8 +7,10 @@ const {
   div,
   h3,
   a,
+  i,
   button,
   textarea,
+  span,
   text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
@@ -30,6 +32,8 @@ const string = {
   sql_name: "text",
   attributes: [
     //{ name: "match", type: "String", required: false },
+    { name: "max_length", type: "Integer", required: false },
+    { name: "min_length", type: "Integer", required: false },
     {
       name: "options",
       type: "String",
@@ -112,7 +116,14 @@ const string = {
         return undefined;
     }
   },
-  validate: () => (x) => true,
+  validate: ({ min_length, max_length }) => (x) => {
+    if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
+    if (isdef(min_length) && x.length < min_length)
+      return { error: `Must be at least ${min_length} characters` };
+    if (isdef(max_length) && x.length > max_length)
+      return { error: `Must be at most ${max_length} characters` };
+    return true;
+  },
 };
 
 const int = {
@@ -141,6 +152,8 @@ const int = {
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false },
   ],
+  validate_attributes: ({ min, max }) =>
+    !isdef(min) || !isdef(max) || max > min,
   read: (v) => {
     switch (typeof v) {
       case "number":
@@ -248,6 +261,15 @@ const float = {
     return true;
   },
 };
+const locale = (req) => {
+  //console.log(req && req.getLocale ? req.getLocale() : undefined);
+  return req && req.getLocale ? req.getLocale() : undefined;
+};
+
+const logit = (x) => {
+  console.log(x);
+  return x;
+};
 
 const date = {
   name: "Date",
@@ -257,16 +279,35 @@ const date = {
   fieldviews: {
     show: {
       isEdit: false,
-      run: (d) =>
+      run: (d, req) =>
         text(
           typeof d === "string"
             ? text(d)
-            : d && d.toISOString
-            ? d.toISOString()
+            : d && d.toLocaleString
+            ? d.toLocaleString(locale(req))
             : ""
         ),
     },
-    relative: { isEdit: false, run: (d) => text(moment(d).fromNow()) },
+    showDay: {
+      isEdit: false,
+      run: (d, req) =>
+        text(
+          typeof d === "string"
+            ? text(d)
+            : d && d.toLocaleDateString
+            ? d.toLocaleDateString(locale(req))
+            : ""
+        ),
+    },
+    relative: {
+      isEdit: false,
+      run: (d, req) => {
+        if (!d) return "";
+        const loc = locale(req);
+        if (loc) return text(moment(d).locale(loc).fromNow());
+        else return text(moment(d).fromNow());
+      },
+    },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls) =>
@@ -277,7 +318,25 @@ const date = {
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
-            value: text_attr(typeof v === "string" ? v : v.toISOString()),
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleString(attrs.locale)
+            ),
+          }),
+        }),
+    },
+    editDay: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "text",
+          class: ["form-control", cls],
+          name: text_attr(nm),
+          disabled: attrs.disabled,
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && {
+            value: text_attr(
+              typeof v === "string" ? v : v.toLocaleDateString(attrs.locale)
+            ),
           }),
         }),
     },
@@ -285,10 +344,13 @@ const date = {
   presets: {
     Now: () => new Date(),
   },
-  read: (v) => {
+  read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
-
     if (typeof v === "string") {
+      if (attrs && attrs.locale) {
+        const d = moment(v, "L LT", attrs.locale).toDate();
+        if (d instanceof Date && !isNaN(d)) return d;
+      }
       const d = new Date(v);
       if (d instanceof Date && !isNaN(d)) return d;
       else return null;
@@ -303,6 +365,28 @@ const bool = {
   contract: () => is.bool,
   fieldviews: {
     show: {
+      isEdit: false,
+      run: (v) =>
+        v === true
+          ? i({
+              class: "fas fa-lg fa-check-circle text-success",
+            })
+          : v === false
+          ? i({
+              class: "fas fa-lg fa-times-circle text-danger",
+            })
+          : "",
+    },
+    checkboxes: {
+      isEdit: false,
+      run: (v) =>
+        v === true
+          ? input({ disabled: true, type: "checkbox", checked: true })
+          : v === false
+          ? input({ type: "checkbox", disabled: true })
+          : "",
+    },
+    TrueFalse: {
       isEdit: false,
       run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },

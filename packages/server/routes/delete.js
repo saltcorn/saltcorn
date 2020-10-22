@@ -16,13 +16,17 @@ router.post(
     const { redirect } = req.query;
     const table = await Table.findOne({ name });
     const role = req.isAuthenticated() ? req.user.role_id : 10;
-
-    if (role <= table.min_role_write) await table.deleteRows({ id });
-    else
-      req.flash(
-        "error",
-        req.__("Not allowed to write to table %s", table.name)
-      );
-    res.redirect(redirect || `/list/${table.name}`);
+    try {
+      if (role <= table.min_role_write) await table.deleteRows({ id });
+      else
+        req.flash(
+          "error",
+          req.__("Not allowed to write to table %s", table.name)
+        );
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    if (req.xhr) res.send("OK");
+    else res.redirect(redirect || `/list/${table.name}`);
   })
 );

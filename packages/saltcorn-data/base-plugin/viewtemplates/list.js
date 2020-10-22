@@ -5,7 +5,7 @@ const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
-const { text, script } = require("@saltcorn/markup/tags");
+const { text, script, button } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
 const { removeEmptyStrings } = require("../../utils");
 const {
@@ -13,23 +13,23 @@ const {
   picked_fields_to_query,
   stateFieldsToWhere,
   initial_config_all_fields,
-} = require("../../plugin-helper");
-const {
-  get_viewable_fields,
   stateToQueryString,
-} = require("./viewable_fields");
+  link_view,
+} = require("../../plugin-helper");
+const { get_viewable_fields } = require("./viewable_fields");
 
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
-        name: "Columns",
+        name: req.__("Columns"),
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           //console.log(context);
           const field_picker_repeat = await field_picker_fields({
             table,
             viewname: context.viewname,
+            req,
           });
           const create_views = await View.find_table_views_where(
             context.table_id,
@@ -39,7 +39,7 @@ const configuration_workflow = () =>
           );
           const create_view_opts = create_views.map((v) => v.name);
           return new Form({
-            blurb: "Specify the fields in the table to show",
+            blurb: req.__("Specify the fields in the table to show"),
             fields: [
               new FieldRepeat({
                 name: "columns",
@@ -49,9 +49,10 @@ const configuration_workflow = () =>
                 ? [
                     {
                       name: "view_to_create",
-                      label: "Use view to create",
-                      sublabel:
-                        "If user has write permission. Leave blank to have no link to create a new item",
+                      label: req.__("Use view to create"),
+                      sublabel: req.__(
+                        "If user has write permission. Leave blank to have no link to create a new item"
+                      ),
                       type: "String",
                       attributes: {
                         options: create_view_opts.join(),
@@ -59,12 +60,22 @@ const configuration_workflow = () =>
                     },
                     {
                       name: "create_view_display",
-                      label: "Display create view as",
+                      label: req.__("Display create view as"),
                       type: "String",
+                      class: "create_view_display",
                       required: true,
                       attributes: {
-                        options: "Link,Embedded",
+                        options: "Link,Embedded,Popup",
                       },
+                    },
+                    {
+                      name: "create_view_label",
+                      label: req.__("Label for create"),
+                      sublabel: req.__(
+                        "Label in link or button to create. Leave blank for a default label"
+                      ),
+                      type: "String",
+                      showIf: { ".create_view_display": ["Link", "Popup"] },
                     },
                   ]
                 : []),
@@ -73,23 +84,16 @@ const configuration_workflow = () =>
         },
       },
       {
-        name: "Default state",
+        name: req.__("Default state"),
         contextField: "default_state",
-        onlyWhen: async (context) =>
-          context.columns.filter(
-            (column) => column.type === "Field" && column.state_field
-          ).length > 0,
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const table_fields = await table.getFields();
-          const formfields = context.columns
-            .filter((column) => column.type === "Field" && column.state_field)
-            .map((column) => {
-              const f = new Field(
-                table_fields.find((f) => f.name == column.field_name)
-              );
+          const formfields = table_fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => {
               return {
-                name: column.field_name,
+                name: f.name,
                 label: f.label,
                 type: f.type,
                 reftable_name: f.reftable_name,
@@ -99,9 +103,15 @@ const configuration_workflow = () =>
                 required: false,
               };
             });
+          formfields.push({
+            name: "_omit_state_form",
+            label: req.__("Omit search form"),
+            sublabel: req.__("Do not display the search filter form"),
+            type: "Bool",
+          });
           const form = new Form({
             fields: formfields,
-            blurb: "Default search form values when first loaded",
+            blurb: req.__("Default search form values when first loaded"),
           });
           await form.fill_fkey_options(true);
           return form;
@@ -115,11 +125,13 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
     if (column.type === "Field" && column.state_field) {
-      const f = new Field(
-        table_fields.find((f) => f.name == column.field_name)
-      );
-      f.required = false;
-      state_fields.push(f);
+      const tbl_fld = table_fields.find((f) => f.name == column.field_name);
+      if (tbl_fld) {
+        const f = new Field(tbl_fld);
+        f.required = false;
+        if (column.header_label) f.label = column.header_label;
+        state_fields.push(f);
+      }
     }
   });
   state_fields.push({ name: "_sortby", input_type: "hidden" });
@@ -132,7 +144,7 @@ const initial_config = initial_config_all_fields(false);
 const run = async (
   table_id,
   viewname,
-  { columns, view_to_create, create_view_display },
+  { columns, view_to_create, create_view_display, create_view_label },
   stateWithId,
   extraOpts
 ) => {
@@ -146,7 +158,7 @@ const run = async (
     fields,
     columns,
     false,
-    extraOpts.req.csrfToken()
+    extraOpts.req
   );
   const { id, ...state } = stateWithId || {};
   const qstate = await stateFieldsToWhere({ fields, state });
@@ -188,11 +200,13 @@ const run = async (
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraOpts);
-    } else
-      create_link = link(
+    } else {
+      create_link = link_view(
         `/view/${view_to_create}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`
+        create_view_label || `Add ${pluralize(table.name, 1)}`,
+        create_view_display === "Popup"
       );
+    }
   }
 
   return mkTable(tfields, rows, page_opts) + create_link;
@@ -205,7 +219,8 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
-  display_state_form: true,
+  display_state_form: (opts) =>
+    !(opts && opts.default_state && opts.default_state._omit_state_form),
   default_state_form: ({ default_state }) =>
     default_state && removeEmptyStrings(default_state),
 };

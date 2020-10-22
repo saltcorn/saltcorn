@@ -6,9 +6,20 @@ const {
   link,
   post_btn,
   post_delete_btn,
+  post_dropdown_item,
   renderBuilder,
 } = require("@saltcorn/markup");
-const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+const {
+  span,
+  h5,
+  h4,
+  nbsp,
+  p,
+  a,
+  div,
+  button,
+  text,
+} = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -18,45 +29,114 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const router = new Router();
 module.exports = router;
 
+const view_dropdown = (view, req) =>
+  div(
+    { class: "dropdown" },
+    button(
+      {
+        class: "btn btn-outline-secondary",
+        "data-boundary": "viewport",
+        type: "button",
+        id: `dropdownMenuButton${view.id}`,
+        "data-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      },
+      '<i class="fas fa-ellipsis-h"></i>'
+    ),
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-right",
+        "aria-labelledby": `dropdownMenuButton${view.id}`,
+      },
+      a(
+        {
+          class: "dropdown-item",
+          href: `/view/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
+      a(
+        {
+          class: "dropdown-item",
+          href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
+      post_dropdown_item(
+        `/viewedit/add-to-menu/${view.id}`,
+        '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+        req
+      ),
+      post_dropdown_item(
+        `/viewedit/clone/${view.id}`,
+        '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+        req
+      ),
+      div({ class: "dropdown-divider" }),
+      post_dropdown_item(
+        `/viewedit/delete/${view.id}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+        req,
+        true,
+        view.name
+      )
+    )
+  );
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    var views = await View.find({}, { orderBy: "name" });
+    var orderBy = "name";
+    if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
+
+    var views = await View.find({}, { orderBy, nocase: true });
     const tables = await Table.find();
     const getTable = (tid) => tables.find((t) => t.id === tid).name;
+    views.forEach((v) => {
+      v.table = getTable(v.table_id);
+    });
+    if (req.query._sortby === "table")
+      views.sort((a, b) =>
+        a.table.toLowerCase() > b.table.toLowerCase() ? 1 : -1
+      );
+    const roles = await User.get_roles();
+
     const viewMarkup =
       views.length > 0
         ? mkTable(
             [
-              { label: req.__("Name"), key: "name" },
-              { label: req.__("Template"), key: "viewtemplate" },
-              { label: req.__("Table"), key: (r) => getTable(r.table_id) },
               {
-                label: req.__("Run"),
-                key: (r) =>
-                  link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
+                label: req.__("Name"),
+                key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+                sortlink: `javascript:set_state_field('_sortby', 'name')`,
               },
               {
-                label: req.__("Edit"),
-                key: (r) =>
-                  link(
-                    `/viewedit/edit/${encodeURIComponent(r.name)}`,
-                    req.__("Edit")
-                  ),
+                label: req.__("Template"),
+                key: "viewtemplate",
+                sortlink: `javascript:set_state_field('_sortby', 'viewtemplate')`,
               },
               {
-                label: req.__("Delete"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                    req.csrfToken()
-                  ),
+                label: req.__("Table"),
+                key: (r) => r.table,
+                sortlink: `javascript:set_state_field('_sortby', 'table')`,
+              },
+              {
+                label: req.__("Role to access"),
+                key: (row) => {
+                  const role = roles.find((r) => r.id === row.min_role);
+                  return role ? role.role : "?";
+                },
+              },
+              {
+                label: "",
+                key: (r) => view_dropdown(r, req),
               },
             ],
             views
@@ -93,19 +173,29 @@ router.get(
   })
 );
 
-const viewForm = (req, tableOptions, roles, values) =>
-  new Form({
+const viewForm = (req, tableOptions, roles, values) => {
+  const isEdit =
+    values && values.id && !getState().getConfig("development_mode", false);
+  return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
     fields: [
-      new Field({ label: req.__("View name"), name: "name", type: "String" }),
+      new Field({
+        label: req.__("View name"),
+        name: "name",
+        type: "String",
+        sublabel: req.__(
+          "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
+        ),
+      }),
       new Field({
         label: req.__("Template"),
         name: "viewtemplate",
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
+        disabled: isEdit,
       }),
       new Field({
         label: req.__("Table"),
@@ -113,6 +203,7 @@ const viewForm = (req, tableOptions, roles, values) =>
         input_type: "select",
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
+        disabled: isEdit,
       }),
       new Field({
         name: "min_role",
@@ -127,10 +218,22 @@ const viewForm = (req, tableOptions, roles, values) =>
         name: "on_root_page",
         type: "Bool",
       }),
+      ...(isEdit
+        ? [
+            new Field({
+              name: "viewtemplate",
+              input_type: "hidden",
+            }),
+            new Field({
+              name: "table_name",
+              input_type: "hidden",
+            }),
+          ]
+        : []),
     ],
     values,
   });
-
+};
 router.get(
   "/edit/:viewname",
   setTenant,
@@ -139,7 +242,12 @@ router.get(
     const { viewname } = req.params;
 
     var viewrow = await View.findOne({ name: viewname });
-
+    if (!viewrow) {
+      console.log("not found:", viewname);
+      req.flash("error", `View not found: ${text(viewname)}`);
+      res.redirect("/viewedit");
+      return;
+    }
     const tables = await Table.find();
     const currentTable = tables.find((t) => t.id === viewrow.table_id);
     viewrow.table_name = currentTable.name;
@@ -280,7 +388,7 @@ const respondWorkflow = (view, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: `${wfres.stepName} (step ${wfres.currentStep} / max ${wfres.maxSteps})`,
+        title: wfres.title,
         contents,
       },
     ],
@@ -306,12 +414,15 @@ router.get(
     const { name } = req.params;
 
     const view = await View.findOne({ name });
-    const configFlow = await view.get_config_flow();
-    const wfres = await configFlow.run({
-      table_id: view.table_id,
-      viewname: name,
-      ...view.configuration,
-    });
+    const configFlow = await view.get_config_flow(req);
+    const wfres = await configFlow.run(
+      {
+        table_id: view.table_id,
+        viewname: name,
+        ...view.configuration,
+      },
+      req
+    );
     respondWorkflow(view, wfres, req, res);
   })
 );
@@ -324,9 +435,48 @@ router.post(
     const { name } = req.params;
 
     const view = await View.findOne({ name });
-    const configFlow = await view.get_config_flow();
-    const wfres = await configFlow.run(req.body);
+    const configFlow = await view.get_config_flow(req);
+    const wfres = await configFlow.run(req.body, req);
     respondWorkflow(view, wfres, req, res);
+  })
+);
+router.post(
+  "/add-to-menu/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const view = await View.findOne({ id });
+    await add_to_menu({
+      label: view.name,
+      type: "View",
+      min_role: 10,
+      viewname: view.name,
+    });
+    req.flash(
+      "success",
+      req.__(
+        "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+        view.name
+      )
+    );
+    res.redirect(`/viewedit`);
+  })
+);
+
+router.post(
+  "/clone/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const view = await View.findOne({ id });
+    const newview = await view.clone();
+    req.flash(
+      "success",
+      req.__("View %s duplicated as %s", view.name, newview.name)
+    );
+    res.redirect(`/viewedit`);
   })
 );
 

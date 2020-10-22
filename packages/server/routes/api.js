@@ -86,17 +86,38 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-      const allfields = fields.map((f) => f.name);
+      let errors = [];
+      let hasErrors = false;
       Object.keys(row).forEach((k) => {
-        if (!allfields.includes(k)) {
+        const field = fields.find((f) => f.name === k);
+        if (!field || field.calculated) {
           delete row[k];
         }
+        if (field.required && typeof row[k] === "undefined") {
+          hasErrors = true;
+          errors.push(`${k}: required`);
+        }
+
+        if (field.type && field.type.validate) {
+          const vres = field.type.validate(field.attributes || {})(row[k]);
+          console.log({ field, vres });
+          if (vres.error) {
+            hasErrors = true;
+            errors.push(`${k}: ${vres.error}`);
+          }
+        }
       });
+      console.log({ hasErrors, errors });
+      if (hasErrors) {
+        res.status(400).json({ error: errors.join(", ") });
+        return;
+      }
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined
       );
-      res.json(ins_res);
+      if (ins_res.error) res.status(400).json(ins_res);
+      else res.json(ins_res);
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }
@@ -118,19 +139,37 @@ router.post(
       const { _versions, ...row } = req.body;
       const fields = await table.getFields();
       readState(row, fields);
-      const allfields = fields.map((f) => f.name);
+      let errors = [];
+      let hasErrors = false;
       Object.keys(row).forEach((k) => {
-        if (!allfields.includes(k)) {
+        const field = fields.find((f) => f.name === k);
+        if (!field || field.calculated) {
           delete row[k];
         }
+        if (field.required && typeof row[k] === "undefined") {
+          hasErrors = true;
+          errors.push(`${k}: required`);
+        }
+        if (field.type && field.type.validate) {
+          const vres = field.type.validate(field.attributes || {})(row[k]);
+          if (vres.error) {
+            hasErrors = true;
+            errors.push(`${k}: ${res.error}`);
+          }
+        }
       });
+      if (hasErrors) {
+        res.status(400).json({ error: errors.join(", ") });
+        return;
+      }
       const ins_res = await table.tryUpdateRow(
         row,
         +id,
         req.user ? +req.user.id : undefined
       );
 
-      res.json(ins_res);
+      if (ins_res.error) res.status(400).json(ins_res);
+      else res.json(ins_res);
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }
@@ -148,9 +187,12 @@ router.delete(
     }
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     if (role <= table.min_role_write) {
-      await table.deleteRows({ id });
-
-      res.json({ success: true });
+      try {
+        await table.deleteRows({ id });
+        res.json({ success: true });
+      } catch (e) {
+        res.status(400).json({ error: e.message });
+      }
     } else {
       res.status(401).json({ error: req.__("Not authorized") });
     }

@@ -1,10 +1,15 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const {
+  apply_calculated_fields,
+  apply_calculated_fields_stored,
+} = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
+const fs = require("fs").promises;
 
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -117,23 +122,43 @@ class Table {
   async getRow(where) {
     await this.getFields();
     const row = await db.selectOne(this.name, where);
-    return this.readFromDB(row);
+    return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
-    return rows.map((r) => this.readFromDB(r));
+    return apply_calculated_fields(
+      rows.map((r) => this.readFromDB(r)),
+      this.fields
+    );
   }
 
   async countRows(where) {
     return await db.count(this.name, where);
   }
 
-  async updateRow(v, id, _userid) {
+  async distinctValues(fieldnm) {
+    const res = await db.query(
+      `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
+    );
+    return res.rows.map((r) => r[fieldnm]);
+  }
+
+  async updateRow(v_in, id, _userid) {
+    let existing;
+    let v;
+    const fields = await this.getFields();
+    if (fields.some((f) => f.calculated && f.stored)) {
+      existing = await db.selectOne(this.name, { id });
+      v = await apply_calculated_fields_stored(
+        { ...existing, ...v_in },
+        this.fields
+      );
+    } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
-      const existing = await this.getRow({ id });
+      if (!existing) existing = await db.selectOne(this.name, { id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,
@@ -168,7 +193,9 @@ class Table {
     );
   }
 
-  async insertRow(v, _userid) {
+  async insertRow(v_in, _userid) {
+    await this.getFields();
+    const v = await apply_calculated_fields_stored(v_in, this.fields);
     const id = await db.insert(this.name, v);
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -191,8 +218,9 @@ class Table {
   }
 
   async getFields() {
-    if (!this.fields)
+    if (!this.fields) {
       this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
+    }
     return this.fields;
   }
 
@@ -244,6 +272,11 @@ class Table {
     );
   }
 
+  async enable_fkey_constraints() {
+    const fields = await this.getFields();
+    for (const f of fields) await f.enable_fkey_constraint(this);
+  }
+
   static async create_from_csv(name, filePath) {
     var rows;
     try {
@@ -273,7 +306,7 @@ class Table {
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
-      //can fail here if: non integer id, duplicate headers, invalid name
+      //can fail here if: non integer i d, duplicate headers, invalid name
       const fld = new Field({
         name: Field.labelToName(k),
         required,
@@ -317,6 +350,7 @@ class Table {
 
   async import_csv_file(filePath) {
     var headers;
+    const { readState } = require("../plugin-helper");
     try {
       [headers] = await csvtojson({
         output: "csv",
@@ -325,7 +359,7 @@ class Table {
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
-    const fields = await this.getFields();
+    const fields = (await this.getFields()).filter((f) => !f.calculated);
     const okHeaders = {};
     const renames = [];
     for (const f of fields) {
@@ -357,6 +391,44 @@ class Table {
           rec[to] = rec[from];
           delete rec[from];
         });
+        readState(rec, fields);
+        await db.insert(this.name, rec, true, client);
+      } catch (e) {
+        await client.query("ROLLBACK");
+
+        if (!db.isSQLite) await client.release(true);
+        return { error: `${e.message} in row ${i}` };
+      }
+    }
+
+    await client.query("COMMIT");
+
+    if (!db.isSQLite) await client.release(true);
+
+    if (db.reset_sequence) await db.reset_sequence(this.name);
+    return {
+      success: `Imported ${file_rows.length} rows into table ${this.name}`,
+    };
+  }
+  async import_json_file(filePath) {
+    const file_rows = JSON.parse(await fs.readFile(filePath));
+    const fields = await this.getFields();
+    const { readState } = require("../plugin-helper");
+
+    var i = 1;
+    const client = db.isSQLite ? db : await db.getClient();
+    await client.query("BEGIN");
+    for (const rec of file_rows) {
+      i += 1;
+      fields
+        .filter((f) => f.calculated && !f.stored)
+        .forEach((f) => {
+          if (typeof rec[f.name] !== "undefined") {
+            delete rec[f.name];
+          }
+        });
+      try {
+        readState(rec, fields);
         await db.insert(this.name, rec, true, client);
       } catch (e) {
         await client.query("ROLLBACK");
@@ -366,8 +438,8 @@ class Table {
       }
     }
     await client.query("COMMIT");
-
     if (!db.isSQLite) await client.release(true);
+    if (db.reset_sequence) await db.reset_sequence(this.name);
 
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
@@ -387,9 +459,11 @@ class Table {
         } else {
           const table = await Table.findOne({ name: f.reftable_name });
           await table.getFields();
-          table.fields.forEach((pf) => {
-            parent_field_list.push(`${f.name}.${pf.name}`);
-          });
+          table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .forEach((pf) => {
+              parent_field_list.push(`${f.name}.${pf.name}`);
+            });
           parent_relations.push({ key_field: f, table });
         }
       }
@@ -430,7 +504,9 @@ class Table {
       });
 
     Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
-      const reftable = fields.find((f) => f.name === ref).reftable_name;
+      const reffield = fields.find((f) => f.name === ref);
+      if (!reffield) throw new Error(`Key field not found: ${ref}`);
+      const reftable = reffield.reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
@@ -440,18 +516,29 @@ class Table {
       }
       fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
     });
-    for (const f of fields) {
+    for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
     Object.entries(opts.aggregations || {}).forEach(
-      ([fldnm, { table, ref, field, aggregate }]) => {
-        fldNms.push(
-          `(select ${sqlsanitize(aggregate)}(${
-            sqlsanitize(field) || "*"
-          }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
-            ref
-          )}=a.id) ${sqlsanitize(fldnm)}`
-        );
+      ([fldnm, { table, ref, field, aggregate, subselect }]) => {
+        if (subselect)
+          fldNms.push(
+            `(select ${sqlsanitize(aggregate)}(${
+              sqlsanitize(field) || "*"
+            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+              ref
+            )} in (select "${subselect.field}" from ${schema}"${
+              subselect.table.name
+            }" where "${subselect.whereField}"=a.id)) ${sqlsanitize(fldnm)}`
+          );
+        else
+          fldNms.push(
+            `(select ${sqlsanitize(aggregate)}(${
+              sqlsanitize(field) || "*"
+            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+              ref
+            )}=a.id) ${sqlsanitize(fldnm)}`
+          );
       }
     );
 
@@ -475,7 +562,7 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     const res = await db.query(sql, values);
 
-    return res.rows;
+    return apply_calculated_fields(res.rows, this.fields);
   }
 }
 

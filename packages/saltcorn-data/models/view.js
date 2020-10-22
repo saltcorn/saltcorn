@@ -106,6 +106,24 @@ class View {
     await require("../db/state").getState().refresh();
     return new View({ id, ...v });
   }
+
+  async clone() {
+    const basename = this.name + " copy";
+    let newname;
+    for (let i = 0; i < 100; i++) {
+      newname = i ? `${basename} (${i})` : basename;
+      const existing = await View.findOne({ name: newname });
+      if (!existing) break;
+    }
+    const createObj = {
+      ...this,
+      name: newname,
+    };
+    delete createObj.viewtemplateObj;
+    delete createObj.id;
+    return await View.create(createObj);
+  }
+
   async delete() {
     await View.delete({ id: this.id });
     await remove_from_menu({ name: this.name, type: "View" });
@@ -197,7 +215,7 @@ class View {
     });
     return state;
   }
-  async get_state_form(query) {
+  async get_state_form(query, req) {
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
     const display_state_form =
       typeof vt_display_state_form === "function"
@@ -208,6 +226,8 @@ class View {
 
       fields.forEach((f) => {
         f.required = false;
+        if (f.label === "Anywhere" && f.name === "_fts")
+          f.label = req.__(f.label);
         if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
         if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
           query[f.name] = f.type.read(query[f.name]);
@@ -217,8 +237,9 @@ class View {
         methodGET: true,
         action: `/view/${encodeURIComponent(this.name)}`,
         fields,
-        submitLabel: "Apply",
+        submitLabel: req.__("Apply"),
         isStateForm: true,
+        __: req.__,
         values: removeEmptyStrings(query),
       });
       await form.fill_fkey_options(true);
@@ -226,8 +247,8 @@ class View {
     } else return null;
   }
 
-  async get_config_flow() {
-    const configFlow = this.viewtemplateObj.configuration_workflow();
+  async get_config_flow(req) {
+    const configFlow = this.viewtemplateObj.configuration_workflow(req);
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || ((c) => c);
     configFlow.onDone = async (ctx) => {
@@ -255,8 +276,14 @@ View.contract = {
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
-    get_state_form: is.fun(is.obj(), is.promise(is.maybe(is.class("Form")))),
-    get_config_flow: is.fun([], is.promise(is.class("Workflow"))),
+    get_state_form: is.fun(
+      [is.obj(), is.obj({ __: is.fun(is.str, is.str) })],
+      is.promise(is.maybe(is.class("Form")))
+    ),
+    get_config_flow: is.fun(
+      is.obj({ __: is.fun(is.str, is.str) }),
+      is.promise(is.class("Workflow"))
+    ),
     delete: is.fun([], is.promise(is.undefined)),
     menu_label: is.getter(is.maybe(is.str)),
     run: is.fun(
