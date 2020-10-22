@@ -100,7 +100,6 @@ router.post(
 
         if (field.type && field.type.validate) {
           const vres = field.type.validate(field.attributes || {})(row[k]);
-          console.log({ field, vres });
           if (vres.error) {
             hasErrors = true;
             errors.push(`${k}: ${vres.error}`);
