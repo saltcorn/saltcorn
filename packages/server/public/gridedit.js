@@ -7,8 +7,13 @@ function jsgrid_controller(table_name, vc, keyfields) {
     return item;
   };
   var errorHandler = function (request) {
+    console.log(request);
     $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
-    ${request.responseText}
+    ${
+      request.responseJSON && request.responseJSON.error
+        ? request.responseJSON.error
+        : request.responseText
+    }
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
