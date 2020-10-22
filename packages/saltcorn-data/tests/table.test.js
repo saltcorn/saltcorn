@@ -303,6 +303,38 @@ Gordon Kane, 217`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({ error: "Required field missing: Pages" });
   });
+  it("fail on strings in ints", async () => {
+    const csv = `author,Pages
+Leonardo Boff, 99
+David MacKay, ITILA`;
+    const fnm = "/tmp/test1.csv";
+    await fs.writeFile(fnm, csv);
+    const table = await Table.create("books_not_req_pages", {
+      min_role_read: 10,
+    });
+    await Field.create({
+      table,
+      name: "author",
+      label: "Author",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "pages",
+      label: "Pages",
+      type: "Integer",
+      attributes: { min: 0 },
+    });
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    /*expect(impres).toEqual({
+      success: "Imported 1 row into table books_not_req_pages",
+    });*/
+    const rows = await table.getRows({ author: "David MacKay" });
+    expect(rows.length).toBe(0);
+    //expect(rows[0].pages).toBe(217);
+  });
   it("should create by importing", async () => {
     const csv = `item,cost,count, vatable
 Book, 5,4, f
