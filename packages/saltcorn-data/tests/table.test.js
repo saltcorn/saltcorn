@@ -328,12 +328,12 @@ David MacKay, ITILA`;
     });
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    /*expect(impres).toEqual({
-      success: "Imported 1 row into table books_not_req_pages",
-    });*/
+    expect(impres).toEqual({
+      success:
+        "Imported 1 rows into table books_not_req_pages. Rejected 1 rows.",
+    });
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
-    //expect(rows[0].pages).toBe(217);
   });
   it("should create by importing", async () => {
     const csv = `item,cost,count, vatable
