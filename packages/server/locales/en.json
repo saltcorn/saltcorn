@@ -424,5 +424,8 @@
 	"Disable": "Disable",
 	"Enabled user %s": "Enabled user %s",
 	"Enable": "Enable",
-	"Disabled user %s": "Disabled user %s"
+	"Disabled user %s": "Disabled user %s",
+	"Disabled": "Disabled",
+	"Send password reset email": "Send password reset email",
+	" with password %s": " with password %s"
 }

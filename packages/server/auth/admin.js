@@ -16,7 +16,7 @@ const {
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, button, text, span } = require("@saltcorn/markup/tags");
+const { a, div, button, text, span, code } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
@@ -32,9 +32,9 @@ const userForm = contract(
       type: "Key",
       reftable_name: "roles",
     });
-    const roles = await User.get_roles();
+    const roles = (await User.get_roles()).filter((r) => r.role !== "public");
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
-
+    const can_reset = getState().getConfig("smtp_host", "") !== "";
     const form = new Form({
       fields: [
         new Field({
@@ -42,23 +42,46 @@ const userForm = contract(
           name: "email",
           input_type: "text",
         }),
+        roleField,
       ],
       action: "/useradmin/save",
       submitLabel: user ? req.__("Save") : req.__("Create"),
     });
-    if (!user)
+    if (!user) {
+      form.fields.push(
+        new Field({
+          label: req.__("Set random password"),
+          name: "rnd_password",
+          class: "rnd_password",
+          type: "Bool",
+          default: true,
+        })
+      );
       form.fields.push(
         new Field({
           label: req.__("Password"),
           name: "password",
           input_type: "password",
+          showIf: { ".rnd_password": false },
         })
       );
-    form.fields.push(roleField);
+      can_reset &&
+        form.fields.push(
+          new Field({
+            label: req.__("Send password reset email"),
+            name: "send_pwreset_email",
+            type: "Bool",
+            default: true,
+            showIf: { ".rnd_password": true },
+          })
+        );
+    }
     if (user) {
       form.hidden("id");
       form.values = user;
       delete form.values.password;
+    } else {
+      form.values.role_id = roles[roles.length - 1].id;
     }
     return form;
   }
@@ -100,7 +123,7 @@ const user_dropdown = (user, req, can_reset) =>
       post_dropdown_item(
         `/useradmin/reset-password/${user.id}`,
         '<i class="fas fa-envelope"></i>&nbsp;' +
-          req.__("Send reset password link"),
+          req.__("Send password reset email"),
         req
       ),
     user.disabled &&
@@ -210,7 +233,14 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { email, password, role_id, id } = req.body;
+    let {
+      email,
+      password,
+      role_id,
+      id,
+      rnd_password,
+      send_pwreset_email,
+    } = req.body;
     if (id) {
       try {
         await db.update("users", { email, role_id }, id);
@@ -219,9 +249,15 @@ router.post(
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {
+      if (rnd_password) password = generate_password();
       const u = await User.create({ email, password, role_id: +role_id });
+      const pwflash =
+        rnd_password && !send_pwreset_email
+          ? req.__(` with password %s`, code(password))
+          : "";
       if (u.error) req.flash("error", u.error);
-      else req.flash("success", req.__(`User %s created`, email));
+      else req.flash("success", req.__(`User %s created`, email) + pwflash);
+      if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
     }
     res.redirect(`/useradmin`);
   })
