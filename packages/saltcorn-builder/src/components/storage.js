@@ -143,6 +143,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
+          confirm={segment.confirm}
           block={segment.block || false}
           minRole={segment.minRole || 10}
         />
@@ -399,10 +400,12 @@ export const craftToSaltcorn = (nodes) => {
         type: "Action",
         action_name: node.props.name,
         minRole: node.props.minRole,
+        confirm: node.props.confirm,
       });
       return {
         type: "action",
         block: node.props.block,
+        confirm: node.props.confirm,
         action_name: node.props.name,
         minRole: node.props.minRole,
       };
