@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
+import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 import ContentEditable from "react-contenteditable";
 
-export const Text = ({ text, block, textStyle }) => {
+export const Text = ({ text, block, isFormula, textStyle }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -20,11 +20,14 @@ export const Text = ({ text, block, textStyle }) => {
 
   return (
     <span
-      className={`${textStyle} is-text ${selected ? "selected-node" : ""}`}
+      className={`${textStyle} is-text ${
+        isFormula.text ? "text-monospace" : ""
+      } ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
     >
+      {isFormula.text && "="}
       <ContentEditable
         html={text}
         style={{ display: "inline" }}
@@ -36,25 +39,30 @@ export const Text = ({ text, block, textStyle }) => {
 };
 
 export const TextSettings = () => {
+  const node = useNode((node) => ({
+    text: node.data.props.text,
+    block: node.data.props.block,
+    isFormula: node.data.props.isFormula,
+    textStyle: node.data.props.textStyle,
+  }));
   const {
     actions: { setProp },
     text,
     block,
     textStyle,
-  } = useNode((node) => ({
-    text: node.data.props.text,
-    block: node.data.props.block,
-    textStyle: node.data.props.textStyle,
-  }));
+    isFormula,
+  } = node;
   return (
     <div>
       <label>Text to display</label>
-      <input
-        type="text"
-        className="text-to-display w-100"
-        value={text}
-        onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
-      />
+      <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
+        <input
+          type="text"
+          className="text-to-display form-control"
+          value={text}
+          onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
+        />
+      </OrFormula>
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
@@ -62,6 +70,12 @@ export const TextSettings = () => {
 };
 
 Text.craft = {
+  defaultProps: {
+    text: "Click here",
+    block: false,
+    isFormula: {},
+    textStyle: "",
+  },
   displayName: "Text",
   related: {
     settings: TextSettings,

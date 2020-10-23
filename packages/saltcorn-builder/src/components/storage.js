@@ -42,6 +42,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <Text
           key={ix}
           text={segment.contents}
+          isFormula={segment.isFormula || {}}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
         />
@@ -262,6 +263,7 @@ export const craftToSaltcorn = (nodes) => {
         contents: node.props.text,
         block: node.props.block,
         textStyle: node.props.textStyle,
+        isFormula: node.props.isFormula,
       };
     }
     if (node.displayName === HTMLCode.craft.displayName) {
