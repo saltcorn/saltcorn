@@ -5,11 +5,18 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  settingsDropdown,
+  post_dropdown_item,
+} = require("@saltcorn/markup");
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-
+const { a, div, button, text } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
@@ -74,7 +81,31 @@ const wrap = (req, cardTitle, response, lastBc) => ({
     },
   ],
 });
-
+const user_dropdown = (user, req, can_reset) =>
+  settingsDropdown(`dropdownMenuButton${user.id}`, [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/useradmin/${user.id}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+    ),
+    can_reset &&
+      post_dropdown_item(
+        `/useradmin/reset-password/${user.id}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' +
+          req.__("Send reset password link"),
+        req
+      ),
+    div({ class: "dropdown-divider" }),
+    post_dropdown_item(
+      `/useradmin/delete/${user.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      user.email
+    ),
+  ]);
 router.get(
   "/",
   setTenant,
@@ -93,37 +124,14 @@ router.get(
         mkTable(
           [
             { label: req.__("ID"), key: "id" },
-            { label: req.__("Email"), key: "email" },
+            {
+              label: req.__("Email"),
+              key: (r) => link(`/useradmin/${r.id}`, r.email),
+            },
             { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
             {
-              label: req.__("View"),
-              key: (r) => link(`/useradmin/${r.id}`, req.__("Edit")),
-            },
-            ...(can_reset
-              ? [
-                  {
-                    label: req.__("Reset password"),
-                    key: (r) =>
-                      post_btn(
-                        `/useradmin/reset-password/${r.id}`,
-                        req.__("Send"),
-                        req.csrfToken(),
-                        { small: true }
-                      ),
-                  },
-                ]
-              : []),
-            {
-              label: req.__("Delete"),
-              key: (r) =>
-                r.id !== req.user.id
-                  ? post_btn(
-                      `/useradmin/delete/${r.id}`,
-                      req.__("Delete"),
-                      req.csrfToken(),
-                      { small: true }
-                    )
-                  : "",
+              label: "",
+              key: (r) => user_dropdown(r, req, can_reset),
             },
           ],
           users
