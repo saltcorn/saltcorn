@@ -9,6 +9,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.language = o.language;
+    this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry =
@@ -57,6 +58,7 @@ class User {
   static async authenticate(uo) {
     const urow = await User.findOne({ email: uo.email });
     if (!urow) return false;
+    if (urow.disabled) return false;
     const cmp = urow.checkPassword(uo.password);
     if (cmp) return new User(urow);
     else return false;
@@ -79,9 +81,11 @@ class User {
   }
 
   async set_language(language) {
-    await db.update("users", { language }, this.id);
+    await this.update({ language });
   }
-
+  async update(row) {
+    await db.update("users", row, this.id);
+  }
   async getNewResetToken() {
     const reset_password_token_uuid = uuidv4();
     const reset_password_expiry = new Date();
@@ -143,7 +147,7 @@ class User {
   async destroy_sessions() {
     if (!db.isSQLite)
       await db.query(
-        "delete from _sc_sessions where sess->'passport'->'user'->>'id' = $1",
+        "delete from _sc_session where sess->'passport'->'user'->>'id' = $1",
         [`${this.id}`]
       );
   }
@@ -154,6 +158,7 @@ User.contract = {
     id: is.maybe(is.posint),
     email: is.str,
     password: is.str,
+    disabled: is.bool,
     language: is.maybe(is.str),
     role_id: is.posint,
     reset_password_token: is.maybe(

@@ -420,5 +420,9 @@
 	"Are you sure you want to delete %s?": "Are you sure you want to delete %s?",
 	"Are you sure?": "Are you sure?",
 	"Set random password": "Set random password",
-	"Changed password for user %s to %s": "Changed password for user %s to %s"
+	"Changed password for user %s to %s": "Changed password for user %s to %s",
+	"Disable": "Disable",
+	"Enabled user %s": "Enabled user %s",
+	"Enable": "Enable",
+	"Disabled user %s": "Disabled user %s"
 }

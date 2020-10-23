@@ -16,7 +16,7 @@ const {
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, button, text } = require("@saltcorn/markup/tags");
+const { a, div, button, text, span } = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
@@ -92,14 +92,27 @@ const user_dropdown = (user, req, can_reset) =>
     ),
     post_dropdown_item(
       `/useradmin/set-random-password/${user.id}`,
-      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Set random password"),
+      '<i class="fas fa-random"></i>&nbsp;' + req.__("Set random password"),
       req
     ),
+
     can_reset &&
       post_dropdown_item(
         `/useradmin/reset-password/${user.id}`,
-        '<i class="far fa-trash-alt"></i>&nbsp;' +
+        '<i class="fas fa-envelope"></i>&nbsp;' +
           req.__("Send reset password link"),
+        req
+      ),
+    user.disabled &&
+      post_dropdown_item(
+        `/useradmin/enable/${user.id}`,
+        '<i class="fas fa-play"></i>&nbsp;' + req.__("Enable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/disable/${user.id}`,
+        '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
         req
       ),
     div({ class: "dropdown-divider" }),
@@ -132,6 +145,13 @@ router.get(
             {
               label: req.__("Email"),
               key: (r) => link(`/useradmin/${r.id}`, r.email),
+            },
+            {
+              label: "",
+              key: (r) =>
+                r.disabled
+                  ? span({ class: "badge badge-danger" }, "Disabled")
+                  : "",
             },
             { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
             {
@@ -241,6 +261,33 @@ router.post(
       req.__(`Changed password for user %s to %s`, u.email, newpw)
     );
 
+    res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/disable/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.update({ disabled: true });
+    await u.destroy_sessions();
+    req.flash("success", req.__(`Disabled user %s`, u.email));
+    res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/enable/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.update({ disabled: false });
+    req.flash("success", req.__(`Enabled user %s`, u.email));
     res.redirect(`/useradmin`);
   })
 );
