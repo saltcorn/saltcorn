@@ -8,6 +8,7 @@
   },
   "author": "Tom Nielsen",
   "license": "MIT",
+  "main": "index.js",
   "dependencies": {
     "@saltcorn/markup": "^0.2.3-beta.0",
     "acorn": "^8.0.3",
