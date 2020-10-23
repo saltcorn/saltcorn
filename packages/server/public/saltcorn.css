@@ -124,3 +124,8 @@ input[type="color"].form-control {
 button.btn.activate-formula.btn-outline-secondary:hover {
   background-color: unset;
 }
+
+div.dropdown-menu.search-form {
+  max-height: 75vh;
+  overflow-y: auto;
+}

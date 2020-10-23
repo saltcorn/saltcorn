@@ -309,7 +309,10 @@ const renderForm = (form, csrfToken) => {
       ),
 
       div(
-        { class: "dropdown-menu", "aria-labelledby": "dropdownMenuButton" },
+        {
+          class: "dropdown-menu search-form",
+          "aria-labelledby": "dropdownMenuButton",
+        },
         mkForm(form, csrfToken, form.errors)
       )
     );
