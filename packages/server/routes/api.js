@@ -92,6 +92,7 @@ router.post(
         const field = fields.find((f) => f.name === k);
         if (!field || field.calculated) {
           delete row[k];
+          return;
         }
         if (field.required && typeof row[k] === "undefined") {
           hasErrors = true;
@@ -100,14 +101,12 @@ router.post(
 
         if (field.type && field.type.validate) {
           const vres = field.type.validate(field.attributes || {})(row[k]);
-          console.log({ field, vres });
           if (vres.error) {
             hasErrors = true;
             errors.push(`${k}: ${vres.error}`);
           }
         }
       });
-      console.log({ hasErrors, errors });
       if (hasErrors) {
         res.status(400).json({ error: errors.join(", ") });
         return;
@@ -145,6 +144,7 @@ router.post(
         const field = fields.find((f) => f.name === k);
         if (!field || field.calculated) {
           delete row[k];
+          return;
         }
         if (field.required && typeof row[k] === "undefined") {
           hasErrors = true;

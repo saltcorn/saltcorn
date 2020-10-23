@@ -26,10 +26,12 @@ export const ActionSettings = () => {
     name,
     block,
     minRole,
+    confirm,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
+    confirm: node.data.props.confirm,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -47,6 +49,16 @@ export const ActionSettings = () => {
             </option>
           ))}
         </select>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={confirm}
+          onChange={(e) => setProp((prop) => (prop.confirm = e.target.checked))}
+        />
+        <label className="form-check-label">User confirmation?</label>
       </div>
       <BlockSetting block={block} setProp={setProp} />
       <MinRoleSetting minRole={minRole} setProp={setProp} />

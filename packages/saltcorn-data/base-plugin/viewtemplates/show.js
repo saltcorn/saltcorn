@@ -40,6 +40,8 @@ const configuration_workflow = (req) =>
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
+          fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
+
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
           );
@@ -73,7 +75,6 @@ const configuration_workflow = (req) =>
               state_fields.some((sf) => sf.name === "id")
           );
           const images = await File.find({ mime_super: "image" });
-
           return {
             fields,
             images,
@@ -199,8 +200,8 @@ const runMany = async (
 };
 
 const render = (row, fields, layout0, viewname, table, role, req) => {
-  const evalMaybeExpr = (segment, key) => {
-    if (segment.isFormula && segment.isFormula[key]) {
+  const evalMaybeExpr = (segment, key, fmlkey) => {
+    if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       const f = get_expression_function(segment[key], fields);
       segment[key] = f(row);
     }
@@ -211,11 +212,16 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
     },
+    blank(segment) {
+      evalMaybeExpr(segment, "contents", "text");
+    },
   });
   const blockDispatch = {
     field({ field_name, fieldview }) {
       const val = row[field_name];
-      const field = fields.find((fld) => fld.name === field_name);
+      let field = fields.find((fld) => fld.name === field_name);
+      if (!field && field_name === "id")
+        field = new Field({ name: "id", label: "id", type: "Integer" });
       if (!field) return "";
       if (fieldview && field.type === "File") {
         return val
@@ -243,11 +249,12 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name }) {
+    action({ action_name, confirm }) {
       return post_btn(
         action_url(viewname, table, action_name, row),
         action_name,
-        req.csrfToken()
+        req.csrfToken(),
+        { confirm, req }
       );
     },
     view_link(view) {

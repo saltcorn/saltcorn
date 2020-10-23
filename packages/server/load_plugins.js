@@ -10,6 +10,7 @@ const manager = new PluginManager({
     "@saltcorn/markup/tags": require("@saltcorn/markup/tags"),
     "@saltcorn/markup/layout": require("@saltcorn/markup/layout"),
     "@saltcorn/markup/layout_utils": require("@saltcorn/markup/layout_utils"),
+    "@saltcorn/data": require("@saltcorn/data"),
     "@saltcorn/data/db": require("@saltcorn/data/db"),
     "@saltcorn/data/utils": require("@saltcorn/data/utils"),
     "@saltcorn/data/db/state": require("@saltcorn/data/db/state"),

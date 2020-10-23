@@ -8,6 +8,7 @@ const {
   post_delete_btn,
   post_dropdown_item,
   renderBuilder,
+  settingsDropdown,
 } = require("@saltcorn/markup");
 const {
   span,
@@ -35,59 +36,40 @@ const router = new Router();
 module.exports = router;
 
 const view_dropdown = (view, req) =>
-  div(
-    { class: "dropdown" },
-    button(
+  settingsDropdown(`dropdownMenuButton${view.id}`, [
+    a(
       {
-        class: "btn btn-outline-secondary",
-        "data-boundary": "viewport",
-        type: "button",
-        id: `dropdownMenuButton${view.id}`,
-        "data-toggle": "dropdown",
-        "aria-haspopup": "true",
-        "aria-expanded": "false",
+        class: "dropdown-item",
+        href: `/view/${encodeURIComponent(view.name)}`,
       },
-      '<i class="fas fa-ellipsis-h"></i>'
+      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
     ),
-    div(
+    a(
       {
-        class: "dropdown-menu dropdown-menu-right",
-        "aria-labelledby": `dropdownMenuButton${view.id}`,
+        class: "dropdown-item",
+        href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
       },
-      a(
-        {
-          class: "dropdown-item",
-          href: `/view/${encodeURIComponent(view.name)}`,
-        },
-        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-      ),
-      a(
-        {
-          class: "dropdown-item",
-          href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-        },
-        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
-      ),
-      post_dropdown_item(
-        `/viewedit/add-to-menu/${view.id}`,
-        '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
-        req
-      ),
-      post_dropdown_item(
-        `/viewedit/clone/${view.id}`,
-        '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-        req
-      ),
-      div({ class: "dropdown-divider" }),
-      post_dropdown_item(
-        `/viewedit/delete/${view.id}`,
-        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-        req,
-        true,
-        view.name
-      )
-    )
-  );
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+    ),
+    post_dropdown_item(
+      `/viewedit/add-to-menu/${view.id}`,
+      '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+      req
+    ),
+    post_dropdown_item(
+      `/viewedit/clone/${view.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
+    div({ class: "dropdown-divider" }),
+    post_dropdown_item(
+      `/viewedit/delete/${view.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      view.name
+    ),
+  ]);
 router.get(
   "/",
   setTenant,

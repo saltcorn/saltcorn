@@ -350,7 +350,7 @@ class Table {
 
   async import_csv_file(filePath) {
     var headers;
-    const { readState } = require("../plugin-helper");
+    const { readStateStrict } = require("../plugin-helper");
     try {
       [headers] = await csvtojson({
         output: "csv",
@@ -382,6 +382,7 @@ class Table {
       return { error: `Error processing CSV file` };
     }
     var i = 1;
+    let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
     for (const rec of file_rows) {
@@ -391,8 +392,9 @@ class Table {
           rec[to] = rec[from];
           delete rec[from];
         });
-        readState(rec, fields);
-        await db.insert(this.name, rec, true, client);
+        const rowOk = readStateStrict(rec, fields);
+        if (rowOk) await db.insert(this.name, rec, true, client);
+        else rejects += 1;
       } catch (e) {
         await client.query("ROLLBACK");
 
@@ -407,7 +409,9 @@ class Table {
 
     if (db.reset_sequence) await db.reset_sequence(this.name);
     return {
-      success: `Imported ${file_rows.length} rows into table ${this.name}`,
+      success:
+        `Imported ${file_rows.length - rejects} rows into table ${this.name}` +
+        (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
   async import_json_file(filePath) {

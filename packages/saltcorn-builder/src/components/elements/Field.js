@@ -44,7 +44,12 @@ export const FieldSettings = () => {
           <td>
             <select
               value={name}
-              onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
+              onChange={(e) => {
+                setProp((prop) => (prop.name = e.target.value));
+                const newfvs = options.field_view_options[e.target.value];
+                if (newfvs && newfvs.length > 0)
+                  setProp((prop) => (prop.fieldview = newfvs[0]));
+              }}
             >
               {options.fields.map((f, ix) => (
                 <option key={ix} value={f.name}>
