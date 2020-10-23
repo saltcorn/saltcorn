@@ -153,7 +153,13 @@ const get_viewable_fields = contract(
                 action_url(viewname, table, column.action_name, r),
                 column.action_label || column.action_name,
                 req.csrfToken(),
-                { small: true, ajax: true, reload_on_done: true }
+                {
+                  small: true,
+                  ajax: true,
+                  reload_on_done: true,
+                  confirm: column.confirm,
+                  req,
+                }
               ),
           };
         else if (column.type === "ViewLink") {
