@@ -2,7 +2,7 @@ const renderForm = require("./form");
 const renderBuilder = require("./builder");
 const mkTable = require("./table");
 const tabs = require("./tabs");
-const { a, text } = require("./tags");
+const { a, text, div, button } = require("./tags");
 
 const link = (href, s) => a({ href: text(href) }, text(s));
 
@@ -67,9 +67,35 @@ const post_dropdown_item = (href, s, req, confirm, what) => {
     <input type="hidden" name="_csrf" value="${req.csrfToken()}">
   </form>`;
 };
+
+const settingsDropdown = (id, elems) =>
+  div(
+    { class: "dropdown" },
+    button(
+      {
+        class: "btn btn-sm btn-outline-secondary",
+        "data-boundary": "viewport",
+        type: "button",
+        id,
+        "data-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      },
+      '<i class="fas fa-ellipsis-h"></i>'
+    ),
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-right",
+        "aria-labelledby": id,
+      },
+      elems
+    )
+  );
+
 module.exports = {
   mkTable,
   renderForm,
+  settingsDropdown,
   renderBuilder,
   link,
   post_btn,
