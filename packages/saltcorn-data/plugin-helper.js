@@ -100,6 +100,8 @@ const field_picker_fields = contract(
   async ({ table, viewname, req }) => {
     const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
+    fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
+
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
     const actions = ["Delete", ...boolfields.map((f) => `Toggle ${f.name}`)];
     const fldOptions = fields.map((f) => f.name);

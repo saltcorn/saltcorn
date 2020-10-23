@@ -5,6 +5,7 @@ const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
 const { link_view } = require("../../plugin-helper");
 const { get_expression_function } = require("../../models/expression");
+const Field = require("../../models/field");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
@@ -191,8 +192,9 @@ const get_viewable_fields = contract(
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Field") {
-          const f = fields.find((fld) => fld.name === column.field_name);
-
+          let f = fields.find((fld) => fld.name === column.field_name);
+          if (!f && column.field_name === "id")
+            f = new Field({ name: "id", label: "id", type: "Integer" });
           return (
             f && {
               label: column.header_label
