@@ -20,6 +20,7 @@ const post_btn = (
     klass = "",
     formClass,
     spinner,
+    req,
     confirm,
   } = {}
 ) =>
@@ -34,6 +35,8 @@ const post_btn = (
       ? `onclick="${
           spinner ? "press_store_button(this);" : ""
         }ajax_post_btn(this, ${reload_on_done}, ${reload_delay})"`
+      : confirm
+      ? `onclick="return confirm('${req.__("Are you sure?")}')"`
       : ""
   } class="${klass} btn ${
     small ? "btn-sm" : ""

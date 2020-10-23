@@ -246,11 +246,12 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name }) {
+    action({ action_name, confirm }) {
       return post_btn(
         action_url(viewname, table, action_name, row),
         action_name,
-        req.csrfToken()
+        req.csrfToken(),
+        { confirm, req }
       );
     },
     view_link(view) {
