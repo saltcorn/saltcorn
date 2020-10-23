@@ -21,7 +21,7 @@ class User {
   }
 
   static async hashPassword(pw) {
-    return await bcrypt.hash(pw, 5);
+    return await bcrypt.hash(pw, 10);
   }
   checkPassword(pw) {
     return bcrypt.compareSync(pw, this.password);

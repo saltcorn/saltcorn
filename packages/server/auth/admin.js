@@ -90,6 +90,11 @@ const user_dropdown = (user, req, can_reset) =>
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
+    post_dropdown_item(
+      `/useradmin/set-random-password/${user.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Set random password"),
+      req
+    ),
     can_reset &&
       post_dropdown_item(
         `/useradmin/reset-password/${user.id}`,
@@ -211,6 +216,29 @@ router.post(
     const u = await User.findOne({ id });
     await send_reset_email(u, req);
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
+
+    res.redirect(`/useradmin`);
+  })
+);
+const generate_password = () => {
+  const candidate = is.str.generate().split(" ").join("");
+  if (candidate.length < 10) return generate_password();
+  else return candidate;
+};
+
+router.post(
+  "/set-random-password/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    const newpw = generate_password();
+    await u.changePasswordTo(newpw);
+    req.flash(
+      "success",
+      req.__(`Changed password for user %s to %s`, u.email, newpw)
+    );
 
     res.redirect(`/useradmin`);
   })
