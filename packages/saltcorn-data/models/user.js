@@ -139,6 +139,14 @@ class User {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
   }
+
+  async destroy_sessions() {
+    if (!db.isSQLite)
+      await db.query(
+        "delete from _sc_sessions where sess->'passport'->'user'->>'id' = $1",
+        [`${this.id}`]
+      );
+  }
 }
 
 User.contract = {

@@ -235,6 +235,7 @@ router.post(
     const u = await User.findOne({ id });
     const newpw = generate_password();
     await u.changePasswordTo(newpw);
+    await u.destroy_sessions();
     req.flash(
       "success",
       req.__(`Changed password for user %s to %s`, u.email, newpw)
@@ -251,6 +252,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    await u.destroy_sessions();
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 
