@@ -34,7 +34,7 @@ const setLanguage = (req) => {
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
     if (req.subdomains.length === 0 || req.subdomains[0] === "www")
-      db.runWithTenant("public", () => {
+      db.runWithTenant(db.connectObj.default_schema, () => {
         setLanguage(req);
         next();
       });

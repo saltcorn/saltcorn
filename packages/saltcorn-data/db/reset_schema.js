@@ -113,7 +113,7 @@ const reset = async (dontDrop = false, schema = "public") => {
     source: "npm",
     location: "@saltcorn/sbadmin2",
   });
-  if (schema === "public" && !is_sqlite)
+  if (schema === db.connectObj.default_schema && !is_sqlite)
     await db.query(`
     CREATE UNLOGGED TABLE "_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",

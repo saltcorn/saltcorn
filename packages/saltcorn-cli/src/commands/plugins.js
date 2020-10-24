@@ -9,7 +9,10 @@ class PluginsCommand extends Command {
     var plugins = [];
     const { flags } = this.parse(PluginsCommand);
 
-    const tenantList = ["public", ...(await getAllTenants())];
+    const tenantList = [
+      db.connectObj.default_schema,
+      ...(await getAllTenants()),
+    ];
 
     for (const domain of tenantList) {
       await db.runWithTenant(domain, async () => {
