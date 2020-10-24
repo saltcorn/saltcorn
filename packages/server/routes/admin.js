@@ -82,7 +82,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (db.getTenantSchema() === "public") {
+    if (db.getTenantSchema() === db.connectObj.default_schema) {
       process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);

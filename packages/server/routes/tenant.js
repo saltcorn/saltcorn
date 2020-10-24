@@ -51,7 +51,10 @@ router.get(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -97,7 +100,10 @@ router.post(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -152,7 +158,10 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -228,7 +237,10 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -271,7 +283,10 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")

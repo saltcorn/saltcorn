@@ -44,7 +44,7 @@ const pluginForm = (plugin) => {
         attributes: { options: "npm,local,github" },
       }),
       new Field({ label: "Location", name: "location", input_type: "text" }),
-      ...(schema === "public"
+      ...(schema === db.connectObj.default_schema
         ? [new Field({ label: "Version", name: "version", input_type: "text" })]
         : []),
     ],
@@ -270,7 +270,7 @@ const store_actions_dropdown = (req) =>
         },
         '<i class="fas fa-sync"></i>&nbsp;' + req.__("Refresh")
       ),
-      db.getTenantSchema() === "public" &&
+      db.getTenantSchema() === db.connectObj.default_schema &&
         a(
           {
             class: "dropdown-item",
@@ -279,7 +279,7 @@ const store_actions_dropdown = (req) =>
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed plugins")
         ),
-      db.getTenantSchema() === "public" &&
+      db.getTenantSchema() === db.connectObj.default_schema &&
         a(
           {
             class: "dropdown-item",
@@ -448,7 +448,7 @@ router.post(
   error_catcher(async (req, res) => {
     const plugin = new Plugin(req.body);
     const schema = db.getTenantSchema();
-    if (schema !== "public") {
+    if (schema !== db.connectObj.default_schema) {
       req.flash(
         "error",
         `Only store plugins can be installed on tenant instances`
@@ -458,7 +458,7 @@ router.post(
       try {
         await load_plugins.loadAndSaveNewPlugin(
           plugin,
-          schema === "public" || plugin.source === "github"
+          schema === db.connectObj.default_schema || plugin.source === "github"
         );
         req.flash("success", `Plugin ${plugin.name} installed`);
         res.redirect(`/plugins`);

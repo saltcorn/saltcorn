@@ -162,7 +162,7 @@ const getState = contract(is.fun([], is.class("State")), () => {
   if (!db.is_it_multi_tenant()) return singleton;
 
   const ten = db.getTenantSchema();
-  if (ten === "public") return singleton;
+  if (ten === db.connectObj.default_schema) return singleton;
   else return tenants[ten];
 });
 

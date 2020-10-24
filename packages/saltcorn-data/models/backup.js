@@ -144,7 +144,9 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
 
   const ten = db.getTenantSchema();
   const tens =
-    ten === "public" ? getState().getConfig("site_name", "") : "-" + ten;
+    ten === db.connectObj.default_schema
+      ? getState().getConfig("site_name", "")
+      : "-" + ten;
   const zipFileName = `sc-backup-${tens}-${day}.zip`;
 
   var zip = new Zip();

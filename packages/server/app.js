@@ -75,6 +75,7 @@ const getApp = async (opts = {}) => {
     app.use(
       session({
         store: new pgSession({
+          schemaName: db.connectObj.default_schema,
           pool: db.pool,
           tableName: "_sc_session",
         }),

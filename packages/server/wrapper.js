@@ -59,7 +59,8 @@ const get_menu = (req) => {
           : []),
       ];
   const schema = db.getTenantSchema();
-  const tenant_list = db.is_it_multi_tenant() && schema === "public";
+  const tenant_list =
+    db.is_it_multi_tenant() && schema === db.connectObj.default_schema;
   const isAdmin = role === 1;
   const adminItems = [
     { link: "/table", label: req.__("Tables") },
@@ -78,7 +79,7 @@ const get_menu = (req) => {
         ...(tenant_list
           ? [{ link: "/tenant/list", label: req.__("Tenants") }]
           : []),
-        ...(schema === "public"
+        ...(schema === db.connectObj.default_schema
           ? [{ link: "/crashlog", label: req.__("Crash log") }]
           : []),
       ],
