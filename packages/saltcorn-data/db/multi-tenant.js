@@ -13,15 +13,14 @@ const runWithTenant = (tenant, f) => {
   else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 };
 
-const getTenantSchema = () => {
-  if (!is_multi_tenant) return "public";
-  const storeVal = tenantNamespace.getStore();
-  return storeVal || "public";
-};
+const getTenantSchema = () => {};
 
-module.exports = {
-  getTenantSchema,
+module.exports = (connObj) => ({
+  getTenantSchema() {
+    const storeVal = tenantNamespace.getStore();
+    return storeVal || connObj.default_schema;
+  },
   enable_multi_tenant,
   runWithTenant,
   is_it_multi_tenant,
-};
+});
