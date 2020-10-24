@@ -418,5 +418,15 @@
   "Apply": "Applica",
   "Are you sure?": "Sicuro?",
   "Search filter": "Filtro di ricerca",
-  "Are you sure you want to delete %s?": "Sicuro di voler cancellare %s?"
+  "Are you sure you want to delete %s?": "Sicuro di voler cancellare %s?",
+  " with password %s": "con password %s",
+  "Changed password for user %s to %s": "Modificata la password per l'utente %s in %s",
+  "Disable": "Disabilitare",
+  "Disabled": "Disablitato",
+  "Disabled user %s": "Disabilitare l'utente %s",
+  "Enable": "Abilitare",
+  "Enabled user %s": "Abilitato l'utente %s",
+  "Send password reset email": "Invia email di reset password",
+  "Set random password": "Imposta password casuale",
+  "User confirmation?": "Conferma dell'utente?"
 }

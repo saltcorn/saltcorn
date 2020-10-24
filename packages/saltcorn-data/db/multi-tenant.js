@@ -13,8 +13,6 @@ const runWithTenant = (tenant, f) => {
   else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 };
 
-const getTenantSchema = () => {};
-
 module.exports = (connObj) => ({
   getTenantSchema() {
     const storeVal = tenantNamespace.getStore();
