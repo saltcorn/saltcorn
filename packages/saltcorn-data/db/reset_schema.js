@@ -1,8 +1,8 @@
 //https://stackoverflow.com/a/21247009
-const reset = async (dontDrop = false, schema = "public") => {
+const reset = async (dontDrop = false, schema0) => {
   const db = require(".");
   const { migrate } = require("../migrate");
-
+  const schema = schema0 || db.connectObj.default_schema;
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
   const serial = is_sqlite ? "integer" : "serial";
@@ -122,9 +122,9 @@ const reset = async (dontDrop = false, schema = "public") => {
     )
     WITH (OIDS=FALSE);
     
-    ALTER TABLE "_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+    ALTER TABLE "${db.connectObj.default_schema}"."_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
     
-    CREATE INDEX "_sc_IDX_session_expire" ON "_sc_session" ("expire");
+    CREATE INDEX "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
   `);
 
   await migrate(schema);

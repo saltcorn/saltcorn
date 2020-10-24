@@ -39,11 +39,14 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 };
 
 const drop_reset_schema = async (schema) => {
-  await pool.query(`DROP SCHEMA "${schema}" CASCADE;
+  const sql = `DROP SCHEMA IF EXISTS "${schema}" CASCADE;
   CREATE SCHEMA "${schema}";
   GRANT ALL ON SCHEMA "${schema}" TO postgres;
-  GRANT ALL ON SCHEMA "${schema}" TO "${schema}" ;
-  COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`);
+  GRANT ALL ON SCHEMA "${schema}" TO "public" ;
+  COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`;
+  sql_log(sql);
+
+  await pool.query(sql);
 };
 
 const count = async (tbl, whereObj) => {

@@ -11,7 +11,9 @@ class ResetCommand extends Command {
     } else {
       const ans = await cli.confirm(
         `This will wipe all data from database "${
-          db.isSQLite ? "SQLite" : db.connectObj.database
+          db.isSQLite
+            ? "SQLite"
+            : db.connectObj.database + "." + db.connectObj.default_schema
         }".\nContinue (y/n)?`
       );
       if (ans) await reset();
