@@ -115,7 +115,7 @@ const reset = async (dontDrop = false, schema = "public") => {
   });
   if (schema === db.connectObj.default_schema && !is_sqlite)
     await db.query(`
-    CREATE UNLOGGED TABLE "_sc_session" (
+    CREATE UNLOGGED TABLE "${db.connectObj.default_schema}"."_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL
