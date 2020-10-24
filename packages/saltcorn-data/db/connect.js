@@ -24,6 +24,8 @@ const getConnectObject = (connSpec = {}) => {
   connObj.multi_tenant =
     connObj.multi_tenant || process.env.SALTCORN_MULTI_TENANT;
   connObj.file_store = connObj.file_store || process.env.SALTCORN_FILE_STORE;
+  connObj.default_schema =
+    connObj.default_schema || process.env.SALTCORN_DEFAULT_SCHEMA;
 
   if (!(connObj.user && connObj.password && connObj.database)) {
     const cfg = getConfigFile() || {};
@@ -35,12 +37,14 @@ const getConnectObject = (connSpec = {}) => {
     connObj.file_store = connObj.file_store || cfg.file_store;
     connObj.database = connObj.database || cfg.database;
     connObj.session_secret = connObj.session_secret || cfg.session_secret;
+    connObj.default_schema = connObj.default_schema || cfg.default_schema;
     connObj.multi_tenant =
       typeof connObj.multi_tenant === "undefined"
         ? cfg.multi_tenant
         : connObj.multi_tenant;
   }
 
+  connObj.default_schema = connObj.default_schema || "public";
   connObj.file_store = connObj.file_store || pathsWithApp.data;
 
   if (
