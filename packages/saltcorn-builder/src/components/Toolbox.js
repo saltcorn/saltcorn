@@ -233,7 +233,12 @@ const ActionElem = ({ connectors, options }) => (
     icon="fas fa-running"
     title="Action button"
   >
-    <Action name={options.actions[0]} block={false} minRole={10} />
+    <Action
+      name={options.actions[0]}
+      block={false}
+      minRole={10}
+      confirm={false}
+    />
   </WrapElem>
 );
 const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (

@@ -100,6 +100,8 @@ const field_picker_fields = contract(
   async ({ table, viewname, req }) => {
     const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
+    fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
+
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
     const actions = ["Delete", ...boolfields.map((f) => `Toggle ${f.name}`)];
     const fldOptions = fields.map((f) => f.name);
@@ -189,6 +191,12 @@ const field_picker_fields = contract(
         name: "action_label",
         label: __("Action Label"),
         type: "String",
+        showIf: { ".coltype": "Action" },
+      },
+      {
+        name: "confirm",
+        label: __("User confirmation?"),
+        type: "Bool",
         showIf: { ".coltype": "Action" },
       },
       {
@@ -561,6 +569,34 @@ const readState = (state, fields) => {
   return state;
 };
 
+const readStateStrict = (state, fields) => {
+  let hasErrors = false;
+  fields.forEach((f) => {
+    const current = state[f.name];
+    //console.log(f.name, current, typeof current);
+
+    if (typeof current !== "undefined") {
+      if (f.type.read) {
+        const readval = f.type.read(current);
+        if (typeof readval === "undefined") {
+          if (current === "" && !f.required) delete state[f.name];
+          else hasErrors = true;
+        }
+        if (f.type && f.type.validate) {
+          const vres = f.type.validate(f.attributes || {})(readval);
+          if (vres.error) hasErrors = true;
+        }
+        state[f.name] = readval;
+      } else if (f.type === "Key" || f.type === "File")
+        state[f.name] =
+          current === "null" || current === "" || current === null
+            ? null
+            : +current;
+    } else if (f.required) hasErrors = true;
+  });
+  return hasErrors ? false : state;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -572,6 +608,7 @@ module.exports = {
   get_link_view_opts,
   is_column,
   readState,
+  readStateStrict,
   stateToQueryString,
   link_view,
 };

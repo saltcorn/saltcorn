@@ -17,6 +17,49 @@ export const BlockSetting = ({ block, setProp }) => (
   </div>
 );
 
+export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
+  const { mode } = useContext(optionsCtx);
+
+  return mode !== "show" ? (
+    children
+  ) : (
+    <Fragment>
+      <div className="input-group  input-group-sm w-100">
+        {isFormula[nodekey] ? (
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={node[nodekey]}
+            onChange={(e) =>
+              setProp((prop) => (prop[nodekey] = e.target.value))
+            }
+          />
+        ) : (
+          children
+        )}
+        <div className="input-group-append">
+          <button
+            className={`btn activate-formula ${
+              isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
+            }`}
+            title="Calculated formula"
+            type="button"
+            onClick={(e) =>
+              setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
+            }
+          >
+            <i className="fas fa-calculator"></i>
+          </button>
+        </div>
+      </div>
+      {isFormula[nodekey] && (
+        <div style={{ marginTop: "-5px" }}>
+          <small className="text-muted text-monospace">FORMULA</small>
+        </div>
+      )}
+    </Fragment>
+  );
+};
 export const MinRoleSetting = ({ minRole, setProp }) => {
   const options = useContext(optionsCtx);
   return (
