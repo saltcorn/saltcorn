@@ -120,8 +120,10 @@ describe("homepage", () => {
       .expect(toInclude("You have no views!"));
   });
   it("shows with-view quick start", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
