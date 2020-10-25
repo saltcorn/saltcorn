@@ -39,13 +39,12 @@ describe("Table create", () => {
     await browser.page.select("#inputtype", "Integer");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Field attributes");
-    console.log(await browser.content());
     await browser.page.type("#inputmin", "0");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Persons table");
   });
   it("edits int field", async () => {
-    await browser.goto("/field/2");
+    await browser.goto("/field/3");
     expect(await browser.content()).toContain("Edit field");
     await browser.clickNav("button[type=submit]");
     await browser.erase_input("#inputmin");
