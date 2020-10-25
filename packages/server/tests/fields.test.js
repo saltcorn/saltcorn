@@ -1,6 +1,8 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
+
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -19,7 +21,7 @@ beforeAll(async () => {
 });
 
 describe("Field Endpoints", () => {
-  itShouldRedirectUnauthToLogin("/field/1");
+  itShouldRedirectUnauthToLogin("/field/2");
 
   it("should show existing", async () => {
     const loginCookie = await getAdminLoginCookie();

@@ -11,6 +11,8 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
+
 beforeAll(async () => {
   await resetToFixtures();
 });

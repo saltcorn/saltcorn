@@ -11,6 +11,7 @@ const {
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
