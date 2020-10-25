@@ -63,7 +63,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).toContain(">Useless<");
     await browser.clickNav("tr:nth-child(3) button");
-    await browser.page.waitForTimeout(1000);
+    await browser.page.waitFor(1000);
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).not.toContain(">Useless<");
     expect(await browser.content()).toContain("Field Useless deleted");
@@ -153,10 +153,10 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Join field");
     await browser.page.click("span.is-text");
     await browser.page.waitForSelector("input.text-to-display");
-    await browser.page.waitForTimeout(100);
+    await browser.page.waitFor(100);
     await browser.erase_input("input.text-to-display");
     await browser.slowly_type("input.text-to-display", "MyOtherInput");
-    await browser.page.waitForTimeout(100);
+    await browser.page.waitFor(100);
     await browser.clickNav("button.btn-primary.builder-save");
 
     expect(await browser.content()).toContain("Add view");
