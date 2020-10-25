@@ -29,9 +29,9 @@ describe("Table Endpoints", () => {
       .post("/table/")
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/4"));
+      .expect(toRedirect("/table/5"));
     await request(app)
-      .get("/table/4")
+      .get("/table/5")
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"));
     //expect(res.statusCode).toEqual(302);
@@ -126,7 +126,7 @@ Pencil, 0.5,2, t`;
       .set("Cookie", loginCookie)
       .field("name", "expenses")
       .attach("file", Buffer.from(csv, "utf-8"))
-      .expect(toRedirect("/table/5"));
+      .expect(toRedirect("/table/6"));
   });
   it("should upload csv to existing table", async () => {
     const csv = `author,Pages
@@ -138,9 +138,9 @@ Gordon Kane, 217`;
       .post("/table/upload_to_table/books")
       .set("Cookie", loginCookie)
       .attach("file", Buffer.from(csv, "utf-8"))
-      .expect(toRedirect("/table/1"));
+      .expect(toRedirect("/table/2"));
     await request(app)
-      .get(`/table/1`)
+      .get(`/table/2`)
       .set("Cookie", loginCookie)
       .expect(toInclude("Imported 2 rows"))
       .expect(toInclude("success"));

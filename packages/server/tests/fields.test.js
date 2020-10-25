@@ -27,7 +27,7 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/field/1")
+      .get("/field/2")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
   });
@@ -36,7 +36,7 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/field/new/1")
+      .get("/field/new/2")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
   });
@@ -80,7 +80,7 @@ describe("Field Endpoints", () => {
       .send("min=0")
       .send("max=410")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/1"));
+      .expect(toRedirect("/table/2"));
   });
   it("should delete new field", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -89,7 +89,7 @@ describe("Field Endpoints", () => {
     await request(app)
       .post(`/field/delete/${fld.id}`)
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/1"));
+      .expect(toRedirect("/table/2"));
   });
   it("should post new string field", async () => {
     const loginCookie = await getAdminLoginCookie();
