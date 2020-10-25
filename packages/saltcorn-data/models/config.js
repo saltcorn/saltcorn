@@ -59,6 +59,12 @@ const configTypes = {
     default: true,
     blurb: "Show the login link in the menu",
   },
+  new_user_form: {
+    type: "View users",
+    label: "New user form",
+    default: "",
+    blurb: "A view to show to new users",
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",

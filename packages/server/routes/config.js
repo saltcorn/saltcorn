@@ -2,6 +2,8 @@ const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
 const File = require("@saltcorn/data/models/file");
+const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 const Form = require("@saltcorn/data/models/form");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
@@ -45,7 +47,9 @@ const wrap = (req, cardTitle, response, lastBc) => ({
 
 const show_section = ({ name, keys }, cfgs, files, req) => {
   const canEdit = (key) =>
-    getState().types[configTypes[key].type] || configTypes[key].type === "File";
+    getState().types[configTypes[key].type] ||
+    configTypes[key].type === "File" ||
+    configTypes[key].type.startsWith("View ");
   const hideValue = (key) =>
     configTypes[key] ? configTypes[key].type === "hidden" : true;
   const showFile = (r) => {
@@ -76,7 +80,7 @@ const sections = (req) => [
   },
   {
     name: req.__("Authentication"),
-    keys: ["allow_signup", "login_menu", "allow_forgot"],
+    keys: ["allow_signup", "login_menu", "allow_forgot", "new_user_form"],
   },
   {
     name: req.__("E-mail"),
@@ -130,6 +134,13 @@ router.get(
 );
 
 const formForKey = async (req, key, value) => {
+  const isView = configTypes[key].type.startsWith("View ");
+  const viewAttributes = async () => {
+    const [v, table_name] = configTypes[key].type.split(" ");
+    const table = await Table.findOne({ name: table_name });
+    const views = await View.find({ table_id: table.id });
+    return { options: views.map((v) => v.name).join(",") };
+  };
   const form = new Form({
     action: `/config/edit/${key}`,
     blurb: req.__(configTypes[key].blurb),
@@ -138,9 +149,11 @@ const formForKey = async (req, key, value) => {
       {
         name: key,
         label: req.__(configTypes[key].label || key),
-        type: configTypes[key].type,
+        type: isView ? "String" : configTypes[key].type,
         sublabel: req.__(configTypes[key].sublabel),
-        attributes: configTypes[key].attributes,
+        attributes: isView
+          ? await viewAttributes()
+          : configTypes[key].attributes,
       },
     ],
     ...(typeof value !== "undefined" && { values: { [key]: value } }),
