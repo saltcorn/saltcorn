@@ -120,7 +120,7 @@ describe("homepage", () => {
       .expect(toInclude("You have no views!"));
   });
   it("shows with-view quick start", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = await Table.findOne({ name: "mytable" });
 
     const v = await View.create({
       table_id: table.id,
@@ -158,17 +158,19 @@ describe("bool toggle", () => {
 
 describe("history", () => {
   it("should enable history", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("id=1")
+      .send("id=" + table.id)
       .send("versioned=on")
-      .expect(toRedirect("/table/1"));
-    const table = await Table.findOne({ name: "books" });
-    expect(table.versioned).toBe(true);
+      .expect(toRedirect("/table/" + table.id));
+    const table1 = await Table.findOne({ name: "books" });
+    expect(table1.versioned).toBe(true);
   });
   it("create new row in versioned table", async () => {
     const loginCookie = await getAdminLoginCookie();
