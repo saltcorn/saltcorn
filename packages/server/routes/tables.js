@@ -263,7 +263,10 @@ router.get(
           },
           {
             label: req.__("Delete"),
-            key: (r) => post_delete_btn(`/field/delete/${r.id}`, req, r.name),
+            key: (r) =>
+              table.name === "users" && r.name === "email"
+                ? ""
+                : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
           },
         ],
         fields
@@ -471,6 +474,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = await Table.findOne({ id });
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
     try {
       await t.delete();
       req.flash("success", req.__(`Table %s deleted`, t.name));
@@ -499,7 +507,9 @@ router.get(
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+                  r.name === "users"
+                    ? ""
+                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },
             ],
             rows
