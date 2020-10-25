@@ -138,7 +138,7 @@ const formForKey = async (req, key, value) => {
   const viewAttributes = async () => {
     const [v, table_name] = configTypes[key].type.split(" ");
     const table = await Table.findOne({ name: table_name });
-    const views = await View.find({ table_id: table.id });
+    const views = await View.find({ table_id: table.id, viewtemplate: "Edit" });
     return { options: views.map((v) => v.name).join(",") };
   };
   const form = new Form({

@@ -35,6 +35,7 @@ const {
 const { available_languages } = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
 const router = new Router();
 module.exports = router;
 
@@ -311,25 +312,31 @@ router.post(
           res.redirect("/auth/signup");
           return;
         }
+        const new_user_form = getState().getConfig("new_user_form");
+        if (new_user_form) {
+          const view = await View.findOne({ name: new_user_form });
+          const resp = await view.run({ email, password }, { res, req });
+          res.sendWrap(view.name, resp);
+        } else {
+          const u = await User.create({ email, password });
 
-        const u = await User.create({ email, password });
-
-        req.login(
-          {
-            email: u.email,
-            id: u.id,
-            role_id: u.role_id,
-            tenant: db.getTenantSchema(),
-          },
-          function (err) {
-            if (!err) {
-              res.redirect("/");
-            } else {
-              req.flash("danger", err);
-              res.redirect("/auth/signup");
+          req.login(
+            {
+              email: u.email,
+              id: u.id,
+              role_id: u.role_id,
+              tenant: db.getTenantSchema(),
+            },
+            function (err) {
+              if (!err) {
+                res.redirect("/");
+              } else {
+                req.flash("danger", err);
+                res.redirect("/auth/signup");
+              }
             }
-          }
-        );
+          );
+        }
       }
     } else {
       req.flash("danger", req.__("Signups not enabled"));
