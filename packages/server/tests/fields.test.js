@@ -93,7 +93,7 @@ describe("Field Endpoints", () => {
   });
   it("should post new string field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({}));
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -109,7 +109,7 @@ describe("Field Endpoints", () => {
 
   it("should post new fkey field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: 3 }));
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
