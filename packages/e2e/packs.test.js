@@ -110,7 +110,7 @@ describe("todo packs", () => {
     expect(await browser.content()).toContain("Clean bathroom");
 
     await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
+    await browser.page.waitForTimeout(250);
     expect(await browser.getInnerText("button#tribdone")).toBe("F");
     await browser.page.click("button#tribdone");
     expect(await browser.getInnerText("button#tribdone")).toBe("?");
@@ -122,7 +122,7 @@ describe("todo packs", () => {
     expect(await browser.content()).toContain("Clean bathroom");
 
     await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
+    await browser.page.waitForTimeout(250);
     expect(await browser.getInnerText("button#tribdone")).toBe("?");
     await browser.page.click("button#tribdone");
     expect(await browser.getInnerText("button#tribdone")).toBe("T");
@@ -133,7 +133,7 @@ describe("todo packs", () => {
     expect(await browser.content()).toContain("Take out trash");
     expect(await browser.content()).not.toContain("Clean bathroom");
     await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
+    await browser.page.waitForTimeout(250);
     expect(await browser.getInnerText("button#tribdone")).toBe("T");
     await browser.page.click("button#tribdone");
     await browser.page.click("button#tribdone");
