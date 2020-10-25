@@ -89,8 +89,10 @@ describe("view with routes", () => {
   it("should enable", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},

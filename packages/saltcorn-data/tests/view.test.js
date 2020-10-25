@@ -61,8 +61,9 @@ describe("View", () => {
     expect(rows).toContainEqual({ author: "James Joyce", id: 3, pages: 678 });
   });
   it("should find", async () => {
+    const table = await Table.findOne({ name: "books" });
     const link_views = await View.find({
-      table_id: 1,
+      table_id: table.id,
     });
     expect(link_views.length).toBe(3);
   });
@@ -73,8 +74,10 @@ describe("View", () => {
     expect(link_views.length).toBe(1);
   });
   it("should create and delete", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
@@ -103,8 +106,10 @@ describe("View with routes", () => {
         json = h;
       },
     };
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
@@ -123,8 +128,10 @@ describe("View with routes", () => {
 });
 describe("nested views", () => {
   it("should create and run", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const small = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "small",
       viewtemplate: "Show",
       configuration: {
@@ -153,7 +160,7 @@ describe("nested views", () => {
       on_root_page: false,
     });
     const medium = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "medium",
       viewtemplate: "Show",
       configuration: {
@@ -196,8 +203,10 @@ describe("nested views", () => {
     expect(res).not.toContain("Melville");
   });
   it("should create and run feed of nested", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const large = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "large",
       viewtemplate: "Feed",
       configuration: {

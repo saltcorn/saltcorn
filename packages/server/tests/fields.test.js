@@ -41,7 +41,9 @@ describe("Field Endpoints", () => {
 
   it("should post new int field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
@@ -56,9 +58,11 @@ describe("Field Endpoints", () => {
 
   it("should post new int field with attributes", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         name: "AgeRating",
         label: "AgeRating",
         type: "Integer",
@@ -87,7 +91,7 @@ describe("Field Endpoints", () => {
   });
   it("should post new string field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
+    const ctx = encodeURIComponent(JSON.stringify({}));
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
