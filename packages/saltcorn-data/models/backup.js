@@ -31,7 +31,7 @@ const create_pack = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (dirpath) => {
     const tables = await asyncMap(
-      await Table.find({}),
+      (await Table.find({})).filter((t) => t.name !== "users"),
       async (t) => await table_pack(t.name)
     );
     const views = await asyncMap(
@@ -86,7 +86,7 @@ const create_table_jsons = contract(
     await fs.mkdir(dirpath);
     const tables = await Table.find({});
     for (const t of tables) {
-      await create_table_json(t, dirpath);
+      if (t.name !== "users") await create_table_json(t, dirpath);
     }
   }
 );
@@ -203,7 +203,7 @@ const restore_tables = contract(
   is.fun(is.str, is.promise(is.maybe(is.str))),
   async (dirpath) => {
     var err;
-    const tables = await Table.find();
+    const tables = (await Table.find()).filter((t) => t.name !== "users");
     for (const table of tables) {
       const fnm_csv = path.join(dirpath, "tables", table.name + ".csv");
       const fnm_json = path.join(dirpath, "tables", table.name + ".json");

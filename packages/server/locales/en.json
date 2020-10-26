@@ -428,5 +428,10 @@
 	"Disabled": "Disabled",
 	"Send password reset email": "Send password reset email",
 	" with password %s": " with password %s",
-	"User confirmation?": "User confirmation?"
+	"User confirmation?": "User confirmation?",
+	"New user form": "New user form",
+	"A view to show to new users": "A view to show to new users",
+	"Account already exists": "Account already exists",
+	"Search not configured": "Search not configured",
+	"Already in use": "Already in use"
 }

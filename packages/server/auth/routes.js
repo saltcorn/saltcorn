@@ -35,6 +35,8 @@ const {
 const { available_languages } = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
@@ -285,6 +287,90 @@ router.post(
     }
   })
 );
+
+const getNewUserForm = async (new_user_view_name, req) => {
+  const view = await View.findOne({ name: new_user_view_name });
+  const table = await Table.findOne({ name: "users" });
+  const fields = await table.getFields();
+  const { columns, layout } = view.configuration;
+
+  const tfields = (columns || [])
+    .map((column) => {
+      if (column.type === "Field") {
+        const f = fields.find((fld) => fld.name === column.field_name);
+        if (f) {
+          f.fieldview = column.fieldview;
+          return f;
+        }
+      }
+    })
+    .filter((tf) => !!tf);
+
+  const form = new Form({
+    action: `/auth/signup_final`,
+    fields: tfields,
+    layout,
+    submitLabel: req.__("Sign up"),
+  });
+  await form.fill_fkey_options();
+  form.hidden("email");
+  form.hidden("password");
+  return form;
+};
+
+const signup_login_with_user = (u, req, res) =>
+  req.login(
+    {
+      email: u.email,
+      id: u.id,
+      role_id: u.role_id,
+      tenant: db.getTenantSchema(),
+    },
+    function (err) {
+      if (!err) {
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/auth/signup");
+      }
+    }
+  );
+router.post(
+  "/signup_final",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_signup")) {
+      const new_user_form = getState().getConfig("new_user_form");
+      const form = await getNewUserForm(new_user_form, req);
+      form.validate(req.body);
+      if (form.hasErrors) {
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+      } else {
+        try {
+          const u = await User.create(form.values);
+          signup_login_with_user(u, req, res);
+        } catch (e) {
+          const table = await Table.findOne({ name: "users" });
+          const fields = await table.getFields();
+          form.hasErrors = true;
+          const unique_field_error = fields.find(
+            (f) =>
+              e.message ===
+              `duplicate key value violates unique constraint "users_${f.name}_unique"`
+          );
+          if (unique_field_error)
+            form.errors[unique_field_error.name] = req.__("Already in use");
+          else form.errors._form = e.message;
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+        }
+      }
+    } else {
+      req.flash("danger", req.__("Signups not enabled"));
+      res.redirect("/auth/login");
+    }
+  })
+);
+
 router.post(
   "/signup",
   setTenant,
@@ -311,25 +397,16 @@ router.post(
           res.redirect("/auth/signup");
           return;
         }
-
-        const u = await User.create({ email, password });
-
-        req.login(
-          {
-            email: u.email,
-            id: u.id,
-            role_id: u.role_id,
-            tenant: db.getTenantSchema(),
-          },
-          function (err) {
-            if (!err) {
-              res.redirect("/");
-            } else {
-              req.flash("danger", err);
-              res.redirect("/auth/signup");
-            }
-          }
-        );
+        const new_user_form = getState().getConfig("new_user_form");
+        if (new_user_form) {
+          const form = await getNewUserForm(new_user_form, req);
+          form.values.email = email;
+          form.values.password = password;
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+        } else {
+          const u = await User.create({ email, password });
+          signup_login_with_user(u, req, res);
+        }
       }
     } else {
       req.flash("danger", req.__("Signups not enabled"));
@@ -337,6 +414,7 @@ router.post(
     }
   })
 );
+
 function handler(req, res) {
   console.log(
     `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(

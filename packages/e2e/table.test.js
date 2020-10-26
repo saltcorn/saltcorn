@@ -44,7 +44,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Persons table");
   });
   it("edits int field", async () => {
-    await browser.goto("/field/2");
+    await browser.goto("/field/3");
     expect(await browser.content()).toContain("Edit field");
     await browser.clickNav("button[type=submit]");
     await browser.erase_input("#inputmin");

@@ -182,7 +182,8 @@ const no_views_logged_in = async (req, res) => {
   else {
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
-    if (tables.length === 0) {
+    if (tables.length <= 1) {
+      //users
       res.sendWrap(req.__("Hello"), await welcome_page(req));
     } else if (views.length === 0) {
       res.sendWrap("Hello", {

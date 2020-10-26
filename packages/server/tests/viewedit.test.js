@@ -11,6 +11,8 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
+
 beforeAll(async () => {
   await resetToFixtures();
 });
@@ -69,9 +71,11 @@ describe("viewedit new List", () => {
   });
   it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         viewname: "mybooklist",
       })
     );
@@ -90,9 +94,11 @@ describe("viewedit new List", () => {
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         viewname: "mybooklist",
         columns: [
           {
@@ -153,9 +159,11 @@ describe("viewedit new List with one field", () => {
   });
   it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         viewname: "mybooklist1",
       })
     );
@@ -172,9 +180,11 @@ describe("viewedit new List with one field", () => {
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         viewname: "mybooklist1",
         columns: [
           {
@@ -232,9 +242,11 @@ describe("viewedit new Show", () => {
   });
   it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         viewname: "mybook",
       })
     );

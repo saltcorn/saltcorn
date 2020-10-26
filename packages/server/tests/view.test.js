@@ -11,6 +11,7 @@ const {
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
@@ -89,8 +90,10 @@ describe("view with routes", () => {
   it("should enable", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
