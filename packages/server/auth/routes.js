@@ -288,7 +288,7 @@ router.post(
   })
 );
 
-const getNewUserForm = async (new_user_view_name) => {
+const getNewUserForm = async (new_user_view_name, req) => {
   const view = await View.findOne({ name: new_user_view_name });
   const table = await Table.findOne({ name: "users" });
   const fields = await table.getFields();
@@ -310,6 +310,7 @@ const getNewUserForm = async (new_user_view_name) => {
     action: `/auth/signup_final`,
     fields: tfields,
     layout,
+    submitLabel: req.__("Sign up"),
   });
   await form.fill_fkey_options();
   form.hidden("email");
@@ -340,15 +341,19 @@ router.post(
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
       const new_user_form = getState().getConfig("new_user_form");
-      const form = await getNewUserForm(new_user_form);
+      const form = await getNewUserForm(new_user_form, req);
       form.validate(req.body);
       if (form.hasErrors) {
-        form.action = "/auth/signup";
-        form.submitLabel = req.__("Sign up");
         res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
       } else {
-        const u = await User.create(form.values);
-        signup_login_with_user(u, req, res);
+        try {
+          const u = await User.create(form.values);
+          signup_login_with_user(u, req, res);
+        } catch (e) {
+          form.hasErrors = true;
+          form.errors._form = e.message;
+          res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+        }
       }
     } else {
       req.flash("danger", req.__("Signups not enabled"));
@@ -385,10 +390,10 @@ router.post(
         }
         const new_user_form = getState().getConfig("new_user_form");
         if (new_user_form) {
-          const form = await getNewUserForm(new_user_form);
+          const form = await getNewUserForm(new_user_form, req);
           form.values.email = email;
           form.values.password = password;
-          res.sendWrap(new_user_form, renderForm(form, req.csrfToken()));
+          res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
         } else {
           const u = await User.create({ email, password });
           signup_login_with_user(u, req, res);
