@@ -432,5 +432,6 @@
 	"New user form": "New user form",
 	"A view to show to new users": "A view to show to new users",
 	"Account already exists": "Account already exists",
-	"Search not configured": "Search not configured"
+	"Search not configured": "Search not configured",
+	"Already in use": "Already in use"
 }

@@ -344,15 +344,24 @@ router.post(
       const form = await getNewUserForm(new_user_form, req);
       form.validate(req.body);
       if (form.hasErrors) {
-        res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
       } else {
         try {
           const u = await User.create(form.values);
           signup_login_with_user(u, req, res);
         } catch (e) {
+          const table = await Table.findOne({ name: "users" });
+          const fields = await table.getFields();
           form.hasErrors = true;
-          form.errors._form = e.message;
-          res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+          const unique_field_error = fields.find(
+            (f) =>
+              e.message ===
+              `duplicate key value violates unique constraint "users_${f.name}_unique"`
+          );
+          if (unique_field_error)
+            form.errors[unique_field_error.name] = req.__("Already in use");
+          else form.errors._form = e.message;
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
         }
       }
     } else {
@@ -393,7 +402,7 @@ router.post(
           const form = await getNewUserForm(new_user_form, req);
           form.values.email = email;
           form.values.password = password;
-          res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
         } else {
           const u = await User.create({ email, password });
           signup_login_with_user(u, req, res);
