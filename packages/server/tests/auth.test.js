@@ -1,6 +1,8 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
+const Field = require("@saltcorn/data/models/field");
 const User = require("@saltcorn/data/models/user");
 const {
   getStaffLoginCookie,
@@ -232,5 +234,80 @@ describe("user admin", () => {
       .expect(toRedirect("/useradmin"));
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
+  });
+});
+describe("User fields", () => {
+  it("should add fields", async () => {
+    const table = await Table.findOne({ name: "users" });
+    await Field.create({
+      table,
+      label: "Height",
+      type: "Integer",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "newuser",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", fieldview: "edit", field_name: "height" },
+          { type: "Action", minRole: 10, action_name: "Save" },
+        ],
+        layout: {
+          above: [
+            {
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    { type: "blank", contents: "Height", isFormula: {} },
+                  ],
+                },
+                {
+                  above: [
+                    null,
+                    {
+                      type: "field",
+                      fieldview: "edit",
+                      field_name: "height",
+                    },
+                  ],
+                },
+              ],
+            },
+            { type: "line_break" },
+            { type: "action", minRole: 10, action_name: "Save" },
+          ],
+        },
+      },
+      min_role: 1,
+      on_root_page: true,
+    });
+    await getState().setConfig("new_user_form", "newuser");
+  });
+  it("should sign up", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/signup/")
+      .send("email=staff14@foo.com")
+      .send("password=seCERGERG45et")
+      .expect(200)
+      .expect(toInclude("/auth/signup_final"))
+      .expect(toInclude("seCERGERG45et"))
+      .expect(toInclude(">Height<"));
+  });
+  it("should sign up with new user form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/signup_final")
+      .send("email=staff14@foo.com")
+      .send("password=seCERGERG45et")
+      .send("height=191")
+      .expect(toRedirect("/"));
+    const table = await Table.findOne({ name: "users" });
+    const ut = await table.getRow({ email: "staff14@foo.com" });
+    expect(ut.email).toBe("staff14@foo.com");
+    expect(ut.height).toBe(191);
   });
 });
