@@ -36,6 +36,7 @@ const { available_languages } = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
@@ -286,6 +287,36 @@ router.post(
     }
   })
 );
+
+const getNewUserForm = async (new_user_view_name) => {
+  const view = await View.findOne({ name: new_user_view_name });
+  const table = await Table.findOne({ name: "users" });
+  const fields = await table.getFields();
+  const { columns, layout } = view.configuration;
+
+  const tfields = (columns || [])
+    .map((column) => {
+      if (column.type === "Field") {
+        const f = fields.find((fld) => fld.name === column.field_name);
+        if (f) {
+          f.fieldview = column.fieldview;
+          return f;
+        }
+      }
+    })
+    .filter((tf) => !!tf);
+
+  const form = new Form({
+    action: `/auth/signup_final`,
+    fields: tfields,
+    layout,
+  });
+  await form.fill_fkey_options();
+  form.hidden("email");
+  form.hidden("password");
+  return form;
+};
+
 router.post(
   "/signup",
   setTenant,
@@ -314,9 +345,10 @@ router.post(
         }
         const new_user_form = getState().getConfig("new_user_form");
         if (new_user_form) {
-          const view = await View.findOne({ name: new_user_form });
-          const resp = await view.run({ email, password }, { res, req });
-          res.sendWrap(view.name, resp);
+          const form = await getNewUserForm(new_user_form);
+          form.values.email = email;
+          form.values.password = password;
+          res.sendWrap(new_user_form, renderForm(form, req.csrfToken()));
         } else {
           const u = await User.create({ email, password });
 
