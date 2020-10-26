@@ -1,5 +1,7 @@
 const db = require("../db/index.js");
 const User = require("../models/user");
+const Table = require("../models/table");
+const Field = require("../models/field");
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -66,5 +68,32 @@ describe("User", () => {
     await u.delete();
     const us = await User.find({ email: "foo@bar.com" });
     expect(us.length).toBe(0);
+  });
+});
+
+describe("User fields", () => {
+  it("should add fields", async () => {
+    const table = await Table.findOne({ name: "users" });
+    const fc = await Field.create({
+      table,
+      label: "Height",
+      type: "Integer",
+    });
+    await User.create({
+      email: "foo1@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo1@bar.com",
+      password: "YEge56FGew",
+    });
+    expect(u.email).toBe("foo1@bar.com");
+    expect(u.role_id).toBe(8);
+    expect(u.height).toBe(undefined);
+    expect(u.password === "YEge56FGew").toBe(false);
+    const ut = await table.getRow({ id: u.id });
+    expect(ut.email).toBe("foo1@bar.com");
+    expect(ut.height).toBe(183);
   });
 });
