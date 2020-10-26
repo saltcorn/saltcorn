@@ -36,7 +36,8 @@ class User {
     await db.update("users", upd, this.id);
   }
   static async create(uo) {
-    const u = new User(uo);
+    const { email, password, ...rest } = uo;
+    const u = new User({ email, password });
     if (User.unacceptable_password_reason(u.password))
       return {
         error:
@@ -49,6 +50,7 @@ class User {
     const id = await db.insert("users", {
       email: u.email,
       password: hashpw,
+      ...rest,
       role_id: u.role_id,
     });
     u.id = id;

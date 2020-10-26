@@ -430,5 +430,6 @@
 	" with password %s": " with password %s",
 	"User confirmation?": "User confirmation?",
 	"New user form": "New user form",
-	"A view to show to new users": "A view to show to new users"
+	"A view to show to new users": "A view to show to new users",
+	"Account already exists": "Account already exists"
 }

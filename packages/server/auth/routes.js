@@ -317,6 +317,46 @@ const getNewUserForm = async (new_user_view_name) => {
   return form;
 };
 
+const signup_login_with_user = (u, req, res) =>
+  req.login(
+    {
+      email: u.email,
+      id: u.id,
+      role_id: u.role_id,
+      tenant: db.getTenantSchema(),
+    },
+    function (err) {
+      if (!err) {
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/auth/signup");
+      }
+    }
+  );
+router.post(
+  "/signup_final",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (getState().getConfig("allow_signup")) {
+      const new_user_form = getState().getConfig("new_user_form");
+      const form = await getNewUserForm(new_user_form);
+      form.validate(req.body);
+      if (form.hasErrors) {
+        form.action = "/auth/signup";
+        form.submitLabel = req.__("Sign up");
+        res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+      } else {
+        const u = await User.create(form.values);
+        signup_login_with_user(u, req, res);
+      }
+    } else {
+      req.flash("danger", req.__("Signups not enabled"));
+      res.redirect("/auth/login");
+    }
+  })
+);
+
 router.post(
   "/signup",
   setTenant,
@@ -351,23 +391,7 @@ router.post(
           res.sendWrap(new_user_form, renderForm(form, req.csrfToken()));
         } else {
           const u = await User.create({ email, password });
-
-          req.login(
-            {
-              email: u.email,
-              id: u.id,
-              role_id: u.role_id,
-              tenant: db.getTenantSchema(),
-            },
-            function (err) {
-              if (!err) {
-                res.redirect("/");
-              } else {
-                req.flash("danger", err);
-                res.redirect("/auth/signup");
-              }
-            }
-          );
+          signup_login_with_user(u, req, res);
         }
       }
     } else {
@@ -376,6 +400,7 @@ router.post(
     }
   })
 );
+
 function handler(req, res) {
   console.log(
     `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
