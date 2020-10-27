@@ -433,5 +433,6 @@
 	"A view to show to new users": "A view to show to new users",
 	"Account already exists": "Account already exists",
 	"Search not configured": "Search not configured",
-	"Already in use": "Already in use"
+	"Already in use": "Already in use",
+	"Functions you can use (in addition to standard JavaScript functions): ": "Functions you can use (in addition to standard JavaScript functions): "
 }
