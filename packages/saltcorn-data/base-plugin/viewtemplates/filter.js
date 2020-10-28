@@ -76,11 +76,10 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   }
   const blockDispatch = {
     search_bar() {
-      return search_bar(
-        "_fts",
-        state["_fts"],
-        "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())"
-      );
+      return search_bar("_fts", state["_fts"], {
+        onClick:
+          "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())",
+      });
     },
     dropdown_filter({ field_name }) {
       return select(

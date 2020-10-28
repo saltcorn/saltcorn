@@ -21,7 +21,7 @@ const select_options = (v, hdr) => {
     .join(""));
 };
 
-const search_bar = (name, v, onClick) => `<div class="input-group">
+const search_bar = (name, v, { onClick } = {}) => `<div class="input-group">
 <input type="text" class="form-control bg-light search-bar" placeholder="Search for..." 
        id="input${text_attr(name)}" name="${name}" 
        ${onClick ? `onChange="${onClick}"` : ""}
