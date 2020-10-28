@@ -9,6 +9,7 @@ const manager = new PluginManager({
     "@saltcorn/markup": require("@saltcorn/markup"),
     "@saltcorn/markup/tags": require("@saltcorn/markup/tags"),
     "@saltcorn/markup/layout": require("@saltcorn/markup/layout"),
+    "@saltcorn/markup/helpers": require("@saltcorn/markup/helpers"),
     "@saltcorn/markup/layout_utils": require("@saltcorn/markup/layout_utils"),
     "@saltcorn/data": require("@saltcorn/data"),
     "@saltcorn/data/db": require("@saltcorn/data/db"),

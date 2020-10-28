@@ -144,6 +144,13 @@ function set_state_field(key, value) {
     value
   );
 }
+function set_state_fields(kvs) {
+  var newhref = window.location.href;
+  Object.entries(kvs).forEach((kv) => {
+    newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
+  });
+  window.location.href = newhref;
+}
 function unset_state_field(key) {
   window.location.href = removeQueryStringParameter(window.location.href, key);
 }
