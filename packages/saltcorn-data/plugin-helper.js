@@ -417,6 +417,28 @@ const picked_fields_to_query = contract(
   }
 );
 
+const stateFieldsToQuery = contract(is.fun(is.obj(), is.obj()), (state) => {
+  let q = {};
+  const stateKeys = Object.keys(state);
+  if (state._sortby) q.orderBy = state._sortby;
+  if (state._pagesize) q.limit = db.sqlsanitize(`${state._pagesize}`);
+  if (state._pagesize && state._page)
+    q.offset = (parseInt(state._page) - 1) * parseInt(state._pagesize);
+  const latNear = stateKeys.find((k) => k.startsWith("_near_lat_"));
+  const longNear = stateKeys.find((k) => k.startsWith("_near_long_"));
+  if (latNear && longNear) {
+    const latfield = db.sqlsanitize(latNear.replace("_near_lat_", ""));
+    const longfield = db.sqlsanitize(longNear.replace("_near_long_", ""));
+    const lat = parseFloat(state[latNear]);
+    const long = parseFloat(state[longNear]);
+    const cos_lat_2 = Math.pow(Math.cos((lat * Math.PI) / 180), 2);
+    q.orderBy = {
+      sql: `((${latfield}-${lat})*(${latfield}-${lat})) + ((${longfield} - ${long})*(${longfield} - ${long})*${cos_lat_2})`,
+    };
+  }
+  return q;
+});
+
 const stateFieldsToWhere = contract(
   is.fun(
     is.obj({
@@ -603,6 +625,7 @@ module.exports = {
   get_child_views,
   get_parent_views,
   stateFieldsToWhere,
+  stateFieldsToQuery,
   initial_config_all_fields,
   calcfldViewOptions,
   get_link_view_opts,

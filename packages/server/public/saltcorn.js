@@ -9,12 +9,10 @@ jQuery.fn.swapWith = function (to) {
 };
 
 function sortby(k) {
-  $('input[name="_sortby"]').val(k);
-  $("form.stateForm").submit();
+  set_state_fields({ _sortby: k });
 }
-function gopage(n) {
-  $('input[name="_page"]').val(n);
-  $("form.stateForm").submit();
+function gopage(n, pagesize) {
+  set_state_fields({ _page: n, _pagesize: pagesize });
 }
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
