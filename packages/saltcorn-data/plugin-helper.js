@@ -2,6 +2,7 @@ const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
 const { getState } = require("./db/state");
+const db = require("./db");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
@@ -421,7 +422,7 @@ const stateFieldsToQuery = contract(is.fun(is.obj(), is.obj()), (state) => {
   let q = {};
   const stateKeys = Object.keys(state);
   if (state._sortby) q.orderBy = state._sortby;
-  if (state._pagesize) q.limit = db.sqlsanitize(`${state._pagesize}`);
+  if (state._pagesize) q.limit = parseInt(state._pagesize);
   if (state._pagesize && state._page)
     q.offset = (parseInt(state._page) - 1) * parseInt(state._pagesize);
   const latNear = stateKeys.find((k) => k.startsWith("_near_lat_"));

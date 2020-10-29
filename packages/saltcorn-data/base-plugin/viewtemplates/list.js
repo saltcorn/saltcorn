@@ -14,6 +14,7 @@ const {
   stateFieldsToWhere,
   initial_config_all_fields,
   stateToQueryString,
+  stateFieldsToQuery,
   link_view,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
@@ -161,18 +162,18 @@ const run = async (
     extraOpts.req
   );
   const { id, ...state } = stateWithId || {};
-  const qstate = await stateFieldsToWhere({ fields, state });
+  const where = await stateFieldsToWhere({ fields, state });
+  const q = await stateFieldsToQuery(state);
   const rows_per_page = 20;
+  if (!q.limit) q.limit = rows_per_page;
+  if (!q.orderBy) q.orderBy = "id";
+
   const current_page = parseInt(state._page) || 1;
   const rows = await table.getJoinedRows({
-    where: qstate,
+    where,
     joinFields,
     aggregations,
-    limit: rows_per_page,
-    offset: (current_page - 1) * rows_per_page,
-    ...(state._sortby && state._sortby !== "undefined"
-      ? { orderBy: state._sortby }
-      : { orderBy: "id" }),
+    ...q,
   });
 
   var page_opts =
@@ -181,7 +182,7 @@ const run = async (
       : { selectedId: id };
 
   if (rows.length === rows_per_page || current_page > 1) {
-    const nrows = await table.countRows(qstate);
+    const nrows = await table.countRows(where);
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
         current_page,
