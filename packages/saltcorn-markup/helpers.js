@@ -1,4 +1,4 @@
-const { a, text, div, input, text_attr } = require("./tags");
+const { a, text, div, input, text_attr, ul, li, span } = require("./tags");
 
 const isdef = (x) => typeof x !== "undefined";
 
@@ -19,6 +19,40 @@ const select_options = (v, hdr) => {
       }>${text(label)}</option>`;
     })
     .join(""));
+};
+
+const pagination = ({ current_page, pages, get_page_link }) => {
+  const from = Math.max(1, current_page - 3);
+  const to = Math.min(pages, current_page + 3);
+  var lis = [];
+  if (from > 1) {
+    lis.push(
+      li(
+        { class: `page-item` },
+        a({ class: "page-link", href: get_page_link(1) }, 1)
+      )
+    );
+    lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
+  }
+
+  for (let index = from; index <= to; index++) {
+    lis.push(
+      li(
+        { class: ["page-item", index === current_page && "active"] },
+        a({ class: "page-link", href: get_page_link(index) }, index)
+      )
+    );
+  }
+  if (to < pages) {
+    lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
+    lis.push(
+      li(
+        { class: `page-item` },
+        a({ class: "page-link", href: get_page_link(pages) }, pages)
+      )
+    );
+  }
+  return ul({ class: "pagination" }, lis);
 };
 
 const search_bar = (
@@ -47,4 +81,10 @@ const search_bar_form = () => `<form action="/search" method="get">
 ${search_bar("q")}
 </form>`;
 
-module.exports = { isdef, select_options, search_bar, search_bar_form };
+module.exports = {
+  isdef,
+  select_options,
+  search_bar,
+  search_bar_form,
+  pagination,
+};

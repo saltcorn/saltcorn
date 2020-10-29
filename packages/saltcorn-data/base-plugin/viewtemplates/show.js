@@ -187,6 +187,7 @@ const runMany = async (
     where: qstate,
     joinFields,
     aggregations,
+    ...(extra && extra.limit && { limit: extra.limit }),
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
     ...q,
