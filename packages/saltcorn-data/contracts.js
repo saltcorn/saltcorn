@@ -151,7 +151,7 @@ const is_table_query = is.obj({
   where: is.maybe(is.obj()),
   limit: is.maybe(is.positive),
   offset: is.maybe(is.positive),
-  orderBy: is.maybe(is.str),
+  orderBy: is.maybe(is.or(is.str, is.obj({ sql: is.str }))),
   orderDesc: is.maybe(is.bool),
 });
 

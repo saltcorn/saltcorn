@@ -561,7 +561,8 @@ class Table {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy && "a." + opts.orderBy,
+      orderBy:
+        opts.orderBy && (opts.orderBy.sql ? opts.orderBy : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
