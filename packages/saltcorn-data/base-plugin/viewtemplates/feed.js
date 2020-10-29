@@ -9,7 +9,11 @@ const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const {} = require("./viewable_fields");
 const pluralize = require("pluralize");
-const { link_view, stateToQueryString } = require("../../plugin-helper");
+const {
+  link_view,
+  stateToQueryString,
+  stateFieldsToQuery,
+} = require("../../plugin-helper");
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -173,10 +177,15 @@ const run = async (
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
+  const q = await stateFieldsToQuery(state);
+  let qextra = {};
+  if (!q.orderBy) {
+    qextra.orderBy = order_field;
+    if (descending) qextra.orderDesc = true;
+  }
   const sresp = await sview.runMany(state, {
     ...extraArgs,
-    orderBy: order_field,
-    ...(descending && { orderDesc: true }),
+    ...qextra,
   });
   const role =
     extraArgs && extraArgs.req && extraArgs.req.user
