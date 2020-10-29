@@ -63,6 +63,7 @@ class Plugin {
   async dependant_views() {
     const views = await View.find({});
     const { getState } = require("../db/state");
+    if (!getState().plugins[this.name]) return [];
     const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
     const vt_names = myViewTemplates.map((vt) => vt.name);
     return views
