@@ -420,10 +420,13 @@ const picked_fields_to_query = contract(
 
 const stateFieldsToQuery = contract(
   is.fun(is.obj(), is.obj()),
-  (state, prefix = "") => {
+  ({ state, fields, prefix = "" }) => {
     let q = {};
     const stateKeys = Object.keys(state);
-    if (state._sortby) q.orderBy = state._sortby;
+    if (state._sortby) {
+      const field = fields.find((f) => f.name === state._sortby);
+      if (field) q.orderBy = state._sortby;
+    }
     if (state._pagesize) q.limit = parseInt(state._pagesize);
     if (state._pagesize && state._page)
       q.offset = (parseInt(state._page) - 1) * parseInt(state._pagesize);

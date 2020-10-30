@@ -186,11 +186,11 @@ const run = async (
   extraArgs
 ) => {
   const table = await Table.findOne({ id: table_id });
-
+  const fields = await table.getFields();
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
-  const q = await stateFieldsToQuery(state);
+  const q = await stateFieldsToQuery({ state, fields });
   let qextra = {};
   if (!q.orderBy) {
     qextra.orderBy = order_field;
