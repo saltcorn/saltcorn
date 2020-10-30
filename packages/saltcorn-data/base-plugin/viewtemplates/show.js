@@ -16,6 +16,7 @@ const renderLayout = require("@saltcorn/markup/layout");
 
 const {
   stateFieldsToWhere,
+  stateFieldsToQuery,
   get_link_view_opts,
   picked_fields_to_query,
   initial_config_all_fields,
@@ -180,12 +181,16 @@ const runMany = async (
   const fields = await tbl.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
+  const q = await stateFieldsToQuery({ state, fields });
+
   const rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
+    ...(extra && extra.limit && { limit: extra.limit }),
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
+    ...q,
   });
 
   const rendered = await renderRows(

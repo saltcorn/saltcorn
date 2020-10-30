@@ -4,6 +4,7 @@ const Field = require("./field");
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
+  recalculate_for_stored,
 } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
@@ -408,6 +409,10 @@ class Table {
     if (!db.isSQLite) await client.release(true);
 
     if (db.reset_sequence) await db.reset_sequence(this.name);
+
+    if (this.fields.some((f) => f.calculated && f.stored)) {
+      recalculate_for_stored(this);
+    }
     return {
       success:
         `Imported ${file_rows.length - rejects} rows into table ${this.name}` +
@@ -556,7 +561,8 @@ class Table {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy && "a." + opts.orderBy,
+      orderBy:
+        opts.orderBy && (opts.orderBy.sql ? opts.orderBy : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };

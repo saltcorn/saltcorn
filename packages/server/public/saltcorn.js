@@ -9,12 +9,10 @@ jQuery.fn.swapWith = function (to) {
 };
 
 function sortby(k) {
-  $('input[name="_sortby"]').val(k);
-  $("form.stateForm").submit();
+  set_state_fields({ _sortby: k });
 }
-function gopage(n) {
-  $('input[name="_page"]').val(n);
-  $("form.stateForm").submit();
+function gopage(n, pagesize) {
+  set_state_fields({ _page: n, _pagesize: pagesize });
 }
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
@@ -147,7 +145,9 @@ function set_state_field(key, value) {
 function set_state_fields(kvs) {
   var newhref = window.location.href;
   Object.entries(kvs).forEach((kv) => {
-    newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
+    if (kv[1].unset && kv[1].unset === true)
+      newhref = removeQueryStringParameter(newhref, kv[0]);
+    else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
   window.location.href = newhref;
 }
