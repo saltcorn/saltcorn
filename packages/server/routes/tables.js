@@ -14,6 +14,7 @@ const {
   post_delete_btn,
   post_dropdown_item,
 } = require("@saltcorn/markup");
+const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -386,6 +387,12 @@ router.get(
         { class: "mx-auto" },
         settingsDropdown(`dataMenuButton`, [
           post_dropdown_item(
+            `/table/recalc-stored/${table.name}`,
+            '<i class="fas fa-sync"></i>&nbsp;' +
+              req.__("Recalculate stored fields"),
+            req
+          ),
+          post_dropdown_item(
             `/table/delete-all-rows/${table.name}`,
             '<i class="far fa-trash-alt"></i>&nbsp;' +
               req.__("Delete all rows"),
@@ -616,9 +623,26 @@ router.post(
 
     try {
       await table.deleteRows({});
+      req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       req.flash("error", e.message);
     }
+
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/recalc-stored/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    recalculate_for_stored(table);
+
+    req.flash("success", req.__("Started recalculating stored fields"));
 
     res.redirect(`/table/${table.id}`);
   })
