@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+    image: saltcorn/saltcorn:dev
+    entrypoint: "sleep 100000"
+    environment:
+      - "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true"
+      - "SALTCORN_MULTI_TENANT=true"
+    ports:
+      - "3000"
+    env_file:
+      - .env
+  database:
+    volumes:
+      - db-data:/var/lib/postgresql/data/pgdata
+volumes:
+  db-data:
