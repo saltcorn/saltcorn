@@ -19,6 +19,14 @@ For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn un
 
 Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/) and other awesome free and open source projects.
 
+## Quickstart with Docker
+
+You can run a local instance for quick test by running the following command
+
+`docker-compose up -d`
+
+and then point your browser to http://localhost:3000
+
 ## Install from packages
 
 Instructions have been tested on Ubuntu 20.04 on a 1GB VM.
@@ -242,3 +250,17 @@ to also watch a local module
 in `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run builddev`
+
+### Run e2e tests
+
+Rename `docker-compose.e2e.yml` to `docker-compose.override.yml`, and launch a local stack:
+
+`docker-compose up -d` and then enter the main container by running `docker-compose exec app bash` 
+
+From there, you can run any command you would run in Github Actions like:
+
+- `saltcorn run-tests`
+- `saltcorn run-tests saltcorn-data`
+- `saltcorn run-tests server`
+
+Finally, you can go back to your shell with `exit`
