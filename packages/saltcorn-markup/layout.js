@@ -84,7 +84,19 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       );
     }
     if (segment.type === "link") {
-      return wrap(segment, isTop, ix, a({ href: segment.url }, segment.text));
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        a(
+          {
+            href: segment.url,
+            target: segment.target_blank ? "_blank" : false,
+            rel: segment.nofollow ? "nofollow" : false,
+          },
+          segment.text
+        )
+      );
     }
     if (segment.type === "card")
       return wrap(
@@ -92,7 +104,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         isTop,
         ix,
         div(
-          { class: "card shadow mt-4" },
+          {
+            class: `card shadow mt-4 ${segment.url ? "with-link" : ""}`,
+            onclick: segment.url ? `location.href='${segment.url}'` : false,
+          },
           segment.title &&
             div(
               { class: "card-header" },

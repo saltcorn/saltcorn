@@ -63,6 +63,8 @@ export const layoutToNodes = (layout, query, actions) => {
           url={segment.url}
           text={segment.text}
           block={segment.block || false}
+          nofollow={segment.nofollow || false}
+          target_blank={segment.target_blank || false}
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
         />
@@ -151,7 +153,14 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "card") {
       return (
-        <Element key={ix} canvas title={segment.title} is={Card}>
+        <Element
+          key={ix}
+          canvas
+          title={segment.title}
+          url={segment.url}
+          isFormula={segment.isFormula || {}}
+          is={Card}
+        >
           {toTag(segment.contents)}
         </Element>
       );
@@ -253,6 +262,8 @@ export const craftToSaltcorn = (nodes) => {
           contents: get_nodes(node),
           type: "card",
           title: node.props.title,
+          isFormula: node.props.isFormula,
+          url: node.props.url,
         };
       else return get_nodes(node);
     }
@@ -301,6 +312,8 @@ export const craftToSaltcorn = (nodes) => {
         text: node.props.text,
         url: node.props.url,
         block: node.props.block,
+        nofollow: node.props.nofollow,
+        target_blank: node.props.target_blank,
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
       };

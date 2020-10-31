@@ -241,7 +241,6 @@ router.get(
       const tableHtml = mkTable(
         [
           { label: req.__("Label"), key: "label" },
-
           {
             label: req.__("Type"),
             key: (r) =>
@@ -257,6 +256,7 @@ router.get(
             label: req.__("Attributes"),
             key: (r) => attribBadges(r),
           },
+          { label: req.__("Variable name"), key: "name" },
           {
             label: req.__("Edit"),
             key: (r) => link(`/field/${r.id}`, req.__("Edit")),

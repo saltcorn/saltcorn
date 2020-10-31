@@ -220,6 +220,10 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
     },
+    card(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "title");
+    },
   });
   const blockDispatch = {
     field({ field_name, fieldview }) {

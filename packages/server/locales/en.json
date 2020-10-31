@@ -435,5 +435,6 @@
 	"Search not configured": "Search not configured",
 	"Already in use": "Already in use",
 	"Functions you can use (in addition to standard JavaScript functions): ": "Functions you can use (in addition to standard JavaScript functions): ",
-	"Items per page": "Items per page"
+	"Items per page": "Items per page",
+	"Variable name": "Variable name"
 }
