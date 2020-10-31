@@ -84,7 +84,15 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       );
     }
     if (segment.type === "link") {
-      return wrap(segment, isTop, ix, a({ href: segment.url }, segment.text));
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        a(
+          { href: segment.url, rel: segment.nofollow ? "nofollow" : false },
+          segment.text
+        )
+      );
     }
     if (segment.type === "card")
       return wrap(

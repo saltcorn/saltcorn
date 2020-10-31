@@ -28,6 +28,7 @@ export const LinkSettings = () => {
     block: node.data.props.block,
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
+    nofollow: node.data.props.nofollow,
   }));
   const {
     actions: { setProp },
@@ -36,6 +37,7 @@ export const LinkSettings = () => {
     block,
     isFormula,
     textStyle,
+    nofollow,
   } = node;
 
   return (
@@ -58,6 +60,18 @@ export const LinkSettings = () => {
           onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
         />
       </OrFormula>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={nofollow}
+          onChange={(e) =>
+            setProp((prop) => (prop.nofollow = e.target.checked))
+          }
+        />
+        <label className="form-check-label">Nofollow</label>
+      </div>
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
@@ -69,6 +83,7 @@ Link.craft = {
     text: "Click here",
     url: "https://saltcorn.com/",
     block: false,
+    nofollow: false,
     isFormula: {},
     textStyle: "",
   },
