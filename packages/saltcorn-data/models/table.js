@@ -461,20 +461,14 @@ class Table {
     var parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
-        if (f.reftable_name === "users") {
-          parent_field_list.push(`${f.name}.email`);
-          const table = new Table({ name: "users " });
-          parent_relations.push({ key_field: f, table });
-        } else {
-          const table = await Table.findOne({ name: f.reftable_name });
-          await table.getFields();
-          table.fields
-            .filter((f) => !f.calculated || f.stored)
-            .forEach((pf) => {
-              parent_field_list.push(`${f.name}.${pf.name}`);
-            });
-          parent_relations.push({ key_field: f, table });
-        }
+        const table = await Table.findOne({ name: f.reftable_name });
+        await table.getFields();
+        table.fields
+          .filter((f) => !f.calculated || f.stored)
+          .forEach((pf) => {
+            parent_field_list.push(`${f.name}.${pf.name}`);
+          });
+        parent_relations.push({ key_field: f, table });
       }
     }
     return { parent_relations, parent_field_list };
