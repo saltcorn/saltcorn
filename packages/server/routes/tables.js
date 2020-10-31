@@ -10,7 +10,9 @@ const {
   renderForm,
   link,
   post_btn,
+  settingsDropdown,
   post_delete_btn,
+  post_dropdown_item,
 } = require("@saltcorn/markup");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
@@ -379,6 +381,18 @@ router.get(
             onchange: "this.form.submit();",
           })
         )
+      ),
+      div(
+        { class: "mx-auto" },
+        settingsDropdown(`dataMenuButton`, [
+          post_dropdown_item(
+            `/table/delete-all-rows/${table.name}`,
+            '<i class="far fa-trash-alt"></i>&nbsp;' +
+              req.__("Delete all rows"),
+            req,
+            true
+          ),
+        ])
       )
     );
     res.sendWrap(req.__(`%s table`, table.name), {
@@ -588,6 +602,24 @@ router.post(
     }
 
     await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/delete-all-rows/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    try {
+      await table.deleteRows({});
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
     res.redirect(`/table/${table.id}`);
   })
 );

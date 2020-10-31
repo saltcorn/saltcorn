@@ -436,5 +436,6 @@
 	"Already in use": "Already in use",
 	"Functions you can use (in addition to standard JavaScript functions): ": "Functions you can use (in addition to standard JavaScript functions): ",
 	"Items per page": "Items per page",
-	"Variable name": "Variable name"
+	"Variable name": "Variable name",
+	"Delete all rows": "Delete all rows"
 }
