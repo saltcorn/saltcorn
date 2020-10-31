@@ -292,6 +292,7 @@ export const ToolboxShow = () => {
       />
       <ViewElem connectors={connectors} views={views} />
       <ContainerElem connectors={connectors} />
+      <CardElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -311,6 +312,7 @@ export const ToolboxFilter = () => {
       <SearchElem connectors={connectors} />
 
       <ContainerElem connectors={connectors} />
+      <CardElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -331,6 +333,7 @@ export const ToolboxEdit = () => {
       <LineBreakElem connectors={connectors} />
       <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
+      <CardElem connectors={connectors} />
     </Fragment>
   );
 };
