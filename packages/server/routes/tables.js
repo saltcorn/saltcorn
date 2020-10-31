@@ -10,8 +10,11 @@ const {
   renderForm,
   link,
   post_btn,
+  settingsDropdown,
   post_delete_btn,
+  post_dropdown_item,
 } = require("@saltcorn/markup");
+const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -379,6 +382,24 @@ router.get(
             onchange: "this.form.submit();",
           })
         )
+      ),
+      div(
+        { class: "mx-auto" },
+        settingsDropdown(`dataMenuButton`, [
+          post_dropdown_item(
+            `/table/recalc-stored/${table.name}`,
+            '<i class="fas fa-sync"></i>&nbsp;' +
+              req.__("Recalculate stored fields"),
+            req
+          ),
+          post_dropdown_item(
+            `/table/delete-all-rows/${table.name}`,
+            '<i class="far fa-trash-alt"></i>&nbsp;' +
+              req.__("Delete all rows"),
+            req,
+            true
+          ),
+        ])
       )
     );
     res.sendWrap(req.__(`%s table`, table.name), {
@@ -580,7 +601,7 @@ router.post(
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
     try {
-      const parse_res = await table.import_csv_file(newPath);
+      const parse_res = await table.import_csv_file(newPath, true);
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
@@ -588,6 +609,41 @@ router.post(
     }
 
     await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/delete-all-rows/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    try {
+      await table.deleteRows({});
+      req.flash("success", req.__("Deleted all rows"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/recalc-stored/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    recalculate_for_stored(table);
+
+    req.flash("success", req.__("Started recalculating stored fields"));
+
     res.redirect(`/table/${table.id}`);
   })
 );

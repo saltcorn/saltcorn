@@ -349,7 +349,7 @@ class Table {
     return parse_res;
   }
 
-  async import_csv_file(filePath) {
+  async import_csv_file(filePath, recalc_stored) {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
@@ -410,7 +410,7 @@ class Table {
 
     if (db.reset_sequence) await db.reset_sequence(this.name);
 
-    if (this.fields.some((f) => f.calculated && f.stored)) {
+    if (recalc_stored && this.fields.some((f) => f.calculated && f.stored)) {
       recalculate_for_stored(this);
     }
     return {
