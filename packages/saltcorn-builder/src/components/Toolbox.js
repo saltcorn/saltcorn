@@ -101,7 +101,7 @@ const CardElem = ({ connectors }) => (
     icon="far fa-square"
     label="Card"
   >
-    <Element canvas is={Card}></Element>
+    <Element canvas is={Card} isFormula={{}} url=""></Element>
   </WrapElem>
 );
 const ImageElem = ({ connectors, images }) => (

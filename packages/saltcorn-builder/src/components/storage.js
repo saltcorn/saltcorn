@@ -153,7 +153,14 @@ export const layoutToNodes = (layout, query, actions) => {
       );
     } else if (segment.type === "card") {
       return (
-        <Element key={ix} canvas title={segment.title} is={Card}>
+        <Element
+          key={ix}
+          canvas
+          title={segment.title}
+          url={segment.url}
+          isFormula={segment.isFormula || {}}
+          is={Card}
+        >
           {toTag(segment.contents)}
         </Element>
       );
@@ -255,6 +262,8 @@ export const craftToSaltcorn = (nodes) => {
           contents: get_nodes(node),
           type: "card",
           title: node.props.title,
+          isFormula: node.props.isFormula,
+          url: node.props.url,
         };
       else return get_nodes(node);
     }

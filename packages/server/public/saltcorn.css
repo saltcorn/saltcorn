@@ -129,3 +129,7 @@ div.dropdown-menu.search-form {
   max-height: 75vh;
   overflow-y: auto;
 }
+
+div.card.with-link:hover {
+  cursor: pointer;
+}

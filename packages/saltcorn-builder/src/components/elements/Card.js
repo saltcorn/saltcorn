@@ -1,5 +1,6 @@
 import React, { Fragment } from "react";
 import { Text } from "./Text";
+import { OrFormula } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -21,12 +22,17 @@ export const Card = ({ children, title }) => {
 };
 
 export const CardSettings = () => {
+  const node = useNode((node) => ({
+    title: node.data.props.title,
+    isFormula: node.data.props.isFormula,
+    url: node.data.props.url,
+  }));
   const {
     actions: { setProp },
     title,
-  } = useNode((node) => ({
-    title: node.data.props.title,
-  }));
+    url,
+    isFormula,
+  } = node;
   return (
     <div>
       <label>Card title</label>
@@ -36,12 +42,23 @@ export const CardSettings = () => {
         value={title}
         onChange={(e) => setProp((prop) => (prop.title = e.target.value))}
       />
+      <label>URL</label>
+      <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
+        <input
+          type="text"
+          className="form-control "
+          value={url}
+          onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
+        />
+      </OrFormula>
     </div>
   );
 };
 Card.craft = {
   props: {
     title: "",
+    url: "",
+    isFormula: {},
   },
   displayName: "Card",
   related: {

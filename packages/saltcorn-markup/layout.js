@@ -104,7 +104,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         isTop,
         ix,
         div(
-          { class: "card shadow mt-4" },
+          {
+            class: `card shadow mt-4 ${segment.url ? "with-link" : ""}`,
+            onclick: segment.url ? `location.href='${segment.url}'` : false,
+          },
           segment.title &&
             div(
               { class: "card-header" },
