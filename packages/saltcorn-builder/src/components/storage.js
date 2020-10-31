@@ -64,6 +64,7 @@ export const layoutToNodes = (layout, query, actions) => {
           text={segment.text}
           block={segment.block || false}
           nofollow={segment.nofollow || false}
+          target_blank={segment.target_blank || false}
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
         />
@@ -303,6 +304,7 @@ export const craftToSaltcorn = (nodes) => {
         url: node.props.url,
         block: node.props.block,
         nofollow: node.props.nofollow,
+        target_blank: node.props.target_blank,
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
       };

@@ -89,7 +89,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         isTop,
         ix,
         a(
-          { href: segment.url, rel: segment.nofollow ? "nofollow" : false },
+          {
+            href: segment.url,
+            target: segment.target_blank ? "_blank" : false,
+            rel: segment.nofollow ? "nofollow" : false,
+          },
           segment.text
         )
       );
