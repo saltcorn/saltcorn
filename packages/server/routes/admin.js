@@ -67,7 +67,11 @@ router.get(
             table(
               tbody(
                 tr(th(req.__("Saltcorn version")), td(packagejson.version)),
-                tr(th(req.__("Node.js version")), td(process.version))
+                tr(th(req.__("Node.js version")), td(process.version)),
+                tr(
+                  th(req.__("Database")),
+                  td(db.isSQLite ? "SQLite" : "PostgreSQL")
+                )
               )
             )
           ),
