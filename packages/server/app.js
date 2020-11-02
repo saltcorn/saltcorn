@@ -5,6 +5,7 @@ const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const CustomBearerStrategy = require("passport-http-custom-bearer");
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
@@ -111,6 +112,36 @@ const getApp = async (opts = {}) => {
         loginAttempt();
         async function loginAttempt() {
           const mu = await User.authenticate({ email, password });
+          if (mu)
+            return done(null, {
+              email: mu.email,
+              id: mu.id,
+              role_id: mu.role_id,
+              language: mu.language,
+              tenant: db.getTenantSchema(),
+            });
+          else {
+            return done(
+              null,
+              false,
+              req.flash("danger", req.__("Incorrect user or password"))
+            );
+          }
+        }
+      }
+    )
+  );
+  passport.use(
+    "api-bearer",
+    new CustomBearerStrategy(
+      {
+        bodyName: "api_token",
+        queryName: "api_token",
+      },
+      function (token, done) {
+        loginAttempt();
+        async function loginAttempt() {
+          const mu = await User.findOne({ api_token: token });
           if (mu)
             return done(null, {
               email: mu.email,
