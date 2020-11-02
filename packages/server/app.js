@@ -142,7 +142,7 @@ const getApp = async (opts = {}) => {
         loginAttempt();
         async function loginAttempt() {
           const mu = await User.findOne({ api_token: token });
-          if (mu)
+          if (mu && token && token.length > 5)
             return done(null, {
               email: mu.email,
               id: mu.id,
