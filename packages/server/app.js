@@ -138,7 +138,12 @@ const getApp = async (opts = {}) => {
   });
 
   app.use(wrapper);
-  if (!opts.disableCsrf) app.use(csrf());
+  const csurf = csrf();
+  if (!opts.disableCsrf)
+    app.use(function (req, res, next) {
+      if (req.url.startsWith("/api/")) return next();
+      csurf(req, res, next);
+    });
   else
     app.use((req, res, next) => {
       req.csrfToken = () => "";

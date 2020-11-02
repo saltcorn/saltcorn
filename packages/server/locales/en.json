@@ -440,5 +440,6 @@
 	"Delete all rows": "Delete all rows",
 	"Recalculate stored fields": "Recalculate stored fields",
 	"Started recalculating stored fields": "Started recalculating stored fields",
-	"Deleted all rows": "Deleted all rows"
+	"Deleted all rows": "Deleted all rows",
+	"Database": "Database"
 }
