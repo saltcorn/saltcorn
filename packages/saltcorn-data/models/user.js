@@ -107,6 +107,7 @@ class User {
   async getNewAPIToken() {
     const api_token = uuidv4();
     await db.update("users", { api_token }, this.id);
+    this.api_token = api_token;
     return api_token;
   }
 
