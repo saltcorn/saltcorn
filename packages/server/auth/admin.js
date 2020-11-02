@@ -243,7 +243,8 @@ router.get(
           contents: [
             div(
               user.api_token
-                ? code(user.api_token)
+                ? span({ class: "mr-1" }, "API token for this user: ") +
+                    code(user.api_token)
                 : req.__("No API token issued")
             ),
             div(
@@ -307,6 +308,20 @@ router.post(
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
     res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/gen-api-token/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.getNewAPIToken();
+    req.flash("success", req.__(`New API token generated`));
+
+    res.redirect(`/useradmin/${u.id}`);
   })
 );
 const generate_password = () => {
