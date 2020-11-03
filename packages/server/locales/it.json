@@ -428,5 +428,17 @@
   "Enabled user %s": "Abilitato l'utente %s",
   "Send password reset email": "Invia email di reset password",
   "Set random password": "Imposta password casuale",
-  "User confirmation?": "Conferma dell'utente?"
+  "User confirmation?": "Conferma dell'utente?",
+  "A view to show to new users": "Vista da mostrare ai nuovi utenti",
+  "Account already exists": "Acount già esistente",
+  "Already in use": "Già in uso",
+  "New user form": "Nuovo modulo utente",
+  "Search not configured": "Ricerca non configurata",
+  "Delete all rows": "Cancella tutte le righe",
+  "Deleted all rows": "Tutte le righe cancellate",
+  "Items per page": "Elementi per pagina",
+  "Recalculate stored fields": "Ricalcola i campi memorizzati",
+  "Variable name": "Nome Variabile",
+  "Started recalculating stored fields": "Ricolcolo variabili memorizzate iniziato",
+  "Functions you can use (in addition to standard JavaScript functions): ": "Funzioni utilizzabili (in aggiunta alle funzioni standard JavaScript): "
 }
