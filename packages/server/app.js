@@ -134,24 +134,23 @@ const getApp = async (opts = {}) => {
   passport.use(
     "api-bearer",
     new BearerStrategy(function (token, done) {
-      console.log({ token });
       loginAttempt();
       async function loginAttempt() {
         const mu = await User.findOne({ api_token: token });
         if (mu && token && token.length > 5)
-          return done(null, {
-            email: mu.email,
-            id: mu.id,
-            role_id: mu.role_id,
-            language: mu.language,
-            tenant: db.getTenantSchema(),
-          });
-        else {
           return done(
             null,
-            false,
-            req.flash("danger", req.__("Incorrect user or password"))
+            {
+              email: mu.email,
+              id: mu.id,
+              role_id: mu.role_id,
+              language: mu.language,
+              tenant: db.getTenantSchema(),
+            },
+            { scope: "all" }
           );
+        else {
+          return done(null, { role_id: 10 });
         }
       }
     })

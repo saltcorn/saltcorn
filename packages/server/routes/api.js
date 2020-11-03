@@ -6,6 +6,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const load_plugins = require("../load_plugins");
+const passport = require("passport");
+
 const {
   stateFieldsToWhere,
   readState,
@@ -29,7 +31,8 @@ const limitFields = (fields) => (r) => {
 router.get(
   "/:tableName/",
   setTenant,
-  error_catcher(async (req, res) => {
+  //passport.authenticate("api-bearer", { session: false }),
+  error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
     const { fields, versioncount, ...req_query } = req.query;
     const table = await Table.findOne({ name: tableName });
@@ -37,37 +40,48 @@ router.get(
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
-    if (role <= table.min_role_read) {
-      var rows;
-      if (versioncount === "on") {
-        const joinOpts = {
-          orderBy: "id",
-          aggregations: {
-            _versions: {
-              table: table.name + "__history",
-              ref: "id",
-              field: "id",
-              aggregate: "count",
-            },
-          },
-        };
-        rows = await table.getJoinedRows(joinOpts);
-      } else if (req_query && req_query !== {}) {
-        const tbl_fields = await table.getFields();
-        const qstate = await stateFieldsToWhere({
-          fields: tbl_fields,
-          approximate: false,
-          state: req.query,
-        });
-        rows = await table.getRows(qstate);
-      } else {
-        rows = await table.getRows();
+
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        const role = req.isAuthenticated()
+          ? req.user.role_id
+          : user && user.role_id
+          ? user.role_id
+          : 10;
+        if (role <= table.min_role_read) {
+          var rows;
+          if (versioncount === "on") {
+            const joinOpts = {
+              orderBy: "id",
+              aggregations: {
+                _versions: {
+                  table: table.name + "__history",
+                  ref: "id",
+                  field: "id",
+                  aggregate: "count",
+                },
+              },
+            };
+            rows = await table.getJoinedRows(joinOpts);
+          } else if (req_query && req_query !== {}) {
+            const tbl_fields = await table.getFields();
+            const qstate = await stateFieldsToWhere({
+              fields: tbl_fields,
+              approximate: false,
+              state: req.query,
+            });
+            rows = await table.getRows(qstate);
+          } else {
+            rows = await table.getRows();
+          }
+          res.json({ success: rows.map(limitFields(fields)) });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
       }
-      res.json({ success: rows.map(limitFields(fields)) });
-    } else {
-      res.status(401).json({ error: req.__("Not authorized") });
-    }
+    )(req, res, next);
   })
 );
 
