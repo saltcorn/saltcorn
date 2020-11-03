@@ -9,6 +9,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.language = o.language;
+    this.api_token = o.api_token;
     this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
@@ -102,6 +103,12 @@ class User {
       this.id
     );
     return reset_password_token_uuid;
+  }
+  async getNewAPIToken() {
+    const api_token = uuidv4();
+    await db.update("users", { api_token }, this.id);
+    this.api_token = api_token;
+    return api_token;
   }
 
   static unacceptable_password_reason(pw) {

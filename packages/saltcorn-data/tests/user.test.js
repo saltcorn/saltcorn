@@ -63,6 +63,16 @@ describe("User", () => {
     });
     expect(!!u2).toBe(true);
   });
+  it("should reset password", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    const token = await u.getNewAPIToken();
+    expect(token.length > 5).toBe(true);
+    const u1 = await User.findOne({ email: "foo@bar.com" });
+    expect(u1.api_token).toEqual(token);
+    await u1.getNewAPIToken();
+    const u2 = await User.findOne({ email: "foo@bar.com" });
+    expect(u2.api_token).not.toEqual(token);
+  });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.delete();

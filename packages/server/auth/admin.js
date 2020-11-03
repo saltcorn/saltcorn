@@ -16,7 +16,15 @@ const {
 const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, button, text, span, code } = require("@saltcorn/markup/tags");
+const {
+  a,
+  div,
+  button,
+  text,
+  span,
+  code,
+  br,
+} = require("@saltcorn/markup/tags");
 const router = new Router();
 module.exports = router;
 
@@ -214,17 +222,43 @@ router.get(
     const user = await User.findOne({ id });
     const form = await userForm(req, user);
 
-    res.sendWrap(
-      req.__("Edit user"),
-      wrap(
-        req,
-        req.__("Edit user %s", user.email),
-        renderForm(form, req.csrfToken()),
+    res.sendWrap(req.__("Edit user"), {
+      above: [
         {
-          text: user.email,
-        }
-      )
-    );
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Users"), href: "/useradmin" },
+            { text: user.email },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Edit user %s", user.email),
+          contents: renderForm(form, req.csrfToken()),
+        },
+        {
+          type: "card",
+          title: req.__("API token"),
+          contents: [
+            div(
+              user.api_token
+                ? span({ class: "mr-1" }, "API token for this user: ") +
+                    code(user.api_token)
+                : req.__("No API token issued")
+            ),
+            div(
+              { class: "mt-4" },
+              post_btn(
+                `/useradmin/gen-api-token/${user.id}`,
+                user.api_token ? "Reset" : "Generate",
+                req.csrfToken()
+              )
+            ),
+          ],
+        },
+      ],
+    });
   })
 );
 
@@ -274,6 +308,20 @@ router.post(
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
     res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/gen-api-token/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.getNewAPIToken();
+    req.flash("success", req.__(`New API token generated`));
+
+    res.redirect(`/useradmin/${u.id}`);
   })
 );
 const generate_password = () => {

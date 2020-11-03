@@ -7,8 +7,10 @@ const {
   resetToFixtures,
   succeedJsonWith,
   notAuthorized,
+  toRedirect,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const User = require("@saltcorn/data/models/user");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -152,5 +154,35 @@ describe("API post", () => {
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
       .expect(succeedJsonWith((resp) => resp === true));
+  });
+});
+describe("API authentication", () => {
+  it("should generate token", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/useradmin/gen-api-token/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/useradmin/1"));
+    const u = await User.findOne({ id: 1 });
+    expect(!!u.api_token).toBe(true);
+  });
+  it("should allow access to patients with query string ", async () => {
+    const app = await getApp();
+    const u = await User.findOne({ id: 1 });
+    const url = "/api/patients/?access_token=" + u.api_token;
+    await request(app)
+      .get(url)
+      .expect(succeedJsonWith((rows) => rows.length == 2));
+  });
+  it("should allow access to patients with bearer token", async () => {
+    const app = await getApp();
+    const u = await User.findOne({ id: 1 });
+    const url = "/api/patients/";
+    await request(app)
+      .get(url)
+      .set("Authorization", "Bearer " + u.api_token)
+
+      .expect(succeedJsonWith((rows) => rows.length == 2));
   });
 });

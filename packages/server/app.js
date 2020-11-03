@@ -5,6 +5,7 @@ const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const BearerStrategy = require("passport-http-bearer");
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
@@ -130,6 +131,30 @@ const getApp = async (opts = {}) => {
       }
     )
   );
+  passport.use(
+    "api-bearer",
+    new BearerStrategy(function (token, done) {
+      loginAttempt();
+      async function loginAttempt() {
+        const mu = await User.findOne({ api_token: token });
+        if (mu && token && token.length > 5)
+          return done(
+            null,
+            {
+              email: mu.email,
+              id: mu.id,
+              role_id: mu.role_id,
+              language: mu.language,
+              tenant: db.getTenantSchema(),
+            },
+            { scope: "all" }
+          );
+        else {
+          return done(null, { role_id: 10 });
+        }
+      }
+    })
+  );
   passport.serializeUser(function (user, done) {
     done(null, user);
   });
@@ -138,7 +163,12 @@ const getApp = async (opts = {}) => {
   });
 
   app.use(wrapper);
-  if (!opts.disableCsrf) app.use(csrf());
+  const csurf = csrf();
+  if (!opts.disableCsrf)
+    app.use(function (req, res, next) {
+      if (req.url.startsWith("/api/")) return next();
+      csurf(req, res, next);
+    });
   else
     app.use((req, res, next) => {
       req.csrfToken = () => "";
