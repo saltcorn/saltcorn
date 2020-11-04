@@ -89,7 +89,7 @@ const reset = async (dontDrop = false, schema0) => {
   await db.query(`
     CREATE TABLE ${schemaQdot}users (
       id ${serial} primary key,      
-      email VARCHAR(128),
+      email VARCHAR(128) not null unique,
       password VARCHAR(60),
       role_id integer not null references ${schemaQdot}_sc_roles(id)
     )
