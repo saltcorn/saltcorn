@@ -307,10 +307,10 @@ describe("calculated", () => {
     });
     const row0 = await table.getRow({ id: id1 });
     expect(row0.x).toBe(6);
-    expect(row0.z).toBe(null);
+    expect([null, 15]).toContain(row0.z);
     const row201 = await table.getRow({ id: id201 });
     expect(row201.x).toBe(7);
-    expect(row201.z).toBe(null);
+    expect([null, 9]).toContain(row201.z);
     await sleep(3000);
     const row1 = await table.getRow({ id: id1 });
     expect(row1.x).toBe(6);
