@@ -27,6 +27,7 @@ const restore_backup = (csrf, inner) =>
       onchange: "this.form.submit();",
     })
   );
+
 const add_edit_bar = ({ role, title, contents, what, url }) => {
   if (role > 1) return contents;
   const bar = div(
@@ -48,4 +49,5 @@ const add_edit_bar = ({ role, title, contents, what, url }) => {
     return contents;
   } else return { above: [bar, contents] };
 };
+
 module.exports = { restore_backup, add_edit_bar };
