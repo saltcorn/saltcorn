@@ -47,9 +47,30 @@ const configuration_workflow = () =>
       },
     ],
   });
-
+//action use cases: field modify, like, rate, notify, send row to webhook
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
+  actions: {
+    increment: {
+      configFields: [
+        {
+          name: "field",
+          label: "Field",
+          type: "Field",
+          attributes: { type: ["Int", "Float"] },
+        },
+      ],
+      run: ({ table, config: { field }, row, user }) =>
+        table.updateRow(
+          { [field.name]: row[field.name] + 1 },
+          row.id,
+          user ? user.id : null
+        ),
+    },
+
+    // row
+    // field
+  },
   functions: {
     add3: { run: (x) => x + 3 },
     add5: (x) => x + 5,

@@ -5,9 +5,16 @@ const feed = require("./viewtemplates/feed");
 const edit = require("./viewtemplates/edit");
 const filter = require("./viewtemplates/filter");
 const fileviews = require("./fileviews");
+const actions = require("./actions");
 const { string, int, bool, date, float, color } = require("./types");
 
 const types = [string, int, bool, date, float, color];
 const viewtemplates = [list, edit, show, listshowlist, feed, filter];
 
-module.exports = { sc_plugin_api_version: 1, types, viewtemplates, fileviews };
+module.exports = {
+  sc_plugin_api_version: 1,
+  types,
+  viewtemplates,
+  fileviews,
+  actions,
+};
