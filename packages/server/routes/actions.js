@@ -24,11 +24,7 @@ const wrap = (req, cardTitle, response, lastBc) => ({
         ...(lastBc ? [lastBc] : []),
       ],
     },
-    {
-      type: "card",
-      title: cardTitle,
-      contents: response,
-    },
+    ...response,
   ],
 });
 
@@ -48,11 +44,13 @@ router.get(
     });
     res.sendWrap(
       req.__("Actions"),
-      wrap(
-        req,
-        req.__("Actions"),
-        mkTable([{ label: req.__("Name"), key: "name" }], actions)
-      )
+      wrap(req, req.__("Actions"), [
+        {
+          type: "card",
+          title: req.__("Actions available"),
+          contents: mkTable([{ label: req.__("Name"), key: "name" }], actions),
+        },
+      ])
     );
   })
 );
