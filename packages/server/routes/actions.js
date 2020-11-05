@@ -12,6 +12,7 @@ const {
   post_btn,
   settingsDropdown,
   post_dropdown_item,
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
@@ -64,6 +65,10 @@ router.get(
                 { label: req.__("Action"), key: "action" },
                 { label: req.__("Table"), key: "table_name" },
                 { label: req.__("When"), key: "when_trigger" },
+                {
+                  label: req.__("Delete"),
+                  key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
+                },
               ],
               triggers
             ),
@@ -219,6 +224,18 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    res.redirect(`/actions/`);
+  })
+);
+
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trigger = await Trigger.findOne({ id });
+    await trigger.delete();
     res.redirect(`/actions/`);
   })
 );
