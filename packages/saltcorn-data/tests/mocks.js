@@ -47,7 +47,7 @@ const configuration_workflow = () =>
       },
     ],
   });
-//action use cases: field modify, like, rate, notify, send row to webhook
+
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
   actions: {

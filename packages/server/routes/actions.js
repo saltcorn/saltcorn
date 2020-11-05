@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
+const Trigger = require("@saltcorn/data/models/trigger");
 
 const router = new Router();
 module.exports = router;
@@ -13,6 +14,9 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
+const Form = require("@saltcorn/data/models/form");
+const { div } = require("@saltcorn/markup/tags");
+const Table = require("@saltcorn/data/models/table");
 
 const wrap = (req, cardTitle, response, lastBc) => ({
   above: [
@@ -27,21 +31,22 @@ const wrap = (req, cardTitle, response, lastBc) => ({
     ...response,
   ],
 });
-
+const getActions = async () => {
+  return Object.entries(getState().actions).map(([k, v]) => {
+    const hasConfig = !!v.configFields;
+    return {
+      name: k,
+      hasConfig,
+    };
+  });
+};
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const state = getState();
-    let actions = [];
-    Object.entries(state.actions).forEach(([k, v]) => {
-      const hasConfig = !!v.configFields;
-      actions.push({
-        name: k,
-        hasConfig,
-      });
-    });
+    const triggers = await Trigger.findAllWithTableName();
+    const actions = await getActions();
     res.sendWrap(
       req.__("Actions"),
       wrap(req, req.__("Actions"), [
@@ -50,7 +55,170 @@ router.get(
           title: req.__("Actions available"),
           contents: mkTable([{ label: req.__("Name"), key: "name" }], actions),
         },
+        {
+          type: "card",
+          title: req.__("Triggers"),
+          contents: div(
+            mkTable(
+              [
+                { label: req.__("Action"), key: "action" },
+                { label: req.__("Table"), key: "table_name" },
+                { label: req.__("When"), key: "when_trigger" },
+              ],
+              triggers
+            ),
+            link("/actions/trigger/new", req.__("Add trigger"))
+          ),
+        },
       ])
     );
+  })
+);
+const triggerForm = async (req, trigger) => {
+  const actions = await getActions();
+  const tables = await Table.find({});
+  const form = new Form({
+    action: "/actions/trigger",
+    fields: [
+      {
+        name: "action",
+        label: req.__("Action"),
+        input_type: "select",
+        required: true,
+        options: actions.map((t) => ({ value: t.name, label: t.name })),
+      },
+      {
+        name: "table_id",
+        label: req.__("Table"),
+        input_type: "select",
+        options: [
+          { value: "", label: "" },
+          ...tables.map((t) => ({ value: t.id, label: t.name })),
+        ],
+      },
+      {
+        name: "when_trigger",
+        label: req.__("When"),
+        input_type: "select",
+        required: true,
+        options: [
+          "Insert",
+          "Update",
+          "Delete",
+          "Weekly",
+          "Daily",
+          "Hourly",
+          "Often",
+        ].map((t) => ({ value: t, label: t })),
+      },
+    ],
+  });
+  if (trigger) {
+    form.hidden("id");
+    form.values = trigger;
+  }
+  return form;
+};
+router.get(
+  "/trigger/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await triggerForm(req);
+    res.sendWrap(
+      req.__("New trigger"),
+      wrap(
+        req,
+        req.__("New trigger"),
+        [
+          {
+            type: "card",
+            title: req.__("New trigger"),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
+        {
+          text: req.__("New trigger"),
+        }
+      )
+    );
+  })
+);
+
+router.get(
+  "/trigger/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trigger = await Trigger.findOne({ id });
+
+    const form = await triggerForm(req, trigger);
+    res.sendWrap(
+      req.__("Edit trigger"),
+      wrap(
+        req,
+        req.__("Edit trigger"),
+        [
+          {
+            type: "card",
+            title: req.__("Edit trigger"),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
+        {
+          text: req.__("Edit trigger"),
+        }
+      )
+    );
+  })
+);
+
+router.post(
+  "/trigger",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await triggerForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(
+        req.__("Edit trigger"),
+        wrap(
+          req,
+          req.__("Edit trigger"),
+          [
+            {
+              type: "card",
+              title: req.__("Edit trigger"),
+              contents: renderForm(form, req.csrfToken()),
+            },
+          ],
+          {
+            text: req.__("Edit trigger"),
+          }
+        )
+      );
+    } else {
+      let id;
+      if (form.values.id) {
+        id = form.values.id;
+        await Trigger.update(id, form.values);
+      } else {
+        const tr = await Trigger.create(form.values);
+        id = tr.id;
+      }
+      res.redirect(`/actions/configure/${id}`);
+    }
+  })
+);
+router.get(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trigger = await Trigger.findOne({ id });
+    res.redirect(`/actions/`);
   })
 );

@@ -446,5 +446,8 @@
 	"No API token issued": "No API token issued",
 	"New API token generated": "New API token generated",
 	"Actions": "Actions",
-	"Actions available": "Actions available"
+	"Actions available": "Actions available",
+	"Triggers": "Triggers",
+	"Add trigger": "Add trigger",
+	"New trigger": "New trigger"
 }
