@@ -71,6 +71,7 @@ const get_menu = (req) => {
       label: req.__("Settings"),
       subitems: [
         { link: "/plugins", label: req.__("Plugins") },
+        { link: "/actions", label: req.__("Actions") },
         { link: "/menu", label: req.__("Menu") },
         { link: "/useradmin", label: req.__("Users") },
         { link: "/search/config", label: req.__("Search") },

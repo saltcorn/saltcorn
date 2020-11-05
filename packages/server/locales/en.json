@@ -444,5 +444,6 @@
 	"Database": "Database",
 	"API token": "API token",
 	"No API token issued": "No API token issued",
-	"New API token generated": "New API token generated"
+	"New API token generated": "New API token generated",
+	"Actions": "Actions"
 }

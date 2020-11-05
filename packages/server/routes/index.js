@@ -8,6 +8,7 @@ const search = require("./search");
 const files = require("./files");
 const menu = require("./menu");
 const admin = require("./admin");
+const actions = require("./actions");
 const tenant = require("./tenant");
 const api = require("./api");
 const plugins = require("./plugins");
@@ -34,6 +35,7 @@ module.exports = (app) => {
   app.use("/crashlog", crashlog);
   app.use("/page", page);
   app.use("/pageedit", pageedit);
+  app.use("/actions", actions);
   app.use("/search", search);
   app.use("/admin", admin);
   app.use("/tenant", tenant);
