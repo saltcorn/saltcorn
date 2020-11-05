@@ -47,29 +47,19 @@ const configuration_workflow = () =>
       },
     ],
   });
-
+let actionCounter = 1;
+const getActionCounter = () => actionCounter;
+const resetActionCounter = () => {
+  actionCounter = 0;
+};
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
   actions: {
-    increment: {
-      configFields: [
-        {
-          name: "field",
-          label: "Field",
-          type: "Field",
-          attributes: { type: ["Int", "Float"] },
-        },
-      ],
-      run: ({ table, configuration: { field }, row, user }) =>
-        table.updateRow(
-          { [field.name]: row[field.name] + 1 },
-          row.id,
-          user ? user.id : null
-        ),
+    incrementCounter: {
+      run: () => {
+        actionCounter += 1;
+      },
     },
-
-    // row
-    // field
   },
   functions: {
     add3: { run: (x) => x + 3 },
@@ -112,4 +102,6 @@ module.exports = {
   plugin_with_routes,
   configuration_workflow,
   mockReqRes,
+  getActionCounter,
+  resetActionCounter,
 };
