@@ -33,6 +33,7 @@ class State {
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
+    this.actions = {};
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
@@ -94,6 +95,9 @@ class State {
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
+    Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
+      this.actions[k] = v;
+    });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
       const type = this.types[v.type];
       if (type) {
@@ -130,6 +134,7 @@ class State {
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
+    this.actions = {};
     this.favicon = null;
     this.layout = { wrap: emergency_layout };
     this.headers = [];
