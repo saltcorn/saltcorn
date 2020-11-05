@@ -47,7 +47,7 @@ class Trigger {
   }
 
   static async runTableTriggers(when_trigger, table) {
-    const { getState } = require("../data/db/state");
+    const { getState } = require("../db/state");
 
     const triggers = await Trigger.find({ when_trigger, table_id: table.id });
     for (const trigger of triggers) {

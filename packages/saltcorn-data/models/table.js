@@ -1,6 +1,7 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const Trigger = require("./trigger");
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
@@ -206,6 +207,7 @@ class Table {
         _userid,
         _time: new Date(),
       });
+    await Trigger.runTableTriggers("Insert", this);
     return id;
   }
 

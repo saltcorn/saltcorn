@@ -60,6 +60,12 @@ const plugin_with_routes = {
         actionCounter += 1;
       },
     },
+    setCounter: {
+      configFields: [{ name: "number", type: "Int" }],
+      run: ({ configuration: { number } }) => {
+        actionCounter = number;
+      },
+    },
   },
   functions: {
     add3: { run: (x) => x + 3 },
