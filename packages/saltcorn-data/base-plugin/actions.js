@@ -3,8 +3,8 @@ const fetch = require("node-fetch");
 module.exports = {
   webhook: {
     configFields: [{ name: "url", label: "URL", type: "String" }],
-    need: ["row"],
-    run: async ({ row, config: { url } }) => {
+    needRow: true,
+    run: async ({ row, configuration: { url } }) => {
       await fetch(url, {
         method: "post",
         body: JSON.stringify(row),
@@ -17,7 +17,7 @@ module.exports = {
   },
   anyJS: {
     configFields: [{ name: "code", label: "Code", type: "String" }],
-    run: async ({ config: { code } }) => {
+    run: async ({ configuration: { code } }) => {
       eval(code);
     },
   },

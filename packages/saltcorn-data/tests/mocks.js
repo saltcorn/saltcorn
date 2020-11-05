@@ -60,7 +60,7 @@ const plugin_with_routes = {
           attributes: { type: ["Int", "Float"] },
         },
       ],
-      run: ({ table, config: { field }, row, user }) =>
+      run: ({ table, configuration: { field }, row, user }) =>
         table.updateRow(
           { [field.name]: row[field.name] + 1 },
           row.id,

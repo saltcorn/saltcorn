@@ -1,6 +1,5 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-const { div } = require("@saltcorn/markup/tags");
 
 class Trigger {
   constructor(o) {
@@ -46,21 +45,27 @@ class Trigger {
   async delete() {
     await db.deleteWhere("_sc_triggers", { id: this.id });
   }
+
+  static async runTableTriggers(when_trigger, table) {
+    const { getState } = require("@saltcorn/data/db/state");
+
+    const triggers = await Trigger.find({ when_trigger, table_id: table.id });
+    for (const trigger of triggers) {
+      const action = getState().actions[trigger.action];
+      await action.run({ table, configuration: trigger.configuration });
+    }
+  }
+
+  static get when_options() {
+    return ["Insert", "Update", "Delete", "Weekly", "Daily", "Hourly", "Often"];
+  }
 }
 
 Trigger.contract = {
   variables: {
     action: is.str,
     table_id: is.maybe(is.posint),
-    when_trigger: is.one_of([
-      "Insert",
-      "Update",
-      "Delete",
-      "Weekly",
-      "Daily",
-      "Hourly",
-      "Often",
-    ]),
+    when_trigger: is.one_of(Trigger.when_options),
     id: is.maybe(is.posint),
     configuration: is.obj(),
   },
@@ -75,6 +80,10 @@ Trigger.contract = {
     create: is.fun(is.obj(), is.promise(is.class("Trigger"))),
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Trigger")))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
+    runTableTriggers: is.fun(
+      [is.one_of(Trigger.when_options), is.class("Table")],
+      is.promise(is.undefined)
+    ),
   },
 };
 

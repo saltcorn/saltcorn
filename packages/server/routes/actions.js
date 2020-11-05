@@ -111,15 +111,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("When"),
         input_type: "select",
         required: true,
-        options: [
-          "Insert",
-          "Update",
-          "Delete",
-          "Weekly",
-          "Daily",
-          "Hourly",
-          "Often",
-        ].map((t) => ({ value: t, label: t })),
+        options: Trigger.when_options.map((t) => ({ value: t, label: t })),
       },
     ],
   });
