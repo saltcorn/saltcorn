@@ -46,18 +46,34 @@ class Trigger {
     await db.deleteWhere("_sc_triggers", { id: this.id });
   }
 
-  static async runTableTriggers(when_trigger, table) {
+  static async runTableTriggers(when_trigger, table, row) {
+    const triggers = await Trigger.getTableTriggers(when_trigger, table);
+    for (const trigger of triggers) {
+      await trigger.run(row);
+    }
+  }
+  static async getTableTriggers(when_trigger, table) {
     const { getState } = require("../db/state");
 
     const triggers = await Trigger.find({ when_trigger, table_id: table.id });
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
-      await action.run({ table, configuration: trigger.configuration });
+      trigger.run = (row) =>
+        action.run({
+          table,
+          configuration: trigger.configuration,
+          row,
+        });
     }
+    return triggers;
   }
 
   static get when_options() {
-    return ["Insert", "Update", "Delete", "Weekly", "Daily", "Hourly", "Often"];
+    return [
+      "Insert",
+      "Update",
+      "Delete" /*"Weekly", "Daily", "Hourly", "Often"*/,
+    ];
   }
 }
 
@@ -81,8 +97,18 @@ Trigger.contract = {
     findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Trigger")))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     runTableTriggers: is.fun(
-      [is.one_of(Trigger.when_options), is.class("Table")],
+      [
+        is.one_of(Trigger.when_options),
+        is.class("Table"),
+        is.obj({ id: is.posint }),
+      ],
       is.promise(is.undefined)
+    ),
+    getTableTriggers: is.fun(
+      [is.one_of(Trigger.when_options), is.class("Table")],
+      is.promise(
+        is.array(is.obj({ action: is.str, run: is.fun(is.obj({}), is.any) }))
+      )
     ),
   },
 };

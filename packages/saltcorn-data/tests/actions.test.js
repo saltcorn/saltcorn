@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 
 describe("Action", () => {
-  it("should add trigger", async () => {
+  it("should add insert trigger", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
@@ -32,5 +32,39 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(0);
     await table.insertRow({ name: "Don Fabrizio" });
     expect(getActionCounter()).toBe(1);
+  });
+  it("should add update trigger", async () => {
+    expect(getActionCounter()).toBe(1);
+
+    const table = await Table.findOne({ name: "patients" });
+
+    await Trigger.create({
+      action: "setCounter",
+      table_id: table.id,
+      when_trigger: "Update",
+      configuration: { number: 17 },
+    });
+    expect(getActionCounter()).toBe(1);
+    const don = await table.getRow({ name: "Don Fabrizio" });
+    await table.updateRow({ name: "Don Fabrizio II" }, don.id);
+    expect(getActionCounter()).toBe(17);
+  });
+  it("should add update trigger", async () => {
+    expect(getActionCounter()).toBe(17);
+
+    const table = await Table.findOne({ name: "patients" });
+
+    await Trigger.create({
+      action: "setCounter",
+      table_id: table.id,
+      when_trigger: "Delete",
+      configuration: { number: 37 },
+    });
+    expect(getActionCounter()).toBe(17);
+    await table.deleteRows({ name: "Don Fabrizio" });
+    expect(getActionCounter()).toBe(17);
+
+    await table.deleteRows({ name: "Don Fabrizio II" });
+    expect(getActionCounter()).toBe(37);
   });
 });
