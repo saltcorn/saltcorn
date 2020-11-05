@@ -61,7 +61,7 @@ Trigger.contract = {
       "Hourly",
       "Often",
     ]),
-    //id: is.maybe(is.posint),
+    id: is.maybe(is.posint),
     configuration: is.obj(),
   },
   methods: {

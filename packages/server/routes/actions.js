@@ -66,6 +66,11 @@ router.get(
                 { label: req.__("Table"), key: "table_name" },
                 { label: req.__("When"), key: "when_trigger" },
                 {
+                  label: req.__("Configure"),
+                  key: (r) =>
+                    link(`/actions/configure/${r.id}`, req.__("Configure")),
+                },
+                {
                   label: req.__("Delete"),
                   key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
                 },
@@ -224,10 +229,77 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    const action = getState().actions[trigger.action];
+    if (!action) {
+      req.flash("warning", "Action not found");
+      res.redirect(`/actions/`);
+    } else if (!action.configFields) {
+      req.flash("warning", "Action not configurable");
+      res.redirect(`/actions/`);
+    } else {
+      const form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: action.configFields,
+      });
+      form.values = trigger.configuration;
+      res.sendWrap(
+        req.__("Configure trigger"),
+        wrap(
+          req,
+          req.__("Configure trigger"),
+          [
+            {
+              type: "card",
+              title: req.__("Configure trigger"),
+              contents: renderForm(form, req.csrfToken()),
+            },
+          ],
+          {
+            text: req.__("Configure trigger"),
+          }
+        )
+      );
+    }
+  })
+);
+router.post(
+  "/configure/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trigger = await Trigger.findOne({ id });
+    const action = getState().actions[trigger.action];
+    const form = new Form({
+      action: `/actions/configure/${id}`,
+      fields: action.configFields,
+    });
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(
+        req.__("Configure trigger"),
+        wrap(
+          req,
+          req.__("Configure trigger"),
+          [
+            {
+              type: "card",
+              title: req.__("Configure trigger"),
+              contents: renderForm(form, req.csrfToken()),
+            },
+          ],
+          {
+            text: req.__("Configure trigger"),
+          }
+        )
+      );
+    } else {
+      await Trigger.update(trigger.id, { configuration: form.values });
+      req.flash("success", "Action configuration saved");
+    }
     res.redirect(`/actions/`);
   })
 );
-
 router.post(
   "/delete/:id",
   setTenant,
