@@ -2,6 +2,7 @@ const fetch = require("node-fetch");
 const vm = require("vm");
 const Table = require("../models/table");
 const { getState } = require("../db/state");
+const { findOne } = require("../models/file");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -34,6 +35,7 @@ module.exports = {
         table,
         row,
         console,
+        ...(row || {}),
         ...getState().function_context,
       });
       await f();
