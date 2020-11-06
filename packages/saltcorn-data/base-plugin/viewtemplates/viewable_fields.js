@@ -16,6 +16,12 @@ const action_url = contract(
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
     }
+    const state_action = getState().actions[action_name];
+    if (state_action) {
+      return {
+        javascript: `view_post('${viewname}', 'run_action', {action_name:'${action_name}', id:${r.id}});`,
+      };
+    }
   }
 );
 const get_view_link_query = contract(

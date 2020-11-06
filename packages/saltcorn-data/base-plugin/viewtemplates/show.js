@@ -11,7 +11,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span } = require("@saltcorn/markup/tags");
+const { div, text, span, a } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -268,12 +268,18 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       return text(val);
     },
     action({ action_name, action_label, confirm }) {
-      return post_btn(
-        action_url(viewname, table, action_name, row),
-        action_label || action_name,
-        req.csrfToken(),
-        { confirm, req }
-      );
+      const url = action_url(viewname, table, action_name, row);
+      const label = action_label || action_name;
+      if (url.javascript)
+        return a(
+          { href: "javascript:" + url.javascript, class: "btn btn-primary" },
+          label
+        );
+      else
+        return post_btn(url, label, req.csrfToken(), {
+          confirm,
+          req,
+        });
     },
     view_link(view) {
       const { key } = view_linker(view, fields);
@@ -281,6 +287,16 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
   };
   return renderLayout({ blockDispatch, layout, role });
+};
+const run_action = async (table_id, viewname, { columns, layout }, body) => {
+  const col = columns.find(
+    (c) => c.type === "Action" && c.action_name === body.action_name
+  );
+  const table = await Table.findOne({ id: table_id });
+  const row = await table.getRow({ id: body.id });
+  const state_action = getState().actions[col.action_name];
+  await state_action.run({ configuration: col.configuration, table, row });
+  return { json: { success: "ok" } };
 };
 
 module.exports = {
@@ -292,4 +308,5 @@ module.exports = {
   renderRows,
   initial_config,
   display_state_form: false,
+  routes: { run_action },
 };

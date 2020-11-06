@@ -33,6 +33,7 @@ module.exports = {
         Table,
         table,
         row,
+        console,
         ...getState().function_context,
       });
       await f();
