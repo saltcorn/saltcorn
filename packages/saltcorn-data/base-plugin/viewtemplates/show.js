@@ -267,8 +267,8 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name, action_label, confirm }) {
-      const url = action_url(viewname, table, action_name, row);
+    action({ action_name, action_label, confirm, rndid }) {
+      const url = action_url(viewname, table, action_name, row, rndid);
       const label = action_label || action_name;
       if (url.javascript)
         return a(
@@ -290,7 +290,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
 };
 const run_action = async (table_id, viewname, { columns, layout }, body) => {
   const col = columns.find(
-    (c) => c.type === "Action" && c.action_name === body.action_name
+    (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
   );
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });

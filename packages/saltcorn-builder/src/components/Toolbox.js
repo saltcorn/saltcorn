@@ -239,6 +239,7 @@ const ActionElem = ({ connectors, options }) => (
       minRole={10}
       confirm={false}
       action_label={""}
+      rndid={"not_assigned"}
       configuration={{}}
     />
   </WrapElem>
