@@ -67,4 +67,24 @@ describe("Action", () => {
     await table.deleteRows({ name: "Don Fabrizio II" });
     expect(getActionCounter()).toBe(37);
   });
+  it("should run js code", async () => {
+    const table = await Table.findOne({ name: "books" });
+
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        code: `
+        const table = await Table.findOne({ name: "patients" });
+        await table.insertRow({ name: "TriggeredInsert" });
+      `,
+      },
+    });
+    await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
+    const patients = await Table.findOne({ name: "patients" });
+
+    const rows = await patients.getRows({ name: "TriggeredInsert" });
+    expect(rows.length).toBe(1);
+  });
 });

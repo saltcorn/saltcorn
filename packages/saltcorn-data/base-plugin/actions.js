@@ -1,4 +1,8 @@
 const fetch = require("node-fetch");
+const vm = require("vm");
+const Table = require("../models/table");
+const { getState } = require("../db/state");
+
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
   webhook: {
@@ -25,7 +29,11 @@ module.exports = {
   run_js_code: {
     configFields: [{ name: "code", label: "Code", type: "String" }],
     run: async ({ configuration: { code } }) => {
-      eval(code);
+      const f = vm.runInNewContext(`async () => {${code}}`, {
+        Table,
+        ...getState().function_context,
+      });
+      await f();
     },
   },
 };
