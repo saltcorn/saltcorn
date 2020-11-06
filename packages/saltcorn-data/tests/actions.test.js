@@ -96,6 +96,7 @@ describe("Action", () => {
       when_trigger: "Update",
       configuration: {
         // from https://requestbin.com/
+        // to inspect https://pipedream.com/sources/dc_jku44wk
         url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
       },
     });
