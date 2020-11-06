@@ -238,6 +238,7 @@ const ActionElem = ({ connectors, options }) => (
       block={false}
       minRole={10}
       confirm={false}
+      configuration={{}}
     />
   </WrapElem>
 );

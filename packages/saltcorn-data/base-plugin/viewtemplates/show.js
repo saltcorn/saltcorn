@@ -46,10 +46,18 @@ const configuration_workflow = (req) =>
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
           );
+          const stateActions = getState().actions;
           const actions = [
             "Delete",
             ...boolfields.map((f) => `Toggle ${f.name}`),
+            ...Object.keys(stateActions),
           ];
+          const actionConfigForms = {};
+          Object.entries(stateActions).forEach(([name, { configFields }]) => {
+            if (configFields) {
+              actionConfigForms[name] = configFields;
+            }
+          });
           const field_view_options = calcfldViewOptions(fields, false);
           const link_view_opts = await get_link_view_opts(
             table,
@@ -80,6 +88,7 @@ const configuration_workflow = (req) =>
             fields,
             images,
             actions,
+            actionConfigForms,
             field_view_options,
             link_view_opts,
             parent_field_list,

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
@@ -27,13 +27,16 @@ export const ActionSettings = () => {
     block,
     minRole,
     confirm,
+    configuration,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     confirm: node.data.props.confirm,
+    configuration: node.data.props.configuration,
   }));
   const options = useContext(optionsCtx);
+  const cfgFields = options.actionConfigForms[name];
   return (
     <div>
       <div>
@@ -62,6 +65,13 @@ export const ActionSettings = () => {
       </div>
       <BlockSetting block={block} setProp={setProp} />
       <MinRoleSetting minRole={minRole} setProp={setProp} />
+      {cfgFields ? (
+        <ActionConfigForm
+          fields={cfgFields}
+          configuration={configuration}
+          setProp={setProp}
+        />
+      ) : null}
     </div>
   );
 };
@@ -72,3 +82,42 @@ Action.craft = {
     settings: ActionSettings,
   },
 };
+
+const ActionConfigForm = ({ fields, configuration, setProp }) => (
+  <Fragment>
+    {fields.map((f, ix) => (
+      <Fragment key={ix}>
+        <label>{f.label || f.name}</label>
+        <ActionConfigField
+          field={f}
+          configuration={configuration}
+          setProp={setProp}
+        />
+      </Fragment>
+    ))}
+  </Fragment>
+);
+const ActionConfigField = ({ field, configuration, setProp }) =>
+  ({
+    String: () => (
+      <input
+        type="text"
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    textarea: () => (
+      <textarea
+        rows="6"
+        type="text"
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+  }[field.input_type || field.type.name || field.type]());
