@@ -28,9 +28,11 @@ module.exports = {
   },*/
   run_js_code: {
     configFields: [{ name: "code", label: "Code", type: "String" }],
-    run: async ({ configuration: { code } }) => {
+    run: async ({ row, table, configuration: { code } }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
+        table,
+        row,
         ...getState().function_context,
       });
       await f();
