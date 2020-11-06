@@ -87,4 +87,19 @@ describe("Action", () => {
     const rows = await patients.getRows({ name: "TriggeredInsert" });
     expect(rows.length).toBe(1);
   });
+  it("should run webhook", async () => {
+    const table = await Table.findOne({ name: "books" });
+
+    await Trigger.create({
+      action: "webhook",
+      table_id: table.id,
+      when_trigger: "Update",
+      configuration: {
+        // from https://requestbin.com/
+        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+      },
+    });
+    const row = await table.getRow({ author: "Giuseppe Tomasi" });
+    await table.updateRow({ pages: 210 }, row.id);
+  });
 });

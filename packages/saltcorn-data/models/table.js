@@ -184,7 +184,12 @@ class Table {
       });
     }
     await db.update(this.name, v, id);
-    await Trigger.runTableTriggers("Update", this, { ...v, id });
+    if (typeof existing === "undefined") {
+      const triggers = await Trigger.getTableTriggers("Update", this);
+      if (triggers.length > 0) existing = await db.selectOne(this.name, { id });
+    }
+    const newRow = { ...existing, ...v, id };
+    await Trigger.runTableTriggers("Update", this, newRow);
 
     return;
   }
