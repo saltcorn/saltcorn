@@ -267,10 +267,10 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name, confirm }) {
+    action({ action_name, action_label, confirm }) {
       return post_btn(
         action_url(viewname, table, action_name, row),
-        action_name,
+        action_label || action_name,
         req.csrfToken(),
         { confirm, req }
       );
