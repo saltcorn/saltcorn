@@ -146,7 +146,9 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
+          action_label={segment.action_label || ""}
           confirm={segment.confirm}
+          configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
         />
@@ -414,14 +416,18 @@ export const craftToSaltcorn = (nodes) => {
       columns.push({
         type: "Action",
         action_name: node.props.name,
+        action_label: node.props.action_label,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        configuration: node.props.configuration,
       });
       return {
         type: "action",
         block: node.props.block,
+        configuration: node.props.configuration,
         confirm: node.props.confirm,
         action_name: node.props.name,
+        action_label: node.props.action_label,
         minRole: node.props.minRole,
       };
     }

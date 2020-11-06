@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
 
-export const Action = ({ name, block }) => {
+export const Action = ({ name, block, action_label }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -14,7 +14,7 @@ export const Action = ({ name, block }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      {name}
+      {action_label || name}
     </button>
   );
   return selected ? <span className={"selected-node"}>{btn}</span> : btn;
@@ -28,11 +28,13 @@ export const ActionSettings = () => {
     minRole,
     confirm,
     configuration,
+    action_label,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     confirm: node.data.props.confirm,
+    action_label: node.data.props.action_label,
     configuration: node.data.props.configuration,
   }));
   const options = useContext(optionsCtx);
@@ -52,6 +54,17 @@ export const ActionSettings = () => {
             </option>
           ))}
         </select>
+      </div>
+      <div>
+        <label>Label (leave blank for default)</label>
+        <input
+          type="text"
+          className="viewlink-label w-100"
+          value={action_label}
+          onChange={(e) =>
+            setProp((prop) => (prop.action_label = e.target.value))
+          }
+        />
       </div>
       <div className="form-check">
         <input
