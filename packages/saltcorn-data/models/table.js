@@ -1,6 +1,7 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const Trigger = require("./trigger");
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
@@ -111,6 +112,15 @@ class Table {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
   async deleteRows(where) {
+    const triggers = await Trigger.getTableTriggers("Delete", this);
+    if (triggers.length > 0) {
+      const rows = await this.getRows(where);
+      for (const trigger of triggers) {
+        for (const row of rows) {
+          await trigger.run(row);
+        }
+      }
+    }
     await db.deleteWhere(this.name, where);
   }
   readFromDB(row) {
@@ -173,7 +183,15 @@ class Table {
         _userid,
       });
     }
-    return await db.update(this.name, v, id);
+    await db.update(this.name, v, id);
+    if (typeof existing === "undefined") {
+      const triggers = await Trigger.getTableTriggers("Update", this);
+      if (triggers.length > 0) existing = await db.selectOne(this.name, { id });
+    }
+    const newRow = { ...existing, ...v, id };
+    await Trigger.runTableTriggers("Update", this, newRow);
+
+    return;
   }
   async tryUpdateRow(v, id, _userid) {
     try {
@@ -192,6 +210,13 @@ class Table {
       )}"=NOT "${sqlsanitize(field_name)}" where id=$1`,
       [id]
     );
+    const triggers = await Trigger.getTableTriggers("Update", this);
+    if (triggers.length > 0) {
+      const row = await this.getRow({ id });
+      for (const trigger of triggers) {
+        await trigger.run(row);
+      }
+    }
   }
 
   async insertRow(v_in, _userid) {
@@ -206,6 +231,7 @@ class Table {
         _userid,
         _time: new Date(),
       });
+    await Trigger.runTableTriggers("Insert", this, { id, ...v });
     return id;
   }
 
