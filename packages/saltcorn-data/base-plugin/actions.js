@@ -23,9 +23,9 @@ module.exports = {
       });
     },
   },
-  send_email: {
+  /*send_email: {
     configFields: [{ name: "view", label: "URL", type: "String" }],
-  },
+  },*/
   run_js_code: {
     configFields: [{ name: "code", label: "Code", type: "String" }],
     run: async ({ configuration: { code } }) => {
