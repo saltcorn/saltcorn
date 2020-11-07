@@ -2,6 +2,7 @@ const fetch = require("node-fetch");
 const vm = require("vm");
 const Table = require("../models/table");
 const { getState } = require("../db/state");
+const { findOne } = require("../models/file");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -27,10 +28,14 @@ module.exports = {
     configFields: [{ name: "view", label: "URL", type: "String" }],
   },*/
   run_js_code: {
-    configFields: [{ name: "code", label: "Code", type: "String" }],
-    run: async ({ configuration: { code } }) => {
+    configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
+    run: async ({ row, table, configuration: { code } }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
+        table,
+        row,
+        console,
+        ...(row || {}),
         ...getState().function_context,
       });
       await f();

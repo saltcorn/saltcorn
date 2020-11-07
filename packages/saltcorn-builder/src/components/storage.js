@@ -146,9 +146,13 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
+          rndid={segment.rndid || "not_assigned"}
+          action_label={segment.action_label || ""}
           confirm={segment.confirm}
+          configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
+          isFormula={segment.isFormula || {}}
         />
       );
     } else if (segment.type === "card") {
@@ -411,18 +415,27 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
     if (node.displayName === Action.craft.displayName) {
+      const newid = rand_ident();
       columns.push({
         type: "Action",
         action_name: node.props.name,
+        action_label: node.props.action_label,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        configuration: node.props.configuration,
+        isFormula: node.props.isFormula,
+        rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       });
       return {
         type: "action",
         block: node.props.block,
+        configuration: node.props.configuration,
         confirm: node.props.confirm,
         action_name: node.props.name,
+        action_label: node.props.action_label,
         minRole: node.props.minRole,
+        isFormula: node.props.isFormula,
+        rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       };
     }
   };

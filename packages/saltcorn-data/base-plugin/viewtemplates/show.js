@@ -11,7 +11,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span } = require("@saltcorn/markup/tags");
+const { div, text, span, a } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -46,10 +46,18 @@ const configuration_workflow = (req) =>
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
           );
+          const stateActions = getState().actions;
           const actions = [
             "Delete",
             ...boolfields.map((f) => `Toggle ${f.name}`),
+            ...Object.keys(stateActions),
           ];
+          const actionConfigForms = {};
+          Object.entries(stateActions).forEach(([name, { configFields }]) => {
+            if (configFields) {
+              actionConfigForms[name] = configFields;
+            }
+          });
           const field_view_options = calcfldViewOptions(fields, false);
           const link_view_opts = await get_link_view_opts(
             table,
@@ -80,6 +88,7 @@ const configuration_workflow = (req) =>
             fields,
             images,
             actions,
+            actionConfigForms,
             field_view_options,
             link_view_opts,
             parent_field_list,
@@ -220,6 +229,9 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
     },
+    action(segment) {
+      evalMaybeExpr(segment, "action_label");
+    },
     card(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
@@ -258,13 +270,19 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name, confirm }) {
-      return post_btn(
-        action_url(viewname, table, action_name, row),
-        action_name,
-        req.csrfToken(),
-        { confirm, req }
-      );
+    action({ action_name, action_label, confirm, rndid }) {
+      const url = action_url(viewname, table, action_name, row, rndid);
+      const label = action_label || action_name;
+      if (url.javascript)
+        return a(
+          { href: "javascript:" + url.javascript, class: "btn btn-primary" },
+          label
+        );
+      else
+        return post_btn(url, label, req.csrfToken(), {
+          confirm,
+          req,
+        });
     },
     view_link(view) {
       const { key } = view_linker(view, fields);
@@ -272,6 +290,16 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
   };
   return renderLayout({ blockDispatch, layout, role });
+};
+const run_action = async (table_id, viewname, { columns, layout }, body) => {
+  const col = columns.find(
+    (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+  );
+  const table = await Table.findOne({ id: table_id });
+  const row = await table.getRow({ id: body.id });
+  const state_action = getState().actions[col.action_name];
+  await state_action.run({ configuration: col.configuration, table, row });
+  return { json: { success: "ok" } };
 };
 
 module.exports = {
@@ -283,4 +311,5 @@ module.exports = {
   renderRows,
   initial_config,
   display_state_form: false,
+  routes: { run_action },
 };

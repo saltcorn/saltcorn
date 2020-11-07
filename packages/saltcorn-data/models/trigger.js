@@ -63,6 +63,7 @@ class Trigger {
           table,
           configuration: trigger.configuration,
           row,
+          ...row,
         });
     }
     return triggers;

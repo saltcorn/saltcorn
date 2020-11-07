@@ -9,12 +9,18 @@ const Field = require("../../models/field");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
-  (viewname, table, action_name, r) => {
+  (viewname, table, action_name, r, rndid) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
     else if (action_name.startsWith("Toggle")) {
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    }
+    const state_action = getState().actions[action_name];
+    if (state_action) {
+      return {
+        javascript: `view_post('${viewname}', 'run_action', {rndid:'${rndid}', id:${r.id}});`,
+      };
     }
   }
 );

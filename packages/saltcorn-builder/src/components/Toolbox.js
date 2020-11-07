@@ -238,6 +238,10 @@ const ActionElem = ({ connectors, options }) => (
       block={false}
       minRole={10}
       confirm={false}
+      action_label={""}
+      isFormula={{}}
+      rndid={"not_assigned"}
+      configuration={{}}
     />
   </WrapElem>
 );
