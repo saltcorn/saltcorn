@@ -271,7 +271,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       return text(val);
     },
     action({ action_name, action_label, confirm, rndid }) {
-      const url = action_url(viewname, table, action_name, row, rndid);
+      const url = action_url(viewname, table, action_name, row, rndid, "rndid");
       const label = action_label || action_name;
       if (url.javascript)
         return a(

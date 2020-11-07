@@ -9,7 +9,7 @@ const Field = require("../../models/field");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
-  (viewname, table, action_name, r, rndid) => {
+  (viewname, table, action_name, r, colId, colIdNm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
     else if (action_name.startsWith("Toggle")) {
@@ -19,7 +19,7 @@ const action_url = contract(
     const state_action = getState().actions[action_name];
     if (state_action) {
       return {
-        javascript: `view_post('${viewname}', 'run_action', {rndid:'${rndid}', id:${r.id}});`,
+        javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
       };
     }
   }
@@ -154,19 +154,35 @@ const get_viewable_fields = contract(
         if (column.type === "Action")
           return {
             label: column.header_label ? text(column.header_label) : "",
-            key: (r) =>
-              post_btn(
-                action_url(viewname, table, column.action_name, r),
-                column.action_label || column.action_name,
-                req.csrfToken(),
-                {
+            key: (r) => {
+              const url = action_url(
+                viewname,
+                table,
+                column.action_name,
+                r,
+                column.action_name,
+                "action_name"
+              );
+              const label = column.action_label_formula
+                ? get_expression_function(column.action_label, fields)(r)
+                : column.action_label || column.action_name;
+              if (url.javascript)
+                return a(
+                  {
+                    href: "javascript:" + url.javascript,
+                    class: "btn btn-primary",
+                  },
+                  label
+                );
+              else
+                return post_btn(url, label, req.csrfToken(), {
                   small: true,
                   ajax: true,
                   reload_on_done: true,
                   confirm: column.confirm,
                   req,
-                }
-              ),
+                });
+            },
           };
         else if (column.type === "ViewLink") {
           const r = view_linker(column, fields);
