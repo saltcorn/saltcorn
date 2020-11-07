@@ -112,6 +112,19 @@ const field_picker_fields = contract(
       ...boolfields.map((f) => `Toggle ${f.name}`),
       ...Object.keys(stateActions),
     ];
+
+    const actionConfigFields = [];
+    for (const [name, action] of Object.entries(stateActions)) {
+      for (const field of action.configFields || []) {
+        actionConfigFields.push({
+          ...field,
+          showIf: {
+            ".action_name": name,
+            ".coltype": "Action",
+          },
+        });
+      }
+    }
     const fldOptions = fields.map((f) => f.name);
     const fldViewOptions = calcfldViewOptions(fields, false);
 
@@ -189,6 +202,7 @@ const field_picker_fields = contract(
         name: "action_name",
         label: __("Action"),
         type: "String",
+        class: "action_name",
         required: true,
         attributes: {
           options: actions.join(),
@@ -214,6 +228,7 @@ const field_picker_fields = contract(
         type: "Bool",
         showIf: { ".coltype": "Action" },
       },
+      ...actionConfigFields,
       {
         name: "view",
         label: __("View"),
