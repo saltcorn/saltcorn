@@ -152,6 +152,7 @@ export const layoutToNodes = (layout, query, actions) => {
           configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
+          isFormula={segment.isFormula || {}}
         />
       );
     } else if (segment.type === "card") {
@@ -422,6 +423,7 @@ export const craftToSaltcorn = (nodes) => {
         minRole: node.props.minRole,
         confirm: node.props.confirm,
         configuration: node.props.configuration,
+        isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       });
       return {
@@ -432,6 +434,7 @@ export const craftToSaltcorn = (nodes) => {
         action_name: node.props.name,
         action_label: node.props.action_label,
         minRole: node.props.minRole,
+        isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       };
     }

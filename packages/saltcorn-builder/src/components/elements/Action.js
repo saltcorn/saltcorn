@@ -1,7 +1,7 @@
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
+import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
 
 export const Action = ({ name, block, action_label }) => {
   const {
@@ -21,22 +21,25 @@ export const Action = ({ name, block, action_label }) => {
 };
 
 export const ActionSettings = () => {
-  const {
-    actions: { setProp },
-    name,
-    block,
-    minRole,
-    confirm,
-    configuration,
-    action_label,
-  } = useNode((node) => ({
+  const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     confirm: node.data.props.confirm,
     action_label: node.data.props.action_label,
     configuration: node.data.props.configuration,
+    isFormula: node.data.props.isFormula,
   }));
+  const {
+    actions: { setProp },
+    name,
+    block,
+    minRole,
+    isFormula,
+    confirm,
+    configuration,
+    action_label,
+  } = node;
   const options = useContext(optionsCtx);
   const cfgFields = options.actionConfigForms[name];
   return (
@@ -57,14 +60,16 @@ export const ActionSettings = () => {
       </div>
       <div>
         <label>Label (leave blank for default)</label>
-        <input
-          type="text"
-          className="viewlink-label w-100"
-          value={action_label}
-          onChange={(e) =>
-            setProp((prop) => (prop.action_label = e.target.value))
-          }
-        />
+        <OrFormula nodekey="action_label" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control"
+            value={action_label}
+            onChange={(e) =>
+              setProp((prop) => (prop.action_label = e.target.value))
+            }
+          />
+        </OrFormula>
       </div>
       <div className="form-check">
         <input

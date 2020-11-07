@@ -239,6 +239,7 @@ const ActionElem = ({ connectors, options }) => (
       minRole={10}
       confirm={false}
       action_label={""}
+      isFormula={{}}
       rndid={"not_assigned"}
       configuration={{}}
     />

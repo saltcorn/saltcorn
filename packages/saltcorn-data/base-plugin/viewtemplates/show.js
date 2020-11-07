@@ -229,6 +229,9 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
     },
+    action(segment) {
+      evalMaybeExpr(segment, "action_label");
+    },
     card(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
