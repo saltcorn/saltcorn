@@ -104,7 +104,14 @@ const field_picker_fields = contract(
     fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
 
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
-    const actions = ["Delete", ...boolfields.map((f) => `Toggle ${f.name}`)];
+
+    const stateActions = getState().actions;
+
+    const actions = [
+      "Delete",
+      ...boolfields.map((f) => `Toggle ${f.name}`),
+      ...Object.keys(stateActions),
+    ];
     const fldOptions = fields.map((f) => f.name);
     const fldViewOptions = calcfldViewOptions(fields, false);
 
@@ -192,6 +199,13 @@ const field_picker_fields = contract(
         name: "action_label",
         label: __("Action Label"),
         type: "String",
+        showIf: { ".coltype": "Action" },
+      },
+      {
+        name: "action_label_formula",
+        label: __("Action label is a formula?"),
+        type: "Bool",
+        required: false,
         showIf: { ".coltype": "Action" },
       },
       {

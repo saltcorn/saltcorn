@@ -450,5 +450,6 @@
 	"Triggers": "Triggers",
 	"Add trigger": "Add trigger",
 	"New trigger": "New trigger",
-	"Configure trigger": "Configure trigger"
+	"Configure trigger": "Configure trigger",
+	"Action label is a formula?": "Action label is a formula?"
 }
