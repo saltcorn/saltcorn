@@ -174,10 +174,8 @@ class Field {
       );
       if (rows.length === 1) return rows[0].id;
     } else {
-      if (this.type.contract) {
-        if (this.type.contract)
-          return this.type.contract(this.attributes).generate();
-      }
+      if (this.type && this.type.contract)
+        return this.type.contract(this.attributes).generate();
     }
   }
 
