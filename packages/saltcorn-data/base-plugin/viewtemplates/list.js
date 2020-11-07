@@ -18,6 +18,7 @@ const {
   link_view,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
+const { getState } = require("../../db/state");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -213,6 +214,25 @@ const run = async (
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
+const run_action = async (table_id, viewname, { columns, layout }, body) => {
+  const col = columns.find(
+    (c) =>
+      c.type === "Action" &&
+      c.action_name === body.action_name &&
+      body.action_name
+  );
+
+  const table = await Table.findOne({ id: table_id });
+  const row = await table.getRow({ id: body.id });
+  const state_action = getState().actions[col.action_name];
+  const configuration = {};
+  (state_action.configFields || []).forEach(({ name }) => {
+    configuration[name] = col[name];
+  });
+  await state_action.run({ configuration, table, row });
+  return { json: { success: "ok" } };
+};
+
 module.exports = {
   name: "List",
   configuration_workflow,
@@ -220,6 +240,7 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
+  routes: { run_action },
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
   default_state_form: ({ default_state }) =>

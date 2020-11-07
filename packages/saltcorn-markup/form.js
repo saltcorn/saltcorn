@@ -110,6 +110,12 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
       )}">${opts}</select>`;
+    case "textarea":
+      return `<textarea class="form-control ${validClass} ${
+        hdr.class || ""
+      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+        name
+      )}">${text(v[hdr.form_name])}</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
         hdr.input_type = "select";
