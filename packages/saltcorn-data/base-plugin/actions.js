@@ -24,9 +24,32 @@ module.exports = {
       });
     },
   },
-  /*send_email: {
-    configFields: [{ name: "view", label: "URL", type: "String" }],
-  },*/
+  insert_joined_row: {
+    configFields: async ({ table }) => {
+      const { child_field_list } = await table.get_child_relations();
+      return [
+        {
+          name: "joined_table",
+          label: "Relation",
+          type: "String",
+          attributes: {
+            options: child_field_list.join(),
+          },
+        },
+      ];
+    },
+    run: async ({ row, table, configuration: { joined_table }, user }) => {
+      const [join_table_name, join_field] = joined_table.split(".");
+      const joinTable = await Table.findOne({ name: join_table_name });
+      const fields = await joinTable.getFields();
+      const newRow = { [join_field]: row.id };
+      for (const field of fields) {
+        if (field.is_fkey && field.reftable.name === "users" && user && user.id)
+          newRow[field.name] = user.id;
+      }
+      await joinTable.insertRow(newRow);
+    },
+  },
   run_js_code: {
     configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
     run: async ({ row, table, configuration: { code } }) => {
