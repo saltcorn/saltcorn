@@ -233,10 +233,8 @@ const run_action = async (
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
   const configuration = {};
-  const cfgFields = getActionConfigFields(
-    state_action,
-    table
-  )(cfgFields).forEach(({ name }) => {
+  const cfgFields = await getActionConfigFields(state_action, table);
+  cfgFields.forEach(({ name }) => {
     configuration[name] = col[name];
   });
   await state_action.run({ configuration, table, row, user: req.user });

@@ -32,10 +32,8 @@ module.exports = {
         {
           name: "joined_table",
           label: "Relation",
-          type: "String",
-          attributes: {
-            options: child_field_list.join(),
-          },
+          input_type: "select",
+          options: child_field_list,
         },
       ];
     },
@@ -45,7 +43,12 @@ module.exports = {
       const fields = await joinTable.getFields();
       const newRow = { [join_field]: row.id };
       for (const field of fields) {
-        if (field.is_fkey && field.reftable.name === "users" && user && user.id)
+        if (
+          field.type === "Key" &&
+          field.reftable_name === "users" &&
+          user &&
+          user.id
+        )
           newRow[field.name] = user.id;
       }
       await joinTable.insertRow(newRow);
