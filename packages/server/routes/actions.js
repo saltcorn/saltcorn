@@ -233,7 +233,7 @@ router.get(
       const table = trigger.table_id
         ? await Table.findOne({ id: trigger.table_id })
         : null;
-      const cfgFields = getActionConfigFields(action, table);
+      const cfgFields = await getActionConfigFields(action, table);
       const form = new Form({
         action: `/actions/configure/${id}`,
         fields: cfgFields,
@@ -267,9 +267,13 @@ router.post(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const action = getState().actions[trigger.action];
+    const table = trigger.table_id
+      ? await Table.findOne({ id: trigger.table_id })
+      : null;
+    const cfgFields = await getActionConfigFields(action, table);
     const form = new Form({
       action: `/actions/configure/${id}`,
-      fields: action.configFields,
+      fields: cfgFields,
     });
     form.validate(req.body);
     if (form.hasErrors) {

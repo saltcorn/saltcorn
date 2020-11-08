@@ -26,6 +26,7 @@ module.exports = {
   },
   insert_joined_row: {
     configFields: async ({ table }) => {
+      if (!table) return [];
       const { child_field_list } = await table.get_child_relations();
       return [
         {
