@@ -16,6 +16,7 @@ const {
   stateToQueryString,
   stateFieldsToQuery,
   link_view,
+  getActionConfigFields,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
@@ -214,7 +215,13 @@ const run = async (
   return mkTable(tfields, rows, page_opts) + create_link;
 };
 
-const run_action = async (table_id, viewname, { columns, layout }, body) => {
+const run_action = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  body,
+  { req, res }
+) => {
   const col = columns.find(
     (c) =>
       c.type === "Action" &&
@@ -226,10 +233,13 @@ const run_action = async (table_id, viewname, { columns, layout }, body) => {
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
   const configuration = {};
-  (state_action.configFields || []).forEach(({ name }) => {
+  const cfgFields = getActionConfigFields(
+    state_action,
+    table
+  )(cfgFields).forEach(({ name }) => {
     configuration[name] = col[name];
   });
-  await state_action.run({ configuration, table, row });
+  await state_action.run({ configuration, table, row, user: req.user });
   return { json: { success: "ok" } };
 };
 

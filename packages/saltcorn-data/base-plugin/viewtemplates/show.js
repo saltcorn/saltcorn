@@ -21,6 +21,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  getActionConfigFields,
 } = require("../../plugin-helper");
 const { action_url, view_linker } = require("./viewable_fields");
 const db = require("../../db");
@@ -53,11 +54,14 @@ const configuration_workflow = (req) =>
             ...Object.keys(stateActions),
           ];
           const actionConfigForms = {};
-          Object.entries(stateActions).forEach(([name, { configFields }]) => {
-            if (configFields) {
-              actionConfigForms[name] = configFields;
+          for (const [name, action] of Object.entries(stateActions)) {
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(
+                action,
+                table
+              );
             }
-          });
+          }
           const field_view_options = calcfldViewOptions(fields, false);
           const link_view_opts = await get_link_view_opts(
             table,
@@ -291,14 +295,25 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
   };
   return renderLayout({ blockDispatch, layout, role });
 };
-const run_action = async (table_id, viewname, { columns, layout }, body) => {
+const run_action = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  body,
+  { req, res }
+) => {
   const col = columns.find(
     (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
   );
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
-  await state_action.run({ configuration: col.configuration, table, row });
+  await state_action.run({
+    configuration: col.configuration,
+    table,
+    row,
+    user: req.user,
+  });
   return { json: { success: "ok" } };
 };
 
