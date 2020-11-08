@@ -31,8 +31,10 @@ function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     var to_show = new Function("e", "return " + e.attr("data-show-if"));
-    if (to_show(e)) e.show();
-    else e.hide();
+    if (to_show(e))
+      e.show().find("input, textarea, button, select").prop("disabled", false);
+    else
+      e.hide().find("input, textarea, button, select").prop("disabled", true);
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
