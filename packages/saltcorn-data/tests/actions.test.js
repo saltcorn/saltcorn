@@ -16,6 +16,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.setTimeout(10000);
+
 describe("Action", () => {
   it("should add insert trigger", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
