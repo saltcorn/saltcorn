@@ -129,7 +129,7 @@ class User {
     )
       return { error: "Invalid token" };
     const u = await User.findOne({ email });
-    if (u && new Date() < u.reset_password_expiry) {
+    if (u && new Date() < u.reset_password_expiry && u.reset_password_token) {
       const match = bcrypt.compareSync(
         reset_password_token,
         u.reset_password_token
