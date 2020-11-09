@@ -223,4 +223,77 @@ describe("Field Endpoints", () => {
       .expect(toInclude("weight"))
       .expect(toNotInclude("[object"));
   });
+
+  it("should post new calculated int field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Integer")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
+  it("should post new calculated string field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=String")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
+  it("should post new calculated float field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Float")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
+  it("should post new calculated boolean field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Bool")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
 });
