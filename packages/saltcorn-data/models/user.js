@@ -80,6 +80,7 @@ class User {
   }
   async delete() {
     const schema = db.getTenantSchemaPrefix();
+    this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
@@ -183,6 +184,7 @@ User.contract = {
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
+    destroy_sessions: is.fun([], is.promise(is.undefined)),
     changePasswordTo: is.fun(is.str, is.promise(is.undefined)),
     checkPassword: is.fun(is.str, is.bool),
   },
