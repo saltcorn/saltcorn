@@ -91,6 +91,11 @@ describe("Table create", () => {
       (async () => await db.selectOne("mytable1", { id: 789 }))()
     ).rejects.toThrow(Error);
   });
+  it("should get distinct values", async () => {
+    const table = await Table.findOne({ name: "mytable1" });
+    const vs = await table.distinctValues("height1");
+    expect(vs).toEqual([7]);
+  });
   it("should delete", async () => {
     const table = await Table.findOne({ name: "mytable1" });
     await table.delete();
