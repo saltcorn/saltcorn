@@ -85,6 +85,10 @@ describe("User", () => {
     const u2 = await User.findOne({ email: "foo@bar.com" });
     expect(u2.api_token).not.toEqual(token);
   });
+  it("should set language ", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    await u.set_language("fr");
+  });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.delete();
