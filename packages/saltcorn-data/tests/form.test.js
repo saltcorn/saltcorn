@@ -89,6 +89,27 @@ describe("Form", () => {
     expect(html.includes("Fred")).toBe(true);
     expect(html.includes("George")).toBe(true);
   });
+  it("should run form validator", async () => {
+    const form = new Form({
+      action: "/",
+      validator({ age }) {
+        if (age < 18) return "Should be older than 18";
+      },
+      fields: [
+        new Field({
+          name: "age",
+          label: "Age",
+          type: "Integer",
+          attributes: { min: 16 },
+        }),
+      ],
+    });
+    const vres = form.validate({ age: 15 });
+    expect(vres.errors).toEqual({ age: "Must be 16 or higher" });
+
+    const vres1 = form.validate({ age: 17 });
+    expect(vres1.errors).toEqual({ _form: "Should be older than 18" });
+  });
 });
 
 describe("Bool Form", () => {
