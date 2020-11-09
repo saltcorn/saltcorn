@@ -116,19 +116,18 @@ router.post(
               delete row[k];
               return;
             }
-
-            //never triggers, we get DB error. TODO
-            if (field.required && typeof row[k] === "undefined") {
-              hasErrors = true;
-              errors.push(`${k}: required`);
-            }
-
             if (field.type && field.type.validate) {
               const vres = field.type.validate(field.attributes || {})(row[k]);
               if (vres.error) {
                 hasErrors = true;
                 errors.push(`${k}: ${vres.error}`);
               }
+            }
+          });
+          fields.forEach((field) => {
+            if (field.required && typeof row[field.name] === "undefined") {
+              hasErrors = true;
+              errors.push(`${field.name}: required`);
             }
           });
           if (hasErrors) {
