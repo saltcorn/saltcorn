@@ -41,7 +41,7 @@ export const ActionSettings = () => {
     action_label,
   } = node;
   const options = useContext(optionsCtx);
-  const cfgFields = options.actionConfigForms[name];
+  const cfgFields = (options.actionConfigForms || {})[name];
   return (
     <div>
       <div>

@@ -102,10 +102,7 @@ const triggerForm = async (req, trigger) => {
         name: "table_id",
         label: req.__("Table"),
         input_type: "select",
-        options: [
-          { value: "", label: "" },
-          ...tables.map((t) => ({ value: t.id, label: t.name })),
-        ],
+        options: [...tables.map((t) => ({ value: t.id, label: t.name }))],
       },
       {
         name: "when_trigger",
