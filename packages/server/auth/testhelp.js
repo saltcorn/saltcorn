@@ -95,6 +95,17 @@ const succeedJsonWith = (pred) => (res) => {
   }
 };
 
+const respondJsonWith = (code, pred) => (res) => {
+  if (res.statusCode !== code) {
+    console.log(res.text);
+    throw new Error(`Expected status ${code}, received ${res.statusCode}`);
+  }
+
+  if (!pred(res.body)) {
+    console.log(res.body);
+    throw new Error(`Not satisfied`);
+  }
+};
 const notAuthorized = (res) => {
   if (res.statusCode !== 401) {
     console.log(res.text);
@@ -112,4 +123,5 @@ module.exports = {
   resetToFixtures,
   succeedJsonWith,
   notAuthorized,
+  respondJsonWith,
 };
