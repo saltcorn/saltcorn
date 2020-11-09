@@ -135,3 +135,61 @@ describe("menu editor", () => {
       .expect(toInclude("BarMenu"));
   });
 });
+describe("actions", () => {
+  itShouldRedirectUnauthToLogin("/actions");
+  it("show actions editor", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/actions")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Actions available"))
+      .expect(toInclude("webhook"));
+  });
+  it("show new action", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/actions/trigger/new")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("New trigger"))
+      .expect(toInclude("webhook"));
+  });
+  it("post trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/trigger")
+      .set("Cookie", loginCookie)
+      .send("action=run_js_code")
+      .send("table_id=2")
+      .send("when_trigger=Insert")
+      .expect(toRedirect("/actions/configure/1"));
+  });
+  it("show configure", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/actions/configure/1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Configure trigger"))
+      .expect(toInclude("Code"));
+  });
+  it("post config", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/configure/1")
+      .set("Cookie", loginCookie)
+      .send("code=1")
+      .expect(toRedirect("/actions/"));
+  });
+  it("deletes trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/delete/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/actions/"));
+  });
+});
