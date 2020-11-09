@@ -181,3 +181,51 @@ describe("user presets", () => {
   const presets = field.presets;
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
+
+describe("Field.distinct_values", () => {
+  it("gives string options", async () => {
+    const table = await Table.create("fdvtable");
+    const fc = await Field.create({
+      table,
+      label: "Colour",
+      type: "String",
+      required: true,
+      attributes: { options: "Red,Green,Purple" },
+    });
+    const dvs = await fc.distinct_values();
+    expect(dvs).toEqual([
+      { label: "", value: "" },
+      { label: "Red", value: "Red" },
+      { label: "Green", value: "Green" },
+      { label: "Purple", value: "Purple" },
+    ]);
+  });
+  it("gives int values", async () => {
+    const table = await Table.findOne({ name: "fdvtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "height",
+      label: "Height",
+      type: "Integer",
+      required: false,
+    });
+    await table.insertRow({ colour: "Red", height: 6 });
+    await table.insertRow({ colour: "Green", height: 11 });
+    const dvs = await fc.distinct_values();
+    expect(dvs).toEqual([
+      { label: "", value: "" },
+      { label: 6, value: 6 },
+      { label: 11, value: 11 },
+    ]);
+  });
+  it("gives fkey values", async () => {
+    const fc = await Field.findOne({ name: "favbook" });
+    const dvs = await fc.distinct_values();
+    expect(dvs).toEqual([
+      { label: "", value: "" },
+      { label: "Herman Melville", value: 1 },
+      { label: "Leo Tolstoy", value: 2 },
+    ]);
+  });
+});

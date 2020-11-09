@@ -484,6 +484,10 @@ Field.contract = {
     fill_table: is.fun([], is.promise(is.undefined)),
     update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
+    distinct_values: is.fun(
+      [],
+      is.promise(is.array(is.obj({ label: is.any, value: is.any })))
+    ),
   },
   static_methods: {
     find: is.fun(
