@@ -93,6 +93,12 @@ const get_link_view_opts = contract(
     return link_view_opts;
   }
 );
+
+const getActionConfigFields = async (action, table) =>
+  typeof action.configFields === "function"
+    ? await action.configFields({ table })
+    : action.configFields || [];
+
 const field_picker_fields = contract(
   is.fun(
     is.obj({ table: is.class("Table"), viewname: is.str }),
@@ -115,7 +121,9 @@ const field_picker_fields = contract(
 
     const actionConfigFields = [];
     for (const [name, action] of Object.entries(stateActions)) {
-      for (const field of action.configFields || []) {
+      const cfgFields = await getActionConfigFields(action, table);
+
+      for (const field of cfgFields) {
         actionConfigFields.push({
           ...field,
           showIf: {
@@ -670,4 +678,5 @@ module.exports = {
   readStateStrict,
   stateToQueryString,
   link_view,
+  getActionConfigFields,
 };

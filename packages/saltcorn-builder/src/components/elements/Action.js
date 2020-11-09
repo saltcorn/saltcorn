@@ -138,4 +138,17 @@ const ActionConfigField = ({ field, configuration, setProp }) =>
         }
       />
     ),
+    select: () => (
+      <select
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      >
+        {field.options.map((o, ix) => (
+          <option key={ix}>{o}</option>
+        ))}
+      </select>
+    ),
   }[field.input_type || field.type.name || field.type]());

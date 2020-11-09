@@ -18,6 +18,7 @@ const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
 const { div } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
+const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 
 const wrap = (req, cardTitle, response, lastBc) => ({
   above: [
@@ -226,9 +227,13 @@ router.get(
       req.flash("warning", "Action not configurable");
       res.redirect(`/actions/`);
     } else {
+      const table = trigger.table_id
+        ? await Table.findOne({ id: trigger.table_id })
+        : null;
+      const cfgFields = await getActionConfigFields(action, table);
       const form = new Form({
         action: `/actions/configure/${id}`,
-        fields: action.configFields,
+        fields: cfgFields,
       });
       form.values = trigger.configuration;
       res.sendWrap(
@@ -259,9 +264,13 @@ router.post(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const action = getState().actions[trigger.action];
+    const table = trigger.table_id
+      ? await Table.findOne({ id: trigger.table_id })
+      : null;
+    const cfgFields = await getActionConfigFields(action, table);
     const form = new Form({
       action: `/actions/configure/${id}`,
-      fields: action.configFields,
+      fields: cfgFields,
     });
     form.validate(req.body);
     if (form.hasErrors) {
