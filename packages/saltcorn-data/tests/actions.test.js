@@ -16,6 +16,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.setTimeout(10000);
+
 describe("Action", () => {
   it("should add insert trigger", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
@@ -102,5 +104,36 @@ describe("Action", () => {
     });
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
     await table.updateRow({ pages: 210 }, row.id);
+  });
+  it("should list triggers", async () => {
+    const table = await Table.findOne({ name: "books" });
+
+    const triggers = await Trigger.findAllWithTableName();
+    expect(triggers.length).toBe(5);
+    expect(
+      triggers.find(
+        (tr) => tr.table_name === "books" && tr.when_trigger === "Update"
+      ).action
+    ).toBe("webhook");
+  });
+  it("should get triggers", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const trigger = await Trigger.findOne({
+      table_id: table.id,
+      when_trigger: "Update",
+    });
+    expect(trigger.action).toBe("webhook");
+    await Trigger.update(trigger.id, { when_trigger: "Insert" });
+    const ins_trigger = await Trigger.find({
+      table_id: table.id,
+      when_trigger: "Insert",
+    });
+    expect(ins_trigger.length).toBe(2);
+    await trigger.delete();
+    const ins_trigger1 = await Trigger.find({
+      table_id: table.id,
+      when_trigger: "Insert",
+    });
+    expect(ins_trigger1.length).toBe(1);
   });
 });

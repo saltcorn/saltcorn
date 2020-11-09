@@ -62,6 +62,18 @@ describe("User", () => {
       password: "newpaass",
     });
     expect(!!u2).toBe(true);
+    const res1 = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: "somerandomtoken",
+      password: "newpaass",
+    });
+    expect(res1).toEqual({ error: "User not found or expired token" });
+    const res2 = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: "",
+      password: "newpaass",
+    });
+    expect(res2).toEqual({ error: "Invalid token" });
   });
   it("should reset password", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
@@ -72,6 +84,10 @@ describe("User", () => {
     await u1.getNewAPIToken();
     const u2 = await User.findOne({ email: "foo@bar.com" });
     expect(u2.api_token).not.toEqual(token);
+  });
+  it("should set language ", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    await u.set_language("fr");
   });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });

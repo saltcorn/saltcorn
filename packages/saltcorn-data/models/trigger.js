@@ -24,7 +24,7 @@ class Trigger {
     const schema = db.getTenantSchemaPrefix();
 
     const sql = `select a.id, a.action, t.name as table_name, a. when_trigger 
-    from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by id`;
+    from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
     const { rows } = await db.query(sql);
     return rows.map((dbf) => new Trigger(dbf));
   }

@@ -80,6 +80,7 @@ class User {
   }
   async delete() {
     const schema = db.getTenantSchemaPrefix();
+    this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
@@ -128,7 +129,7 @@ class User {
     )
       return { error: "Invalid token" };
     const u = await User.findOne({ email });
-    if (u && new Date() < u.reset_password_expiry) {
+    if (u && new Date() < u.reset_password_expiry && u.reset_password_token) {
       const match = bcrypt.compareSync(
         reset_password_token,
         u.reset_password_token
@@ -183,6 +184,7 @@ User.contract = {
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
+    destroy_sessions: is.fun([], is.promise(is.undefined)),
     changePasswordTo: is.fun(is.str, is.promise(is.undefined)),
     checkPassword: is.fun(is.str, is.bool),
   },

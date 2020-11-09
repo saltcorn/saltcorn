@@ -383,7 +383,6 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    await u.destroy_sessions();
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 
