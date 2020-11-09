@@ -56,11 +56,12 @@ module.exports = {
   },
   run_js_code: {
     configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
-    run: async ({ row, table, configuration: { code } }) => {
+    run: async ({ row, table, configuration: { code }, user }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
         row,
+        user,
         console,
         ...(row || {}),
         ...getState().function_context,
