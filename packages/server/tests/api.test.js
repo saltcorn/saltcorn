@@ -107,7 +107,9 @@ describe("API read", () => {
     await request(app)
       .get("/api/patients/?versioncount=on")
       .set("Cookie", loginCookie)
-      .expect(succeedJsonWith((rows) => rows.length == 2));
+      .expect(
+        succeedJsonWith((rows) => rows.length == 2 && +rows[0]._versions === 0)
+      );
   });
 });
 describe("API post", () => {
