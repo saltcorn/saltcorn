@@ -92,6 +92,15 @@ describe("View", () => {
     await View.update({ on_root_page: false }, v.id);
     await v.delete();
   });
+  it("should clone", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    await v.clone();
+    const v1 = await View.findOne({ name: "authorlist copy" });
+    expect(!!v1).toBe(true);
+    const res = await v1.run({ author: "Mel" }, mockReqRes);
+
+    expect(res.length > 0).toBe(true);
+  });
 });
 describe("View with routes", () => {
   it("should create and delete", async () => {
