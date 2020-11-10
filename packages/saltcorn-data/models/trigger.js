@@ -6,6 +6,10 @@ class Trigger {
     this.action = o.action;
     this.table_id = !o.table_id ? null : +o.table_id;
     this.table_name = o.table_name;
+    if (o.table) {
+      this.table_id = o.table.id;
+      this.table_name = o.table.name;
+    }
     this.when_trigger = o.when_trigger;
     this.id = !o.id ? null : +o.id;
     this.configuration =
@@ -14,6 +18,14 @@ class Trigger {
         : o.configuration || {};
 
     contract.class(this);
+  }
+
+  get toJson() {
+    return {
+      action: this.action,
+      when_trigger: this.when_trigger,
+      configuration: this.configuration,
+    };
   }
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_triggers", where, selectopts);
@@ -62,6 +74,8 @@ class Trigger {
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
       trigger.run = (row) =>
+        action &&
+        action.run &&
         action.run({
           table,
           configuration: trigger.configuration,

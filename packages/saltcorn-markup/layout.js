@@ -149,21 +149,19 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
                 hAlign === "center" &&
                 "justify-content-center",
             ],
-            style: `min-height: ${minHeight || 0}px; 
-          border: ${borderWidth || 0}px ${borderStyle} black; 
-          ${
-            renderBg && bgType === "Image" && bgFileId && +bgFileId
-              ? `background-image: url('/files/serve/${bgFileId}');
-          background-size: ${imageSize || "contain"};
-          background-repeat: no-repeat;`
-              : ""
-          }
-          ${
-            renderBg && bgType === "Color"
-              ? `background-color: ${bgColor};`
-              : ""
-          }
-          ${setTextColor ? `color: ${textColor};` : ""}`,
+            style: `min-height: ${minHeight || 0}px; border: ${
+              borderWidth || 0
+            }px ${borderStyle} black; ${
+              renderBg && bgType === "Image" && bgFileId && +bgFileId
+                ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
+                    imageSize || "contain"
+                  }; background-repeat: no-repeat;`
+                : ""
+            } ${
+              renderBg && bgType === "Color"
+                ? `background-color: ${bgColor};`
+                : ""
+            } ${setTextColor ? `color: ${textColor};` : ""}`,
           },
           go(segment.contents)
         )

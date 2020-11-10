@@ -31,7 +31,7 @@ const create_pack = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (dirpath) => {
     const tables = await asyncMap(
-      (await Table.find({})).filter((t) => t.name !== "users"),
+      await Table.find({}),
       async (t) => await table_pack(t.name)
     );
     const views = await asyncMap(

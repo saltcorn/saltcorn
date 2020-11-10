@@ -453,5 +453,6 @@
 	"Configure trigger": "Configure trigger",
 	"Action label is a formula?": "Action label is a formula?",
 	"Action Style": "Action Style",
-	"Button size": "Button size"
+	"Button size": "Button size",
+	"A view with this name already exists": "A view with this name already exists"
 }
