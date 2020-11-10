@@ -3,6 +3,7 @@ const db = require("../db");
 const View = require("./view");
 const User = require("./user");
 const Field = require("./field");
+const Trigger = require("./trigger");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
 const { contract, is } = require("contractis");
@@ -19,12 +20,14 @@ const table_pack = contract(pack_fun, async (name) => {
     delete o.table_id;
     return o;
   };
+  const triggers = await Trigger.find({ table_id: table.id });
   return {
     name: table.name,
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
     versioned: table.versioned,
     fields: fields.map((f) => strip_ids(f.toJson)),
+    triggers: triggers.map((tr) => tr.toJson),
   };
 });
 
@@ -183,6 +186,8 @@ const install_pack = contract(
       const table = await Table.findOne({ name: tableSpec.name });
       for (const field of tableSpec.fields)
         await Field.create({ table, ...field }, bare_tables);
+      for (const trigger of tableSpec.triggers || [])
+        await Trigger.create({ table, ...trigger });
     }
     for (const viewSpec of pack.views) {
       const { table, on_menu, menu_label, ...viewNoTable } = viewSpec;
