@@ -173,8 +173,8 @@ const get_viewable_fields = contract(
                     class:
                       column.action_style === "btn-link"
                         ? ""
-                        : `btn ${column.action_style || btn - primary} ${
-                            column.action_style || ""
+                        : `btn ${column.action_style || "btn-primary"} ${
+                            column.action_size || ""
                           }`,
                   },
                   label

@@ -179,7 +179,7 @@ const store_item_html = (req) => (item) => ({
           {
             klass: "store-install",
             small: true,
-            btnClass: "danger",
+            btnClass: "btn-danger",
             formClass: "d-inline",
             onClick: "press_store_button(this)",
           }
@@ -194,7 +194,7 @@ const store_item_html = (req) => (item) => ({
           {
             klass: "store-install",
             small: true,
-            btnClass: "danger",
+            btnClass: "btn-danger",
             formClass: "d-inline",
             onClick: "press_store_button(this)",
           }
