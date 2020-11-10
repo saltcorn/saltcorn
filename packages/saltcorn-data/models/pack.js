@@ -92,7 +92,7 @@ const can_install_pack = contract(
       db.sqlsanitize(t.name.toLowerCase())
     );
     const matchTables = allTables.filter((dbt) =>
-      packTables.some((pt) => pt === dbt)
+      packTables.some((pt) => pt === dbt && pt !== "users")
     );
     const matchViews = allViews.filter((dbt) =>
       (pack.views || []).some((pt) => pt.name === dbt)
@@ -180,12 +180,14 @@ const install_pack = contract(
       }
     }
     for (const tableSpec of pack.tables) {
-      await Table.create(tableSpec.name, tableSpec);
+      if (tableSpec.name !== "users")
+        await Table.create(tableSpec.name, tableSpec);
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
       for (const field of tableSpec.fields)
-        await Field.create({ table, ...field }, bare_tables);
+        if (!(table.name === "users" && field.name === "email"))
+          await Field.create({ table, ...field }, bare_tables);
       for (const trigger of tableSpec.triggers || [])
         await Trigger.create({ table, ...trigger });
     }
