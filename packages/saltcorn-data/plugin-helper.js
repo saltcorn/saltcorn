@@ -231,6 +231,44 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "Action" },
       },
       {
+        name: "action_style",
+        label: __("Action Style"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "btn-primary", label: "Primary button" },
+            { name: "btn-secondary", label: "Secondary button" },
+            { name: "btn-success", label: "Success button" },
+            { name: "btn-danger", label: "Danger button" },
+            { name: "btn-outline-primary", label: "Primary outline button" },
+            {
+              name: "btn-outline-secondary",
+              label: "Secondary outline button",
+            },
+            { name: "btn-link", label: "Link" },
+          ],
+        },
+
+        showIf: { ".coltype": "Action" },
+      },
+      {
+        name: "action_size",
+        label: __("Button size"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "", label: "Standard" },
+            { name: "btn-lg", label: "Large" },
+            { name: "btn-sm", label: "Small" },
+            { name: "btn-block", label: "Block" },
+            { name: "btn-block btn-lg", label: "Large block" },
+          ],
+        },
+        showIf: { ".coltype": "Action" },
+      },
+      {
         name: "confirm",
         label: __("User confirmation?"),
         type: "Bool",

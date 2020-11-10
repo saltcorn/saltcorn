@@ -274,18 +274,32 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       const val = row[targetNm];
       return text(val);
     },
-    action({ action_name, action_label, confirm, rndid }) {
+    action({
+      action_name,
+      action_label,
+      confirm,
+      rndid,
+      action_style,
+      action_size,
+    }) {
       const url = action_url(viewname, table, action_name, row, rndid, "rndid");
       const label = action_label || action_name;
       if (url.javascript)
         return a(
-          { href: "javascript:" + url.javascript, class: "btn btn-primary" },
+          {
+            href: "javascript:" + url.javascript,
+            class:
+              action_style === "btn-link"
+                ? ""
+                : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          },
           label
         );
       else
         return post_btn(url, label, req.csrfToken(), {
           confirm,
           req,
+          btnClass: `${action_style} ${action_size}`,
         });
     },
     view_link(view) {
