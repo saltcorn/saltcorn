@@ -282,14 +282,6 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       action_style,
       action_size,
     }) {
-      console.log({
-        action_name,
-        action_label,
-        confirm,
-        rndid,
-        action_style,
-        action_size,
-      });
       const url = action_url(viewname, table, action_name, row, rndid, "rndid");
       const label = action_label || action_name;
       if (url.javascript)
