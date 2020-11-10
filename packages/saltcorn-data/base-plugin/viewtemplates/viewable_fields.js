@@ -170,9 +170,12 @@ const get_viewable_fields = contract(
                 return a(
                   {
                     href: "javascript:" + url.javascript,
-                    class: `btn ${column.action_style || btn - primary} ${
-                      column.action_style || ""
-                    }`,
+                    class:
+                      column.action_style === "btn-link"
+                        ? ""
+                        : `btn ${column.action_style || btn - primary} ${
+                            column.action_style || ""
+                          }`,
                   },
                   label
                 );

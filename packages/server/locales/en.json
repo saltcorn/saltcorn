@@ -451,5 +451,7 @@
 	"Add trigger": "Add trigger",
 	"New trigger": "New trigger",
 	"Configure trigger": "Configure trigger",
-	"Action label is a formula?": "Action label is a formula?"
+	"Action label is a formula?": "Action label is a formula?",
+	"Action Style": "Action Style",
+	"Button size": "Button size"
 }

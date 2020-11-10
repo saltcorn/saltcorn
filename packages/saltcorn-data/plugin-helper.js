@@ -233,31 +233,39 @@ const field_picker_fields = contract(
       {
         name: "action_style",
         label: __("Action Style"),
-        type: "select",
-        options: [
-          { value: "btn-primary", label: "Primary button" },
-          { value: "btn-secondary", label: "Secondary button" },
-          { value: "btn-success", label: "Success button" },
-          { value: "btn-danger", label: "Danger button" },
-          { value: "btn-outline-primary", label: "Primary outline button" },
-          { value: "btn-outline-secondary", label: "Secondary outline button" },
-          { value: "btn-link", label: "Link" },
-        ],
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "btn-primary", label: "Primary button" },
+            { name: "btn-secondary", label: "Secondary button" },
+            { name: "btn-success", label: "Success button" },
+            { name: "btn-danger", label: "Danger button" },
+            { name: "btn-outline-primary", label: "Primary outline button" },
+            {
+              name: "btn-outline-secondary",
+              label: "Secondary outline button",
+            },
+            { name: "btn-link", label: "Link" },
+          ],
+        },
 
         showIf: { ".coltype": "Action" },
       },
       {
         name: "action_size",
         label: __("Button size"),
-        type: "select",
-        options: [
-          { value: "", label: "Standard" },
-          { value: "btn-lg", label: "Large" },
-          { value: "btn-sm", label: "Small" },
-          { value: "btn-block", label: "Block" },
-          { value: "btn-block btn-lg", label: "Large block" },
-        ],
-
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "", label: "Standard" },
+            { name: "btn-lg", label: "Large" },
+            { name: "btn-sm", label: "Small" },
+            { name: "btn-block", label: "Block" },
+            { name: "btn-block btn-lg", label: "Large block" },
+          ],
+        },
         showIf: { ".coltype": "Action" },
       },
       {
