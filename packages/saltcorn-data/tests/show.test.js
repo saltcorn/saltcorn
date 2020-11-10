@@ -28,6 +28,22 @@ const test_show = async ({ columns, layout, response }) => {
   expect(res).toBe(response);
   await v.delete();
 };
+const test_edit = async ({ id, columns, layout, response }) => {
+  const table = await Table.findOne({ name: "patients" });
+
+  const v = await View.create({
+    table_id: table.id,
+    name: "testedit",
+    viewtemplate: "Edit",
+    configuration: { columns, layout },
+    min_role: 10,
+    on_root_page: true,
+  });
+
+  const res = await v.run(id ? { id } : {}, mockReqRes);
+  expect(res).toBe(response);
+  await v.delete();
+};
 
 describe("Show view", () => {
   it("should render exactly", async () => {
@@ -166,6 +182,99 @@ describe("Show view", () => {
       },
       columns: [],
       response: `<div class="card shadow mt-4 " ><div class="card-body">author<br />Herman Melville</div></div>`,
+    });
+  });
+});
+describe("Edit view", () => {
+  it("should render exactly", async () => {
+    const layout = {
+      above: [
+        {
+          widths: [2, 10],
+          besides: [
+            {
+              above: [null, { type: "blank", contents: "Name", isFormula: {} }],
+            },
+            {
+              above: [
+                null,
+                { type: "field", fieldview: "edit", field_name: "name" },
+              ],
+            },
+          ],
+        },
+        { type: "line_break" },
+        {
+          widths: [2, 10],
+          besides: [
+            {
+              above: [
+                null,
+                { type: "blank", contents: "Favourite book", isFormula: {} },
+              ],
+            },
+            {
+              above: [
+                null,
+                { type: "field", fieldview: "select", field_name: "favbook" },
+              ],
+            },
+          ],
+        },
+        { type: "line_break" },
+        {
+          widths: [2, 10],
+          besides: [
+            {
+              above: [
+                null,
+                { type: "blank", contents: "Parent", isFormula: {} },
+              ],
+            },
+            {
+              above: [
+                null,
+                { type: "field", fieldview: "select", field_name: "parent" },
+              ],
+            },
+          ],
+        },
+        { type: "line_break" },
+        {
+          type: "action",
+          rndid: "74310f",
+          minRole: 10,
+          isFormula: {},
+          action_name: "Save",
+          action_style: "btn-primary",
+          configuration: {},
+        },
+      ],
+    };
+    const columns = [
+      { type: "Field", fieldview: "edit", field_name: "name" },
+      { type: "Field", fieldview: "select", field_name: "favbook" },
+      { type: "Field", fieldview: "select", field_name: "parent" },
+      {
+        type: "Action",
+        rndid: "74310f",
+        minRole: 10,
+        isFormula: {},
+        action_name: "Save",
+        action_style: "btn-primary",
+        configuration: {},
+      },
+    ];
+    await test_edit({
+      layout,
+      columns,
+      response: `<form action="/view/testedit" class="form-namespace " method="post" ><input type="hidden" name="_csrf" value=""><div class="row"><div class="col-sm-2 text-">Name</div><div class="col-sm-10 text-"><input type="text"  class="form-control  " name="name" id="inputname"></div></div><br /><div class="row"><div class="col-sm-2 text-">Favourite book</div><div class="col-sm-10 text-"><select class="form-control  "  name="favbook" id="inputfavbook"><option value="" ></option><option value="1" >Herman Melville</option><option value="2" >Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-sm-2 text-">Parent</div><div class="col-sm-10 text-"><select class="form-control  "  name="parent" id="inputparent"><option value="" ></option><option value="1" >1</option><option value="2" >2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+    });
+    await test_edit({
+      id: 1,
+      layout,
+      columns,
+      response: `<form action="/view/testedit" class="form-namespace " method="post" ><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row"><div class="col-sm-2 text-">Name</div><div class="col-sm-10 text-"><input type="text"  class="form-control  " name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row"><div class="col-sm-2 text-">Favourite book</div><div class="col-sm-10 text-"><select class="form-control  "  name="favbook" id="inputfavbook"><option value="" ></option><option value="1" selected>Herman Melville</option><option value="2" >Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-sm-2 text-">Parent</div><div class="col-sm-10 text-"><select class="form-control  "  name="parent" id="inputparent"><option value="" ></option><option value="1" >1</option><option value="2" >2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
   });
 });
