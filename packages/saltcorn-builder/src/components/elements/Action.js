@@ -136,17 +136,20 @@ export const ActionSettings = () => {
           </td>
         </tr>
       </table>
-
-      <div className="form-check">
-        <input
-          className="form-check-input"
-          name="block"
-          type="checkbox"
-          checked={confirm}
-          onChange={(e) => setProp((prop) => (prop.confirm = e.target.checked))}
-        />
-        <label className="form-check-label">User confirmation?</label>
-      </div>
+      {options.mode === "show" ? (
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            name="block"
+            type="checkbox"
+            checked={confirm}
+            onChange={(e) =>
+              setProp((prop) => (prop.confirm = e.target.checked))
+            }
+          />
+          <label className="form-check-label">User confirmation?</label>
+        </div>
+      ) : null}
       <BlockSetting block={block} setProp={setProp} />
       <MinRoleSetting minRole={minRole} setProp={setProp} />
       {cfgFields ? (
