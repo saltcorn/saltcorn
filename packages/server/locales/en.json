@@ -454,5 +454,10 @@
 	"Action label is a formula?": "Action label is a formula?",
 	"Action Style": "Action Style",
 	"Button size": "Button size",
-	"A view with this name already exists": "A view with this name already exists"
+	"A view with this name already exists": "A view with this name already exists",
+	"Constraints": "Constraints",
+	"%s constraints": "%s constraints",
+	"Add constraint": "Add constraint",
+	"Add constraint to %s": "Add constraint to %s",
+	"Cannot delete users table": "Cannot delete users table"
 }

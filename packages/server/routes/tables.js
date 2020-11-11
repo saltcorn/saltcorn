@@ -33,6 +33,7 @@ const {
   text,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
 
 const router = new Router();
@@ -386,6 +387,13 @@ router.get(
       div(
         { class: "mx-auto" },
         settingsDropdown(`dataMenuButton`, [
+          a(
+            {
+              class: "dropdown-item",
+              href: `/table/constraints/${table.id}`,
+            },
+            '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
+          ),
           post_dropdown_item(
             `/table/recalc-stored/${table.name}`,
             '<i class="fas fa-sync"></i>&nbsp;' +
@@ -587,6 +595,131 @@ router.get(
         boolean: (v) => (v ? "true" : "false"),
       },
     }).pipe(res);
+  })
+);
+
+router.get(
+  "/constraints/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const cons = await TableConstraint.find({ table_id: table.id });
+    res.sendWrap(req.__(`%s constraints`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: req.__("Constraints") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`%s constraints`, table.name),
+          contents: [
+            mkTable(
+              [
+                { label: req.__("Type"), key: "type" },
+                {
+                  label: req.__("Fields"),
+                  key: (r) => r.configuration.fields.join(", "),
+                },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    post_delete_btn(`/table/delete-constraint/${r.id}`, req),
+                },
+              ],
+              cons
+            ),
+            link(`/table/add-constraint/${id}`, req.__("Add constraint")),
+          ],
+        },
+      ],
+    });
+  })
+);
+
+const constraintForm = (table_id, fields) =>
+  new Form({
+    action: `/table/add-constraint/${table_id}`,
+    blurb: "Tick the boxes for the fields that should be jointly unique",
+    fields: fields.map((f) => ({
+      name: f.name,
+      label: f.label,
+      type: "Bool",
+    })),
+  });
+
+router.get(
+  "/add-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const fields = await table.getFields();
+    const form = constraintForm(table.id, fields);
+    res.sendWrap(req.__(`Add constraint to %s`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            {
+              text: req.__("Constraints"),
+              href: `/table/constraints/${table.id}`,
+            },
+            { text: req.__("New") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`Add constraint to %s`, table.name),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
+    });
+  })
+);
+
+router.post(
+  "/add-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const fields = await table.getFields();
+    const form = constraintForm(table.id, fields);
+    form.validate(req.body);
+    if (form.hasErrors) req.flash("error", req.__("An error occurred"));
+    else {
+      await TableConstraint.create({
+        table_id: table.id,
+        type: "Unique",
+        configuration: {
+          fields: fields.map((f) => f.name).filter((f) => form.values[f]),
+        },
+      });
+    }
+    res.redirect(`/table/constraints/${table.id}`);
+  })
+);
+
+router.post(
+  "/delete-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const cons = await TableConstraint.findOne({ id });
+    await cons.delete();
+    res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
 
