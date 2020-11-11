@@ -223,14 +223,7 @@ class Field {
           this.name
         )}")`
       );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" add CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique UNIQUE ("${sqlsanitize(this.name)}")`
-      );
+    else await db.add_unique_constraint(this.table.name, [this.name]);
   }
 
   async remove_unique_constraint() {
@@ -242,14 +235,7 @@ class Field {
           this.name
         )}_unique;`
       );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique;`
-      );
+    else await db.drop_unique_constraint(this.table.name, [this.name]);
   }
 
   async toggle_not_null(not_null) {

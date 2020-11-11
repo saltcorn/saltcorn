@@ -2,6 +2,7 @@ const { Pool } = require("pg");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const { getTenantSchema } = require("./tenants");
+const { getTenantSchemaPrefix } = require(".");
 var connectObj = getConnectObject();
 
 var pool;
@@ -135,6 +136,28 @@ const reset_sequence = async (tblname) => {
   await pool.query(sql);
 };
 
+const add_unique_constraint = async (table_name, field_names) => {
+  const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}" add CONSTRAINT ${sqlsanitize(table_name)}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique UNIQUE (${field_names
+    .map((f) => `"${sqlsanitize(f)}"`)
+    .join(",")});`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
+const drop_unique_constraint = async (table_name, field_names) => {
+  const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}" drop CONSTRAINT ${sqlsanitize(table_name)}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique;`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
 module.exports = {
   pool,
   query: (text, params) => {
@@ -155,5 +178,7 @@ module.exports = {
   getClient,
   mkWhere,
   drop_reset_schema,
+  add_unique_constraint,
+  drop_unique_constraint,
   reset_sequence,
 };
