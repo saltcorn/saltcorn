@@ -1,12 +1,14 @@
 const Table = require("../models/table");
 const Field = require("../models/field");
 const Trigger = require("../models/trigger");
+const runScheduler = require("../models/scheduler");
 const db = require("../db");
 const { getState } = require("../db/state");
 const {
   plugin_with_routes,
   getActionCounter,
   resetActionCounter,
+  sleep,
 } = require("./mocks");
 
 afterAll(db.close);
@@ -135,5 +137,28 @@ describe("Action", () => {
       when_trigger: "Insert",
     });
     expect(ins_trigger1.length).toBe(1);
+  });
+});
+describe("Scheduler", () => {
+  it("should run and tick", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+
+    await Trigger.create({
+      action: "incrementCounter",
+      when_trigger: "Often",
+    });
+    let stopSched = false;
+    runScheduler({
+      stop_when: () => stopSched,
+      tickSeconds: 1,
+    });
+    await sleep(500);
+    expect(getActionCounter()).toBe(1);
+    await sleep(1200);
+    expect(getActionCounter() > 1).toBe(true);
+    stopSched = true;
+    await sleep(1200);
   });
 });
