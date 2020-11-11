@@ -161,6 +161,38 @@ Gordon Kane, 217`;
       .expect(toNotInclude(`/table/${tbl.id}`))
       .expect(toInclude("books"));
   });
+  it("should show constraints", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const tbl = await Table.findOne({ name: "books" });
+    const id = tbl.id;
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/" + id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Constraints"));
+    await request(app)
+      .get("/table/constraints/" + id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("books constraints"));
+    await request(app)
+      .get("/table/add-constraint/" + id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Add constraint to books"));
+    await request(app)
+      .post("/table/add-constraint/" + id)
+      .send("author=on")
+      .send("pages=on")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/constraints/" + id));
+    await request(app)
+      .get("/table/constraints/" + id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Unique"));
+    await request(app)
+      .post("/table/delete-constraint/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/constraints/" + id));
+  });
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -175,36 +207,5 @@ Gordon Kane, 217`;
         .set("Cookie", loginCookie)
         .expect(toInclude("alert-danger"))
         .expect(toInclude("books"));
-  });
-  it("should show constraints", async () => {
-    const loginCookie = await getAdminLoginCookie();
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/table/2")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Constraints"));
-    await request(app)
-      .get("/table/constraints/2")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("books constraints"));
-    await request(app)
-      .get("/table/add-constraint/2")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Add constraint to books"));
-    await request(app)
-      .post("/table/add-constraint/2")
-      .send("author=on")
-      .send("pages=on")
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/constraints/2"));
-    await request(app)
-      .get("/table/constraints/2")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Unique"));
-    await request(app)
-      .post("/table/delete-constraint/1")
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/constraints/2"));
   });
 });
