@@ -381,12 +381,13 @@ const respondWorkflow = (view, wfres, req, res) => {
       req.__(`View configuration`),
       wrap(renderForm(wfres.renderForm, req.csrfToken()))
     );
-  else if (wfres.renderBuilder)
+  else if (wfres.renderBuilder) {
+    wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
       req.__(`View configuration`),
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
-  else res.redirect(wfres.redirect);
+  } else res.redirect(wfres.redirect);
 };
 router.get(
   "/config/:name",
@@ -471,5 +472,23 @@ router.post(
     await View.delete({ id });
     req.flash("success", req.__("View deleted"));
     res.redirect(`/viewedit`);
+  })
+);
+
+router.post(
+  "/savebuilder/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id && req.body) {
+      const exview = await View.findOne({ id });
+      let newcfg = { ...exview.configuration, ...req.body };
+      await View.update({ configuration: newcfg }, +id);
+      res.json({ success: "ok" });
+    } else {
+      res.json({ error: "no view" });
+    }
   })
 );
