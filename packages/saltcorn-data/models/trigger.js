@@ -67,6 +67,16 @@ class Trigger {
       await trigger.run(row);
     }
   }
+
+  async runWithoutRow() {
+    const { getState } = require("../db/state");
+    const action = getState().actions[this.action];
+    action &&
+      action.run &&
+      action.run({
+        configuration: this.configuration,
+      });
+  }
   static async getTableTriggers(when_trigger, table) {
     const { getState } = require("../db/state");
 
@@ -90,7 +100,8 @@ class Trigger {
     return [
       "Insert",
       "Update",
-      "Delete" /*"Weekly", "Daily", "Hourly", "Often"*/,
+      "Delete",
+      "Often" /*"Weekly", "Daily", "Hourly", */,
     ];
   }
 }

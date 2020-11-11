@@ -103,6 +103,9 @@ const mockReqRes = {
   res: { redirect() {}, json() {}, send() {}, __: (s) => s },
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 module.exports = {
   rick_file,
   plugin_with_routes,
@@ -110,4 +113,5 @@ module.exports = {
   mockReqRes,
   getActionCounter,
   resetActionCounter,
+  sleep,
 };

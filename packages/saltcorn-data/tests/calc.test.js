@@ -2,7 +2,7 @@ const Table = require("../models/table");
 const Field = require("../models/field");
 const db = require("../db");
 const { getState } = require("../db/state");
-const { plugin_with_routes } = require("./mocks");
+const { plugin_with_routes, sleep } = require("./mocks");
 const {
   get_expression_function,
   transform_for_async,
@@ -18,9 +18,6 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 describe("calculated", () => {
   it("how to use functions", () => {
     const f = new Function("{x,y}", "return x+y");
