@@ -176,4 +176,35 @@ Gordon Kane, 217`;
         .expect(toInclude("alert-danger"))
         .expect(toInclude("books"));
   });
+  it("should show constraints", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Constraints"));
+    await request(app)
+      .get("/table/constraints/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("books constraints"));
+    await request(app)
+      .get("/table/add-constraint/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Add constraint to books"));
+    await request(app)
+      .post("/table/add-constraint/2")
+      .send("author=on")
+      .send("pages=on")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/constraints/2"));
+    await request(app)
+      .get("/table/constraints/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Unique"));
+    await request(app)
+      .post("/table/delete-constraint/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/constraints/2"));
+  });
 });
