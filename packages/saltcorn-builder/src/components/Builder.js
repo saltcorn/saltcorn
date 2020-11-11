@@ -103,7 +103,8 @@ const SaveButton = () => {
 
   const onClick = () => {
     const data = craftToSaltcorn(JSON.parse(query.serialize()));
-    fetch(`/pageedit/savebuilder/${options.page_id}`, {
+    const urlroot = options.page_id ? "pageedit" : "viewedit";
+    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
       headers: {
         "Content-Type": "application/json",
@@ -112,7 +113,7 @@ const SaveButton = () => {
       body: JSON.stringify(data),
     });
   };
-  return options.page_id ? (
+  return options.page_id || options.view_id ? (
     <button
       className="btn btn-outline-secondary mr-2 builder-save-ajax"
       onClick={onClick}
