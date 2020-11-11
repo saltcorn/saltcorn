@@ -188,9 +188,12 @@ const install_pack = contract(
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
-      for (const field of tableSpec.fields)
-        if (!(table.name === "users" && field.name === "email"))
+      const exfields = await table.getFields();
+      for (const field of tableSpec.fields) {
+        const exfield = exfields.find((f) => f.name === field.name);
+        if (!((table.name === "users" && field.name === "email") || exfield))
           await Field.create({ table, ...field }, bare_tables);
+      }
       for (const trigger of tableSpec.triggers || [])
         await Trigger.create({ table, ...trigger });
       for (const constraint of tableSpec.constraints || [])
