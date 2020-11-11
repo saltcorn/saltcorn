@@ -9,6 +9,7 @@ const fetch = require("node-fetch");
 const { contract, is } = require("contractis");
 const Page = require("./page");
 const { is_pack, is_plugin } = require("../contracts");
+const TableConstraint = require("./table_constraints");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -21,6 +22,7 @@ const table_pack = contract(pack_fun, async (name) => {
     return o;
   };
   const triggers = await Trigger.find({ table_id: table.id });
+  const constraints = await TableConstraint.find({ table_id: table.id });
   return {
     name: table.name,
     min_role_read: table.min_role_read,
@@ -28,6 +30,7 @@ const table_pack = contract(pack_fun, async (name) => {
     versioned: table.versioned,
     fields: fields.map((f) => strip_ids(f.toJson)),
     triggers: triggers.map((tr) => tr.toJson),
+    constraints: constraints.map((c) => c.toJson),
   };
 });
 
@@ -190,6 +193,8 @@ const install_pack = contract(
           await Field.create({ table, ...field }, bare_tables);
       for (const trigger of tableSpec.triggers || [])
         await Trigger.create({ table, ...trigger });
+      for (const constraint of tableSpec.constraints || [])
+        await TableConstraint.create({ table, ...constraint });
     }
     for (const viewSpec of pack.views) {
       const { table, on_menu, menu_label, ...viewNoTable } = viewSpec;

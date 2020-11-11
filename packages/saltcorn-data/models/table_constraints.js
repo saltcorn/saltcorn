@@ -4,6 +4,9 @@ const { contract, is } = require("contractis");
 class TableConstraint {
   constructor(o) {
     this.table_id = +o.table_id;
+    if (o.table) {
+      this.table_id = o.table.id;
+    }
     this.type = o.type;
     this.id = !o.id ? null : +o.id;
     this.configuration =
@@ -16,8 +19,7 @@ class TableConstraint {
 
   get toJson() {
     return {
-      action: this.action,
-      when_trigger: this.when_trigger,
+      type: this.type,
       configuration: this.configuration,
     };
   }
