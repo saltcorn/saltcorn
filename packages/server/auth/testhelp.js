@@ -18,7 +18,9 @@ const toRedirect = (loc) => (res) => {
 const toInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
-    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    throw new Error(
+      `Expected status ${expCode} when lookinng for "${txt}", received ${res.statusCode}`
+    );
   }
 
   if (!res.text.includes(txt)) {
@@ -37,7 +39,9 @@ const toSucceed = (expCode = 200) => (res) => {
 const toNotInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
-    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    throw new Error(
+      `Expected status ${expCode} when not lookinng for "${txt}", received ${res.statusCode}`
+    );
   }
 
   if (res.text.includes(txt)) {

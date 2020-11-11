@@ -1,4 +1,5 @@
 const Table = require("../models/table");
+const TableConstraint = require("../models/table_constraints");
 const Field = require("../models/field");
 const View = require("../models/view");
 const db = require("../db");
@@ -7,6 +8,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file } = require("./mocks");
 const { mockReqRes } = require("./mocks");
+const { findAllWithTableName } = require("../models/trigger");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -716,5 +718,22 @@ describe("Tables with name clashes", () => {
     const res = await v.run({ id: 1 }, mockReqRes);
     expect(res).toContain("Mustang");
     expect(res).toContain("Sally");
+  });
+});
+describe("Table joint unique constraint", () => {
+  it("should create table", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rows = await table.getRows();
+    const { id, ...row0 } = rows[0];
+    const tc = await TableConstraint.create({
+      table_id: table.id,
+      type: "Unique",
+      configuration: { fields: ["author", "pages"] },
+    });
+    const res = await table.tryInsertRow(row0);
+    expect(!!res.error).toBe(true);
+    await tc.delete();
+    const res1 = await table.tryInsertRow(row0);
+    expect(!!res1.error).toBe(false);
   });
 });

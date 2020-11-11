@@ -213,43 +213,13 @@ class Field {
   }
 
   async add_unique_constraint() {
-    const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    if (db.isSQLite)
-      await db.query(
-        `create unique index ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique on "${sqlsanitize(this.table.name)}"("${sqlsanitize(
-          this.name
-        )}")`
-      );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" add CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique UNIQUE ("${sqlsanitize(this.name)}")`
-      );
+    await db.add_unique_constraint(this.table.name, [this.name]);
   }
 
   async remove_unique_constraint() {
-    const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    if (db.isSQLite)
-      await db.query(
-        `drop index ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique;`
-      );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique;`
-      );
+    await db.drop_unique_constraint(this.table.name, [this.name]);
   }
 
   async toggle_not_null(not_null) {
