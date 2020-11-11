@@ -2,7 +2,6 @@ const { Pool } = require("pg");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const { getTenantSchema } = require("./tenants");
-const { getTenantSchemaPrefix } = require(".");
 var connectObj = getConnectObject();
 
 var pool;
