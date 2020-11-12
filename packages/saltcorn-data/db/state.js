@@ -44,7 +44,14 @@ class State {
     contract.class(this);
   }
   getLayout(user) {
-    return this.layouts.sbadmin2;
+    const role_id = user ? +user.role_id : 10;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.layouts[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
+    const layoutvs = Object.values(this.layouts);
+    return layoutvs[layoutvs.length - 1];
   }
   async refresh() {
     this.views = await View.find();
