@@ -37,7 +37,7 @@ class State {
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};
@@ -107,7 +107,7 @@ class State {
     });
     const layout = withCfg("layout");
     if (layout) {
-      this.layout = contract(is_plugin_layout, layout);
+      this.layouts[name] = contract(is_plugin_layout, layout);
     }
     withCfg("headers", []).forEach((h) => {
       if (!this.headers.includes(h)) this.headers.push(h);
@@ -136,7 +136,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.favicon = null;
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};
