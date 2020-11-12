@@ -464,5 +464,9 @@
 	"Test run output": "Test run output",
 	"Run %s": "Run %s",
 	"back to actions": "back to actions",
-	"Action %s run successfully with no console output": "Action %s run successfully with no console output"
+	"Action %s run successfully with no console output": "Action %s run successfully with no console output",
+	"Roles": "Roles",
+	"Saved layout for role": "Saved layout for role",
+	"Layout by role": "Layout by role",
+	"Users and roles": "Users and roles"
 }

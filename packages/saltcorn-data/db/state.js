@@ -37,13 +37,22 @@ class State {
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};
     contract.class(this);
   }
-
+  getLayout(user) {
+    const role_id = user ? +user.role_id : 10;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.layouts[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
+    const layoutvs = Object.values(this.layouts);
+    return layoutvs[layoutvs.length - 1];
+  }
   async refresh() {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
@@ -107,7 +116,7 @@ class State {
     });
     const layout = withCfg("layout");
     if (layout) {
-      this.layout = contract(is_plugin_layout, layout);
+      this.layouts[name] = contract(is_plugin_layout, layout);
     }
     withCfg("headers", []).forEach((h) => {
       if (!this.headers.includes(h)) this.headers.push(h);
@@ -136,7 +145,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.favicon = null;
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};

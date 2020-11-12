@@ -73,7 +73,7 @@ const get_menu = (req) => {
         { link: "/plugins", label: req.__("Plugins") },
         { link: "/actions", label: req.__("Actions") },
         { link: "/menu", label: req.__("Menu") },
-        { link: "/useradmin", label: req.__("Users") },
+        { link: "/useradmin", label: req.__("Users and roles") },
         { link: "/search/config", label: req.__("Search") },
         { link: "/config", label: req.__("Configuration") },
         { link: "/admin", label: req.__("Admin") },
@@ -149,10 +149,10 @@ module.exports = function (req, res, next) {
   res.sendAuthWrap = function (title, form, authLinks, ...html) {
     const state = getState();
 
-    const layout = state.layout;
+    const layout = state.getLayout(req.user);
     if (layout.authWrap) {
       res.send(
-        state.layout.authWrap({
+        layout.authWrap({
           title,
           form,
           authLinks,
@@ -183,7 +183,7 @@ module.exports = function (req, res, next) {
       const currentUrl = req.originalUrl.split("?")[0];
 
       res.send(
-        state.layout.wrap({
+        layout.wrap({
           title,
           brand: get_brand(state),
           menu: get_menu(req),
@@ -204,12 +204,12 @@ module.exports = function (req, res, next) {
     }
 
     const state = getState();
-
+    const layout = state.getLayout(req.user);
     const currentUrl = req.originalUrl.split("?")[0];
 
     const pageHeaders = typeof opts === "string" ? [] : opts.headers;
     res.send(
-      state.layout.wrap({
+      layout.wrap({
         title,
         brand: get_brand(state),
         menu: get_menu(req),

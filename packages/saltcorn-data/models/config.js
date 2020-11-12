@@ -40,6 +40,7 @@ const configTypes = {
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },
   admin_home: { type: "String", label: "Admin home page", default: "" },
+  layout_by_role: { type: "hidden", label: "Layout by role", default: {} },
   allow_signup: {
     type: "Bool",
     label: "Allow signups",
