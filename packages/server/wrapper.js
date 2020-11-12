@@ -149,10 +149,10 @@ module.exports = function (req, res, next) {
   res.sendAuthWrap = function (title, form, authLinks, ...html) {
     const state = getState();
 
-    const layout = state.layout;
+    const layout = state.layouts.emergency;
     if (layout.authWrap) {
       res.send(
-        state.layout.authWrap({
+        layout.authWrap({
           title,
           form,
           authLinks,
@@ -183,7 +183,7 @@ module.exports = function (req, res, next) {
       const currentUrl = req.originalUrl.split("?")[0];
 
       res.send(
-        state.layout.wrap({
+        layout.wrap({
           title,
           brand: get_brand(state),
           menu: get_menu(req),
@@ -204,12 +204,12 @@ module.exports = function (req, res, next) {
     }
 
     const state = getState();
-
+    const layout = state.layouts.emergency;
     const currentUrl = req.originalUrl.split("?")[0];
 
     const pageHeaders = typeof opts === "string" ? [] : opts.headers;
     res.send(
-      state.layout.wrap({
+      layout.wrap({
         title,
         brand: get_brand(state),
         menu: get_menu(req),
