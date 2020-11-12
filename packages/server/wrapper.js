@@ -149,7 +149,7 @@ module.exports = function (req, res, next) {
   res.sendAuthWrap = function (title, form, authLinks, ...html) {
     const state = getState();
 
-    const layout = state.layouts.emergency;
+    const layout = state.layouts.sbadmin2;
     if (layout.authWrap) {
       res.send(
         layout.authWrap({
@@ -204,7 +204,7 @@ module.exports = function (req, res, next) {
     }
 
     const state = getState();
-    const layout = state.layouts.emergency;
+    const layout = state.layouts.sbadmin2;
     const currentUrl = req.originalUrl.split("?")[0];
 
     const pageHeaders = typeof opts === "string" ? [] : opts.headers;
