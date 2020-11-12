@@ -43,7 +43,9 @@ class State {
     this.functions = {};
     contract.class(this);
   }
-
+  getLayout(user) {
+    return this.layouts.sbadmin2;
+  }
   async refresh() {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
