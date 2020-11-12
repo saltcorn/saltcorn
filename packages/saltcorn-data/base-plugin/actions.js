@@ -17,7 +17,7 @@ module.exports = {
       },
     ],
     run: async ({ row, configuration: { url, body } }) => {
-      await fetch(url, {
+      return await fetch(url, {
         method: "post",
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
@@ -51,7 +51,7 @@ module.exports = {
         )
           newRow[field.name] = user.id;
       }
-      await joinTable.insertRow(newRow);
+      return await joinTable.insertRow(newRow);
     },
   },
   run_js_code: {
@@ -66,7 +66,7 @@ module.exports = {
         ...(row || {}),
         ...getState().function_context,
       });
-      await f();
+      return await f();
     },
   },
 };

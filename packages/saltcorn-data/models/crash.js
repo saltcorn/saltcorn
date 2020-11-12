@@ -17,8 +17,8 @@ class Crash {
       typeof o.headers === "string" ? JSON.parse(o.headers) : o.headers;
     contract.class(this);
   }
-  static async find(where) {
-    const us = await db.select("_sc_errors", where);
+  static async find(where, selopts) {
+    const us = await db.select("_sc_errors", where, selopts);
     return us.map((u) => new Crash(u));
   }
   static async findOne(where) {
