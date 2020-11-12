@@ -133,3 +133,7 @@ div.dropdown-menu.search-form {
 div.card.with-link:hover {
   cursor: pointer;
 }
+
+div.testrunoutput code {
+  color: unset;
+}

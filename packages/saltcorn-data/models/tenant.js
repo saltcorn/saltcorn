@@ -46,9 +46,18 @@ const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
   sqlsanitize(s.replace(".", "").toLowerCase())
 );
 
+const eachTenant = async (f) => {
+  await f();
+  if (db.is_it_multi_tenant()) {
+    const tenantList = await getAllTenants();
+    for (const domain of tenantList) await db.runWithTenant(domain, f);
+  }
+};
+
 module.exports = {
   getAllTenants,
   createTenant,
   domain_sanitize,
   deleteTenant,
+  eachTenant,
 };

@@ -17,7 +17,7 @@ module.exports = {
       },
     ],
     run: async ({ row, configuration: { url, body } }) => {
-      await fetch(url, {
+      return await fetch(url, {
         method: "post",
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
@@ -51,12 +51,12 @@ module.exports = {
         )
           newRow[field.name] = user.id;
       }
-      await joinTable.insertRow(newRow);
+      return await joinTable.insertRow(newRow);
     },
   },
   run_js_code: {
     configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
-    run: async ({ row, table, configuration: { code }, user }) => {
+    run: async ({ row, table, configuration: { code }, user, ...rest }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
@@ -65,8 +65,9 @@ module.exports = {
         console,
         ...(row || {}),
         ...getState().function_context,
+        ...rest,
       });
-      await f();
+      return await f();
     },
   },
 };
