@@ -73,7 +73,7 @@ const get_menu = (req) => {
         { link: "/plugins", label: req.__("Plugins") },
         { link: "/actions", label: req.__("Actions") },
         { link: "/menu", label: req.__("Menu") },
-        { link: "/useradmin", label: req.__("Users") },
+        { link: "/useradmin", label: req.__("Users and roles") },
         { link: "/search/config", label: req.__("Search") },
         { link: "/config", label: req.__("Configuration") },
         { link: "/admin", label: req.__("Admin") },

@@ -13,7 +13,12 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
+const {
+  isAdmin,
+  setTenant,
+  error_catcher,
+  csrfField,
+} = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -23,6 +28,9 @@ const {
   text,
   span,
   code,
+  form,
+  option,
+  select,
   br,
 } = require("@saltcorn/markup/tags");
 const router = new Router();
@@ -152,6 +160,28 @@ const user_dropdown = (user, req, can_reset) =>
       user.email
     ),
   ]);
+const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
+  form(
+    {
+      action: `/useradmin/setrolelayout/${role.id}`,
+      method: "post",
+    },
+    csrfField(req),
+    select(
+      { name: "layout", onchange: "form.submit()" },
+      layouts.map((layout, ix) =>
+        option(
+          {
+            value: layout,
+            ...((layout_by_role[role.id]
+              ? layout_by_role[role.id] === layout
+              : ix == layouts.length - 1) && { selected: true }),
+          },
+          text(layout)
+        )
+      )
+    )
+  );
 router.get(
   "/",
   setTenant,
@@ -163,6 +193,10 @@ router.get(
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
+    const layouts = Object.keys(getState().layouts).filter(
+      (l) => l !== "emergency"
+    );
+    const layout_by_role = getState().getConfig("layout_by_role");
     const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
       req.__("Users"),
@@ -204,6 +238,11 @@ router.get(
               [
                 { label: req.__("ID"), key: "id" },
                 { label: req.__("Role"), key: "role" },
+                {
+                  label: req.__("Theme"),
+                  key: (role) =>
+                    editRoleLayoutForm(role, layouts, layout_by_role, req),
+                },
               ],
               roles
             ),
@@ -348,6 +387,20 @@ router.post(
     req.flash("success", req.__(`New API token generated`));
 
     res.redirect(`/useradmin/${u.id}`);
+  })
+);
+router.post(
+  "/setrolelayout/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const layout_by_role = getState().getConfig("layout_by_role");
+    layout_by_role[+id] = req.body.layout;
+    await getState().setConfig("layout_by_role", layout_by_role);
+    req.flash("success", req.__(`Saved layout for role`));
+
+    res.redirect(`/useradmin/`);
   })
 );
 const generate_password = () => {
