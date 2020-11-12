@@ -95,7 +95,7 @@ const userForm = contract(
   }
 );
 
-const wrap = (req, cardTitle, response, lastBc) => ({
+const wrap = (req, response, lastBc) => ({
   above: [
     {
       type: "breadcrumbs",
@@ -105,13 +105,10 @@ const wrap = (req, cardTitle, response, lastBc) => ({
         ...(lastBc ? [lastBc] : []),
       ],
     },
-    {
-      type: "card",
-      title: cardTitle,
-      contents: response,
-    },
+    ...response,
   ],
 });
+
 const user_dropdown = (user, req, can_reset) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(
@@ -169,30 +166,36 @@ router.get(
     const can_reset = getState().getConfig("smtp_host", "") !== "";
     res.sendWrap(
       req.__("Users"),
-      wrap(req, req.__("Users"), [
-        mkTable(
-          [
-            { label: req.__("ID"), key: "id" },
-            {
-              label: req.__("Email"),
-              key: (r) => link(`/useradmin/${r.id}`, r.email),
-            },
-            {
-              label: "",
-              key: (r) =>
-                r.disabled
-                  ? span({ class: "badge badge-danger" }, "Disabled")
-                  : "",
-            },
-            { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
-            {
-              label: "",
-              key: (r) => user_dropdown(r, req, can_reset),
-            },
+      wrap(req, [
+        {
+          type: "card",
+          title: req.__("Users"),
+          contents: [
+            mkTable(
+              [
+                { label: req.__("ID"), key: "id" },
+                {
+                  label: req.__("Email"),
+                  key: (r) => link(`/useradmin/${r.id}`, r.email),
+                },
+                {
+                  label: "",
+                  key: (r) =>
+                    r.disabled
+                      ? span({ class: "badge badge-danger" }, "Disabled")
+                      : "",
+                },
+                { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+                {
+                  label: "",
+                  key: (r) => user_dropdown(r, req, can_reset),
+                },
+              ],
+              users
+            ),
+            link(`/useradmin/new`, req.__("Add user")),
           ],
-          users
-        ),
-        link(`/useradmin/new`, req.__("Add user")),
+        },
       ])
     );
   })
@@ -206,9 +209,19 @@ router.get(
     const form = await userForm(req);
     res.sendWrap(
       req.__("New user"),
-      wrap(req, req.__("New user"), renderForm(form, req.csrfToken()), {
-        text: req.__("New"),
-      })
+      wrap(
+        req,
+        [
+          {
+            type: "card",
+            title: req.__("Users"),
+            contents: [renderForm(form, req.csrfToken())],
+          },
+        ],
+        {
+          text: req.__("New"),
+        }
+      )
     );
   })
 );
