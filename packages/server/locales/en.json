@@ -459,5 +459,10 @@
 	"%s constraints": "%s constraints",
 	"Add constraint": "Add constraint",
 	"Add constraint to %s": "Add constraint to %s",
-	"Cannot delete users table": "Cannot delete users table"
+	"Cannot delete users table": "Cannot delete users table",
+	"Test run": "Test run",
+	"Test run output": "Test run output",
+	"Run %s": "Run %s",
+	"back to actions": "back to actions",
+	"Action %s run successfully with no console output": "Action %s run successfully with no console output"
 }

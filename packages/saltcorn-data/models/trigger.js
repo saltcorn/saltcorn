@@ -68,13 +68,14 @@ class Trigger {
     }
   }
 
-  async runWithoutRow() {
+  async runWithoutRow(runargs) {
     const { getState } = require("../db/state");
     const action = getState().actions[this.action];
     return (
       action &&
       action.run &&
       action.run({
+        ...runargs,
         configuration: this.configuration,
       })
     );

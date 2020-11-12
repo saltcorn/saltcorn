@@ -16,7 +16,7 @@ const {
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
-const { div } = require("@saltcorn/markup/tags");
+const { div, code, a } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 
@@ -66,6 +66,13 @@ router.get(
                 { label: req.__("Action"), key: "action" },
                 { label: req.__("Table"), key: "table_name" },
                 { label: req.__("When"), key: "when_trigger" },
+                {
+                  label: req.__("Test run"),
+                  key: (r) =>
+                    r.table_id
+                      ? ""
+                      : link(`/actions/testrun/${r.id}`, req.__("Test run")),
+                },
                 {
                   label: req.__("Configure"),
                   key: (r) =>
@@ -310,5 +317,65 @@ router.post(
     const trigger = await Trigger.findOne({ id });
     await trigger.delete();
     res.redirect(`/actions/`);
+  })
+);
+router.get(
+  "/testrun/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trigger = await Trigger.findOne({ id });
+    const output = [];
+    const fakeConsole = {
+      log(...s) {
+        output.push(div(code(s.join(" "))));
+      },
+      error(...s) {
+        output.push(
+          div(code({ style: "color:red;font-weight:bold;" }, s.join(" ")))
+        );
+      },
+    };
+    try {
+      await trigger.runWithoutRow({ console: fakeConsole });
+    } catch (e) {
+      fakeConsole.error(e.message);
+    }
+    if (output.length === 0) {
+      req.flash(
+        "success",
+        req.__(
+          "Action %s run successfully with no console output",
+          trigger.action
+        )
+      );
+      res.redirect(`/actions/`);
+    } else {
+      res.sendWrap(
+        req.__("Test run output"),
+        wrap(
+          req,
+          req.__("Test run"),
+          [
+            {
+              type: "card",
+              title: req.__("Test run output"),
+              contents: div(
+                div({ class: "testrunoutput" }, output),
+
+                a(
+                  { href: `/actions`, class: "mt-4 btn btn-primary" },
+                  "&laquo;&nbsp;" + req.__("back to actions")
+                )
+              ),
+            },
+          ],
+          {
+            text: req.__("Run %s", trigger.action),
+          }
+        )
+      );
+    }
   })
 );

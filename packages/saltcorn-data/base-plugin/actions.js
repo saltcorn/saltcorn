@@ -56,7 +56,7 @@ module.exports = {
   },
   run_js_code: {
     configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
-    run: async ({ row, table, configuration: { code }, user }) => {
+    run: async ({ row, table, configuration: { code }, user, ...rest }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
@@ -65,6 +65,7 @@ module.exports = {
         console,
         ...(row || {}),
         ...getState().function_context,
+        ...rest,
       });
       return await f();
     },
