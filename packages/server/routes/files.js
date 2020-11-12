@@ -171,15 +171,24 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    let jsonResp = {};
     if (!req.files && !req.files.file) {
-      req.flash("warning", req.__("No file found"));
+      if (!req.xhr) req.flash("warning", req.__("No file found"));
+      else jsonResp = { error: "No file found" };
     } else {
-      const f = await File.from_req_files(req.files.file, req.user.id);
-      req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
+      const min_role_read = req.body ? req.body.min_role_read || 1 : 1;
+      const f = await File.from_req_files(
+        req.files.file,
+        req.user.id,
+        +min_role_read
+      );
+      if (!req.xhr)
+        req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
+      else jsonResp = { success: { url: `/files/serve/${f.id}` } };
       if (f.filename === "favicon.png") await getState().refresh();
     }
-
-    res.redirect("/files");
+    if (!req.xhr) res.redirect("/files");
+    else res.json(jsonResp);
   })
 );
 
