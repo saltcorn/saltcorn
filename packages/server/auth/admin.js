@@ -196,6 +196,19 @@ router.get(
             link(`/useradmin/new`, req.__("Add user")),
           ],
         },
+        {
+          type: "card",
+          title: req.__("Roles"),
+          contents: [
+            mkTable(
+              [
+                { label: req.__("ID"), key: "id" },
+                { label: req.__("Role"), key: "role" },
+              ],
+              roles
+            ),
+          ],
+        },
       ])
     );
   })
