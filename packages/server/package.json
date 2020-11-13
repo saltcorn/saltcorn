@@ -27,7 +27,7 @@
     "i18n": "^0.13.2",
     "live-plugin-manager": "^0.14.1",
     "moment": "^2.27.0",
-    "nodemailer": "^6.4.11",
+    "nodemailer": "^6.4.16",
     "passport": "^0.4.1",
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
