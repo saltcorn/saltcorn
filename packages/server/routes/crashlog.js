@@ -40,7 +40,10 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const crashes = await Crash.find({}, { orderBy: "occur_at" });
+    const crashes = await Crash.find(
+      {},
+      { orderBy: "occur_at", orderDesc: true }
+    );
     res.sendWrap(
       req.__("Crash log"),
       wrap(
