@@ -28,7 +28,9 @@ class Crash {
   get reltime() {
     return moment(this.occur_at).fromNow();
   }
-
+  static async count(where) {
+    return await db.count("_sc_errors", where || {});
+  }
   get msg_short() {
     return this.message.length > 90
       ? this.message.substring(0, 90)

@@ -40,10 +40,26 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    const state = req.query,
+      rows_per_page = 20,
+      page_opts = {},
+      current_page = parseInt(state._page) || 1,
+      offset = (parseInt(state._page) - 1) * rows_per_page;
+
     const crashes = await Crash.find(
       {},
-      { orderBy: "occur_at", orderDesc: true }
+      { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
     );
+    if (crashes.length === rows_per_page || current_page > 1) {
+      const nrows = await Crash.count();
+      if (nrows > rows_per_page || current_page > 1) {
+        page_opts.pagination = {
+          current_page,
+          pages: Math.ceil(nrows / rows_per_page),
+          get_page_link: (n) => `javascript:gopage(${n}, ${rows_per_page})`,
+        };
+      }
+    }
     res.sendWrap(
       req.__("Crash log"),
       wrap(
@@ -65,7 +81,8 @@ router.get(
                   ? [{ label: req.__("Tenant"), key: "tenant" }]
                   : []),
               ],
-              crashes
+              crashes,
+              page_opts
             )
       )
     );
