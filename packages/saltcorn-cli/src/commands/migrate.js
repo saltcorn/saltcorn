@@ -1,9 +1,14 @@
 const { Command, flags } = require("@oclif/command");
+const db = require("@saltcorn/data/db");
+const { eachTenant } = require("@saltcorn/data/models/tenant");
 
 class MigrateCommand extends Command {
   async run() {
     const { migrate } = require("@saltcorn/data/migrate");
-    await migrate();
+    await eachTenant(async () => {
+      const domain = db.getTenantSchema();
+      await migrate(domain);
+    });
     this.exit(0);
   }
 }
