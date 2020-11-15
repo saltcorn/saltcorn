@@ -471,5 +471,11 @@
 	"Users and roles": "Users and roles",
 	"Match regular expression": "Match regular expression",
 	"Error message when regular expression does not match": "Error message when regular expression does not match",
-	"Invalid attributes": "Invalid attributes"
+	"Invalid attributes": "Invalid attributes",
+	"Documentation": "Documentation",
+	"Plugin %s installed": "Plugin %s installed",
+	"Plugin %s removed.": "Plugin %s removed.",
+	"Plugin %s installed, please complete configuration.": "Plugin %s installed, please complete configuration.",
+	"Configure %s Plugin": "Configure %s Plugin",
+	"Cannot remove plugin: views %s depend on it": "Cannot remove plugin: views %s depend on it"
 }

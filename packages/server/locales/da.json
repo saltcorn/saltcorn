@@ -381,5 +381,10 @@
 	"Anywhere": "Anywhere",
 	"Search filter": "Search filter",
 	"Are you sure you want to delete %s?": "Are you sure you want to delete %s?",
-	"Are you sure?": "Are you sure?"
+	"Are you sure?": "Are you sure?",
+	"Actions": "Actions",
+	"Users and roles": "Users and roles",
+	"Documentation": "Documentation",
+	"New Plugin": "New Plugin",
+	"Add plugin": "Add plugin"
 }
