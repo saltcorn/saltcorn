@@ -30,14 +30,14 @@ const {
 const router = new Router();
 module.exports = router;
 
-const pluginForm = (plugin) => {
+const pluginForm = (req, plugin) => {
   const schema = db.getTenantSchema();
   const form = new Form({
     action: "/plugins",
     fields: [
-      new Field({ label: "Name", name: "name", input_type: "text" }),
+      new Field({ label: req.__("Name"), name: "name", input_type: "text" }),
       new Field({
-        label: "Source",
+        label: req.__("Source"),
         name: "source",
         type: getState().types.String,
         required: true,
@@ -48,7 +48,7 @@ const pluginForm = (plugin) => {
         ? [new Field({ label: "Version", name: "version", input_type: "text" })]
         : []),
     ],
-    submitLabel: plugin ? "Save" : "Create",
+    submitLabel: plugin ? req.__("Save") : req.__("Create"),
   });
   if (plugin) {
     if (plugin.id) form.hidden("id");
@@ -137,7 +137,7 @@ const store_item_html = (req) => (item) => ({
       ? div(
           a(
             { href: item.documentation_link, target: "_blank" },
-            "Documentation"
+            req.__("Documentation")
           )
         )
       : ""
@@ -232,7 +232,7 @@ const storeNavPills = (req) => {
 const filter_items = (items, query) => {
   switch (query.set) {
     case "plugins":
-      return items.filter((item) => item.plugin);
+      return items.filter((item) => item.plugin && !item.has_theme);
     case "packs":
       return items.filter((item) => item.pack);
     case "themes":
@@ -358,7 +358,7 @@ router.get(
     const wfres = await flow.run(plugin.configuration || {});
 
     res.sendWrap(
-      `Configure ${plugin.name} Plugin`,
+      req.__(`Configure %s Plugin`, plugin.name),
       renderForm(wfres.renderForm, req.csrfToken())
     );
   })
@@ -376,7 +376,7 @@ router.post(
     const wfres = await flow.run(req.body);
     if (wfres.renderForm)
       res.sendWrap(
-        `Configure ${plugin.name} Plugin`,
+        req.__(`Configure %s Plugin`, plugin.name),
         renderForm(wfres.renderForm, req.csrfToken())
       );
     else {
@@ -392,20 +392,20 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    res.sendWrap(`New Plugin`, {
+    res.sendWrap(req.__(`New Plugin`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: "Plugins", href: "/plugins" },
-            { text: "New" },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("New") },
           ],
         },
         {
           type: "card",
-          title: `Add plugin`,
-          contents: renderForm(pluginForm(), req.csrfToken()),
+          title: req.__(`Add plugin`),
+          contents: renderForm(pluginForm(req), req.csrfToken()),
         },
       ],
     });
@@ -421,7 +421,7 @@ router.get(
     await getState().deleteConfig("available_plugins_fetched_at");
     await getState().deleteConfig("available_packs");
     await getState().deleteConfig("available_packs_fetched_at");
-    req.flash("success", `Store refreshed`);
+    req.flash("success", req.__(`Store refreshed`));
 
     res.redirect(`/plugins`);
   })
@@ -436,7 +436,7 @@ router.get(
     for (const plugin of installed_plugins) {
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
-    req.flash("success", `Plugins up-to-date`);
+    req.flash("success", req.__(`Plugins up-to-date`));
 
     res.redirect(`/plugins`);
   })
@@ -451,7 +451,7 @@ router.post(
     if (schema !== db.connectObj.default_schema) {
       req.flash(
         "error",
-        `Only store plugins can be installed on tenant instances`
+        req.__(`Only store plugins can be installed on tenant instances`)
       );
       res.redirect(`/plugins`);
     } else {
@@ -460,12 +460,12 @@ router.post(
           plugin,
           schema === db.connectObj.default_schema || plugin.source === "github"
         );
-        req.flash("success", `Plugin ${plugin.name} installed`);
+        req.flash("success", req.__(`Plugin %s installed`, plugin.name));
         res.redirect(`/plugins`);
       } catch (e) {
         req.flash("error", `${e.message}`);
-        const form = pluginForm(plugin);
-        res.sendWrap(`Edit Plugin`, renderForm(form, req.csrfToken()));
+        const form = pluginForm(req, plugin);
+        res.sendWrap(req.__(`Edit Plugin`), renderForm(form, req.csrfToken()));
       }
     }
   })
@@ -482,11 +482,11 @@ router.post(
     const depviews = await plugin.dependant_views();
     if (depviews.length === 0) {
       await plugin.delete();
-      req.flash("success", `Plugin ${plugin.name} removed.`);
+      req.flash("success", req.__(`Plugin %s removed.`, plugin.name));
     } else {
       req.flash(
         "error",
-        `Cannot remove plugin: views ${depviews.join()} depend on it`
+        req.__(`Cannot remove plugin: views %s depend on it`, depviews.join())
       );
     }
     res.redirect(`/plugins`);
@@ -508,11 +508,14 @@ router.post(
       const plugin_db = await Plugin.findOne({ name });
       req.flash(
         "success",
-        `Plugin ${plugin_db.name} installed, please complete configuration.`
+        req.__(
+          `Plugin %s installed, please complete configuration.`,
+          plugin_db.name
+        )
       );
       res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
-      req.flash("success", `Plugin ${plugin.name} installed`);
+      req.flash("success", req.__(`Plugin %s installed`, plugin.name));
       res.redirect(`/plugins`);
     }
   })

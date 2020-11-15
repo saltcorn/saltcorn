@@ -135,6 +135,11 @@ const getConfig = contract(
   }
 );
 
+const isFixedConfig = (key) =>
+  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
+  (db.connectObj.inherit_configuration.includes(key) &&
+    db.getTenantSchema() !== db.connectObj.default_schema);
+
 const getAllConfig = contract(
   is.fun([], is.promise(is.objVals(is.any))),
   async () => {
@@ -169,7 +174,7 @@ const getAllConfigOrDefaults = contract(
     Object.entries(configTypes).forEach(([key, v]) => {
       const value =
         typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-      cfgs[key] = { value, ...v };
+      if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
     });
     return cfgs;
   }
@@ -235,4 +240,5 @@ module.exports = {
   configTypes,
   remove_from_menu,
   available_languages,
+  isFixedConfig,
 };

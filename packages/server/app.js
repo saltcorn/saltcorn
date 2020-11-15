@@ -39,7 +39,7 @@ const getApp = async (opts = {}) => {
   const sql_log = await getConfig("log_sql");
   const development_mode = await getConfig("development_mode", false);
   if (sql_log) db.set_sql_logging(); // dont override cli flag
-  await migrate();
+  if (!opts.disableMigrate) await migrate();
 
   await loadAllPlugins();
 
@@ -57,7 +57,7 @@ const getApp = async (opts = {}) => {
   app.use(i18n.init);
 
   if (db.is_it_multi_tenant()) {
-    await init_multi_tenant(loadAllPlugins);
+    await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
   }
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);

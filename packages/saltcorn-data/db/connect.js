@@ -6,48 +6,51 @@ const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
 const defaultDataPath = pathsWithApp.data;
-
+const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
 const getConnectObject = (connSpec = {}) => {
+  var connObj = {};
+  const fileCfg = getConfigFile() || {};
+
+  function setKey(k, envnm, opts = {}) {
+    const f = opts.transform || ((x) => x);
+    // Priorities:
+    // 1. getConnectObject argument
+    if (typeof connSpec[k] !== "undefined") connObj[k] = f(connSpec[k]);
+    // 2. Environment variables
+    else if (typeof process.env[envnm] !== "undefined")
+      connObj[k] = f(process.env[envnm]);
+    // 3. Config file
+    else if (typeof fileCfg[k] !== "undefined") connObj[k] = f(fileCfg[k]);
+    // 4. default
+    else if (typeof opts.default !== "undefined") connObj[k] = f(opts.default);
+  }
+
+  setKey("user", "PGUSER");
+  setKey("sqlite_path", "SQLITE_FILEPATH");
+  setKey("host", "PGHOST");
+  setKey("port", "PGPORT");
+  setKey("password", "PGPASSWORD");
+  setKey("database", "PGDATABASE");
+  setKey("session_secret", "SALTCORN_SESSION_SECRET");
+  setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
+  setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
+  setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
+  setKey("fixed_configuration", "SALTCORN_FIXED_CONFIGURATION", {
+    default: {},
+    transform: stringToJSON,
+  });
+  setKey("inherit_configuration", "SALTCORN_INHERIT_CONFIGURATION", {
+    default: [],
+    transform: stringToJSON,
+  });
+
   if (process.env.DATABASE_URL) {
-    return { connectionString: process.env.DATABASE_URL };
-  }
-  var connObj = { ...connSpec };
-
-  connObj.user = connObj.user || process.env.PGUSER;
-  connObj.sqlite_path = connObj.sqlite_path || process.env.SQLITE_FILEPATH;
-  connObj.host = connObj.host || process.env.PGHOST;
-  connObj.port = connObj.port || process.env.PGPORT;
-  connObj.password = connObj.password || process.env.PGPASSWORD;
-  connObj.database = connObj.database || process.env.PGDATABASE;
-  connObj.session_secret =
-    connObj.session_secret || process.env.SALTCORN_SESSION_SECRET;
-  connObj.multi_tenant =
-    connObj.multi_tenant || process.env.SALTCORN_MULTI_TENANT;
-  connObj.file_store = connObj.file_store || process.env.SALTCORN_FILE_STORE;
-  connObj.default_schema =
-    connObj.default_schema || process.env.SALTCORN_DEFAULT_SCHEMA;
-
-  if (!(connObj.user && connObj.password && connObj.database)) {
-    const cfg = getConfigFile() || {};
-    connObj.sqlite_path = connObj.sqlite_path || cfg.sqlite_path;
-    connObj.user = connObj.user || cfg.user;
-    connObj.password = connObj.password || cfg.password;
-    connObj.host = connObj.host || cfg.host;
-    connObj.port = connObj.port || cfg.port;
-    connObj.file_store = connObj.file_store || cfg.file_store;
-    connObj.database = connObj.database || cfg.database;
-    connObj.session_secret = connObj.session_secret || cfg.session_secret;
-    connObj.default_schema = connObj.default_schema || cfg.default_schema;
-    connObj.multi_tenant =
-      typeof connObj.multi_tenant === "undefined"
-        ? cfg.multi_tenant
-        : connObj.multi_tenant;
-  }
-
-  connObj.default_schema = connObj.default_schema || "public";
-  connObj.file_store = connObj.file_store || pathsWithApp.data;
-
-  if (
+    delete connObj[user];
+    delete connObj[password];
+    delete connObj[database];
+    delete connObj[sqlite_path];
+    return { ...connObj, connectionString: process.env.DATABASE_URL };
+  } else if (
     connObj.sqlite_path ||
     (connObj.user && connObj.password && connObj.database)
   ) {
