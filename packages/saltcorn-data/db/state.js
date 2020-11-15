@@ -62,6 +62,8 @@ class State {
   }
 
   getConfig(key, def) {
+    const fixed = db.connectObj.fixed_configuration[key];
+    if (typeof fixed !== fixed) return fixed;
     if (this.configs[key] && typeof this.configs[key].value !== "undefined")
       return this.configs[key].value;
     if (def) return def;

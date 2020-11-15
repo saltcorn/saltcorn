@@ -135,6 +135,9 @@ const getConfig = contract(
   }
 );
 
+const isFixedConfig = (key) =>
+  typeof db.connectObj.fixed_configuration[key] !== "undefined";
+
 const getAllConfig = contract(
   is.fun([], is.promise(is.objVals(is.any))),
   async () => {
@@ -235,4 +238,5 @@ module.exports = {
   configTypes,
   remove_from_menu,
   available_languages,
+  isFixedConfig,
 };
