@@ -6,22 +6,23 @@ const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
 const defaultDataPath = pathsWithApp.data;
-
+const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
 const getConnectObject = (connSpec = {}) => {
   var connObj = {};
   const fileCfg = getConfigFile() || {};
 
   function setKey(k, envnm, opts) {
+    const f = opts.transform || ((x) => x);
     // Priorities:
     // 1. getConnectObject argument
-    if (typeof connSpec[k] !== "undefined") connObj[k] = connSpec[k];
+    if (typeof connSpec[k] !== "undefined") connObj[k] = f(connSpec[k]);
     // 2. Environment variables
     else if (typeof process.env[envnm] !== "undefined")
-      connObj[k] = process.env[envnm];
+      connObj[k] = f(process.env[envnm]);
     // 3. Config file
-    else if (typeof fileCfg[k] !== "undefined") connObj[k] = fileCfg[k];
+    else if (typeof fileCfg[k] !== "undefined") connObj[k] = f(fileCfg[k]);
     // 4. default
-    else if (typeof opts.default !== "undefined") connObj[k] = opts.default;
+    else if (typeof opts.default !== "undefined") connObj[k] = f(opts.default);
   }
 
   setKey("user", "PGUSER");
@@ -34,6 +35,10 @@ const getConnectObject = (connSpec = {}) => {
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
   setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
+  setKey("fixed_configuration", "SALTCORN_FIXED_CONFIGURATION", {
+    default: {},
+    transform: stringToJSON,
+  });
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];
