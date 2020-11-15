@@ -33,7 +33,7 @@ const getConnectObject = (connSpec = {}) => {
   setKey("session_secret", "SALTCORN_SESSION_SECRET");
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
-  setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", "public");
+  setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];
