@@ -11,7 +11,7 @@ const getConnectObject = (connSpec = {}) => {
   var connObj = {};
   const fileCfg = getConfigFile() || {};
 
-  function setKey(k, envnm, opts) {
+  function setKey(k, envnm, opts = {}) {
     const f = opts.transform || ((x) => x);
     // Priorities:
     // 1. getConnectObject argument
