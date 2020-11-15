@@ -7,7 +7,7 @@ const { ifError } = require("assert");
 
 const migrate = async (schema0) => {
   const schema = schema0 || db.connectObj.default_schema;
-  //console.log("migrating",schema )
+  //console.log("migrating", schema);
   const is_sqlite = db.isSQLite;
 
   const dbmigrationRows = await db.select("_sc_migrations");

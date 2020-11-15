@@ -184,12 +184,13 @@ var tenants = {};
 
 const getTenant = (ten) => tenants[ten];
 
-const init_multi_tenant = async (plugin_loader) => {
+const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State();
-      await db.runWithTenant(domain, () => migrate(domain));
+      if (!disableMigrate)
+        await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
     } catch (err) {
       console.error(
