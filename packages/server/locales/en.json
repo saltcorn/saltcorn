@@ -477,5 +477,10 @@
 	"Plugin %s removed.": "Plugin %s removed.",
 	"Plugin %s installed, please complete configuration.": "Plugin %s installed, please complete configuration.",
 	"Configure %s Plugin": "Configure %s Plugin",
-	"Cannot remove plugin: views %s depend on it": "Cannot remove plugin: views %s depend on it"
+	"Cannot remove plugin: views %s depend on it": "Cannot remove plugin: views %s depend on it",
+	"New Plugin": "New Plugin",
+	"Add plugin": "Add plugin",
+	"Store refreshed": "Store refreshed",
+	"Plugins up-to-date": "Plugins up-to-date",
+	"Source": "Source"
 }

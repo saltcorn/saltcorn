@@ -30,7 +30,7 @@ const {
 const router = new Router();
 module.exports = router;
 
-const pluginForm = (plugin) => {
+const pluginForm = (req, plugin) => {
   const schema = db.getTenantSchema();
   const form = new Form({
     action: "/plugins",
@@ -405,7 +405,7 @@ router.get(
         {
           type: "card",
           title: req.__(`Add plugin`),
-          contents: renderForm(pluginForm(), req.csrfToken()),
+          contents: renderForm(pluginForm(req), req.csrfToken()),
         },
       ],
     });
@@ -464,7 +464,7 @@ router.post(
         res.redirect(`/plugins`);
       } catch (e) {
         req.flash("error", `${e.message}`);
-        const form = pluginForm(plugin);
+        const form = pluginForm(req, plugin);
         res.sendWrap(req.__(`Edit Plugin`), renderForm(form, req.csrfToken()));
       }
     }
