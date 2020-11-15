@@ -172,7 +172,7 @@ const getAllConfigOrDefaults = contract(
     Object.entries(configTypes).forEach(([key, v]) => {
       const value =
         typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-      cfgs[key] = { value, ...v };
+      if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
     });
     return cfgs;
   }
