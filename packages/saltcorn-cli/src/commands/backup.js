@@ -16,10 +16,10 @@ class BackupCommand extends Command {
     const { flags } = this.parse(BackupCommand);
 
     const pguser = connobj.user;
+    const pghost = connobj.host || "localhost";
     const outfnm = flags.output || default_filenm;
     const env = { ...process.env, PGPASSWORD: connobj.password };
-
-    execSync(`pg_dump ${pgdb} -U ${pguser} -h localhost -F c >${outfnm}`, {
+    execSync(`pg_dump ${pgdb} -U ${pguser} -h ${pghost} -F c >${outfnm}`, {
       stdio: "inherit",
       env,
     });
@@ -27,7 +27,7 @@ class BackupCommand extends Command {
   }
 }
 
-BackupCommand.description = `Backup the database to a file`;
+BackupCommand.description = `Backup the PostgreSQL database to a file with pg_dump`;
 
 BackupCommand.flags = {
   output: flags.string({
