@@ -232,7 +232,7 @@ const storeNavPills = (req) => {
 const filter_items = (items, query) => {
   switch (query.set) {
     case "plugins":
-      return items.filter((item) => item.plugin);
+      return items.filter((item) => item.plugin && !item.has_theme);
     case "packs":
       return items.filter((item) => item.pack);
     case "themes":
