@@ -468,5 +468,8 @@
 	"Roles": "Roles",
 	"Saved layout for role": "Saved layout for role",
 	"Layout by role": "Layout by role",
-	"Users and roles": "Users and roles"
+	"Users and roles": "Users and roles",
+	"Match regular expression": "Match regular expression",
+	"Error message when regular expression does not match": "Error message when regular expression does not match",
+	"Invalid attributes": "Invalid attributes"
 }

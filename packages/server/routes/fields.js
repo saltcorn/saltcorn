@@ -200,11 +200,15 @@ const fieldFlow = (req) =>
               ],
             });
           } else {
+            const type = getState().types[context.type];
             return new Form({
-              fields: translateAttributes(
-                getState().types[context.type].attributes,
-                req
-              ),
+              validator(vs) {
+                if (type.validate_attributes) {
+                  const res = type.validate_attributes(vs);
+                  if (!res) return req.__("Invalid attributes");
+                }
+              },
+              fields: translateAttributes(type.attributes, req),
             });
           }
         },

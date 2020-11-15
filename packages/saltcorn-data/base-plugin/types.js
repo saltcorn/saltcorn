@@ -31,7 +31,21 @@ const string = {
   name: "String",
   sql_name: "text",
   attributes: [
-    //{ name: "match", type: "String", required: false },
+    {
+      name: "regexp",
+      type: "String",
+      required: false,
+      sublabel: "Match regular expression",
+      validator(s) {
+        if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
+      },
+    },
+    {
+      name: "re_invalid_error",
+      type: "String",
+      required: false,
+      sublabel: "Error message when regular expression does not match",
+    },
     { name: "max_length", type: "Integer", required: false },
     { name: "min_length", type: "Integer", required: false },
     {
@@ -116,16 +130,28 @@ const string = {
         return undefined;
     }
   },
-  validate: ({ min_length, max_length }) => (x) => {
+  validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
     if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
     if (isdef(min_length) && x.length < min_length)
       return { error: `Must be at least ${min_length} characters` };
     if (isdef(max_length) && x.length > max_length)
       return { error: `Must be at most ${max_length} characters` };
+    if (isdef(regexp) && !new RegExp(regexp).test(x))
+      return { error: re_invalid_error || `Does not match regular expression` };
     return true;
   },
+  validate_attributes: ({ min_length, max_length, regexp }) =>
+    (!isdef(min_length) || !isdef(max_length) || max_length >= min_length) &&
+    (!isdef(regexp) || is_valid_regexp(regexp)),
 };
-
+const is_valid_regexp = (s) => {
+  try {
+    new RegExp(s);
+    return true;
+  } catch {
+    return false;
+  }
+};
 const int = {
   name: "Integer",
   sql_name: "int",
