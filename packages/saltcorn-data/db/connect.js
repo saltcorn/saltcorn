@@ -11,7 +11,7 @@ const getConnectObject = (connSpec = {}) => {
   var connObj = {};
   const fileCfg = getConfigFile() || {};
 
-  function setKey(k, envnm, def) {
+  function setKey(k, envnm, opts) {
     // Priorities:
     // 1. getConnectObject argument
     if (typeof connSpec[k] !== "undefined") connObj[k] = connSpec[k];
@@ -21,7 +21,7 @@ const getConnectObject = (connSpec = {}) => {
     // 3. Config file
     else if (typeof fileCfg[k] !== "undefined") connObj[k] = fileCfg[k];
     // 4. default
-    else connObj[k] = def;
+    else if (typeof opts.default !== "undefined") connObj[k] = opts.default;
   }
 
   setKey("user", "PGUSER");
@@ -31,8 +31,8 @@ const getConnectObject = (connSpec = {}) => {
   setKey("password", "PGPASSWORD");
   setKey("database", "PGDATABASE");
   setKey("session_secret", "SALTCORN_SESSION_SECRET");
-  setKey("multi_tenant", "SALTCORN_MULTI_TENANT", false);
-  setKey("file_store", "SALTCORN_FILE_STORE", pathsWithApp.data);
+  setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
+  setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
   setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", "public");
 
   if (process.env.DATABASE_URL) {
