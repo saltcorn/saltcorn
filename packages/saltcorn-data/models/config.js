@@ -136,7 +136,9 @@ const getConfig = contract(
 );
 
 const isFixedConfig = (key) =>
-  typeof db.connectObj.fixed_configuration[key] !== "undefined";
+  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
+  (db.connectObj.inherit_configuration.includes(key) &&
+    db.getTenantSchema() !== db.connectObj.default_schema);
 
 const getAllConfig = contract(
   is.fun([], is.promise(is.objVals(is.any))),

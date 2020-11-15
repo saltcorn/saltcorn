@@ -39,6 +39,10 @@ const getConnectObject = (connSpec = {}) => {
     default: {},
     transform: stringToJSON,
   });
+  setKey("inherit_configuration", "SALTCORN_INHERIT_CONFIGURATION", {
+    default: [],
+    transform: stringToJSON,
+  });
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];
