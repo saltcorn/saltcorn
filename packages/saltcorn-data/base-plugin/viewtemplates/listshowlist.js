@@ -1,12 +1,9 @@
-const Field = require("../../models/field");
-const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
