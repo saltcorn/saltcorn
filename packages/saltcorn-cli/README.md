@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.2.3 linux-x64 node-v14.4.0
+@saltcorn/cli/0.3.0-beta.0 linux-x64 node-v14.4.0
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
@@ -47,20 +47,21 @@ USAGE
 * [`saltcorn serve`](#saltcorn-serve)
 * [`saltcorn setup`](#saltcorn-setup)
 * [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
+* [`saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`](#saltcorn-transform-field-expression-field-table-tenant)
 
 ## `saltcorn backup`
 
-Backup the database to a file
+Backup the PostgreSQL database to a file with pg_dump
 
 ```
 USAGE
   $ saltcorn backup
 
 OPTIONS
-  -o, --output=output  [default: 20201104-saltcorn-LAPTOP-3VET16LK.sqlc] output filename
+  -o, --output=output  [default: 20201117-saltcorn-LAPTOP-3VET16LK.sqlc] output filename
 ```
 
-_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/backup.js)_
+_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/backup.js)_
 
 ## `saltcorn create-user`
 
@@ -74,7 +75,7 @@ OPTIONS
   -a, --admin  Admin user
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/create-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -92,7 +93,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/fixtures.js)_
 
 ## `saltcorn help [COMMAND]`
 
@@ -124,7 +125,7 @@ ARGUMENTS
   PATH    path to local plugin
 ```
 
-_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/localize-plugin.js)_
+_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/localize-plugin.js)_
 
 ## `saltcorn make-migration`
 
@@ -140,7 +141,7 @@ DESCRIPTION
   normally need to run this unless you are a developer.
 ```
 
-_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/make-migration.js)_
+_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/make-migration.js)_
 
 ## `saltcorn migrate`
 
@@ -157,7 +158,7 @@ DESCRIPTION
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/migrate.js)_
 
 ## `saltcorn paths`
 
@@ -172,7 +173,7 @@ DESCRIPTION
   Show configuration and file store paths
 ```
 
-_See code: [src/commands/paths.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/paths.js)_
+_See code: [src/commands/paths.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/paths.js)_
 
 ## `saltcorn plugins`
 
@@ -191,7 +192,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/plugins.js)_
+_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/plugins.js)_
 
 ## `saltcorn reset-schema`
 
@@ -209,7 +210,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -223,7 +224,7 @@ ARGUMENTS
   FILE  backup file to restore
 ```
 
-_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/restore.js)_
 
 ## `saltcorn rm-tenant TENANT`
 
@@ -237,7 +238,7 @@ ARGUMENTS
   TENANT  Tenant to remove
 ```
 
-_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/rm-tenant.js)_
+_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/rm-tenant.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -255,7 +256,7 @@ OPTIONS
   -f, --forever   Run forever till failure
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/run-tests.js)_
 
 ## `saltcorn serve`
 
@@ -266,11 +267,12 @@ USAGE
   $ saltcorn serve
 
 OPTIONS
+  -n, --nomigrate  No migrations
   -p, --port=port  [default: 3000] port
   -v, --verbose    Verbose
 ```
 
-_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/serve.js)_
 
 ## `saltcorn setup`
 
@@ -289,7 +291,7 @@ DESCRIPTION
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/setup.js)_
 
 ## `saltcorn test-plugin PATH`
 
@@ -307,5 +309,22 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.2.3/src/commands/test-plugin.js)_
+_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/test-plugin.js)_
+
+## `saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`
+
+transform an existing field by applying a calculated expression
+
+```
+USAGE
+  $ saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]
+
+ARGUMENTS
+  EXPRESSION  expression to calculate field
+  FIELD       field name
+  TABLE       table name
+  TENANT      tenant name
+```
+
+_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v0.3.0-beta.0/src/commands/transform-field.js)_
 <!-- commandsstop -->
