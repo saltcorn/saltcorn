@@ -214,13 +214,21 @@ const attribBadges = (f) => {
   }
   return s;
 };
+
 router.get(
-  "/:id",
+  "/:idorname",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const table = await Table.findOne({ id });
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) table = await Table.findOne({ id });
+    else {
+      table = await Table.findOne({ name: idorname });
+      id = table.id;
+    }
+
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -228,6 +236,10 @@ router.get(
     }
     const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+    const { child_relations } = await table.get_child_relations();
+    const inbound_refs = [
+      ...new Set(child_relations.map(({ table }) => table.name)),
+    ];
     var fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -249,7 +261,8 @@ router.get(
             label: req.__("Type"),
             key: (r) =>
               r.type === "Key"
-                ? `Key to ${r.reftable_name}`
+                ? `Key to ` +
+                  a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
                 : r.type.name || r.type,
           },
           {
@@ -277,10 +290,15 @@ router.get(
       );
       fieldCard = [
         tableHtml,
+        inbound_refs.length > 0
+          ? req.__("Inbound keys: ") +
+            inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            "<br>"
+          : "",
         a(
           {
             href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field",
+            class: "btn btn-primary add-field mt-2",
           },
           req.__("Add field")
         ),

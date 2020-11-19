@@ -482,5 +482,6 @@
 	"Add plugin": "Add plugin",
 	"Store refreshed": "Store refreshed",
 	"Plugins up-to-date": "Plugins up-to-date",
-	"Source": "Source"
+	"Source": "Source",
+	"Inbound keys: ": "Inbound keys: "
 }
