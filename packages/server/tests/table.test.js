@@ -39,6 +39,10 @@ describe("Table Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("favbook"))
       .expect(toInclude('href="/table/books"'));
+    await request(app)
+      .get("/table/books")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("patients"));
     //expect(res.statusCode).toEqual(302);
   });
   it("should reject existing tables", async () => {
