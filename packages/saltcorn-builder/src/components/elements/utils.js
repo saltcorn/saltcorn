@@ -1,4 +1,4 @@
-import React, { Fragment, useContext } from "react";
+import React, { Fragment, useContext, useState } from "react";
 import optionsCtx from "../context";
 
 export const blockProps = (is_block) =>
@@ -115,5 +115,31 @@ export const TextStyleRow = ({ textStyle, setProp }) => {
         <TextStyleSelect textStyle={textStyle} setProp={setProp} />
       </td>
     </tr>
+  );
+};
+
+export const Accordion = ({ titles, children }) => {
+  const [currentTab, setCurrentTab] = useState(0);
+  return (
+    <Fragment>
+      {children.map((child, ix) => (
+        <Fragment key={ix}>
+          <div
+            className="bg-primary pl-1 text-white w-100 mt-1"
+            onClick={() => setCurrentTab(ix)}
+          >
+            <span className="w-1em">
+              {ix === currentTab ? (
+                <i className="fas fa-chevron-down"></i>
+              ) : (
+                <i className="fas fa-chevron-right"></i>
+              )}
+            </span>
+            {titles[ix]}
+          </div>
+          {ix === currentTab ? child : null}
+        </Fragment>
+      ))}
+    </Fragment>
   );
 };

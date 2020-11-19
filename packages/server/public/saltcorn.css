@@ -137,3 +137,7 @@ div.card.with-link:hover {
 div.testrunoutput code {
   color: unset;
 }
+.w-1em {
+  width: 1em;
+  display: inline-block;
+}
