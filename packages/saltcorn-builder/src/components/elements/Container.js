@@ -2,7 +2,7 @@ import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { Accordion } from "./utils";
+import { Accordion, BlockSetting } from "./utils";
 
 export const Container = ({
   children,
@@ -14,6 +14,7 @@ export const Container = ({
   bgFileId,
   imageSize,
   bgType,
+  block,
   bgColor,
   setTextColor,
   textColor,
@@ -34,6 +35,7 @@ export const Container = ({
         padding: "4px",
         minHeight: `${Math.max(minHeight, 15)}px`,
         border: `${borderWidth}px ${borderStyle} black`,
+        ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
@@ -59,6 +61,20 @@ export const Container = ({
 };
 
 export const ContainerSettings = () => {
+  const node = useNode((node) => ({
+    borderWidth: node.data.props.borderWidth,
+    borderStyle: node.data.props.borderStyle,
+    minHeight: node.data.props.minHeight,
+    bgType: node.data.props.bgType,
+    bgColor: node.data.props.bgColor,
+    bgFileId: node.data.props.bgFileId,
+    imageSize: node.data.props.imageSize,
+    vAlign: node.data.props.vAlign,
+    hAlign: node.data.props.hAlign,
+    block: node.data.props.block,
+    setTextColor: node.data.props.setTextColor,
+    textColor: node.data.props.textColor,
+  }));
   const {
     actions: { setProp },
     borderWidth,
@@ -69,26 +85,15 @@ export const ContainerSettings = () => {
     bgFileId,
     imageSize,
     bgType,
+    block,
     bgColor,
     setTextColor,
     textColor,
-  } = useNode((node) => ({
-    borderWidth: node.data.props.borderWidth,
-    borderStyle: node.data.props.borderStyle,
-    minHeight: node.data.props.minHeight,
-    bgType: node.data.props.bgType,
-    bgColor: node.data.props.bgColor,
-    bgFileId: node.data.props.bgFileId,
-    imageSize: node.data.props.imageSize,
-    vAlign: node.data.props.vAlign,
-    hAlign: node.data.props.hAlign,
-    setTextColor: node.data.props.setTextColor,
-    textColor: node.data.props.textColor,
-  }));
+  } = node;
   const options = useContext(optionsCtx);
   return (
     <Accordion>
-      <table className="w-100" accordionTitle="Placement">
+      <table className="w-100" accordiontitle="Placement">
         <tbody>
           <tr>
             <th colspan="2">Border</th>
@@ -161,9 +166,14 @@ export const ContainerSettings = () => {
               />
             </td>
           </tr>
+          <tr>
+            <td colspan="2">
+              <BlockSetting block={block} setProp={setProp} />
+            </td>
+          </tr>
         </tbody>
       </table>
-      <table className="w-100" accordionTitle="Contents">
+      <table className="w-100" accordiontitle="Contents">
         <tbody>
           <tr>
             <th colspan="2">Align</th>
@@ -348,6 +358,7 @@ Container.craft = {
     hAlign: "left",
     bgFileId: 0,
     bgType: "None",
+    block: true,
     bgColor: "#ffffff",
     setTextColor: false,
     textColor: "#ffffff",

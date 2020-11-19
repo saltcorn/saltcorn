@@ -133,7 +133,7 @@ export const Accordion = ({ titles, children }) => {
               onClick={() => setCurrentTab(ix)}
             >
               <span className="w-1em">{isCurrent ? "▽" : "▷"}</span>
-              {child.props.accordionTitle || titles[ix]}
+              {child.props.accordiontitle || titles[ix]}
             </div>
             {isCurrent ? child : null}
           </Fragment>
