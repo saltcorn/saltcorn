@@ -34,6 +34,11 @@ describe("Table Endpoints", () => {
       .get("/table/5")
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"));
+    await request(app)
+      .get("/table/patients")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("favbook"))
+      .expect(toInclude('href="/table/books"'));
     //expect(res.statusCode).toEqual(302);
   });
   it("should reject existing tables", async () => {

@@ -256,7 +256,8 @@ router.get(
             label: req.__("Type"),
             key: (r) =>
               r.type === "Key"
-                ? `Key to ${r.reftable_name}`
+                ? `Key to ` +
+                  a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
                 : r.type.name || r.type,
           },
           {
