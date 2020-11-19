@@ -123,17 +123,19 @@ export const Accordion = ({ titles, children }) => {
   return (
     <Fragment>
       {children.map((child, ix) => {
-        console.log(ix, currentTab, ix === currentTab);
+        const isCurrent = ix === currentTab;
         return (
           <Fragment key={ix}>
             <div
-              className="bg-primary pl-1 text-white w-100 mt-1"
+              className={`bg-${
+                isCurrent ? "primary" : "secondary"
+              } pl-1 text-white w-100 mt-1`}
               onClick={() => setCurrentTab(ix)}
             >
-              <span className="w-1em">{ix === currentTab ? "▽" : "▷"}</span>
+              <span className="w-1em">{isCurrent ? "▽" : "▷"}</span>
               {child.props.accordionTitle || titles[ix]}
             </div>
-            {ix === currentTab ? child : null}
+            {isCurrent ? child : null}
           </Fragment>
         );
       })}
