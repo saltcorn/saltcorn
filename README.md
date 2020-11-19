@@ -6,8 +6,6 @@ Saltcorn is an extensible open source no-code database application builder. Use 
 
 This repository contains the core codebase, including the code necessary to self host an instance and to host a multitenant instance.
 
-**WARNING: In early stages of development. Expect poor usability, limited functionality and security vulnerabilities**
-
 ## Trying out Saltcorn
 
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create)
@@ -62,7 +60,7 @@ cd
 mkdir -p ~/.config/
 ```
 
-run
+then run
 
 `saltcorn setup` and follow instructions
 
