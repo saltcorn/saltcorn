@@ -214,6 +214,7 @@ const attribBadges = (f) => {
   }
   return s;
 };
+
 router.get(
   "/:idorname",
   setTenant,
@@ -235,6 +236,10 @@ router.get(
     }
     const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+    const { child_relations } = await table.get_child_relations();
+    const inbound_refs = [
+      ...new Set(child_relations.map(({ table }) => table.name)),
+    ];
     var fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -285,10 +290,15 @@ router.get(
       );
       fieldCard = [
         tableHtml,
+        inbound_refs.length > 0
+          ? req.__("Inbound keys: ") +
+            inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            "<br>"
+          : "",
         a(
           {
             href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field",
+            class: "btn btn-primary add-field mt-2",
           },
           req.__("Add field")
         ),
