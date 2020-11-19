@@ -215,12 +215,19 @@ const attribBadges = (f) => {
   return s;
 };
 router.get(
-  "/:id",
+  "/:idorname",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const table = await Table.findOne({ id });
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) table = await Table.findOne({ id });
+    else {
+      table = await Table.findOne({ name: idorname });
+      id = table.id;
+    }
+
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
