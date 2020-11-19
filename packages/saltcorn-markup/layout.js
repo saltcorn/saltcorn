@@ -152,7 +152,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             ],
             style: `${
               block === false ? "display: inline-block;" : ""
-            } min-height: ${minHeight || 0}px; border: ${
+            }min-height: ${minHeight || 0}px; border: ${
               borderWidth || 0
             }px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
