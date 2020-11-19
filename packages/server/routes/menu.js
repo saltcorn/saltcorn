@@ -11,13 +11,6 @@ const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
-const {
-  getConfig,
-  setConfig,
-  getAllConfigOrDefaults,
-  deleteConfig,
-  configTypes,
-} = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
@@ -110,19 +103,22 @@ router.get(
     form.values.site_name = state.getConfig("site_name");
     form.values.site_logo_id = state.getConfig("site_logo_id");
     form.values.menu_items = state.getConfig("menu_items");
-    res.sendWrap(req.__(`Menu editor`), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
-        },
-        {
-          type: "card",
-          title: req.__(`Menu editor`),
-          contents: renderForm(form, req.csrfToken()),
-        },
-      ],
-    });
+    res.sendWrap(
+      { title: req.__(`Menu editor`), headers: [{}] },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
+          },
+          {
+            type: "card",
+            title: req.__(`Menu editor`),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
+      }
+    );
   })
 );
 
