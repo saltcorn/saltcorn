@@ -87,8 +87,8 @@ export const ContainerSettings = () => {
   }));
   const options = useContext(optionsCtx);
   return (
-    <Accordion titles={["Placement", "Contents"]}>
-      <table className="w-100">
+    <Accordion>
+      <table className="w-100" accordionTitle="Placement">
         <tbody>
           <tr>
             <th colspan="2">Border</th>
@@ -163,7 +163,7 @@ export const ContainerSettings = () => {
           </tr>
         </tbody>
       </table>
-      <table className="w-100">
+      <table className="w-100" accordionTitle="Contents">
         <tbody>
           <tr>
             <th colspan="2">Align</th>

@@ -122,24 +122,21 @@ export const Accordion = ({ titles, children }) => {
   const [currentTab, setCurrentTab] = useState(0);
   return (
     <Fragment>
-      {children.map((child, ix) => (
-        <Fragment key={ix}>
-          <div
-            className="bg-primary pl-1 text-white w-100 mt-1"
-            onClick={() => setCurrentTab(ix)}
-          >
-            <span className="w-1em">
-              {ix === currentTab ? (
-                <i className="fas fa-chevron-down"></i>
-              ) : (
-                <i className="fas fa-chevron-right"></i>
-              )}
-            </span>
-            {titles[ix]}
-          </div>
-          {ix === currentTab ? child : null}
-        </Fragment>
-      ))}
+      {children.map((child, ix) => {
+        console.log(ix, currentTab, ix === currentTab);
+        return (
+          <Fragment key={ix}>
+            <div
+              className="bg-primary pl-1 text-white w-100 mt-1"
+              onClick={() => setCurrentTab(ix)}
+            >
+              <span className="w-1em">{ix === currentTab ? "▽" : "▷"}</span>
+              {child.props.accordionTitle || titles[ix]}
+            </div>
+            {ix === currentTab ? child : null}
+          </Fragment>
+        );
+      })}
     </Fragment>
   );
 };
