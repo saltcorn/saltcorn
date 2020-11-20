@@ -181,7 +181,7 @@ describe("Show view", () => {
         isFormula: {},
       },
       columns: [],
-      response: `<div class="card shadow mt-4 " ><div class="card-body">author<br />Herman Melville</div></div>`,
+      response: `<div class="card shadow mt-4 " ><div class="card-body">Herman Melville<br />Herman Melville</div></div>`,
     });
   });
 });

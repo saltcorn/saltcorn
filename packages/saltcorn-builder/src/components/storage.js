@@ -180,12 +180,14 @@ export const layoutToNodes = (layout, query, actions) => {
           minHeight={segment.minHeight}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
+          block={typeof segment.block === "undefined" ? true : segment.block}
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
+          isFormula={segment.isFormula || {}}
           is={Container}
         >
           {toTag(segment.contents)}
@@ -256,12 +258,14 @@ export const craftToSaltcorn = (nodes) => {
           minHeight: node.props.minHeight,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
+          block: node.props.block || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
           bgColor: node.props.bgColor,
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
+          isFormula: node.props.isFormula,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

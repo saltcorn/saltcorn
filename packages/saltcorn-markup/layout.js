@@ -124,6 +124,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         bgColor,
         vAlign,
         hAlign,
+        block,
         imageSize,
         minHeight,
         borderWidth,
@@ -149,7 +150,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
                 hAlign === "center" &&
                 "justify-content-center",
             ],
-            style: `min-height: ${minHeight || 0}px; border: ${
+            style: `${
+              block === false ? "display: inline-block;" : ""
+            }min-height: ${minHeight || 0}px; border: ${
               borderWidth || 0
             }px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
