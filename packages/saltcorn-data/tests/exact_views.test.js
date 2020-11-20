@@ -160,7 +160,7 @@ describe("Show view", () => {
           in_modal: true,
         },
       ],
-      response: `<div class="row"><div class="col-sm-6 text-"><div class="card shadow mt-4 " ><div class="card-body"><button class="btn btn-secondary btn-sm" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-sm-6 text-"><div class="text-left" style="min-height: 100px; border: 1px solid black;  background-color: #a9a7a7; "><a href="https://countto.com/967"  >Herman Melville</a></div></div></div>`,
+      response: `<div class="row"><div class="col-sm-6 text-"><div class="card shadow mt-4 " ><div class="card-body"><button class="btn btn-secondary btn-sm" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-sm-6 text-"><div class="text-left" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7; "><a href="https://countto.com/967"  >Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
