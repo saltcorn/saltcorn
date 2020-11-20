@@ -89,6 +89,7 @@ export const ContainerSettings = () => {
     block: node.data.props.block,
     showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
+    showForRole: node.data.props.showForRole,
     textColor: node.data.props.textColor,
   }));
   const {
@@ -109,6 +110,7 @@ export const ContainerSettings = () => {
     textColor,
     showIfFormula,
     isFormula,
+    showForRole,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -428,6 +430,33 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           )}
+          <tr>
+            <th colspan="2">Role</th>
+          </tr>
+          {options.roles.map(({ role, id }) => (
+            <tr key={id}>
+              <td colspan="2">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    name="block"
+                    type="checkbox"
+                    checked={
+                      typeof showForRole[id] === "undefined"
+                        ? true
+                        : showForRole[id]
+                    }
+                    onChange={(e) =>
+                      setProp(
+                        (prop) => (prop.showForRole[id] = e.target.checked)
+                      )
+                    }
+                  />
+                  <label className="form-check-label">{role}</label>
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </Accordion>
@@ -450,6 +479,7 @@ Container.craft = {
     textColor: "#ffffff",
     imageSize: "contain",
     showIfFormula: "",
+    showForRole: [],
   },
   rules: {
     canDrag: () => true,

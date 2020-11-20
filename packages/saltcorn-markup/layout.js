@@ -130,9 +130,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         borderStyle,
         setTextColor,
         textColor,
+        showForRole,
         hide,
       } = segment;
       if (hide) return "";
+      if (showForRole && showForRole[role] === false) return "";
       const renderBg = !(
         isTop &&
         blockDispatch.noBackgroundAtTop &&
