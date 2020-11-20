@@ -240,6 +240,9 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
     },
+    container(segment) {
+      evalMaybeExpr(segment, "bgColor");
+    },
   });
   const blockDispatch = {
     field({ field_name, fieldview }) {

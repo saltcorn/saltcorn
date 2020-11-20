@@ -187,6 +187,7 @@ export const layoutToNodes = (layout, query, actions) => {
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
+          isFormula={segment.isFormula || {}}
           is={Container}
         >
           {toTag(segment.contents)}
@@ -264,6 +265,7 @@ export const craftToSaltcorn = (nodes) => {
           bgColor: node.props.bgColor,
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
+          isFormula: node.props.isFormula,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

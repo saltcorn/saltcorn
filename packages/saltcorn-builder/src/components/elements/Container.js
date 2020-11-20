@@ -2,7 +2,7 @@ import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { Accordion, BlockSetting } from "./utils";
+import { Accordion, BlockSetting, OrFormula } from "./utils";
 
 export const Container = ({
   children,
@@ -67,6 +67,7 @@ export const ContainerSettings = () => {
     minHeight: node.data.props.minHeight,
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
+    isFormula: node.data.props.isFormula,
     bgFileId: node.data.props.bgFileId,
     imageSize: node.data.props.imageSize,
     vAlign: node.data.props.vAlign,
@@ -89,6 +90,7 @@ export const ContainerSettings = () => {
     bgColor,
     setTextColor,
     textColor,
+    isFormula,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -292,20 +294,19 @@ export const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td>
-                <label>Color</label>
-              </td>
-              <td>
-                <input
-                  type="color"
-                  value={bgColor}
-                  className="w-100 ml-2"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.bgColor = e.target.value;
-                    })
-                  }
-                />
+              <td colspan="2">
+                <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
+                  <input
+                    type="color"
+                    value={bgColor}
+                    className="form-control"
+                    onChange={(e) =>
+                      setProp((prop) => {
+                        prop.bgColor = e.target.value;
+                      })
+                    }
+                  />
+                </OrFormula>
               </td>
             </tr>
           )}
@@ -357,6 +358,7 @@ Container.craft = {
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
+    isFormula: {},
     bgType: "None",
     block: true,
     bgColor: "#ffffff",
