@@ -238,6 +238,14 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
     },
+    container(segment) {
+      evalMaybeExpr(segment, "bgColor");
+
+      if (segment.showIfFormula) {
+        const f = get_expression_function(segment.showIfFormula, fields);
+        if (!f(row)) segment.hide = true;
+      }
+    },
   });
   const blockDispatch = {
     field({ field_name, fieldview }) {

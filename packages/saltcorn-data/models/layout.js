@@ -3,7 +3,6 @@ const traverseSync = (layout, visitors) => {
     if (!segment) return;
     if (visitors[segment.type]) {
       visitors[segment.type](segment);
-      return;
     }
     if (segment.contents) {
       if (typeof contents !== "string") go(segment.contents);

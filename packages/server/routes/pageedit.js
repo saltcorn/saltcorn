@@ -84,6 +84,7 @@ const pageFlow = (req) =>
         builder: async (context) => {
           const views = await View.find();
           const images = await File.find({ mime_super: "image" });
+          const roles = await User.get_roles();
 
           return {
             views,
@@ -91,6 +92,7 @@ const pageFlow = (req) =>
             page_name: context.name,
             page_id: context.id,
             mode: "page",
+            roles,
           };
         },
       },
