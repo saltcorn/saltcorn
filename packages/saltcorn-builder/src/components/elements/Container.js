@@ -87,6 +87,7 @@ export const ContainerSettings = () => {
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     block: node.data.props.block,
+    showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
     textColor: node.data.props.textColor,
   }));
@@ -106,6 +107,7 @@ export const ContainerSettings = () => {
     bgColor,
     setTextColor,
     textColor,
+    showIfFormula,
     isFormula,
   } = node;
   const options = useContext(optionsCtx);
@@ -402,6 +404,32 @@ export const ContainerSettings = () => {
           )}
         </tbody>
       </table>
+      <table className="w-100" accordiontitle="Show if...">
+        <tbody>
+          {options.mode === "show" && (
+            <tr>
+              <th colspan="2">Formula - show if true</th>
+            </tr>
+          )}
+          {options.mode === "show" && (
+            <tr>
+              <td>
+                <input
+                  type="text"
+                  className="form-control text-to-display"
+                  value={showIfFormula}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.showIfFormula = e.target.value))
+                  }
+                />
+                <div style={{ marginTop: "-5px" }}>
+                  <small className="text-muted text-monospace">FORMULA</small>
+                </div>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </Accordion>
   );
 };
@@ -421,6 +449,7 @@ Container.craft = {
     setTextColor: false,
     textColor: "#ffffff",
     imageSize: "contain",
+    showIfFormula: "",
   },
   rules: {
     canDrag: () => true,
