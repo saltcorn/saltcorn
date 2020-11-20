@@ -9,6 +9,8 @@ export const Container = ({
   borderWidth,
   borderStyle,
   minHeight,
+  height,
+  width,
   vAlign,
   hAlign,
   bgFileId,
@@ -53,6 +55,16 @@ export const Container = ({
               color: textColor,
             }
           : {}),
+        ...(typeof height !== "undefined"
+          ? {
+              height: `${height}px`,
+            }
+          : {}),
+        ...(typeof width !== "undefined"
+          ? {
+              width: `${width}px`,
+            }
+          : {}),
       }}
     >
       <div className="canvas">{children}</div>
@@ -65,6 +77,8 @@ export const ContainerSettings = () => {
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
+    height: node.data.props.height,
+    width: node.data.props.width,
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
@@ -73,7 +87,9 @@ export const ContainerSettings = () => {
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     block: node.data.props.block,
+    showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
+    showForRole: node.data.props.showForRole,
     textColor: node.data.props.textColor,
   }));
   const {
@@ -81,6 +97,8 @@ export const ContainerSettings = () => {
     borderWidth,
     borderStyle,
     minHeight,
+    height,
+    width,
     vAlign,
     hAlign,
     bgFileId,
@@ -90,7 +108,9 @@ export const ContainerSettings = () => {
     bgColor,
     setTextColor,
     textColor,
+    showIfFormula,
     isFormula,
+    showForRole,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -146,11 +166,11 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
-            <th colspan="2">Height</th>
+            <th colspan="2">Size</th>
           </tr>
           <tr>
             <td>
-              <label>Min</label>
+              <label>Min height</label>
             </td>
             <td>
               <input
@@ -163,6 +183,46 @@ export const ContainerSettings = () => {
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.minHeight = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Height</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={height}
+                step="1"
+                min="0"
+                max="999"
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.height = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>{" "}
+          <tr>
+            <td>
+              <label>Width</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={width}
+                step="1"
+                min="0"
+                max="999"
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.width = e.target.value;
                   })
                 }
               />
@@ -346,6 +406,59 @@ export const ContainerSettings = () => {
           )}
         </tbody>
       </table>
+      <table className="w-100" accordiontitle="Show if...">
+        <tbody>
+          {options.mode === "show" && (
+            <tr>
+              <th colspan="2">Formula - show if true</th>
+            </tr>
+          )}
+          {options.mode === "show" && (
+            <tr>
+              <td>
+                <input
+                  type="text"
+                  className="form-control text-to-display"
+                  value={showIfFormula}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.showIfFormula = e.target.value))
+                  }
+                />
+                <div style={{ marginTop: "-5px" }}>
+                  <small className="text-muted text-monospace">FORMULA</small>
+                </div>
+              </td>
+            </tr>
+          )}
+          <tr>
+            <th colspan="2">Role</th>
+          </tr>
+          {options.roles.map(({ role, id }) => (
+            <tr key={id}>
+              <td colspan="2">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    name="block"
+                    type="checkbox"
+                    checked={
+                      typeof showForRole[id] === "undefined"
+                        ? true
+                        : showForRole[id]
+                    }
+                    onChange={(e) =>
+                      setProp(
+                        (prop) => (prop.showForRole[id] = e.target.checked)
+                      )
+                    }
+                  />
+                  <label className="form-check-label">{role}</label>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </Accordion>
   );
 };
@@ -365,6 +478,8 @@ Container.craft = {
     setTextColor: false,
     textColor: "#ffffff",
     imageSize: "contain",
+    showIfFormula: "",
+    showForRole: [],
   },
   rules: {
     canDrag: () => true,

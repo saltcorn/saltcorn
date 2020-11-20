@@ -178,6 +178,8 @@ export const layoutToNodes = (layout, query, actions) => {
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
+          height={segment.height}
+          width={segment.width}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
@@ -188,6 +190,8 @@ export const layoutToNodes = (layout, query, actions) => {
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
           isFormula={segment.isFormula || {}}
+          showIfFormula={segment.showIfFormula || ""}
+          showForRole={segment.showForRole || []}
           is={Container}
         >
           {toTag(segment.contents)}
@@ -256,6 +260,8 @@ export const craftToSaltcorn = (nodes) => {
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
           minHeight: node.props.minHeight,
+          height: node.props.height,
+          width: node.props.width,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
           block: node.props.block || false,
@@ -266,6 +272,8 @@ export const craftToSaltcorn = (nodes) => {
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
           isFormula: node.props.isFormula,
+          showIfFormula: node.props.showIfFormula,
+          showForRole: node.props.showForRole,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

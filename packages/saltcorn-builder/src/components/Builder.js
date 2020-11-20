@@ -208,7 +208,7 @@ const Builder = ({ options, layout, mode }) => {
             </div>
           </div>
           <div className="col-sm-auto builder-sidebar">
-            <div style={{ width: "13rem" }}>
+            <div style={{ width: "16rem" }}>
               <div className="card">
                 <div className="card-header">
                   Layers
