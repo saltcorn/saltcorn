@@ -126,7 +126,6 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         hAlign,
         block,
         imageSize,
-        minHeight,
         borderWidth,
         borderStyle,
         setTextColor,
@@ -137,6 +136,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         blockDispatch.noBackgroundAtTop &&
         blockDispatch.noBackgroundAtTop()
       );
+      const sizeProp = (segKey, cssNm) =>
+        typeof segment[segKey] === "undefined"
+          ? ""
+          : `${cssNm}: ${segment[segKey]}px;`;
       return wrap(
         segment,
         isTop,
@@ -152,7 +155,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             ],
             style: `${
               block === false ? "display: inline-block;" : ""
-            }min-height: ${minHeight || 0}px; border: ${
+            }${sizeProp("minHeight", "min-height")}${sizeProp(
+              "height",
+              "height"
+            )}${sizeProp("width", "width")}border: ${
               borderWidth || 0
             }px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId

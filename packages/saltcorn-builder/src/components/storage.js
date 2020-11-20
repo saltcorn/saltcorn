@@ -178,6 +178,8 @@ export const layoutToNodes = (layout, query, actions) => {
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           minHeight={segment.minHeight}
+          height={segment.height}
+          width={segment.width}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
@@ -256,6 +258,8 @@ export const craftToSaltcorn = (nodes) => {
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
           minHeight: node.props.minHeight,
+          height: node.props.height,
+          width: node.props.width,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
           block: node.props.block || false,

@@ -9,6 +9,8 @@ export const Container = ({
   borderWidth,
   borderStyle,
   minHeight,
+  height,
+  width,
   vAlign,
   hAlign,
   bgFileId,
@@ -53,6 +55,16 @@ export const Container = ({
               color: textColor,
             }
           : {}),
+        ...(typeof height !== "undefined"
+          ? {
+              height: `${height}px`,
+            }
+          : {}),
+        ...(typeof width !== "undefined"
+          ? {
+              width: `${width}px`,
+            }
+          : {}),
       }}
     >
       <div className="canvas">{children}</div>
@@ -65,6 +77,8 @@ export const ContainerSettings = () => {
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
     minHeight: node.data.props.minHeight,
+    height: node.data.props.height,
+    width: node.data.props.width,
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
@@ -81,6 +95,8 @@ export const ContainerSettings = () => {
     borderWidth,
     borderStyle,
     minHeight,
+    height,
+    width,
     vAlign,
     hAlign,
     bgFileId,
@@ -146,11 +162,11 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
-            <th colspan="2">Height</th>
+            <th colspan="2">Size</th>
           </tr>
           <tr>
             <td>
-              <label>Min</label>
+              <label>Min height</label>
             </td>
             <td>
               <input
@@ -163,6 +179,46 @@ export const ContainerSettings = () => {
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.minHeight = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Height</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={height}
+                step="1"
+                min="0"
+                max="999"
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.height = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>{" "}
+          <tr>
+            <td>
+              <label>Width</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={width}
+                step="1"
+                min="0"
+                max="999"
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.width = e.target.value;
                   })
                 }
               />
