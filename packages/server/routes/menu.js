@@ -16,6 +16,14 @@ const router = new Router();
 module.exports = router;
 
 const siteIdForm = async (req) => {
+  const imageFiles = await File.find(
+    { mime_super: "image" },
+    { orderBy: "filename" }
+  );
+  const images = [
+    { label: "None", value: 0 },
+    ...imageFiles.map((f) => ({ label: f.filename, value: f.id })),
+  ];
   return new Form({
     action: "/menu/setsiteid",
     submitLabel: req.__("Save"),
@@ -36,14 +44,6 @@ const siteIdForm = async (req) => {
 };
 
 const menuForm = async (req) => {
-  const imageFiles = await File.find(
-    { mime_super: "image" },
-    { orderBy: "filename" }
-  );
-  const images = [
-    { label: "None", value: 0 },
-    ...imageFiles.map((f) => ({ label: f.filename, value: f.id })),
-  ];
   const views = await View.find({});
   const pages = await Page.find({});
   const roles = await User.get_roles();
