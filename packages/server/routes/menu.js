@@ -68,7 +68,7 @@ const menuForm = async (req) => {
         options: ["View", "Page", "Link"],
       },
       {
-        name: "label",
+        name: "text",
         label: req.__("Text label"),
         class: "item-menu",
         input_type: "text",
@@ -109,6 +109,47 @@ const menuForm = async (req) => {
 };
 
 //create -- new
+
+const menuEditorScript = (menu_items) => `
+  // icon picker options
+  var iconPickerOptions = {searchText: "Buscar...", labelHeader: "{0}/{1}"};
+  // sortable list options
+  var sortableListOptions = {
+      placeholderCss: {'background-color': "#cccccc"}
+  };
+  var editor = new MenuEditor('myEditor', 
+              { 
+              listOptions: sortableListOptions, 
+              iconPicker: iconPickerOptions,
+              maxLevel: 2 // (Optional) Default is -1 (no level limit)
+              // Valid levels are from [0, 1, 2, 3,...N]
+              });
+  console.log(editor);
+  editor.setForm($('#menuForm'));
+  editor.setUpdateButton($('#btnUpdate'));
+  editor.setData(${JSON.stringify(menu_items)});
+  //Calling the update method
+  $("#btnUpdate").click(function(){
+      editor.update();
+  });
+  // Calling the add method
+  $('#btnAdd').click(function(){
+      editor.add();
+  });
+  $('#menuSubmitForm button').click(function(){
+    $('#menuSubmitForm input[name="menu"]').val(editor.getString());
+});
+  `;
+const menuTojQME = (menu_items) =>
+  (menu_items || []).map((mi) => ({
+    ...mi,
+    text: mi.label,
+  }));
+const jQMEtoMenu = (menu_items) =>
+  menu_items.map((mi) => ({
+    ...mi,
+    label: mi.text,
+  }));
 router.get(
   "/",
   setTenant,
@@ -119,7 +160,18 @@ router.get(
     const state = getState();
     site_form.values.site_name = state.getConfig("site_name");
     site_form.values.site_logo_id = state.getConfig("site_logo_id");
-    const menu_items = state.getConfig("menu_items") || [];
+    const menu_items = menuTojQME(state.getConfig("menu_items"));
+    const submit_form = new Form({
+      action: "/menu/",
+      submitLabel: req.__("Save"),
+      id: "menuSubmitForm",
+      fields: [
+        {
+          input_type: "hidden",
+          name: "menu",
+        },
+      ],
+    });
     res.sendWrap(
       {
         title: req.__(`Menu editor`),
@@ -150,39 +202,22 @@ router.get(
             type: "card",
             title: req.__(`Menu editor`),
             contents: {
-              besides: [
-                div(ul({ id: "myEditor", class: "sortableLists list-group" })),
-                div(
-                  renderForm(form, req.csrfToken()),
-                  script(
-                    domReady(`
-    // icon picker options
-    var iconPickerOptions = {searchText: "Buscar...", labelHeader: "{0}/{1}"};
-    // sortable list options
-    var sortableListOptions = {
-        placeholderCss: {'background-color': "#cccccc"}
-    };
-    var editor = new MenuEditor('myEditor', 
-                { 
-                listOptions: sortableListOptions, 
-                iconPicker: iconPickerOptions,
-                maxLevel: 2 // (Optional) Default is -1 (no level limit)
-                // Valid levels are from [0, 1, 2, 3,...N]
-                });
-    console.log(editor);
-    editor.setForm($('#menuForm'));
-    editor.setUpdateButton($('#btnUpdate'));
-    editor.setData(${JSON.stringify(menu_items)});
-    //Calling the update method
-    $("#btnUpdate").click(function(){
-        editor.update();
-    });
-    // Calling the add method
-    $('#btnAdd').click(function(){
-        editor.add();
-    });`)
-                  )
-                ),
+              above: [
+                {
+                  besides: [
+                    div(
+                      ul({ id: "myEditor", class: "sortableLists list-group" })
+                    ),
+                    div(
+                      renderForm(form, req.csrfToken()),
+                      script(domReady(menuEditorScript(menu_items)))
+                    ),
+                  ],
+                },
+                {
+                  type: "blank",
+                  contents: renderForm(submit_form, req.csrfToken()),
+                },
               ],
             },
           },
@@ -229,28 +264,11 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await menuForm(req);
+    const new_menu = JSON.parse(req.body.menu);
+    console.log(new_menu);
+    await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
+    req.flash("success", req.__(`Menu updated`));
 
-    const valres = form.validate(req.body);
-    if (valres.errors)
-      res.sendWrap(req.__(`Menu editor`), {
-        above: [
-          {
-            type: "breadcrumbs",
-            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
-          },
-          {
-            type: "card",
-            title: req.__(`Menu editor`),
-            contents: renderForm(form, req.csrfToken()),
-          },
-        ],
-      });
-    else {
-      await getState().setConfig("menu_items", valres.success.menu_items);
-      req.flash("success", req.__(`Menu updated`));
-
-      res.redirect(`/menu`);
-    }
+    res.redirect(`/menu`);
   })
 );
