@@ -370,9 +370,11 @@ const mkForm = (form, csrfToken, errors = {}) => {
     csrfToken === false
       ? ""
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" class="form-namespace ${
-    form.isStateForm ? "stateForm" : ""
-  } ${form.class || ""}" method="${form.methodGET ? "get" : "post"}" ${
+  const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
+    form.action
+  }" class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
+    form.class || ""
+  }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);

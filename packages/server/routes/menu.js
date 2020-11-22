@@ -11,6 +11,7 @@ const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -51,30 +52,34 @@ const menuForm = async (req) => {
   return new Form({
     action: "/menu/",
     submitLabel: req.__("Save"),
+    id: "menuForm",
     fields: [
       {
         name: "type",
         label: req.__("Type"),
         input_type: "select",
-        class: "menutype",
+        class: "menutype item-menu",
         required: true,
         options: ["View", "Page", "Link"],
       },
       {
         name: "label",
         label: req.__("Text label"),
+        class: "item-menu",
         input_type: "text",
         required: true,
       },
       {
         name: "min_role",
         label: req.__("Minimum role"),
+        class: "item-menu",
         input_type: "select",
         options: roles.map((r) => ({ label: r.role, value: r.id })),
       },
       {
         name: "url",
         label: req.__("URL"),
+        class: "item-menu",
         input_type: "text",
         showIf: { ".menutype": "Link" },
       },
@@ -82,6 +87,7 @@ const menuForm = async (req) => {
         name: "pagename",
         label: req.__("Page"),
         input_type: "select",
+        class: "item-menu",
         options: pages.map((r) => r.name),
         showIf: { ".menutype": "Page" },
       },
@@ -89,6 +95,7 @@ const menuForm = async (req) => {
         name: "viewname",
         label: req.__("Views"),
         input_type: "select",
+        class: "item-menu",
         options: views.map((r) => r.name),
         showIf: { ".menutype": "View" },
       },
@@ -107,7 +114,7 @@ router.get(
     const state = getState();
     site_form.values.site_name = state.getConfig("site_name");
     site_form.values.site_logo_id = state.getConfig("site_logo_id");
-    form.values.menu_items = state.getConfig("menu_items");
+    const menu_items = state.getConfig("menu_items") || [];
     res.sendWrap(
       {
         title: req.__(`Menu editor`),
@@ -137,7 +144,42 @@ router.get(
           {
             type: "card",
             title: req.__(`Menu editor`),
-            contents: renderForm(form, req.csrfToken()),
+            contents: {
+              besides: [
+                div(ul({ id: "myEditor", class: "sortableLists list-group" })),
+                div(
+                  renderForm(form, req.csrfToken()),
+                  script(
+                    domReady(`
+    // icon picker options
+    var iconPickerOptions = {searchText: "Buscar...", labelHeader: "{0}/{1}"};
+    // sortable list options
+    var sortableListOptions = {
+        placeholderCss: {'background-color': "#cccccc"}
+    };
+    var editor = new MenuEditor('myEditor', 
+                { 
+                listOptions: sortableListOptions, 
+                iconPicker: iconPickerOptions,
+                maxLevel: 2 // (Optional) Default is -1 (no level limit)
+                // Valid levels are from [0, 1, 2, 3,...N]
+                });
+    console.log(editor);
+    editor.setForm($('#menuForm'));
+    editor.setUpdateButton($('#menuForm button'));
+    editor.setData(${JSON.stringify(menu_items)});
+    //Calling the update method
+    $("#menuForm button").click(function(){
+        editor.update();
+    });
+    // Calling the add method
+    $('#btnAdd').click(function(){
+        editor.add();
+    });`)
+                  )
+                ),
+              ],
+            },
           },
         ],
       }

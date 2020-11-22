@@ -11,6 +11,7 @@ class Form {
     this.values = o.values || {};
     this.action = o.action;
     this.layout = o.layout;
+    this.id = o.id;
     this.labelCols = o.labelCols;
     this.collapsedSummary = o.collapsedSummary;
     this.isStateForm = !!o.isStateForm;
