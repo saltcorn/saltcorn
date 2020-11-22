@@ -109,7 +109,20 @@ router.get(
     site_form.values.site_logo_id = state.getConfig("site_logo_id");
     form.values.menu_items = state.getConfig("menu_items");
     res.sendWrap(
-      { title: req.__(`Menu editor`), headers: [{}] },
+      {
+        title: req.__(`Menu editor`),
+        headers: [
+          {
+            script: "/jquery-menu-editor.min.js",
+          },
+          {
+            script: "/bootstrap-iconpicker.min.js",
+          },
+          {
+            css: "/bootstrap-iconpicker.min.css",
+          },
+        ],
+      },
       {
         above: [
           {
