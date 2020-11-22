@@ -53,6 +53,11 @@ const menuForm = async (req) => {
     action: "/menu/",
     submitLabel: req.__("Save"),
     id: "menuForm",
+    noSubmitButton: true,
+    additionalButtons: [
+      { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
+      { label: "Add", id: "btnAdd", class: "btn btn-primary" },
+    ],
     fields: [
       {
         name: "type",
@@ -166,10 +171,10 @@ router.get(
                 });
     console.log(editor);
     editor.setForm($('#menuForm'));
-    editor.setUpdateButton($('#menuForm button'));
+    editor.setUpdateButton($('#btnUpdate'));
     editor.setData(${JSON.stringify(menu_items)});
     //Calling the update method
-    $("#menuForm button").click(function(){
+    $("#btnUpdate").click(function(){
         editor.update();
     });
     // Calling the add method

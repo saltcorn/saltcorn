@@ -363,7 +363,13 @@ const mkFormWithLayout = (form, csrfToken) => {
     "</form>"
   );
 };
-
+const displayAdditionalButtons = (additionalButtons) =>
+  additionalButtons
+    .map(
+      (btn) =>
+        `<button type="button" id="${btn.id}" class="${btn.class}">${btn.label}</button>&nbsp;`
+    )
+    .join("");
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField =
@@ -403,20 +409,21 @@ const mkForm = (form, csrfToken, errors = {}) => {
     : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn ${
-      form.submitButtonClass || "btn-primary"
-    }">${text(form.submitLabel || "Save")}</button>
+    ${
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons)
+        : ""
+    }
+    ${
+      form.noSubmitButton
+        ? ""
+        : `<button type="submit" class="btn ${
+            form.submitButtonClass || "btn-primary"
+          }">${text(form.submitLabel || "Save")}</button>`
+    }
   </div>
 </div>`;
-  return (
-    blurbp +
-    top +
-    csrfField +
-    flds +
-    fullFormError +
-    (form.noSubmitButton ? "" : bot) +
-    "</form>"
-  );
+  return blurbp + top + csrfField + flds + fullFormError + bot + "</form>";
 };
 
 module.exports = contract(
