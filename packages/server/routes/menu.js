@@ -75,6 +75,19 @@ const menuForm = async (req) => {
         required: true,
       },
       {
+        name: "icon_btn",
+        label: req.__("Icon"),
+        input_type: "custom_html",
+        attributes: {
+          html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
+        },
+      },
+      {
+        name: "icon",
+        class: "item-menu",
+        input_type: "hidden",
+      },
+      {
         name: "min_role",
         label: req.__("Minimum role"),
         class: "item-menu",
@@ -112,7 +125,7 @@ const menuForm = async (req) => {
 
 const menuEditorScript = (menu_items) => `
   // icon picker options
-  var iconPickerOptions = {searchText: "Buscar...", labelHeader: "{0}/{1}"};
+  var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   // sortable list options
   var sortableListOptions = {
       placeholderCss: {'background-color': "#cccccc"}
@@ -124,7 +137,6 @@ const menuEditorScript = (menu_items) => `
               maxLevel: 2 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
-  console.log(editor);
   editor.setForm($('#menuForm'));
   editor.setUpdateButton($('#btnUpdate'));
   editor.setData(${JSON.stringify(menu_items)});
@@ -178,6 +190,9 @@ router.get(
         headers: [
           {
             script: "/jquery-menu-editor.min.js",
+          },
+          {
+            script: "/iconset-fontawesome5-3-1.min.js",
           },
           {
             script: "/bootstrap-iconpicker.min.js",

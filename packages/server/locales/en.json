@@ -483,5 +483,6 @@
 	"Store refreshed": "Store refreshed",
 	"Plugins up-to-date": "Plugins up-to-date",
 	"Source": "Source",
-	"Inbound keys: ": "Inbound keys: "
+	"Inbound keys: ": "Inbound keys: ",
+	"Icon": "Icon"
 }

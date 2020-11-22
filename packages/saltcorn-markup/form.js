@@ -132,6 +132,8 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       return search_bar(name, v && v[hdr.form_name]);
     case "section_header":
       return "";
+    case "custom_html":
+      return hdr.attributes.html;
     default:
       const the_input = `<input type="${
         hdr.input_type
