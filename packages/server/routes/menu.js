@@ -15,6 +15,26 @@ const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const router = new Router();
 module.exports = router;
 
+const siteIdForm = async (req) => {
+  return new Form({
+    action: "/menu/setsiteid",
+    submitLabel: req.__("Save"),
+    fields: [
+      {
+        name: "site_name",
+        label: req.__("Site name"),
+        input_type: "text",
+      },
+      {
+        name: "site_logo_id",
+        label: req.__("Site logo"),
+        input_type: "select",
+        options: images,
+      },
+    ],
+  });
+};
+
 const menuForm = async (req) => {
   const imageFiles = await File.find(
     { mime_super: "image" },
@@ -33,61 +53,45 @@ const menuForm = async (req) => {
     submitLabel: req.__("Save"),
     fields: [
       {
-        name: "site_name",
-        label: req.__("Site name"),
-        input_type: "text",
+        name: "type",
+        label: req.__("Type"),
+        input_type: "select",
+        class: "menutype",
+        required: true,
+        options: ["View", "Page", "Link"],
       },
       {
-        name: "site_logo_id",
-        label: req.__("Site logo"),
-        input_type: "select",
-        options: images,
+        name: "label",
+        label: req.__("Text label"),
+        input_type: "text",
+        required: true,
       },
-      new FieldRepeat({
-        name: "menu_items",
-        fields: [
-          {
-            name: "type",
-            label: req.__("Type"),
-            input_type: "select",
-            class: "menutype",
-            required: true,
-            options: ["View", "Page", "Link"],
-          },
-          {
-            name: "label",
-            label: req.__("Text label"),
-            input_type: "text",
-            required: true,
-          },
-          {
-            name: "min_role",
-            label: req.__("Minimum role"),
-            input_type: "select",
-            options: roles.map((r) => ({ label: r.role, value: r.id })),
-          },
-          {
-            name: "url",
-            label: req.__("URL"),
-            input_type: "text",
-            showIf: { ".menutype": "Link" },
-          },
-          {
-            name: "pagename",
-            label: req.__("Page"),
-            input_type: "select",
-            options: pages.map((r) => r.name),
-            showIf: { ".menutype": "Page" },
-          },
-          {
-            name: "viewname",
-            label: req.__("Views"),
-            input_type: "select",
-            options: views.map((r) => r.name),
-            showIf: { ".menutype": "View" },
-          },
-        ],
-      }),
+      {
+        name: "min_role",
+        label: req.__("Minimum role"),
+        input_type: "select",
+        options: roles.map((r) => ({ label: r.role, value: r.id })),
+      },
+      {
+        name: "url",
+        label: req.__("URL"),
+        input_type: "text",
+        showIf: { ".menutype": "Link" },
+      },
+      {
+        name: "pagename",
+        label: req.__("Page"),
+        input_type: "select",
+        options: pages.map((r) => r.name),
+        showIf: { ".menutype": "Page" },
+      },
+      {
+        name: "viewname",
+        label: req.__("Views"),
+        input_type: "select",
+        options: views.map((r) => r.name),
+        showIf: { ".menutype": "View" },
+      },
     ],
   });
 };
@@ -99,9 +103,10 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
+    const site_form = await siteIdForm(req);
     const state = getState();
-    form.values.site_name = state.getConfig("site_name");
-    form.values.site_logo_id = state.getConfig("site_logo_id");
+    site_form.values.site_name = state.getConfig("site_name");
+    site_form.values.site_logo_id = state.getConfig("site_logo_id");
     form.values.menu_items = state.getConfig("menu_items");
     res.sendWrap(
       { title: req.__(`Menu editor`), headers: [{}] },
@@ -113,12 +118,49 @@ router.get(
           },
           {
             type: "card",
+            title: req.__(`Site identity`),
+            contents: renderForm(site_form, req.csrfToken()),
+          },
+          {
+            type: "card",
             title: req.__(`Menu editor`),
             contents: renderForm(form, req.csrfToken()),
           },
         ],
       }
     );
+  })
+);
+
+router.post(
+  "/setsiteid",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await siteIdForm(req);
+
+    const valres = form.validate(req.body);
+    if (valres.errors)
+      res.sendWrap(req.__(`Menu editor`), {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
+          },
+          {
+            type: "card",
+            title: req.__(`Site identity`),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
+      });
+    else {
+      await getState().setConfig("site_name", valres.success.site_name);
+      await getState().setConfig("site_logo_id", valres.success.site_logo_id);
+      req.flash("success", req.__(`Site identity updated`));
+
+      res.redirect(`/menu`);
+    }
   })
 );
 
@@ -145,8 +187,6 @@ router.post(
         ],
       });
     else {
-      await getState().setConfig("site_name", valres.success.site_name);
-      await getState().setConfig("site_logo_id", valres.success.site_logo_id);
       await getState().setConfig("menu_items", valres.success.menu_items);
       req.flash("success", req.__(`Menu updated`));
 
