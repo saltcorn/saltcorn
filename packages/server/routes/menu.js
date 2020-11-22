@@ -265,7 +265,6 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const new_menu = JSON.parse(req.body.menu);
-    console.log(new_menu);
     await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
     req.flash("success", req.__(`Menu updated`));
 
