@@ -15,7 +15,7 @@ For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn un
 
 ## Acknowledgements
 
-Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/) and other awesome free and open source projects.
+Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/), [jQuery-Menu-Editor](https://github.com/davicotico/jQuery-Menu-Editor) and other awesome free and open source projects.
 
 ## Quickstart with Docker
 

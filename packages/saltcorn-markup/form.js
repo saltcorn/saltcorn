@@ -132,6 +132,8 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       return search_bar(name, v && v[hdr.form_name]);
     case "section_header":
       return "";
+    case "custom_html":
+      return hdr.attributes.html;
     default:
       const the_input = `<input type="${
         hdr.input_type
@@ -363,16 +365,24 @@ const mkFormWithLayout = (form, csrfToken) => {
     "</form>"
   );
 };
-
+const displayAdditionalButtons = (additionalButtons) =>
+  additionalButtons
+    .map(
+      (btn) =>
+        `<button type="button" id="${btn.id}" class="${btn.class}">${btn.label}</button>&nbsp;`
+    )
+    .join("");
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField =
     csrfToken === false
       ? ""
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" class="form-namespace ${
-    form.isStateForm ? "stateForm" : ""
-  } ${form.class || ""}" method="${form.methodGET ? "get" : "post"}" ${
+  const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
+    form.action
+  }" class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
+    form.class || ""
+  }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);
@@ -401,20 +411,21 @@ const mkForm = (form, csrfToken, errors = {}) => {
     : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn ${
-      form.submitButtonClass || "btn-primary"
-    }">${text(form.submitLabel || "Save")}</button>
+    ${
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons)
+        : ""
+    }
+    ${
+      form.noSubmitButton
+        ? ""
+        : `<button type="submit" class="btn ${
+            form.submitButtonClass || "btn-primary"
+          }">${text(form.submitLabel || "Save")}</button>`
+    }
   </div>
 </div>`;
-  return (
-    blurbp +
-    top +
-    csrfField +
-    flds +
-    fullFormError +
-    (form.noSubmitButton ? "" : bot) +
-    "</form>"
-  );
+  return blurbp + top + csrfField + flds + fullFormError + bot + "</form>";
 };
 
 module.exports = contract(

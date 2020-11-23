@@ -101,29 +101,79 @@ describe("menu editor", () => {
   it("post menu", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
+    const menu_json = [
+      {
+        text: "eteteyy",
+        href: "",
+        icon: "fab fa-accessible-icon",
+        target: "_self",
+        title: "",
+        url: "",
+        type: "Header",
+        label: "eteteyy",
+        min_role: "1",
+        pagename: null,
+        viewname: "dqwdw",
+        children: [
+          {
+            text: "fghjjtryj",
+            href: "",
+            icon: "undefined",
+            target: "_self",
+            title: "",
+            url: "",
+            type: "View",
+            label: "fghjjtryj",
+            min_role: "1",
+            pagename: null,
+            viewname: "dqwdw",
+          },
+          {
+            text: "withicon",
+            href: "",
+            icon: "fab fa-affiliatetheme",
+            target: "_self",
+            title: "",
+            url: "",
+            type: "View",
+            label: "withicon",
+            min_role: "1",
+            pagename: null,
+            viewname: "dqwdw",
+          },
+        ],
+      },
+      {
+        text: "wicon",
+        href: "",
+        icon: "fas fa-address-card",
+        target: "_self",
+        title: "",
+        url: "",
+        type: "View",
+        label: "wicon",
+        min_role: "1",
+        pagename: null,
+        viewname: "dqwdw",
+      },
+      {
+        text: "BarMenu",
+        href: "",
+        icon: "empty",
+        target: "_self",
+        title: "",
+        url: "",
+        type: "View",
+        label: "BarMenu",
+        min_role: "10",
+        pagename: null,
+        viewname: "dqwdw",
+      },
+    ];
     await request(app)
       .post("/menu")
       .set("Cookie", loginCookie)
-      .send("site_name=Saltcorn")
-      .send("site_logo_id=0")
-      .send("type_0=View")
-      .send("label_0=Foo")
-      .send("min_role_0=10")
-      .send("url_0=")
-      .send("pagename_0=a_page")
-      .send("viewname_0=authorlist")
-      .send("type_1=Page")
-      .send("label_1=Projects")
-      .send("min_role_1=10")
-      .send("url_1=")
-      .send("pagename_1=a_page")
-      .send("viewname_1=authorlist")
-      .send("type_2=Link")
-      .send("label_2=BarMenu")
-      .send("min_role_2=10")
-      .send("url_2=https%3A%2F%2Fgithub.com%2Fsaltcorn%2Fsaltcorn")
-      .send("pagename_2=a_page")
-      .send("viewname_2=authorlist")
+      .send("menu=" + encodeURIComponent(JSON.stringify(menu_json)))
       .expect(toRedirect("/menu"));
   });
   it("show new menu", async () => {

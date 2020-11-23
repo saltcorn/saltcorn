@@ -1,15 +1,6 @@
-const Form = require("../../models/form");
 const User = require("../../models/user");
-const Field = require("../../models/field");
-const View = require("../../models/view");
-const File = require("../../models/file");
 const Table = require("../../models/table");
-const FieldRepeat = require("../../models/fieldrepeat");
-const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
-const { post_btn, link } = require("@saltcorn/markup");
-const { getState } = require("../../db/state");
-const { eachView } = require("../../models/layout");
 
 const {
   div,
@@ -21,17 +12,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
-const {
-  stateFieldsToWhere,
-  get_link_view_opts,
-  picked_fields_to_query,
-  initial_config_all_fields,
-  calcfldViewOptions,
-  readState,
-} = require("../../plugin-helper");
-const { action_url, view_linker } = require("./viewable_fields");
-const db = require("../../db");
-const { relativeTimeRounding } = require("moment");
+const { readState } = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
 
 const configuration_workflow = () =>

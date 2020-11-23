@@ -141,3 +141,7 @@ div.testrunoutput code {
   width: 1em;
   display: inline-block;
 }
+
+.mr-05 {
+  margin-right: 0.125rem !important;
+}

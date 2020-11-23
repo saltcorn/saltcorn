@@ -28,6 +28,7 @@ const subItem = (currentUrl) => (item) =>
           class: ["collapse-item", active(currentUrl, item) && "active"],
           href: text(item.link),
         },
+        item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
         item.label
       )
     : h6({ class: "collapse-header" }, item.label);
@@ -49,7 +50,11 @@ const sideBarItem = (currentUrl) => (item) => {
   return li(
     { class: ["nav-item", is_active && "active"] },
     item.link
-      ? a({ class: "nav-link", href: text(item.link) }, span(text(item.label)))
+      ? a(
+          { class: "nav-link", href: text(item.link) },
+          item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
+          span(text(item.label))
+        )
       : item.subitems
       ? [
           a(
@@ -61,7 +66,7 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
             },
-            //i({ class: "fas fa-fw fa-wrench" }),
+            item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
             span(text(item.label))
           ),
           div(
