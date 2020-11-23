@@ -65,7 +65,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "menutype item-menu",
         required: true,
-        options: ["View", "Page", "Link"],
+        options: ["View", "Page", "Link", "Header"],
       },
       {
         name: "text",
@@ -156,11 +156,13 @@ const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
     ...mi,
     text: mi.label,
+    ...(mi.subitems ? { children: menuTojQME(mi.subitems) } : {}),
   }));
 const jQMEtoMenu = (menu_items) =>
   menu_items.map((mi) => ({
     ...mi,
     label: mi.text,
+    ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
   }));
 router.get(
   "/",

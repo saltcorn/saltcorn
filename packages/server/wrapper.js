@@ -13,18 +13,22 @@ const getFlashes = (req) =>
 const get_extra_menu = (role) => {
   const cfg = getState().getConfig("menu_items", []);
 
-  const items = cfg
-    .filter((item) => role <= +item.min_role)
-    .map((item) => ({
-      label: item.label,
-      link:
-        item.type === "Link"
-          ? item.url
-          : item.type === "View"
-          ? `/view/${item.viewname}`
-          : `/page/${item.pagename}`,
-    }));
-  return items;
+  const transform = (items) =>
+    items
+      .filter((item) => role <= +item.min_role)
+      .map((item) => ({
+        label: item.label,
+        link:
+          item.type === "Link"
+            ? item.url
+            : item.type === "View"
+            ? `/view/${item.viewname}`
+            : item.type === "Page"
+            ? `/page/${item.pagename}`
+            : undefined,
+        ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
+      }));
+  return transform(cfg);
 };
 
 const get_menu = (req) => {
