@@ -12,6 +12,7 @@ const {
   nav,
   script,
   domReady,
+  i,
 } = require("./tags");
 
 const labelToId = (item) => text(item.replace(" ", ""));
@@ -31,7 +32,7 @@ const innerSections = (sections) => {
   return items;
 };
 
-const navSubitems = ({ label, subitems }) =>
+const navSubitems = ({ label, subitems, icon }) =>
   li(
     { class: "nav-item dropdown" },
     a(
@@ -44,6 +45,7 @@ const navSubitems = ({ label, subitems }) =>
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
+      icon ? i({ class: `fa-fw mr-05 ${icon}` }) : "",
       label
     ),
     div(
@@ -52,7 +54,11 @@ const navSubitems = ({ label, subitems }) =>
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
       subitems.map((si) =>
-        a({ class: "dropdown-item", href: si.link }, si.label)
+        a(
+          { class: "dropdown-item", href: si.link },
+          si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
+          si.label
+        )
       )
     )
   );
@@ -68,6 +74,7 @@ const rightNavBar = (currentUrl, sections) =>
               { class: ["nav-item", active(currentUrl, s) && "active"] },
               a(
                 { class: "nav-link js-scroll-trigger", href: text(s.link) },
+                s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
               )
             )

@@ -156,12 +156,14 @@ const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
     ...mi,
     text: mi.label,
+    subitems: undefined,
     ...(mi.subitems ? { children: menuTojQME(mi.subitems) } : {}),
   }));
 const jQMEtoMenu = (menu_items) =>
   menu_items.map((mi) => ({
     ...mi,
     label: mi.text,
+    children: undefined,
     ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
   }));
 router.get(
