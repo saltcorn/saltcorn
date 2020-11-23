@@ -481,7 +481,7 @@ class Table {
     };
   }
 
-  async get_parent_relations() {
+  async get_parent_relations(allow_double) {
     const fields = await this.getFields();
     var parent_relations = [];
     var parent_field_list = [];
@@ -489,11 +489,21 @@ class Table {
       if (f.is_fkey && f.type !== "File") {
         const table = await Table.findOne({ name: f.reftable_name });
         await table.getFields();
-        table.fields
-          .filter((f) => !f.calculated || f.stored)
-          .forEach((pf) => {
-            parent_field_list.push(`${f.name}.${pf.name}`);
-          });
+        for (const pf of table.fields.filter(
+          (f) => !f.calculated || f.stored
+        )) {
+          parent_field_list.push(`${f.name}.${pf.name}`);
+          if (pf.is_fkey && pf.type !== "File" && allow_double) {
+            const table1 = await Table.findOne({ name: pf.reftable_name });
+            await table1.getFields();
+            for (const gpf of table1.fields.filter(
+              (f) => !f.calculated || f.stored
+            )) {
+              parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+            }
+            parent_relations.push({ key_field: pf, through: f, table: table1 });
+          }
+        }
         parent_relations.push({ key_field: f, table });
       }
     }
