@@ -541,8 +541,9 @@ class Table {
           target: `filename`,
         };
       });
-
-    Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
+    for (const [fldnm, { ref, target, through }] of Object.entries(
+      joinFields
+    )) {
       const reffield = fields.find((f) => f.name === ref);
       if (!reffield) throw new Error(`Key field not found: ${ref}`);
       const reftable = reffield.reftable_name;
@@ -553,8 +554,29 @@ class Table {
           reftable
         )}" ${jtNm} on ${jtNm}.id=a."${sqlsanitize(ref)}"`;
       }
-      fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
-    });
+      if (through) {
+        const throughTable = await Table.findOne({
+          name: reffield.reftable_name,
+        });
+        const throughTableFields = await throughTable.getFields();
+        const throughRefField = throughTableFields.find(
+          (f) => f.name === through
+        );
+        const finalTable = throughRefField.reftable_name;
+        const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
+          through
+        )}_jt_${sqlsanitize(ref)}`;
+        if (!joinTables.includes(jtNm1)) {
+          joinTables.push(jtNm1);
+          joinq += ` left join ${schema}"${sqlsanitize(
+            finalTable
+          )}" ${jtNm1} on ${jtNm1}.id=${jtNm}."${sqlsanitize(through)}"`;
+        }
+        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      } else {
+        fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      }
+    }
     for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
