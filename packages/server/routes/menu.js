@@ -134,7 +134,7 @@ const menuEditorScript = (menu_items) => `
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
-              maxLevel: 2 // (Optional) Default is -1 (no level limit)
+              maxLevel: 1 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
   editor.setForm($('#menuForm'));
