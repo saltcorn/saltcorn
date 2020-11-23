@@ -18,6 +18,7 @@ const get_extra_menu = (role) => {
       .filter((item) => role <= +item.min_role)
       .map((item) => ({
         label: item.label,
+        icon: item.icon,
         link:
           item.type === "Link"
             ? item.url

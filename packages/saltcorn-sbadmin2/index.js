@@ -61,7 +61,7 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
             },
-            //i({ class: "fas fa-fw fa-wrench" }),
+            item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
             span(text(item.label))
           ),
           div(
