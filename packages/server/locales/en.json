@@ -484,5 +484,7 @@
 	"Plugins up-to-date": "Plugins up-to-date",
 	"Source": "Source",
 	"Inbound keys: ": "Inbound keys: ",
-	"Icon": "Icon"
+	"Icon": "Icon",
+	"Create database view": "Create database view",
+	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list"
 }
