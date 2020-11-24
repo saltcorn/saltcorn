@@ -66,7 +66,7 @@ const configuration_workflow = (req) =>
             context.viewname
           );
           const roles = await User.get_roles();
-          const { parent_field_list } = await table.get_parent_relations();
+          const { parent_field_list } = await table.get_parent_relations(true);
           const {
             child_field_list,
             child_relations,
@@ -270,9 +270,14 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       else return text(val);
     },
     join_field({ join_field }) {
-      const [refNm, targetNm] = join_field.split(".");
-      const val = row[`${refNm}_${targetNm}`];
-      return text(val);
+      const keypath = join_field.split(".");
+      if (keypath.length === 2) {
+        const [refNm, targetNm] = keypath;
+        return text(row[`${refNm}_${targetNm}`]);
+      } else {
+        const [refNm, through, targetNm] = keypath;
+        return text(row[`${refNm}_${through}_${targetNm}`]);
+      }
     },
     aggregation({ agg_relation, stat }) {
       const [table, fld] = agg_relation.split(".");

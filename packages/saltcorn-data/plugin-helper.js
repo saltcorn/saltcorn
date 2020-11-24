@@ -138,7 +138,7 @@ const field_picker_fields = contract(
 
     const link_view_opts = await get_link_view_opts(table, viewname);
 
-    const { parent_field_list } = await table.get_parent_relations();
+    const { parent_field_list } = await table.get_parent_relations(true);
     const {
       child_field_list,
       child_relations,
@@ -460,9 +460,18 @@ const picked_fields_to_query = contract(
     var aggregations = {};
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
-        const [refNm, targetNm] = column.join_field.split(".");
-        //joinFields[targetNm] = { ref: refNm, target: targetNm };
-        joinFields[`${refNm}_${targetNm}`] = { ref: refNm, target: targetNm };
+        const kpath = column.join_field.split(".");
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[`${refNm}_${targetNm}`] = { ref: refNm, target: targetNm };
+        } else {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[`${refNm}_${through}_${targetNm}`] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+          };
+        }
       }
       if (column.type === "ViewLink") {
         const [vtype, vrest] = column.view.split(":");

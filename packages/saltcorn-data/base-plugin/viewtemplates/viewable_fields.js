@@ -198,12 +198,21 @@ const get_viewable_fields = contract(
           if (column.header_label) r.label = text(column.header_label);
           return r;
         } else if (column.type === "JoinField") {
-          const [refNm, targetNm] = column.join_field.split(".");
+          const keypath = column.join_field.split(".");
+          let refNm, targetNm, through, key;
+          if (keypath.length === 2) {
+            [refNm, targetNm] = keypath;
+            key = `${refNm}_${targetNm}`;
+          } else {
+            [refNm, through, targetNm] = keypath;
+            key = `${refNm}_${through}_${targetNm}`;
+          }
+
           return {
             label: column.header_label
               ? text(column.header_label)
               : text(targetNm),
-            key: `${refNm}_${targetNm}`,
+            key,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {

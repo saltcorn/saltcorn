@@ -481,7 +481,7 @@ class Table {
     };
   }
 
-  async get_parent_relations() {
+  async get_parent_relations(allow_double) {
     const fields = await this.getFields();
     var parent_relations = [];
     var parent_field_list = [];
@@ -489,11 +489,21 @@ class Table {
       if (f.is_fkey && f.type !== "File") {
         const table = await Table.findOne({ name: f.reftable_name });
         await table.getFields();
-        table.fields
-          .filter((f) => !f.calculated || f.stored)
-          .forEach((pf) => {
-            parent_field_list.push(`${f.name}.${pf.name}`);
-          });
+        for (const pf of table.fields.filter(
+          (f) => !f.calculated || f.stored
+        )) {
+          parent_field_list.push(`${f.name}.${pf.name}`);
+          if (pf.is_fkey && pf.type !== "File" && allow_double) {
+            const table1 = await Table.findOne({ name: pf.reftable_name });
+            await table1.getFields();
+            for (const gpf of table1.fields.filter(
+              (f) => !f.calculated || f.stored
+            )) {
+              parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+            }
+            parent_relations.push({ key_field: pf, through: f, table: table1 });
+          }
+        }
         parent_relations.push({ key_field: f, table });
       }
     }
@@ -531,8 +541,9 @@ class Table {
           target: `filename`,
         };
       });
-
-    Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
+    for (const [fldnm, { ref, target, through }] of Object.entries(
+      joinFields
+    )) {
       const reffield = fields.find((f) => f.name === ref);
       if (!reffield) throw new Error(`Key field not found: ${ref}`);
       const reftable = reffield.reftable_name;
@@ -543,8 +554,29 @@ class Table {
           reftable
         )}" ${jtNm} on ${jtNm}.id=a."${sqlsanitize(ref)}"`;
       }
-      fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
-    });
+      if (through) {
+        const throughTable = await Table.findOne({
+          name: reffield.reftable_name,
+        });
+        const throughTableFields = await throughTable.getFields();
+        const throughRefField = throughTableFields.find(
+          (f) => f.name === through
+        );
+        const finalTable = throughRefField.reftable_name;
+        const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
+          through
+        )}_jt_${sqlsanitize(ref)}`;
+        if (!joinTables.includes(jtNm1)) {
+          joinTables.push(jtNm1);
+          joinq += ` left join ${schema}"${sqlsanitize(
+            finalTable
+          )}" ${jtNm1} on ${jtNm1}.id=${jtNm}."${sqlsanitize(through)}"`;
+        }
+        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      } else {
+        fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      }
+    }
     for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
