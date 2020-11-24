@@ -252,7 +252,7 @@ class View {
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || ((c) => c);
     configFlow.onDone = async (ctx) => {
-      const { table_id, ...configuration } = oldOnDone(ctx);
+      const { table_id, ...configuration } = await oldOnDone(ctx);
 
       await View.update({ configuration }, this.id);
 

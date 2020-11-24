@@ -20,9 +20,39 @@ const {
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
+const { get_async_expression_function } = require("../../models/expression");
+const db = require("../../db");
+
+const create_db_view = async (context) => {
+  const table = await Table.findOne({ id: context.table_id });
+  const fields = await table.getFields();
+  const { joinFields, aggregations } = picked_fields_to_query(
+    context.columns,
+    fields
+  );
+
+  const { sql } = await table.getJoinedQuery({
+    where: {},
+    joinFields,
+    aggregations,
+  });
+  const schema = db.getTenantSchemaPrefix();
+
+  await db.query(
+    `create or replace view ${schema}"${db.sqlsanitize(
+      context.viewname
+    )}" as ${sql};`
+  );
+};
 
 const configuration_workflow = (req) =>
   new Workflow({
+    onDone: async (ctx) => {
+      if (ctx.default_state._create_db_view) {
+        await create_db_view(ctx);
+      }
+      return ctx;
+    },
     steps: [
       {
         name: req.__("Columns"),
@@ -112,6 +142,15 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Do not display the search filter form"),
             type: "Bool",
           });
+          if (!db.isSQLite)
+            formfields.push({
+              name: "_create_db_view",
+              label: req.__("Create database view"),
+              sublabel: req.__(
+                "Create an SQL view in the database with the fields in this list"
+              ),
+              type: "Bool",
+            });
           const form = new Form({
             fields: formfields,
             blurb: req.__("Default search form values when first loaded"),
