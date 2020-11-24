@@ -182,6 +182,17 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get double joined rows", async () => {
+    const readings = await Table.findOne({ name: "readings" });
+    const reads = await readings.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        author: { ref: "patient_id", through: "favbook", target: "author" },
+      },
+    });
+    expect(reads.length).toStrictEqual(3);
+    expect(reads[0].author).toBe("Herman Melville");
+  });
   it("should get joined rows with aggregations and joins", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const michaels = await patients.getJoinedRows({
