@@ -20,9 +20,15 @@ const {
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
+const { get_async_expression_function } = require("../../models/expression");
 
 const configuration_workflow = (req) =>
   new Workflow({
+    onDone: async (ctx) => {
+      if (ctx._create_db_view) {
+      }
+      return ctx;
+    },
     steps: [
       {
         name: req.__("Columns"),
@@ -110,6 +116,14 @@ const configuration_workflow = (req) =>
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
+            type: "Bool",
+          });
+          formfields.push({
+            name: "_create_db_view",
+            label: req.__("Create database view"),
+            sublabel: req.__(
+              "Create an SQL view in the database with the fields in this list"
+            ),
             type: "Bool",
           });
           const form = new Form({

@@ -75,7 +75,7 @@ class Workflow {
   }
   async runStep(context, stepIx) {
     if (stepIx >= this.steps.length) {
-      return this.onDone(context);
+      return await this.onDone(context);
     }
     const step = this.steps[stepIx];
     if (step.onlyWhen) {
