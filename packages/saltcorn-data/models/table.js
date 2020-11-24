@@ -524,7 +524,7 @@ class Table {
     }
     return { child_relations, child_field_list };
   }
-  async getJoinedRows(opts = {}) {
+  async getJoinedQuery(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
     var joinq = "";
@@ -622,9 +622,15 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    return { sql, values };
+  }
+  async getJoinedRows(opts = {}) {
+    const fields = await this.getFields();
+
+    const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
 
-    return apply_calculated_fields(res.rows, this.fields);
+    return apply_calculated_fields(res.rows, fields);
   }
 }
 
