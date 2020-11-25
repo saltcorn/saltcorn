@@ -486,5 +486,6 @@
 	"Inbound keys: ": "Inbound keys: ",
 	"Icon": "Icon",
 	"Create database view": "Create database view",
-	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list"
+	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list",
+	"Upgrade": "Upgrade"
 }
