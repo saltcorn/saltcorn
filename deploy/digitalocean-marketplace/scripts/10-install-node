@@ -1,0 +1,4 @@
+wget -qO - https://deb.nodesource.com/setup_14.x | bash -
+apt-get install -qqy nodejs
+
+npm install -g @saltcorn/cli@latest --unsafe

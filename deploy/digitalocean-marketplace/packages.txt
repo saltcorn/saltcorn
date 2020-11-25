@@ -1,0 +1,1 @@
+libpq-dev build-essential python-is-python3 postgresql postgresql-client
