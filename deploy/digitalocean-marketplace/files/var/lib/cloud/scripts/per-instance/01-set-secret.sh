@@ -14,3 +14,6 @@ cat <<EOF > /home/saltcorn/.config/.saltcorn
 EOF
 chown saltcorn:saltcorn /home/saltcorn/.config/.saltcorn
 chmod 600 /home/saltcorn/.config/.saltcorn
+systemctl daemon-reload
+systemctl start saltcorn
+systemctl enable saltcorn
