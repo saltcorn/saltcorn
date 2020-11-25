@@ -9,7 +9,7 @@ cat <<EOF > /home/saltcorn/.config/.saltcorn
     "database":"saltcorn",
     "user":"saltcorn",
     "password":"${pg_pass}",
-    "session_secret":"${session_secret}",
+    "session_secret":"${session_secret}"
 }
 EOF
 chown saltcorn:saltcorn /home/saltcorn/.config/.saltcorn
