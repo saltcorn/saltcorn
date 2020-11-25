@@ -137,7 +137,7 @@ router.post(
       });
       child.on("exit", function (code, signal) {
         res.end(
-          "Upgrade done (if it was available).\n\nPress the BACK button in your browser, then RELOAD the page."
+          `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
         );
         setTimeout(() => {
           process.exit(0);
