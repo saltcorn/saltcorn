@@ -1,0 +1,14 @@
+[Unit]
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=simple
+User=saltcorn
+WorkingDirectory=/home/saltcorn
+ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

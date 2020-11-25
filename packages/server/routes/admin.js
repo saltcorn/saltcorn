@@ -3,6 +3,7 @@ const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
+const { spawn } = require("child_process");
 
 const { post_btn } = require("@saltcorn/markup");
 const {
@@ -18,6 +19,7 @@ const {
   td,
   th,
   tr,
+  button,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { getState, restart_tenant } = require("@saltcorn/data/db/state");
@@ -35,6 +37,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
@@ -66,7 +69,23 @@ router.get(
             h4(req.__("About Saltcorn")),
             table(
               tbody(
-                tr(th(req.__("Saltcorn version")), td(packagejson.version)),
+                tr(
+                  th(req.__("Saltcorn version")),
+                  td(
+                    packagejson.version +
+                      (isRoot
+                        ? post_btn(
+                            "/admin/upgrade",
+                            req.__("Upgrade"),
+                            req.csrfToken(),
+                            {
+                              btnClass: "btn-primary btn-sm",
+                              formClass: "d-inline",
+                            }
+                          )
+                        : "")
+                  )
+                ),
                 tr(th(req.__("Node.js version")), td(process.version)),
                 tr(
                   th(req.__("Database")),
@@ -92,6 +111,38 @@ router.post(
       await restart_tenant(loadAllPlugins);
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
+    }
+  })
+);
+
+router.post(
+  "/upgrade",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (db.getTenantSchema() !== db.connectObj.default_schema) {
+      req.flash("error", req.__("Not possible for tenant"));
+      res.redirect("/admin");
+    } else {
+      res.write("Starting upgrade\n");
+      const child = spawn(
+        "npm",
+        ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
+        {
+          stdio: ["ignore", "pipe", process.stderr],
+        }
+      );
+      child.stdout.on("data", (data) => {
+        res.write(data);
+      });
+      child.on("exit", function (code, signal) {
+        res.end(
+          `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+        );
+        setTimeout(() => {
+          process.exit(0);
+        }, 100);
+      });
     }
   })
 );

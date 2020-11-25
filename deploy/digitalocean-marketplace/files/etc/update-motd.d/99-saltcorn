@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Configured as part of the DigitalOcean 1-Click Image build process
+
+myip=$(hostname -I | awk '{print$1}')
+cat <<EOF
+********************************************************************************
+
+Welcome to DigitalOcean's One-Click Saltcorn Droplet. 
+
+In a web browser, you can view:
+ * Your Saltcorn website: http://$myip
+
+On the server:
+ * Your Saltcorn configration file is at /home/saltcorn/.config/.saltcorn. To 
+   enable multi-tenant hosting, add 'multi_tenant: true' to this file.
+
+For help and more information, visit https://saltcorn.com
+
+********************************************************************************
+To delete this message of the day: rm -rf $(readlink -f ${0})
+EOF
