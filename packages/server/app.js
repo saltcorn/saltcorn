@@ -26,6 +26,7 @@ const wrapper = require("./wrapper");
 const csrf = require("csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
+const is = require("contractis/is");
 
 const locales = Object.keys(available_languages);
 
@@ -80,7 +81,7 @@ const getApp = async (opts = {}) => {
           pool: db.pool,
           tableName: "_sc_session",
         }),
-        secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
+        secret: db.connectObj.session_secret || is.str.generate(),
         resave: false,
         saveUninitialized: false,
         cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
