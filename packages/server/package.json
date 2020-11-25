@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/server",
-  "version": "0.3.0-beta.1",
+  "version": "0.3.0-beta.2",
   "description": "Server app for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "index.js",
