@@ -23,9 +23,22 @@ const configuration_workflow = () =>
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-
+          const {
+            child_field_list,
+            child_relations,
+          } = await table.get_child_relations();
           const roles = await User.get_roles();
-
+          for (const cr of child_relations) {
+            const cfields = await cr.table.getFields();
+            cfields.forEach((cf) => {
+              if (cf.name !== cr.key_field.name)
+                fields.push({
+                  ...cf,
+                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                });
+            });
+          }
           return {
             fields,
             roles,
