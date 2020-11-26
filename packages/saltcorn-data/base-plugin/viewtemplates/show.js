@@ -199,6 +199,7 @@ const runMany = async (
     joinFields,
     aggregations,
     ...(extra && extra.limit && { limit: extra.limit }),
+    ...(extra && extra.offset && { offset: extra.offset }),
     ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
     ...q,

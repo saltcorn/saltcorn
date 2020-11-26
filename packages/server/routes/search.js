@@ -7,6 +7,7 @@ const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
+const { pagination } = require("@saltcorn/markup/helpers");
 
 const router = new Router();
 module.exports = router;
@@ -110,7 +111,7 @@ const searchForm = () =>
     ],
   });
 
-const runSearch = async (q, req, res) => {
+const runSearch = async ({ q, _page }, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
 
@@ -119,17 +120,32 @@ const runSearch = async (q, req, res) => {
     res.redirect("/");
     return;
   }
-
+  const current_page = parseInt(_page) || 1;
+  const offset = (current_page - 1) * 20;
   var resp = [];
   for (const [tableName, viewName] of Object.entries(cfg)) {
     if (!viewName || viewName === "") continue;
     const view = await View.findOne({ name: viewName });
-    const vresps = await view.runMany({ _fts: q }, { res, req });
+
+    const vresps = await view.runMany(
+      { _fts: q },
+      { res, req, limit: 20, offset }
+    );
+    let paginate = "";
+    if (vresps.length === 20 || current_page > 1) {
+      paginate = pagination({
+        current_page,
+        pages: current_page + (vresps.length === 20 ? 1 : 0),
+        get_page_link: (n) =>
+          `javascript:gopage(${n}, 20, {table:'${tableName}'})`,
+      });
+    }
+
     if (vresps.length > 0)
       resp.push({
         type: "card",
         title: tableName,
-        contents: vresps.map((vr) => vr.html).join("<hr>"),
+        contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
       });
   }
 
@@ -156,7 +172,7 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     if (req.query && req.query.q) {
-      await runSearch(req.query.q, req, res);
+      await runSearch(req.query, req, res);
     } else {
       const cfg = getState().getConfig("globalSearch");
 
