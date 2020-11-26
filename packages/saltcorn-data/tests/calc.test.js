@@ -216,6 +216,6 @@ describe("expressions", () => {
     expect(expressionValidator("name.toUpperCase()")).toBe(true);
   });
   it("invalidates incorrect", () => {
-    expect(expressionValidator("2+")).toBe("Unexpected token '}'");
+    expect(expressionValidator("2+")).toBe("Unexpected end of input");
   });
 });
