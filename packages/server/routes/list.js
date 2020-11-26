@@ -154,6 +154,13 @@ router.get(
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
     jsfields.push({ type: "control" });
+    jsfields.unshift({
+      name: "id",
+      title: "id",
+      type: "number",
+      editing: false,
+      inserting: false,
+    });
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),

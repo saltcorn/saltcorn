@@ -66,6 +66,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       return select(
         {
           name: "role",
+          class: "form-control d-inline",
+          style: "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
         distinct_values[field_name].map(({ label, value }) =>
@@ -83,7 +85,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             off: state[field_name] === false,
             "?": state[field_name] === null,
           }[value]
-        : state[field_name] === value;
+        : eq_string(state[field_name], value);
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
@@ -100,7 +102,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   };
   return renderLayout({ blockDispatch, layout, role });
 };
-
+const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",
   get_state_fields,
