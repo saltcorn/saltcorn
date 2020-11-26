@@ -7,7 +7,7 @@ const { asyncMap } = require("../utils");
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
-    const f = vm.runInNewContext(s);
+    const f = vm.runInNewContext(`()=>{${s}}`);
     return true;
   } catch (e) {
     return e.message;

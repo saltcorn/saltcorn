@@ -212,7 +212,10 @@ describe("expressions", () => {
   it("validates correct", () => {
     expect(expressionValidator("2+2")).toBe(true);
   });
+  it("validates correct", () => {
+    expect(expressionValidator("name.toUpperCase()")).toBe(true);
+  });
   it("invalidates incorrect", () => {
-    expect(expressionValidator("2+")).toBe("Unexpected end of input");
+    expect(expressionValidator("2+")).toBe("Unexpected token '}'");
   });
 });
