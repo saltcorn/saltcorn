@@ -41,6 +41,7 @@ export const DropDownFilterSettings = () => {
           <td>
             <select
               value={name}
+              className="form-control"
               onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
             >
               {options.fields.map((f, ix) => (

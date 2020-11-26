@@ -572,7 +572,6 @@ const stateFieldsToWhere = contract(
             },
           ];
         }
-        console.log({ k });
       }
     });
     return qstate;

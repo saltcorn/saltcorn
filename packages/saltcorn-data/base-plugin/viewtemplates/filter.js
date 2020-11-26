@@ -66,6 +66,17 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       const field = fields.find((f) => f.name === col.field_name);
       if (field)
         distinct_values[col.field_name] = await field.distinct_values();
+      else if (col.field_name.includes(".")) {
+        const kpath = col.field_name.split(".");
+        if (kpath.length === 3) {
+          const [jtNm, jFieldNm, lblField] = kpath;
+          const jtable = await Table.findOne({ name: jtNm });
+          const jfields = await jtable.getFields();
+          const jfield = jfields.find((f) => f.name === lblField);
+          if (jfield)
+            distinct_values[col.field_name] = await jfield.distinct_values();
+        }
+      }
     }
   }
   const blockDispatch = {
