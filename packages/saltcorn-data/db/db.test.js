@@ -84,6 +84,27 @@ describe("mkWhere", () => {
       where: "where id>$1 and id<$2",
     });
   });
+  it("should query subselect", () => {
+    expect(
+      mkWhere({
+        id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: "where id in (select bar from foo where baz=$1)",
+    });
+    expect(
+      mkWhere({
+        age: 45,
+        id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
+        name: "Alice",
+      })
+    ).toStrictEqual({
+      values: [45, 7, "Alice"],
+      where:
+        "where age=$1 and id in (select bar from foo where baz=$2) and name=$3",
+    });
+  });
 });
 
 describe("where", () => {
@@ -109,6 +130,19 @@ describe("where", () => {
   it("should  count", async () => {
     const tbls = await db.count("_sc_tables", {
       name: { ilike: "yothertabl" },
+    });
+
+    expect(tbls).toStrictEqual(1);
+  });
+  it("should count subselect ", async () => {
+    const tbls = await db.count("books", {
+      id: {
+        inSelect: {
+          table: "patients",
+          field: "favbook",
+          where: { author: "Leo Tolstoy" },
+        },
+      },
     });
 
     expect(tbls).toStrictEqual(1);

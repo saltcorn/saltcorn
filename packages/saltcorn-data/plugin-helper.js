@@ -562,7 +562,14 @@ const stateFieldsToWhere = contract(
           const [jtNm, jFieldNm, lblField] = kpath;
           qstate.id = [
             ...(qstate.id || []),
-            { inSubselect: { table: jtNm, where: { [jFieldNm]: lblField } } },
+            {
+              // where id in (select jFieldNm from jtnm where lblField=v)
+              inSelect: {
+                table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+                field: db.sqlsanitize(jFieldNm),
+                where: { [db.sqlsanitize(lblField)]: v },
+              },
+            },
           ];
         }
         console.log({ k });
