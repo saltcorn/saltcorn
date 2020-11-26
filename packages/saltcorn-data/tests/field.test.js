@@ -200,6 +200,7 @@ describe("Field.distinct_values", () => {
       { label: "Purple", value: "Purple" },
     ]);
   });
+
   it("gives int values", async () => {
     const table = await Table.findOne({ name: "fdvtable" });
 
@@ -226,6 +227,17 @@ describe("Field.distinct_values", () => {
       { label: "", value: "" },
       { label: "Herman Melville", value: 1 },
       { label: "Leo Tolstoy", value: 2 },
+    ]);
+  });
+  it("gives string values", async () => {
+    const books = await Table.findOne({ name: "books" });
+    books.insertRow({ author: "Herman Melville", pages: 56 });
+    const fc = await Field.findOne({ name: "author" });
+    const dvs = await fc.distinct_values();
+    expect(dvs).toEqual([
+      { label: "", value: "" },
+      { label: "Herman Melville", value: "Herman Melville" },
+      { label: "Leo Tolstoy", value: "Leo Tolstoy" },
     ]);
   });
 });

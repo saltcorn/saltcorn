@@ -143,7 +143,10 @@ class Field {
       label: r[this.name],
       value: r[this.name],
     }));
-    return [...new Set([{ label: "", value: "" }, ...dbOpts])];
+    const set = new Set(
+      [{ label: "", value: "" }, ...dbOpts].map(JSON.stringify)
+    );
+    return [...set].map(JSON.parse);
   }
 
   get sql_type() {
