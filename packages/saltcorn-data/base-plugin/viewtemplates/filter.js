@@ -84,7 +84,6 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             "?": state[field_name] === null,
           }[value]
         : eq_string(state[field_name], value);
-      console.log(field_name, state[field_name], value, typeof value);
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
