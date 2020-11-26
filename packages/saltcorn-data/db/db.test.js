@@ -134,17 +134,4 @@ describe("where", () => {
 
     expect(tbls).toStrictEqual(1);
   });
-  it("should count subselect ", async () => {
-    const tbls = await db.count("books", {
-      id: {
-        inSelect: {
-          table: "patients",
-          field: "favbook",
-          where: { author: "Leo Tolstoy" },
-        },
-      },
-    });
-
-    expect(tbls).toStrictEqual(1);
-  });
 });
