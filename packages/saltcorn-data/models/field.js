@@ -138,15 +138,16 @@ class Field {
       return this.options || [];
     }
     await this.fill_table();
-    const rows = await db.select(this.table.name);
+    const { rows } = await db.query(
+      `select distinct "${db.sqlsanitize(this.name)}" from ${
+        this.table.sql_name
+      } order by "${db.sqlsanitize(this.name)}"`
+    );
     const dbOpts = rows.map((r) => ({
       label: r[this.name],
       value: r[this.name],
     }));
-    const set = new Set(
-      [{ label: "", value: "" }, ...dbOpts].map(JSON.stringify)
-    );
-    return [...set].map(JSON.parse);
+    return [{ label: "", value: "" }, ...dbOpts];
   }
 
   get sql_type() {
