@@ -157,7 +157,7 @@ router.get(
     jsfields.unshift({
       name: "id",
       title: "id",
-      type: "name",
+      type: "number",
       editing: false,
       inserting: false,
     });
