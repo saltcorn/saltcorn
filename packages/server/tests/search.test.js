@@ -47,4 +47,8 @@ describe("Search config Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/search?q=Tolstoy").expect(toInclude("Leo"));
   });
+  it("should show search form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/search?q=Melville").expect(toNotInclude("Leo"));
+  });
 });

@@ -7,6 +7,7 @@ const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
+const { pagination } = require("@saltcorn/markup/helpers");
 
 const router = new Router();
 module.exports = router;
@@ -110,7 +111,7 @@ const searchForm = () =>
     ],
   });
 
-const runSearch = async (q, req, res) => {
+const runSearch = async ({ q, _page, table }, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
 
@@ -119,18 +120,40 @@ const runSearch = async (q, req, res) => {
     res.redirect("/");
     return;
   }
-
-  var resp = [];
+  const current_page = parseInt(_page) || 1;
+  const offset = (current_page - 1) * 20;
+  let resp = [];
+  let tablesWithResults = [];
+  let tablesConfigured = 0;
   for (const [tableName, viewName] of Object.entries(cfg)) {
     if (!viewName || viewName === "") continue;
+    tablesConfigured += 1;
+    if (table && tableName !== table) continue;
     const view = await View.findOne({ name: viewName });
-    const vresps = await view.runMany({ _fts: q }, { res, req });
-    if (vresps.length > 0)
+
+    const vresps = await view.runMany(
+      { _fts: q },
+      { res, req, limit: 20, offset }
+    );
+    let paginate = "";
+    if (vresps.length === 20 || current_page > 1) {
+      paginate = pagination({
+        current_page,
+        pages: current_page + (vresps.length === 20 ? 1 : 0),
+        trailing_ellipsis: vresps.length === 20,
+        get_page_link: (n) =>
+          `javascript:gopage(${n}, 20, {table:'${tableName}'})`,
+      });
+    }
+
+    if (vresps.length > 0) {
+      tablesWithResults.push(tableName);
       resp.push({
         type: "card",
-        title: tableName,
-        contents: vresps.map((vr) => vr.html).join(""),
+        title: span({ id: tableName }, tableName),
+        contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
       });
+    }
   }
 
   const form = searchForm();
@@ -144,7 +167,31 @@ const runSearch = async (q, req, res) => {
     above: [
       {
         type: "card",
-        contents: renderForm(form, false),
+        contents: div(
+          renderForm(form, false),
+          typeof table !== "undefined" &&
+            tablesConfigured > 1 &&
+            div(
+              req.__("Showing matches in table %s.", table),
+              "&nbsp;",
+              a(
+                {
+                  href: `javascript:set_state_fields({table:{unset:true},_page:{unset:true}})`,
+                },
+                req.__("Search all tables")
+              )
+            ),
+          tablesWithResults.length > 1 &&
+            div(
+              req.__("Show only matches in table:"),
+              "&nbsp;",
+              tablesWithResults
+                .map((t) =>
+                  a({ href: `javascript:set_state_field('table', '${t}')` }, t)
+                )
+                .join(" | ")
+            )
+        ),
       },
       ...searchResult,
     ],
@@ -156,7 +203,7 @@ router.get(
   setTenant,
   error_catcher(async (req, res) => {
     if (req.query && req.query.q) {
-      await runSearch(req.query.q, req, res);
+      await runSearch(req.query, req, res);
     } else {
       const cfg = getState().getConfig("globalSearch");
 

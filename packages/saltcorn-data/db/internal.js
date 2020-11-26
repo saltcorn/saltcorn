@@ -17,10 +17,13 @@ const whereFTS = (v, i, is_sqlite) => {
   const { fields, table } = v;
   var flds = fields
     .filter((f) => f.type && f.type.sql_name === "text")
-    .map((f) =>
-      table
-        ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
-        : `"${sqlsanitize(f.name)}"`
+    .map(
+      (f) =>
+        "coalesce(" +
+        (table
+          ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
+          : `"${sqlsanitize(f.name)}"`) +
+        ",'')"
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
