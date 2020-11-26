@@ -47,6 +47,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         is_sqlite,
         i()
       )})`
+    : Array.isArray(v)
+    ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
@@ -69,7 +71,9 @@ const getVal = ([k, v]) =>
   k === "_fts"
     ? v.searchTerm
     : typeof (v || {}).in !== "undefined"
-    ? v.in
+    ? [v.in]
+    : Array.isArray(v)
+    ? v.map((vi) => getVal([k, vi]))
     : typeof (v || {}).ilike !== "undefined"
     ? v.ilike
     : typeof (v || {}).lt !== "undefined"
@@ -84,7 +88,10 @@ const mkWhere = (whereObj, is_sqlite) => {
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")
       : "";
-  const values = wheres.map(getVal).filter((v) => v !== null);
+  const values = wheres
+    .map(getVal)
+    .flat(1)
+    .filter((v) => v !== null);
   return { where, values };
 };
 
