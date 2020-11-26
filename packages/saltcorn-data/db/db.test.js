@@ -79,6 +79,31 @@ describe("mkWhere", () => {
       values: [8],
       where: "where id>=$1",
     });
+    expect(mkWhere({ id: [{ gt: 0 }, { lt: 10 }] })).toStrictEqual({
+      values: [0, 10],
+      where: "where id>$1 and id<$2",
+    });
+  });
+  it("should query subselect", () => {
+    expect(
+      mkWhere({
+        id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: "where id in (select bar from foo where baz=$1)",
+    });
+    expect(
+      mkWhere({
+        age: 45,
+        id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
+        name: "Alice",
+      })
+    ).toStrictEqual({
+      values: [45, 7, "Alice"],
+      where:
+        "where age=$1 and id in (select bar from foo where baz=$2) and name=$3",
+    });
   });
 });
 

@@ -38,6 +38,26 @@ const mkCounter = () => {
     return i;
   };
 };
+const subSelectWhere = (is_sqlite, i) => (k, v) => {
+  const whereObj = v.inSelect.where;
+  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const where =
+    whereObj && wheres.length > 0
+      ? "where " + wheres.map(whereClause(is_sqlite, i)).join(" and ")
+      : "";
+  return `${sqlsanitizeAllowDots(k)} in (select ${v.inSelect.field} from ${
+    v.inSelect.table
+  } ${where})`;
+};
+const subSelectVals = (v) => {
+  const whereObj = v.inSelect.where;
+  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const xs = wheres
+    .map(getVal)
+    .flat(1)
+    .filter((v) => v !== null);
+  return xs;
+};
 
 const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
@@ -47,6 +67,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         is_sqlite,
         i()
       )})`
+    : Array.isArray(v)
+    ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
     ? `${sqlsanitizeAllowDots(k)} ${
         is_sqlite ? "LIKE" : "ILIKE"
@@ -61,6 +83,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         is_sqlite,
         i()
       )}`
+    : typeof (v || {}).inSelect !== "undefined"
+    ? subSelectWhere(is_sqlite, i)(k, v)
     : v === null
     ? `${sqlsanitizeAllowDots(k)} is null`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
@@ -69,9 +93,13 @@ const getVal = ([k, v]) =>
   k === "_fts"
     ? v.searchTerm
     : typeof (v || {}).in !== "undefined"
-    ? v.in
+    ? [v.in]
+    : Array.isArray(v)
+    ? v.map((vi) => getVal([k, vi])).flat(1)
     : typeof (v || {}).ilike !== "undefined"
     ? v.ilike
+    : typeof (v || {}).inSelect !== "undefined"
+    ? subSelectVals(v)
     : typeof (v || {}).lt !== "undefined"
     ? v.lt
     : typeof (v || {}).gt !== "undefined"
@@ -84,7 +112,10 @@ const mkWhere = (whereObj, is_sqlite) => {
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")
       : "";
-  const values = wheres.map(getVal).filter((v) => v !== null);
+  const values = wheres
+    .map(getVal)
+    .flat(1)
+    .filter((v) => v !== null);
   return { where, values };
 };
 

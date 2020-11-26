@@ -47,6 +47,7 @@ export const ToggleFilterSettings = () => {
           <td>
             <select
               value={name}
+              className="form-control"
               onChange={(e) => {
                 setProp((prop) => (prop.name = e.target.value));
                 const field = options.fields.find(

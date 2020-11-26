@@ -134,6 +134,24 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe(2);
   });
+  it("should get rows in id range", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const rows = await patients.getRows({ id: [{ gt: 0 }, { lt: 10 }] });
+    expect(rows.length).toStrictEqual(2);
+  });
+  it("should get rows by subselect", async () => {
+    const books = await Table.findOne({ name: "books" });
+    const nrows = await books.countRows({
+      id: {
+        inSelect: {
+          table: "patients",
+          field: "favbook",
+          where: { author: "Leo Tolstoy" },
+        },
+      },
+    });
+    expect(nrows).toStrictEqual(1);
+  });
   it("should get joined rows with arbitrary fieldnames", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const michaels = await patients.getJoinedRows({

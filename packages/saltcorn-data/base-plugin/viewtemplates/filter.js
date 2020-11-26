@@ -23,9 +23,22 @@ const configuration_workflow = () =>
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-
+          const {
+            child_field_list,
+            child_relations,
+          } = await table.get_child_relations();
           const roles = await User.get_roles();
-
+          for (const cr of child_relations) {
+            const cfields = await cr.table.getFields();
+            cfields.forEach((cf) => {
+              if (cf.name !== cr.key_field.name)
+                fields.push({
+                  ...cf,
+                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                });
+            });
+          }
           return {
             fields,
             roles,
@@ -53,6 +66,17 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       const field = fields.find((f) => f.name === col.field_name);
       if (field)
         distinct_values[col.field_name] = await field.distinct_values();
+      else if (col.field_name.includes(".")) {
+        const kpath = col.field_name.split(".");
+        if (kpath.length === 3) {
+          const [jtNm, jFieldNm, lblField] = kpath;
+          const jtable = await Table.findOne({ name: jtNm });
+          const jfields = await jtable.getFields();
+          const jfield = jfields.find((f) => f.name === lblField);
+          if (jfield)
+            distinct_values[col.field_name] = await jfield.distinct_values();
+        }
+      }
     }
   }
   const blockDispatch = {
