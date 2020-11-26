@@ -83,7 +83,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             off: state[field_name] === false,
             "?": state[field_name] === null,
           }[value]
-        : state[field_name] === value;
+        : eq_string(state[field_name], value);
+      console.log(field_name, state[field_name], value, typeof value);
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
@@ -100,7 +101,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   };
   return renderLayout({ blockDispatch, layout, role });
 };
-
+const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",
   get_state_fields,
