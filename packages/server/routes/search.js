@@ -122,9 +122,12 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   }
   const current_page = parseInt(_page) || 1;
   const offset = (current_page - 1) * 20;
-  var resp = [];
+  let resp = [];
+  let tablesWithResults = [];
+  let tablesConfigured = 0;
   for (const [tableName, viewName] of Object.entries(cfg)) {
     if (!viewName || viewName === "") continue;
+    tablesConfigured += 1;
     if (table && tableName !== table) continue;
     const view = await View.findOne({ name: viewName });
 
@@ -137,17 +140,20 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       paginate = pagination({
         current_page,
         pages: current_page + (vresps.length === 20 ? 1 : 0),
+        trailing_ellipsis: vresps.length === 20,
         get_page_link: (n) =>
           `javascript:gopage(${n}, 20, {table:'${tableName}'})`,
       });
     }
 
-    if (vresps.length > 0)
+    if (vresps.length > 0) {
+      tablesWithResults.push(tableName);
       resp.push({
         type: "card",
-        title: tableName,
+        title: span({ id: tableName }, tableName),
         contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
       });
+    }
   }
 
   const form = searchForm();
@@ -161,7 +167,31 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     above: [
       {
         type: "card",
-        contents: renderForm(form, false),
+        contents: div(
+          renderForm(form, false),
+          typeof table !== "undefined" &&
+            tablesConfigured > 1 &&
+            div(
+              req.__("Showing matches in table %s.", table),
+              "&nbsp;",
+              a(
+                {
+                  href: `javascript:set_state_fields({table:{unset:true},_page:{unset:true}})`,
+                },
+                req.__("Search all tables")
+              )
+            ),
+          tablesWithResults.length > 1 &&
+            div(
+              req.__("Show only matches in table:"),
+              "&nbsp;",
+              tablesWithResults
+                .map((t) =>
+                  a({ href: `javascript:set_state_field('table', '${t}')` }, t)
+                )
+                .join(" | ")
+            )
+        ),
       },
       ...searchResult,
     ],

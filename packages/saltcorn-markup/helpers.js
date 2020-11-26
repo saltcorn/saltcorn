@@ -21,7 +21,12 @@ const select_options = (v, hdr) => {
     .join(""));
 };
 
-const pagination = ({ current_page, pages, get_page_link }) => {
+const pagination = ({
+  current_page,
+  pages,
+  get_page_link,
+  trailing_ellipsis,
+}) => {
   const from = Math.max(1, current_page - 3);
   const to = Math.min(pages, current_page + 3);
   var lis = [];
@@ -52,6 +57,8 @@ const pagination = ({ current_page, pages, get_page_link }) => {
       )
     );
   }
+  if (trailing_ellipsis)
+    lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
   return ul({ class: "pagination" }, lis);
 };
 

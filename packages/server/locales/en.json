@@ -487,5 +487,7 @@
 	"Icon": "Icon",
 	"Create database view": "Create database view",
 	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list",
-	"Upgrade": "Upgrade"
+	"Upgrade": "Upgrade",
+	"Show only matches in table:": "Show only matches in table:",
+	"Showing matches in table %s.": "Showing matches in table %s."
 }
