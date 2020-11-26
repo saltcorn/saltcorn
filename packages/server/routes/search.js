@@ -129,7 +129,7 @@ const runSearch = async (q, req, res) => {
       resp.push({
         type: "card",
         title: tableName,
-        contents: vresps.map((vr) => vr.html).join(""),
+        contents: vresps.map((vr) => vr.html).join("<hr>"),
       });
   }
 
