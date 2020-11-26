@@ -556,6 +556,17 @@ const stateFieldsToWhere = contract(
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
       } else if (field || k === "id") qstate[k] = v;
+      else if (k.includes(".")) {
+        const kpath = k.split(".");
+        if (kpath.length === 3) {
+          const [jtNm, jFieldNm, lblField] = kpath;
+          qstate.id = [
+            ...(qstate.id || []),
+            { inSubselect: { table: jtNm, where: { [jFieldNm]: lblField } } },
+          ];
+        }
+        console.log({ k });
+      }
     });
     return qstate;
   }
