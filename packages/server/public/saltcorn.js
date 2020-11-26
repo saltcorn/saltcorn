@@ -11,8 +11,8 @@ jQuery.fn.swapWith = function (to) {
 function sortby(k) {
   set_state_fields({ _sortby: k });
 }
-function gopage(n, pagesize) {
-  set_state_fields({ _page: n, _pagesize: pagesize });
+function gopage(n, pagesize, extra = {}) {
+  set_state_fields({ ...extra, _page: n, _pagesize: pagesize });
 }
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);

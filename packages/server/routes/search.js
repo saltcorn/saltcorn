@@ -111,7 +111,7 @@ const searchForm = () =>
     ],
   });
 
-const runSearch = async ({ q, _page }, req, res) => {
+const runSearch = async ({ q, _page, table }, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
 
@@ -125,6 +125,7 @@ const runSearch = async ({ q, _page }, req, res) => {
   var resp = [];
   for (const [tableName, viewName] of Object.entries(cfg)) {
     if (!viewName || viewName === "") continue;
+    if (table && tableName !== table) continue;
     const view = await View.findOne({ name: viewName });
 
     const vresps = await view.runMany(
