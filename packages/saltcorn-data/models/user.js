@@ -156,11 +156,13 @@ class User {
 
   async destroy_sessions() {
     if (!db.isSQLite) {
-      const schema = db.getTenantSchemaPrefix();
+      const schema = db.getTenantSchema();
 
       await db.query(
-        `delete from ${schema}_sc_session where sess->'passport'->'user'->>'id' = $1`,
-        [`${this.id}`]
+        `delete from _sc_session 
+        where sess->'passport'->'user'->>'id' = $1 
+        and sess->'passport'->'user'->>'tenant' = $2`,
+        [`${this.id}`, schema]
       );
     }
   }
