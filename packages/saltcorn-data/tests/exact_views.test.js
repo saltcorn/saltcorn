@@ -12,10 +12,9 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
-  columns,
-  layout,
   response,
   id,
+  ...rest
 }) => {
   const tbl = await Table.findOne({ name: table });
 
@@ -23,7 +22,7 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
     table_id: tbl.id,
     name,
     viewtemplate,
-    configuration: { columns, layout },
+    configuration: rest,
     min_role: 10,
     on_root_page: true,
   });
@@ -44,6 +43,11 @@ const test_show = mkTester({
 const test_edit = mkTester({
   name: "testedit",
   viewtemplate: "Edit",
+  table: "patients",
+});
+const test_list = mkTester({
+  name: "testlist",
+  viewtemplate: "List",
   table: "patients",
 });
 
@@ -277,6 +281,65 @@ describe("Edit view", () => {
       layout,
       columns,
       response: `<form action="/view/testedit" class="form-namespace " method="post" ><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row"><div class="col-sm-2 text-">Name</div><div class="col-sm-10 text-"><input type="text"  class="form-control  " name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row"><div class="col-sm-2 text-">Favourite book</div><div class="col-sm-10 text-"><select class="form-control  "  name="favbook" id="inputfavbook"><option value="" ></option><option value="1" selected>Herman Melville</option><option value="2" >Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-sm-2 text-">Parent</div><div class="col-sm-10 text-"><select class="form-control  "  name="parent" id="inputparent"><option value="" ></option><option value="1" >1</option><option value="2" >2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+    });
+  });
+});
+describe("List view", () => {
+  it("should render exactly", async () => {
+    await test_list({
+      columns: [
+        {
+          type: "Field",
+          fieldview: "as_text",
+          field_name: "name",
+          state_field: "on",
+          header_label: "",
+        },
+        { type: "JoinField", join_field: "parent.name", header_label: "" },
+        { type: "JoinField", join_field: "favbook.author", header_label: "" },
+        {
+          code: 'console.log("hi")',
+          type: "Action",
+          action_name: "run_js_code",
+          action_size: "",
+          action_label: "say hi",
+          action_style: "btn-primary",
+          header_label: "Helloer",
+        },
+        {
+          type: "ViewLink",
+          view: "ParentShow:authorshow.books.favbook",
+          view_label: "id+5",
+          header_label: "",
+          view_label_formula: "on",
+        },
+        {
+          stat: "Count",
+          type: "Aggregation",
+          agg_field: "temperature",
+          agg_relation: "readings.patient_id",
+          header_label: "readings",
+        },
+        {
+          type: "Link",
+          link_url: "'https://lmgtfy.app/?q='+name",
+          link_text: "name.toUpperCase()",
+          header_label: "",
+          link_url_formula: "on",
+          link_text_formula: "on",
+        },
+        {
+          type: "Action",
+          confirm: "on",
+          action_name: "Delete",
+          action_size: "btn-sm",
+          action_label: "",
+          action_style: "btn-outline-primary",
+          header_label: "",
+        },
+      ],
+      response:
+        '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'name\')">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th /><th /></tr></thead><tbody><tr><td>Kirk Douglas</td><td /><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-primary">Delete</button></form></td></tr></tbody></table></div>',
     });
   });
 });
