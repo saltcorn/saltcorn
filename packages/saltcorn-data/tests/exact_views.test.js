@@ -11,39 +11,41 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
-
-const test_show = async ({ columns, layout, response }) => {
-  const table = await Table.findOne({ name: "books" });
+const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
+  columns,
+  layout,
+  response,
+  id,
+}) => {
+  const tbl = await Table.findOne({ name: table });
 
   const v = await View.create({
-    table_id: table.id,
-    name: "testshow",
-    viewtemplate: "Show",
+    table_id: tbl.id,
+    name,
+    viewtemplate,
     configuration: { columns, layout },
     min_role: 10,
     on_root_page: true,
   });
 
-  const res = await v.run({ id: 1 }, mockReqRes);
+  const res = await v.run(
+    id ? { id } : set_id ? { id: set_id } : {},
+    mockReqRes
+  );
   expect(res).toBe(response);
   await v.delete();
 };
-const test_edit = async ({ id, columns, layout, response }) => {
-  const table = await Table.findOne({ name: "patients" });
-
-  const v = await View.create({
-    table_id: table.id,
-    name: "testedit",
-    viewtemplate: "Edit",
-    configuration: { columns, layout },
-    min_role: 10,
-    on_root_page: true,
-  });
-
-  const res = await v.run(id ? { id } : {}, mockReqRes);
-  expect(res).toBe(response);
-  await v.delete();
-};
+const test_show = mkTester({
+  name: "testshow",
+  viewtemplate: "Show",
+  set_id: 1,
+  table: "books",
+});
+const test_edit = mkTester({
+  name: "testedit",
+  viewtemplate: "Edit",
+  table: "patients",
+});
 
 describe("Show view", () => {
   it("should render exactly", async () => {
