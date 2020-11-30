@@ -4,6 +4,7 @@ const View = require("../models/view");
 const db = require("../db");
 const { plugin_with_routes, mockReqRes } = require("./mocks");
 const { getState } = require("../db/state");
+const Page = require("../models/page");
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -34,6 +35,14 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
   expect(res).toBe(response);
   await v.delete();
 };
+
+const test_page = async ({ response, ...rest }) => {
+  const p = await Page.create(rest);
+  const contents = await p.run({}, mockReqRes);
+  expect(contents).toStrictEqual(response);
+  await p.delete();
+};
+
 const test_show = mkTester({
   name: "testshow",
   viewtemplate: "Show",
@@ -387,6 +396,132 @@ describe("Filter view", () => {
       viewname: "testfilter",
       response:
         '<div class="row"><div class="col-sm-6 text-"><select name="role" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'patients.favbook.name\'): set_state_field(\'patients.favbook.name\', this.value)"><option value=""  /><option value="Kirk Douglas" >Kirk Douglas</option><option value="Michael Douglas" >Michael Douglas</option></select></div><div class="col-sm-6 text-"><button class="btn btn-outline-primary" onClick="set_state_field(\'pages\', encodeURIComponent(\'13\'))">thirteen</button></div></div><button class="btn btn-outline-primary" onClick="set_state_field(\'patients.favbook.name\', encodeURIComponent(\'Jim\'))">Jim</button><select name="role" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'author\'): set_state_field(\'author\', this.value)"><option value=""  /><option value="Herman Melville" >Herman Melville</option><option value="Leo Tolstoy" >Leo Tolstoy</option></select>',
+    });
+  });
+});
+describe("Page", () => {
+  it("should render exactly", async () => {
+    await test_page({
+      response: {
+        above: [
+          {
+            widths: [6, 6],
+            besides: [
+              {
+                type: "container",
+                block: true,
+                bgType: "None",
+                hAlign: "left",
+                height: "50",
+                vAlign: "top",
+                bgColor: "#ffffff",
+                contents: {
+                  type: "blank",
+                  isHTML: true,
+                  contents: "<h6>a h6</h6>",
+                },
+                imageSize: "contain",
+                isFormula: {},
+                textColor: "#ffffff",
+                borderStyle: "solid",
+                borderWidth: "1",
+                showForRole: [],
+              },
+              {
+                url: "https://abc.com",
+                type: "card",
+                title: "The Title goes Here",
+                contents: {
+                  url: "https://saltcorn.com/",
+                  text: "Click here",
+                  type: "link",
+                  nofollow: true,
+                  isFormula: {},
+                },
+                isFormula: {},
+              },
+            ],
+          },
+          {
+            name: "806e61",
+            type: "view",
+            view: "authorlist",
+            state: "shared",
+            contents:
+              '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'author\')">Author</a></th><th>authorshow</th><th /><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+          },
+          {
+            name: "18a8cc",
+            type: "view",
+            view: "authorshow",
+            state: "fixed",
+            contents: "Herman Melville",
+          },
+        ],
+      },
+      name: "testpage",
+      title: "gergerger",
+      description: "greger",
+      min_role: 10,
+      id: 2,
+      layout: {
+        above: [
+          {
+            widths: [6, 6],
+            besides: [
+              {
+                type: "container",
+                block: true,
+                bgType: "None",
+                hAlign: "left",
+                height: "50",
+                vAlign: "top",
+                bgColor: "#ffffff",
+                contents: {
+                  type: "blank",
+                  isHTML: true,
+                  contents: "<h6>a h6</h6>",
+                },
+                imageSize: "contain",
+                isFormula: {},
+                textColor: "#ffffff",
+                borderStyle: "solid",
+                borderWidth: "1",
+                showForRole: [],
+              },
+              {
+                url: "https://abc.com",
+                type: "card",
+                title: "The Title goes Here",
+                contents: {
+                  url: "https://saltcorn.com/",
+                  text: "Click here",
+                  type: "link",
+                  nofollow: true,
+                  isFormula: {},
+                },
+                isFormula: {},
+              },
+            ],
+          },
+          {
+            name: "806e61",
+            type: "view",
+            view: "authorlist",
+            state: "shared",
+            contents:
+              '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'author\')">Author</a></th><th>authorshow</th><th /><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+          },
+          {
+            name: "18a8cc",
+            type: "view",
+            view: "authorshow",
+            state: "fixed",
+            contents: "Herman Melville",
+          },
+        ],
+      },
+      fixed_states: { "18a8cc": { id: 1 }, fixed_stateforauthorshowview: null },
     });
   });
 });
