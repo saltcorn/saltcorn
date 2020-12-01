@@ -49,13 +49,7 @@ const sideBarItem = (currentUrl) => (item) => {
   const is_active = active(currentUrl, item);
   return li(
     { class: ["nav-item", is_active && "active"] },
-    item.link
-      ? a(
-          { class: "nav-link", href: text(item.link) },
-          item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
-          span(text(item.label))
-        )
-      : item.subitems
+    item.subitems
       ? [
           a(
             {
@@ -81,6 +75,12 @@ const sideBarItem = (currentUrl) => (item) => {
             )
           ),
         ]
+      : item.link
+      ? a(
+          { class: "nav-link", href: text(item.link) },
+          item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
+          span(text(item.label))
+        )
       : span({ class: "nav-link" }, text(item.label))
   );
 };

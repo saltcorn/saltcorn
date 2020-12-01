@@ -69,7 +69,9 @@ const rightNavBar = (currentUrl, sections) =>
       { class: "navbar-nav ml-auto my-2 my-lg-0" },
 
       innerSections(sections).map((s) =>
-        s.link
+        s.subitems
+          ? navSubitems(s)
+          : s.link
           ? li(
               { class: ["nav-item", active(currentUrl, s) && "active"] },
               a(
@@ -78,8 +80,6 @@ const rightNavBar = (currentUrl, sections) =>
                 text(s.label)
               )
             )
-          : s.subitems
-          ? navSubitems(s)
           : ""
       )
     )
