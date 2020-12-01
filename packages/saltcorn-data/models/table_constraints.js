@@ -1,5 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const { stringToJSON } = require("../utils");
 
 class TableConstraint {
   constructor(o) {
@@ -9,11 +10,7 @@ class TableConstraint {
     }
     this.type = o.type;
     this.id = !o.id ? null : +o.id;
-    this.configuration =
-      typeof o.configuration === "string"
-        ? JSON.parse(o.configuration)
-        : o.configuration || {};
-
+    this.configuration = stringToJSON(o.configuration) || {};
     contract.class(this);
   }
 
@@ -56,11 +53,7 @@ class TableConstraint {
   }
 
   static get type_options() {
-    return [
-      "Unique",
-      /*"Weekly", "Daily", "Hourly", "Often"*/
-      ,
-    ];
+    return ["Unique"];
   }
 }
 
