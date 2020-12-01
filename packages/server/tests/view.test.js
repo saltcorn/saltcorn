@@ -126,3 +126,15 @@ describe("view with routes", () => {
       .expect(toInclude("<div>Hello</div>"));
   });
 });
+
+describe("render view on page", () => {
+  it("should show edit", async () => {
+    const view = await View.findOne({ name: "authorshow" });
+    View.update({ default_render_page: "a_page" }, view.id);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/view/authorshow?id=1")
+      .expect(toInclude("Bye bye"))
+      .expect(toNotInclude("Herman Melville"));
+  });
+});
