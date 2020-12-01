@@ -1,6 +1,8 @@
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
+const Page = require("@saltcorn/data/models/page");
+
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const { setTenant, error_catcher } = require("../routes/utils.js");
@@ -21,29 +23,39 @@ router.get(
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
-    } else if (role > view.min_role) {
+      return;
+    }
+    if (role > view.min_role) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
-    } else {
-      const state = view.combine_state_and_default_state(req.query);
-      const resp = await view.run(state, { res, req });
-      const state_form = await view.get_state_form(state, req);
-      const contents = div(
-        state_form ? renderForm(state_form, req.csrfToken()) : "",
-        resp
-      );
-
-      res.sendWrap(
-        view.name,
-        add_edit_bar({
-          role: req.xhr ? 10 : role,
-          title: view.name,
-          what: req.__("View"),
-          url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-          contents,
-        })
-      );
+      return;
     }
+    if (view.default_render_page) {
+      const db_page = await Page.findOne({ name: view.default_render_page });
+      if (db_page) {
+        const contents = await db_page.run(req.query, { res, req });
+        res.sendWrap(view.name, contents);
+        return;
+      }
+    }
+    const state = view.combine_state_and_default_state(req.query);
+    const resp = await view.run(state, { res, req });
+    const state_form = await view.get_state_form(state, req);
+    const contents = div(
+      state_form ? renderForm(state_form, req.csrfToken()) : "",
+      resp
+    );
+
+    res.sendWrap(
+      view.name,
+      add_edit_bar({
+        role: req.xhr ? 10 : role,
+        title: view.name,
+        what: req.__("View"),
+        url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        contents,
+      })
+    );
   })
 );
 router.post(

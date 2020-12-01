@@ -30,6 +30,8 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const Page = require("@saltcorn/data/models/page");
+
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const router = new Router();
@@ -155,7 +157,7 @@ router.get(
   })
 );
 
-const viewForm = (req, tableOptions, roles, values) => {
+const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   return new Form({
@@ -194,6 +196,18 @@ const viewForm = (req, tableOptions, roles, values) => {
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+      }),
+      new Field({
+        name: "default_render_page",
+        label: req.__("Show on page"),
+        sublabel: req.__(
+          "Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements."
+        ),
+        input_type: "select",
+        options: [
+          { value: "", label: "" },
+          ...pages.map((p) => ({ value: p.name, label: p.name })),
+        ],
       }),
       new Field({
         label: req.__("On root page"),
@@ -235,7 +249,8 @@ router.get(
     viewrow.table_name = currentTable.name;
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles, viewrow);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages, viewrow);
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -264,7 +279,8 @@ router.get(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -295,7 +311,8 @@ router.post(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {

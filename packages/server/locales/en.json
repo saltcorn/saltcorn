@@ -490,5 +490,7 @@
 	"Upgrade": "Upgrade",
 	"Show only matches in table:": "Show only matches in table:",
 	"Showing matches in table %s.": "Showing matches in table %s.",
-	"Edit trigger": "Edit trigger"
+	"Edit trigger": "Edit trigger",
+	"Show on page": "Show on page",
+	"Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements.": "Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements."
 }
