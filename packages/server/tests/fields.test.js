@@ -13,6 +13,7 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { encodeXText } = require("nodemailer/lib/shared");
 
 afterAll(db.close);
 
@@ -233,14 +234,31 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/")
       .send("stepName=Basic properties")
-      .send("name=AgeRating")
-      .send("label=AgeRating")
+      .send("label=PagesPlus10")
       .send("type=Integer")
       .send("calculated=on")
       .send("contextEnc=" + ctx)
       .set("Cookie", loginCookie)
       .expect(200)
       .expect(toInclude("Examples:"));
+    const ctx1 = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        type: "Integer",
+        label: "PagesPlus10",
+        calculated: true,
+      })
+    );
+
+    await request(app)
+      .post("/field/")
+      .send("stepName=Expression")
+      .send("expression=" + encodeURIComponent("pages+10"))
+      .send("contextEnc=" + ctx1)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+    const row = await table.getRow({ id: 1 });
+    expect(row.pagesplus10).toBe(977);
   });
   it("should post new calculated string field", async () => {
     const loginCookie = await getAdminLoginCookie();

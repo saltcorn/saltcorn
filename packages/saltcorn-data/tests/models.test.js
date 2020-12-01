@@ -1,6 +1,7 @@
 const db = require("../db/index.js");
 const renderLayout = require("@saltcorn/markup/layout");
 const Table = require("../models/table");
+const TableConstraint = require("../models/table_constraints");
 const Form = require("../models/form");
 const Field = require("../models/field");
 const Crash = require("../models/crash");
@@ -149,6 +150,23 @@ describe("File", () => {
     expect(f.mimetype).toBe("image/png");
     await File.update(f.id, { size_kb: 56 });
     await f.delete();
+  });
+});
+
+describe("TableConstraint", () => {
+  it("should create", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const con = await TableConstraint.create({
+      table,
+      type: "Unique",
+      configuration: { fields: ["author", "pages"] },
+    });
+    const con1 = await TableConstraint.findOne({ id: con.id });
+    expect(con1.type).toBe("Unique");
+    expect(con1.toJson.type).toBe("Unique");
+    expect(con1.id).toBe(con.id);
+    expect(con1.configuration.fields).toContain("pages");
+    await con1.delete();
   });
 });
 
