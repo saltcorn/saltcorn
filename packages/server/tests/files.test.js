@@ -62,6 +62,10 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/2").expect(toRedirect("/"));
   });
+  it("not download file to public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/files/download/2").expect(toRedirect("/"));
+  });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -81,6 +85,16 @@ describe("files admin", () => {
     await request(app)
       .post("/files/delete/2")
       .set("Cookie", loginCookie)
+      .expect(toRedirect("/files"));
+  });
+  it("upload file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/files/upload")
+      .set("Cookie", loginCookie)
+      .attach("file", Buffer.from("helloiamasmallfile", "utf-8"))
+
       .expect(toRedirect("/files"));
   });
 });
