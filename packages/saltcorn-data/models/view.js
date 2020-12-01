@@ -24,6 +24,7 @@ class View {
     this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
+    this.default_render_page = o.default_render_page;
     contract.class(this);
   }
   static async findOne(where) {
@@ -273,6 +274,7 @@ View.contract = {
     viewtemplate: is.str,
     min_role: is.posint,
     viewtemplateObj: is.maybe(is_viewtemplate),
+    default_render_page: is.maybe(is.str),
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
