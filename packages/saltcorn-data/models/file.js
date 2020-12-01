@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+const { asyncMap } = require("../utils");
 const fs = require("fs").promises;
 
 class File {
@@ -48,19 +49,25 @@ class File {
   }
 
   static async from_req_files(file, user_id, min_role_read = 1) {
-    const newPath = File.get_new_path();
-    const [mime_super, mime_sub] = file.mimetype.split("/");
-    await file.mv(newPath);
-    return await File.create({
-      filename: file.name,
-      location: newPath,
-      uploaded_at: new Date(),
-      size_kb: Math.round(file.size / 1024),
-      user_id,
-      mime_super,
-      mime_sub,
-      min_role_read,
-    });
+    if (Array.isArray(file)) {
+      return await asyncMap(file, (f) =>
+        File.from_req_files(f, user_id, min_role_read)
+      );
+    } else {
+      const newPath = File.get_new_path();
+      const [mime_super, mime_sub] = file.mimetype.split("/");
+      await file.mv(newPath);
+      return await File.create({
+        filename: file.name,
+        location: newPath,
+        uploaded_at: new Date(),
+        size_kb: Math.round(file.size / 1024),
+        user_id,
+        mime_super,
+        mime_sub,
+        min_role_read,
+      });
+    }
   }
   async delete() {
     try {
@@ -109,8 +116,8 @@ File.contract = {
     findOne: is.fun(is.obj(), is.promise(is.class("File"))),
     create: is.fun(is.obj(), is.promise(is.class("File"))),
     from_req_files: is.fun(
-      [is.obj(), is.posint, is.maybe(is.posint)],
-      is.promise(is.class("File"))
+      [is.or(is.obj(), is.array(is.obj())), is.posint, is.maybe(is.posint)],
+      is.promise(is.or(is.class("File"), is.array(is.class("File"))))
     ),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     ensure_file_store: is.fun([], is.promise(is.undefined)),

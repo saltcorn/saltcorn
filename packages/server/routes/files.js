@@ -100,6 +100,7 @@ router.get(
           class: "form-control-file",
           type: "file",
           onchange: "form.submit()",
+          multiple: true,
         })
       )
     );
@@ -172,6 +173,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let jsonResp = {};
+    console.log(req.files);
     if (!req.files && !req.files.file) {
       if (!req.xhr) req.flash("warning", req.__("No file found"));
       else jsonResp = { error: "No file found" };
@@ -182,9 +184,25 @@ router.post(
         req.user.id,
         +min_role_read
       );
+      const many = Array.isArray(f);
       if (!req.xhr)
-        req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
-      else jsonResp = { success: { url: `/files/serve/${f.id}` } };
+        req.flash(
+          "success",
+          req.__(
+            `File %s uploaded`,
+            many
+              ? f.map((fl) => text(fl.filename)).join(", ")
+              : text(f.filename)
+          )
+        );
+      else
+        jsonResp = {
+          success: {
+            url: many
+              ? f.map((fl) => `/files/serve/${fl.id}`)
+              : `/files/serve/${f.id}`,
+          },
+        };
       if (f.filename === "favicon.png") await getState().refresh();
     }
     if (!req.xhr) res.redirect("/files");
