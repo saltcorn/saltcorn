@@ -223,7 +223,6 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       segment[key] = f(row);
     }
   };
-  console.log(layout0);
   const layout = structuredClone(layout0);
   traverseSync(layout, {
     link(segment) {
