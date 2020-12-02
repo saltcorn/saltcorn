@@ -211,9 +211,8 @@ router.get(
             ],
           },
           {
-            type: "card",
-            title: req.__(`%s data table`, table.name),
-            contents: [
+            type: "blank",
+            contents: div(
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
               script(domReady(versionsField(table.name))),
               script(
@@ -235,8 +234,8 @@ router.get(
          `)
               ),
               div({ id: "jsGridNotify" }),
-              div({ id: "jsGrid" }),
-            ],
+              div({ id: "jsGrid" })
+            ),
           },
         ],
       }
