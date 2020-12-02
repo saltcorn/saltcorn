@@ -87,6 +87,9 @@ export const ViewLinkSettings = () => {
 
 ViewLink.craft = {
   displayName: "ViewLink",
+  defaultProps: {
+    isFormula: {},
+  },
   related: {
     settings: ViewLinkSettings,
   },
