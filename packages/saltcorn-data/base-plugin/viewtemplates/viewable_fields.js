@@ -185,6 +185,7 @@ const get_viewable_fields = contract(
                   ajax: true,
                   reload_on_done: true,
                   confirm: column.confirm,
+                  btnClass: column.action_style || "btn-primary",
                   req,
                 });
             },
