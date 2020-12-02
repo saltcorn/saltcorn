@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
+import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
 
 export const ViewLink = ({ name, block, minRole, inModal, label }) => {
   const {
@@ -24,20 +24,23 @@ export const ViewLink = ({ name, block, minRole, inModal, label }) => {
 };
 
 export const ViewLinkSettings = () => {
+  const node = useNode((node) => ({
+    name: node.data.props.name,
+    block: node.data.props.block,
+    minRole: node.data.props.minRole,
+    isFormula: node.data.props.isFormula,
+    label: node.data.props.label,
+    inModal: node.data.props.inModal,
+  }));
   const {
     actions: { setProp },
     name,
     block,
     minRole,
     label,
+    isFormula,
     inModal,
-  } = useNode((node) => ({
-    name: node.data.props.name,
-    block: node.data.props.block,
-    minRole: node.data.props.minRole,
-    label: node.data.props.label,
-    inModal: node.data.props.inModal,
-  }));
+  } = node;
   const options = useContext(optionsCtx);
   return (
     <div>
@@ -57,12 +60,14 @@ export const ViewLinkSettings = () => {
       </div>
       <div>
         <label>Label (leave blank for default)</label>
-        <input
-          type="text"
-          className="viewlink-label w-100"
-          value={label}
-          onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
-        />
+        <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="viewlink-label form-control"
+            value={label}
+            onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
+          />
+        </OrFormula>
       </div>
       <div className="form-check">
         <input

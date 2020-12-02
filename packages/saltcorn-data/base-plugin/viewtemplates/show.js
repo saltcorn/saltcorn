@@ -223,11 +223,15 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       segment[key] = f(row);
     }
   };
+  console.log(layout0);
   const layout = structuredClone(layout0);
   traverseSync(layout, {
     link(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
+    },
+    view_link(segment) {
+      evalMaybeExpr(segment, "view_label", "label");
     },
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
