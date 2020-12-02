@@ -207,7 +207,7 @@ class Table {
     await db.query(
       `update ${schema}"${sqlsanitize(this.name)}" set "${sqlsanitize(
         field_name
-      )}"=NOT "${sqlsanitize(field_name)}" where id=$1`,
+      )}"=NOT coalesce("${sqlsanitize(field_name)}", false) where id=$1`,
       [id]
     );
     const triggers = await Trigger.getTableTriggers("Update", this);

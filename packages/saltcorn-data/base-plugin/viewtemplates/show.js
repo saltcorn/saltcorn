@@ -229,6 +229,9 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
     },
+    view_link(segment) {
+      evalMaybeExpr(segment, "view_label", "label");
+    },
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
     },

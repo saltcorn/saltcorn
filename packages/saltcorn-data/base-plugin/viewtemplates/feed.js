@@ -153,6 +153,12 @@ const configuration_workflow = (req) =>
                 type: "Bool",
                 required: true,
               },
+              {
+                name: "hide_pagination",
+                label: req.__("Hide pagination"),
+                type: "Bool",
+                required: true,
+              },
             ],
           });
         },
@@ -179,6 +185,7 @@ const run = async (
     create_view_display,
     in_card,
     rows_per_page = 20,
+    hide_pagination,
     ...cols
   },
   state,
@@ -203,7 +210,7 @@ const run = async (
     ...qextra,
   });
   let paginate = "";
-  if (sresp.length === qextra.limit || current_page > 1) {
+  if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
     const fields = await table.getFields();
 
     const where = await stateFieldsToWhere({ fields, state });

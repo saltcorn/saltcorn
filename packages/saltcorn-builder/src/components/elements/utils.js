@@ -13,7 +13,7 @@ export const BlockSetting = ({ block, setProp }) => (
       checked={block}
       onChange={(e) => setProp((prop) => (prop.block = e.target.checked))}
     />
-    <label className="form-check-label">Block</label>
+    <label className="form-check-label">Block display</label>
   </div>
 );
 

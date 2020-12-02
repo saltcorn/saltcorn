@@ -139,6 +139,7 @@ export const layoutToNodes = (layout, query, actions) => {
           block={segment.block || false}
           inModal={segment.in_modal || false}
           minRole={segment.minRole || 10}
+          isFormula={segment.isFormula || {}}
         />
       );
     } else if (segment.type === "action") {
@@ -425,6 +426,7 @@ export const craftToSaltcorn = (nodes) => {
         in_modal: node.props.inModal,
         view_label: node.props.label,
         view: node.props.name,
+        isFormula: node.props.isFormula,
         minRole: node.props.minRole,
       };
     }
