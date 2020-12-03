@@ -495,5 +495,9 @@
 	"Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements.": "Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements.",
 	"Hide pagination": "Hide pagination",
 	"True": "True",
-	"False": "False"
+	"False": "False",
+	"Clear all": "Clear all",
+	"This will delete <strong>EVERYTHING</strong> in the selected categories": "This will delete <strong>EVERYTHING</strong> in the selected categories",
+	"Deleted all %s": "Deleted all %s",
+	"Restart server": "Restart server"
 }

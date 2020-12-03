@@ -100,6 +100,11 @@ class Table {
       await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
         this.id,
       ]);
+      if (this.versioned)
+        await client.query(
+          `drop table ${schema}"${sqlsanitize(this.name)}__history"`
+        );
+
       await client.query(`COMMIT`);
     } catch (e) {
       await client.query(`ROLLBACK`);
