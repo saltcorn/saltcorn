@@ -60,14 +60,17 @@ describe("crash log", () => {
   it("crashes on missing id", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    console.log(
-      "An error is printed below. This is expected as part of the test."
-    );
+    const oldConsoleError = console.error;
+    console.error = jest.fn();
+
     await request(app)
       .get("/crashlog/99")
       .set("Cookie", loginCookie)
       .expect(toInclude("squirrels", 500));
+    expect(console.error).toHaveBeenCalled();
+    console.error = oldConsoleError;
   });
+
   it("show crashlog list with errors", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
