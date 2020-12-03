@@ -91,7 +91,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     dropdown_filter({ field_name }) {
       return select(
         {
-          name: "role",
+          name: `ddfilter${field_name}`,
           class: "form-control d-inline",
           style: "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
