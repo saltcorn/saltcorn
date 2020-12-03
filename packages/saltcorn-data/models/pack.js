@@ -46,6 +46,7 @@ const view_pack = contract(pack_fun, async (name) => {
     on_root_page: view.on_root_page,
     table: table.name,
     menu_label: view.menu_label,
+    default_render_page: view.default_render_page,
   };
 });
 
