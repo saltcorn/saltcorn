@@ -59,6 +59,7 @@ describe("pack create", () => {
       menu_label: undefined,
       table: "books",
       viewtemplate: "List",
+      default_render_page: null,
     });
   });
   it("creates plugin pack", async () => {
