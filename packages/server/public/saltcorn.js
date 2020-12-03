@@ -105,6 +105,17 @@ function rep_down(e) {
 $(function () {
   $("form").change(apply_showif);
   apply_showif();
+  $("[data-inline-edit-dest-url]").click(function () {
+    var url = $(this).attr("data-inline-edit-dest-url");
+    var current = $(this).html();
+    $(this).replaceWith(
+      `<form method="post" action="${url}" >
+      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+      <input type="text" name="value" value="${current}">
+      <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      </form>`
+    );
+  });
 });
 
 //https://stackoverflow.com/a/6021027
