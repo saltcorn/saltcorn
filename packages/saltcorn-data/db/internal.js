@@ -88,6 +88,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
       )}`
     : typeof (v || {}).inSelect !== "undefined"
     ? subSelectWhere(is_sqlite, i)(k, v)
+    : typeof (v || {}).sql !== "undefined"
+    ? `${sqlsanitizeAllowDots(k)} ${v.sql}`
     : v === null
     ? `${sqlsanitizeAllowDots(k)} is null`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
@@ -107,6 +109,8 @@ const getVal = ([k, v]) =>
     ? v.lt
     : typeof (v || {}).gt !== "undefined"
     ? v.gt
+    : typeof (v || {}).sql !== "undefined"
+    ? null
     : v;
 
 const mkWhere = (whereObj, is_sqlite) => {
