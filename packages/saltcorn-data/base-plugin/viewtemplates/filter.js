@@ -65,7 +65,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     if (col.type === "DropDownFilter") {
       const field = fields.find((f) => f.name === col.field_name);
       if (field)
-        distinct_values[col.field_name] = await field.distinct_values();
+        distinct_values[col.field_name] = await field.distinct_values(
+          extra.req
+        );
       else if (col.field_name.includes(".")) {
         const kpath = col.field_name.split(".");
         if (kpath.length === 3) {
@@ -94,8 +96,14 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           style: "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
-        distinct_values[field_name].map(({ label, value }) =>
-          option({ value, selected: state[field_name] === value }, label)
+        distinct_values[field_name].map(({ label, value, jsvalue }) =>
+          option(
+            {
+              value,
+              selected: state[field_name] === or_if_undef(jsvalue, value),
+            },
+            label
+          )
         )
       );
     },
@@ -126,6 +134,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   };
   return renderLayout({ blockDispatch, layout, role });
 };
+
+const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",

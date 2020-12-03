@@ -120,7 +120,8 @@ class Field {
       this.options = [...new Set(allOpts)];
     }
   }
-  async distinct_values() {
+  async distinct_values(req) {
+    const __ = req && req.__ ? req.__ : (s) => s;
     if (
       this.type.name === "String" &&
       this.attributes &&
@@ -137,6 +138,13 @@ class Field {
       await this.fill_fkey_options();
       return this.options || [];
     }
+    if (this.type.name === "Bool") {
+      return [
+        { label: "", value: "" },
+        { label: __("True"), value: "on", jsvalue: true },
+        { label: __("False"), value: "off", jsvalue: false },
+      ];
+    }
     await this.fill_table();
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
@@ -144,7 +152,7 @@ class Field {
       } order by "${db.sqlsanitize(this.name)}"`
     );
     const dbOpts = rows.map((r) => ({
-      label: r[this.name],
+      label: `${r[this.name]}`,
       value: r[this.name],
     }));
     return [{ label: "", value: "" }, ...dbOpts];
