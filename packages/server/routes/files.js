@@ -173,7 +173,6 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let jsonResp = {};
-    console.log(req.files);
     if (!req.files && !req.files.file) {
       if (!req.xhr) req.flash("warning", req.__("No file found"));
       else jsonResp = { error: "No file found" };
