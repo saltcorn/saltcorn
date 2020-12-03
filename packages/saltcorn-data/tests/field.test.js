@@ -216,8 +216,8 @@ describe("Field.distinct_values", () => {
     const dvs = await fc.distinct_values();
     expect(dvs).toEqual([
       { label: "", value: "" },
-      { label: 6, value: 6 },
-      { label: 11, value: 11 },
+      { label: "6", value: 6 },
+      { label: "11", value: 11 },
     ]);
   });
   it("gives fkey values", async () => {
