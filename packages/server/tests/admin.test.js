@@ -277,3 +277,29 @@ describe("actions", () => {
       .expect(toRedirect("/actions/"));
   });
 });
+describe("clear all page", () => {
+  itShouldRedirectUnauthToLogin("/admin/clear-all");
+  it("show page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/admin/clear-all")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("EVERYTHING"));
+  });
+  it("post and clear", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/admin/clear-all")
+      .set("Cookie", loginCookie)
+      .send("tables=on")
+      .send("views=on")
+      .send("pages=on")
+      .send("files=on")
+      .send("users=on")
+      .send("config=on")
+      .send("plugins=on")
+      .expect(toRedirect("/auth/create_first_user"));
+  });
+});
