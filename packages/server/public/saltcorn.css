@@ -153,9 +153,3 @@ div[data-inline-edit-dest-url] .editicon {
 div[data-inline-edit-dest-url]:hover .editicon {
   display: inline;
 }
-
-div.explainer-box {
-  border: 1px solid #006600;
-  background-color: #b8ffb8;
-  padding: 10px;
-}

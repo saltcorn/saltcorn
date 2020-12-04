@@ -138,7 +138,7 @@ $(function () {
   $("[data-explainers]").each(function () {
     var id = $(this).attr("id") + "_explainer";
     if ($("#" + id).length === 0) {
-      $(this).after(`<div class="explainer-box my-2" id="${id}"></div>`);
+      $(this).after(`<div class="alert alert-info my-2" id="${id}"></div>`);
       setExplainer(this);
     }
   });
