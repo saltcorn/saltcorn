@@ -116,7 +116,6 @@ $(function () {
   $("[data-inline-edit-dest-url]").click(function () {
     var url = $(this).attr("data-inline-edit-dest-url");
     var current = $(this).children("span.current").html();
-    console.log(current);
     $(this).replaceWith(
       `<form method="post" action="${url}" >
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
@@ -124,6 +123,27 @@ $(function () {
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       </form>`
     );
+  });
+  function setExplainer(that) {
+    var id = $(that).attr("id") + "_explainer";
+
+    var explainers = JSON.parse(
+      decodeURIComponent($(that).attr("data-explainers"))
+    );
+    var currentVal = explainers[$(that).val()];
+    $("#" + id).html(`<strong>${$(that).val()}</strong>: ${currentVal}`);
+    if (currentVal) $("#" + id).show();
+    else $("#" + id).hide();
+  }
+  $("[data-explainers]").each(function () {
+    var id = $(this).attr("id") + "_explainer";
+    if ($("#" + id).length === 0) {
+      $(this).after(`<div class="explainer-box my-2" id="${id}"></div>`);
+      setExplainer(this);
+    }
+  });
+  $("[data-explainers]").change(function () {
+    setExplainer(this);
   });
 });
 
