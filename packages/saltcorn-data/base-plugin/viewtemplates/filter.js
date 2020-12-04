@@ -140,7 +140,7 @@ const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",
   description:
-    "Elements that limit the rows that are shown in other views on the same page",
+    "Elements that limit the rows shown in other views on the same page. Filter views do not show any rows on their own.",
   get_state_fields,
   configuration_workflow,
   run,
