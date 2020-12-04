@@ -157,6 +157,9 @@ router.get(
   })
 );
 
+const mapObjectValues = (o, f) =>
+  Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
+
 const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
@@ -179,6 +182,10 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
+        explainers: mapObjectValues(
+          getState().viewtemplates,
+          ({ description }) => description
+        ),
         disabled: isEdit,
       }),
       new Field({
