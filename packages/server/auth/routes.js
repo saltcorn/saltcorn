@@ -263,7 +263,7 @@ router.post(
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
         const { email, password } = form.values;
-        const u = await User.create({ email, password, role_id: 1, id: 1 });
+        const u = await User.create({ email, password, role_id: 1 });
         req.login(
           {
             email: u.email,

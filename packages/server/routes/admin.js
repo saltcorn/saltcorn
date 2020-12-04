@@ -344,6 +344,7 @@ router.post(
         if (f.name !== "email") await f.delete();
       }
       await db.deleteWhere("users");
+      await db.reset_sequence("users");
       res.redirect(`/auth/create_first_user`);
     } else {
       req.flash(
