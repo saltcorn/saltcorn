@@ -60,14 +60,17 @@ describe("crash log", () => {
   it("crashes on missing id", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    console.log(
-      "An error is printed below. This is expected as part of the test."
-    );
+    const oldConsoleError = console.error;
+    console.error = jest.fn();
+
     await request(app)
       .get("/crashlog/99")
       .set("Cookie", loginCookie)
       .expect(toInclude("squirrels", 500));
+    expect(console.error).toHaveBeenCalled();
+    console.error = oldConsoleError;
   });
+
   it("show crashlog list with errors", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -275,5 +278,31 @@ describe("actions", () => {
       .post("/actions/delete/1")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
+  });
+});
+describe("clear all page", () => {
+  itShouldRedirectUnauthToLogin("/admin/clear-all");
+  it("show page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/admin/clear-all")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("EVERYTHING"));
+  });
+  it("post and clear", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/admin/clear-all")
+      .set("Cookie", loginCookie)
+      .send("tables=on")
+      .send("views=on")
+      .send("pages=on")
+      .send("files=on")
+      .send("users=on")
+      .send("config=on")
+      .send("plugins=on")
+      .expect(toRedirect("/auth/create_first_user"));
   });
 });

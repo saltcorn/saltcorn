@@ -145,3 +145,11 @@ div.testrunoutput code {
 .mr-05 {
   margin-right: 0.125rem !important;
 }
+
+div[data-inline-edit-dest-url] .editicon {
+  display: none;
+}
+
+div[data-inline-edit-dest-url]:hover .editicon {
+  display: inline;
+}

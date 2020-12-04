@@ -30,7 +30,7 @@ router.get(
       res.redirect("/");
       return;
     }
-    if (view.default_render_page) {
+    if (view.default_render_page && !req.xhr) {
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         const contents = await db_page.run(req.query, { res, req });

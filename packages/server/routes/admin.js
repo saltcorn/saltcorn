@@ -2,12 +2,14 @@ const Router = require("express-promise-router");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
+const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 
-const { post_btn } = require("@saltcorn/markup");
+const { post_btn, renderForm } = require("@saltcorn/markup");
 const {
   div,
+  a,
   hr,
   form,
   input,
@@ -29,6 +31,7 @@ const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const { restore_backup } = require("../markup/admin.js");
 var packagejson = require("../package.json");
+const Form = require("@saltcorn/data/models/form");
 const router = new Router();
 module.exports = router;
 
@@ -49,12 +52,16 @@ router.get(
           title: req.__("Admin"),
           contents: div(
             div(
-              req.__("Restart server."),
-              post_btn("/admin/restart", req.__("Restart"), req.csrfToken(), {
-                ajax: true,
-                reload_delay: 4000,
-                spinner: true,
-              })
+              post_btn(
+                "/admin/restart",
+                req.__("Restart server"),
+                req.csrfToken(),
+                {
+                  ajax: true,
+                  reload_delay: 4000,
+                  spinner: true,
+                }
+              )
             ),
             hr(),
 
@@ -65,6 +72,14 @@ router.get(
               "<br/>",
               req.__("Restore"),
             ]),
+            hr(),
+            a(
+              { href: "/admin/clear-all", class: "btn btn-danger" },
+              i({ class: "fas fa-trash-alt" }),
+              " ",
+              req.__("Clear all"),
+              " &raquo;"
+            ),
             hr(),
             h4(req.__("About Saltcorn")),
             table(
@@ -124,7 +139,7 @@ router.post(
       req.flash("error", req.__("Not possible for tenant"));
       res.redirect("/admin");
     } else {
-      res.write("Starting upgrade\n");
+      res.write("Starting upgrade, please wait...\n");
       const child = spawn(
         "npm",
         ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
@@ -177,5 +192,172 @@ router.post(
     else req.flash("success", req.__("Successfully restored backup"));
     fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
+  })
+);
+
+const clearAllForm = (req) =>
+  new Form({
+    action: "/admin/clear-all",
+    labelCols: 0,
+    submitLabel: "Delete",
+    blurb: req.__(
+      "This will delete <strong>EVERYTHING</strong> in the selected categories"
+    ),
+    fields: [
+      {
+        type: "Bool",
+        label: req.__("Tables"),
+        name: "tables",
+        default: true,
+      },
+      {
+        type: "Bool",
+        label: req.__("Views"),
+        name: "views",
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "pages",
+        label: req.__("Pages"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "files",
+        label: req.__("Files"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "users",
+        label: req.__("Users"),
+        default: true,
+      },
+      {
+        name: "config",
+        type: "Bool",
+        label: req.__("Configuration"),
+        default: true,
+      },
+      ,
+      {
+        type: "Bool",
+        name: "plugins",
+        label: req.__("Plugins"),
+        default: true,
+      },
+    ],
+  });
+
+router.get(
+  "/clear-all",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(req.__(`Admin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Admin"), href: "/admin" },
+            { text: req.__("Clear all") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Clear all"),
+          contents: div(renderForm(clearAllForm(req), req.csrfToken())),
+        },
+      ],
+    });
+  })
+);
+router.post(
+  "/clear-all",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = clearAllForm(req);
+    form.validate(req.body);
+    //order: pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
+    if (form.values.pages) {
+      await db.deleteWhere("_sc_pages");
+    }
+    if (form.values.views) {
+      await db.deleteWhere("_sc_views");
+    }
+    //user fields
+    const users = await Table.findOne({ name: "users" });
+    const userfields = await users.getFields();
+    for (const f of userfields) {
+      if (f.is_fkey) {
+        if (f.reftable_name === "_sc_files" && form.values.files) {
+          await f.delete();
+        } else if (f.reftable_name !== "users" && form.values.tables) {
+          await f.delete();
+        }
+      }
+    }
+    if (form.values.tables) {
+      await db.deleteWhere("_sc_table_constraints");
+      await db.deleteWhere("_sc_triggers", {
+        table_id: { sql: "is not null" },
+      });
+      const tables = await Table.find();
+      for (const table of tables) {
+        const fields = await table.getFields();
+        for (const f of fields) {
+          if (f.is_fkey) {
+            await f.delete();
+          }
+        }
+      }
+      for (const table of tables) {
+        if (table.name !== "users") await table.delete();
+      }
+    }
+    if (form.values.files) {
+      const files = await File.find();
+      for (const file of files) {
+        await file.delete();
+      }
+    }
+    if (form.values.plugins) {
+      const ps = await Plugin.find();
+      for (const p of ps) {
+        if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
+      }
+      getState().refresh();
+    }
+    if (form.values.config) {
+      //config+crashes+nontable triggers
+      await db.deleteWhere("_sc_triggers");
+      await db.deleteWhere("_sc_errors");
+      await db.deleteWhere("_sc_config");
+      getState().refresh();
+    }
+    if (form.values.users) {
+      await db.deleteWhere("_sc_config");
+      for (const f of userfields) {
+        if (f.name !== "email") await f.delete();
+      }
+      await db.deleteWhere("users");
+      if (db.reset_sequence) await db.reset_sequence("users");
+      res.redirect(`/auth/create_first_user`);
+    } else {
+      req.flash(
+        "success",
+        req.__(
+          "Deleted all %s",
+          Object.entries(form.values)
+            .filter(([k, v]) => v)
+            .map(([k, v]) => k)
+            .join(", ")
+        )
+      );
+      res.redirect(`/admin`);
+    }
   })
 );

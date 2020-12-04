@@ -64,7 +64,14 @@ router.get(
       "Files",
       mkTable(
         [
-          { label: req.__("Filename"), key: "filename" },
+          {
+            label: req.__("Filename"),
+            key: (r) =>
+              div(
+                { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                r.filename
+              ),
+          },
           { label: req.__("Size (KiB)"), key: "size_kb" },
           { label: req.__("Media type"), key: (r) => r.mimetype },
           {
@@ -162,6 +169,18 @@ router.post(
         req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
       );
     else req.flash("success", req.__(`Minimum role updated`));
+
+    res.redirect("/files");
+  })
+);
+router.post(
+  "/setname/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const filename = req.body.value;
+    await File.update(+id, { filename });
 
     res.redirect("/files");
   })

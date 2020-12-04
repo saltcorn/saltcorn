@@ -38,6 +38,13 @@ describe("mkWhere", () => {
   it("should empty on null obj arg", () => {
     expect(mkWhere({})).toStrictEqual({ values: [], where: "" });
   });
+  it("should query sql", () => {
+    expect(mkWhere({ foo: { sql: "is bar" } })).toStrictEqual({
+      values: [],
+      where: "where foo is bar",
+    });
+  });
+
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
       values: [5],
