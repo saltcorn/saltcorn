@@ -139,6 +139,8 @@ const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",
+  description:
+    "Elements that limit the rows that are shown in other views on the same page",
   get_state_fields,
   configuration_workflow,
   run,

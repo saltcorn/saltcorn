@@ -316,6 +316,7 @@ const runPost = async (
 
 module.exports = {
   name: "Edit",
+  description: "Form for creating a new row or editing existing rows",
   configuration_workflow,
   run,
   runPost,

@@ -268,6 +268,7 @@ const run = async (
 
 module.exports = {
   name: "Feed",
+  description: "Show multiple rows based on repetition of an underlying view",
   configuration_workflow,
   run,
   get_state_fields,

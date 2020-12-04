@@ -348,6 +348,7 @@ const run_action = async (
 
 module.exports = {
   name: "Show",
+  description: "Show a single row, with flexible layout",
   get_state_fields,
   configuration_workflow,
   run,

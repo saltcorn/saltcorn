@@ -282,6 +282,7 @@ const run_action = async (
 
 module.exports = {
   name: "List",
+  description: "Display multiple rows in a grid",
   configuration_workflow,
   run,
   view_quantity: "Many",
