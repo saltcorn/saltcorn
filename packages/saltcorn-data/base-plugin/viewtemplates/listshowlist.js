@@ -207,6 +207,8 @@ const run = async (
 
 module.exports = {
   name: "ListShowList",
+  description:
+    "Combine an optional list view on the left with displays on the right of a single selected row, with views of related rows from different tables underneath",
   configuration_workflow,
   run,
   get_state_fields,

@@ -109,7 +109,13 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.class || ""
       }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
-      )}">${opts}</select>`;
+      )}"${
+        hdr.attributes && hdr.attributes.explainers
+          ? ` data-explainers="${encodeURIComponent(
+              JSON.stringify(hdr.attributes.explainers)
+            )}"`
+          : ""
+      }>${opts}</select>`;
     case "textarea":
       return `<textarea class="form-control ${validClass} ${
         hdr.class || ""

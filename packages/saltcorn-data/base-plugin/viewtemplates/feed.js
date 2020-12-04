@@ -268,6 +268,8 @@ const run = async (
 
 module.exports = {
   name: "Feed",
+  description:
+    "Show multiple rows by displaying a chosen view for each row, stacked or in columns",
   configuration_workflow,
   run,
   get_state_fields,
