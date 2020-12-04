@@ -110,8 +110,10 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
         name
       )}"${
-        hdr.explainers
-          ? ` data-explainers="${encodeURIComponent(hdr.explainers)}"`
+        hdr.attributes && hdr.attributes.explainers
+          ? ` data-explainers="${encodeURIComponent(
+              JSON.stringify(hdr.attributes.explainers)
+            )}"`
           : ""
       }>${opts}</select>`;
     case "textarea":

@@ -182,10 +182,12 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
-        explainers: mapObjectValues(
-          getState().viewtemplates,
-          ({ description }) => description
-        ),
+        attributes: {
+          explainers: mapObjectValues(
+            getState().viewtemplates,
+            ({ description }) => description
+          ),
+        },
         disabled: isEdit,
       }),
       new Field({
