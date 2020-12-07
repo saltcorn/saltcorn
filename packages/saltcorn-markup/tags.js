@@ -48,7 +48,18 @@ const domReady = (js) =>
 
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
-
+const escapeHTML = (str) =>
+  str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      }[tag])
+  );
 const nbsp = "&nbsp;";
 module.exports = {
   a: mkTag("a"),
@@ -94,4 +105,5 @@ module.exports = {
   text_attr,
   nbsp,
   mkTag,
+  escapeHTML,
 };
