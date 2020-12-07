@@ -49,6 +49,7 @@ const domReady = (js) =>
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
 const escapeHTML = (str) =>
+  str &&
   str.replace(
     /[&<>'"]/g,
     (tag) =>
