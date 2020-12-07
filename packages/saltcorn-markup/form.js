@@ -307,7 +307,7 @@ const renderForm = (form, csrfToken) => {
     Object.entries(form.values).forEach(([k, v]) => {
       if (typeof v === "undefined") return;
       if (k[0] !== "_") collapsedSummary += ` ${text(k)}:${text_attr(v)} `;
-      if (k === "_fts") collapsedSummary += ` ${v} `;
+      if (k === "_fts") collapsedSummary += ` ${text(v)} `;
     });
     return div(
       { class: "dropdown" },
