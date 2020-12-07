@@ -4,8 +4,8 @@ const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const vm = require("vm");
 const readKey = (v) => {
-  const parsed = parseInt(v);
-  return isNaN(parsed) ? null : parsed;
+  const parsed = +v;
+  return !isNaN(parsed) ? parsed : v ? { error: "Unable to read key" } : null;
 };
 
 class Field {
