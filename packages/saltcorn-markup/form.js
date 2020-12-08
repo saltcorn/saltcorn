@@ -9,7 +9,6 @@ const {
   a,
   h5,
   span,
-  escapeHTML,
 } = require("./tags");
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
@@ -308,7 +307,7 @@ const renderForm = (form, csrfToken) => {
     Object.entries(form.values).forEach(([k, v]) => {
       if (typeof v === "undefined") return;
       if (k[0] !== "_") collapsedSummary += ` ${text(k)}:${text_attr(v)} `;
-      if (k === "_fts") collapsedSummary += ` ${escapeHTML(text(v))} `;
+      if (k === "_fts") collapsedSummary += ` ${text_attr(v)} `;
     });
     return div(
       { class: "dropdown" },

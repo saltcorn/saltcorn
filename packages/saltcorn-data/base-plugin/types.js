@@ -12,7 +12,6 @@ const {
   textarea,
   span,
   text_attr,
-  escapeHTML,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 
