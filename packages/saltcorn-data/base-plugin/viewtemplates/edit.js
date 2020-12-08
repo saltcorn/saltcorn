@@ -60,9 +60,8 @@ const configuration_workflow = (req) =>
           );
           var formFields = [];
           omitted_fields.forEach((f) => {
-            if (f.presets) {
-              f.required = false;
-            }
+            f.required = false;
+
             formFields.push(f);
             if (f.presets) {
               formFields.push(

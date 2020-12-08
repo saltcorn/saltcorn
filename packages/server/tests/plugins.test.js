@@ -211,7 +211,16 @@ describe("Pack Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/"));
   });
+  it("should validate user entry on todo", async () => {
+    //db.set_sql_logging();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/todoedit")
+      .send("description=ZAP&done=on&user=2%2F2&project=&status=Ideas")
 
+      .expect(200)
+      .expect(toInclude("Unable to read key"));
+  });
   it("should uninstall named", async () => {
     const loginCookie = await getAdminLoginCookie();
 

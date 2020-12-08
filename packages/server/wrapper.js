@@ -151,6 +151,8 @@ const get_brand = (state) => {
   };
 };
 module.exports = function (req, res, next) {
+  const role = (req.user || {}).role_id || 10;
+
   res.sendAuthWrap = function (title, form, authLinks, ...html) {
     const state = getState();
 
@@ -167,6 +169,7 @@ module.exports = function (req, res, next) {
           alerts: getFlashes(req),
           headers: get_headers(req),
           csrfToken: req.csrfToken(),
+          role,
         })
       );
     } else {
@@ -196,6 +199,7 @@ module.exports = function (req, res, next) {
           alerts: getFlashes(req),
           body,
           headers: get_headers(req),
+          role,
         })
       );
     }
@@ -222,6 +226,7 @@ module.exports = function (req, res, next) {
         alerts: getFlashes(req),
         body: html.length === 1 ? html[0] : html.join(""),
         headers: get_headers(req, opts.description, pageHeaders),
+        role,
       })
     );
   };

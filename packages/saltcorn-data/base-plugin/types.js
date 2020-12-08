@@ -63,9 +63,9 @@ const string = {
       ? is.str
       : is.one_of(options.map((o) => o.name)),
   fieldviews: {
-    as_text: { isEdit: false, run: (s) => text(s) },
-    as_link: { isEdit: false, run: (s) => a({ href: text(s) }, text(s)) },
-    as_header: { isEdit: false, run: (s) => h3(text(s)) },
+    as_text: { isEdit: false, run: (s) => text_attr(s) },
+    as_link: { isEdit: false, run: (s) => a({ href: text(s) }, text_attr(s)) },
+    as_header: { isEdit: false, run: (s) => h3(text_attr(s)) },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required) =>
