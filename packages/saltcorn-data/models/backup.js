@@ -255,9 +255,9 @@ const restore = contract(
     );
 
     const can_restore = await can_install_pack(pack);
-    if (can_restore.error || can_restore.warning) {
+    if (can_restore.error) {
       return `Cannot restore backup, clashing entities: 
-      ${can_restore.error || ""} ${can_restore.warning || ""}
+      ${can_restore.error || ""}
       Delete these entities or restore to a pristine instance.
       `;
     }
