@@ -158,9 +158,10 @@ const blockDispatch = {
       )
     ),
 };
-const renderBody = (title, body) =>
+const renderBody = (title, body, role) =>
   renderLayout({
     blockDispatch,
+    role,
     layout:
       typeof body === "string" ? { type: "card", title, contents: body } : body,
   });
@@ -250,7 +251,16 @@ const authWrap = ({
     </div>`
   );
 
-const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
+const wrap = ({
+  title,
+  menu,
+  brand,
+  alerts,
+  currentUrl,
+  body,
+  headers,
+  role,
+}) =>
   wrapIt(
     headers,
     title,
@@ -262,7 +272,7 @@ const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
         <div id="content">
           <div class="container-fluid">
             ${alerts.map((a) => alert(a.type, a.msg)).join("")}
-            ${renderBody(title, body)}
+            ${renderBody(title, body, role)}
           </div>
         </div>
       </div>
