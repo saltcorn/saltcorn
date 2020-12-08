@@ -109,7 +109,16 @@ const can_install_pack = contract(
       return {
         error: "Tables already exist: " + matchTables.join(),
       };
-
+    pack.tables.forEach((t) => {
+      if (t.name === "users")
+        t.fields.forEach((f) => {
+          if (f.required) {
+            warns.push(
+              `User field '${f.name}' is required in pack, but there are existing users. You must set a value for each user and then change the field to be required. Got to <a href="/list/users">users table data</a>.`
+            );
+          }
+        });
+    });
     matchViews.forEach((v) => {
       warns.push(`Clashing view ${v}.`);
     });
@@ -192,8 +201,14 @@ const install_pack = contract(
       const exfields = await table.getFields();
       for (const field of tableSpec.fields) {
         const exfield = exfields.find((f) => f.name === field.name);
-        if (!((table.name === "users" && field.name === "email") || exfield))
-          await Field.create({ table, ...field }, bare_tables);
+        if (!((table.name === "users" && field.name === "email") || exfield)) {
+          if (table.name === "users" && field.required)
+            await Field.create(
+              { table, ...field, required: false },
+              bare_tables
+            );
+          else await Field.create({ table, ...field }, bare_tables);
+        }
       }
       for (const trigger of tableSpec.triggers || [])
         await Trigger.create({ table, ...trigger });
