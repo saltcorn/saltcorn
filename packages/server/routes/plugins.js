@@ -354,7 +354,7 @@ router.get(
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
-    flow.action = `/plugins/configure/${plugin.name}`;
+    flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
 
     res.sendWrap(
@@ -372,7 +372,7 @@ router.post(
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
-    flow.action = `/plugins/configure/${plugin.name}`;
+    flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(req.body);
     if (wfres.renderForm)
       res.sendWrap(
