@@ -85,7 +85,7 @@ const getApp = async (opts = {}) => {
         secret: db.connectObj.session_secret || is.str.generate(),
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "lax" }, // 30 days
       })
     );
   }
