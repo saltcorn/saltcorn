@@ -134,16 +134,14 @@ const getApp = async (opts = {}) => {
     )
   );
   const cfg_base_url = await getConfig("base_url");
-  const twitterParams = {
-    consumerKey: await getConfig("twitterKey", "nokey"),
-    consumerSecret: await getConfig("twitterSecret", "nosecret"),
-    callbackURL: `${cfg_base_url}/auth/callback/twitter`,
-  };
-  console.log(twitterParams);
   passport.use(
     "twitter",
     new TwitterStrategy(
-      twitterParams,
+      {
+        consumerKey: await getConfig("twitterKey", "nokey"),
+        consumerSecret: await getConfig("twitterSecret", "nosecret"),
+        callbackURL: `${cfg_base_url}auth/callback/twitter`,
+      },
       function (token, tokenSecret, profile, cb) {
         console.log(profile);
         User.findOrCreate({ twitterId: profile.id }, function (err, user) {

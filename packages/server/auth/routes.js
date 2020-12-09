@@ -465,7 +465,7 @@ router.post(
 );
 router.get("/login-with/twitter", passport.authenticate("twitter"));
 
-router.post(
+router.get(
   "/callback/twitter",
   setTenant,
   passport.authenticate("twitter", { failureRedirect: "/auth/login" }),
