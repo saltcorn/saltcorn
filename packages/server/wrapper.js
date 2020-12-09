@@ -44,14 +44,21 @@ const get_menu = (req) => {
     ? [
         {
           label: req.__("User"),
+          icon: "far fa-user",
           isUser: true,
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
             {
               label: req.__("User Settings"),
+              icon: "fas fa-user-cog",
+
               link: "/auth/settings",
             },
-            { link: "/auth/logout", label: req.__("Logout") },
+            {
+              link: "/auth/logout",
+              icon: "fas fa-sign-out-alt",
+              label: req.__("Logout"),
+            },
           ],
         },
       ]
@@ -68,25 +75,50 @@ const get_menu = (req) => {
     db.is_it_multi_tenant() && schema === db.connectObj.default_schema;
   const isAdmin = role === 1;
   const adminItems = [
-    { link: "/table", label: req.__("Tables") },
-    { link: "/viewedit", label: req.__("Views") },
-    { link: "/pageedit", label: req.__("Pages") },
-    { link: "/files", label: req.__("Files") },
+    { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
+    { link: "/viewedit", icon: "far fa-eye", label: req.__("Views") },
+    { link: "/pageedit", icon: "far fa-file", label: req.__("Pages") },
+    { link: "/files", icon: "far fa-images", label: req.__("Files") },
     {
       label: req.__("Settings"),
+      icon: "fas fa-wrench",
       subitems: [
-        { link: "/plugins", label: req.__("Plugins") },
-        { link: "/actions", label: req.__("Actions") },
-        { link: "/menu", label: req.__("Menu") },
-        { link: "/useradmin", label: req.__("Users and roles") },
-        { link: "/search/config", label: req.__("Search") },
-        { link: "/config", label: req.__("Configuration") },
-        { link: "/admin", label: req.__("Admin") },
+        { link: "/plugins", icon: "fas fa-plug", label: req.__("Plugins") },
+        { link: "/actions", icon: "fas fa-running", label: req.__("Actions") },
+        { link: "/menu", icon: "fas fa-bars", label: req.__("Menu") },
+        {
+          link: "/useradmin",
+          icon: "fas fa-users-cog",
+          label: req.__("Users and roles"),
+        },
+        {
+          link: "/search/config",
+          icon: "fas fa-search",
+          label: req.__("Search"),
+        },
+        {
+          link: "/config",
+          icon: "fas fa-cogs",
+          label: req.__("Configuration"),
+        },
+        { link: "/admin", icon: "fas fa-tools", label: req.__("Admin") },
         ...(tenant_list
-          ? [{ link: "/tenant/list", label: req.__("Tenants") }]
+          ? [
+              {
+                link: "/tenant/list",
+                icon: "fas fa-boxes",
+                label: req.__("Tenants"),
+              },
+            ]
           : []),
         ...(schema === db.connectObj.default_schema
-          ? [{ link: "/crashlog", label: req.__("Crash log") }]
+          ? [
+              {
+                link: "/crashlog",
+                icon: "fas fa-car-crash",
+                label: req.__("Crash log"),
+              },
+            ]
           : []),
       ],
     },
