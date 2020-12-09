@@ -463,6 +463,17 @@ router.post(
     res.redirect("/");
   })
 );
+router.get("/login-with/twitter", passport.authenticate("twitter"));
+
+router.post(
+  "/callback/twitter",
+  setTenant,
+  passport.authenticate("twitter", { failureRedirect: "/auth/login" }),
+  error_catcher(async (req, res) => {
+    req.flash("success", req.__("Welcome, %s!", req.body.email));
+    res.redirect("/");
+  })
+);
 
 const changPwForm = (req) =>
   new Form({
