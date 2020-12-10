@@ -173,7 +173,7 @@ const renderAuthLinks = (authLinks) => {
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
   if (authLinks.signup)
     links.push(link(authLinks.signup, "Create an account!"));
-  const meth_links = authLinks.methods
+  const meth_links = (authLinks.methods || [])
     .map(({ url, icon, label }) =>
       a(
         { href: url, class: "btn btn-secondary btn-user btn-block" },
