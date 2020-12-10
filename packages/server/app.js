@@ -144,9 +144,9 @@ const getApp = async (opts = {}) => {
       },
       function (token, tokenSecret, profile, cb) {
         console.log(profile);
-        User.findOrCreateByAttribute("twitterId", profile.id).then((u) =>
-          cb(null, u)
-        );
+        User.findOrCreateByAttribute("twitterId", profile.id, {
+          email: "",
+        }).then((u) => cb(null, u));
       }
     )
   );
