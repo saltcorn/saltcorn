@@ -463,7 +463,15 @@ router.post(
     res.redirect("/");
   })
 );
-router.get("/login-with/twitter", passport.authenticate("twitter"));
+router.get(
+  "/login-with/twitter",
+  passport.authenticate("twitter"),
+  error_catcher(async (req, res) => {
+    console.log("user", req.user);
+    //req.flash("success", req.__("Welcome, %s!", req.body.email));
+    res.redirect("/");
+  })
+);
 
 router.get(
   "/callback/twitter",

@@ -143,7 +143,7 @@ const getApp = async (opts = {}) => {
         callbackURL: `${cfg_base_url}auth/callback/twitter`,
       },
       function (token, tokenSecret, profile, cb) {
-        console.log(profile);
+        //console.log(profile);
         User.findOrCreateByAttribute("twitterId", profile.id, {
           email: "",
         }).then((u) => cb(null, u));
