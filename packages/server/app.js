@@ -113,14 +113,7 @@ const getApp = async (opts = {}) => {
         loginAttempt();
         async function loginAttempt() {
           const mu = await User.authenticate({ email, password });
-          if (mu)
-            return done(null, {
-              email: mu.email,
-              id: mu.id,
-              role_id: mu.role_id,
-              language: mu.language,
-              tenant: db.getTenantSchema(),
-            });
+          if (mu) return done(null, mu.session_object);
           else {
             return done(
               null,
