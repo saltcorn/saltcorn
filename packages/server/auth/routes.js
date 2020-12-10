@@ -616,28 +616,38 @@ router.post(
     form.validate(req.body);
     if (form.hasErrors || !req.user || !req.user.id) {
       res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
-    } else {
-      const u = await User.findOne({ id: req.user.id });
-      await u.update({ email: form.values.email });
-      u.email = form.values.email;
-      req.login(
-        {
-          email: u.email,
-          id: u.id,
-          role_id: u.role_id,
-          tenant: db.getTenantSchema(),
-        },
-        function (err) {
-          if (!err) {
-            req.flash("success", req.__("Welcome, %s!", u.email));
-            res.redirect("/");
-          } else {
-            req.flash("danger", err);
-            res.redirect("/");
-          }
-        }
-      );
+      return;
     }
+    const existing = await User.findOne({ email: form.values.email });
+    if (existing) {
+      form.hasErrors = true;
+      form.errors.email = req.__(
+        "A user with this email address already exists"
+      );
+      res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
+      return;
+    }
+
+    const u = await User.findOne({ id: req.user.id });
+    await u.update({ email: form.values.email });
+    u.email = form.values.email;
+    req.login(
+      {
+        email: u.email,
+        id: u.id,
+        role_id: u.role_id,
+        tenant: db.getTenantSchema(),
+      },
+      function (err) {
+        if (!err) {
+          req.flash("success", req.__("Welcome, %s!", u.email));
+          res.redirect("/");
+        } else {
+          req.flash("danger", err);
+          res.redirect("/");
+        }
+      }
+    );
   })
 );
 
