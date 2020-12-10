@@ -499,7 +499,7 @@ router.get(
             req.flash("success", req.__("Welcome, %s!", req.body.email));
             res.redirect("/");
           }
-          next();
+          //next();
         }
       );
     }
