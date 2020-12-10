@@ -600,7 +600,6 @@ const setEmailForm = (req) =>
 router.get(
   "/set-email",
   setTenant,
-  loggedIn,
   error_catcher(async (req, res) => {
     res.sendWrap(
       req.__("Set Email"),
@@ -612,11 +611,10 @@ router.get(
 router.post(
   "/set-email",
   setTenant,
-  loggedIn,
   error_catcher(async (req, res) => {
     const form = setEmailForm(req);
     form.validate(req.body);
-    if (form.hasErrors) {
+    if (form.hasErrors || !req.user || !req.user.id) {
       res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
     } else {
       const u = await User.findOne({ id: req.user.id });
