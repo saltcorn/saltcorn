@@ -496,7 +496,7 @@ router.get(
           if (!req.user.email) {
             res.redirect("/auth/set-email");
           } else {
-            req.flash("success", req.__("Welcome, %s!", req.body.email));
+            req.flash("success", req.__("Welcome, %s!", req.user.email));
             res.redirect("/");
           }
           //next();
