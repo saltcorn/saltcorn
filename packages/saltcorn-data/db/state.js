@@ -34,6 +34,7 @@ class State {
     this.configs = {};
     this.fileviews = {};
     this.actions = {};
+    this.auth_methods = {};
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
@@ -114,6 +115,9 @@ class State {
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
       this.actions[k] = v;
     });
+    Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
+      this.auth_methods[k] = v;
+    });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
       const type = this.types[v.type];
       if (type) {
@@ -151,6 +155,7 @@ class State {
     this.configs = {};
     this.fileviews = {};
     this.actions = {};
+    this.auth_methods = {};
     this.favicon = null;
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];

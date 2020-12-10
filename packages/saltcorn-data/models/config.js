@@ -36,8 +36,6 @@ const configTypes = {
     type: "Date",
     label: "Available plugins fetched",
   },
-  twitterKey: { type: "String", label: "Twitter key", default: "" },
-  twitterSecret: { type: "String", label: "Twitter secret", default: "" },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },

@@ -463,18 +463,44 @@ router.post(
     res.redirect("/");
   })
 );
-router.get("/login-with/twitter", passport.authenticate("twitter"));
+router.get(
+  "/login-with/:method",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    if (auth) {
+      passport.authenticate(method)(req, res, next);
+    } else {
+      req.flash(
+        "danger",
+        req.__("Unknown authentication method %ss", text(method))
+      );
+      res.redirect("/");
+    }
+  })
+);
 
 router.get(
-  "/callback/twitter",
+  "/callback/:method",
   setTenant,
-  passport.authenticate("twitter", { failureRedirect: "/auth/login" }),
-  error_catcher(async (req, res) => {
-    if (!req.user.email) {
-      res.redirect("/auth/set-email");
-    } else {
-      req.flash("success", req.__("Welcome, %s!", req.body.email));
-      res.redirect("/");
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    if (auth) {
+      passport.authenticate(method, { failureRedirect: "/auth/login" })(
+        req,
+        res,
+        () => {
+          if (!req.user.email) {
+            res.redirect("/auth/set-email");
+          } else {
+            req.flash("success", req.__("Welcome, %s!", req.body.email));
+            res.redirect("/");
+          }
+          next();
+        }
+      );
     }
   })
 );

@@ -5,7 +5,6 @@ const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
-const TwitterStrategy = require("passport-twitter").Strategy;
 const BearerStrategy = require("passport-http-bearer");
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
@@ -133,23 +132,9 @@ const getApp = async (opts = {}) => {
       }
     )
   );
-  const cfg_base_url = await getConfig("base_url");
-  passport.use(
-    "twitter",
-    new TwitterStrategy(
-      {
-        consumerKey: await getConfig("twitterKey", "nokey"),
-        consumerSecret: await getConfig("twitterSecret", "nosecret"),
-        callbackURL: `${cfg_base_url}auth/callback/twitter`,
-      },
-      function (token, tokenSecret, profile, cb) {
-        //console.log(profile);
-        User.findOrCreateByAttribute("twitterId", profile.id, {
-          email: "",
-        }).then((u) => cb(null, u));
-      }
-    )
-  );
+  for (const [nm, auth] of Object.entries(getState().auth_methods)) {
+    passport.use(nm, auth.strategy);
+  }
   passport.use(
     "api-bearer",
     new BearerStrategy(function (token, done) {
