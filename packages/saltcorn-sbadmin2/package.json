@@ -7,7 +7,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@saltcorn/data": "^0.3.0",
+    "@saltcorn/data": "^0.2.0",
     "@saltcorn/markup": "^0.3.0"
   },
   "author": "Tom Nielsen",
