@@ -69,14 +69,14 @@ class User {
     return u;
   }
 
-  get session_object(){
+  get session_object() {
     return {
       email: this.email,
       id: this.id,
       role_id: this.role_id,
       language: this.language,
       tenant: db.getTenantSchema(),
-    });
+    };
   }
   static async authenticate(uo) {
     const urow = await User.findOne({ email: uo.email });
