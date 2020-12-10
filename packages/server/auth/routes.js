@@ -106,14 +106,21 @@ const resetForm = (body, req) => {
   return form;
 };
 const getAuthLinks = (current) => {
-  const links = {};
+  const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
-
+  Object.entries(getState().auth_methods).forEach(([name, auth]) => {
+    links.methods.push({
+      icon: auth.icon,
+      label: auth.label,
+      name,
+      url: `/auth/login-with/${name}`,
+    });
+  });
   return links;
 };
 

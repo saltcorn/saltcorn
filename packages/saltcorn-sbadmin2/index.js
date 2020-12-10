@@ -168,14 +168,28 @@ const renderBody = (title, body, role) =>
 
 const renderAuthLinks = (authLinks) => {
   var links = [];
+  var methods = [];
   if (authLinks.login)
     links.push(link(authLinks.login, "Already have an account? Login!"));
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
   if (authLinks.signup)
     links.push(link(authLinks.signup, "Create an account!"));
-  if (links.length === 0) return "";
+  const meth_links = authLinks.methods
+    .map(({ url, icon, label }) =>
+      a(
+        { href: url, class: "btn btn-secondary btn-user btn-block" },
+        icon || "",
+        `&nbsp;Login with ${label}`
+      )
+    )
+    .join("");
+  if (links.length === 0) return hr() + meth_links;
   else
-    return hr() + links.map((l) => div({ class: "text-center" }, l)).join("");
+    return (
+      hr() +
+      (meth_links ? meth_links + hr() : "") +
+      links.map((l) => div({ class: "text-center" }, l)).join("")
+    );
 };
 
 const formModify = (form) => {
