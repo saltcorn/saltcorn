@@ -44,6 +44,12 @@ describe("mkWhere", () => {
       where: "where foo is bar",
     });
   });
+  it("should query json", () => {
+    expect(mkWhere({ foo: { json: ["bar", 5] } })).toStrictEqual({
+      values: [5],
+      where: "where foo->>'bar'=$1",
+    });
+  });
 
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
