@@ -168,7 +168,6 @@ const renderBody = (title, body, role) =>
 
 const renderAuthLinks = (authLinks) => {
   var links = [];
-  var methods = [];
   if (authLinks.login)
     links.push(link(authLinks.login, "Already have an account? Login!"));
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
