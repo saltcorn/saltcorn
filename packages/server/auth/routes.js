@@ -478,7 +478,7 @@ router.get(
     const { method } = req.params;
     const auth = getState().auth_methods[method];
     if (auth) {
-      passport.authenticate(method)(req, res, next);
+      passport.authenticate(method, auth.parameters)(req, res, next);
     } else {
       req.flash(
         "danger",
