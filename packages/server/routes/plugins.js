@@ -385,6 +385,16 @@ router.post(
       plugin.configuration = wfres;
       await plugin.upsert();
       await load_plugins.loadPlugin(plugin);
+      const instore = await Plugin.store_plugins_available();
+      const store_plugin = instore.find((p) => p.name === plugin.name);
+      if (store_plugin && store_plugin.has_auth) {
+        req.flash(
+          "warning",
+          req.__(
+            `Restart required for changes to take effect. Restart server from the <a href="/admin">Admin page</a>.`
+          )
+        );
+      }
       res.redirect("/plugins");
     }
   })

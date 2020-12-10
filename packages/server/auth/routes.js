@@ -482,7 +482,7 @@ router.get(
     } else {
       req.flash(
         "danger",
-        req.__("Unknown authentication method %ss", text(method))
+        req.__("Unknown authentication method %s", text(method))
       );
       res.redirect("/");
     }
