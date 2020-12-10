@@ -75,6 +75,7 @@ const get_store_items = async () => {
     description: plugin.description,
     documentation_link: plugin.documentation_link,
     has_theme: plugin.has_theme,
+    has_auth: plugin.has_auth,
   }));
 
   const local_logins = installed_plugins
@@ -128,6 +129,7 @@ const store_item_html = (req) => (item) => ({
       item.plugin && badge(req.__("Plugin")),
       item.pack && badge(req.__("Pack")),
       item.has_theme && badge(req.__("Theme")),
+      item.has_auth && badge(req.__("Authentication")),
       item.github && badge("GitHub"),
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed"))

@@ -66,6 +66,7 @@ const requirePlugin = async (plugin, force) => {
 };
 
 const loadAllPlugins = async () => {
+  await getState().refresh();
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     await loadPlugin(plugin);

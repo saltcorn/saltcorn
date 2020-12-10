@@ -499,5 +499,7 @@
 	"Clear all": "Clear all",
 	"This will delete <strong>EVERYTHING</strong> in the selected categories": "This will delete <strong>EVERYTHING</strong> in the selected categories",
 	"Deleted all %s": "Deleted all %s",
-	"Restart server": "Restart server"
+	"Restart server": "Restart server",
+	"Edit Plugin": "Edit Plugin",
+	"Unknown authentication method %ss": "Unknown authentication method %ss"
 }

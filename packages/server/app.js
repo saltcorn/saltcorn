@@ -84,7 +84,7 @@ const getApp = async (opts = {}) => {
         secret: db.connectObj.session_secret || is.str.generate(),
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
       })
     );
   }
@@ -113,14 +113,7 @@ const getApp = async (opts = {}) => {
         loginAttempt();
         async function loginAttempt() {
           const mu = await User.authenticate({ email, password });
-          if (mu)
-            return done(null, {
-              email: mu.email,
-              id: mu.id,
-              role_id: mu.role_id,
-              language: mu.language,
-              tenant: db.getTenantSchema(),
-            });
+          if (mu) return done(null, mu.session_object);
           else {
             return done(
               null,
@@ -132,6 +125,9 @@ const getApp = async (opts = {}) => {
       }
     )
   );
+  for (const [nm, auth] of Object.entries(getState().auth_methods)) {
+    passport.use(nm, auth.strategy);
+  }
   passport.use(
     "api-bearer",
     new BearerStrategy(function (token, done) {

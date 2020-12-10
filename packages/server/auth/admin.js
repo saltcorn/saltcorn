@@ -348,7 +348,7 @@ router.post(
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {
-      if (rnd_password) password = generate_password();
+      if (rnd_password) password = User.generate_password();
       const u = await User.create({ email, password, role_id: +role_id });
       const pwflash =
         rnd_password && !send_pwreset_email
@@ -403,11 +403,6 @@ router.post(
     res.redirect(`/useradmin/`);
   })
 );
-const generate_password = () => {
-  const candidate = is.str.generate().split(" ").join("");
-  if (candidate.length < 10) return generate_password();
-  else return candidate;
-};
 
 router.post(
   "/set-random-password/:id",
@@ -416,7 +411,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    const newpw = generate_password();
+    const newpw = User.generate_password();
     await u.changePasswordTo(newpw);
     await u.destroy_sessions();
     req.flash(

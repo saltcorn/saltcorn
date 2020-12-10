@@ -67,7 +67,7 @@ module.exports = {
   img: mkTag("img"),
   thead: mkTag("thead"),
   tbody: mkTag("tbody"),
-  small: mkTag("small"),
+  small: mkTag("small", true),
   pre: mkTag("pre"),
   code: mkTag("code"),
   header: mkTag("header"),

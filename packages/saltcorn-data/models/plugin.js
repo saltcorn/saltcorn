@@ -15,6 +15,7 @@ class Plugin {
     this.description = o.description;
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
+    this.has_auth = o.has_auth;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
@@ -78,12 +79,17 @@ class Plugin {
       "available_plugins_fetched_at",
       false
     );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
     if (!stored || !stored_at || is_stale(stored_at)) {
       const from_api = await Plugin.store_plugins_available_from_store();
       await getState().setConfig("available_plugins", from_api);
       await getState().setConfig("available_plugins_fetched_at", new Date());
-      return from_api;
-    } else return stored.map((p) => new Plugin(p));
+      return from_api.filter((p) => isRoot || !p.has_auth);
+    } else
+      return stored
+        .map((p) => new Plugin(p))
+        .filter((p) => isRoot || !p.has_auth);
   }
   static async store_plugins_available_from_store() {
     //console.log("fetch plugins");

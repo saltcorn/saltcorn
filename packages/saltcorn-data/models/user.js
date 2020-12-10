@@ -9,6 +9,7 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.language = o.language;
+    this._attributes = o._attributes || {};
     this.api_token = o.api_token;
     this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
@@ -36,6 +37,16 @@ class User {
     if (expireToken) upd.reset_password_token = null;
     await db.update("users", upd, this.id);
   }
+
+  static async findOrCreateByAttribute(k, v, uo = {}) {
+    const u = await User.findOne({ _attributes: { json: [k, v] } });
+    if (u) return u;
+    else {
+      const extra = {};
+      if (!uo.password) extra.password = User.generate_password();
+      return await User.create({ ...uo, ...extra, _attributes: { [k]: v } });
+    }
+  }
   static async create(uo) {
     const { email, password, role_id, ...rest } = uo;
     const u = new User({ email, password, role_id });
@@ -58,6 +69,15 @@ class User {
     return u;
   }
 
+  get session_object() {
+    return {
+      email: this.email,
+      id: this.id,
+      role_id: this.role_id,
+      language: this.language,
+      tenant: db.getTenantSchema(),
+    };
+  }
   static async authenticate(uo) {
     const urow = await User.findOne({ email: uo.email });
     if (!urow) return false;
@@ -153,7 +173,11 @@ class User {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
   }
-
+  static generate_password() {
+    const candidate = is.str.generate().split(" ").join("");
+    if (candidate.length < 10) return User.generate_password();
+    else return candidate;
+  }
   async destroy_sessions() {
     if (!db.isSQLite) {
       const schema = db.getTenantSchema();
@@ -175,6 +199,7 @@ User.contract = {
     password: is.str,
     disabled: is.bool,
     language: is.maybe(is.str),
+    _attributes: is.maybe(is.obj({})),
     role_id: is.posint,
     reset_password_token: is.maybe(
       is.and(
