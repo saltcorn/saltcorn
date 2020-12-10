@@ -15,6 +15,7 @@ class Plugin {
     this.description = o.description;
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
+    this.has_auth = o.has_auth;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
