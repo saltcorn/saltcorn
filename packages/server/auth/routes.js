@@ -463,25 +463,19 @@ router.post(
     res.redirect("/");
   })
 );
-router.get(
-  "/login-with/twitter",
-  passport.authenticate("twitter"),
-  error_catcher(async (req, res) => {
-    console.log("user lwt", req.user);
-    //req.flash("success", req.__("Welcome, %s!", req.body.email));
-    res.redirect("/");
-  })
-);
+router.get("/login-with/twitter", passport.authenticate("twitter"));
 
 router.get(
   "/callback/twitter",
   setTenant,
   passport.authenticate("twitter", { failureRedirect: "/auth/login" }),
   error_catcher(async (req, res) => {
-    console.log("user cb", req.user);
-
-    req.flash("success", req.__("Welcome, %s!", req.body.email));
-    res.redirect("/");
+    if (!req.user.email) {
+      res.redirect("/auth/set-email");
+    } else {
+      req.flash("success", req.__("Welcome, %s!", req.body.email));
+      res.redirect("/");
+    }
   })
 );
 
@@ -591,6 +585,61 @@ router.get(
       req.__("User settings"),
       userSettings(req, changPwForm(req), user)
     );
+  })
+);
+
+const setEmailForm = (req) =>
+  new Form({
+    action: "/auth/set-email",
+    blurb: req.__("Please enter your email address"),
+    fields: [
+      { name: "email", label: req.__("Email"), type: "String", required: true },
+    ],
+  });
+
+router.get(
+  "/set-email",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      req.__("Set Email"),
+      renderForm(setEmailForm(req), req.csrfToken())
+    );
+  })
+);
+
+router.post(
+  "/set-email",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const form = setEmailForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
+    } else {
+      const u = await User.findOne({ id: req.user.id });
+      await u.update({ email: form.values.email });
+      u.email = form.values.email;
+      req.login(
+        {
+          email: u.email,
+          id: u.id,
+          role_id: u.role_id,
+          tenant: db.getTenantSchema(),
+        },
+        function (err) {
+          if (!err) {
+            req.flash("success", req.__("Welcome, %s!", u.email));
+            res.redirect("/");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/");
+          }
+        }
+      );
+    }
   })
 );
 
