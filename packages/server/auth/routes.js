@@ -467,7 +467,7 @@ router.get(
   "/login-with/twitter",
   passport.authenticate("twitter"),
   error_catcher(async (req, res) => {
-    console.log("user", req.user);
+    console.log("user lwt", req.user);
     //req.flash("success", req.__("Welcome, %s!", req.body.email));
     res.redirect("/");
   })
@@ -478,6 +478,8 @@ router.get(
   setTenant,
   passport.authenticate("twitter", { failureRedirect: "/auth/login" }),
   error_catcher(async (req, res) => {
+    console.log("user cb", req.user);
+
     req.flash("success", req.__("Welcome, %s!", req.body.email));
     res.redirect("/");
   })
