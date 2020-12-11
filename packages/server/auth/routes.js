@@ -407,9 +407,6 @@ router.post(
     }
     try {
       const uobj = { ...req.user, ...form.values };
-      console.log("uobj", uobj);
-      console.log("req.body", req.body);
-      console.log("req.user", req.user);
       const u = await User.create(uobj);
       signup_login_with_user(u, req, res);
     } catch (e) {
@@ -585,7 +582,7 @@ router.get(
         req,
         res,
         () => {
-          console.log("req.user in cb", req.user);
+          if (!req.user) return;
           if (!req.user.id) {
             res.redirect("/auth/signup_final_ext");
           }
