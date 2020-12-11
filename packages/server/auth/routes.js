@@ -580,6 +580,7 @@ router.get(
         req,
         res,
         () => {
+          console.log("req.user in cb", req.user);
           if (!req.user.id) {
             res.redirect("/auth/signup_final_ext");
           }

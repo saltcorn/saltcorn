@@ -48,6 +48,8 @@ class User {
       if (new_user_form) {
         // cannot create user, return pseudo-user
         const pseudoUser = { ...uo, _attributes: { [k]: v } };
+        console.log("pseudouser", pseudoUser);
+
         return { ...pseudoUser, session_object: pseudoUser };
       } else {
         const extra = {};
