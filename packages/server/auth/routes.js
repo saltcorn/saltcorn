@@ -323,12 +323,14 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   });
   await form.fill_fkey_options();
   if (askEmail) {
-    form.fields.push({
-      name: "email",
-      label: req.__("Email"),
-      type: "String",
-      required: true,
-    });
+    form.fields.push(
+      new Field({
+        name: "email",
+        label: req.__("Email"),
+        type: "String",
+        required: true,
+      })
+    );
     form.layout = {
       above: [
         {
