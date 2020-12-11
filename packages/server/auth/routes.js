@@ -401,8 +401,9 @@ router.post(
       return;
     }
     try {
-      const uobject;
-      const u = await User.create({ ...form.values, ...req.user });
+      const uobj = { ...form.values, ...req.user };
+      console.log(uobj);
+      const u = await User.create(uobj);
       signup_login_with_user(u, req, res);
     } catch (e) {
       const table = await Table.findOne({ name: "users" });
