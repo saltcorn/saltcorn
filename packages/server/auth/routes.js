@@ -342,6 +342,9 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
           fieldview: "edit",
           field_name: "email",
         },
+        {
+          type: "line_break",
+        },
         form.layout,
       ],
     };
