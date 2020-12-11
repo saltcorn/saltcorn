@@ -42,9 +42,18 @@ class User {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
     if (u) return u;
     else {
-      const extra = {};
-      if (!uo.password) extra.password = User.generate_password();
-      return await User.create({ ...uo, ...extra, _attributes: { [k]: v } });
+      const { getState } = require("../db/state");
+
+      const new_user_form = getState().getConfig("new_user_form");
+      if (new_user_form) {
+        // cannot create user, return pseudo-user
+        const pseudoUser = { ...uo, _attributes: { [k]: v } };
+        return { ...pseudoUser, session_object: pseudoUser };
+      } else {
+        const extra = {};
+        if (!uo.password) extra.password = User.generate_password();
+        return await User.create({ ...uo, ...extra, _attributes: { [k]: v } });
+      }
     }
   }
   static async create(uo) {

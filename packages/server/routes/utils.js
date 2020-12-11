@@ -4,7 +4,7 @@ const { getState, getTenant } = require("@saltcorn/data/db/state");
 const { input } = require("@saltcorn/markup/tags");
 
 function loggedIn(req, res, next) {
-  if (req.user && req.user.tenant === db.getTenantSchema()) {
+  if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
     next();
   } else {
     req.flash("danger", req.__("Must be logged in first"));

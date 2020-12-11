@@ -105,7 +105,7 @@ const resetForm = (body, req) => {
   form.values.token = body && body.token;
   return form;
 };
-const getAuthLinks = (current) => {
+const getAuthLinks = (current, noMethods) => {
   const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
@@ -113,14 +113,15 @@ const getAuthLinks = (current) => {
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
-  Object.entries(getState().auth_methods).forEach(([name, auth]) => {
-    links.methods.push({
-      icon: auth.icon,
-      label: auth.label,
-      name,
-      url: `/auth/login-with/${name}`,
+  if (!noMethods)
+    Object.entries(getState().auth_methods).forEach(([name, auth]) => {
+      links.methods.push({
+        icon: auth.icon,
+        label: auth.label,
+        name,
+        url: `/auth/login-with/${name}`,
+      });
     });
-  });
   return links;
 };
 
@@ -296,7 +297,7 @@ router.post(
   })
 );
 
-const getNewUserForm = async (new_user_view_name, req) => {
+const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
   const table = await Table.findOne({ name: "users" });
   const fields = await table.getFields();
@@ -321,7 +322,35 @@ const getNewUserForm = async (new_user_view_name, req) => {
     submitLabel: req.__("Sign up"),
   });
   await form.fill_fkey_options();
-  form.hidden("email");
+  if (askEmail) {
+    form.fields.push(
+      new Field({
+        name: "email",
+        label: req.__("Email"),
+        type: "String",
+        required: true,
+      })
+    );
+    form.layout = {
+      above: [
+        {
+          type: "blank",
+          contents: "Email",
+        },
+        {
+          type: "field",
+          fieldview: "edit",
+          field_name: "email",
+        },
+        {
+          type: "line_break",
+        },
+        form.layout,
+      ],
+    };
+  } else {
+    form.hidden("email");
+  }
   form.hidden("password");
   return form;
 };
@@ -343,6 +372,62 @@ const signup_login_with_user = (u, req, res) =>
       }
     }
   );
+
+router.get(
+  "/signup_final_ext",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const new_user_form = getState().getConfig("new_user_form");
+    if (!req.user || req.user.id || !new_user_form) {
+      req.flash("danger", "This is the wrong place");
+      res.redirect("/auth/login");
+      return;
+    }
+    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
+    form.values.email = req.user.email;
+    res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+  })
+);
+
+router.post(
+  "/signup_final_ext",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const new_user_form = getState().getConfig("new_user_form");
+    if (!req.user || req.user.id || !new_user_form) {
+      req.flash("danger", "This is the wrong place");
+      res.redirect("/auth/login");
+      return;
+    }
+    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
+
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      return;
+    }
+    try {
+      const uobj = { ...req.user, ...form.values };
+      const u = await User.create(uobj);
+      signup_login_with_user(u, req, res);
+    } catch (e) {
+      const table = await Table.findOne({ name: "users" });
+      const fields = await table.getFields();
+      form.hasErrors = true;
+      const unique_field_error = fields.find(
+        (f) =>
+          e.message ===
+          `duplicate key value violates unique constraint "users_${f.name}_unique"`
+      );
+      if (unique_field_error)
+        form.errors[unique_field_error.name] = req.__("Already in use");
+      else form.errors._form = e.message;
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+    }
+  })
+);
 router.post(
   "/signup_final",
   setTenant,
@@ -352,7 +437,7 @@ router.post(
       const form = await getNewUserForm(new_user_form, req);
       form.validate(req.body);
       if (form.hasErrors) {
-        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         try {
           const u = await User.create(form.values);
@@ -369,7 +454,7 @@ router.post(
           if (unique_field_error)
             form.errors[unique_field_error.name] = req.__("Already in use");
           else form.errors._form = e.message;
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         }
       }
     } else {
@@ -410,7 +495,7 @@ router.post(
           const form = await getNewUserForm(new_user_form, req);
           form.values.email = email;
           form.values.password = password;
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         } else {
           const u = await User.create({ email, password });
           signup_login_with_user(u, req, res);
@@ -482,7 +567,7 @@ router.get(
     } else {
       req.flash(
         "danger",
-        req.__("Unknown authentication method %ss", text(method))
+        req.__("Unknown authentication method %s", text(method))
       );
       res.redirect("/");
     }
@@ -500,6 +585,10 @@ router.get(
         req,
         res,
         () => {
+          if (!req.user) return;
+          if (!req.user.id) {
+            res.redirect("/auth/signup_final_ext");
+          }
           if (!req.user.email) {
             res.redirect("/auth/set-email");
           } else {
