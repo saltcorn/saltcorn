@@ -42,6 +42,8 @@ class User {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
     if (u) return u;
     else {
+      const { getState } = require("../db/state");
+
       const new_user_form = getState().getConfig("new_user_form");
       if (new_user_form) {
         // cannot create user, return pseudo-user
