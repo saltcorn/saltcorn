@@ -40,7 +40,6 @@ const get_menu = (req) => {
   const allow_signup = state.getConfig("allow_signup");
   const login_menu = state.getConfig("login_menu");
   const extra_menu = get_extra_menu(role);
-  console.log(req.user);
   const authItems = isAuth
     ? [
         {
