@@ -40,6 +40,7 @@ const get_menu = (req) => {
   const allow_signup = state.getConfig("allow_signup");
   const login_menu = state.getConfig("login_menu");
   const extra_menu = get_extra_menu(role);
+  console.log(req.user);
   const authItems = isAuth
     ? [
         {
@@ -48,7 +49,6 @@ const get_menu = (req) => {
           isUser: true,
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
-            { label: small(req.user.role) },
             {
               label: req.__("User Settings"),
               icon: "fas fa-user-cog",
