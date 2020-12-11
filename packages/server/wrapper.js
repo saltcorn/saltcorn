@@ -48,6 +48,7 @@ const get_menu = (req) => {
           isUser: true,
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
+            { label: small(req.user.role) },
             {
               label: req.__("User Settings"),
               icon: "fas fa-user-cog",
