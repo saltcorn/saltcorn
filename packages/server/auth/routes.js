@@ -379,6 +379,7 @@ router.get(
       return;
     }
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
     form.values.email = req.user.email;
     res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
   })
@@ -395,6 +396,8 @@ router.post(
       return;
     }
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
+
     form.validate(req.body);
     if (form.hasErrors) {
       res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
@@ -581,7 +584,7 @@ router.get(
         res,
         () => {
           console.log("req.user in cb", req.user);
-          if (!req.user.id) {
+          if (!!req.user.id) {
             res.redirect("/auth/signup_final_ext");
           }
           if (!req.user.email) {
