@@ -401,8 +401,10 @@ router.post(
       return;
     }
     try {
-      const uobj = { ...form.values, ...req.user };
-      console.log(uobj);
+      const uobj = { ...req.user, ...form.values };
+      console.log("uobj", uobj);
+      console.log("req.body", req.body);
+      console.log("req.user", req.user);
       const u = await User.create(uobj);
       signup_login_with_user(u, req, res);
     } catch (e) {
