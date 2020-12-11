@@ -105,7 +105,7 @@ const resetForm = (body, req) => {
   form.values.token = body && body.token;
   return form;
 };
-const getAuthLinks = (current) => {
+const getAuthLinks = (current, noMethods) => {
   const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
@@ -113,14 +113,15 @@ const getAuthLinks = (current) => {
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
-  Object.entries(getState().auth_methods).forEach(([name, auth]) => {
-    links.methods.push({
-      icon: auth.icon,
-      label: auth.label,
-      name,
-      url: `/auth/login-with/${name}`,
+  if (!noMethods)
+    Object.entries(getState().auth_methods).forEach(([name, auth]) => {
+      links.methods.push({
+        icon: auth.icon,
+        label: auth.label,
+        name,
+        url: `/auth/login-with/${name}`,
+      });
     });
-  });
   return links;
 };
 
@@ -331,6 +332,10 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
     form.layout = {
       above: [
         {
+          type: "blank",
+          contents: "Email",
+        },
+        {
           type: "field",
           fieldview: "edit",
           field_name: "email",
@@ -375,7 +380,7 @@ router.get(
     }
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
     form.values.email = req.user.email;
-    res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+    res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
   })
 );
 
@@ -392,10 +397,11 @@ router.post(
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
     form.validate(req.body);
     if (form.hasErrors) {
-      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       return;
     }
     try {
+      const uobject;
       const u = await User.create({ ...form.values, ...req.user });
       signup_login_with_user(u, req, res);
     } catch (e) {
@@ -410,9 +416,8 @@ router.post(
       if (unique_field_error)
         form.errors[unique_field_error.name] = req.__("Already in use");
       else form.errors._form = e.message;
-      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
     }
-    res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
   })
 );
 router.post(
@@ -424,7 +429,7 @@ router.post(
       const form = await getNewUserForm(new_user_form, req);
       form.validate(req.body);
       if (form.hasErrors) {
-        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         try {
           const u = await User.create(form.values);
@@ -441,7 +446,7 @@ router.post(
           if (unique_field_error)
             form.errors[unique_field_error.name] = req.__("Already in use");
           else form.errors._form = e.message;
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         }
       }
     } else {
@@ -482,7 +487,7 @@ router.post(
           const form = await getNewUserForm(new_user_form, req);
           form.values.email = email;
           form.values.password = password;
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup"));
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         } else {
           const u = await User.create({ email, password });
           signup_login_with_user(u, req, res);
