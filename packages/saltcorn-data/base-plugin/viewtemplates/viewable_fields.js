@@ -65,7 +65,23 @@ const make_link = contract(
     };
   }
 );
+const parse_view_select = (s) => {
+  const colonSplit = s.split(":");
+  if (colonSplit.length === 1) return { type: "Own", viewname: s };
+  const [type, vrest] = colonSplit;
+  switch (type) {
+    case "Own":
+      return { type, viewname: vrest };
+    case "ChildList":
+      const [viewnm, tbl, fld] = vrest.split(".");
+      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+    case "ParentShow":
+      const [pviewnm, ptbl, pfld] = vrest.split(".");
+      return { type, viewname: pviewnm, table_name: tbl, field_name: fld };
+  }
+};
 
+//todo: use above to simplify code
 const view_linker = contract(
   is.fun(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
@@ -299,5 +315,6 @@ module.exports = {
   get_viewable_fields,
   action_url,
   view_linker,
+  parse_view_select,
   splitUniques,
 };
