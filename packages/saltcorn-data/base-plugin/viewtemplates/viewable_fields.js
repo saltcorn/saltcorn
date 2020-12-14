@@ -77,7 +77,7 @@ const parse_view_select = (s) => {
       return { type, viewname: viewnm, table_name: tbl, field_name: fld };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
-      return { type, viewname: pviewnm, table_name: tbl, field_name: fld };
+      return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
   }
 };
 
