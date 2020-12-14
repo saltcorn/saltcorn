@@ -32,6 +32,7 @@ export const ViewSettings = () => {
     state: node.data.props.state,
   }));
   const options = useContext(optionsCtx);
+  const views = options.views;
   //console.log(options)
   return (
     <div>
@@ -42,9 +43,9 @@ export const ViewSettings = () => {
           className="w-100"
           onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
-          {options.views.map((f, ix) => (
+          {views.map((f, ix) => (
             <option key={ix} value={f.name}>
-              {f.name}
+              {f.label || f.name}
             </option>
           ))}
         </select>

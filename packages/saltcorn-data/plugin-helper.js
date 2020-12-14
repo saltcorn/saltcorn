@@ -67,10 +67,12 @@ const get_link_view_opts = contract(
   ),
   async (table, viewname) => {
     const own_link_views = await View.find_possible_links_to_table(table.id);
-    const link_view_opts = own_link_views.map((v) => ({
-      label: v.name,
-      name: `Own:${v.name}`,
-    }));
+    const link_view_opts = own_link_views
+      .filter((v) => v.name !== viewname)
+      .map((v) => ({
+        label: v.name,
+        name: `Own:${v.name}`,
+      }));
     const child_views = await get_child_views(table, viewname);
     for (const { relation, related_table, views } of child_views) {
       for (const view of views) {

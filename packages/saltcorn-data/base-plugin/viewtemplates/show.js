@@ -21,7 +21,11 @@ const {
   calcfldViewOptions,
   getActionConfigFields,
 } = require("../../plugin-helper");
-const { action_url, view_linker } = require("./viewable_fields");
+const {
+  action_url,
+  view_linker,
+  parse_view_select,
+} = require("./viewable_fields");
 const db = require("../../db");
 const { asyncMap } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
@@ -79,12 +83,7 @@ const configuration_workflow = (req) =>
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
           });
-          const views = await View.find_table_views_where(
-            context.table_id,
-            ({ state_fields, viewtemplate, viewrow }) =>
-              viewrow.name !== context.viewname &&
-              state_fields.some((sf) => sf.name === "id")
-          );
+          const views = link_view_opts;
           const images = await File.find({ mime_super: "image" });
           return {
             fields,
@@ -151,9 +150,12 @@ const renderRows = async (
   var views = {};
   const getView = async (nm) => {
     if (views[nm]) return views[nm];
-    const view = await View.findOne({ name: nm });
+    const view_select = parse_view_select(nm);
+    const view = await View.findOne({ name: view_select.viewname });
     if (!view) return false;
-    view.table = await Table.findOne({ id: view.table_id });
+    if (view.table_id === table.id) view.table = table;
+    else view.table = await Table.findOne({ id: view.table_id });
+    view.view_select = view_select;
     views[nm] = view;
     return view;
   };
@@ -163,7 +165,10 @@ const renderRows = async (
       const view = await getView(segment.view);
       if (!view)
         segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
-      else if (view.viewtemplateObj.renderRows) {
+      else if (
+        view.viewtemplateObj.renderRows &&
+        view.view_select.type === "Own"
+      ) {
         segment.contents = (
           await view.viewtemplateObj.renderRows(
             view.table,
@@ -174,7 +179,19 @@ const renderRows = async (
           )
         )[0];
       } else {
-        segment.contents = await view.run({ id: row.id }, extra);
+        let state;
+        switch (view.view_select.type) {
+          case "Own":
+            state = { id: row.id };
+            break;
+          case "ChildList":
+            state = { [view.view_select.field_name]: row.id };
+            break;
+          case "ParentShow":
+            state = { id: row[view.view_select.field_name] };
+            break;
+        }
+        segment.contents = await view.run(state, extra);
       }
     });
     return render(row, fields, layout, viewname, table, role, extra.req);
