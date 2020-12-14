@@ -116,7 +116,11 @@ File.contract = {
     findOne: is.fun(is.obj(), is.promise(is.class("File"))),
     create: is.fun(is.obj(), is.promise(is.class("File"))),
     from_req_files: is.fun(
-      [is.or(is.obj(), is.array(is.obj())), is.posint, is.maybe(is.posint)],
+      [
+        is.or(is.obj(), is.array(is.obj())),
+        is.or(is.posint, is.eq(null)),
+        is.maybe(is.posint),
+      ],
       is.promise(is.or(is.class("File"), is.array(is.class("File"))))
     ),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
