@@ -98,7 +98,7 @@ File.contract = {
     uploaded_at: is.class("Date"),
     size_kb: is.posint,
     id: is.maybe(is.posint),
-    user_id: is.posint,
+    user_id: is.maybe(is.posint),
     min_role_read: is.posint,
   },
   methods: {
@@ -118,7 +118,7 @@ File.contract = {
     from_req_files: is.fun(
       [
         is.or(is.obj(), is.array(is.obj())),
-        is.or(is.posint, is.eq(null)),
+        is.maybe(is.posint),
         is.maybe(is.posint),
       ],
       is.promise(is.or(is.class("File"), is.array(is.class("File"))))
