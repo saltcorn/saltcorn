@@ -44,7 +44,10 @@ module.exports = router;
 const loginForm = (req, isCreating) => {
   const postAuthMethods = Object.entries(getState().auth_methods)
     .filter(([k, v]) => v.postUsernamePassword)
-    .map(([k, v]) => k);
+    .map(([k, v]) => v);
+  const user_sublabel = postAuthMethods
+    .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
+    .join(", ");
   return new Form({
     class: "login",
     fields: [
@@ -52,6 +55,7 @@ const loginForm = (req, isCreating) => {
         label: req.__("E-mail"),
         name: "email",
         input_type: "text",
+        sublabel: user_sublabel || undefined,
         validator: (s) => s.length < 128,
       }),
       new Field({
@@ -588,9 +592,8 @@ router.post(
     const auth = getState().auth_methods[method];
     console.log(method, auth);
     if (auth) {
-      passport.authenticate(method, auth.parameters)(req, res, (...args) => {
-        console.log("inside", args);
-        next(...args);
+      passport.authenticate(method, auth.parameters)(req, res, () => {
+        res.redirect("/");
       });
     } else {
       req.flash(
