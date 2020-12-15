@@ -41,8 +41,12 @@ const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
-const loginForm = (req, isCreating) =>
-  new Form({
+const loginForm = (req, isCreating) => {
+  const postAuthMethods = Object.entries(getState().auth_methods)
+    .filter(([k, v]) => v.postUsernamePassword)
+    .map(([k, v]) => k);
+  return new Form({
+    class: "login",
     fields: [
       new Field({
         label: req.__("E-mail"),
@@ -62,7 +66,7 @@ const loginForm = (req, isCreating) =>
     action: "/auth/login",
     submitLabel: req.__("Login"),
   });
-
+};
 const forgotForm = (req) =>
   new Form({
     blurb: req.__(
@@ -115,11 +119,14 @@ const getAuthLinks = (current, noMethods) => {
     links.forgot = "/auth/forgot";
   if (!noMethods)
     Object.entries(getState().auth_methods).forEach(([name, auth]) => {
+      const url = auth.postUsernamePassword
+        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}').submit();`
+        : `/auth/login-with/${name}`;
       links.methods.push({
         icon: auth.icon,
         label: auth.label,
         name,
-        url: `/auth/login-with/${name}`,
+        url,
       });
     });
   return links;
@@ -564,6 +571,27 @@ router.get(
     const auth = getState().auth_methods[method];
     if (auth) {
       passport.authenticate(method, auth.parameters)(req, res, next);
+    } else {
+      req.flash(
+        "danger",
+        req.__("Unknown authentication method %s", text(method))
+      );
+      res.redirect("/");
+    }
+  })
+);
+router.post(
+  "/login-with/:method",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    console.log(method, auth);
+    if (auth) {
+      passport.authenticate(method, auth.parameters)(req, res, (...args) => {
+        console.log("inside", args);
+        next(...args);
+      });
     } else {
       req.flash(
         "danger",
