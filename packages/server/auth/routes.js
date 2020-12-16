@@ -592,9 +592,11 @@ router.post(
     const auth = getState().auth_methods[method];
     console.log(method, auth);
     if (auth) {
-      passport.authenticate(method, auth.parameters)(req, res, () => {
-        res.redirect("/");
-      });
+      passport.authenticate(method, auth.parameters)(
+        req,
+        res,
+        loginCallback(req, res)
+      );
     } else {
       req.flash(
         "danger",
@@ -604,6 +606,19 @@ router.post(
     }
   })
 );
+
+const loginCallback = (req, res) => () => {
+  if (!req.user) return;
+  if (!req.user.id) {
+    res.redirect("/auth/signup_final_ext");
+  }
+  if (!req.user.email) {
+    res.redirect("/auth/set-email");
+  } else {
+    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    res.redirect("/");
+  }
+};
 
 router.get(
   "/callback/:method",
@@ -615,19 +630,7 @@ router.get(
       passport.authenticate(method, { failureRedirect: "/auth/login" })(
         req,
         res,
-        () => {
-          if (!req.user) return;
-          if (!req.user.id) {
-            res.redirect("/auth/signup_final_ext");
-          }
-          if (!req.user.email) {
-            res.redirect("/auth/set-email");
-          } else {
-            req.flash("success", req.__("Welcome, %s!", req.user.email));
-            res.redirect("/");
-          }
-          //next();
-        }
+        loginCallback(req, res)
       );
     }
   })
