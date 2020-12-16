@@ -216,9 +216,12 @@ const ViewLinkElem = ({ connectors, options }) => (
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
     label="ViewLink"
+    disable={options.link_view_opts.length === 0}
   >
     <ViewLink
-      name={options.link_view_opts[0].name}
+      name={
+        options.link_view_opts.length > 0 ? options.link_view_opts[0].name : ""
+      }
       block={false}
       minRole={10}
       label={""}
