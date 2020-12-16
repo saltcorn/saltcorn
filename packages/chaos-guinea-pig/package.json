@@ -12,7 +12,7 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
     "contractis": "^0.0.15-alpha.0",
-    "jest": "^25.5.4",
+    "jest": "^26.0.0",
     "seedrandom": "^3.0.5",
     "stack-trace": "^0.0.10",
     "superagent": "^5.2.2",
