@@ -7,8 +7,9 @@ class Crash {
     this.id = o.id;
     this.stack = o.stack;
     this.message = o.message;
-    this.occur_at =
-      typeof o.occur_at === "string" ? new Date(o.occur_at) : o.occur_at;
+    this.occur_at = ["string", "number"].includes(typeof o.occur_at)
+      ? new Date(o.occur_at)
+      : o.occur_at;
     this.tenant = o.tenant;
     this.user_id = o.user_id;
     this.body = o.body;

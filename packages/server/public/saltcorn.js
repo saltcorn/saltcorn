@@ -8,8 +8,8 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
-function sortby(k) {
-  set_state_fields({ _sortby: k });
+function sortby(k, desc) {
+  set_state_fields({ _sortby: k, _sortdesc: desc ? "on" : { unset: true } });
 }
 function gopage(n, pagesize, extra = {}) {
   set_state_fields({ ...extra, _page: n, _pagesize: pagesize });

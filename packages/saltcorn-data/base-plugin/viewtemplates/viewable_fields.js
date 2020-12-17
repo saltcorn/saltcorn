@@ -1,5 +1,5 @@
 const { post_btn, link } = require("@saltcorn/markup");
-const { text, a } = require("@saltcorn/markup/tags");
+const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
@@ -256,9 +256,7 @@ const get_viewable_fields = contract(
             f = new Field({ name: "id", label: "id", type: "Integer" });
           return (
             f && {
-              label: column.header_label
-                ? text(column.header_label)
-                : text(f.label),
+              label: headerLabelForName(column, f, req),
               key:
                 column.fieldview && f.type === "File"
                   ? (row) =>
@@ -277,14 +275,34 @@ const get_viewable_fields = contract(
                     ? (row) => f.type.showAs(row[f.name])
                     : (row) => text(row[f.name])
                   : f.listKey,
-              sortlink: `javascript:sortby('${text(f.name)}')`,
+              sortlink: sortlinkForName(f.name, req),
             }
           );
         }
       })
       .filter((v) => !!v)
 );
-
+const sortlinkForName = (fname, req) => {
+  const { _sortby, _sortdesc } = req.query || {};
+  const desc =
+    typeof _sortdesc == "undefined"
+      ? _sortby === fname
+      : _sortdesc
+      ? "false"
+      : "true";
+  return `javascript:sortby('${text(fname)}', ${desc})`;
+};
+const headerLabelForName = (column, f, req) => {
+  const label = column.header_label ? text(column.header_label) : text(f.label);
+  const { _sortby, _sortdesc } = req.query || {};
+  let arrow =
+    _sortby !== f.name
+      ? ""
+      : _sortdesc
+      ? i({ class: "fas fa-caret-down" })
+      : i({ class: "fas fa-caret-up" });
+  return label + arrow;
+};
 const splitUniques = contract(
   is.fun(
     [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
