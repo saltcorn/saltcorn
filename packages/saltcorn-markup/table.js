@@ -16,9 +16,7 @@ const {
 } = require("./tags");
 const { pagination } = require("./helpers");
 const headerCell = (hdr) =>
-  hdr.sortlink
-    ? th(a({ href: hdr.sortlink }, text(hdr.label)))
-    : th(text(hdr.label));
+  hdr.sortlink ? th(a({ href: hdr.sortlink }, hdr.label)) : th(hdr.label);
 
 const mkTable = contract(
   is.fun(
