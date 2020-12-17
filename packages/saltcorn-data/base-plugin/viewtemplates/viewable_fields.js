@@ -277,13 +277,23 @@ const get_viewable_fields = contract(
                     ? (row) => f.type.showAs(row[f.name])
                     : (row) => text(row[f.name])
                   : f.listKey,
-              sortlink: `javascript:sortby('${text(f.name)}')`,
+              sortlink: sortlinkForName(f.name, req),
             }
           );
         }
       })
       .filter((v) => !!v)
 );
+const sortlinkForName = (fname, req) => {
+  const { _sortby, _sortdesc } = req.query || {};
+  const desc =
+    typeof _sortdesc == "undefined"
+      ? _sortby === fname
+      : _sortdesc
+      ? "false"
+      : "true";
+  return `javascript:sortby('${text(fname)}', ${desc})`;
+};
 
 const splitUniques = contract(
   is.fun(
