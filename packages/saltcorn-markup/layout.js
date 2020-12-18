@@ -151,7 +151,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         div(
           {
             class: [
-              `text-${hAlign}`,
+              hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "middle" &&
                 hAlign === "center" &&
@@ -196,9 +196,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         segment.besides.map((t, ixb) =>
           div(
             {
-              class: `col-sm-${
-                segment.widths ? segment.widths[ixb] : defwidth
-              } text-${segment.aligns ? segment.aligns[ixb] : ""}`,
+              class: `col-${segment.widths ? segment.widths[ixb] : defwidth}${
+                segment.aligns ? " text-" + segment.aligns[ixb] : ""
+              }`,
             },
             go(t, false, ixb)
           )

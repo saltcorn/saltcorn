@@ -131,6 +131,7 @@ const field_picker_fields = contract(
           showIf: {
             ".action_name": name,
             ".coltype": "Action",
+            ...(field.showIf || {}),
           },
         });
       }

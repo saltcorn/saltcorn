@@ -231,6 +231,7 @@ const remove_from_menu = contract(
     await getState().setConfig("menu_items", new_menu);
   }
 );
+
 module.exports = {
   getConfig,
   getAllConfig,
