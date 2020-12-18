@@ -502,5 +502,6 @@
 	"Restart server": "Restart server",
 	"Edit Plugin": "Edit Plugin",
 	"Unknown authentication method %ss": "Unknown authentication method %ss",
-	"Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>.": "Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>."
+	"Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>.": "Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>.",
+	"Email with password reset link sent": "Email with password reset link sent"
 }

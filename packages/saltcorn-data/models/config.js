@@ -234,6 +234,8 @@ const remove_from_menu = contract(
 );
 
 const getMailTransport = () => {
+  const { getState } = require("../db/state");
+
   const port = getState().getConfig("smtp_port");
   const secure = getState().getConfig("smtp_secure", port === 465);
   return nodemailer.createTransport({
