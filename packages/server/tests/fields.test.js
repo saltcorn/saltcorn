@@ -13,7 +13,6 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-const { encodeXText } = require("nodemailer/lib/shared");
 
 afterAll(db.close);
 
