@@ -4,7 +4,10 @@ const Table = require("../models/table");
 const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
-const { getMailTransport } = require("../models/email");
+const {
+  getMailTransport,
+  transformBootstrapEmail,
+} = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
@@ -119,7 +122,9 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const html = await view.run({ id: row.id }, mockReqRes);
+      const htmlBs = await view.run({ id: row.id }, mockReqRes);
+      const html = await transformBootstrapEmail(htmlBs);
+      console.log(htmlBs);
       const email = {
         from: getState().getConfig("email_from"),
         to: to_addr,

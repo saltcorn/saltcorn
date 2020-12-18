@@ -1,5 +1,9 @@
 const nodemailer = require("nodemailer");
 const { getState } = require("../db/state");
+const BootstrapEmail = require("bootstrap-email");
+const tmp = require("tmp-promise");
+const fs = require("fs").promises;
+const { div } = require("@saltcorn/markup/tags");
 
 const getMailTransport = () => {
   const port = getState().getConfig("smtp_port");
@@ -14,6 +18,18 @@ const getMailTransport = () => {
     },
   });
 };
+
+const transformBootstrapEmail = async (bsHtml) => {
+  const filename = await tmp.tmpName();
+  await fs.writeFile(filename, div({ class: "container" }, bsHtml));
+
+  const template = new BootstrapEmail(filename);
+  const email = template.compile();
+  await fs.unlink(filename);
+  return email;
+};
+
 module.exports = {
   getMailTransport,
+  transformBootstrapEmail,
 };

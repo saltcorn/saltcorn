@@ -15,6 +15,7 @@
     "adm-zip": "^0.4.16",
     "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
+    "bootstrap-email": "^1.1.1",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.0.15-alpha.0",
     "csv-stringify": "^5.5.0",
