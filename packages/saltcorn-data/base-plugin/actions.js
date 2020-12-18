@@ -5,6 +5,7 @@ const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const { getMailTransport } = require("../models/config");
+const { mockReqRes } = require("../tests/mocks");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -76,7 +77,7 @@ module.exports = {
           label: "Fixed address",
           type: "String",
           required: true,
-          showIf: { ".to_email": "Field" },
+          showIf: { ".to_email": "Fixed" },
         },
         {
           name: "subject",
@@ -118,17 +119,15 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const resp = await view.run({ id: row.id }, {});
-      let html;
-      if (typeof resp === "string") html = resp;
-      else {
-      }
-      await getMailTransport().sendMail({
+      const html = await view.run({ id: row.id }, mockReqRes);
+      const email = {
         from: getState().getConfig("email_from"),
         to: to_addr,
         subject,
-        html: "",
-      });
+        html,
+      };
+      //console.log(email);
+      await getMailTransport().sendMail(email);
     },
   },
   insert_joined_row: {
