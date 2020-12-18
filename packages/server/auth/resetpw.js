@@ -1,5 +1,5 @@
 const { getState } = require("@saltcorn/data/db/state");
-const { getMailTransport } = require("@saltcorn/data/models/config");
+const { getMailTransport } = require("@saltcorn/data/models/email");
 const { get_base_url } = require("../routes/utils");
 
 const generate_email = (link, user, req) => ({

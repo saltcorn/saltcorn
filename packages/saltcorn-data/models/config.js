@@ -1,6 +1,5 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-const nodemailer = require("nodemailer");
 
 const configTypes = {
   site_name: {
@@ -233,21 +232,6 @@ const remove_from_menu = contract(
   }
 );
 
-const getMailTransport = () => {
-  const { getState } = require("../db/state");
-
-  const port = getState().getConfig("smtp_port");
-  const secure = getState().getConfig("smtp_secure", port === 465);
-  return nodemailer.createTransport({
-    host: getState().getConfig("smtp_host"),
-    port,
-    secure,
-    auth: {
-      user: getState().getConfig("smtp_username"),
-      pass: getState().getConfig("smtp_password"),
-    },
-  });
-};
 module.exports = {
   getConfig,
   getAllConfig,
@@ -258,5 +242,4 @@ module.exports = {
   remove_from_menu,
   available_languages,
   isFixedConfig,
-  getMailTransport,
 };
