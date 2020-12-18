@@ -4,6 +4,7 @@ const Table = require("../models/table");
 const View = require("../models/view");
 const { getState } = require("../db/state");
 const { findOne } = require("../models/file");
+const User = require("../models/user");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -79,7 +80,32 @@ module.exports = {
         },
       ];
     },
-    run: async ({ row, table, configuration: { joined_table }, user }) => {},
+    run: async ({
+      row,
+      table,
+      configuration: { view, to_email, to_email_field, to_email_fixed },
+      user,
+    }) => {
+      let to_addr;
+      switch (to_email) {
+        case "Fixed":
+          to_addr = to_email_fixed;
+          break;
+        case "User":
+          to_addr = user.email;
+          break;
+        case "Field":
+          const fields = await table.getFields();
+          const field = fields.find((f) => f.name === to_email_field);
+          if (field && field.type.name === "String")
+            to_addr = row[to_email_field];
+          else if (field && field.reftable_name === "users") {
+            const refuser = await User.findOne({ id: row[to_email_field] });
+            to_addr = refuser.email;
+          }
+          break;
+      }
+    },
   },
   insert_joined_row: {
     configFields: async ({ table }) => {
