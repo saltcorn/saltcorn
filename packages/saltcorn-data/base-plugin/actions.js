@@ -3,8 +3,8 @@ const vm = require("vm");
 const Table = require("../models/table");
 const View = require("../models/view");
 const { getState } = require("../db/state");
-const { findOne } = require("../models/file");
 const User = require("../models/user");
+const { getMailTransport } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -78,12 +78,24 @@ module.exports = {
           required: true,
           showIf: { ".to_email": "Field" },
         },
+        {
+          name: "subject",
+          label: "Subject",
+          type: "String",
+          required: true,
+        },
       ];
     },
     run: async ({
       row,
       table,
-      configuration: { view, to_email, to_email_field, to_email_fixed },
+      configuration: {
+        view,
+        subject,
+        to_email,
+        to_email_field,
+        to_email_fixed,
+      },
       user,
     }) => {
       let to_addr;
@@ -105,6 +117,12 @@ module.exports = {
           }
           break;
       }
+      await getMailTransport().sendMail({
+        from: getState().getConfig("email_from"),
+        to: to_addr,
+        subject,
+        html: "",
+      });
     },
   },
   insert_joined_row: {
