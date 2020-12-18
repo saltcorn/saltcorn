@@ -196,7 +196,9 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         segment.besides.map((t, ixb) =>
           div(
             {
-              class: `col-${segment.widths ? segment.widths[ixb] : defwidth}${
+              class: `col-${
+                segment.breakpoint ? segment.breakpoint + "-" : ""
+              }${segment.widths ? segment.widths[ixb] : defwidth}${
                 segment.aligns ? " text-" + segment.aligns[ixb] : ""
               }`,
             },
