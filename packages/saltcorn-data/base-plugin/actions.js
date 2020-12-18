@@ -41,7 +41,7 @@ module.exports = {
         .map((f) => f.name);
       return [
         {
-          name: "view",
+          name: "viewname",
           label: "View to send",
           type: "String",
           required: true,
@@ -90,7 +90,7 @@ module.exports = {
       row,
       table,
       configuration: {
-        view,
+        viewname,
         subject,
         to_email,
         to_email_field,
@@ -116,6 +116,12 @@ module.exports = {
             to_addr = refuser.email;
           }
           break;
+      }
+      const view = await View.findOne({ name: viewname });
+      const resp = await view.run({ id: row.id }, {});
+      let html;
+      if (typeof resp === "string") html = resp;
+      else {
       }
       await getMailTransport().sendMail({
         from: getState().getConfig("email_from"),
