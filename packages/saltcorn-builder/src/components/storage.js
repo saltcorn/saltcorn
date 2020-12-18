@@ -202,6 +202,7 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <Columns
           key={ix}
+          breakpoint={segment.breakpoint || ""}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
@@ -222,6 +223,7 @@ export const layoutToNodes = (layout, query, actions) => {
         .parseReactElement(
           <Columns
             widths={getColWidths(segment)}
+            breakpoint={segment.breakpoint || ""}
             ncols={segment.besides.length}
             contents={segment.besides.map(toTag)}
           />
@@ -313,6 +315,7 @@ export const craftToSaltcorn = (nodes) => {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
+        breakpoint: node.props.breakpoint,
         widths,
       };
     }
