@@ -151,7 +151,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         div(
           {
             class: [
-              `text-${hAlign}`,
+              hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "middle" &&
                 hAlign === "center" &&
@@ -198,7 +198,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             {
               class: `col-sm-${
                 segment.widths ? segment.widths[ixb] : defwidth
-              } text-${segment.aligns ? segment.aligns[ixb] : ""}`,
+              }${segment.aligns ? " text-" + segment.aligns[ixb] : ""}`,
             },
             go(t, false, ixb)
           )
