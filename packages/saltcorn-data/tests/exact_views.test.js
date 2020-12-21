@@ -85,7 +85,7 @@ describe("Show view", () => {
         field_name: "author",
       },
       columns: [{ type: "Field", fieldview: "as_text", field_name: "author" }],
-      response: `<span class="h3">Herman Melville</span>`,
+      response: `<h3>Herman Melville</h3>`,
     });
     await test_show({
       layout: {
