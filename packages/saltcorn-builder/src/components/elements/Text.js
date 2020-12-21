@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 import ContentEditable from "react-contenteditable";
+import optionsCtx from "../context";
 
 export const Text = ({ text, block, isFormula, textStyle }) => {
   const {
@@ -44,6 +45,7 @@ export const TextSettings = () => {
     block: node.data.props.block,
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
+    labelFor: node.data.props.labelFor,
   }));
   const {
     actions: { setProp },
@@ -51,7 +53,9 @@ export const TextSettings = () => {
     block,
     textStyle,
     isFormula,
+    labelFor,
   } = node;
+  const { mode, fields } = useContext(optionsCtx);
   return (
     <div>
       <label>Text to display</label>
@@ -63,6 +67,24 @@ export const TextSettings = () => {
           onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
         />
       </OrFormula>
+      {mode === "edit" && (
+        <Fragment>
+          <label>Label for Field</label>
+          <select
+            value={labelFor}
+            onChange={(e) => {
+              setProp((prop) => (prop.labelFor = e.target.value));
+            }}
+          >
+            <option value={""}></option>
+            {fields.map((f, ix) => (
+              <option key={ix} value={f.name}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </Fragment>
+      )}
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
@@ -75,6 +97,7 @@ Text.craft = {
     block: false,
     isFormula: {},
     textStyle: "",
+    labelFor: "",
   },
   displayName: "Text",
   related: {

@@ -64,9 +64,9 @@ describe("form render", () => {
     });
     const want = `<form action="/" class="form-namespace " method="post" >
 <input type="hidden" name="_csrf" value="">
-<span class="h2">
+<h2>
 <input type="text" class="form-control  "  name="name" id="inputname" >
-</span><br /></form>`;
+</h2><br /></form>`;
     expect(nolines(renderForm(form, ""))).toBe(nolines(want));
   });
   it("renders a simple form with errors", () => {
