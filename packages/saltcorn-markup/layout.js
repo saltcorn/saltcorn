@@ -51,7 +51,7 @@ const applyTextStyle = (textStyle, inner, isBlock) => {
       return h6(inner);
     default:
       return isBlock
-        ? div({ class: segment.textStyle || "" }, inner)
+        ? div({ class: textStyle || "" }, inner)
         : textStyle
         ? span({ class: textStyle || "" }, inner)
         : inner;
