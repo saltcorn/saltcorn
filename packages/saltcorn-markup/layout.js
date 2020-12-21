@@ -12,6 +12,7 @@ const {
   h4,
   h5,
   h6,
+  label,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
@@ -34,7 +35,7 @@ const makeSegments = (body, alerts) => {
     else return body;
   }
 };
-const applyTextStyle = (textStyle, inner) => {
+const applyTextStyle = (textStyle, inner, isBlock) => {
   switch (textStyle) {
     case "h1":
       return h1(inner);
@@ -49,7 +50,11 @@ const applyTextStyle = (textStyle, inner) => {
     case "h6":
       return h6(inner);
     default:
-      return span({ class: textStyle || "" }, inner);
+      return isBlock
+        ? div({ class: segment.textStyle || "" }, inner)
+        : textStyle
+        ? span({ class: textStyle || "" }, inner)
+        : inner;
   }
 };
 const render = ({ blockDispatch, layout, role, alerts }) => {
@@ -58,11 +63,12 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
-      return segment.block
-        ? div({ class: segment.textStyle || "" }, inner)
-        : segment.textStyle
-        ? applyTextStyle(segment.textStyle, inner)
-        : inner;
+      return segment.labelFor
+        ? label(
+            { for: `input${text(segment.labelFor)}` },
+            applyTextStyle(segment.textStyle, inner, segment.block)
+          )
+        : applyTextStyle(segment.textStyle, inner, segment.block);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
