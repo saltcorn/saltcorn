@@ -1,5 +1,18 @@
 const { contract, is } = require("contractis");
-const { div, a, span, h6, text, img, p, h1 } = require("./tags");
+const {
+  div,
+  a,
+  span,
+  text,
+  img,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+} = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
@@ -21,7 +34,24 @@ const makeSegments = (body, alerts) => {
     else return body;
   }
 };
-
+const applyTextStyle = (textStyle, inner) => {
+  switch (textStyle) {
+    case "h1":
+      return h1(inner);
+    case "h2":
+      return h2(inner);
+    case "h3":
+      return h3(inner);
+    case "h4":
+      return h4(inner);
+    case "h5":
+      return h5(inner);
+    case "h6":
+      return h6(inner);
+    default:
+      return span({ class: textStyle || "" }, inner);
+  }
+};
 const render = ({ blockDispatch, layout, role, alerts }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
@@ -31,7 +61,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       return segment.block
         ? div({ class: segment.textStyle || "" }, inner)
         : segment.textStyle
-        ? span({ class: segment.textStyle || "" }, inner)
+        ? applyTextStyle(segment.textStyle, inner)
         : inner;
   }
   function go(segment, isTop, ix) {
