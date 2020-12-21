@@ -45,6 +45,7 @@ export const layoutToNodes = (layout, query, actions) => {
           isFormula={segment.isFormula || {}}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+          labelFor={segment.labelFor || ""}
         />
       );
     } else if (segment.type === "image") {
@@ -296,6 +297,7 @@ export const craftToSaltcorn = (nodes) => {
         block: node.props.block,
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
+        labelFor: node.props.labelFor,
       };
     }
     if (node.displayName === HTMLCode.craft.displayName) {
