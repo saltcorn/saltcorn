@@ -533,7 +533,10 @@ const stateFieldsToQuery = contract(
     return q;
   }
 );
-
+const addOrCreateList = (container, key, x) => {
+  if (container[key]) container[key].push(x);
+  else container[key] = [x];
+};
 const stateFieldsToWhere = contract(
   is.fun(
     is.obj({
@@ -550,7 +553,13 @@ const stateFieldsToWhere = contract(
         return;
       }
       const field = fields.find((fld) => fld.name == k);
-      if (
+      if (k.startsWith("_fromdate_")) {
+        const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
+        addOrCreateList(qstate, datefield, { gt: new Date(v), equal: true });
+      } else if (k.startsWith("_todate_")) {
+        const datefield = db.sqlsanitize(k.replace("_todate_", ""));
+        addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
+      } else if (
         field &&
         field.type.name === "String" &&
         !(field.attributes && field.attributes.options) &&
