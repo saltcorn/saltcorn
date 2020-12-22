@@ -130,6 +130,10 @@ const string = {
         return undefined;
     }
   },
+  presets: {
+    IP: ({ req }) => req.ip,
+    SessionID: ({ req }) => req.sessionID,
+  },
   validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
     if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
     if (isdef(min_length) && x.length < min_length)
