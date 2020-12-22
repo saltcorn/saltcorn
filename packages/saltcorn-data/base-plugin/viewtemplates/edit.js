@@ -209,7 +209,7 @@ const fill_presets = async (table, req, fixed) => {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find((f) => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user });
+        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
       }
       delete fixed[k];
     }
