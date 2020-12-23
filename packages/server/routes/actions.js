@@ -304,8 +304,8 @@ router.post(
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
       req.flash("success", "Action configuration saved");
+      res.redirect(`/actions/`);
     }
-    res.redirect(`/actions/`);
   })
 );
 router.post(
