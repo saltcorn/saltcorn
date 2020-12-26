@@ -527,7 +527,7 @@ const stateFieldsToQuery = contract(
       const long = parseFloat(state[longNear]);
       const cos_lat_2 = Math.pow(Math.cos((lat * Math.PI) / 180), 2);
       q.orderBy = {
-        sql: `((${prefix}${latfield}-${lat})*(${prefix}${latfield}-${lat})) + ((${prefix}${longfield} - ${long})*(${prefix}${longfield} - ${long})*${cos_lat_2})`,
+        sql: `((${prefix}${latfield} - ${lat})*(${prefix}${latfield} - ${lat})) + ((${prefix}${longfield} - ${long})*(${prefix}${longfield} - ${long})*${cos_lat_2})`,
       };
     }
     return q;
