@@ -65,6 +65,7 @@ describe("pack create", () => {
   it("creates plugin pack", async () => {
     const ppack = await plugin_pack("base");
     expect(ppack).toStrictEqual({
+      configuration: null,
       location: "@saltcorn/base-plugin",
       name: "base",
       source: "npm",
