@@ -2,7 +2,7 @@ import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { Accordion, BlockSetting, OrFormula } from "./utils";
+import { Accordion, BlockSetting, OrFormula, parseStyles } from "./utils";
 
 export const Container = ({
   children,
@@ -21,6 +21,8 @@ export const Container = ({
   bgColor,
   setTextColor,
   textColor,
+  customClass,
+  customCSS,
 }) => {
   const {
     selected,
@@ -29,12 +31,13 @@ export const Container = ({
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={`text-${hAlign} ${
+      className={`${customClass || ""} text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
       } ${selected ? "selected-node" : ""}`}
       style={{
+        ...parseStyles(customCSS || ""),
         padding: "4px",
         minHeight: `${Math.max(minHeight, 15)}px`,
         border: `${borderWidth}px ${borderStyle} black`,
@@ -98,6 +101,8 @@ export const ContainerSettings = () => {
     setTextColor: node.data.props.setTextColor,
     showForRole: node.data.props.showForRole,
     textColor: node.data.props.textColor,
+    customClass: node.data.props.customClass,
+    customCSS: node.data.props.customCSS,
   }));
   const {
     actions: { setProp },
@@ -119,6 +124,8 @@ export const ContainerSettings = () => {
     showIfFormula,
     isFormula,
     showForRole,
+    customClass,
+    customCSS,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -487,6 +494,29 @@ export const ContainerSettings = () => {
           ))}
         </tbody>
       </table>
+      <div accordiontitle="Custom class/CSS">
+        <div>
+          <label>Custom class</label>
+        </div>
+        <input
+          type="text"
+          className="form-control text-to-display"
+          value={customClass}
+          onChange={(e) =>
+            setProp((prop) => (prop.customClass = e.target.value))
+          }
+        />
+        <div>
+          <label>Custom CSS</label>
+        </div>
+        <textarea
+          rows="4"
+          type="text"
+          className="text-to-display w-100"
+          value={customCSS}
+          onChange={(e) => setProp((prop) => (prop.customCSS = e.target.value))}
+        ></textarea>
+      </div>
     </Accordion>
   );
 };

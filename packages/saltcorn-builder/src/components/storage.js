@@ -179,6 +179,8 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
+          customClass={segment.customClass}
+          customCSS={segment.customCSS}
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
@@ -264,6 +266,8 @@ export const craftToSaltcorn = (nodes) => {
           type: "container",
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
+          customCSS: node.props.customCSS,
+          customClass: node.props.customClass,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
