@@ -176,10 +176,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         blockDispatch.noBackgroundAtTop &&
         blockDispatch.noBackgroundAtTop()
       );
-      const sizeProp = (segKey, cssNm) =>
+      const sizeProp = (segKey, cssNm, unit = "px") =>
         typeof segment[segKey] === "undefined"
           ? ""
-          : `${cssNm}: ${segment[segKey]}px;`;
+          : `${cssNm}: ${segment[segKey]}${unit};`;
       return wrap(
         segment,
         isTop,
@@ -198,9 +198,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             }${sizeProp("minHeight", "min-height")}${sizeProp(
               "height",
               "height"
-            )}${sizeProp("width", "width")}border: ${
-              borderWidth || 0
-            }px ${borderStyle} black; ${
+            )}${sizeProp("width", "width")}${sizeProp(
+              "widthPct",
+              "width",
+              "%"
+            )}border: ${borderWidth || 0}px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"

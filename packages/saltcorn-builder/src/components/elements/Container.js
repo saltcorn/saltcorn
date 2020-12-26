@@ -11,6 +11,7 @@ export const Container = ({
   minHeight,
   height,
   width,
+  widthPct,
   vAlign,
   hAlign,
   bgFileId,
@@ -65,6 +66,11 @@ export const Container = ({
               width: `${width}px`,
             }
           : {}),
+        ...(typeof widthPct !== "undefined"
+          ? {
+              width: `${widthPct}%`,
+            }
+          : {}),
       }}
     >
       <div className="canvas">{children}</div>
@@ -79,6 +85,7 @@ export const ContainerSettings = () => {
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
+    widthPct: node.data.props.widthPct,
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
@@ -99,6 +106,7 @@ export const ContainerSettings = () => {
     minHeight,
     height,
     width,
+    widthPct,
     vAlign,
     hAlign,
     bgFileId,
@@ -210,7 +218,7 @@ export const ContainerSettings = () => {
           </tr>{" "}
           <tr>
             <td>
-              <label>Width</label>
+              <label>Width px</label>
             </td>
             <td>
               <input
@@ -223,6 +231,26 @@ export const ContainerSettings = () => {
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.width = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Width %</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={widthPct}
+                step="1"
+                min="0"
+                max="100"
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.widthPct = e.target.value;
                   })
                 }
               />
