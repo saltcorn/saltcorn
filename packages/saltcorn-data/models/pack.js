@@ -58,6 +58,7 @@ const plugin_pack = contract(pack_fun, async (name) => {
     name: plugin.name,
     source: plugin.source,
     location: plugin.location,
+    configuration: plugin.configuration,
   };
 });
 const page_pack = contract(pack_fun, async (name) => {
