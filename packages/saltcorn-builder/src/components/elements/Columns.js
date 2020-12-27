@@ -27,7 +27,6 @@ export const Columns = ({ widths, contents, ncols }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-
   return (
     <div
       className={`row ${selected ? "selected-node" : ""}`}

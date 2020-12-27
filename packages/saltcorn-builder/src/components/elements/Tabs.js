@@ -10,7 +10,6 @@ export const Tabs = ({ contents, titles, tabStyle, ntabs }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
-
   return (
     <Fragment>
       <ul
@@ -31,15 +30,18 @@ export const Tabs = ({ contents, titles, tabStyle, ntabs }) => {
         ))}
       </ul>
       <div className="tab-content" id="myTabContent">
-        <div
-          className={`tab-pane fade show active`}
-          role="tabpanel"
-          aria-labelledby="home-tab"
-        >
-          <Element canvas id={`Tab${showTab}`} is={Column}>
-            {contents[showTab]}
-          </Element>
-        </div>
+        {ntimes(ntabs, (ix) => (
+          <div
+            key={ix}
+            className={`tab-pane fade ${ix === showTab ? `show active` : ""}`}
+            role="tabpanel"
+            aria-labelledby="home-tab"
+          >
+            <Element canvas id={`Tab${ix}`} is={Column}>
+              {contents[ix]}
+            </Element>
+          </div>
+        ))}
       </div>
     </Fragment>
   );
@@ -97,7 +99,7 @@ export const TabsSettings = () => {
           </td>
         </tr>
         <tr>
-          <th colspan="2">Titles</th>
+          <th colSpan="2">Titles</th>
         </tr>
         {ntimes(ntabs, (ix) => (
           <tr key={ix}>
@@ -120,7 +122,7 @@ export const TabsSettings = () => {
 };
 Tabs.craft = {
   props: {
-    titles: [],
+    titles: ["Tab1", "Tab2"],
     ntabs: 2,
     tabStyle: "Tabs",
   },
