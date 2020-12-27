@@ -27,7 +27,6 @@ export const Columns = ({ widths, contents, ncols }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-
   return (
     <div
       className={`row ${selected ? "selected-node" : ""}`}
@@ -55,7 +54,6 @@ export const ColumnsSettings = () => {
     ncols: node.data.props.ncols,
     breakpoint: node.data.props.breakpoint,
   }));
-  console.log(widths);
   return (
     <div>
       <table>

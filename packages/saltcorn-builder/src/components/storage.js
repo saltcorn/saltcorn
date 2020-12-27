@@ -5,6 +5,7 @@ import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
+import { Tabs } from "./elements/Tabs";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
@@ -141,6 +142,8 @@ export const layoutToNodes = (layout, query, actions) => {
           inModal={segment.in_modal || false}
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
+          link_style={segment.link_style || ""}
+          link_size={segment.link_size || ""}
         />
       );
     } else if (segment.type === "action") {
@@ -179,9 +182,12 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
+          customClass={segment.customClass}
+          customCSS={segment.customCSS}
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
+          widthPct={segment.widthPct}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
@@ -198,6 +204,16 @@ export const layoutToNodes = (layout, query, actions) => {
         >
           {toTag(segment.contents)}
         </Element>
+      );
+    } else if (segment.type === "tabs") {
+      return (
+        <Tabs
+          key={ix}
+          titles={segment.titles}
+          ntabs={segment.ntabs}
+          tabsStyle={segment.tabsStyle}
+          contents={segment.contents.map(toTag)}
+        />
       );
     } else if (segment.besides) {
       return (
@@ -263,9 +279,12 @@ export const craftToSaltcorn = (nodes) => {
           type: "container",
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
+          customCSS: node.props.customCSS,
+          customClass: node.props.customClass,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
+          widthPct: node.props.widthPct,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
           block: node.props.block || false,
@@ -319,6 +338,17 @@ export const craftToSaltcorn = (nodes) => {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoint: node.props.breakpoint,
         widths,
+      };
+    }
+    if (node.displayName === Tabs.craft.displayName) {
+      return {
+        type: "tabs",
+        contents: ntimes(node.props.ntabs, (ix) =>
+          go(nodes[node.linkedNodes["Tab" + ix]])
+        ),
+        titles: node.props.titles,
+        tabsStyle: node.props.tabsStyle,
+        ntabs: node.props.ntabs,
       };
     }
 
@@ -433,6 +463,8 @@ export const craftToSaltcorn = (nodes) => {
         view: node.props.name,
         isFormula: node.props.isFormula,
         minRole: node.props.minRole,
+        link_style: node.props.link_style,
+        link_size: node.props.link_size,
       };
     }
     if (node.displayName === Action.craft.displayName) {

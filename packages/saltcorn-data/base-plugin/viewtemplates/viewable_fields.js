@@ -87,7 +87,17 @@ const view_linker = contract(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  ({ view, view_label, in_modal, view_label_formula }, fields) => {
+  (
+    {
+      view,
+      view_label,
+      in_modal,
+      view_label_formula,
+      link_style = "",
+      link_size = "",
+    },
+    fields
+  ) => {
     const get_label = (def, row) => {
       if (!view_label || view_label.length === 0) return def;
       if (!view_label_formula) return view_label;
@@ -105,7 +115,9 @@ const view_linker = contract(
             link_view(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
               get_label(vnm, r),
-              in_modal
+              in_modal,
+              link_style,
+              link_size
             ),
         };
       case "ChildList":
@@ -116,7 +128,9 @@ const view_linker = contract(
             link_view(
               `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
               get_label(viewnm, r),
-              in_modal
+              in_modal,
+              link_style,
+              link_size
             ),
         };
       case "ParentShow":
@@ -135,7 +149,9 @@ const view_linker = contract(
                       : summary_field,
                     r
                   ),
-                  in_modal
+                  in_modal,
+                  link_style,
+                  link_size
                 )
               : "";
           },

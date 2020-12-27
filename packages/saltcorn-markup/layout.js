@@ -13,6 +13,9 @@ const {
   h5,
   h6,
   label,
+  ul,
+  button,
+  li,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
@@ -56,6 +59,86 @@ const applyTextStyle = (textStyle, inner, isBlock) => {
         ? span({ class: textStyle || "" }, inner)
         : inner;
   }
+};
+
+const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
+  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  if (tabsStyle === "Accordion")
+    return div(
+      { class: "accordion", id: `${rndid}top` },
+      contents.map((t, ix) =>
+        div(
+          { class: "card" },
+          div(
+            { class: "card-header", id: `${rndid}head${ix}` },
+            h2(
+              { class: "mb-0" },
+              button(
+                {
+                  class: "btn btn-link btn-block text-left",
+                  type: "button",
+                  "data-toggle": "collapse",
+                  "data-target": `#${rndid}tab${ix}`,
+                  "aria-expanded": ix === 0 ? "true" : "false",
+                  "aria-controls": `${rndid}tab${ix}`,
+                },
+                titles[ix]
+              )
+            )
+          ),
+          div(
+            {
+              class: ["collapse", ix === 0 && "show"],
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}head${ix}`,
+              "data-parent": `#${rndid}top`,
+            },
+            div({ class: "card-body" }, go(t, false, ix))
+          )
+        )
+      )
+    );
+  else
+    return (
+      ul(
+        {
+          role: "tablist",
+          id: `${rndid}`,
+          class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
+        },
+        contents.map((t, ix) =>
+          li(
+            { class: "nav-item", role: "presentation" },
+            a(
+              {
+                class: ["nav-link", ix === 0 && "active"],
+                id: `${rndid}link${ix}`,
+                "data-toggle": "tab",
+                href: `#${rndid}tab${ix}`,
+                role: "tab",
+                "aria-controls": `${rndid}tab${ix}`,
+                "aria-selected": "true",
+              },
+              titles[ix]
+            )
+          )
+        )
+      ) +
+      div(
+        { class: "tab-content", id: `${rndid}content` },
+        contents.map((t, ix) =>
+          div(
+            {
+              class: ["tab-pane fade", ix === 0 && "show active"],
+              role: "tabpanel",
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}link${ix}`,
+            },
+            go(t, false, ix)
+          )
+        )
+      )
+    );
 };
 const render = ({ blockDispatch, layout, role, alerts }) => {
   //console.log(JSON.stringify(layout, null, 2));
@@ -153,6 +236,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
+    if (segment.type === "tabs")
+      return wrap(segment, isTop, ix, renderTabs(segment, go));
     if (segment.type === "container") {
       const {
         bgFileId,
@@ -176,10 +261,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         blockDispatch.noBackgroundAtTop &&
         blockDispatch.noBackgroundAtTop()
       );
-      const sizeProp = (segKey, cssNm) =>
+      const sizeProp = (segKey, cssNm, unit = "px") =>
         typeof segment[segKey] === "undefined"
           ? ""
-          : `${cssNm}: ${segment[segKey]}px;`;
+          : `${cssNm}: ${segment[segKey]}${unit};`;
       return wrap(
         segment,
         isTop,
@@ -198,9 +283,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
             }${sizeProp("minHeight", "min-height")}${sizeProp(
               "height",
               "height"
-            )}${sizeProp("width", "width")}border: ${
-              borderWidth || 0
-            }px ${borderStyle} black; ${
+            )}${sizeProp("width", "width")}${sizeProp(
+              "widthPct",
+              "width",
+              "%"
+            )}border: ${borderWidth || 0}px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"
