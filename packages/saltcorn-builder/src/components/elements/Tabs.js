@@ -4,7 +4,7 @@ import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const Tabs = ({ contents, titles, tabStyle, ntabs }) => {
+export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -15,7 +15,9 @@ export const Tabs = ({ contents, titles, tabStyle, ntabs }) => {
       <ul
         id="myTab"
         role="tablist"
-        className={`nav nav-tabs builder ${selected ? "selected-node" : ""}`}
+        className={`nav ${
+          tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"
+        } builder ${selected ? "selected-node" : ""}`}
         ref={(dom) => connect(drag(dom))}
       >
         {ntimes(ntabs, (ix) => (
@@ -77,8 +79,8 @@ export const TabsSettings = () => {
               }
             >
               <option>Tabs</option>
-              {/* <option>Pills</option>
-              <option>Accordion</option>*/}
+              <option>Pills</option>
+              {/* <option>Accordion</option>*/}
             </select>
           </td>
         </tr>
@@ -124,7 +126,7 @@ Tabs.craft = {
   props: {
     titles: ["Tab1", "Tab2"],
     ntabs: 2,
-    tabStyle: "Tabs",
+    tabsStyle: "Tabs",
   },
   displayName: "Tabs",
   related: {
