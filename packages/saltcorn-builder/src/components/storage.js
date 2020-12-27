@@ -5,6 +5,7 @@ import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
+import { Tabs } from "./elements/Tabs";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
@@ -202,6 +203,16 @@ export const layoutToNodes = (layout, query, actions) => {
           {toTag(segment.contents)}
         </Element>
       );
+    } else if (segment.type === "tabs") {
+      return (
+        <Tabs
+          key={ix}
+          titles={segment.titles}
+          ntabs={segment.ntabs}
+          tabsStyle={segment.tabsStyle}
+          contents={segment.contents.map(toTag)}
+        />
+      );
     } else if (segment.besides) {
       return (
         <Columns
@@ -325,6 +336,17 @@ export const craftToSaltcorn = (nodes) => {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoint: node.props.breakpoint,
         widths,
+      };
+    }
+    if (node.displayName === Tabs.craft.displayName) {
+      return {
+        type: "tabs",
+        contents: ntimes(node.props.ntabs, (ix) =>
+          go(nodes[node.linkedNodes["Tab" + ix]])
+        ),
+        titles: node.props.titles,
+        tabsStyle: node.props.tabsStyle,
+        ntabs: node.props.ntabs,
       };
     }
 
