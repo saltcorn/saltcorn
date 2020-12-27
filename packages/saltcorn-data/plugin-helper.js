@@ -6,9 +6,9 @@ const db = require("./db");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
-const { button } = require("@saltcorn/markup/tags");
+const { button, a, label, text } = require("@saltcorn/markup/tags");
 
-const link_view = (url, label, popup) => {
+const link_view = (url, label, popup, link_style = "", link_size = "") => {
   if (popup) {
     return button(
       {
@@ -17,7 +17,16 @@ const link_view = (url, label, popup) => {
       },
       label
     );
-  } else return link(url, label);
+  } else
+    return a(
+      {
+        href: url,
+        ...(link_style || link_size
+          ? { class: `${link_style} ${link_size}` }
+          : {}),
+      },
+      text(label)
+    );
 };
 
 const stateToQueryString = contract(
