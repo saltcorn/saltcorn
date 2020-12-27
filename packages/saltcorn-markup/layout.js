@@ -103,23 +103,36 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
       ul(
         {
           role: "tablist",
+          id: `${rndid}`,
           class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
         },
         contents.map((t, ix) =>
           li(
             { class: "nav-item", role: "presentation" },
-            a({ class: ["nav-link", ix === 0 && "active"] }, titles[ix])
+            a(
+              {
+                class: ["nav-link", ix === 0 && "active"],
+                id: `${rndid}link${ix}`,
+                "data-toggle": "tab",
+                href: `#${rndid}tab${ix}`,
+                role: "tab",
+                "aria-controls": `${rndid}tab${ix}`,
+                "aria-selected": "true",
+              },
+              titles[ix]
+            )
           )
         )
       ) +
       div(
-        { class: "tab-content" },
+        { class: "tab-content", id: `${rndid}content` },
         contents.map((t, ix) =>
           div(
             {
               class: ["tab-pane fade", ix === 0 && "show active"],
               role: "tabpanel",
-              "aria-labelledby": "home-tab",
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}link${ix}`,
             },
             go(t, false, ix)
           )
