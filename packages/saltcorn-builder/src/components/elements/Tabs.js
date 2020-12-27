@@ -10,43 +10,77 @@ export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
-  return (
-    <Fragment>
-      <ul
-        id="myTab"
-        role="tablist"
-        className={`nav ${
-          tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"
-        } builder ${selected ? "selected-node" : ""}`}
-        ref={(dom) => connect(drag(dom))}
-      >
+  if (tabsStyle === "Accordion")
+    return (
+      <div class="accordion">
         {ntimes(ntabs, (ix) => (
-          <li key={ix} className="nav-item" role="presentation">
-            <a
-              className={`nav-link ${ix === showTab ? `active` : ""}`}
-              onClick={() => setShowTab(ix)}
+          <div class="card">
+            <div class="card-header">
+              <h2 class="mb-0">
+                <button
+                  class="btn btn-link btn-block text-left"
+                  type="button"
+                  onClick={() => setShowTab(ix)}
+                >
+                  {titles[ix]}
+                </button>
+              </h2>
+            </div>
+
+            <div
+              id="collapseOne"
+              class={`collapse ${ix === showTab ? "show" : ""}`}
+              aria-labelledby="headingOne"
+              data-parent="#accordionExample"
             >
-              {titles[ix]}
-            </a>
-          </li>
-        ))}
-      </ul>
-      <div className="tab-content" id="myTabContent">
-        {ntimes(ntabs, (ix) => (
-          <div
-            key={ix}
-            className={`tab-pane fade ${ix === showTab ? `show active` : ""}`}
-            role="tabpanel"
-            aria-labelledby="home-tab"
-          >
-            <Element canvas id={`Tab${ix}`} is={Column}>
-              {contents[ix]}
-            </Element>
+              <div class="card-body">
+                <Element canvas id={`Tab${ix}`} is={Column}>
+                  {contents[ix]}
+                </Element>
+              </div>
+            </div>
           </div>
         ))}
       </div>
-    </Fragment>
-  );
+    );
+  else
+    return (
+      <Fragment>
+        <ul
+          id="myTab"
+          role="tablist"
+          className={`nav ${
+            tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"
+          } builder ${selected ? "selected-node" : ""}`}
+          ref={(dom) => connect(drag(dom))}
+        >
+          {ntimes(ntabs, (ix) => (
+            <li key={ix} className="nav-item" role="presentation">
+              <a
+                className={`nav-link ${ix === showTab ? `active` : ""}`}
+                onClick={() => setShowTab(ix)}
+              >
+                {titles[ix]}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div className="tab-content" id="myTabContent">
+          {ntimes(ntabs, (ix) => (
+            <div
+              key={ix}
+              className={`tab-pane fade ${ix === showTab ? `show active` : ""}`}
+              role="tabpanel"
+              aria-labelledby="home-tab"
+            >
+              <Element canvas id={`Tab${ix}`} is={Column}>
+                {contents[ix]}
+              </Element>
+            </div>
+          ))}
+        </div>
+      </Fragment>
+    );
 };
 
 export const TabsSettings = () => {
@@ -80,7 +114,7 @@ export const TabsSettings = () => {
             >
               <option>Tabs</option>
               <option>Pills</option>
-              {/* <option>Accordion</option>*/}
+              <option>Accordion</option>
             </select>
           </td>
         </tr>
