@@ -13,6 +13,7 @@ import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
+import { Tabs } from "./elements/Tabs";
 import { Container } from "./elements/Container";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
@@ -71,6 +72,16 @@ const ColumnsElem = ({ connectors }) => (
     label="Columns"
   >
     <Columns contents={[]} />
+  </WrapElem>
+);
+const TabsElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-columns"
+    title="Tabbed content"
+    label="Tabs"
+  >
+    <Tabs contents={[]} />
   </WrapElem>
 );
 const LineBreakElem = ({ connectors }) => (
@@ -300,6 +311,7 @@ export const ToolboxShow = () => {
       <ViewElem connectors={connectors} views={views} />
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
+      <TabsElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -320,6 +332,7 @@ export const ToolboxFilter = () => {
 
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
+      <TabsElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -341,6 +354,7 @@ export const ToolboxEdit = () => {
       <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
+      <TabsElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -361,6 +375,7 @@ export const ToolboxPage = () => {
       <ViewElem connectors={connectors} views={views} />
       <SearchElem connectors={connectors} />
       <ContainerElem connectors={connectors} />
+      <TabsElem connectors={connectors} />
     </Fragment>
   );
 };

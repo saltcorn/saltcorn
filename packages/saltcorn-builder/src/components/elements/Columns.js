@@ -55,7 +55,6 @@ export const ColumnsSettings = () => {
     ncols: node.data.props.ncols,
     breakpoint: node.data.props.breakpoint,
   }));
-  console.log(widths);
   return (
     <div>
       <table>

@@ -11,6 +11,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
+import { Tabs } from "./elements/Tabs";
 import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
@@ -200,6 +201,7 @@ const Builder = ({ options, layout, mode }) => {
                   Container,
                   Column,
                   DropDownFilter,
+                  Tabs,
                   ToggleFilter,
                 }}
               >
