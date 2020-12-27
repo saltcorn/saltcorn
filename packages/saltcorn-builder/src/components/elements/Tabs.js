@@ -69,7 +69,7 @@ export const TabsSettings = () => {
           <td>
             <select
               value={tabsStyle}
-              className="w-100 ml-2"
+              className="form-control"
               onChange={(e) =>
                 setProp((prop) => {
                   prop.tabsStyle = e.target.value;

@@ -77,7 +77,7 @@ const ColumnsElem = ({ connectors }) => (
 const TabsElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
-    icon="fas fa-columns"
+    icon="fas fa-list-ul"
     title="Tabbed content"
     label="Tabs"
   >
