@@ -276,13 +276,17 @@ const run_action = async (
   cfgFields.forEach(({ name }) => {
     configuration[name] = col[name];
   });
-  const result = await state_action.run({
-    configuration,
-    table,
-    row,
-    user: req.user,
-  });
-  return { json: { success: "ok", ...(result || {}) } };
+  try {
+    const result = await state_action.run({
+      configuration,
+      table,
+      row,
+      user: req.user,
+    });
+    return { json: { success: "ok", ...(result || {}) } };
+  } catch (e) {
+    return { json: { error: e.message || e } };
+  }
 };
 
 module.exports = {

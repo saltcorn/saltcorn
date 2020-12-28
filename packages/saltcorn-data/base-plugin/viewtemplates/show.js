@@ -354,13 +354,17 @@ const run_action = async (
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
-  const result = await state_action.run({
-    configuration: col.configuration,
-    table,
-    row,
-    user: req.user,
-  });
-  return { json: { success: "ok", ...(result || {}) } };
+  try {
+    const result = await state_action.run({
+      configuration: col.configuration,
+      table,
+      row,
+      user: req.user,
+    });
+    return { json: { success: "ok", ...(result || {}) } };
+  } catch (e) {
+    return { json: { error: e.message || e } };
+  }
 };
 
 module.exports = {
