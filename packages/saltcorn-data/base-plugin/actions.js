@@ -133,6 +133,7 @@ module.exports = {
       };
       //console.log(email);
       await getMailTransport().sendMail(email);
+      return { notify: `E-mail sent to ${to_addr}` };
     },
   },
   insert_joined_row: {

@@ -218,6 +218,29 @@ function tristateClick(nm) {
   }
 }
 
+function notifyAlert(note) {
+  if (Array.isArray(note)) {
+    note.forEach(notifyAlert);
+    return;
+  }
+  var txt, type;
+  if (typeof note == "string") {
+    txt = note;
+    type = "info";
+  } else {
+    txt = note.text;
+    type = note.type;
+  }
+
+  $("#alerts-area")
+    .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+  ${txt}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>`);
+}
+
 function view_post(viewname, route, data, onDone) {
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
@@ -227,7 +250,11 @@ function view_post(viewname, route, data, onDone) {
     },
     contentType: "application/json",
     data: JSON.stringify(data),
-  }).done(onDone);
+  }).done(function (res) {
+    if (onDone) onDone(res);
+    if (res.notify) notifyAlert(res.notify);
+    if (res.error) notifyAlert({ type: "danger", text: res.error });
+  });
 }
 var logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {

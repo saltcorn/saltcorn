@@ -284,7 +284,9 @@ const wrap = ({
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
           <div class="container-fluid">
-            ${alerts.map((a) => alert(a.type, a.msg)).join("")}
+            <div id="alerts-area">
+              ${alerts.map((a) => alert(a.type, a.msg)).join("")}
+            </div>
             ${renderBody(title, body, role)}
           </div>
         </div>
