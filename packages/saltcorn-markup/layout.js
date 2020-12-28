@@ -117,7 +117,7 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
                 href: `#${rndid}tab${ix}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
-                "aria-selected": "true",
+                "aria-selected": ix === 0 ? "true" : "false",
               },
               titles[ix]
             )
