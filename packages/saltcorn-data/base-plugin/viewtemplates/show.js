@@ -101,6 +101,28 @@ const configuration_workflow = (req) =>
           };
         },
       },
+      {
+        name: req.__("Set page title"),
+        form: () =>
+          new Form({
+            blurb: req.__(
+              "Skip this section if you do not want to set the page title"
+            ),
+            fields: [
+              {
+                name: "page_title",
+                label: __("Page title"),
+                type: "String",
+              },
+              {
+                name: "page_title_formula",
+                label: __("Page title is a formula?"),
+                type: "Bool",
+                required: false,
+              },
+            ],
+          }),
+      },
     ],
   });
 const get_state_fields = () => [
