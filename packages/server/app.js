@@ -38,11 +38,11 @@ const i18n = new I18n({
 const getApp = async (opts = {}) => {
   const app = express();
   const sql_log = await getConfig("log_sql");
-  const development_mode = await getConfig("development_mode", false);
   if (sql_log) db.set_sql_logging(); // dont override cli flag
   if (!opts.disableMigrate) await migrate();
 
   await loadAllPlugins();
+  const development_mode = getState().getConfig("development_mode", false);
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
