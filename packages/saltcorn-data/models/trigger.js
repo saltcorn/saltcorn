@@ -3,6 +3,7 @@ const { contract, is } = require("contractis");
 
 class Trigger {
   constructor(o) {
+    this.name = o.name;
     this.action = o.action;
     this.table_id = !o.table_id ? null : +o.table_id;
     this.table_name = o.table_name;
@@ -22,6 +23,7 @@ class Trigger {
 
   get toJson() {
     return {
+      name: this.name,
       action: this.action,
       when_trigger: this.when_trigger,
       configuration: this.configuration,
@@ -35,7 +37,7 @@ class Trigger {
   static async findAllWithTableName() {
     const schema = db.getTenantSchemaPrefix();
 
-    const sql = `select a.id, a.action, t.name as table_name, a. when_trigger 
+    const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger 
     from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
     const { rows } = await db.query(sql);
     return rows.map((dbf) => new Trigger(dbf));
@@ -113,6 +115,7 @@ Trigger.contract = {
   variables: {
     action: is.str,
     table_id: is.maybe(is.posint),
+    name: is.maybe(is.str),
     when_trigger: is.one_of(Trigger.when_options),
     id: is.maybe(is.posint),
     configuration: is.obj(),

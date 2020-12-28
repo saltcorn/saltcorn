@@ -63,6 +63,7 @@ router.get(
           contents: div(
             mkTable(
               [
+                { label: req.__("Name"), key: "name" },
                 { label: req.__("Action"), key: "action" },
                 { label: req.__("Table"), key: "table_name" },
                 { label: req.__("When"), key: "when_trigger" },
@@ -99,13 +100,17 @@ const triggerForm = async (req, trigger) => {
     action: "/actions/trigger",
     fields: [
       {
+        name: "name",
+        label: req.__("Name"),
+        type: "String",
+      },
+      {
         name: "action",
         label: req.__("Action"),
         input_type: "select",
         required: true,
         options: actions.map((t) => ({ value: t.name, label: t.name })),
       },
-
       {
         name: "when_trigger",
         label: req.__("When"),

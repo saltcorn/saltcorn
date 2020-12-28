@@ -320,6 +320,47 @@ const field_picker_fields = contract(
         showIf: { ".coltype": "ViewLink" },
       },
       {
+        name: "link_style",
+        label: __("Link Style"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "", label: "Link" },
+            { name: "btn btn-primary", label: "Primary button" },
+            { name: "btn btn-secondary", label: "Secondary button" },
+            { name: "btn btn-success", label: "Success button" },
+            { name: "btn btn-danger", label: "Danger button" },
+            {
+              name: "btn btn-outline-primary",
+              label: "Primary outline button",
+            },
+            {
+              name: "btn btn-outline-secondary",
+              label: "Secondary outline button",
+            },
+          ],
+        },
+
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
+        name: "link_size",
+        label: __("Link size"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "", label: "Standard" },
+            { name: "btn-lg", label: "Large" },
+            { name: "btn-sm", label: "Small" },
+            { name: "btn-block", label: "Block" },
+            { name: "btn-block btn-lg", label: "Large block" },
+          ],
+        },
+        showIf: { ".coltype": "ViewLink" },
+      },
+      {
         name: "link_text",
         label: __("Link text"),
         type: "String",
