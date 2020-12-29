@@ -107,6 +107,12 @@ const configTypes = {
     blurb:
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
   },
+  letsencrypt: {
+    label: "LetsEncrypt enabled",
+    default: false,
+    type: "hidden",
+    blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
+  },
 };
 
 const available_languages = {

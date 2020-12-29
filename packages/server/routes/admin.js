@@ -5,6 +5,8 @@ const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
+const User = require("@saltcorn/data/models/user");
+const path = require("path");
 
 const { post_btn, renderForm } = require("@saltcorn/markup");
 const {
@@ -41,6 +43,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const letsencrypt = getState().getConfig("letsencrypt", false);
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
@@ -72,6 +75,13 @@ router.get(
               "<br/>",
               req.__("Restore"),
             ]),
+            !letsencrypt && hr(),
+            !letsencrypt &&
+              post_btn(
+                "/admin/enable-letsencrypt",
+                req.__("Enable LetsEncrypt HTTPS"),
+                req.csrfToken()
+              ),
             hr(),
             a(
               { href: "/admin/clear-all", class: "btn btn-danger" },
@@ -81,6 +91,7 @@ router.get(
               " &raquo;"
             ),
             hr(),
+
             h4(req.__("About Saltcorn")),
             table(
               tbody(
@@ -249,6 +260,72 @@ const clearAllForm = (req) =>
       },
     ],
   });
+
+router.post(
+  "/enable-letsencrypt",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (db.getTenantSchema() === db.connectObj.default_schema) {
+      const base_url = getState().getConfig("base_url");
+      if (!base_url) {
+        req.flash("error", req.__("Set Base URL configuration first"));
+        res.redirect("/admin");
+        return;
+      }
+      const domain = base_url
+        .toLowerCase()
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(/^(www\.)/, "")
+        .replace(/\//g, "");
+      if (![domain, `www.${domain}`].includes(req.hostname)) {
+        req.flash(
+          "error",
+          req.__(
+            "Base URL domain %s does not match hostname %s",
+            domain,
+            req.hostname
+          )
+        );
+        res.redirect("/admin");
+        return;
+      }
+
+      try {
+        const file_store = db.connectObj.file_store;
+        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        const Greenlock = require("greenlock");
+        const greenlock = Greenlock.create({
+          packageRoot: path.resolve(__dirname, ".."),
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+        });
+
+        await greenlock.manager.defaults({
+          subscriberEmail: admin_users[0].email,
+          agreeToTerms: true,
+        });
+        await greenlock.sites.add({
+          subject: domain,
+          altnames: [domain, `www.${domain}`],
+        });
+        await getState().setConfig("letsencrypt", true);
+        req.flash(
+          "success",
+          req.__("LetsEncrypt SSL enabled. Restart for changes to take effect.")
+        );
+        res.redirect("/admin");
+      } catch (e) {
+        req.flash("error", e.message);
+        res.redirect("/admin");
+      }
+    } else {
+      req.flash("error", req.__("Not possible for tenant"));
+      res.redirect("/admin");
+    }
+  })
+);
 
 router.get(
   "/clear-all",
