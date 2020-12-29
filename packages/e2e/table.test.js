@@ -158,6 +158,7 @@ describe("Table create", () => {
     await browser.slowly_type("input.text-to-display", "MyOtherInput");
     await browser.page.waitFor(100);
     await browser.clickNav("button.btn-primary.builder-save");
+    await browser.clickNav("button[type=submit]");
 
     expect(await browser.content()).toContain("Add view");
     expect(await browser.content()).toContain("PersonShow");

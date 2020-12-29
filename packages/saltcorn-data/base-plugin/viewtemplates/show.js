@@ -9,7 +9,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span, a } = require("@saltcorn/markup/tags");
+const { div, text, span, a, text_attr } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -101,6 +101,28 @@ const configuration_workflow = (req) =>
           };
         },
       },
+      {
+        name: req.__("Set page title"),
+        form: () =>
+          new Form({
+            blurb: req.__(
+              "Skip this section if you do not want to set the page title"
+            ),
+            fields: [
+              {
+                name: "page_title",
+                label: req.__("Page title"),
+                type: "String",
+              },
+              {
+                name: "page_title_formula",
+                label: req.__("Page title is a formula?"),
+                type: "Bool",
+                required: false,
+              },
+            ],
+          }),
+      },
     ],
   });
 const get_state_fields = () => [
@@ -113,7 +135,13 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state, extra) => {
+const run = async (
+  table_id,
+  viewname,
+  { columns, layout, page_title, page_title_formula },
+  state,
+  extra
+) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
@@ -129,8 +157,19 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     limit: 2,
   });
   if (rows.length !== 1) return extra.req.__("No record selected");
-
-  return (await renderRows(tbl, viewname, { columns, layout }, extra, rows))[0];
+  const rendered = (
+    await renderRows(tbl, viewname, { columns, layout }, extra, rows)
+  )[0];
+  let page_title_preamble = "";
+  if (page_title) {
+    let the_title = page_title;
+    if (page_title_formula) {
+      const f = get_expression_function(page_title, fields);
+      the_title = f(rows[0]);
+    }
+    page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
+  }
+  return page_title_preamble + rendered;
 };
 
 const renderRows = async (

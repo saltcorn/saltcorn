@@ -79,7 +79,15 @@ const csrfField = (req) =>
 const error_catcher = (fn) => (request, response, next) => {
   Promise.resolve(fn(request, response, next)).catch(next);
 };
+const scan_for_page_title = (contents, viewname) => {
+  if (typeof contents === "string" && contents.includes("<!--SCPT:")) {
+    const start = contents.indexOf("<!--SCPT:");
+    const end = contents.indexOf("-->", start);
+    return contents.substring(start + 9, end);
+  }
 
+  return viewname;
+};
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -88,4 +96,5 @@ module.exports = {
   setTenant,
   get_base_url,
   error_catcher,
+  scan_for_page_title,
 };

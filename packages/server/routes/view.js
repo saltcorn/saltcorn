@@ -5,7 +5,11 @@ const Page = require("@saltcorn/data/models/page");
 
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
-const { setTenant, error_catcher } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  scan_for_page_title,
+} = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 
 const router = new Router();
@@ -34,7 +38,7 @@ router.get(
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         const contents = await db_page.run(req.query, { res, req });
-        res.sendWrap(view.name, contents);
+        res.sendWrap(scan_for_page_title(contents, view.name), contents);
         return;
       }
     }
@@ -45,9 +49,9 @@ router.get(
       state_form ? renderForm(state_form, req.csrfToken()) : "",
       resp
     );
-
+    const title = scan_for_page_title(contents, view.name);
     res.sendWrap(
-      view.name,
+      title,
       add_edit_bar({
         role: req.xhr ? 10 : role,
         title: view.name,
