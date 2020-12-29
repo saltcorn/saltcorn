@@ -508,5 +508,9 @@
 	"Link size": "Link size",
 	"Set page title": "Set page title",
 	"Skip this section if you do not want to set the page title": "Skip this section if you do not want to set the page title",
-	"Page title is a formula?": "Page title is a formula?"
+	"Page title is a formula?": "Page title is a formula?",
+	"Enable LetsEncrypt HTTPS": "Enable LetsEncrypt HTTPS",
+	"Set Base URL first": "Set Base URL first",
+	"LetsEncrypt enabled": "LetsEncrypt enabled",
+	"LetsEncrypt SSL enabled. Restart for changes to take effect.": "LetsEncrypt SSL enabled. Restart for changes to take effect."
 }
