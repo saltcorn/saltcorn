@@ -19,8 +19,8 @@ module.exports = async ({ port = 3000, ...appargs } = {}) => {
       configDir: path.join(file_store, "greenlock.d"),
       maintainerEmail: admin_users[0].email,
     });
-    console.log("get", greenlock.sites.get());
     console.log("gl", greenlock);
+    console.log("get", await greenlock.sites.get());
     require("greenlock-express")
       .init({
         packageRoot: __dirname,
