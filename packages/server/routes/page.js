@@ -4,7 +4,11 @@ const Page = require("@saltcorn/data/models/page");
 const { div, a, i } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant, error_catcher } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  scan_for_page_title,
+} = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 
 const router = new Router();
@@ -28,10 +32,9 @@ router.get(
       const db_page = await Page.findOne({ name: pagename });
       if (db_page && role <= db_page.min_role) {
         const contents = await db_page.run(req.query, { res, req });
-
+        const title = scan_for_page_title(contents, db_page.title);
         res.sendWrap(
-          { title: db_page.title, description: db_page.description } ||
-            `${pagename} page`,
+          { title, description: db_page.description } || `${pagename} page`,
           add_edit_bar({
             role,
             title: db_page.name,

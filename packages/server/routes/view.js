@@ -5,21 +5,15 @@ const Page = require("@saltcorn/data/models/page");
 
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
-const { setTenant, error_catcher } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  scan_for_page_title,
+} = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
-
-const scan_for_page_title = (contents, viewname) => {
-  if (typeof contents === "string" && contents.includes("<!--SCPT:")) {
-    const start = contents.indexOf("<!--SCPT:");
-    const end = contents.indexOf("-->", start);
-    return contents.substring(start + 9, end);
-  }
-
-  return viewname;
-};
 
 router.get(
   "/:viewname",
