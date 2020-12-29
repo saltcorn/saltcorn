@@ -271,6 +271,7 @@ router.post(
       if (!base_url) {
         req.flash("error", req.__("Set Base URL first"));
         res.redirect("/admin");
+        return;
       }
       const domain = base_url
         .toLowerCase()
@@ -278,6 +279,19 @@ router.post(
         .replace("http://", "")
         .replace(/^(www\.)/, "")
         .replace(/\//g, "");
+      if (![domain, `www.${domain}`].includes(req.hostname)) {
+        req.flash(
+          "error",
+          req.__(
+            "Base URL domain %s does not match hostname %s",
+            domain,
+            req.hostname
+          )
+        );
+        res.redirect("/admin");
+        return;
+      }
+
       try {
         const file_store = db.connectObj.file_store;
         const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
