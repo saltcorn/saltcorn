@@ -162,7 +162,12 @@ const run = async (
   )[0];
   let page_title_preamble = "";
   if (page_title) {
-    page_title_preamble = `<!--SCPT:${text_attr(page_title)}-->`;
+    let the_title = page_title;
+    if (page_title_formula) {
+      const f = get_expression_function(page_title, fields);
+      the_title = f(rows[0]);
+    }
+    page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
   return page_title_preamble + rendered;
 };
