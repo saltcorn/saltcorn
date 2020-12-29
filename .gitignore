@@ -108,3 +108,5 @@ plugin_packages/
 *.sqlc
 
 sessions.sqlite
+
+.greenlockrc
