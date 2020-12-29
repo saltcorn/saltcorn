@@ -226,6 +226,20 @@ describe("viewedit new List with one field", () => {
 });
 
 describe("viewedit new Show", () => {
+  const columns = [
+    { type: "Field", field_name: "author", state_field: "on" },
+    { type: "ViewLink", view: "Own:authorshow" },
+    { type: "Action", action_name: "Delete" },
+    {
+      type: "Aggregation",
+      agg_relation: "patients.favbook",
+      agg_field: "name",
+      stat: "Count",
+    },
+  ];
+  const layout = {
+    above: [{ type: "field", fieldview: "show", field_name: "author" }],
+  };
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -240,7 +254,7 @@ describe("viewedit new Show", () => {
       .expect(toRedirect("/viewedit/config/mybook"));
     //expect(res.text.includes("View configuration")).toBe(true);
   });
-  it("save new view", async () => {
+  it("save new view layout", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = await Table.findOne({ name: "books" });
 
@@ -250,20 +264,7 @@ describe("viewedit new Show", () => {
         viewname: "mybook",
       })
     );
-    const columns = [
-      { type: "Field", field_name: "author", state_field: "on" },
-      { type: "ViewLink", view: "Own:authorshow" },
-      { type: "Action", action_name: "Delete" },
-      {
-        type: "Aggregation",
-        agg_relation: "patients.favbook",
-        agg_field: "name",
-        stat: "Count",
-      },
-    ];
-    const layout = {
-      above: [{ type: "field", fieldview: "show", field_name: "author" }],
-    };
+
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/viewedit/config/mybook")
@@ -271,6 +272,27 @@ describe("viewedit new Show", () => {
       .send("stepName=Layout")
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Set page title"));
+  });
+  it("save new view page title", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        viewname: "mybook",
+        layout,
+        columns,
+      })
+    );
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/viewedit/config/mybook")
+      .send("contextEnc=" + ctx)
+      .send("stepName=Set+page+title")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
