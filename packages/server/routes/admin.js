@@ -75,8 +75,9 @@ router.get(
               "<br/>",
               req.__("Restore"),
             ]),
-            !letsencrypt && hr(),
+            !letsencrypt && isRoot && hr(),
             !letsencrypt &&
+              isRoot &&
               post_btn(
                 "/admin/enable-letsencrypt",
                 req.__("Enable LetsEncrypt HTTPS"),
