@@ -44,7 +44,7 @@ router.get(
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const letsencrypt = getState().getConfig("letsencrypt", false);
-
+    console.log({ letsencrypt });
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
