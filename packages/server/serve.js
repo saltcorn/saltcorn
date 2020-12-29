@@ -20,7 +20,7 @@ module.exports = async ({ port = 3000, ...appargs } = {}) => {
       maintainerEmail: admin_users[0].email,
     });
     console.log("gl", greenlock);
-    console.log("get", await greenlock.sites.get());
+    console.log("get", await greenlock.sites.get({}));
     require("greenlock-express")
       .init({
         packageRoot: __dirname,
