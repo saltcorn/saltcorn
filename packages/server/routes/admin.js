@@ -269,7 +269,7 @@ router.post(
     if (db.getTenantSchema() === db.connectObj.default_schema) {
       const base_url = getState().getConfig("base_url");
       if (!base_url) {
-        req.flash("error", req.__("Set Base URL first"));
+        req.flash("error", req.__("Set Base URL configuration first"));
         res.redirect("/admin");
         return;
       }
