@@ -9,7 +9,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span, a } = require("@saltcorn/markup/tags");
+const { div, text, span, a, text_attr } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -111,12 +111,12 @@ const configuration_workflow = (req) =>
             fields: [
               {
                 name: "page_title",
-                label: __("Page title"),
+                label: req.__("Page title"),
                 type: "String",
               },
               {
                 name: "page_title_formula",
-                label: __("Page title is a formula?"),
+                label: req.__("Page title is a formula?"),
                 type: "Bool",
                 required: false,
               },

@@ -11,6 +11,16 @@ const { add_edit_bar } = require("../markup/admin.js");
 const router = new Router();
 module.exports = router;
 
+const scan_for_page_title = (contents, viewname) => {
+  if (typeof contents === "string" && contents.includes("<!--SCPT:")) {
+    const start = contents.indexOf("<!--SCPT:");
+    const end = contents.indexOf("-->", start);
+    return contents.substring(start + 9, end);
+  }
+
+  return viewname;
+};
+
 router.get(
   "/:viewname",
   setTenant,
@@ -34,7 +44,7 @@ router.get(
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         const contents = await db_page.run(req.query, { res, req });
-        res.sendWrap(view.name, contents);
+        res.sendWrap(scan_for_page_title(contents, view.name), contents);
         return;
       }
     }
@@ -45,9 +55,9 @@ router.get(
       state_form ? renderForm(state_form, req.csrfToken()) : "",
       resp
     );
-
+    const title = scan_for_page_title(contents, view.name);
     res.sendWrap(
-      view.name,
+      title,
       add_edit_bar({
         role: req.xhr ? 10 : role,
         title: view.name,

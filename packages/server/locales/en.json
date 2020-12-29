@@ -505,5 +505,8 @@
 	"Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>.": "Restart required for changes to take effect. Restart server from the <a href=\"/admin\">Admin page</a>.",
 	"Email with password reset link sent": "Email with password reset link sent",
 	"Link Style": "Link Style",
-	"Link size": "Link size"
+	"Link size": "Link size",
+	"Set page title": "Set page title",
+	"Skip this section if you do not want to set the page title": "Skip this section if you do not want to set the page title",
+	"Page title is a formula?": "Page title is a formula?"
 }
