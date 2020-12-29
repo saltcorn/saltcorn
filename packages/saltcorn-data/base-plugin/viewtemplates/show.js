@@ -135,7 +135,13 @@ const get_state_fields = () => [
 
 const initial_config = initial_config_all_fields(false);
 
-const run = async (table_id, viewname, { columns, layout }, state, extra) => {
+const run = async (
+  table_id,
+  viewname,
+  { columns, layout, page_title, page_title_formula },
+  state,
+  extra
+) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
@@ -151,8 +157,14 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     limit: 2,
   });
   if (rows.length !== 1) return extra.req.__("No record selected");
-
-  return (await renderRows(tbl, viewname, { columns, layout }, extra, rows))[0];
+  const rendered = (
+    await renderRows(tbl, viewname, { columns, layout }, extra, rows)
+  )[0];
+  let page_title_preamble = "";
+  if (page_title) {
+    page_title_preamble = `<!--SCPT:${text_attr(page_title)}-->`;
+  }
+  return page_title_preamble + rendered;
 };
 
 const renderRows = async (
