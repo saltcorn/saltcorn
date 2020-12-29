@@ -19,16 +19,21 @@ module.exports = async ({ port = 3000, ...appargs } = {}) => {
       configDir: path.join(file_store, "greenlock.d"),
       maintainerEmail: admin_users[0].email,
     });
-    console.log("gl", greenlock);
-    console.log("get", await greenlock._find({}));
-    require("greenlock-express")
-      .init({
-        packageRoot: __dirname,
-        configDir: path.join(file_store, "greenlock.d"),
-        maintainerEmail: admin_users[0].email,
-        cluster: false,
-      })
-      .serve(app);
+    const certs = await greenlock._find({});
+    console.log("Certificates:", certs);
+    if (certs && certs.length > 0)
+      require("greenlock-express")
+        .init({
+          packageRoot: __dirname,
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+          cluster: false,
+        })
+        .serve(app);
+    else
+      app.listen(port, () => {
+        console.log(`Saltcorn listening on http://127.0.0.1:${port}/`);
+      });
   } else
     app.listen(port, () => {
       console.log(`Saltcorn listening on http://127.0.0.1:${port}/`);
