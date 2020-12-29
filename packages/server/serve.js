@@ -13,7 +13,13 @@ module.exports = async ({ port = 3000, ...appargs } = {}) => {
   if (port === 80 && getState().getConfig("letsencrypt", false)) {
     const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
     const file_store = db.connectObj.file_store;
-
+    const Greenlock = require("greenlock");
+    const greenlock = Greenlock.create({
+      packageRoot: __dirname,
+      configDir: path.join(file_store, "greenlock.d"),
+      maintainerEmail: admin_users[0].email,
+    });
+    console.log(greenlock.sites.find());
     require("greenlock-express")
       .init({
         packageRoot: __dirname,
