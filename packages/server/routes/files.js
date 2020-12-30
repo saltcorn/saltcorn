@@ -14,6 +14,7 @@ const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
   span,
   h5,
+  h1,
   h4,
   nbsp,
   p,
@@ -140,6 +141,12 @@ router.get(
     const user_id = req.user && req.user.id;
     const { id } = req.params;
     const file = await File.findOne({ id });
+    if (!file) {
+      res
+        .status(404)
+        .sendWrap(res.__("Not found"), h1(res.__("File not found")));
+      return;
+    }
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";

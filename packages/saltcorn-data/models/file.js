@@ -27,8 +27,8 @@ class File {
   }
 
   static async findOne(where) {
-    const db_fld = await db.selectOne("_sc_files", where);
-    return new File(db_fld);
+    const f = await db.selectMaybeOne("_sc_files", where);
+    return f ? new File(f) : null;
   }
 
   static async update(id, row) {
