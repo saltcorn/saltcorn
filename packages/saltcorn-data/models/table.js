@@ -647,7 +647,7 @@ Table.contract = {
     delete: is.fun([], is.promise(is.eq(undefined))),
     update: is.fun(is.obj(), is.promise(is.eq(undefined))),
     deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
-    getRow: is.fun(is.obj(), is.promise(is.obj())),
+    getRow: is.fun(is.obj(), is.promise(is.maybe(is.obj()))),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
     updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
