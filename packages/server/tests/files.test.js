@@ -58,6 +58,15 @@ describe("files admin", () => {
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
+
+  it("serve missing file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/files/serve/22")
+      .set("Cookie", loginCookie)
+      .expect(404);
+  });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/2").expect(toRedirect("/"));

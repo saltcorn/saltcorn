@@ -137,7 +137,8 @@ class Table {
   }
   async getRow(where) {
     await this.getFields();
-    const row = await db.selectOne(this.name, where);
+    const row = await db.selectMaybeOne(this.name, where);
+    if (!row) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 

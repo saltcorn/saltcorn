@@ -513,5 +513,6 @@
 	"Set Base URL configuration first": "Set Base URL configuration first",
 	"LetsEncrypt enabled": "LetsEncrypt enabled",
 	"LetsEncrypt SSL enabled. Restart for changes to take effect.": "LetsEncrypt SSL enabled. Restart for changes to take effect.",
-	"File not found": "File not found"
+	"File not found": "File not found",
+	"Table %s not found": "Table %s not found"
 }

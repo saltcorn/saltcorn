@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
-const { a, script, domReady, div } = require("@saltcorn/markup/tags");
+const { a, script, domReady, div, text } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
@@ -138,7 +138,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { tname } = req.params;
     const table = await Table.findOne({ name: tname });
-
+    if (!table) {
+      req.flash("error", req.__("Table %s not found", text(tname)));
+      res.redirect(`/table`);
+      return;
+    }
     const fields = await table.getFields();
     for (const f of fields) {
       if (f.type === "File") f.attributes = { select_file_where: {} };
