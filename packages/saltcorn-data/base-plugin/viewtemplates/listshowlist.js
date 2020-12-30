@@ -147,6 +147,7 @@ const run = async (
     if (state.id) id = state.id;
     else {
       myrow = await table.getRow(uniques);
+      if (!myrow) return `Not found`;
       id = myrow.id;
     }
     for (const relspec of Object.keys(subtables || {})) {
