@@ -112,7 +112,7 @@ File.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("File")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.class("File"))),
+    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("File")))),
     create: is.fun(is.obj(), is.promise(is.class("File"))),
     from_req_files: is.fun(
       [
