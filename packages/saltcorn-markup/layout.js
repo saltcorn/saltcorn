@@ -253,6 +253,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         textColor,
         showForRole,
         hide,
+        customClass,
+        customCSS,
       } = segment;
       if (hide) return "";
       if (showForRole && showForRole[role] === false) return "";
@@ -265,6 +267,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         typeof segment[segKey] === "undefined"
           ? ""
           : `${cssNm}: ${segment[segKey]}${unit};`;
+      const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
       return wrap(
         segment,
         isTop,
@@ -272,13 +275,14 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         div(
           {
             class: [
+              customClass || false,
               hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "middle" &&
                 hAlign === "center" &&
                 "justify-content-center",
             ],
-            style: `${
+            style: `${ppCustomCSS(customCSS || "")}${
               block === false ? "display: inline-block;" : ""
             }${sizeProp("minHeight", "min-height")}${sizeProp(
               "height",
