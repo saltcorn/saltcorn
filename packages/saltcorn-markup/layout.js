@@ -21,22 +21,24 @@ const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
 const makeSegments = (body, alerts) => {
-  const alertsSegments =
-    alerts && alerts.length > 0
-      ? [{ type: "blank", contents: alerts.map((a) => alert(a.type, a.msg)) }]
-      : [];
+  const alertsSegments = [
+    {
+      type: "blank",
+      contents: div(
+        { id: "alerts-area" },
+        (alerts || []).map((a) => alert(a.type, a.msg))
+      ),
+    },
+  ];
+
   if (typeof body === "string")
     return {
       above: [...alertsSegments, { type: "blank", contents: body }],
     };
   else if (body.above) {
-    if (alerts && alerts.length > 0) body.above.unshift(alertsSegments[0]);
+    body.above.unshift(alertsSegments[0]);
     return body;
-  } else {
-    if (alerts && alerts.length > 0)
-      return { above: [...alertsSegments, body] };
-    else return body;
-  }
+  } else return { above: [...alertsSegments, body] };
 };
 const applyTextStyle = (textStyle, inner, isBlock) => {
   switch (textStyle) {
