@@ -14,14 +14,14 @@ module.exports = async ({ port = 3000, ...appargs } = {}) => {
   const nonGreenlockServer = () => {
     const cert = getState().getConfig("custom_ssl_certificate", "");
     const key = getState().getConfig("custom_ssl_private_key", "");
-    if (cert && key) {
+    if (port === 80 && cert && key) {
       const https = require("https");
       const http = require("http");
       const httpServer = http.createServer(app);
       const httpsServer = https.createServer({ key, cert }, app);
 
       httpServer.listen(port, () => {
-        console.log("HTTP Server running on port " + port);
+        console.log("HTTP Server running on port 80");
       });
 
       httpsServer.listen(443, () => {
