@@ -7,7 +7,7 @@ const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
-
+const { getAllTenants } = require("@saltcorn/data/models/tenant");
 const { post_btn, renderForm } = require("@saltcorn/markup");
 const {
   div,
@@ -292,7 +292,15 @@ router.post(
         res.redirect("/admin");
         return;
       }
-
+      const allTens = await getAllTenants();
+      if (allTens.length > 0) {
+        req.flash(
+          "error",
+          req.__("Cannot enable LetsEncrypt as there are subdomain tenants")
+        );
+        res.redirect("/admin");
+        return;
+      }
       try {
         const file_store = db.connectObj.file_store;
         const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });

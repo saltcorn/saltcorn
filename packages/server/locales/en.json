@@ -514,5 +514,7 @@
 	"LetsEncrypt enabled": "LetsEncrypt enabled",
 	"LetsEncrypt SSL enabled. Restart for changes to take effect.": "LetsEncrypt SSL enabled. Restart for changes to take effect.",
 	"File not found": "File not found",
-	"Table %s not found": "Table %s not found"
+	"Table %s not found": "Table %s not found",
+	"Page %s added to menu. Adjust access permissions in Settings &raquo; Menu": "Page %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+	"Page %s duplicated as %s": "Page %s duplicated as %s"
 }
