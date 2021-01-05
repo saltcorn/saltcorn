@@ -23,7 +23,7 @@ const { search_bar_form } = require("./helpers");
 const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
 
 const makeSegments = (body, alerts) => {
-  const alertsSegments = couldHaveAlerts
+  const alertsSegments = couldHaveAlerts(alerts)
     ? [
         {
           type: "blank",
