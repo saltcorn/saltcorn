@@ -91,7 +91,8 @@ const getNewURL = (req, subdomain) => {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const newurl = `${req.protocol}://${subdomain}.${req.hostname}${ports}/`;
+  const hostname = req.hostname.replace(/^(www\.)/, "");
+  const newurl = `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 
   return newurl;
 };
