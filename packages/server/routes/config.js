@@ -153,6 +153,7 @@ const formForKey = async (req, key, value) => {
         name: key,
         label: req.__(configTypes[key].label || key),
         type: isView ? "String" : configTypes[key].type,
+        fieldview: configTypes[key].fieldview,
         sublabel: req.__(configTypes[key].sublabel),
         attributes: isView
           ? await viewAttributes()
