@@ -83,7 +83,14 @@ const sections = (req) => [
   },
   {
     name: req.__("Authentication"),
-    keys: ["allow_signup", "login_menu", "allow_forgot", "new_user_form"],
+    keys: [
+      "allow_signup",
+      "login_menu",
+      "allow_forgot",
+      "new_user_form",
+      "custom_ssl_certificate",
+      "custom_ssl_private_key",
+    ],
   },
   {
     name: req.__("E-mail"),
