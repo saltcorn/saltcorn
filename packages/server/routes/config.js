@@ -52,7 +52,9 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
     configTypes[key].type === "File" ||
     configTypes[key].type.startsWith("View ");
   const hideValue = (key) =>
-    configTypes[key] ? configTypes[key].type === "hidden" : true;
+    configTypes[key]
+      ? configTypes[key].type === "hidden" || configTypes[key].hide_value
+      : true;
   const showFile = (r) => {
     const file = files.find((f) => f.id == r.value);
     return file ? file.filename : req.__("Unknown file");
