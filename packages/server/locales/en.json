@@ -516,5 +516,7 @@
 	"File not found": "File not found",
 	"Table %s not found": "Table %s not found",
 	"Page %s added to menu. Adjust access permissions in Settings &raquo; Menu": "Page %s added to menu. Adjust access permissions in Settings &raquo; Menu",
-	"Page %s duplicated as %s": "Page %s duplicated as %s"
+	"Page %s duplicated as %s": "Page %s duplicated as %s",
+	"Custom SSL certificate": "Custom SSL certificate",
+	"Custom SSL private key": "Custom SSL private key"
 }

@@ -107,6 +107,18 @@ const configTypes = {
     blurb:
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
   },
+  custom_ssl_certificate: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL certificate",
+    default: "",
+  },
+  custom_ssl_private_key: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL private key",
+    default: "",
+  },
   letsencrypt: {
     label: "LetsEncrypt enabled",
     default: false,
