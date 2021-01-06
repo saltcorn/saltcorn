@@ -43,7 +43,6 @@ const view_pack = contract(pack_fun, async (name) => {
     viewtemplate: view.viewtemplate,
     configuration: view.configuration,
     min_role: view.min_role,
-    on_root_page: view.on_root_page,
     table: table.name,
     menu_label: view.menu_label,
     default_render_page: view.default_render_page,
@@ -221,7 +220,13 @@ const install_pack = contract(
         await TableConstraint.create({ table, ...constraint });
     }
     for (const viewSpec of pack.views) {
-      const { table, on_menu, menu_label, ...viewNoTable } = viewSpec;
+      const {
+        table,
+        on_menu,
+        menu_label,
+        on_root_page,
+        ...viewNoTable
+      } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({ ...viewNoTable, table_id: vtable.id });
       if (menu_label)

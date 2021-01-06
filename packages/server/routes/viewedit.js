@@ -218,11 +218,6 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
           ...pages.map((p) => ({ value: p.name, label: p.name })),
         ],
       }),
-      new Field({
-        label: req.__("On root page"),
-        name: "on_root_page",
-        type: "Bool",
-      }),
       ...(isEdit
         ? [
             new Field({

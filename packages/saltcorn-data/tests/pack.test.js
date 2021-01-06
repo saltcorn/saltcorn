@@ -55,7 +55,6 @@ describe("pack create", () => {
       },
       min_role: 10,
       name: "authorlist",
-      on_root_page: true,
       menu_label: undefined,
       table: "books",
       viewtemplate: "List",
@@ -180,7 +179,6 @@ const todoPack = {
       table: "TodoItems",
       on_menu: false,
       min_role: 10,
-      on_root_page: false,
       viewtemplate: "Edit",
       configuration: {
         fixed: { done: false },
@@ -232,7 +230,6 @@ const todoPack = {
       table: "TodoItems",
       min_role: 10,
       menu_label: "List",
-      on_root_page: true,
       viewtemplate: "List",
       configuration: {
         columns: [
