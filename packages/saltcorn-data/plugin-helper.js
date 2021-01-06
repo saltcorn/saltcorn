@@ -487,7 +487,7 @@ const get_parent_views = contract(
   async (table, viewname) => {
     var parent_views = [];
     const parentrels = (await table.getFields()).filter(
-      (f) => f.is_fkey && f.type !== "File" && f.reftable_name !== "users"
+      (f) => f.is_fkey && f.type !== "File"
     );
     for (const relation of parentrels) {
       const related_table = await Table.findOne({
