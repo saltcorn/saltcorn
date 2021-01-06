@@ -33,6 +33,7 @@ const {
   select,
   br,
 } = require("@saltcorn/markup/tags");
+const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
@@ -51,15 +52,10 @@ const userForm = contract(
     const roles = (await User.get_roles()).filter((r) => r.role !== "public");
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
     const can_reset = getState().getConfig("smtp_host", "") !== "";
+    const userTable = await Table.findOne({ name: "users" });
+    const userFields = await userTable.getFields();
     const form = new Form({
-      fields: [
-        new Field({
-          label: req.__("E-mail"),
-          name: "email",
-          input_type: "text",
-        }),
-        roleField,
-      ],
+      fields: [roleField, ...userFields],
       action: "/useradmin/save",
       submitLabel: user ? req.__("Save") : req.__("Create"),
     });
@@ -339,17 +335,24 @@ router.post(
       id,
       rnd_password,
       send_pwreset_email,
+      _csrf,
+      ...rest
     } = req.body;
     if (id) {
       try {
-        await db.update("users", { email, role_id }, id);
+        await db.update("users", { email, role_id, ...rest }, id);
         req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {
       if (rnd_password) password = User.generate_password();
-      const u = await User.create({ email, password, role_id: +role_id });
+      const u = await User.create({
+        email,
+        password,
+        role_id: +role_id,
+        ...rest,
+      });
       const pwflash =
         rnd_password && !send_pwreset_email
           ? req.__(` with password %s`, code(password))
