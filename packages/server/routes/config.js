@@ -52,7 +52,9 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
     configTypes[key].type === "File" ||
     configTypes[key].type.startsWith("View ");
   const hideValue = (key) =>
-    configTypes[key] ? configTypes[key].type === "hidden" : true;
+    configTypes[key]
+      ? configTypes[key].type === "hidden" || configTypes[key].hide_value
+      : true;
   const showFile = (r) => {
     const file = files.find((f) => f.id == r.value);
     return file ? file.filename : req.__("Unknown file");
@@ -83,7 +85,14 @@ const sections = (req) => [
   },
   {
     name: req.__("Authentication"),
-    keys: ["allow_signup", "login_menu", "allow_forgot", "new_user_form"],
+    keys: [
+      "allow_signup",
+      "login_menu",
+      "allow_forgot",
+      "new_user_form",
+      "custom_ssl_certificate",
+      "custom_ssl_private_key",
+    ],
   },
   {
     name: req.__("E-mail"),
@@ -153,6 +162,7 @@ const formForKey = async (req, key, value) => {
         name: key,
         label: req.__(configTypes[key].label || key),
         type: isView ? "String" : configTypes[key].type,
+        fieldview: configTypes[key].fieldview,
         sublabel: req.__(configTypes[key].sublabel),
         attributes: isView
           ? await viewAttributes()
