@@ -282,7 +282,6 @@ describe("User fields", () => {
         },
       },
       min_role: 1,
-      on_root_page: true,
     });
     await getState().setConfig("new_user_form", "newuser");
   });

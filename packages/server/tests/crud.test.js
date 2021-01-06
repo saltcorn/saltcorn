@@ -47,11 +47,6 @@ describe("homepage", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/").expect(toInclude("authorlist"));
   });
-  it("shows single on_root_page view", async () => {
-    await db.query("update _sc_views set on_root_page=false where id<>1;");
-    const app = await getApp({ disableCsrf: true });
-    await request(app).get("/").expect(toInclude("Melville"));
-  });
 
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -128,7 +123,6 @@ describe("homepage", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: false,
     });
     const loginCookie = await getAdminLoginCookie();
 

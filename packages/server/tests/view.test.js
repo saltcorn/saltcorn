@@ -98,7 +98,6 @@ describe("view with routes", () => {
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 8,
-      on_root_page: true,
     });
   });
   it("should redirect if not auth", async () => {

@@ -76,7 +76,6 @@ const pack = {
         longtitude_field: "long",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -102,7 +101,6 @@ const pack = {
         viewname: "ShowName",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -118,7 +116,6 @@ const pack = {
         view_to_create: "",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -134,7 +131,6 @@ const pack = {
         view_to_create: "",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -156,7 +152,6 @@ const pack = {
         viewname: "NestedShow",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -171,7 +166,6 @@ const pack = {
         longtitude_field: "long",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -187,7 +181,6 @@ const pack = {
         view_to_create: "",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -209,7 +202,6 @@ const pack = {
         viewname: "NestedShowNoPop",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
     {
@@ -225,7 +217,6 @@ const pack = {
         view_to_create: "",
       },
       min_role: 10,
-      on_root_page: false,
       table: "cats",
     },
   ],

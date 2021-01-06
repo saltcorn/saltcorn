@@ -25,7 +25,6 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
     viewtemplate,
     configuration: rest,
     min_role: 10,
-    on_root_page: true,
   });
 
   const res = await v.run(

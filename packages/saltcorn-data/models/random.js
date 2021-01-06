@@ -145,7 +145,6 @@ const initial_view = async (table, viewtemplate) => {
     viewtemplate,
     table_id: table.id,
     min_role: 10,
-    on_root_page: false,
   });
   return view;
 };
