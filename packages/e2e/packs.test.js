@@ -73,7 +73,7 @@ describe("PM packs", () => {
     await browser.delete_tenant("sub1");
     await browser.create_tenant("sub1");
     await browser.install_pack("Issue  tracker");
-    await browser.clickNav(".card-body > div > a");
+    await browser.clickNav(".card-body > a");
     await browser.page.type("#inputdescription", "my new task");
     await browser.page.type("#inputdetails", "some stuff");
     await browser.clickNav("button[type=submit]");
