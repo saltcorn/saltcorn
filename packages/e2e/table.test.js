@@ -214,9 +214,9 @@ describe("Table create", () => {
     const page = await browser.content();
     expect(page).toContain("Login");
     expect(page).not.toContain("Logout");
-    expect(page).toContain("Sign up");
-    expect(page).toContain("<title>PersonList</title>");
-    expect(page).toContain("TerryTheBeaver");
+    expect(page).toContain("Create an account");
+    //expect(page).toContain("<title>PersonList</title>");
+    //expect(page).toContain("TerryTheBeaver");
     expect(page).not.toContain('href="/table"');
   });
   it("Signs up", async () => {
