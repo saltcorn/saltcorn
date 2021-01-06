@@ -113,7 +113,6 @@ describe("Table create", () => {
     await browser.goto("/viewedit/edit/PersonList");
     expect(await browser.content()).toContain("PersonList");
     await browser.page.select("#inputmin_role", "10");
-    await browser.page.click("#inputon_root_page");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Use view to create");
     await browser.page.select("#inputview_to_create", "PersonEdit");
@@ -215,9 +214,9 @@ describe("Table create", () => {
     const page = await browser.content();
     expect(page).toContain("Login");
     expect(page).not.toContain("Logout");
-    expect(page).toContain("Sign up");
-    expect(page).toContain("<title>PersonList</title>");
-    expect(page).toContain("TerryTheBeaver");
+    expect(page).toContain("Create an account");
+    //expect(page).toContain("<title>PersonList</title>");
+    //expect(page).toContain("TerryTheBeaver");
     expect(page).not.toContain('href="/table"');
   });
   it("Signs up", async () => {

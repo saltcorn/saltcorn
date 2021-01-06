@@ -21,7 +21,6 @@ class View {
           ? 10
           : 8
         : +o.min_role;
-    this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     this.default_render_page = o.default_render_page;

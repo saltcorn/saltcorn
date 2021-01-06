@@ -632,7 +632,6 @@ describe("Table and view deletion ", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: {} },
       min_role: 10,
-      on_root_page: true,
     });
     let error;
     try {
@@ -717,7 +716,6 @@ describe("Tables with name clashes", () => {
         ],
       },
       min_role: 10,
-      on_root_page: true,
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toContain("Mustang");
@@ -742,7 +740,6 @@ describe("Tables with name clashes", () => {
         },
       },
       min_role: 10,
-      on_root_page: true,
     });
     const res = await v.run({ id: 1 }, mockReqRes);
     expect(res).toContain("Mustang");

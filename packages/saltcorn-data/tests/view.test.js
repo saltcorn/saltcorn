@@ -16,7 +16,6 @@ describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
     expect(v.min_role).toBe(10);
-    expect(v.on_root_page).toBe(true);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
@@ -82,14 +81,12 @@ describe("View", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: true,
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
 
     const st = v.combine_state_and_default_state({ baz: 3 });
     expect(st).toStrictEqual({ baz: 3, foo: "bar" });
-    await View.update({ on_root_page: false }, v.id);
     await v.delete();
   });
   it("should clone", async () => {
@@ -123,7 +120,6 @@ describe("View with routes", () => {
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 10,
-      on_root_page: true,
     });
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
@@ -166,7 +162,6 @@ describe("nested views", () => {
         viewname: "small",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const medium = await View.create({
       table_id: table.id,
@@ -202,7 +197,6 @@ describe("nested views", () => {
         viewname: "medium",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const res = await medium.run({ id: 2 }, mockReqRes);
 
@@ -232,7 +226,6 @@ describe("nested views", () => {
         create_view_display: "Link",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const res = await large.run({}, mockReqRes);
 

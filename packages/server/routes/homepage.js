@@ -302,32 +302,13 @@ module.exports = async (req, res) => {
   const cfgResp = await get_config_response(role + "_home", res, req);
   if (cfgResp) return;
 
-  const views = getState().views.filter(
-    (v) => v.on_root_page && (isAuth || v.min_role === 10)
-  );
-
-  if (views.length === 0) {
-    if (!isAuth) {
-      const hasUsers = await User.nonEmpty();
-      if (!hasUsers) {
-        res.redirect("/auth/create_first_user");
-        return;
-      } else res.redirect("/auth/login");
-    } else {
-      await no_views_logged_in(req, res);
-    }
-  } else if (views.length === 1) {
-    const view = views[0];
-    const state = view.combine_state_and_default_state(req.query);
-    const resp = await view.run(state, { res, req });
-    const state_form = await view.get_state_form(state, req);
-
-    res.sendWrap(
-      `${view.name}`,
-      div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp)
-    );
+  if (!isAuth) {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      res.redirect("/auth/create_first_user");
+      return;
+    } else res.redirect("/auth/login");
   } else {
-    const viewlis = views.map((v) => li(link(`/view/${v.name}`, v.name)));
-    res.sendWrap(req.__("Hello"), ul(viewlis));
+    await no_views_logged_in(req, res);
   }
 };

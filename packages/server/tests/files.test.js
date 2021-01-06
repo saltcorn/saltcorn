@@ -148,7 +148,6 @@ describe("files edit", () => {
         },
       },
       min_role: 10,
-      on_root_page: false,
     });
   });
   it("shows edit view", async () => {
