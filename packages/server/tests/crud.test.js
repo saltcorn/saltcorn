@@ -43,11 +43,6 @@ describe("standard edit form", () => {
 });
 
 describe("homepage", () => {
-  it("shows to public", async () => {
-    const app = await getApp({ disableCsrf: true });
-    await request(app).get("/").expect(toInclude("authorlist"));
-  });
-
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
 

@@ -39,7 +39,7 @@ describe("Public auth Endpoints", () => {
 describe("login process", () => {
   it("should say Login when not logged in", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/").expect(toInclude("Login"));
+    await request(app).get("/").expect(toRedirect("/auth/login"));
   });
 
   it("should say Logout when logged in", async () => {
