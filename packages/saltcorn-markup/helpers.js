@@ -65,7 +65,7 @@ const pagination = ({
 const search_bar = (
   name,
   v,
-  { onClick, placeHolder, has_dropdown, contents } = {}
+  { onClick, placeHolder, has_dropdown, contents, badges } = {}
 ) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
 
@@ -81,6 +81,21 @@ const search_bar = (
          v ? `value="${text_attr(v)}"` : ""
        }>
 <div class="input-group-append">
+  ${
+    badges && badges.length > 0
+      ? `<div class="input-group-text">${badges
+          .map(
+            (b) =>
+              `<span class="badge badge-primary">${b.text}${
+                b.onclick
+                  ? `<a href="javascript:${b.onclick}"><i class="ml-1 fas fa-lg fa-times"></i></a> `
+                  : ""
+              }</span>`
+          )
+          .join("&nbsp;")}
+  </div>`
+      : ""
+  }
   ${
     has_dropdown
       ? `<button class="btn btn-primary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`

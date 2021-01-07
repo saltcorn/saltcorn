@@ -9,6 +9,7 @@ const {
   option,
   select,
   button,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -83,6 +84,22 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       }
     }
   }
+
+  const badges = [];
+  Object.entries(state).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
+    if (k[0] !== "_") {
+      let showv = v;
+      if (distinct_values[k]) {
+        const realv = distinct_values[k].find((dv) => dv.value === v);
+        if (realv) showv = realv.label;
+      }
+      badges.push({
+        text: `${text_attr(k)}:${text_attr(showv)}`,
+        onclick: `unset_state_field('${text_attr(k)}')`,
+      });
+    }
+  });
   const blockDispatch = {
     search_bar({ has_dropdown, contents }, go) {
       const rendered_contents = go(contents);
@@ -91,6 +108,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())",
         has_dropdown,
         contents: rendered_contents,
+        badges,
       });
     },
     dropdown_filter({ field_name }) {
