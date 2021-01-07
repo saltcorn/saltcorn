@@ -19,6 +19,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
+import { ClearFilter } from "./elements/ClearFilter";
 
 const getColWidths = (segment) => {
   if (!segment.widths)
@@ -109,6 +110,16 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.field_name}
           value={segment.value}
           label={segment.label}
+          block={segment.block || false}
+        />
+      );
+    } else if (segment.type === "clear_filter") {
+      return (
+        <ClearFilter
+          key={ix}
+          label={segment.label}
+          btn_style={segment.btn_style}
+          btn_size={segment.btn_size}
           block={segment.block || false}
         />
       );
@@ -417,6 +428,15 @@ export const craftToSaltcorn = (nodes) => {
         block: node.props.block,
         field_name: node.props.name,
         value: node.props.value,
+        label: node.props.label,
+      };
+    }
+    if (node.displayName === ClearFilter.craft.displayName) {
+      return {
+        type: "clear_filter",
+        block: node.props.block,
+        btn_size: node.props.btn_size,
+        btn_style: node.props.btn_style,
         label: node.props.label,
       };
     }

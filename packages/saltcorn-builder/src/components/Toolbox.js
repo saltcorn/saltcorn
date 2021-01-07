@@ -11,6 +11,7 @@ import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
+import { ClearFilter } from "./elements/ClearFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Tabs } from "./elements/Tabs";
@@ -206,6 +207,21 @@ const ToggleFilterElem = ({ connectors, fields }) => (
     <ToggleFilter name={fields[0].name} value={""} label={""} block={false} />
   </WrapElem>
 );
+const ClearFilterElem = ({ connectors, fields }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fas fa-power-off"
+    title="Clear filter"
+    label="Clear"
+  >
+    <ClearFilter
+      label={""}
+      block={false}
+      btn_size={""}
+      btn_style={"btn-primary"}
+    />
+  </WrapElem>
+);
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
@@ -328,6 +344,7 @@ export const ToolboxFilter = () => {
       <LineBreakElem connectors={connectors} />
       <DropDownFilterElem connectors={connectors} fields={fields} />
       <ToggleFilterElem connectors={connectors} fields={fields} />
+      <ClearFilterElem connectors={connectors} fields={fields} />
       <SearchElem connectors={connectors} />
 
       <ContainerElem connectors={connectors} />

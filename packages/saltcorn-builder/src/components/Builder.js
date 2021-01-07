@@ -15,6 +15,8 @@ import { Tabs } from "./elements/Tabs";
 import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
+import { ClearFilter } from "./elements/ClearFilter";
+
 import optionsCtx from "./context";
 import {
   ToolboxShow,
@@ -203,6 +205,7 @@ const Builder = ({ options, layout, mode }) => {
                   DropDownFilter,
                   Tabs,
                   ToggleFilter,
+                  ClearFilter,
                 }}
               >
                 <Element canvas is={Column}></Element>
