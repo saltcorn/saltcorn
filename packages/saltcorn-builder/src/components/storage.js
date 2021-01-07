@@ -83,7 +83,14 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.type === "line_break") {
       return <LineBreak key={ix} />;
     } else if (segment.type === "search_bar") {
-      return <SearchBar key={ix} />;
+      return (
+        <SearchBar
+          key={ix}
+          contents={toTag(segment.contents)}
+          has_dropdown={segment.has_dropdown || false}
+          show_badges={segment.show_badges || false}
+        />
+      );
     } else if (segment.type === "field") {
       return (
         <Field
@@ -99,6 +106,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <DropDownFilter
           key={ix}
           name={segment.field_name}
+          neutral_label={segment.neutral_label || ""}
           block={segment.block || false}
         />
       );
@@ -330,7 +338,12 @@ export const craftToSaltcorn = (nodes) => {
       return { type: "line_break" };
     }
     if (node.displayName === SearchBar.craft.displayName) {
-      return { type: "search_bar" };
+      return {
+        type: "search_bar",
+        has_dropdown: node.props.has_dropdown,
+        show_badges: node.props.show_badges,
+        contents: go(nodes[node.linkedNodes["search_drop"]]),
+      };
     }
     if (node.displayName === Columns.craft.displayName) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
@@ -403,6 +416,7 @@ export const craftToSaltcorn = (nodes) => {
       return {
         type: "dropdown_filter",
         block: node.props.block,
+        neutral_label: node.props.neutral_label,
         field_name: node.props.name,
       };
     }

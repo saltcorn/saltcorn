@@ -193,7 +193,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     title="Dropdown filter"
     label="Dropdown"
   >
-    <DropDownFilter name={fields[0].name} block={false} />
+    <DropDownFilter name={fields[0].name} block={false} neutral_label={""} />
   </WrapElem>
 );
 const ToggleFilterElem = ({ connectors, fields }) => (
@@ -329,7 +329,7 @@ export const ToolboxFilter = () => {
       <DropDownFilterElem connectors={connectors} fields={fields} />
       <ToggleFilterElem connectors={connectors} fields={fields} />
       <SearchElem connectors={connectors} />
-
+      <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />

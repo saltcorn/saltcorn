@@ -9,6 +9,7 @@ const {
   option,
   select,
   button,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -39,9 +40,11 @@ const configuration_workflow = () =>
                 });
             });
           }
+          const actions = ["Clear"];
           return {
             fields,
             roles,
+            actions,
             mode: "filter",
           };
         },
@@ -81,14 +84,34 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       }
     }
   }
+
+  const badges = [];
+  Object.entries(state).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
+    if (k[0] !== "_") {
+      let showv = v;
+      if (distinct_values[k]) {
+        const realv = distinct_values[k].find((dv) => dv.value === v);
+        if (realv) showv = realv.label;
+      }
+      badges.push({
+        text: `${text_attr(k)}:${text_attr(showv)}`,
+        onclick: `unset_state_field('${text_attr(k)}')`,
+      });
+    }
+  });
   const blockDispatch = {
-    search_bar() {
+    search_bar({ has_dropdown, contents, show_badges }, go) {
+      const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
         onClick:
-          "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())",
+          "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('input.search-bar').val())",
+        has_dropdown,
+        contents: rendered_contents,
+        badges: show_badges ? badges : null,
       });
     },
-    dropdown_filter({ field_name }) {
+    dropdown_filter({ field_name, neutral_label }) {
       return select(
         {
           name: `ddfilter${field_name}`,
@@ -101,11 +124,24 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             {
               value,
               selected: state[field_name] === or_if_undef(jsvalue, value),
+              class: !value && !label ? "text-muted" : undefined,
             },
-            label
+            !value && !label ? neutral_label : label
           )
         )
       );
+    },
+    action({ block, action_label, action_style, action_size }) {
+      if (action_style === "btn-link")
+        return a({ href: "javascript:clear_state()" }, action_label);
+      else
+        return button(
+          {
+            onClick: "clear_state()",
+            class: `btn ${action_style || ""} ${action_size || ""}`,
+          },
+          action_label
+        );
     },
     toggle_filter({ field_name, value, label }) {
       const field = fields.find((f) => f.name === field_name);

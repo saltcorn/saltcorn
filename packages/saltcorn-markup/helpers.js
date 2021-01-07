@@ -65,24 +65,59 @@ const pagination = ({
 const search_bar = (
   name,
   v,
-  { onClick, placeHolder } = {}
-) => `<div class="input-group">
-<input type="text" class="form-control bg-light search-bar" placeholder="${
-  placeHolder || "Search for..."
+  { onClick, placeHolder, has_dropdown, contents, badges } = {}
+) => {
+  const rndid = Math.floor(Math.random() * 16777215).toString(16);
+
+  return `<div class="input-group search-bar">
+  <div class="input-group-prepend">
+  <button class="btn btn-outline-secondary" ${
+    onClick ? `onClick="${onClick}"` : ""
+  } type="submit" id="button-search-submit">
+  <i class="fas fa-search"></i>
+  </button>
+  </div>
+<input type="text" class="form-control search-bar ${
+    badges && badges.length > 0 ? "br-none" : ""
+  }" placeholder="${placeHolder || "Search for..."}" 
 }" 
+  }" 
        id="input${text_attr(name)}" name="${name}" 
        ${onClick ? `onChange="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
 <div class="input-group-append">
-  <button class="btn btn-primary" ${
-    onClick ? `onClick="${onClick}"` : ""
-  } btype="submit" id="button-search-submit">
-  <i class="fas fa-search"></i>
-  </button>
+  ${
+    badges && badges.length > 0
+      ? `<div class="input-group-text">${badges
+          .map(
+            (b) =>
+              `<span class="badge badge-primary">${b.text}${
+                b.onclick
+                  ? `<a href="javascript:${b.onclick}"><i class="ml-1 fas fa-lg fa-times"></i></a> `
+                  : ""
+              }</span>`
+          )
+          .join("&nbsp;")}
+  </div>`
+      : ""
+  }
+  ${
+    has_dropdown
+      ? `<button class="btn btn-outline-secondary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      : ""
+  }
+  ${
+    has_dropdown
+      ? `<div class="dropdown-menu search-bar p-2" id="dm${rndid}" aria-labelledby="dd${rndid}">
+      ${contents}
+      </div>`
+      : ""
+  }
 </div>
 </div>`;
+};
 
 const search_bar_form = () => `<form action="/search" method="get">
 ${search_bar("q")}

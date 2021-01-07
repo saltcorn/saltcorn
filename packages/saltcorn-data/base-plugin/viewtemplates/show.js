@@ -300,6 +300,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
     container(segment) {
       evalMaybeExpr(segment, "bgColor");
+      evalMaybeExpr(segment, "customClass");
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);

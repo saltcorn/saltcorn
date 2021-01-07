@@ -498,14 +498,16 @@ export const ContainerSettings = () => {
         <div>
           <label>Custom class</label>
         </div>
-        <input
-          type="text"
-          className="form-control text-to-display"
-          value={customClass}
-          onChange={(e) =>
-            setProp((prop) => (prop.customClass = e.target.value))
-          }
-        />
+        <OrFormula nodekey="customClass" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={customClass}
+            onChange={(e) =>
+              setProp((prop) => (prop.customClass = e.target.value))
+            }
+          />
+        </OrFormula>
         <div>
           <label>Custom CSS</label>
         </div>
