@@ -27,15 +27,16 @@ export const SearchBar = ({ has_dropdown, contents }) => {
           placeholder="Search..."
           disabled
         />
-        {has_dropdown && (
-          <button
-            className="btn btn-primary"
-            onClick={() => setDropdown(!showDropdown)}
-          >
-            {showDropdown ? "⏷" : "⏴"}
-          </button>
-        )}
+
         <div className="input-group-append">
+          {has_dropdown && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setDropdown(!showDropdown)}
+            >
+              {showDropdown ? "⏷" : "⏴"}
+            </button>
+          )}
           <button
             className="btn btn-primary"
             disabled
