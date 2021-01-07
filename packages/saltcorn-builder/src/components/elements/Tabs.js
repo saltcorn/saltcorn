@@ -12,13 +12,13 @@ export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
   const [showTab, setShowTab] = useState(0);
   if (tabsStyle === "Accordion")
     return (
-      <div class="accordion">
+      <div className="accordion">
         {ntimes(ntabs, (ix) => (
-          <div class="card">
-            <div class="card-header">
-              <h2 class="mb-0">
+          <div className="card">
+            <div className="card-header">
+              <h2 className="mb-0">
                 <button
-                  class="btn btn-link btn-block text-left"
+                  className="btn btn-link btn-block text-left"
                   type="button"
                   onClick={() => setShowTab(ix)}
                 >
@@ -29,11 +29,11 @@ export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
 
             <div
               id="collapseOne"
-              class={`collapse ${ix === showTab ? "show" : ""}`}
+              className={`collapse ${ix === showTab ? "show" : ""}`}
               aria-labelledby="headingOne"
               data-parent="#accordionExample"
             >
-              <div class="card-body">
+              <div className="card-body">
                 <Element canvas id={`Tab${ix}`} is={Column}>
                   {contents[ix]}
                 </Element>

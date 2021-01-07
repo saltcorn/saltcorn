@@ -31,7 +31,7 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
         <div className="input-group-append">
           {show_badges && (
             <div className="input-group-text">
-              <span class="badge badge-primary">X:Y</span>
+              <span className="badge badge-primary">X:Y</span>
             </div>
           )}
           {has_dropdown && (
