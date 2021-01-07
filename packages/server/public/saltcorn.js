@@ -352,3 +352,16 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
+function align_dropdown(id) {
+  setTimeout(() => {
+    if ($("#dm" + id).hasClass("show")) {
+      var inputWidth = $(".input-group.search-bar").outerWidth();
+      $(".dropdown-menu.search-bar").css("width", inputWidth);
+      var d0pos = $(".input-group.search-bar").offset();
+      $("#dm" + id).offset({ left: d0pos.left });
+      $(document).on("click", ".dropdown-menu.search-bar", function (e) {
+        e.stopPropagation();
+      });
+    }
+  }, 0);
+}

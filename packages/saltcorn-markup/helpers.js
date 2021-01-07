@@ -65,24 +65,41 @@ const pagination = ({
 const search_bar = (
   name,
   v,
-  { onClick, placeHolder } = {}
-) => `<div class="input-group">
+  { onClick, placeHolder, has_dropdown, contents } = {}
+) => {
+  const rndid = Math.floor(Math.random() * 16777215).toString(16);
+
+  return `<div class="input-group search-bar">
 <input type="text" class="form-control bg-light search-bar" placeholder="${
-  placeHolder || "Search for..."
+    placeHolder || "Search for..."
+  }" 
 }" 
+  }" 
        id="input${text_attr(name)}" name="${name}" 
        ${onClick ? `onChange="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
 <div class="input-group-append">
+  ${
+    has_dropdown
+      ? `<button class="btn btn-primary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      : ""
+  }
   <button class="btn btn-primary" ${
     onClick ? `onClick="${onClick}"` : ""
-  } btype="submit" id="button-search-submit">
+  } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
-  </button>
+  </button>${
+    has_dropdown
+      ? `<div class="dropdown-menu search-bar" id="dm${rndid}" aria-labelledby="dd${rndid}">
+      ${contents}
+      </div>`
+      : ""
+  }
 </div>
 </div>`;
+};
 
 const search_bar_form = () => `<form action="/search" method="get">
 ${search_bar("q")}

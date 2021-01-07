@@ -84,10 +84,13 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     }
   }
   const blockDispatch = {
-    search_bar() {
+    search_bar({ has_dropdown, contents }, go) {
+      const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
         onClick:
           "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())",
+        has_dropdown,
+        contents: rendered_contents,
       });
     },
     dropdown_filter({ field_name }) {
