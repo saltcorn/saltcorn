@@ -107,6 +107,18 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
+    clear_filter({ block, label, btn_style, btn_size }) {
+      if (btn_style === "btn-link")
+        return a({ href: "javascript:clear_state()" }, label);
+      else
+        return button(
+          {
+            onClick: "clear_state()",
+            class: `btn ${btn_style || ""} ${btn_size | ""}`,
+          },
+          label
+        );
+    },
     toggle_filter({ field_name, value, label }) {
       const field = fields.find((f) => f.name === field_name);
       const isBool = field && field.type.name === "Bool";

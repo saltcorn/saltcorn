@@ -199,7 +199,9 @@ function unset_state_field(key) {
 function href_to(href) {
   window.location.href = href;
 }
-
+function clear_state() {
+  window.location.href = window.location.href.split("?")[0];
+}
 function tristateClick(nm) {
   var current = $(`button#trib${nm}`).html();
   switch (current) {
