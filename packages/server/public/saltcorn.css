@@ -156,3 +156,10 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .searchbar-dropdown {
   left: unset;
 }
+.search-bar .input-group-text {
+  background-color: unset;
+  border-left: none;
+}
+.br-none {
+  border-right: none;
+}

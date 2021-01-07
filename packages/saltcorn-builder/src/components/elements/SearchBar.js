@@ -21,6 +21,16 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
           connect(drag(dom));
         }}
       >
+        <div className="input-group-prepend">
+          <button
+            className="btn btn-outline-secondary"
+            disabled
+            type="submit"
+            id="button-search-submit"
+          >
+            <i className="fas fa-search"></i>
+          </button>
+        </div>
         <input
           type="text"
           className="form-control bg-light"
@@ -36,20 +46,12 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
           )}
           {has_dropdown && (
             <button
-              className="btn btn-primary"
+              className="btn btn-outline-secondary"
               onClick={() => setDropdown(!showDropdown)}
             >
               {showDropdown ? "⏷" : "⏴"}
             </button>
           )}
-          <button
-            className="btn btn-primary"
-            disabled
-            type="submit"
-            id="button-search-submit"
-          >
-            <i className="fas fa-search"></i>
-          </button>
         </div>
       </div>
       <div

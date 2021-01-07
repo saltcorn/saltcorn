@@ -70,9 +70,16 @@ const search_bar = (
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
 
   return `<div class="input-group search-bar">
-<input type="text" class="form-control bg-light search-bar" placeholder="${
-    placeHolder || "Search for..."
-  }" 
+  <div class="input-group-prepend">
+  <button class="btn btn-outline-secondary" ${
+    onClick ? `onClick="${onClick}"` : ""
+  } type="submit" id="button-search-submit">
+  <i class="fas fa-search"></i>
+  </button>
+  </div>
+<input type="text" class="form-control search-bar ${
+    badges && badges.length > 0 ? "br-none" : ""
+  }" placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 
        id="input${text_attr(name)}" name="${name}" 
@@ -98,16 +105,12 @@ const search_bar = (
   }
   ${
     has_dropdown
-      ? `<button class="btn btn-primary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      ? `<button class="btn btn-outline-secondary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
       : ""
   }
-  <button class="btn btn-primary" ${
-    onClick ? `onClick="${onClick}"` : ""
-  } type="submit" id="button-search-submit">
-  <i class="fas fa-search"></i>
-  </button>${
+  ${
     has_dropdown
-      ? `<div class="dropdown-menu search-bar" id="dm${rndid}" aria-labelledby="dd${rndid}">
+      ? `<div class="dropdown-menu search-bar p-2" id="dm${rndid}" aria-labelledby="dd${rndid}">
       ${contents}
       </div>`
       : ""
