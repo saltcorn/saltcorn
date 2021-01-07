@@ -39,9 +39,11 @@ const configuration_workflow = () =>
                 });
             });
           }
+          const actions = ["Clear"];
           return {
             fields,
             roles,
+            actions,
             mode: "filter",
           };
         },
@@ -107,16 +109,16 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
-    clear_filter({ block, label, btn_style, btn_size }) {
-      if (btn_style === "btn-link")
-        return a({ href: "javascript:clear_state()" }, label);
+    action({ block, action_label, action_style, action_size }) {
+      if (action_style === "btn-link")
+        return a({ href: "javascript:clear_state()" }, action_label);
       else
         return button(
           {
             onClick: "clear_state()",
-            class: `btn ${btn_style || ""} ${btn_size | ""}`,
+            class: `btn ${action_style || ""} ${action_size || ""}`,
           },
-          label
+          action_label
         );
     },
     toggle_filter({ field_name, value, label }) {

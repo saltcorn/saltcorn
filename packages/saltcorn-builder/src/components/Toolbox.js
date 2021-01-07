@@ -329,7 +329,7 @@ export const ToolboxFilter = () => {
       <DropDownFilterElem connectors={connectors} fields={fields} />
       <ToggleFilterElem connectors={connectors} fields={fields} />
       <SearchElem connectors={connectors} />
-
+      <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
