@@ -18,7 +18,6 @@ export const SearchBar = ({ has_dropdown, contents }) => {
             const elwidth = dom.getBoundingClientRect().width;
             if (elwidth !== dropWidth) setDropWidth(elwidth);
           }
-          //
           connect(drag(dom));
         }}
       >
