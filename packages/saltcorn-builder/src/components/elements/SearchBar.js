@@ -8,12 +8,19 @@ export const SearchBar = ({ has_dropdown, contents }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showDropdown, setDropdown] = useState(false);
-  console.log(showDropdown);
+  const [dropWidth, setDropWidth] = useState(200);
   return (
     <Fragment>
       <div
         className={`input-group  ${selected ? "selected-node" : ""}`}
-        ref={(dom) => connect(drag(dom))}
+        ref={(dom) => {
+          if (dom && dom.getBoundingClientRect) {
+            const elwidth = dom.getBoundingClientRect().width;
+            if (elwidth !== dropWidth) setDropWidth(elwidth);
+          }
+          //
+          connect(drag(dom));
+        }}
       >
         <input
           type="text"
@@ -40,7 +47,12 @@ export const SearchBar = ({ has_dropdown, contents }) => {
           </button>
         </div>
       </div>
-      <div className={`dropdown-menu ${showDropdown ? "show" : ""}`}>
+      <div
+        className={`dropdown-menu searchbar-dropdown ${
+          showDropdown ? "show" : ""
+        }`}
+        style={{ width: dropWidth }}
+      >
         <Element canvas id={`search_drop`} is={Column}>
           {contents}
         </Element>
