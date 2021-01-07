@@ -88,6 +88,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           contents={toTag(segment.contents)}
           has_dropdown={segment.has_dropdown || false}
+          show_badges={segment.show_badges || false}
         />
       );
     } else if (segment.type === "field") {
@@ -339,6 +340,7 @@ export const craftToSaltcorn = (nodes) => {
       return {
         type: "search_bar",
         has_dropdown: node.props.has_dropdown,
+        show_badges: node.props.show_badges,
         contents: go(nodes[node.linkedNodes["search_drop"]]),
       };
     }

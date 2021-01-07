@@ -2,7 +2,7 @@ import React, { Fragment, useState } from "react";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 
-export const SearchBar = ({ has_dropdown, contents }) => {
+export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -29,6 +29,11 @@ export const SearchBar = ({ has_dropdown, contents }) => {
         />
 
         <div className="input-group-append">
+          {show_badges && (
+            <div className="input-group-text">
+              <span class="badge badge-primary">X:Y</span>
+            </div>
+          )}
           {has_dropdown && (
             <button
               className="btn btn-primary"
@@ -64,8 +69,10 @@ export const SearchBarSettings = () => {
   const {
     actions: { setProp },
     has_dropdown,
+    show_badges,
   } = useNode((node) => ({
     has_dropdown: node.data.props.has_dropdown,
+    show_badges: node.data.props.show_badges,
   }));
 
   return (
@@ -81,6 +88,18 @@ export const SearchBarSettings = () => {
           }
         />
         <label className="form-check-label">Has Dropdown</label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={show_badges}
+          onChange={(e) =>
+            setProp((prop) => (prop.show_badges = e.target.checked))
+          }
+        />
+        <label className="form-check-label">Show current state badges</label>
       </div>
     </div>
   );
