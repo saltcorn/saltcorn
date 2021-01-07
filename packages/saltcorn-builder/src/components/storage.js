@@ -106,6 +106,7 @@ export const layoutToNodes = (layout, query, actions) => {
         <DropDownFilter
           key={ix}
           name={segment.field_name}
+          neutral_label={segment.neutral_label || ""}
           block={segment.block || false}
         />
       );
@@ -415,6 +416,7 @@ export const craftToSaltcorn = (nodes) => {
       return {
         type: "dropdown_filter",
         block: node.props.block,
+        neutral_label: node.props.neutral_label,
         field_name: node.props.name,
       };
     }

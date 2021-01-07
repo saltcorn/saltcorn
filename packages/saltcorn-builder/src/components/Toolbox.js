@@ -193,7 +193,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     title="Dropdown filter"
     label="Dropdown"
   >
-    <DropDownFilter name={fields[0].name} block={false} />
+    <DropDownFilter name={fields[0].name} block={false} neutral_label={""} />
   </WrapElem>
 );
 const ToggleFilterElem = ({ connectors, fields }) => (

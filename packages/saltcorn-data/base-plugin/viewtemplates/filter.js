@@ -111,7 +111,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         badges: show_badges ? badges : null,
       });
     },
-    dropdown_filter({ field_name }) {
+    dropdown_filter({ field_name, neutral_label }) {
       return select(
         {
           name: `ddfilter${field_name}`,
@@ -124,8 +124,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             {
               value,
               selected: state[field_name] === or_if_undef(jsvalue, value),
+              class: !value && !label ? "text-muted" : undefined,
             },
-            label
+            !value && !label ? neutral_label : label
           )
         )
       );

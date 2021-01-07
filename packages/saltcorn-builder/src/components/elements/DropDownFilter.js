@@ -26,9 +26,11 @@ export const DropDownFilterSettings = () => {
     actions: { setProp },
     name,
     block,
+    neutral_label,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
+    neutral_label: node.data.props.neutral_label,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -52,7 +54,20 @@ export const DropDownFilterSettings = () => {
             </select>
           </td>
         </tr>
-
+        <tr>
+          <td>
+            <label>Neutral label</label>
+          </td>
+          <td>
+            <input
+              value={neutral_label}
+              className="form-control"
+              onChange={(e) =>
+                setProp((prop) => (prop.neutral_label = e.target.value))
+              }
+            />
+          </td>
+        </tr>
         <tr>
           <td></td>
           <td>
