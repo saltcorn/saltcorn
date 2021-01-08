@@ -10,61 +10,62 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
   const [showDropdown, setDropdown] = useState(false);
   const [dropWidth, setDropWidth] = useState(200);
   return (
-    <Fragment>
-      <div
-        className={`input-group  ${selected ? "selected-node" : ""}`}
-        ref={(dom) => {
-          if (dom && dom.getBoundingClientRect) {
-            const elwidth = dom.getBoundingClientRect().width;
-            if (elwidth !== dropWidth) setDropWidth(elwidth);
-          }
-          connect(drag(dom));
-        }}
-      >
-        <div className="input-group-prepend">
-          <button
-            className="btn btn-outline-secondary"
-            disabled
-            type="submit"
-            id="button-search-submit"
-          >
-            <i className="fas fa-search"></i>
-          </button>
-        </div>
-        <input
-          type="text"
-          className="form-control bg-light"
-          placeholder="Search..."
+    <div
+      className={`input-group  ${selected ? "selected-node" : ""}`}
+      ref={(dom) => {
+        if (dom && dom.getBoundingClientRect) {
+          console.log(dom.getBoundingClientRect());
+          const elwidth = dom.getBoundingClientRect().width;
+          if (elwidth !== dropWidth) setDropWidth(elwidth);
+        }
+        connect(drag(dom));
+      }}
+    >
+      <div className="input-group-prepend">
+        <button
+          className="btn btn-outline-secondary"
           disabled
-        />
+          type="submit"
+          id="button-search-submit"
+        >
+          <i className="fas fa-search"></i>
+        </button>
+      </div>
+      <input
+        type="text"
+        className="form-control bg-light"
+        placeholder="Search..."
+        disabled
+      />
 
-        <div className="input-group-append">
-          {show_badges && (
-            <div className="input-group-text">
-              <span className="badge badge-primary">X:Y</span>
-            </div>
-          )}
-          {has_dropdown && (
+      <div className="input-group-append">
+        {show_badges && (
+          <div className="input-group-text">
+            <span className="badge badge-primary">X:Y</span>
+          </div>
+        )}
+        {has_dropdown && (
+          <Fragment>
             <button
               className="btn btn-outline-secondary"
               onClick={() => setDropdown(!showDropdown)}
             >
               {showDropdown ? "⏷" : "⏴"}
             </button>
-          )}
-        </div>
+            <div
+              className={`dropdown-menu searchbar-dropdown ${
+                showDropdown ? "show" : ""
+              }`}
+              style={{ width: dropWidth, left: 0 }}
+            >
+              <Element canvas id={`search_drop`} is={Column}>
+                {contents}
+              </Element>
+            </div>
+          </Fragment>
+        )}
       </div>
-      <div
-        className={`dropdown-menu searchbar-dropdown ${
-          showDropdown ? "show" : ""
-        }`}
-        style={{ width: dropWidth }}
-      >
-        <Element canvas id={`search_drop`} is={Column}>
-          {contents}
-        </Element>
-      </div>
-    </Fragment>
+    </div>
   );
 };
 export const SearchBarSettings = () => {
