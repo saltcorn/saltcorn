@@ -324,7 +324,7 @@ export const ToolboxShow = () => {
 export const ToolboxFilter = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields } = options;
+  const { fields, views } = options;
   return (
     <Fragment>
       <TextElem connectors={connectors} />
@@ -338,6 +338,7 @@ export const ToolboxFilter = () => {
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
+      <ViewElem connectors={connectors} views={views} />
     </Fragment>
   );
 };
