@@ -111,12 +111,12 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         badges: show_badges ? badges : null,
       });
     },
-    dropdown_filter({ field_name, neutral_label }) {
+    dropdown_filter({ field_name, neutral_label, full_width }) {
       return select(
         {
           name: `ddfilter${field_name}`,
           class: "form-control d-inline",
-          style: "width: unset;",
+          style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
         distinct_values[field_name].map(({ label, value, jsvalue }) =>
