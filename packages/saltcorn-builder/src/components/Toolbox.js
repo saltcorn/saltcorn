@@ -193,7 +193,12 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     title="Dropdown filter"
     label="Dropdown"
   >
-    <DropDownFilter name={fields[0].name} block={false} neutral_label={""} />
+    <DropDownFilter
+      name={fields[0].name}
+      block={false}
+      neutral_label={""}
+      full_width={false}
+    />
   </WrapElem>
 );
 const ToggleFilterElem = ({ connectors, fields }) => (
@@ -319,7 +324,7 @@ export const ToolboxShow = () => {
 export const ToolboxFilter = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields } = options;
+  const { fields, views } = options;
   return (
     <Fragment>
       <TextElem connectors={connectors} />
@@ -333,6 +338,7 @@ export const ToolboxFilter = () => {
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
+      <ViewElem connectors={connectors} views={views} />
     </Fragment>
   );
 };

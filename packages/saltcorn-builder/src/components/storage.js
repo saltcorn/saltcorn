@@ -108,6 +108,7 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.field_name}
           neutral_label={segment.neutral_label || ""}
           block={segment.block || false}
+          full_width={segment.full_width || false}
         />
       );
     } else if (segment.type === "toggle_filter") {
@@ -417,6 +418,7 @@ export const craftToSaltcorn = (nodes) => {
         type: "dropdown_filter",
         block: node.props.block,
         neutral_label: node.props.neutral_label,
+        full_width: node.props.full_width,
         field_name: node.props.name,
       };
     }

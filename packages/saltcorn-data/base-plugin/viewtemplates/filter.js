@@ -1,4 +1,5 @@
 const User = require("../../models/user");
+const View = require("../../models/view");
 const Table = require("../../models/table");
 const Workflow = require("../../models/workflow");
 
@@ -15,6 +16,7 @@ const renderLayout = require("@saltcorn/markup/layout");
 
 const { readState } = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
+const { eachView } = require("../../models/layout");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -41,10 +43,19 @@ const configuration_workflow = () =>
             });
           }
           const actions = ["Clear"];
+          const own_link_views = await View.find_table_views_where(
+            table.id,
+            ({ viewrow }) => viewrow.name !== context.viewname
+          );
+          const views = own_link_views.map((v) => ({
+            label: v.name,
+            name: v.name,
+          }));
           return {
             fields,
             roles,
             actions,
+            views,
             mode: "filter",
           };
         },
@@ -100,6 +111,13 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       });
     }
   });
+  await eachView(layout, async (segment) => {
+    const view = await View.findOne({ name: segment.view });
+    if (!view)
+      segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+    else segment.contents = await view.run(state, extra);
+  });
+
   const blockDispatch = {
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
@@ -111,12 +129,12 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         badges: show_badges ? badges : null,
       });
     },
-    dropdown_filter({ field_name, neutral_label }) {
+    dropdown_filter({ field_name, neutral_label, full_width }) {
       return select(
         {
           name: `ddfilter${field_name}`,
           class: "form-control d-inline",
-          style: "width: unset;",
+          style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
         distinct_values[field_name].map(({ label, value, jsvalue }) =>
@@ -131,16 +149,17 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
-    action({ block, action_label, action_style, action_size }) {
+    action({ block, action_label, action_style, action_size, action_name }) {
+      const label = action_label || action_name;
       if (action_style === "btn-link")
-        return a({ href: "javascript:clear_state()" }, action_label);
+        return a({ href: "javascript:clear_state()" }, label);
       else
         return button(
           {
             onClick: "clear_state()",
-            class: `btn ${action_style || ""} ${action_size || ""}`,
+            class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
-          action_label
+          label
         );
     },
     toggle_filter({ field_name, value, label }) {
