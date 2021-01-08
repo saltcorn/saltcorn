@@ -131,16 +131,17 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
-    action({ block, action_label, action_style, action_size }) {
+    action({ block, action_label, action_style, action_size, action_name }) {
+      const label = action_label || action_name;
       if (action_style === "btn-link")
-        return a({ href: "javascript:clear_state()" }, action_label);
+        return a({ href: "javascript:clear_state()" }, label);
       else
         return button(
           {
             onClick: "clear_state()",
             class: `btn ${action_style || ""} ${action_size || ""}`,
           },
-          action_label
+          label
         );
     },
     toggle_filter({ field_name, value, label }) {
