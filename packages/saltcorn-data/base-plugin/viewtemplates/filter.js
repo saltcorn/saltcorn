@@ -157,7 +157,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         return button(
           {
             onClick: "clear_state()",
-            class: `btn ${action_style || ""} ${action_size || ""}`,
+            class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
           label
         );
