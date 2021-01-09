@@ -9,6 +9,7 @@ const {
   transformBootstrapEmail,
 } = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
+const { get_async_expression_function } = require("../models/expression");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -164,6 +165,38 @@ module.exports = {
           newRow[field.name] = user.id;
       }
       return await joinTable.insertRow(newRow);
+    },
+  },
+  insert_any_row: {
+    configFields: async ({ table }) => {
+      const tables = await Table.find();
+      return [
+        {
+          name: "table",
+          label: "Table",
+          input_type: "select",
+          options: tables.map((t) => t.name),
+        },
+        {
+          name: "row_expr",
+          label: "Row expression",
+          sublabel: "Expression for JavaScript object",
+          type: "String",
+          fieldview: "textarea",
+        },
+      ];
+    },
+    run: async ({ row, configuration: { row_expr, table }, user, ...rest }) => {
+      const f = get_async_expression_function(row_expr, [], {
+        row: row || {},
+        user,
+        console,
+      });
+      const calcrow = await f({});
+      const table_for_insert = await Table.findOne({ name: table });
+      const res = await table_for_insert.tryInsertRow(calcrow, user && user.id);
+      if (res.error) return res;
+      else return true;
     },
   },
   run_js_code: {
