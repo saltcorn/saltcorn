@@ -29,7 +29,7 @@
     "nodemailer": "^6.4.17",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
-    "sqlite3": "^5.0.0",
+    "sqlite3": "^5.0.1",
     "tmp-promise": "^3.0.2",
     "uuid": "^8.2.0"
   },
