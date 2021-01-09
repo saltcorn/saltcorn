@@ -141,6 +141,7 @@ const configuration_workflow = (req) =>
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
             type: "Bool",
+            default: true,
           });
           if (!db.isSQLite)
             formfields.push({

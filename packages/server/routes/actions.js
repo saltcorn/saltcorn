@@ -16,7 +16,7 @@ const {
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
-const { div, code, a } = require("@saltcorn/markup/tags");
+const { div, code, a, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 
@@ -55,7 +55,11 @@ router.get(
         {
           type: "card",
           title: req.__("Actions available"),
-          contents: mkTable([{ label: req.__("Name"), key: "name" }], actions),
+          contents: div(
+            actions
+              .map((a) => span({ class: "badge badge-primary" }, a.name))
+              .join("&nbsp;")
+          ),
         },
         {
           type: "card",
