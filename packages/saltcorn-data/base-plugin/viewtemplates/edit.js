@@ -5,6 +5,7 @@ const User = require("../../models/user");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
+const { getState } = require("../../db/state");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const {
@@ -12,6 +13,7 @@ const {
   calcfldViewOptions,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
+
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -30,6 +32,18 @@ const configuration_workflow = (req) =>
             "Save",
             //"Delete"
           ];
+          if (table.name === "users") {
+            actions.push("Login");
+            actions.push("Sign up");
+            Object.entries(getState().auth_methods).forEach(([k, v]) => {
+              actions.push(`Login with ${k}`);
+            });
+            fields.push({
+              name: "password",
+              label: "Password",
+              type: "String",
+            });
+          }
           return {
             fields,
             field_view_options,
