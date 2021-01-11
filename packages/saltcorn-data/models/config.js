@@ -66,6 +66,18 @@ const configTypes = {
     default: "",
     blurb: "A view to show to new users",
   },
+  login_form: {
+    type: "View users",
+    label: "Login view",
+    blurb: "A view with the login form",
+    default: "",
+  },
+  signup_form: {
+    type: "View users",
+    label: "Signup view",
+    blurb: "A view with the signup form",
+    default: "",
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
