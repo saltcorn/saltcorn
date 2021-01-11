@@ -30,8 +30,8 @@
     "live-plugin-manager": "^0.14.1",
     "moment": "^2.27.0",
     "passport": "^0.4.1",
+    "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
-    "passport-local": "^1.0.0",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0"
   },
