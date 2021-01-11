@@ -285,7 +285,7 @@ const renderFormLayout = (form) => {
         return innerField(form.values, form.errors)(field) + errorFeedback;
       } else return "";
     },
-    action({ action_label, confirm, action_style, action_size }) {
+    action({ action_name, action_label, confirm, action_style, action_size }) {
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';
@@ -293,7 +293,9 @@ const renderFormLayout = (form) => {
         action_style === "btn-link"
           ? ""
           : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-      }">${text(form.submitLabel || action_label || "Save")}</button>`;
+      }">${text(
+        action_label || form.submitLabel || action_name || "Save"
+      )}</button>`;
     },
   };
   return renderLayout({ blockDispatch, layout: form.layout });

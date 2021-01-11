@@ -43,6 +43,7 @@ const configuration_workflow = (req) =>
               label: "Password",
               type: "String",
             });
+            field_view_options.password = ["password"];
           }
           return {
             fields,
@@ -145,7 +146,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   },
 ];
 
-const getForm = async (table, viewname, columns, layout, id) => {
+const getForm = async (table, viewname, columns, layout, id, req) => {
   const fields = await table.getFields();
 
   const tfields = (columns || [])
@@ -155,16 +156,26 @@ const getForm = async (table, viewname, columns, layout, id) => {
         if (f) {
           f.fieldview = column.fieldview;
           return f;
+        } else if (table.name === "users" && column.field_name === "password") {
+          return new Field({
+            name: "password",
+            fieldview: column.fieldview,
+            type: "String",
+          });
         }
       }
     })
     .filter((tf) => !!tf);
-
+  const path = req.baseUrl + req.path;
+  let action = `/view/${viewname}`;
+  if (path.startsWith("/auth/")) action = path;
   const form = new Form({
-    action: `/view/${viewname}`,
+    action,
     fields: tfields,
     layout,
   });
+  console.log(columns);
+  console.log(layout);
   await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
@@ -185,7 +196,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, state.id);
+  const form = await getForm(table, viewname, columns, layout, state.id, req);
   const { uniques, nonUniques } = splitUniques(fields, state);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
@@ -241,7 +252,7 @@ const runPost = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, body.id);
+  const form = await getForm(table, viewname, columns, layout, body.id, req);
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
