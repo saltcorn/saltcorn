@@ -121,6 +121,18 @@ const string = {
           text(v) || ""
         ),
     },
+    password: {
+      isEdit: true,
+      run: (nm, v, attrs, cls) =>
+        input({
+          type: "password",
+          disabled: attrs.disabled,
+          class: ["form-control", cls],
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && { value: text_attr(v) }),
+        }),
+    },
   },
   read: (v) => {
     switch (typeof v) {
