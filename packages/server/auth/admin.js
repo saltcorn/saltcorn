@@ -53,7 +53,9 @@ const userForm = contract(
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
     const can_reset = getState().getConfig("smtp_host", "") !== "";
     const userTable = await Table.findOne({ name: "users" });
-    const userFields = await userTable.getFields();
+    const userFields = (await userTable.getFields()).filter(
+      (f) => !f.calculated
+    );
     const form = new Form({
       fields: [roleField, ...userFields],
       action: "/useradmin/save",
