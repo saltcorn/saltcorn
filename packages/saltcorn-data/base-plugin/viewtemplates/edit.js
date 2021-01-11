@@ -174,8 +174,6 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
     fields: tfields,
     layout,
   });
-  console.log(columns);
-  console.log(layout);
   await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
