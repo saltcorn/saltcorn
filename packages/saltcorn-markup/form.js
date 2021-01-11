@@ -300,6 +300,7 @@ const renderFormLayout = (form) => {
 };
 
 const renderForm = (form, csrfToken) => {
+  if (typeof form === "string") return form;
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -435,6 +436,9 @@ const mkForm = (form, csrfToken, errors = {}) => {
 };
 
 module.exports = contract(
-  is.fun([is.class("Form"), is.or(is.str, is.eq(false))], is.str),
+  is.fun(
+    [is.or(is.str, is.class("Form")), is.or(is.str, is.eq(false))],
+    is.str
+  ),
   renderForm
 );

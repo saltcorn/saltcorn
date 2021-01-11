@@ -251,11 +251,7 @@ const authWrap = ({
                     <div class="text-center">
                       <h1 class="h4 text-gray-900 mb-4">${title}</h1>
                     </div>
-                    ${
-                      typeof form === "string"
-                        ? form
-                        : renderForm(formModify(form), csrfToken)
-                    }
+                    ${renderForm(formModify(form), csrfToken)}
                     ${renderAuthLinks(authLinks)}
                     ${afterForm}
                   </div>
