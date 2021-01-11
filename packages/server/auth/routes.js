@@ -140,7 +140,21 @@ router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
-    res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
+    const login_form_name = getState().getConfig("login_form", "");
+    if (login_form_name) {
+      const login_form = await View.findOne({ name: login_form_name });
+      if (!login_form)
+        res.sendAuthWrap(
+          req.__(`Login`),
+          loginForm(req),
+          getAuthLinks("login")
+        );
+      else {
+        const resp = await login_form.run({}, { res, req });
+        res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
+      }
+    } else
+      res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
   })
 );
 
