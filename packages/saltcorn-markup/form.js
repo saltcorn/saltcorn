@@ -286,6 +286,21 @@ const renderFormLayout = (form) => {
       } else return "";
     },
     action({ action_name, action_label, confirm, action_style, action_size }) {
+      if (action_name && action_name.startsWith("Login with ")) {
+        const method_label = action_name.replace("Login with ", "");
+
+        return a(
+          {
+            href: `/auth/login-with/${method_label}`,
+            //TODO get url through form.req to reduce coupling
+            class: [
+              action_style !== "btn-link" &&
+                `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+            ],
+          },
+          action_label || action_name
+        );
+      }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';
@@ -301,7 +316,9 @@ const renderFormLayout = (form) => {
   return renderLayout({ blockDispatch, layout: form.layout });
 };
 
-const renderForm = (form, csrfToken) => {
+const renderForm = (form, csrfToken0) => {
+  const csrfToken =
+    csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
   if (typeof form === "string") return form;
   if (form.isStateForm) {
     form.class += " px-4 py-3";
@@ -439,7 +456,7 @@ const mkForm = (form, csrfToken, errors = {}) => {
 
 module.exports = contract(
   is.fun(
-    [is.or(is.str, is.class("Form")), is.or(is.str, is.eq(false))],
+    [is.or(is.str, is.class("Form")), is.maybe(is.or(is.str, is.eq(false)))],
     is.str
   ),
   renderForm
