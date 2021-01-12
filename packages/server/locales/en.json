@@ -522,5 +522,6 @@
 	"Login view": "Login view",
 	"Signup view": "Signup view",
 	"A view with the login form": "A view with the login form",
-	"A view with the signup form": "A view with the signup form"
+	"A view with the signup form": "A view with the signup form",
+	"Signups not enabled": "Signups not enabled"
 }

@@ -248,15 +248,26 @@ router.get(
   "/signup",
   setTenant,
   error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_signup")) {
+    if (!getState().getConfig("allow_signup")) {
+      req.flash("danger", req.__("Signups not enabled"));
+      res.redirect("/auth/login");
+      return;
+    }
+    const defaultSignup = () => {
       const form = loginForm(req, true);
       form.action = "/auth/signup";
       form.submitLabel = req.__("Sign up");
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
-    } else {
-      req.flash("danger", req.__("Signups not enabled"));
-      res.redirect("/auth/login");
-    }
+    };
+    const signup_form_name = getState().getConfig("signup_form", "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (!signup_form) defaultSignup();
+      else {
+        const resp = await signup_form.run({}, { res, req });
+        res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
+      }
+    } else defaultSignup();
   })
 );
 
@@ -493,42 +504,77 @@ router.post(
   "/signup",
   setTenant,
   error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_signup")) {
-      const form = loginForm(req, true);
-      form.validate(req.body);
-
-      if (form.hasErrors) {
-        form.action = "/auth/signup";
-        form.submitLabel = req.__("Sign up");
-        res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
-      } else {
-        const { email, password } = form.values;
-        if (email.length > 127) {
-          req.flash("danger", req.__("E-mail too long"));
-          res.redirect("/auth/signup");
-          return;
-        }
-
-        const us = await User.find({ email });
-        if (us.length > 0) {
-          req.flash("danger", req.__("Account already exists"));
-          res.redirect("/auth/signup");
-          return;
-        }
-        const new_user_form = getState().getConfig("new_user_form");
-        if (new_user_form) {
-          const form = await getNewUserForm(new_user_form, req);
-          form.values.email = email;
-          form.values.password = password;
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
-        } else {
-          const u = await User.create({ email, password });
-          signup_login_with_user(u, req, res);
-        }
-      }
-    } else {
+    if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
+      return;
+    }
+
+    const unsuitableEmailPassword = async (email, password) => {
+      if (email.length > 127) {
+        req.flash("danger", req.__("E-mail too long"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+
+      const us = await User.find({ email });
+      if (us.length > 0) {
+        req.flash("danger", req.__("Account already exists"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      const pwcheck = User.unacceptable_password_reason(password);
+      if (pwcheck) {
+        req.flash("danger", pwcheck);
+        res.redirect("/auth/signup");
+        return true;
+      }
+
+      //also check password
+    };
+    const new_user_form = getState().getConfig("new_user_form");
+
+    const signup_form_name = getState().getConfig("signup_form", "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (signup_form) {
+        const { _csrf, ...userObject } = req.body;
+        const { email, password } = userObject;
+        if (await unsuitableEmailPassword(email, password)) return;
+        if (new_user_form) {
+          const form = await getNewUserForm(new_user_form, req);
+          Object.entries(userObject).forEach(([k, v]) => {
+            form.values[k] = v;
+            if (!form.fields.find((f) => f.name === k)) form.hidden(k);
+          });
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+        } else {
+          const u = await User.create(userObject);
+          signup_login_with_user(u, req, res);
+        }
+        return;
+      }
+    }
+
+    const form = loginForm(req, true);
+    form.validate(req.body);
+
+    if (form.hasErrors) {
+      form.action = "/auth/signup";
+      form.submitLabel = req.__("Sign up");
+      res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+    } else {
+      const { email, password } = form.values;
+      if (await unsuitableEmailPassword(email, password)) return;
+      if (new_user_form) {
+        const form = await getNewUserForm(new_user_form, req);
+        form.values.email = email;
+        form.values.password = password;
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      } else {
+        const u = await User.create({ email, password });
+        signup_login_with_user(u, req, res);
+      }
     }
   })
 );
