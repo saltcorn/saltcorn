@@ -4,6 +4,7 @@ const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate } = require("../contracts");
 const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
 const { remove_from_menu } = require("./config");
+const { div } = require("@saltcorn/markup/tags");
 
 class View {
   constructor(o) {
@@ -146,6 +147,27 @@ class View {
       extraArgs
     );
   }
+
+  async run_possibly_on_page(req, res) {
+    const view = this;
+    if (view.default_render_page && !req.xhr) {
+      const Page = require("../models/page");
+      const db_page = await Page.findOne({ name: view.default_render_page });
+      if (db_page) {
+        const contents = await db_page.run(req.query, { res, req });
+        return contents;
+      }
+    }
+    const state = view.combine_state_and_default_state(req.query);
+    const resp = await view.run(state, { res, req });
+    const state_form = await view.get_state_form(state, req);
+    const contents = div(
+      state_form ? renderForm(state_form, req.csrfToken()) : "",
+      resp
+    );
+    return contents;
+  }
+
   async runMany(query, extraArgs) {
     if (this.viewtemplateObj.runMany)
       return await this.viewtemplateObj.runMany(
