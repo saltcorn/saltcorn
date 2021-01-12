@@ -534,6 +534,11 @@ describe("signup with custom login form", () => {
       .send("username=bestStaffEver")
       .send("password=seCERGERG45et")
       .expect(toRedirect("/"));
+    const user = await User.findOne({ username: "bestStaffEver" });
+    expect(!!user).toBe(true);
+    expect(user.email).toBe("staff7@foo.com");
+    expect(user.height).toBe(null);
+    expect(user.checkPassword("seCERGERG45et")).toBe(true);
   });
   it("should show login page", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -544,7 +549,7 @@ describe("signup with custom login form", () => {
   });
   it("should log in with new user", async () => {
     const app = await getApp({ disableCsrf: true });
-    const res = await request(app)
+    await request(app)
       .post("/auth/login/")
       .send("username=bestStaffEver")
       .send("password=seCERGERG45et")
@@ -559,14 +564,24 @@ describe("signup with custom login form", () => {
       .post("/auth/signup/")
       .send("email=staff8@foo.com")
       .send("username=staffOfTheMonth")
-      .send("password=seCERGERG45et")
+      .send("password=seCERRG45et")
       .expect(200)
-      .expect(toInclude("Height"));
+      .expect(toInclude("Height"))
+      .expect(toInclude("/auth/signup_final"))
+      .expect(toInclude("staff8@foo.com"))
+      .expect(toInclude("staffOfTheMonth"))
+      .expect(toInclude("seCERRG45et"));
+    await request(app)
+      .post("/auth/signup_final/")
+      .send("email=staff8@foo.com")
+      .send("username=staffOfTheMonth")
+      .send("password=seCERRG45et")
+      .send("height=15")
+      .expect(toRedirect("/"));
+    const user = await User.findOne({ username: "staffOfTheMonth" });
+    expect(!!user).toBe(true);
+    expect(user.email).toBe("staff8@foo.com");
+    expect(user.height).toBe(15);
+    expect(user.checkPassword("seCERRG45et")).toBe(true);
   });
 });
-/* missing tests:
-
-* login and signup forms
-* login and signup on pages
-* login and signup views with new user form
-*/
