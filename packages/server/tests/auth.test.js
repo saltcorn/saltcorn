@@ -537,7 +537,7 @@ describe("signup with custom login form", () => {
     const user = await User.findOne({ username: "bestStaffEver" });
     expect(!!user).toBe(true);
     expect(user.email).toBe("staff7@foo.com");
-    expect(user.height).toBe(null);
+    expect(!user.height).toBe(true);
     expect(user.checkPassword("seCERGERG45et")).toBe(true);
   });
   it("should show login page", async () => {
@@ -578,10 +578,13 @@ describe("signup with custom login form", () => {
       .send("password=seCERRG45et")
       .send("height=15")
       .expect(toRedirect("/"));
-    const user = await User.findOne({ username: "staffOfTheMonth" });
+
+    const table = await Table.findOne({ name: "users" });
+    const user = await User.findOne({ email: "staff8@foo.com" });
     expect(!!user).toBe(true);
-    expect(user.email).toBe("staff8@foo.com");
-    expect(user.height).toBe(15);
     expect(user.checkPassword("seCERRG45et")).toBe(true);
+    const userrow = await table.getRow({ email: "staff8@foo.com" });
+    expect(userrow.username).toBe("staffOfTheMonth");
+    expect(userrow.height).toBe(15);
   });
 });

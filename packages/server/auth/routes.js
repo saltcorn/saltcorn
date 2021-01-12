@@ -474,6 +474,20 @@ router.post(
     if (getState().getConfig("allow_signup")) {
       const new_user_form = getState().getConfig("new_user_form");
       const form = await getNewUserForm(new_user_form, req);
+      const signup_form_name = getState().getConfig("signup_form", "");
+      if (signup_form_name) {
+        const signup_form = await View.findOne({ name: signup_form_name });
+        if (signup_form) {
+          signup_form.configuration.columns.forEach((col) => {
+            if (
+              col.type === "Field" &&
+              !["email", "password"].includes(col.field_name)
+            ) {
+              form.hidden(col.field_name);
+            }
+          });
+        }
+      }
       form.validate(req.body);
       if (form.hasErrors) {
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
@@ -537,8 +551,6 @@ router.post(
         res.redirect("/auth/signup");
         return true;
       }
-
-      //also check password
     };
     const new_user_form = getState().getConfig("new_user_form");
 
@@ -546,7 +558,11 @@ router.post(
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
       if (signup_form) {
-        const { _csrf, id, role_id, ...userObject } = req.body;
+        const userObject = {};
+        signup_form.configuration.columns.forEach((col) => {
+          if (col.type === "Field")
+            userObject[col.field_name] = req.body[col.field_name];
+        });
         const { email, password } = userObject;
         if (await unsuitableEmailPassword(email, password)) return;
         if (new_user_form) {
