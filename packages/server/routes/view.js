@@ -34,7 +34,7 @@ router.get(
       res.redirect("/");
       return;
     }
-    const contents = await view.run_possibly_on_page(req, res);
+    const contents = await view.run_possibly_on_page(req.query, req, res);
 
     const title = scan_for_page_title(contents, view.name);
     res.sendWrap(

@@ -148,17 +148,17 @@ class View {
     );
   }
 
-  async run_possibly_on_page(req, res) {
+  async run_possibly_on_page(query, req, res) {
     const view = this;
     if (view.default_render_page && !req.xhr) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
-        const contents = await db_page.run(req.query, { res, req });
+        const contents = await db_page.run(query, { res, req });
         return contents;
       }
     }
-    const state = view.combine_state_and_default_state(req.query);
+    const state = view.combine_state_and_default_state(query);
     const resp = await view.run(state, { res, req });
     const state_form = await view.get_state_form(state, req);
     const contents = div(

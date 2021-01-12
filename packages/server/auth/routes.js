@@ -150,8 +150,9 @@ router.get(
           getAuthLinks("login")
         );
       else {
-        const resp = await login_form.run({}, { res, req });
-        res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
+        const resp = await login_form.run_possibly_on_page({}, req, res);
+        if (login_form.default_render_page) res.sendWrap(req.__(`Login`), resp);
+        else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
       }
     } else
       res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
@@ -264,8 +265,10 @@ router.get(
       const signup_form = await View.findOne({ name: signup_form_name });
       if (!signup_form) defaultSignup();
       else {
-        const resp = await signup_form.run({}, { res, req });
-        res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
+        const resp = await signup_form.run_possibly_on_page({}, req, res);
+        if (signup_form.default_render_page)
+          res.sendWrap(req.__(`Sign up`), resp);
+        else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
       }
     } else defaultSignup();
   })
