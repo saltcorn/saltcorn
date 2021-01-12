@@ -168,7 +168,7 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
     .filter((tf) => !!tf);
   const path = req.baseUrl + req.path;
   let action = `/view/${viewname}`;
-  if (path.startsWith("/auth/")) action = path;
+  if (path && path.startsWith("/auth/")) action = path;
   const form = new Form({
     action,
     fields: tfields,

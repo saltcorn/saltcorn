@@ -318,7 +318,10 @@ const renderFormLayout = (form) => {
 
 const renderForm = (form, csrfToken0) => {
   const csrfToken =
-    csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
+    csrfToken0 === false || csrfToken0 === ""
+      ? csrfToken0
+      : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
+
   if (typeof form === "string") return form;
   if (form.isStateForm) {
     form.class += " px-4 py-3";
