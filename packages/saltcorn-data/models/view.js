@@ -5,6 +5,7 @@ const { fieldlike, is_viewtemplate } = require("../contracts");
 const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
+const { renderForm } = require("@saltcorn/markup");
 
 class View {
   constructor(o) {
