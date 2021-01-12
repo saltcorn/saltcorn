@@ -511,6 +511,11 @@ router.post(
     }
 
     const unsuitableEmailPassword = async (email, password) => {
+      if (!email || !password) {
+        req.flash("danger", req.__("E-mail and password required"));
+        res.redirect("/auth/signup");
+        return true;
+      }
       if (email.length > 127) {
         req.flash("danger", req.__("E-mail too long"));
         res.redirect("/auth/signup");
