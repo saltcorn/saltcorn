@@ -10,6 +10,8 @@ const {
   toRedirect,
   toInclude,
   toSucceed,
+  resetToFixtures,
+  toNotInclude,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -18,11 +20,17 @@ const i18n = require("i18n");
 const path = require("path");
 
 afterAll(db.close);
+beforeAll(async () => {
+  await resetToFixtures();
+});
 
 describe("Public auth Endpoints", () => {
   it("should show login", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/auth/login/").expect(toSucceed());
+    await request(app)
+      .get("/auth/login/")
+      .expect(toSucceed())
+      .expect(toInclude("E-mail"));
   });
 
   it("should show signup", async () => {
@@ -310,3 +318,255 @@ describe("User fields", () => {
     expect(ut.height).toBe(191);
   });
 });
+
+describe("signup with custom login form", () => {
+  it("should create user fields and login form", async () => {
+    const table = await Table.findOne({ name: "users" });
+    const fc = await Field.create({
+      table,
+      label: "Username",
+      type: "String",
+      required: false,
+    });
+    await View.create({
+      name: "loginform",
+      viewtemplate: "Edit",
+      table_id: table.id,
+      configuration: {
+        fixed: { email: "", preset_email: "" },
+        layout: {
+          above: [
+            {
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    { type: "blank", contents: "Username", isFormula: {} },
+                  ],
+                },
+                {
+                  above: [
+                    null,
+                    {
+                      type: "field",
+                      fieldview: "edit",
+                      field_name: "username",
+                    },
+                  ],
+                },
+              ],
+            },
+            { type: "line_break" },
+            {
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    { type: "blank", contents: "Password", isFormula: {} },
+                  ],
+                },
+                {
+                  above: [
+                    {
+                      type: "field",
+                      fieldview: "password",
+                      field_name: "password",
+                    },
+                    null,
+                  ],
+                },
+              ],
+            },
+            { type: "line_break" },
+            {
+              type: "action",
+              rndid: "63f01b",
+              minRole: 10,
+              isFormula: {},
+              action_name: "Login",
+              action_label: "Login",
+              action_style: "btn-primary",
+              configuration: {},
+            },
+            {
+              type: "action",
+              rndid: "45dd57",
+              minRole: 10,
+              isFormula: {},
+              action_name: "Login with github",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          { type: "Field", fieldview: "edit", field_name: "username" },
+          { type: "Field", fieldview: "password", field_name: "password" },
+          {
+            type: "Action",
+            rndid: "63f01b",
+            minRole: 10,
+            isFormula: {},
+            action_name: "Login",
+            action_label: "Login",
+            action_style: "btn-primary",
+            configuration: {},
+          },
+          {
+            type: "Action",
+            rndid: "45dd57",
+            minRole: 10,
+            isFormula: {},
+            action_name: "Login with github",
+            configuration: {},
+          },
+        ],
+        viewname: "loginform",
+        view_when_done: "publicissueboard",
+      },
+      min_role: 1,
+      //default_render_page: "loginpage",
+    });
+
+    await getState().setConfig("login_form", "loginform");
+
+    await View.create({
+      name: "signupform",
+      viewtemplate: "Edit",
+      table_id: table.id,
+      configuration: {
+        fixed: { email: "", preset_email: "" },
+        layout: {
+          above: [
+            {
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    { type: "blank", contents: "Email", isFormula: {} },
+                  ],
+                },
+                {
+                  above: [
+                    null,
+                    { type: "field", fieldview: "edit", field_name: "email" },
+                  ],
+                },
+              ],
+            },
+            { type: "line_break" },
+            {
+              widths: [2, 10],
+              besides: [
+                { type: "blank", contents: "Username", isFormula: {} },
+                { type: "field", fieldview: "edit", field_name: "username" },
+              ],
+            },
+            { type: "line_break" },
+            {
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    { type: "blank", contents: "Password", isFormula: {} },
+                  ],
+                },
+                {
+                  above: [
+                    {
+                      type: "field",
+                      fieldview: "password",
+                      field_name: "password",
+                    },
+                    null,
+                  ],
+                },
+              ],
+            },
+            { type: "line_break" },
+            {
+              type: "action",
+              rndid: "63f01b",
+              minRole: 10,
+              isFormula: {},
+              action_name: "Sign up",
+              action_style: "btn-primary",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          { type: "Field", fieldview: "edit", field_name: "email" },
+          { type: "Field", fieldview: "edit", field_name: "username" },
+          { type: "Field", fieldview: "password", field_name: "password" },
+          {
+            type: "Action",
+            rndid: "63f01b",
+            minRole: 10,
+            isFormula: {},
+            action_name: "Sign up",
+            action_style: "btn-primary",
+            configuration: {},
+          },
+        ],
+        viewname: "loginform",
+        view_when_done: "publicissueboard",
+      },
+      min_role: 1,
+      //default_render_page: "signuppage",
+    });
+    await getState().setConfig("signup_form", "signupform");
+
+    await getState().setConfig("new_user_form", "");
+  });
+  it("should show sign up page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/auth/signup/").expect(toInclude("Username"));
+  });
+  it("should sign up", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/signup/")
+      .send("email=staff7@foo.com")
+      .send("username=bestStaffEver")
+      .send("password=seCERGERG45et")
+      .expect(toRedirect("/"));
+  });
+  it("should show login page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/auth/login/")
+      .expect(toInclude("Username"))
+      .expect(toNotInclude("E-mail"));
+  });
+  it("should log in with new user", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/auth/login/")
+      .send("username=bestStaffEver")
+      .send("password=seCERGERG45et")
+      .expect(toRedirect("/"));
+  });
+
+  it("should sign up with new user form", async () => {
+    await getState().setConfig("new_user_form", "newuser");
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/signup/")
+      .send("email=staff8@foo.com")
+      .send("username=staffOfTheMonth")
+      .send("password=seCERGERG45et")
+      .expect(200)
+      .expect(toInclude("Height"));
+  });
+});
+/* missing tests:
+
+* login and signup forms
+* login and signup on pages
+* login and signup views with new user form
+*/
