@@ -89,10 +89,12 @@ class User {
     };
   }
   static async authenticate(uo) {
-    const urow = await User.findOne({ email: uo.email });
-    if (!urow) return false;
+    const { password, ...uoSearch } = uo;
+    const urows = await User.find(uoSearch, { limit: 2 });
+    if (urows.length !== 1) return false;
+    const [urow] = urows;
     if (urow.disabled) return false;
-    const cmp = urow.checkPassword(uo.password);
+    const cmp = urow.checkPassword(password);
     if (cmp) return new User(urow);
     else return false;
   }
@@ -231,7 +233,7 @@ User.contract = {
     nonEmpty: is.fun([], is.promise(is.bool)),
     hashPassword: is.fun(is.str, is.promise(is.str)),
     authenticate: is.fun(
-      is.obj({ email: is.str, password: is.str }),
+      is.obj({ password: is.str }),
       is.promise(is.or(is.class("User"), is.eq(false)))
     ),
     create: is.fun(

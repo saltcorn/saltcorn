@@ -90,6 +90,8 @@ const sections = (req) => [
       "login_menu",
       "allow_forgot",
       "new_user_form",
+      "login_form",
+      "signup_form",
       "custom_ssl_certificate",
       "custom_ssl_private_key",
     ],

@@ -4,7 +4,7 @@ const mountRoutes = require("./routes");
 const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
+const CustomStrategy = require("passport-custom").Strategy;
 const BearerStrategy = require("passport-http-bearer");
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
@@ -107,23 +107,21 @@ const getApp = async (opts = {}) => {
 
   passport.use(
     "local",
-    new LocalStrategy(
-      { passReqToCallback: true, usernameField: "email" },
-      (req, email, password, done) => {
-        loginAttempt();
-        async function loginAttempt() {
-          const mu = await User.authenticate({ email, password });
-          if (mu) return done(null, mu.session_object);
-          else {
-            return done(
-              null,
-              false,
-              req.flash("danger", req.__("Incorrect user or password"))
-            );
-          }
+    new CustomStrategy((req, done) => {
+      loginAttempt();
+      async function loginAttempt() {
+        const { remember, _csrf, ...userobj } = req.body;
+        const mu = await User.authenticate(userobj);
+        if (mu) return done(null, mu.session_object);
+        else {
+          return done(
+            null,
+            false,
+            req.flash("danger", req.__("Incorrect user or password"))
+          );
         }
       }
-    )
+    })
   );
   for (const [nm, auth] of Object.entries(getState().auth_methods)) {
     passport.use(nm, auth.strategy);

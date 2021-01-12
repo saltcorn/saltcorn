@@ -5,6 +5,7 @@ const User = require("../../models/user");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
+const { getState } = require("../../db/state");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const {
@@ -12,6 +13,7 @@ const {
   calcfldViewOptions,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
+
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -30,6 +32,19 @@ const configuration_workflow = (req) =>
             "Save",
             //"Delete"
           ];
+          if (table.name === "users") {
+            actions.push("Login");
+            actions.push("Sign up");
+            Object.entries(getState().auth_methods).forEach(([k, v]) => {
+              actions.push(`Login with ${k}`);
+            });
+            fields.push({
+              name: "password",
+              label: "Password",
+              type: "String",
+            });
+            field_view_options.password = ["password"];
+          }
           return {
             fields,
             field_view_options,
@@ -131,7 +146,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   },
 ];
 
-const getForm = async (table, viewname, columns, layout, id) => {
+const getForm = async (table, viewname, columns, layout, id, req) => {
   const fields = await table.getFields();
 
   const tfields = (columns || [])
@@ -141,13 +156,21 @@ const getForm = async (table, viewname, columns, layout, id) => {
         if (f) {
           f.fieldview = column.fieldview;
           return f;
+        } else if (table.name === "users" && column.field_name === "password") {
+          return new Field({
+            name: "password",
+            fieldview: column.fieldview,
+            type: "String",
+          });
         }
       }
     })
     .filter((tf) => !!tf);
-
+  const path = req.baseUrl + req.path;
+  let action = `/view/${viewname}`;
+  if (path && path.startsWith("/auth/")) action = path;
   const form = new Form({
-    action: `/view/${viewname}`,
+    action,
     fields: tfields,
     layout,
   });
@@ -171,7 +194,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, state.id);
+  const form = await getForm(table, viewname, columns, layout, state.id, req);
   const { uniques, nonUniques } = splitUniques(fields, state);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
@@ -227,7 +250,7 @@ const runPost = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, body.id);
+  const form = await getForm(table, viewname, columns, layout, body.id, req);
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);

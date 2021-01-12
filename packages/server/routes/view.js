@@ -34,21 +34,8 @@ router.get(
       res.redirect("/");
       return;
     }
-    if (view.default_render_page && !req.xhr) {
-      const db_page = await Page.findOne({ name: view.default_render_page });
-      if (db_page) {
-        const contents = await db_page.run(req.query, { res, req });
-        res.sendWrap(scan_for_page_title(contents, view.name), contents);
-        return;
-      }
-    }
-    const state = view.combine_state_and_default_state(req.query);
-    const resp = await view.run(state, { res, req });
-    const state_form = await view.get_state_form(state, req);
-    const contents = div(
-      state_form ? renderForm(state_form, req.csrfToken()) : "",
-      resp
-    );
+    const contents = await view.run_possibly_on_page(req.query, req, res);
+
     const title = scan_for_page_title(contents, view.name);
     res.sendWrap(
       title,

@@ -518,5 +518,10 @@
 	"Page %s added to menu. Adjust access permissions in Settings &raquo; Menu": "Page %s added to menu. Adjust access permissions in Settings &raquo; Menu",
 	"Page %s duplicated as %s": "Page %s duplicated as %s",
 	"Custom SSL certificate": "Custom SSL certificate",
-	"Custom SSL private key": "Custom SSL private key"
+	"Custom SSL private key": "Custom SSL private key",
+	"Login view": "Login view",
+	"Signup view": "Signup view",
+	"A view with the login form": "A view with the login form",
+	"A view with the signup form": "A view with the signup form",
+	"Signups not enabled": "Signups not enabled"
 }
