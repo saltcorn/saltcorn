@@ -546,7 +546,7 @@ router.post(
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
       if (signup_form) {
-        const { _csrf, ...userObject } = req.body;
+        const { _csrf, id, role_id, ...userObject } = req.body;
         const { email, password } = userObject;
         if (await unsuitableEmailPassword(email, password)) return;
         if (new_user_form) {
