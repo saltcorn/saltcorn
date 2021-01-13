@@ -318,7 +318,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
   });
   const blockDispatch = {
-    field({ field_name, fieldview }) {
+    field({ field_name, fieldview, configuration }) {
       const val = row[field_name];
       let field = fields.find((fld) => fld.name === field_name);
       if (!field && field_name === "id")
@@ -328,7 +328,8 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
         return val
           ? getState().fileviews[fieldview].run(
               val,
-              row[`${field_name}__filename`]
+              row[`${field_name}__filename`],
+              configuration
             )
           : "";
       } else if (
@@ -336,7 +337,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req);
+        return field.type.fieldviews[fieldview].run(val, req, configuration);
       else return text(val);
     },
     join_field({ join_field }) {
