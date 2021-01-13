@@ -344,6 +344,22 @@ const date = {
             : ""
         ),
     },
+    format: {
+      isEdit: false,
+      configFields: [
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          sublabel: "moment.js format specifier",
+        },
+      ],
+      run: (d, req, options) => {
+        if (!d) return "";
+        if (!options || !options.format) return text(moment(d).format());
+        return text(moment(d).format(options.format));
+      },
+    },
     relative: {
       isEdit: false,
       run: (d, req) => {
