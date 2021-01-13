@@ -647,7 +647,7 @@ router.post(
     } else {
       req.session.cookie.expires = false; // Cookie expires at end of session
     }
-    req.flash("success", req.__("Welcome, %s!", req.body.email));
+    req.flash("success", req.__("Welcome, %s!", req.user.email));
     res.redirect("/");
   })
 );
