@@ -361,6 +361,7 @@ export const ToolboxEdit = () => {
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
+      <LinkElem connectors={connectors} />
     </Fragment>
   );
 };
