@@ -23,6 +23,7 @@ export const Container = ({
   textColor,
   customClass,
   customCSS,
+  minScreenWidth,
 }) => {
   const {
     selected,
@@ -103,6 +104,7 @@ export const ContainerSettings = () => {
     textColor: node.data.props.textColor,
     customClass: node.data.props.customClass,
     customCSS: node.data.props.customCSS,
+    minScreenWidth: node.data.props.minScreenWidth,
   }));
   const {
     actions: { setProp },
@@ -126,6 +128,7 @@ export const ContainerSettings = () => {
     showForRole,
     customClass,
     customCSS,
+    minScreenWidth,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -492,6 +495,28 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           ))}
+          <tr>
+            <td>
+              <label>Min screen width</label>
+            </td>
+            <td>
+              <select
+                value={minScreenWidth}
+                className="w-100 ml-2"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.minScreenWidth = e.target.value;
+                  })
+                }
+              >
+                <option value="">all</option>
+                <option value="sm">small</option>
+                <option value="md">medium</option>
+                <option value="lg">large</option>
+                <option value="xl">x-large</option>
+              </select>
+            </td>
+          </tr>
         </tbody>
       </table>
       <div accordiontitle="Custom class/CSS">
@@ -540,6 +565,7 @@ Container.craft = {
     imageSize: "contain",
     showIfFormula: "",
     showForRole: [],
+    minScreenWidth: "",
   },
   rules: {
     canDrag: () => true,
