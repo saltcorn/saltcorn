@@ -1,7 +1,13 @@
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  MinRoleSetting,
+  OrFormula,
+  ConfigForm,
+} from "./utils";
 
 export const Action = ({
   name,
@@ -153,7 +159,7 @@ export const ActionSettings = () => {
       <BlockSetting block={block} setProp={setProp} />
       <MinRoleSetting minRole={minRole} setProp={setProp} />
       {cfgFields ? (
-        <ActionConfigForm
+        <ConfigForm
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}
@@ -169,55 +175,3 @@ Action.craft = {
     settings: ActionSettings,
   },
 };
-
-const ActionConfigForm = ({ fields, configuration, setProp }) => (
-  <Fragment>
-    {fields.map((f, ix) => (
-      <Fragment key={ix}>
-        <label>{f.label || f.name}</label>
-        <ActionConfigField
-          field={f}
-          configuration={configuration}
-          setProp={setProp}
-        />
-      </Fragment>
-    ))}
-  </Fragment>
-);
-const ActionConfigField = ({ field, configuration, setProp }) =>
-  ({
-    String: () => (
-      <input
-        type="text"
-        className="form-control"
-        value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
-      />
-    ),
-    textarea: () => (
-      <textarea
-        rows="6"
-        type="text"
-        className="form-control"
-        value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
-      />
-    ),
-    select: () => (
-      <select
-        className="form-control"
-        value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
-      >
-        {field.options.map((o, ix) => (
-          <option key={ix}>{o}</option>
-        ))}
-      </select>
-    ),
-  }[field.input_type || field.type.name || field.type]());

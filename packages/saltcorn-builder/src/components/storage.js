@@ -99,6 +99,7 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+          configuration={segment.configuration || {}}
         />
       );
     } else if (segment.type === "dropdown_filter") {
@@ -407,6 +408,7 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
+        configuration: node.props.configuration,
       };
     }
     if (node.displayName === DropDownFilter.craft.displayName) {

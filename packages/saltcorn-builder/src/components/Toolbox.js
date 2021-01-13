@@ -182,6 +182,7 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
       name={fields[0].name}
       block={false}
       textStyle={""}
+      configuration={{}}
       fieldview={fields[0].is_fkey ? "" : field_view_options[fields[0].name][0]}
     />
   </WrapElem>
