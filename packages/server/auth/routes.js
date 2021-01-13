@@ -616,6 +616,14 @@ function handler(req, res) {
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
 }
+// try to find a unique user id in login submit
+const userIdKey = (body) => {
+  if (body.email) return body.email;
+  const { remember, password, _csrf, passwordRepeat, ...rest } = body;
+  const kvs = Object.entries(rest);
+  if (kvs.length > 0) return kvs[0][1];
+  else return "nokey";
+};
 const ipLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // limit each IP to 100 requests per windowMs
@@ -625,7 +633,7 @@ const ipLimiter = rateLimit({
 const userLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => req.body.email,
+  keyGenerator: (req) => userIdKey(req.body),
   handler,
 });
 
@@ -641,7 +649,7 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
-    userLimiter.resetKey(req.body.email);
+    userLimiter.resetKey(userIdKey(req.body));
     if (req.body.remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
     } else {
