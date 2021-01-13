@@ -70,7 +70,6 @@ module.exports = {
           sublabel:
             "Field with email address a String, or Key to user who will receive email",
           type: "String",
-          required: true,
           attributes: {
             options: field_opts.join(),
           },
@@ -80,7 +79,6 @@ module.exports = {
           name: "to_email_fixed",
           label: "Fixed address",
           type: "String",
-          required: true,
           showIf: { ".to_email": "Fixed" },
         },
         {

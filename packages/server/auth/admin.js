@@ -185,7 +185,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const users = await User.find();
+    const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
     var roleMap = {};
     roles.forEach((r) => {

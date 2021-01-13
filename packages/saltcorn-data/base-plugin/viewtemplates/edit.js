@@ -43,7 +43,13 @@ const configuration_workflow = (req) =>
               label: "Password",
               type: "String",
             });
+            fields.push({
+              name: "remember",
+              label: "Remember me",
+              type: "Bool",
+            });
             field_view_options.password = ["password"];
+            field_view_options.remember = ["edit"];
           }
           return {
             fields,
@@ -161,6 +167,12 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
             name: "password",
             fieldview: column.fieldview,
             type: "String",
+          });
+        } else if (table.name === "users" && column.field_name === "remember") {
+          return new Field({
+            name: "remember",
+            fieldview: column.fieldview,
+            type: "Bool",
           });
         }
       }

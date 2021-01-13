@@ -98,8 +98,8 @@ class User {
     if (cmp) return new User(urow);
     else return false;
   }
-  static async find(where) {
-    const us = await db.select("users", where);
+  static async find(where, selectopts) {
+    const us = await db.select("users", where, selectopts);
     return us.map((u) => new User(u));
   }
   static async findOne(where) {

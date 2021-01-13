@@ -186,7 +186,10 @@ const field_picker_fields = contract(
               label: __(`Field in %s table`, table.name),
             },
             { name: "Action", label: __("Action on row") },
-            { name: "ViewLink", label: __("Link to other view") },
+
+            ...(link_view_opts.length > 0
+              ? [{ name: "ViewLink", label: __("Link to other view") }]
+              : []),
             { name: "Link", label: __("Link to anywhere") },
             ...(parent_field_list.length > 0
               ? [{ name: "JoinField", label: __("Join Field") }]
@@ -527,15 +530,17 @@ const picked_fields_to_query = contract(
         }
       }
       if (column.type === "ViewLink") {
-        const [vtype, vrest] = column.view.split(":");
-        if (vtype === "ParentShow") {
-          const [pviewnm, ptbl, pfld] = vrest.split(".");
-          const field = fields.find((f) => f.name === pfld);
-          if (field && field.attributes.summary_field)
-            joinFields[`summary_field_${ptbl.toLowerCase()}`] = {
-              ref: pfld,
-              target: field.attributes.summary_field,
-            };
+        if (column.view && column.view.split) {
+          const [vtype, vrest] = column.view.split(":");
+          if (vtype === "ParentShow") {
+            const [pviewnm, ptbl, pfld] = vrest.split(".");
+            const field = fields.find((f) => f.name === pfld);
+            if (field && field.attributes.summary_field)
+              joinFields[`summary_field_${ptbl.toLowerCase()}`] = {
+                ref: pfld,
+                target: field.attributes.summary_field,
+              };
+          }
         }
       } else if (column.type === "Aggregation") {
         //console.log(column)
