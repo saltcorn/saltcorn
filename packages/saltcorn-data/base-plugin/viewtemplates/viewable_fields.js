@@ -223,6 +223,7 @@ const get_viewable_fields = contract(
             },
           };
         else if (column.type === "ViewLink") {
+          if (!column.view) return;
           const r = view_linker(column, fields);
           if (column.header_label) r.label = text(column.header_label);
           return r;

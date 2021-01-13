@@ -527,15 +527,17 @@ const picked_fields_to_query = contract(
         }
       }
       if (column.type === "ViewLink") {
-        const [vtype, vrest] = column.view.split(":");
-        if (vtype === "ParentShow") {
-          const [pviewnm, ptbl, pfld] = vrest.split(".");
-          const field = fields.find((f) => f.name === pfld);
-          if (field && field.attributes.summary_field)
-            joinFields[`summary_field_${ptbl.toLowerCase()}`] = {
-              ref: pfld,
-              target: field.attributes.summary_field,
-            };
+        if (column.view && column.view.split) {
+          const [vtype, vrest] = column.view.split(":");
+          if (vtype === "ParentShow") {
+            const [pviewnm, ptbl, pfld] = vrest.split(".");
+            const field = fields.find((f) => f.name === pfld);
+            if (field && field.attributes.summary_field)
+              joinFields[`summary_field_${ptbl.toLowerCase()}`] = {
+                ref: pfld,
+                target: field.attributes.summary_field,
+              };
+          }
         }
       } else if (column.type === "Aggregation") {
         //console.log(column)
