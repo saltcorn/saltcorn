@@ -261,6 +261,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         hide,
         customClass,
         customCSS,
+        minScreenWidth,
       } = segment;
       if (hide) return "";
       if (showForRole && showForRole[role] === false) return "";
@@ -274,6 +275,10 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           ? ""
           : `${cssNm}: ${segment[segKey]}${unit};`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
+      const baseDisplayClass = block ? "block" : "inline-block";
+      const displayClass = minScreenWidth
+        ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
+        : `d-${baseDisplayClass}`;
       return wrap(
         segment,
         isTop,
@@ -287,17 +292,17 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
               vAlign === "middle" &&
                 hAlign === "center" &&
                 "justify-content-center",
+              displayClass,
             ],
-            style: `${ppCustomCSS(customCSS || "")}${
-              block === false ? "display: inline-block;" : ""
-            }${sizeProp("minHeight", "min-height")}${sizeProp(
-              "height",
-              "height"
-            )}${sizeProp("width", "width")}${sizeProp(
-              "widthPct",
+            style: `${ppCustomCSS(customCSS || "")}${sizeProp(
+              "minHeight",
+              "min-height"
+            )}${sizeProp("height", "height")}${sizeProp(
               "width",
-              "%"
-            )}border: ${borderWidth || 0}px ${borderStyle} black; ${
+              "width"
+            )}${sizeProp("widthPct", "width", "%")}border: ${
+              borderWidth || 0
+            }px ${borderStyle} black; ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"
