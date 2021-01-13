@@ -348,8 +348,8 @@ const date = {
       isEdit: false,
       configFields: [
         {
-          name: "url",
-          label: "URL",
+          name: "format",
+          label: "Format",
           type: "String",
           sublabel: "moment.js format specifier",
         },
