@@ -186,7 +186,10 @@ const field_picker_fields = contract(
               label: __(`Field in %s table`, table.name),
             },
             { name: "Action", label: __("Action on row") },
-            { name: "ViewLink", label: __("Link to other view") },
+
+            ...(link_view_opts.length > 0
+              ? [{ name: "ViewLink", label: __("Link to other view") }]
+              : []),
             { name: "Link", label: __("Link to anywhere") },
             ...(parent_field_list.length > 0
               ? [{ name: "JoinField", label: __("Join Field") }]
