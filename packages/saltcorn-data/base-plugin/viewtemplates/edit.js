@@ -11,6 +11,7 @@ const { renderForm } = require("@saltcorn/markup");
 const {
   initial_config_all_fields,
   calcfldViewOptions,
+  calcfldViewConfig,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
@@ -24,6 +25,7 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
+          const fieldViewConfigForms = calcfldViewConfig(fields, false);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -56,6 +58,7 @@ const configuration_workflow = (req) =>
             field_view_options,
             roles,
             actions,
+            fieldViewConfigForms,
             images,
             mode: "edit",
           };

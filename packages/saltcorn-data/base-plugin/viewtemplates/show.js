@@ -19,6 +19,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcfldViewConfig,
   getActionConfigFields,
 } = require("../../plugin-helper");
 const {
@@ -64,15 +65,9 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const fieldViewConfigForms = {};
+          const fieldViewConfigForms = calcfldViewConfig(fields, false);
           const field_view_options = calcfldViewOptions(fields, false);
-          fields.forEach((f) => {
-            fieldViewConfigForms[f.name] = {};
-            Object.entries(f.type.fieldviews || {}).forEach(([nm, fv]) => {
-              if (fv.configFields)
-                fieldViewConfigForms[f.name][nm] = fv.configFields;
-            });
-          });
+
           const link_view_opts = await get_link_view_opts(
             table,
             context.viewname

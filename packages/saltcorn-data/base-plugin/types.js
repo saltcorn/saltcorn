@@ -71,6 +71,13 @@ const string = {
     as_header: { isEdit: false, run: (s) => h3(text_attr(s || "")) },
     edit: {
       isEdit: true,
+      configFields: [
+        {
+          name: "placeholder",
+          label: "Placeholder",
+          type: "String",
+        },
+      ],
       run: (nm, v, attrs, cls, required) =>
         attrs.options
           ? select(
@@ -105,6 +112,7 @@ const string = {
               type: "text",
               disabled: attrs.disabled,
               class: ["form-control", cls],
+              placeholder: attrs.placeholder,
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
               ...(isdef(v) && { value: text_attr(v) }),
