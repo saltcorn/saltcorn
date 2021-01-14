@@ -203,7 +203,7 @@ const renderRows = async (
     views[nm] = view;
     return view;
   };
-
+  const owner_field = await table.owner_fieldname();
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
       const view = await getView(segment.view);
@@ -238,7 +238,16 @@ const renderRows = async (
         segment.contents = await view.run(state, extra);
       }
     });
-    return render(row, fields, layout, viewname, table, role, extra.req);
+    return render(
+      row,
+      fields,
+      layout,
+      viewname,
+      table,
+      role,
+      extra.req,
+      owner_field
+    );
   });
 };
 
@@ -277,7 +286,18 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
-const render = (row, fields, layout0, viewname, table, role, req) => {
+const render = (
+  row,
+  fields,
+  layout0,
+  viewname,
+  table,
+  role,
+  req,
+  owner_field
+) => {
+  const user_id = req.user ? req.user.id : null;
+  const is_owner = owner_field && user_id && row[owner_field] === user_id;
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       const f = get_expression_function(segment[key], fields);
@@ -385,7 +405,12 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
       return key(row);
     },
   };
-  return renderLayout({ blockDispatch, layout, role });
+  return renderLayout({
+    blockDispatch,
+    layout,
+    role,
+    is_owner,
+  });
 };
 const run_action = async (
   table_id,

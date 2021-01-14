@@ -146,7 +146,7 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
       )
     );
 };
-const render = ({ blockDispatch, layout, role, alerts }) => {
+const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
     if (isTop && blockDispatch && blockDispatch.wrapTop)
@@ -262,9 +262,15 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         customClass,
         customCSS,
         minScreenWidth,
+        show_for_owner,
       } = segment;
       if (hide) return "";
-      if (showForRole && showForRole[role] === false) return "";
+      if (
+        showForRole &&
+        showForRole[role] === false &&
+        !(show_for_owner && is_owner)
+      )
+        return "";
       const renderBg = !(
         isTop &&
         blockDispatch.noBackgroundAtTop &&
