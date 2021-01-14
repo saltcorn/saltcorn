@@ -370,6 +370,7 @@ const authorise_post = async ({ body, table_id, req }) => {
     const field_name = await table.owner_fieldname();
     return field_name && `${body[field_name]}` === `${user_id}`;
   }
+  if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
 };
 module.exports = {

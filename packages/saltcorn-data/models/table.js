@@ -74,6 +74,7 @@ class Table {
   }
   async owner_fieldname() {
     if (!this.ownership_field_id) return null;
+    if (this.name === "users") return "id";
     const fields = await this.getFields();
     return this.owner_fieldname_from_fields(fields);
   }
