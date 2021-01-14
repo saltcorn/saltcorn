@@ -182,6 +182,7 @@ const FieldElem = ({ connectors, fields, field_view_options }) => (
       name={fields[0].name}
       block={false}
       textStyle={""}
+      configuration={{}}
       fieldview={fields[0].is_fkey ? "" : field_view_options[fields[0].name][0]}
     />
   </WrapElem>
@@ -293,6 +294,7 @@ export const ToolboxShow = () => {
     child_field_list,
     agg_field_opts,
     views,
+    images,
   } = options;
   return (
     <Fragment>
@@ -317,6 +319,7 @@ export const ToolboxShow = () => {
       <ContainerElem connectors={connectors} />
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
+      <ImageElem connectors={connectors} images={images} />
     </Fragment>
   );
 };
@@ -346,7 +349,7 @@ export const ToolboxFilter = () => {
 export const ToolboxEdit = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options } = options;
+  const { fields, field_view_options, images } = options;
   return (
     <Fragment>
       <TextElem connectors={connectors} />
@@ -362,6 +365,7 @@ export const ToolboxEdit = () => {
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
       <LinkElem connectors={connectors} />
+      <ImageElem connectors={connectors} images={images} />
     </Fragment>
   );
 };

@@ -162,3 +162,56 @@ export const parseStyles = (styles) =>
       }),
       {}
     );
+export const ConfigForm = ({ fields, configuration, setProp }) => (
+  <Fragment>
+    {fields.map((f, ix) => (
+      <Fragment key={ix}>
+        <label>{f.label || f.name}</label>
+        <ConfigField
+          field={f}
+          configuration={configuration}
+          setProp={setProp}
+        />
+        {f.sublabel ? <i>{f.sublabel}</i> : null}
+      </Fragment>
+    ))}
+    <br />
+  </Fragment>
+);
+export const ConfigField = ({ field, configuration, setProp }) =>
+  ({
+    String: () => (
+      <input
+        type="text"
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    textarea: () => (
+      <textarea
+        rows="6"
+        type="text"
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    select: () => (
+      <select
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      >
+        {field.options.map((o, ix) => (
+          <option key={ix}>{o}</option>
+        ))}
+      </select>
+    ),
+  }[field.input_type || field.type.name || field.type]());

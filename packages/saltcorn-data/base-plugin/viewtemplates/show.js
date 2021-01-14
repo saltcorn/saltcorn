@@ -19,6 +19,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcfldViewConfig,
   getActionConfigFields,
 } = require("../../plugin-helper");
 const {
@@ -64,7 +65,9 @@ const configuration_workflow = (req) =>
               );
             }
           }
+          const fieldViewConfigForms = calcfldViewConfig(fields, false);
           const field_view_options = calcfldViewOptions(fields, false);
+
           const link_view_opts = await get_link_view_opts(
             table,
             context.viewname
@@ -90,6 +93,7 @@ const configuration_workflow = (req) =>
             images,
             actions,
             actionConfigForms,
+            fieldViewConfigForms,
             field_view_options,
             link_view_opts,
             parent_field_list,
@@ -309,7 +313,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
     },
   });
   const blockDispatch = {
-    field({ field_name, fieldview }) {
+    field({ field_name, fieldview, configuration }) {
       const val = row[field_name];
       let field = fields.find((fld) => fld.name === field_name);
       if (!field && field_name === "id")
@@ -319,7 +323,8 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
         return val
           ? getState().fileviews[fieldview].run(
               val,
-              row[`${field_name}__filename`]
+              row[`${field_name}__filename`],
+              configuration
             )
           : "";
       } else if (
@@ -327,7 +332,7 @@ const render = (row, fields, layout0, viewname, table, role, req) => {
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req);
+        return field.type.fieldviews[fieldview].run(val, req, configuration);
       else return text(val);
     },
     join_field({ join_field }) {

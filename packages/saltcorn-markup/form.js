@@ -282,6 +282,7 @@ const renderFormLayout = (form) => {
               form.errors[field.name]
             )}</div>`
           : "";
+        field.attributes = { ...field.attributes, ...segment.configuration };
         return innerField(form.values, form.errors)(field) + errorFeedback;
       } else return "";
     },

@@ -68,6 +68,19 @@ const calcfldViewOptions = contract(
     return fvs;
   }
 );
+const calcfldViewConfig = contract(
+  is.fun([is.array(is.class("Field")), is.bool], is.obj()),
+  (fields, isEdit) => {
+    const fieldViewConfigForms = {};
+    fields.forEach((f) => {
+      fieldViewConfigForms[f.name] = {};
+      Object.entries(f.type.fieldviews || {}).forEach(([nm, fv]) => {
+        if (fv.configFields) fieldViewConfigForms[f.name][nm] = fv.configFields;
+      });
+    });
+    return fieldViewConfigForms;
+  }
+);
 
 const get_link_view_opts = contract(
   is.fun(
@@ -811,4 +824,5 @@ module.exports = {
   stateToQueryString,
   link_view,
   getActionConfigFields,
+  calcfldViewConfig,
 };
