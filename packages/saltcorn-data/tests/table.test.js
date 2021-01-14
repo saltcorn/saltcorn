@@ -8,7 +8,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file } = require("./mocks");
 const { mockReqRes } = require("./mocks");
-const { findAllWithTableName } = require("../models/trigger");
+const { findAllWithTableName, runTableTriggers } = require("../models/trigger");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -761,5 +761,22 @@ describe("Table joint unique constraint", () => {
     await tc.delete();
     const res1 = await table.tryInsertRow(row0);
     expect(!!res1.error).toBe(false);
+  });
+});
+describe("Table with row ownership", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwned");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_field_id: owner.id });
+    await persons.delete();
   });
 });
