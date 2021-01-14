@@ -46,10 +46,28 @@ const roleOptions = [
   { value: 10, label: "Public" },
 ];
 
-const tableForm = (table, req) => {
+const tableForm = async (table, req) => {
+  const fields = await table.getFields();
+
+  const userFields = fields
+    .filter((f) => f.reftable_name === "users")
+    .map((f) => ({ value: f.id, label: f.name }));
   const form = new Form({
     action: "/table",
     fields: [
+      ...(userFields.length > 0
+        ? [
+            {
+              label: req.__("Ownership field"),
+              name: "ownership_field_id",
+              sublabel: req.__(
+                "The user referred to in this field will be the owner of the row"
+              ),
+              input_type: "select",
+              options: [{ value: "", label: req.__("None") }, ...userFields],
+            },
+          ]
+        : []),
       {
         label: req.__("Minimum role for read"),
         name: "min_role_read",
@@ -428,6 +446,7 @@ router.get(
         ])
       )
     );
+    const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
         {
@@ -459,7 +478,7 @@ router.get(
         {
           type: "card",
           title: req.__("Edit table properties"),
-          contents: renderForm(tableForm(table, req), req.csrfToken()),
+          contents: renderForm(tblForm, req.csrfToken()),
         },
       ],
     });
