@@ -29,7 +29,10 @@ router.get(
       res.redirect("/");
       return;
     }
-    if (role > view.min_role) {
+    if (
+      role > view.min_role &&
+      !(await view.authorise_get({ query: req.query, req, ...view }))
+    ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
       return;
@@ -80,7 +83,10 @@ router.post(
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
-    } else if (role > view.min_role) {
+    } else if (
+      role > view.min_role &&
+      !(await view.authorise_post({ body: req.body, req, ...view }))
+    ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
     } else {

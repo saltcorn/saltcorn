@@ -12,6 +12,7 @@ const {
   initial_config_all_fields,
   calcfldViewOptions,
   calcfldViewConfig,
+  get_parent_views,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
@@ -120,14 +121,21 @@ const configuration_workflow = (req) =>
           return done_views.length > 0;
         },
         form: async (context) => {
-          const done_views = await View.find_all_views_where(
+          const own_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               (viewrow.table_id === context.table_id ||
                 state_fields.every((sf) => !sf.required))
           );
-          const done_view_opts = done_views.map((v) => v.name);
+          const table = await Table.findOne({ id: context.table_id });
+          const parent_views = await get_parent_views(table, context.viewname);
 
+          const done_view_opts = own_views.map((v) => v.name);
+          parent_views.forEach(({ relation, related_table, views }) =>
+            views.forEach((v) => {
+              done_view_opts.push(`${v.name}.${relation.name}`);
+            })
+          );
           return new Form({
             blurb: req.__(
               "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
@@ -330,7 +338,8 @@ const runPost = async (
     if (!view_when_done) {
       res.redirect(`/`);
     } else {
-      const nxview = await View.findOne({ name: view_when_done });
+      const [viewname_when_done, relation] = view_when_done.split(".");
+      const nxview = await View.findOne({ name: viewname_when_done });
       //console.log()
       if (!nxview) {
         req.flash(
@@ -341,16 +350,29 @@ const runPost = async (
       } else {
         const state_fields = await nxview.get_state_fields();
         if (
-          nxview.table_id === table_id &&
+          (nxview.table_id === table_id || relation) &&
           state_fields.some((sf) => sf.name === "id")
         )
-          res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
-        else res.redirect(`/view/${text(view_when_done)}`);
+          res.redirect(
+            `/view/${text(viewname_when_done)}?id=${text(
+              relation ? row[relation] : id
+            )}`
+          );
+        else res.redirect(`/view/${text(viewname_when_done)}`);
       }
     }
   }
 };
-
+const authorise_post = async ({ body, table_id, req }) => {
+  const table = await Table.findOne({ id: table_id });
+  const user_id = req.user ? req.user.id : null;
+  if (table.ownership_field_id && user_id) {
+    const field_name = await table.owner_fieldname();
+    return field_name && `${body[field_name]}` === `${user_id}`;
+  }
+  if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
+  return false;
+};
 module.exports = {
   name: "Edit",
   description: "Form for creating a new row or editing existing rows",
@@ -360,4 +382,7 @@ module.exports = {
   get_state_fields,
   initial_config,
   display_state_form: false,
+  authorise_post,
+  authorise_get: async ({ query, ...rest }) =>
+    authorise_post({ body: query, ...rest }),
 };

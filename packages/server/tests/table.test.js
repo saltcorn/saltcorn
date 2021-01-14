@@ -1,6 +1,7 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
+const Field = require("@saltcorn/data/models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -11,6 +12,7 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const User = require("@saltcorn/data/models/user");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -216,5 +218,39 @@ Gordon Kane, 217`;
         .set("Cookie", loginCookie)
         .expect(toInclude("alert-danger"))
         .expect(toInclude("books"));
+  });
+});
+describe("deletion to table with row ownership", () => {
+  it("should create table", async () => {
+    const persons = await Table.create("owned");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    const ownerfield = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({
+      ownership_field_id: ownerfield.id,
+      min_role_write: 1,
+    });
+    const user = await User.findOne({ email: "staff@foo.com" });
+    const otheruser = await User.findOne({ email: "user@foo.com" });
+    const row = await persons.insertRow({ name: "something", owner: user.id });
+    expect(await persons.countRows()).toBe(1);
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/delete/owned/" + row)
+      .expect(toRedirect("/list/owned"));
+    expect(await persons.countRows()).toBe(1);
+    await request(app)
+      .post("/delete/owned/" + row)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/list/owned"));
+    expect(await persons.countRows()).toBe(0);
   });
 });

@@ -18,7 +18,12 @@ router.post(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     try {
       if (role <= table.min_role_write) await table.deleteRows({ id });
-      else
+      else if (table.ownership_field_id && req.user) {
+        const row = await table.getRow({ id });
+        if (row && (await table.is_owner(req.user, row)))
+          await table.deleteRows({ id });
+        else req.flash("error", req.__("Not authorized"));
+      } else
         req.flash(
           "error",
           req.__("Not allowed to write to table %s", table.name)

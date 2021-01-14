@@ -105,6 +105,7 @@ export const ContainerSettings = () => {
     customClass: node.data.props.customClass,
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
+    show_for_owner: node.data.props.show_for_owner,
   }));
   const {
     actions: { setProp },
@@ -129,8 +130,10 @@ export const ContainerSettings = () => {
     customClass,
     customCSS,
     minScreenWidth,
+    show_for_owner,
   } = node;
   const options = useContext(optionsCtx);
+  const ownership = !!options.ownership;
   return (
     <Accordion>
       <table className="w-100" accordiontitle="Placement">
@@ -495,6 +498,26 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           ))}
+          {ownership ? (
+            <tr>
+              <td colspan="2">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    name="block"
+                    type="checkbox"
+                    checked={show_for_owner}
+                    onChange={(e) =>
+                      setProp(
+                        (prop) => (prop.show_for_owner = e.target.checked)
+                      )
+                    }
+                  />
+                  <label className="form-check-label">Owner</label>
+                </div>
+              </td>
+            </tr>
+          ) : null}
           <tr>
             <td>
               <label>Min screen width</label>
@@ -566,6 +589,7 @@ Container.craft = {
     showIfFormula: "",
     showForRole: [],
     minScreenWidth: "",
+    show_for_owner: false,
   },
   rules: {
     canDrag: () => true,

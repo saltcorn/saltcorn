@@ -239,7 +239,16 @@ const run = async (
       : 10;
 
   var create_link = "";
-  if (view_to_create && role <= table.min_role_write) {
+  const user_id =
+    extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
+  const about_user = fields.some(
+    (f) =>
+      f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
+  );
+  if (
+    view_to_create &&
+    (role <= table.min_role_write || (table.ownership_field_id && about_user))
+  ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraOpts);

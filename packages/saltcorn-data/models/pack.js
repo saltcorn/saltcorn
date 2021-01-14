@@ -23,6 +23,7 @@ const table_pack = contract(pack_fun, async (name) => {
   };
   const triggers = await Trigger.find({ table_id: table.id });
   const constraints = await TableConstraint.find({ table_id: table.id });
+
   return {
     name: table.name,
     min_role_read: table.min_role_read,
@@ -31,6 +32,7 @@ const table_pack = contract(pack_fun, async (name) => {
     fields: fields.map((f) => strip_ids(f.toJson)),
     triggers: triggers.map((tr) => tr.toJson),
     constraints: constraints.map((c) => c.toJson),
+    ownership_field_name: table.owner_fieldname_from_fields(fields),
   };
 });
 
@@ -218,6 +220,13 @@ const install_pack = contract(
         await Trigger.create({ table, ...trigger });
       for (const constraint of tableSpec.constraints || [])
         await TableConstraint.create({ table, ...constraint });
+      if (tableSpec.ownership_field_name) {
+        const owner_field = await Field.findOne({
+          table_id: table.id,
+          name: tableSpec.ownership_field_name,
+        });
+        await table.update({ ownership_field_id: owner_field.id });
+      }
     }
     for (const viewSpec of pack.views) {
       const {

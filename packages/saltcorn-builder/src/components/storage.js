@@ -211,6 +211,7 @@ export const layoutToNodes = (layout, query, actions) => {
           showIfFormula={segment.showIfFormula || ""}
           showForRole={segment.showForRole || []}
           minScreenWidth={segment.minScreenWidth || ""}
+          show_for_owner={!!segment.show_for_owner}
           is={Container}
         >
           {toTag(segment.contents)}
@@ -309,6 +310,7 @@ export const craftToSaltcorn = (nodes) => {
           showIfFormula: node.props.showIfFormula,
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
+          show_for_owner: node.props.show_for_owner,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

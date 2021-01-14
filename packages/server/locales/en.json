@@ -523,5 +523,8 @@
 	"Signup view": "Signup view",
 	"A view with the login form": "A view with the login form",
 	"A view with the signup form": "A view with the signup form",
-	"Signups not enabled": "Signups not enabled"
+	"Signups not enabled": "Signups not enabled",
+	"Ownership field": "Ownership field",
+	"The user referred to in this field will be the owner of the row": "The user referred to in this field will be the owner of the row",
+	"None": "None"
 }

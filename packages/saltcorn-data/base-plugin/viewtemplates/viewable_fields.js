@@ -162,6 +162,11 @@ const view_linker = contract(
   }
 );
 
+const action_requires_write = (nm) => {
+  if (nm === "Delete") return true;
+  if (nm.startsWith("Toggle")) return true;
+};
+
 const get_viewable_fields = contract(
   is.fun(
     [
@@ -183,10 +188,20 @@ const get_viewable_fields = contract(
   (viewname, table, fields, columns, isShow, req) =>
     columns
       .map((column) => {
+        const role = req.user ? req.user.role_id : 10;
+        const user_id = req.user ? req.user.id : null;
         if (column.type === "Action")
           return {
             label: column.header_label ? text(column.header_label) : "",
             key: (r) => {
+              if (action_requires_write(column.action_name)) {
+                const owner_field = table.owner_fieldname_from_fields(fields);
+                if (
+                  table.min_role_write < role &&
+                  (!owner_field || r[owner_field] !== user_id)
+                )
+                  return "";
+              }
               const url = action_url(
                 viewname,
                 table,

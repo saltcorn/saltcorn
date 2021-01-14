@@ -53,6 +53,7 @@ class Table {
     this.id = o.id;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
+    this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
     contract.class(this);
   }
@@ -66,6 +67,22 @@ class Table {
 
     return tbls.map((t) => new Table(t));
   }
+  owner_fieldname_from_fields(fields) {
+    if (!this.ownership_field_id) return null;
+    const field = fields.find((f) => f.id === this.ownership_field_id);
+    return field.name;
+  }
+  async owner_fieldname() {
+    if (this.name === "users") return "id";
+    if (!this.ownership_field_id) return null;
+    const fields = await this.getFields();
+    return this.owner_fieldname_from_fields(fields);
+  }
+  async is_owner(user, row) {
+    if (!user) return false;
+    const field_name = await this.owner_fieldname();
+    return field_name && row[field_name] === user.id;
+  }
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
@@ -78,6 +95,7 @@ class Table {
       versioned: options.versioned || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
+      ownership_field_id: options.ownership_field_id,
     };
     const id = await db.insert("_sc_tables", tblrow);
     const table = new Table({ ...tblrow, id });
@@ -87,7 +105,7 @@ class Table {
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
-
+    await this.update({ ownership_field_id: null });
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
@@ -116,6 +134,7 @@ class Table {
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
+
   async deleteRows(where) {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     if (triggers.length > 0) {
