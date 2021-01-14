@@ -278,6 +278,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       const baseDisplayClass = block === false ? "inline-block" : "block";
       const displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
+        : baseDisplayClass === "block"
+        ? false // no need
         : `d-${baseDisplayClass}`;
       return wrap(
         segment,
