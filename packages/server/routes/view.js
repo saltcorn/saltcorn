@@ -29,7 +29,10 @@ router.get(
       res.redirect("/");
       return;
     }
-    if (role > view.min_role) {
+    if (
+      role > view.min_role &&
+      !(await view.authorise_get({ query: req.query, req, ...view }))
+    ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
       return;
