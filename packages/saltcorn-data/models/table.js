@@ -67,12 +67,19 @@ class Table {
 
     return tbls.map((t) => new Table(t));
   }
-
-  async is_owner(user, row) {
-    if (!this.ownership_field_id) return false;
-    const fields = await this.getFields();
+  owner_fieldname_from_fields(fields) {
+    if (!this.ownership_field_id) return null;
     const field = fields.find((f) => f.id === this.ownership_field_id);
-    return field && row[field.name] === user.id;
+    return field.name;
+  }
+  async owner_fieldname() {
+    if (!this.ownership_field_id) return null;
+    const fields = await this.getFields();
+    return this.owner_fieldname_from_fields(fields);
+  }
+  async is_owner(user, row) {
+    const field_name = await this.owner_fieldname();
+    return field_name && row[field_name] === user.id;
   }
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
