@@ -105,7 +105,7 @@ export const ContainerSettings = () => {
     customClass: node.data.props.customClass,
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
-    only_for_owner: node.data.props.only_for_owner,
+    show_for_owner: node.data.props.show_for_owner,
   }));
   const {
     actions: { setProp },
@@ -130,7 +130,7 @@ export const ContainerSettings = () => {
     customClass,
     customCSS,
     minScreenWidth,
-    only_for_owner,
+    show_for_owner,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -506,14 +506,14 @@ export const ContainerSettings = () => {
                     className="form-check-input"
                     name="block"
                     type="checkbox"
-                    checked={only_for_owner}
+                    checked={show_for_owner}
                     onChange={(e) =>
                       setProp(
-                        (prop) => (prop.only_for_owner = e.target.checked)
+                        (prop) => (prop.show_for_owner = e.target.checked)
                       )
                     }
                   />
-                  <label className="form-check-label">Owner only</label>
+                  <label className="form-check-label">Owner</label>
                 </div>
               </td>
             </tr>
@@ -589,7 +589,7 @@ Container.craft = {
     showIfFormula: "",
     showForRole: [],
     minScreenWidth: "",
-    only_for_owner: false,
+    show_for_owner: false,
   },
   rules: {
     canDrag: () => true,
