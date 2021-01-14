@@ -67,6 +67,13 @@ class Table {
 
     return tbls.map((t) => new Table(t));
   }
+
+  async is_owner(user, row) {
+    if (!this.ownership_field_id) return false;
+    const fields = await this.getFields();
+    const field = fields.find((f) => f.id === this.ownership_field_id);
+    return field && row[field.name] === user.id;
+  }
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
@@ -79,6 +86,7 @@ class Table {
       versioned: options.versioned || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
+      ownership_field_id: options.ownership_field_id,
     };
     const id = await db.insert("_sc_tables", tblrow);
     const table = new Table({ ...tblrow, id });
