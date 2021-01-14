@@ -102,6 +102,7 @@ const configuration_workflow = (req) =>
             roles,
             views,
             mode: "show",
+            ownership: !!table.ownership_field_id || table.name === "users",
           };
         },
       },
