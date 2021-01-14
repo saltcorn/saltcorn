@@ -231,7 +231,7 @@ const run = async (
       : 10;
   var create_link = "";
   const user_id =
-    extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
+    extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   const about_user = fields.some(
     (f) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
