@@ -53,6 +53,7 @@ class Table {
     this.id = o.id;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
+    this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
     contract.class(this);
   }
@@ -116,6 +117,7 @@ class Table {
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
+
   async deleteRows(where) {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     if (triggers.length > 0) {
