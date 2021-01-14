@@ -92,7 +92,8 @@ describe("Random tables", () => {
     const tables = await Table.find({});
     for (const table of tables) {
       const count = await table.countRows();
-      tableCounts.push([table.name, count]);
+      await table.getFields();
+      tableCounts.push([table, count]);
     }
 
     fnm = await create_backup();
@@ -105,11 +106,14 @@ describe("Random tables", () => {
       role_id: 1,
     });
     const restoreres = await restore(fnm, (p) => {});
-    for (const [name, n] of tableCounts) {
-      const table = await Table.findOne({ name });
+    for (const [oldtable, n] of tableCounts) {
+      const table = await Table.findOne({ name: oldtable.name });
       expect(!!table).toBe(true);
       const count = await table.countRows();
-      expect([table.name, count]).toEqual([name, n]);
+      expect([table.name, count]).toEqual([oldtable.name, n]);
+      expect(await table.owner_fieldname()).toEqual(
+        await oldtable.owner_fieldname()
+      );
     }
 
     expect(restoreres).toBe(undefined);

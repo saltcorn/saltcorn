@@ -28,6 +28,11 @@ const random_table = async () => {
   for (let index = 0; index < 20; index++) {
     await fill_table_row(table);
   }
+  const fields = await table.getFields();
+  const userFields = fields.filter((f) => f.reftable_name === "users");
+  if (userFields.length > 0 && Math.random() > 0.5)
+    await table.update({ ownership_field_id: userFields[0].id });
+
   return table;
 };
 
