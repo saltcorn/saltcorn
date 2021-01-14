@@ -275,7 +275,7 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           ? ""
           : `${cssNm}: ${segment[segKey]}${unit};`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
-      const baseDisplayClass = block ? "block" : "inline-block";
+      const baseDisplayClass = block === false ? "inline-block" : "block";
       const displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
         : `d-${baseDisplayClass}`;
