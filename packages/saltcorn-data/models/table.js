@@ -88,7 +88,7 @@ class Table {
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
-
+    await this.update({ ownership_field_id: null });
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
