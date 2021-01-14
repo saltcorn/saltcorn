@@ -139,6 +139,11 @@ class View {
     await require("../db/state").getState().refresh();
   }
 
+  async authorise_post(arg) {
+    if (!this.viewtemplateObj.authorise_post) return false;
+    return await this.viewtemplateObj.authorise_post(arg);
+  }
+
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,

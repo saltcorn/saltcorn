@@ -360,4 +360,13 @@ module.exports = {
   get_state_fields,
   initial_config,
   display_state_form: false,
+  authorise_post: async ({ body, table_id, req }) => {
+    const table = await Table.findOne({ id: table_id });
+    const user_id = req.user ? req.user.id : null;
+    if (table.ownership_field_id && user_id) {
+      const field_name = await table.owner_fieldname();
+      return field_name && `${body[field_name]}` === `${user_id}`;
+    }
+    return false;
+  },
 };

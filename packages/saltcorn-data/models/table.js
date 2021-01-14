@@ -78,6 +78,7 @@ class Table {
     return this.owner_fieldname_from_fields(fields);
   }
   async is_owner(user, row) {
+    if (!user) return false;
     const field_name = await this.owner_fieldname();
     return field_name && row[field_name] === user.id;
   }
