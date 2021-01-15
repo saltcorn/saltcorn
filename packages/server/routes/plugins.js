@@ -222,7 +222,7 @@ const storeNavPills = (req) => {
       )
     );
   return ul(
-    { class: "nav nav-pills" },
+    { class: "nav nav-pills plugin-section" },
     link("All"),
     link("Plugins"),
     link("Packs"),
