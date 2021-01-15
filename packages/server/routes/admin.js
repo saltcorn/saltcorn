@@ -427,7 +427,10 @@ router.post(
     }
     if (form.values.users) {
       await db.deleteWhere("_sc_config");
-      for (const f of userfields) {
+      const users1 = await Table.findOne({ name: "users" });
+      const userfields1 = await users1.getFields();
+
+      for (const f of userfields1) {
         if (f.name !== "email") await f.delete();
       }
       await db.deleteWhere("users");
