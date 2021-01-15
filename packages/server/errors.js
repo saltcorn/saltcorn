@@ -6,6 +6,7 @@ const { getState } = require("@saltcorn/data/db/state");
 module.exports = async function (err, req, res, next) {
   console.error(err.stack);
   const devmode = getState().getConfig("development_mode", false);
+  const log_sql = getState().getConfig("log_sql", false);
   const role = (req.user || {}).role_id || 10;
   if (err.message && err.message.includes("invalid csrf token")) {
     req.flash("error", res.__("Invalid form data, try again"));
@@ -13,7 +14,7 @@ module.exports = async function (err, req, res, next) {
     else res.redirect("/");
     return;
   }
-  await Crash.create(err, req);
+  if (!(devmode && log_sql)) await Crash.create(err, req);
 
   if (req.xhr) {
     res

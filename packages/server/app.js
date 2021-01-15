@@ -43,6 +43,7 @@ const getApp = async (opts = {}) => {
 
   await loadAllPlugins();
   const development_mode = getState().getConfig("development_mode", false);
+  if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
