@@ -26,7 +26,7 @@ const {
   li,
   button,
 } = require("@saltcorn/markup/tags");
-
+const { search_bar } = require("@saltcorn/markup/helpers");
 const router = new Router();
 module.exports = router;
 
@@ -232,6 +232,20 @@ const storeNavPills = (req) => {
 };
 
 const filter_items = (items, query) => {
+  const in_set = filter_items_set(items, query);
+  if (!query.q) return in_set;
+  return in_set.filter((p) => satisfy_q(p, query.q.toLowerCase()));
+};
+
+const match_string = (s, q) => {
+  if (!s || !q) return false;
+  return s.toLowerCase().includes(q);
+};
+
+const satisfy_q = (p, q) => {
+  return match_string(p.name, q) || match_string(p.description, q);
+};
+const filter_items_set = (items, query) => {
   switch (query.set) {
     case "plugins":
       return items.filter((item) => item.plugin && !item.has_theme);
@@ -245,7 +259,6 @@ const filter_items = (items, query) => {
       return items;
   }
 };
-
 const store_actions_dropdown = (req) =>
   div(
     { class: "dropdown" },
@@ -325,6 +338,13 @@ const plugin_store_html = (items, req) => {
         contents: div(
           { class: "d-flex" },
           storeNavPills(req),
+          div(
+            { class: "ml-auto" },
+            search_bar("q", req.query.q || "", {
+              onClick:
+                "(function(v){v ? set_state_field('q', v):unset_state_field('q');})($('input.search-bar').val())",
+            })
+          ),
           div({ class: "ml-auto" }, store_actions_dropdown(req))
         ),
       },
