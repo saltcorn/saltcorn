@@ -25,6 +25,12 @@ const {
   ul,
   li,
   button,
+  table,
+  tbody,
+  tr,
+  th,
+  td,
+  strong,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const router = new Router();
@@ -108,7 +114,7 @@ const cfg_link = (req, row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm d-inline",
+        class: "btn btn-secondary btn-sm d-inline mr-1",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: req.__("Configure plugin"),
@@ -117,6 +123,17 @@ const cfg_link = (req, row) => {
     );
   else return "";
 };
+
+const info_link = (req, row) =>
+  a(
+    {
+      class: "btn btn-secondary btn-sm d-inline",
+      role: "button",
+      href: `/plugins/info/${encodeURIComponent(row.name)}`,
+      title: req.__("Information about plugin"),
+    },
+    '<i class="far fa-question-circle"></i>'
+  );
 
 const badge = (title) =>
   span({ class: "badge badge-secondary plugin-store" }, title);
@@ -172,6 +189,8 @@ const store_item_html = (req) => (item) => ({
         ),
 
       item.installed && item.plugin && cfg_link(req, item),
+      item.installed && item.plugin && info_link(req, item),
+
       item.installed &&
         item.pack &&
         post_btn(
@@ -439,6 +458,71 @@ router.get(
           title: req.__(`Add plugin`),
           contents: renderForm(pluginForm(req), req.csrfToken()),
         },
+      ],
+    });
+  })
+);
+
+router.get(
+  "/info/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const plugin_db = await Plugin.findOne({ name });
+    const mod = await load_plugins.requirePlugin(plugin_db);
+    console.log(mod);
+    console.log(mod.plugin_module.types);
+    if (!plugin_db) {
+      req.flash("warning", "Plugin not found");
+      res.redirect("/plugins");
+      return;
+    }
+    const infoTable = table(
+      tbody(
+        tr(th(req.__("Package name")), td(mod.name)),
+        tr(th(req.__("Package version")), td(mod.version)),
+        mod.plugin_module.dependencies
+          ? tr(
+              th(req.__("Plugin dependencies")),
+              td(
+                mod.plugin_module.dependencies.map((d) =>
+                  span({ class: "badge badge-primary mr-1" }, d)
+                )
+              )
+            )
+          : null
+      )
+    );
+    let cards = [];
+    if (mod.plugin_module.layout)
+      cards.push({
+        type: "card",
+        title: req.__("Layout"),
+        contents: req.__("This plugin supplies a theme."),
+      });
+    if (mod.plugin_module.types)
+      cards.push({
+        type: "card",
+        title: req.__("Types"),
+        contents: req.__("This plugin supplies these types:"),
+      });
+    res.sendWrap(req.__(`New Plugin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: plugin_db.name },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`%s plugin information`, plugin_db.name),
+          contents: infoTable,
+        },
+        ...cards,
       ],
     });
   })

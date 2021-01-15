@@ -73,6 +73,7 @@ module.exports = {
   header: mkTag("header"),
   footer: mkTag("footer"),
   section: mkTag("section"),
+  strong: mkTag("strong"),
   tr: mkTag("tr"),
   th: mkTag("th"),
   td: mkTag("td"),
