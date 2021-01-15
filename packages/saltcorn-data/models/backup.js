@@ -188,14 +188,15 @@ const restore_files = contract(
 );
 
 const restore_users = contract(
-  is.fun(is.str, is.promise(is.undefined)),
+  is.fun(is.str, is.promise(is.maybe(is.str))),
   async (dirpath) => {
-    const user_rows = await csvtojson().fromFile(
-      path.join(dirpath, "users.csv")
+    const usertable = await Table.findOne({ name: "users" });
+    const res = await usertable.import_csv_file(
+      path.join(dirpath, "users.csv"),
+      false,
+      true
     );
-    for (const user of user_rows) {
-      if (user.id > 1) await db.insert("users", new User(user));
-    }
+    return res.error;
   }
 );
 
