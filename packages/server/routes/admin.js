@@ -393,6 +393,7 @@ router.post(
       });
       const tables = await Table.find();
       for (const table of tables) {
+        await table.update({ ownership_field_id: null });
         const fields = await table.getFields();
         for (const f of fields) {
           if (f.is_fkey) {
