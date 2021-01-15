@@ -393,6 +393,7 @@ router.post(
       });
       const tables = await Table.find();
       for (const table of tables) {
+        await table.update({ ownership_field_id: null });
         const fields = await table.getFields();
         for (const f of fields) {
           if (f.is_fkey) {
@@ -426,7 +427,10 @@ router.post(
     }
     if (form.values.users) {
       await db.deleteWhere("_sc_config");
-      for (const f of userfields) {
+      const users1 = await Table.findOne({ name: "users" });
+      const userfields1 = await users1.getFields();
+
+      for (const f of userfields1) {
         if (f.name !== "email") await f.delete();
       }
       await db.deleteWhere("users");

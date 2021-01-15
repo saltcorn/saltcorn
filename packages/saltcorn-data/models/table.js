@@ -400,7 +400,7 @@ class Table {
     return parse_res;
   }
 
-  async import_csv_file(filePath, recalc_stored) {
+  async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
@@ -439,6 +439,7 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      if (skip_first_data_row && i === 2) continue;
       try {
         renames.forEach(({ from, to }) => {
           rec[to] = rec[from];
