@@ -14,7 +14,10 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
-const { plugin_types_info_card } = require("../markup/plugin-store");
+const {
+  plugin_types_info_card,
+  plugin_functions_info_card,
+} = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
   h5,
@@ -471,8 +474,10 @@ router.get(
     const { name } = req.params;
     const plugin_db = await Plugin.findOne({ name });
     const mod = await load_plugins.requirePlugin(plugin_db);
-    console.log(mod);
-    console.log(mod.plugin_module.types);
+    const store_items = await get_store_items();
+    const store_item = store_items.find((item) => item.name === name);
+    //console.log(mod);
+    //console.log(store_item);
     if (!plugin_db) {
       req.flash("warning", "Plugin not found");
       res.redirect("/plugins");
@@ -491,6 +496,17 @@ router.get(
                 )
               )
             )
+          : null,
+        store_item && store_item.documentation_link
+          ? tr(
+              th(req.__("Documentation")),
+              td(
+                link(
+                  store_item.documentation_link,
+                  store_item.documentation_link
+                )
+              )
+            )
           : null
       )
     );
@@ -501,14 +517,9 @@ router.get(
         title: req.__("Layout"),
         contents: req.__("This plugin supplies a theme."),
       });
-    if (mod.plugin_module.types)
-      cards.push({
-        type: "card",
-        title: req.__("Types"),
-        contents:
-          req.__("This plugin supplies these types: ") +
-          plugin_types_info_card(mod, req),
-      });
+    if (mod.plugin_module.types) cards.push(plugin_types_info_card(mod, req));
+    if (mod.plugin_module.functions)
+      cards.push(plugin_functions_info_card(mod, req));
     res.sendWrap(req.__(`New Plugin`), {
       above: [
         {
