@@ -18,6 +18,7 @@ const {
   plugin_types_info_card,
   plugin_functions_info_card,
   plugin_viewtemplates_info_card,
+  showRepository,
 } = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
@@ -34,9 +35,12 @@ const {
   tr,
   th,
   td,
+  p,
   strong,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
+const fs = require("fs");
+const path = require("path");
 const router = new Router();
 module.exports = router;
 
@@ -477,9 +481,10 @@ router.get(
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
-    console.log(mod);
-    console.log(mod.plugin_module.viewtemplates);
-    //console.log(store_item);
+    let pkgjson;
+    if (fs.existsSync(path.join(mod.location, "package.json")))
+      pkgjson = require(path.join(mod.location, "package.json"));
+
     if (!plugin_db) {
       req.flash("warning", "Plugin not found");
       res.redirect("/plugins");
@@ -509,6 +514,9 @@ router.get(
                 )
               )
             )
+          : null,
+        pkgjson && pkgjson.repository
+          ? tr(th(req.__("Repository")), td(showRepository(pkgjson.repository)))
           : null
       )
     );
@@ -537,7 +545,7 @@ router.get(
         {
           type: "card",
           title: req.__(`%s plugin information`, plugin_db.name),
-          contents: infoTable,
+          contents: p(store_item.description) + infoTable,
         },
         ...cards,
       ],

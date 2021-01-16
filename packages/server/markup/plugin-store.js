@@ -16,8 +16,9 @@ const {
   td,
   strong,
 } = require("@saltcorn/markup/tags");
-
-const show_function_arguments = (args) => (args || []).join(", ");
+const { link } = require("@saltcorn/markup");
+const show_function_arguments = (args) =>
+  (args || []).map(({ name, type }) => `${name}: ${type}`).join(", ");
 
 const plugin_types_info_card = (plugin, req) => ({
   type: "card",
@@ -35,7 +36,7 @@ const plugin_functions_info_card = (plugin, req) => ({
       div(
         h4(
           { class: "d-inline mr-2" },
-          `${nm}(${show_function_arguments(v.arguments)})`
+          `${nm}(${show_function_arguments(v["arglist"])})`
         ),
         v.isAsync && span({ class: "badge badge-primary" }, "async"),
         v.returns ? p(req.__("Returns: "), v.returns) : null,
@@ -52,9 +53,14 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
     .map(({ name, description }) => div(h4(name), p(description)))
     .join("<hr>"),
 });
+const showRepository = (repo) =>
+  repo && repo.startsWith("github:")
+    ? link(repo.replace("github:", "https://github.com/"), repo)
+    : repo;
 
 module.exports = {
   plugin_types_info_card,
   plugin_functions_info_card,
   plugin_viewtemplates_info_card,
+  showRepository,
 };
