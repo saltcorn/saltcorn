@@ -482,7 +482,6 @@ router.get(
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
     let pkgjson;
-    console.log(mod);
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
 
