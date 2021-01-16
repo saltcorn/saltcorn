@@ -17,6 +17,7 @@ const db = require("@saltcorn/data/db");
 const {
   plugin_types_info_card,
   plugin_functions_info_card,
+  plugin_viewtemplates_info_card,
 } = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
@@ -476,7 +477,8 @@ router.get(
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
-    //console.log(mod);
+    console.log(mod);
+    console.log(mod.plugin_module.viewtemplates);
     //console.log(store_item);
     if (!plugin_db) {
       req.flash("warning", "Plugin not found");
@@ -520,6 +522,8 @@ router.get(
     if (mod.plugin_module.types) cards.push(plugin_types_info_card(mod, req));
     if (mod.plugin_module.functions)
       cards.push(plugin_functions_info_card(mod, req));
+    if (mod.plugin_module.viewtemplates)
+      cards.push(plugin_viewtemplates_info_card(mod, req));
     res.sendWrap(req.__(`New Plugin`), {
       above: [
         {

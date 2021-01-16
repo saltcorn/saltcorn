@@ -536,5 +536,6 @@
 	"Types": "Types",
 	"This plugin supplies these types: ": "This plugin supplies these types: ",
 	"Functions": "Functions",
-	"Returns: ": "Returns: "
+	"Returns: ": "Returns: ",
+	"View templates": "View templates"
 }

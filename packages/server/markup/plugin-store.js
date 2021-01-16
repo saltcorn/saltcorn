@@ -45,4 +45,16 @@ const plugin_functions_info_card = (plugin, req) => ({
     .join("<hr>"),
 });
 
-module.exports = { plugin_types_info_card, plugin_functions_info_card };
+const plugin_viewtemplates_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("View templates"),
+  contents: plugin.plugin_module.viewtemplates
+    .map(({ name, description }) => div(h4(name), p(description)))
+    .join("<hr>"),
+});
+
+module.exports = {
+  plugin_types_info_card,
+  plugin_functions_info_card,
+  plugin_viewtemplates_info_card,
+};
