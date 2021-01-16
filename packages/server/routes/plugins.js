@@ -14,7 +14,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
-
+const { plugin_types_info_card } = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
   h5,
@@ -505,7 +505,9 @@ router.get(
       cards.push({
         type: "card",
         title: req.__("Types"),
-        contents: req.__("This plugin supplies these types:"),
+        contents:
+          req.__("This plugin supplies these types: ") +
+          plugin_types_info_card(mod, req),
       });
     res.sendWrap(req.__(`New Plugin`), {
       above: [
