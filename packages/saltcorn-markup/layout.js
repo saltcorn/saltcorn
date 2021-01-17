@@ -276,10 +276,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         blockDispatch.noBackgroundAtTop &&
         blockDispatch.noBackgroundAtTop()
       );
-      const sizeProp = (segKey, cssNm, unit = "px") =>
+      const sizeProp = (segKey, cssNm, unit) =>
         typeof segment[segKey] === "undefined"
           ? ""
-          : `${cssNm}: ${segment[segKey]}${unit};`;
+          : `${cssNm}: ${segment[segKey]}${
+              unit || segment[segKey + "Unit"] || "px"
+            };`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
       const baseDisplayClass = block === false ? "inline-block" : "block";
       const displayClass = minScreenWidth
