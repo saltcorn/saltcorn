@@ -164,7 +164,7 @@ export const ContainerSettings = () => {
                 type="number"
                 value={borderWidth}
                 step="1"
-                className="form-control w-50 d-inline mr-2"
+                className="form-control-sm w-50 d-inline mr-2"
                 min="0"
                 max="20"
                 onChange={(e) =>
@@ -183,7 +183,7 @@ export const ContainerSettings = () => {
             <td>
               <select
                 value={borderStyle}
-                className="form-control"
+                className="form-control-sm w-50"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.borderStyle = e.target.value;
@@ -215,7 +215,7 @@ export const ContainerSettings = () => {
                 step="1"
                 min="0"
                 max="999"
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.minHeight = e.target.value;
@@ -224,7 +224,7 @@ export const ContainerSettings = () => {
               />
               <SelectUnits
                 value={minHeightUnit}
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 vert={true}
                 onChange={(e) =>
                   setProp((prop) => {
@@ -243,7 +243,7 @@ export const ContainerSettings = () => {
                 type="number"
                 value={height}
                 step="1"
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.height = e.target.value;
@@ -252,7 +252,7 @@ export const ContainerSettings = () => {
               />
               <SelectUnits
                 value={heightUnit}
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 vert={true}
                 onChange={(e) =>
                   setProp((prop) => {
@@ -271,7 +271,7 @@ export const ContainerSettings = () => {
                 type="number"
                 value={width}
                 step="1"
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.width = e.target.value;
@@ -280,7 +280,7 @@ export const ContainerSettings = () => {
               />
               <SelectUnits
                 value={widthUnit}
-                className="w-50 form-control d-inline"
+                className="w-50 form-control-sm d-inline"
                 vert={false}
                 onChange={(e) =>
                   setProp((prop) => {
@@ -312,7 +312,7 @@ export const ContainerSettings = () => {
                   type="number"
                   value={margin[ix]}
                   step="1"
-                  className="form-control"
+                  className="form-control-sm w-100"
                   onChange={(e) =>
                     setProp((prop) => {
                       prop.margin[ix] = e.target.value;
@@ -325,7 +325,7 @@ export const ContainerSettings = () => {
                   type="number"
                   value={padding[ix]}
                   step="1"
-                  className="form-control"
+                  className="form-control-sm w-100"
                   onChange={(e) =>
                     setProp((prop) => {
                       prop.padding[ix] = e.target.value;
@@ -350,7 +350,7 @@ export const ContainerSettings = () => {
             <td>
               <select
                 value={vAlign}
-                className="w-100 ml-2"
+                className="form-control-sm"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.vAlign = e.target.value;
@@ -369,7 +369,7 @@ export const ContainerSettings = () => {
             <td>
               <select
                 value={hAlign}
-                className="w-100 ml-2"
+                className="form-control-sm"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.hAlign = e.target.value;
@@ -392,7 +392,7 @@ export const ContainerSettings = () => {
             </td>
             <td>
               <select
-                className="w-100 ml-2"
+                className="form-control-sm"
                 value={bgType}
                 onChange={(e) => {
                   setProp((prop) => {
@@ -420,7 +420,7 @@ export const ContainerSettings = () => {
                 <td>
                   <select
                     value={bgFileId}
-                    className="w-100 ml-2"
+                    className="form-control-sm"
                     onChange={(e) =>
                       setProp((prop) => (prop.bgFileId = e.target.value))
                     }
@@ -441,7 +441,7 @@ export const ContainerSettings = () => {
                 <td>
                   <select
                     value={imageSize}
-                    className="w-100 ml-2"
+                    className="form-control-sm"
                     onChange={(e) =>
                       setProp((prop) => {
                         prop.imageSize = e.target.value;
@@ -457,12 +457,13 @@ export const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td colSpan="2">
+              <td></td>
+              <td>
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input
                     type="color"
                     value={bgColor}
-                    className="form-control"
+                    className="form-control-sm w-50"
                     onChange={(e) =>
                       setProp((prop) => {
                         prop.bgColor = e.target.value;
@@ -497,7 +498,7 @@ export const ContainerSettings = () => {
                 <input
                   type="color"
                   value={textColor}
-                  className="w-100 ml-2"
+                  className="form-control-sm"
                   onChange={(e) =>
                     setProp((prop) => {
                       prop.textColor = e.target.value;
@@ -624,7 +625,7 @@ export const ContainerSettings = () => {
         <textarea
           rows="4"
           type="text"
-          className="text-to-display w-100"
+          className="text-to-display form-control"
           value={customCSS}
           onChange={(e) => setProp((prop) => (prop.customCSS = e.target.value))}
         ></textarea>
