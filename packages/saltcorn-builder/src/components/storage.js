@@ -356,7 +356,8 @@ export const craftToSaltcorn = (nodes) => {
         type: "search_bar",
         has_dropdown: node.props.has_dropdown,
         show_badges: node.props.show_badges,
-        contents: go(nodes[node.linkedNodes["search_drop"]]),
+        contents:
+          node.linkedNodes && go(nodes[node.linkedNodes["search_drop"]]),
       };
     }
     if (node.displayName === Columns.craft.displayName) {
