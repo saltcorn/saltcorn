@@ -163,3 +163,7 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .br-none {
   border-right: none;
 }
+
+.plugin-section .nav-link {
+  padding: 0.5rem 0.75rem;
+}

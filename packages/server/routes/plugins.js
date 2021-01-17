@@ -14,7 +14,12 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
-
+const {
+  plugin_types_info_card,
+  plugin_functions_info_card,
+  plugin_viewtemplates_info_card,
+  showRepository,
+} = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
   h5,
@@ -25,8 +30,17 @@ const {
   ul,
   li,
   button,
+  table,
+  tbody,
+  tr,
+  th,
+  td,
+  p,
+  strong,
 } = require("@saltcorn/markup/tags");
-
+const { search_bar } = require("@saltcorn/markup/helpers");
+const fs = require("fs");
+const path = require("path");
 const router = new Router();
 module.exports = router;
 
@@ -108,7 +122,7 @@ const cfg_link = (req, row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm d-inline",
+        class: "btn btn-secondary btn-sm d-inline mr-1",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: req.__("Configure plugin"),
@@ -117,6 +131,17 @@ const cfg_link = (req, row) => {
     );
   else return "";
 };
+
+const info_link = (req, row) =>
+  a(
+    {
+      class: "btn btn-secondary btn-sm d-inline",
+      role: "button",
+      href: `/plugins/info/${encodeURIComponent(row.name)}`,
+      title: req.__("Information about plugin"),
+    },
+    '<i class="far fa-question-circle"></i>'
+  );
 
 const badge = (title) =>
   span({ class: "badge badge-secondary plugin-store" }, title);
@@ -172,6 +197,8 @@ const store_item_html = (req) => (item) => ({
         ),
 
       item.installed && item.plugin && cfg_link(req, item),
+      item.installed && item.plugin && info_link(req, item),
+
       item.installed &&
         item.pack &&
         post_btn(
@@ -222,7 +249,7 @@ const storeNavPills = (req) => {
       )
     );
   return ul(
-    { class: "nav nav-pills" },
+    { class: "nav nav-pills plugin-section" },
     link("All"),
     link("Plugins"),
     link("Packs"),
@@ -232,6 +259,20 @@ const storeNavPills = (req) => {
 };
 
 const filter_items = (items, query) => {
+  const in_set = filter_items_set(items, query);
+  if (!query.q) return in_set;
+  return in_set.filter((p) => satisfy_q(p, query.q.toLowerCase()));
+};
+
+const match_string = (s, q) => {
+  if (!s || !q) return false;
+  return s.toLowerCase().includes(q);
+};
+
+const satisfy_q = (p, q) => {
+  return match_string(p.name, q) || match_string(p.description, q);
+};
+const filter_items_set = (items, query) => {
   switch (query.set) {
     case "plugins":
       return items.filter((item) => item.plugin && !item.has_theme);
@@ -245,7 +286,6 @@ const filter_items = (items, query) => {
       return items;
   }
 };
-
 const store_actions_dropdown = (req) =>
   div(
     { class: "dropdown" },
@@ -325,6 +365,13 @@ const plugin_store_html = (items, req) => {
         contents: div(
           { class: "d-flex" },
           storeNavPills(req),
+          div(
+            { class: "ml-auto" },
+            search_bar("q", req.query.q || "", {
+              onClick:
+                "(function(v){v ? set_state_field('q', v):unset_state_field('q');})($('input.search-bar').val())",
+            })
+          ),
           div({ class: "ml-auto" }, store_actions_dropdown(req))
         ),
       },
@@ -419,6 +466,88 @@ router.get(
           title: req.__(`Add plugin`),
           contents: renderForm(pluginForm(req), req.csrfToken()),
         },
+      ],
+    });
+  })
+);
+
+router.get(
+  "/info/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const plugin_db = await Plugin.findOne({ name });
+    const mod = await load_plugins.requirePlugin(plugin_db);
+    const store_items = await get_store_items();
+    const store_item = store_items.find((item) => item.name === name);
+    let pkgjson;
+    if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
+      pkgjson = require(path.join(mod.location, "package.json"));
+
+    if (!plugin_db) {
+      req.flash("warning", "Plugin not found");
+      res.redirect("/plugins");
+      return;
+    }
+    const infoTable = table(
+      tbody(
+        tr(th(req.__("Package name")), td(mod.name)),
+        tr(th(req.__("Package version")), td(mod.version)),
+        mod.plugin_module.dependencies
+          ? tr(
+              th(req.__("Plugin dependencies")),
+              td(
+                mod.plugin_module.dependencies.map((d) =>
+                  span({ class: "badge badge-primary mr-1" }, d)
+                )
+              )
+            )
+          : null,
+        store_item && store_item.documentation_link
+          ? tr(
+              th(req.__("Documentation")),
+              td(
+                link(
+                  store_item.documentation_link,
+                  store_item.documentation_link
+                )
+              )
+            )
+          : null,
+        pkgjson && pkgjson.repository
+          ? tr(th(req.__("Repository")), td(showRepository(pkgjson.repository)))
+          : null
+      )
+    );
+    let cards = [];
+    if (mod.plugin_module.layout)
+      cards.push({
+        type: "card",
+        title: req.__("Layout"),
+        contents: req.__("This plugin supplies a theme."),
+      });
+    if (mod.plugin_module.types) cards.push(plugin_types_info_card(mod, req));
+    if (mod.plugin_module.functions)
+      cards.push(plugin_functions_info_card(mod, req));
+    if (mod.plugin_module.viewtemplates)
+      cards.push(plugin_viewtemplates_info_card(mod, req));
+    res.sendWrap(req.__(`New Plugin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Plugins"), href: "/plugins" },
+            { text: plugin_db.name },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`%s plugin information`, plugin_db.name),
+          contents: p(store_item.description) + infoTable,
+        },
+        ...cards,
       ],
     });
   })

@@ -526,5 +526,17 @@
 	"Signups not enabled": "Signups not enabled",
 	"Ownership field": "Ownership field",
 	"The user referred to in this field will be the owner of the row": "The user referred to in this field will be the owner of the row",
-	"None": "None"
+	"None": "None",
+	"Information about plugin": "Information about plugin",
+	"%s plugin information": "%s plugin information",
+	"Package version": "Package version",
+	"Package name": "Package name",
+	"Plugin dependencies": "Plugin dependencies",
+	"This plugin supplies a theme.": "This plugin supplies a theme.",
+	"Types": "Types",
+	"This plugin supplies these types: ": "This plugin supplies these types: ",
+	"Functions": "Functions",
+	"Returns: ": "Returns: ",
+	"View templates": "View templates",
+	"Repository": "Repository"
 }
