@@ -197,7 +197,9 @@ export const layoutToNodes = (layout, query, actions) => {
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
-          widthPct={segment.widthPct}
+          minHeightUnit={segment.minHeightUnit || "px"}
+          heightUnit={segment.heightUnit || "px"}
+          widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
@@ -296,7 +298,9 @@ export const craftToSaltcorn = (nodes) => {
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
-          widthPct: node.props.widthPct,
+          minHeightUnit: node.props.minHeightUnit,
+          heightUnit: node.props.heightUnit,
+          widthUnit: node.props.widthUnit,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
           block: node.props.block || false,
