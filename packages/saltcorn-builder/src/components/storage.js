@@ -194,10 +194,14 @@ export const layoutToNodes = (layout, query, actions) => {
           borderStyle={segment.borderStyle}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
+          margin={segment.margin || [0, 0, 0, 0]}
+          padding={segment.padding || [0, 0, 0, 0]}
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
-          widthPct={segment.widthPct}
+          minHeightUnit={segment.minHeightUnit || "px"}
+          heightUnit={segment.heightUnit || "px"}
+          widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
@@ -296,9 +300,13 @@ export const craftToSaltcorn = (nodes) => {
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
-          widthPct: node.props.widthPct,
+          minHeightUnit: node.props.minHeightUnit,
+          heightUnit: node.props.heightUnit,
+          widthUnit: node.props.widthUnit,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
+          margin: node.props.margin,
+          padding: node.props.padding,
           block: node.props.block || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
@@ -348,7 +356,10 @@ export const craftToSaltcorn = (nodes) => {
         type: "search_bar",
         has_dropdown: node.props.has_dropdown,
         show_badges: node.props.show_badges,
-        contents: go(nodes[node.linkedNodes["search_drop"]]),
+        contents:
+          node.linkedNodes &&
+          node.props.has_dropdown &&
+          go(nodes[node.linkedNodes["search_drop"]]),
       };
     }
     if (node.displayName === Columns.craft.displayName) {

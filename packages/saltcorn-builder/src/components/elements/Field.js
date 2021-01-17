@@ -39,7 +39,6 @@ export const FieldSettings = () => {
   const cfgFields = ((options.fieldViewConfigForms || {})[name] || {})[
     fieldview
   ];
-  console.log({ cfgFields });
   return (
     <Fragment>
       <table className="w-100">

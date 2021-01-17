@@ -22,26 +22,9 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
       }}
     >
       <div className="input-group-prepend">
-        <button
-          className="btn btn-outline-secondary"
-          disabled
-        />
-
-        <div className="input-group-append">
-          {show_badges && (
-            <div className="input-group-text">
-              <span className="badge badge-primary">X:Y</span>
-            </div>
-          )}
-          {has_dropdown && (
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() => setDropdown(!showDropdown)}
-            >
-              {showDropdown ? "⏷" : "⏴"}
-            </button>
-          )}
-        </div>
+        <button className="btn btn-outline-secondary" disabled>
+          <i class="fas fa-search"></i>
+        </button>
       </div>
       <input
         type="text"

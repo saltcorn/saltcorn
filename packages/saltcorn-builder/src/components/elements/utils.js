@@ -142,6 +142,17 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
+
+export const SelectUnits = ({ vert, ...props }) => (
+  <select {...props}>
+    <option>px</option>
+    <option>%</option>
+    <option>{vert ? "vh" : "vw"}</option>
+    <option>em</option>
+    <option>rem</option>
+  </select>
+);
+
 export const parseStyles = (styles) =>
   (styles || "")
     .split("\n")
@@ -162,11 +173,14 @@ export const parseStyles = (styles) =>
       }),
       {}
     );
+const isCheckbox = (f) =>
+  f && f.type && (f.type === "Bool" || f.type.name === "Bool");
+
 export const ConfigForm = ({ fields, configuration, setProp }) => (
   <Fragment>
     {fields.map((f, ix) => (
       <Fragment key={ix}>
-        <label>{f.label || f.name}</label>
+        {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
         <ConfigField
           field={f}
           configuration={configuration}
@@ -189,6 +203,53 @@ export const ConfigField = ({ field, configuration, setProp }) =>
           setProp((prop) => (prop.configuration[field.name] = e.target.value))
         }
       />
+    ),
+    Integer: () => (
+      <input
+        type="number"
+        className="form-control"
+        step={1}
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    Float: () => (
+      <input
+        type="number"
+        className="form-control"
+        step={0.01}
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    Color: () => (
+      <input
+        type="color"
+        className="form-control"
+        value={configuration[field.name]}
+        onChange={(e) =>
+          setProp((prop) => (prop.configuration[field.name] = e.target.value))
+        }
+      />
+    ),
+    Bool: () => (
+      <div className="form-check">
+        <input
+          type="checkbox"
+          className="form-check-input"
+          checked={configuration[field.name]}
+          onChange={(e) =>
+            setProp(
+              (prop) => (prop.configuration[field.name] = e.target.checked)
+            )
+          }
+        />
+        <label className="form-check-label">{field.label}</label>
+      </div>
     ),
     textarea: () => (
       <textarea
