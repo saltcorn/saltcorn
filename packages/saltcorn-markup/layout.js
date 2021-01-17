@@ -289,6 +289,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         : baseDisplayClass === "block"
         ? false // no need
         : `d-${baseDisplayClass}`;
+      const ppBox = (what) =>
+        !segment[what] || segment[what] === [0, 0, 0, 0]
+          ? ""
+          : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       return wrap(
         segment,
         isTop,
@@ -312,7 +316,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               "width"
             )}${sizeProp("widthPct", "width", "%")}border: ${
               borderWidth || 0
-            }px ${borderStyle} black; ${
+            }px ${borderStyle} black;${ppBox("padding")}${ppBox("margin")} ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"

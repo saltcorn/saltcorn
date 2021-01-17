@@ -31,6 +31,8 @@ export const Container = ({
   textColor,
   customClass,
   customCSS,
+  margin,
+  padding,
   minScreenWidth,
 }) => {
   const {
@@ -47,7 +49,8 @@ export const Container = ({
       } ${selected ? "selected-node" : ""}`}
       style={{
         ...parseStyles(customCSS || ""),
-        padding: "4px",
+        padding: padding.map((p) => p + "px").join(" "),
+        margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
         border: `${borderWidth}px ${borderStyle} black`,
         ...(block === false ? { display: "inline-block" } : {}),
@@ -111,6 +114,8 @@ export const ContainerSettings = () => {
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
     show_for_owner: node.data.props.show_for_owner,
+    margin: node.data.props.margin,
+    padding: node.data.props.padding,
   }));
   const {
     actions: { setProp },
@@ -138,6 +143,8 @@ export const ContainerSettings = () => {
     customCSS,
     minScreenWidth,
     show_for_owner,
+    margin,
+    padding,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -146,7 +153,7 @@ export const ContainerSettings = () => {
       <table className="w-100" accordiontitle="Placement">
         <tbody>
           <tr>
-            <th colspan="2">Border</th>
+            <th colSpan="2">Border</th>
           </tr>
           <tr>
             <td>
@@ -195,7 +202,7 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
-            <th colspan="2">Size</th>
+            <th colSpan="2">Size</th>
           </tr>
           <tr>
             <td>
@@ -284,16 +291,57 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
-            <td colspan="2">
+            <td colSpan="2">
               <BlockSetting block={block} setProp={setProp} />
             </td>
           </tr>
         </tbody>
       </table>
+      <table className="w-100" accordiontitle="Spacing">
+        <tbody>
+          <tr>
+            <th></th>
+            <th>Margin</th>
+            <th>Padding</th>
+          </tr>
+          {["Top", "Right", "Bottom", "Left"].map((direction, ix) => (
+            <tr key={ix}>
+              <td>{direction}</td>
+              <td>
+                <input
+                  type="number"
+                  value={margin[ix]}
+                  step="1"
+                  className="form-control"
+                  onChange={(e) =>
+                    setProp((prop) => {
+                      prop.margin[ix] = e.target.value;
+                    })
+                  }
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={padding[ix]}
+                  step="1"
+                  className="form-control"
+                  onChange={(e) =>
+                    setProp((prop) => {
+                      prop.padding[ix] = e.target.value;
+                    })
+                  }
+                />
+              </td>
+              <td>px</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <table className="w-100" accordiontitle="Contents">
         <tbody>
           <tr>
-            <th colspan="2">Align</th>
+            <th colSpan="2">Align</th>
           </tr>
           <tr>
             <td>
@@ -336,7 +384,7 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
-            <th colspan="2">Background</th>
+            <th colSpan="2">Background</th>
           </tr>
           <tr>
             <td>
@@ -409,7 +457,7 @@ export const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td colspan="2">
+              <td colSpan="2">
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input
                     type="color"
@@ -426,7 +474,7 @@ export const ContainerSettings = () => {
             </tr>
           )}
           <tr>
-            <td colspan="2">
+            <td colSpan="2">
               <label>
                 Set text color{" "}
                 <input
@@ -465,7 +513,7 @@ export const ContainerSettings = () => {
         <tbody>
           {options.mode === "show" && (
             <tr>
-              <th colspan="2">Formula - show if true</th>
+              <th colSpan="2">Formula - show if true</th>
             </tr>
           )}
           {options.mode === "show" && (
@@ -486,11 +534,11 @@ export const ContainerSettings = () => {
             </tr>
           )}
           <tr>
-            <th colspan="2">Role</th>
+            <th colSpan="2">Role</th>
           </tr>
           {options.roles.map(({ role, id }) => (
             <tr key={id}>
-              <td colspan="2">
+              <td colSpan="2">
                 <div className="form-check">
                   <input
                     className="form-check-input"
@@ -514,7 +562,7 @@ export const ContainerSettings = () => {
           ))}
           {ownership ? (
             <tr>
-              <td colspan="2">
+              <td colSpan="2">
                 <div className="form-check">
                   <input
                     className="form-check-input"
@@ -602,6 +650,8 @@ Container.craft = {
     imageSize: "contain",
     showIfFormula: "",
     showForRole: [],
+    margin: [0, 0, 0, 0],
+    padding: [0, 0, 0, 0],
     minScreenWidth: "",
     show_for_owner: false,
   },

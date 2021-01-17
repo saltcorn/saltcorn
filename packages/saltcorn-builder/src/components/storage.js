@@ -194,6 +194,8 @@ export const layoutToNodes = (layout, query, actions) => {
           borderStyle={segment.borderStyle}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
+          margin={segment.margin || [0, 0, 0, 0]}
+          padding={segment.padding || [0, 0, 0, 0]}
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
@@ -303,6 +305,8 @@ export const craftToSaltcorn = (nodes) => {
           widthUnit: node.props.widthUnit,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
+          margin: node.props.margin,
+          padding: node.props.padding,
           block: node.props.block || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
