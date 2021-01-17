@@ -2,7 +2,13 @@ import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { Accordion, BlockSetting, OrFormula, parseStyles } from "./utils";
+import {
+  Accordion,
+  BlockSetting,
+  OrFormula,
+  parseStyles,
+  SelectUnits,
+} from "./utils";
 
 export const Container = ({
   children,
@@ -11,7 +17,9 @@ export const Container = ({
   minHeight,
   height,
   width,
-  widthPct,
+  minHeightUnit,
+  heightUnit,
+  widthUnit,
   vAlign,
   hAlign,
   bgFileId,
@@ -40,7 +48,7 @@ export const Container = ({
       style={{
         ...parseStyles(customCSS || ""),
         padding: "4px",
-        minHeight: `${Math.max(minHeight, 15)}px`,
+        minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
         border: `${borderWidth}px ${borderStyle} black`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
@@ -62,17 +70,12 @@ export const Container = ({
           : {}),
         ...(typeof height !== "undefined"
           ? {
-              height: `${height}px`,
+              height: `${height}${heightUnit || "px"}`,
             }
           : {}),
         ...(typeof width !== "undefined"
           ? {
-              width: `${width}px`,
-            }
-          : {}),
-        ...(typeof widthPct !== "undefined"
-          ? {
-              width: `${widthPct}%`,
+              width: `${width}${widthUnit || "px"}`,
             }
           : {}),
       }}
@@ -89,7 +92,9 @@ export const ContainerSettings = () => {
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
-    widthPct: node.data.props.widthPct,
+    minHeightUnit: node.data.props.minHeightUnit,
+    heightUnit: node.data.props.heightUnit,
+    widthUnit: node.data.props.widthUnit,
     bgType: node.data.props.bgType,
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
@@ -114,7 +119,9 @@ export const ContainerSettings = () => {
     minHeight,
     height,
     width,
-    widthPct,
+    minHeightUnit,
+    heightUnit,
+    widthUnit,
     vAlign,
     hAlign,
     bgFileId,
@@ -150,7 +157,7 @@ export const ContainerSettings = () => {
                 type="number"
                 value={borderWidth}
                 step="1"
-                className="w-100 ml-2"
+                className="form-control w-50 d-inline mr-2"
                 min="0"
                 max="20"
                 onChange={(e) =>
@@ -159,6 +166,7 @@ export const ContainerSettings = () => {
                   })
                 }
               />
+              px
             </td>
           </tr>
           <tr>
@@ -168,7 +176,7 @@ export const ContainerSettings = () => {
             <td>
               <select
                 value={borderStyle}
-                className="w-100 ml-2"
+                className="form-control"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.borderStyle = e.target.value;
@@ -200,10 +208,20 @@ export const ContainerSettings = () => {
                 step="1"
                 min="0"
                 max="999"
-                className="w-100 ml-2"
+                className="w-50 form-control d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.minHeight = e.target.value;
+                  })
+                }
+              />
+              <SelectUnits
+                value={minHeightUnit}
+                className="w-50 form-control d-inline"
+                vert={true}
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.minHeightUnit = e.target.value;
                   })
                 }
               />
@@ -218,12 +236,20 @@ export const ContainerSettings = () => {
                 type="number"
                 value={height}
                 step="1"
-                min="0"
-                max="999"
-                className="w-100 ml-2"
+                className="w-50 form-control d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.height = e.target.value;
+                  })
+                }
+              />
+              <SelectUnits
+                value={heightUnit}
+                className="w-50 form-control d-inline"
+                vert={true}
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.heightUnit = e.target.value;
                   })
                 }
               />
@@ -231,39 +257,27 @@ export const ContainerSettings = () => {
           </tr>{" "}
           <tr>
             <td>
-              <label>Width px</label>
+              <label>Width</label>
             </td>
             <td>
               <input
                 type="number"
                 value={width}
                 step="1"
-                min="0"
-                max="999"
-                className="w-100 ml-2"
+                className="w-50 form-control d-inline"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.width = e.target.value;
                   })
                 }
               />
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Width %</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={widthPct}
-                step="1"
-                min="0"
-                max="100"
-                className="w-100 ml-2"
+              <SelectUnits
+                value={widthUnit}
+                className="w-50 form-control d-inline"
+                vert={false}
                 onChange={(e) =>
                   setProp((prop) => {
-                    prop.widthPct = e.target.value;
+                    prop.widthUnit = e.target.value;
                   })
                 }
               />

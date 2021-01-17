@@ -142,6 +142,17 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
+
+export const SelectUnits = ({ vert, ...props }) => (
+  <select {...props}>
+    <option>px</option>
+    <option>%</option>
+    <option>{vert ? "vh" : "vw"}</option>
+    <option>em</option>
+    <option>rem</option>
+  </select>
+);
+
 export const parseStyles = (styles) =>
   (styles || "")
     .split("\n")
