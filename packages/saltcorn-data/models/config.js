@@ -1,6 +1,5 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-const { is_stale } = require("./pack");
 const latestVersion = require("latest-version");
 
 const configTypes = {
@@ -269,9 +268,10 @@ const remove_from_menu = contract(
 
 const get_latest_npm_version = async (pkg) => {
   const { getState } = require("../db/state");
+  const { is_stale } = require("./pack");
   const stored = getState().getConfig("latest_npm_version", {});
 
-  if (stored[pkg] && !is_stale(stored[pkg].time, 3)) {
+  if (stored[pkg] && !is_stale(stored[pkg].time, 6)) {
     return stored[pkg].version;
   }
 
@@ -279,7 +279,7 @@ const get_latest_npm_version = async (pkg) => {
   const stored1 = getState().getConfig("latest_npm_version", {});
   await getState().setConfig("latest_npm_version", {
     ...stored1,
-    pkg: { time: new Date(), version: latest },
+    [pkg]: { time: new Date(), version: latest },
   });
   return latest;
 };
