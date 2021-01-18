@@ -1,5 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const { is_stale } = require("./pack");
 
 const configTypes = {
   site_name: {
@@ -139,6 +140,7 @@ const configTypes = {
     type: "hidden",
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
   },
+  latest_npm_version: { type: "hidden", label: "Layout by role", default: {} },
 };
 
 const available_languages = {
@@ -264,6 +266,15 @@ const remove_from_menu = contract(
   }
 );
 
+const get_latest_npm_version = async (pkg) => {
+  const { getState } = require("../db/state");
+  const stored = getState().getConfig("latest_npm_version", {});
+
+  if (stored[pkg] && !is_stale(stored[pkg].time, 3)) {
+    return stored[pkg].version;
+  }
+};
+
 module.exports = {
   getConfig,
   getAllConfig,
@@ -274,4 +285,5 @@ module.exports = {
   remove_from_menu,
   available_languages,
   isFixedConfig,
+  get_latest_npm_version,
 };

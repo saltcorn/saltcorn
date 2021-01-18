@@ -270,9 +270,9 @@ const install_pack = contract(
 );
 
 const is_stale = contract(
-  is.fun(is.or(is.class("Date"), is.str), is.bool),
-  (date) => {
-    const oneday = 60 * 60 * 24 * 1000;
+  is.fun([is.or(is.class("Date"), is.str), is.maybe(is.posint)], is.bool),
+  (date, hours = 24) => {
+    const oneday = 60 * 60 * hours * 1000;
     const now = new Date();
     return new Date(date) < now - oneday;
   }
