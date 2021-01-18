@@ -510,7 +510,7 @@ router.get(
               ? a(
                   {
                     href: `/plugins/upgrade-plugin/${plugin_db.name}`,
-                    class: "btn btn-primary btn-sm",
+                    class: "btn btn-primary btn-sm ml-2",
                   },
                   req.__("Upgrade")
                 )
@@ -613,7 +613,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
-    const plugin = await Plugin.find({ name });
+    const plugin = await Plugin.findOne({ name });
     await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     req.flash("success", req.__(`Plugin up-to-date`));
 

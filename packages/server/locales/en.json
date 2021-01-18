@@ -540,5 +540,7 @@
 	"View templates": "View templates",
 	"Repository": "Repository",
 	"Latest": "Latest",
-	"Latest version": "Latest version"
+	"Latest version": "Latest version",
+	"Latest npm version cache": "Latest npm version cache",
+	"Plugin up-to-date": "Plugin up-to-date"
 }

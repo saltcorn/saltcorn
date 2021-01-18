@@ -140,7 +140,12 @@ const configTypes = {
     type: "hidden",
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
   },
-  latest_npm_version: { type: "hidden", label: "Layout by role", default: {} },
+  latest_npm_version: {
+    type: "hidden",
+    label: "Layout by role",
+    default: {},
+    label: "Latest npm version cache",
+  },
 };
 
 const available_languages = {
