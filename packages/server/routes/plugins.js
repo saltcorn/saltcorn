@@ -41,6 +41,8 @@ const {
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
 const path = require("path");
+const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+
 const router = new Router();
 module.exports = router;
 
@@ -481,6 +483,12 @@ router.get(
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
+    const update_permitted =
+      db.getTenantSchema() === db.connectObj.default_schema &&
+      plugin_db.source === "npm";
+    const latest =
+      update_permitted && (await get_latest_npm_version(plugin_db.location));
+    const can_update = update_permitted && latest && mod.version !== latest;
     let pkgjson;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
@@ -494,6 +502,7 @@ router.get(
       tbody(
         tr(th(req.__("Package name")), td(mod.name)),
         tr(th(req.__("Package version")), td(mod.version)),
+        tr(th(req.__("Latest version")), td(latest || "")),
         mod.plugin_module.dependencies
           ? tr(
               th(req.__("Plugin dependencies")),
