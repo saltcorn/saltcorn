@@ -8,6 +8,8 @@ const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { restore_backup } = require("../markup/admin");
+const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+const packagejson = require("../package.json");
 
 const tableTable = (tables) =>
   mkTable(
@@ -180,6 +182,20 @@ const no_views_logged_in = async (req, res) => {
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
     res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
+    const can_update = packagejson.version !== latest;
+    if (latest && can_update)
+      req.flash(
+        "warning",
+        req.__(
+          "An upgrade to Saltcorn is available! Current version: %s; latest version: %s.",
+          packagejson.version,
+          latest
+        ) +
+          " " +
+          a({ href: "/admin" }, req.__("Upgrade here"))
+      );
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
     if (tables.length <= 1) {
