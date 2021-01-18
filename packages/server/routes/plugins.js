@@ -502,7 +502,21 @@ router.get(
       tbody(
         tr(th(req.__("Package name")), td(mod.name)),
         tr(th(req.__("Package version")), td(mod.version)),
-        tr(th(req.__("Latest version")), td(latest || "")),
+        tr(
+          th(req.__("Latest version")),
+          td(
+            latest || "",
+            can_update
+              ? a(
+                  {
+                    href: `/plugins/upgrade-plugin/${plugin_db.name}`,
+                    class: "btn btn-primary btn-sm",
+                  },
+                  req.__("Upgrade")
+                )
+              : ""
+          )
+        ),
         mod.plugin_module.dependencies
           ? tr(
               th(req.__("Plugin dependencies")),
@@ -589,6 +603,21 @@ router.get(
     req.flash("success", req.__(`Plugins up-to-date`));
 
     res.redirect(`/plugins`);
+  })
+);
+
+router.get(
+  "/upgrade-plugin/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+
+    const plugin = await Plugin.find({ name });
+    await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+    req.flash("success", req.__(`Plugin up-to-date`));
+
+    res.redirect(`/plugins/info/${plugin.name}`);
   })
 );
 router.post(
