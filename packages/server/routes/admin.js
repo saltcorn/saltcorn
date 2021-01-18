@@ -24,6 +24,7 @@ const {
   th,
   tr,
   button,
+  span,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { getState, restart_tenant } = require("@saltcorn/data/db/state");
@@ -32,8 +33,9 @@ const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const { restore_backup } = require("../markup/admin.js");
-var packagejson = require("../package.json");
+const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
+const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
 
@@ -44,6 +46,8 @@ router.get(
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const letsencrypt = getState().getConfig("letsencrypt", false);
+    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
+    const can_update = packagejson.version !== latest;
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
@@ -100,7 +104,7 @@ router.get(
                   th(req.__("Saltcorn version")),
                   td(
                     packagejson.version +
-                      (isRoot
+                      (isRoot && can_update
                         ? post_btn(
                             "/admin/upgrade",
                             req.__("Upgrade"),
@@ -109,6 +113,11 @@ router.get(
                               btnClass: "btn-primary btn-sm",
                               formClass: "d-inline",
                             }
+                          )
+                        : isRoot && !can_update
+                        ? span(
+                            { class: "badge badge-primary ml-2" },
+                            req.__("Latest")
                           )
                         : "")
                   )

@@ -24,6 +24,7 @@
     "dumb-passwords": "^0.2.1",
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
+    "latest-version": "^5.1.0",
     "moment": "^2.27.0",
     "node-fetch": "^2.6.1",
     "nodemailer": "^6.4.17",
