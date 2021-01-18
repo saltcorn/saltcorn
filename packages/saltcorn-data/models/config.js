@@ -1,6 +1,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { is_stale } = require("./pack");
+const latestVersion = require("latest-version");
 
 const configTypes = {
   site_name: {
@@ -273,6 +274,14 @@ const get_latest_npm_version = async (pkg) => {
   if (stored[pkg] && !is_stale(stored[pkg].time, 3)) {
     return stored[pkg].version;
   }
+
+  const latest = await latestVersion(pkg);
+  const stored1 = getState().getConfig("latest_npm_version", {});
+  await getState().setConfig("latest_npm_version", {
+    ...stored1,
+    pkg: { time: new Date(), version: latest },
+  });
+  return latest;
 };
 
 module.exports = {
