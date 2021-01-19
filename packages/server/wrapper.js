@@ -167,12 +167,19 @@ const get_headers = (req, description, extras = []) => {
     { css: "/saltcorn.css" },
     { script: "/saltcorn.js" },
   ];
+  let from_cfg = [];
+  if (state.getConfig("page_custom_css", ""))
+    from_cfg.push({ style: state.getConfig("page_custom_css", "") });
+  if (state.getConfig("page_custom_html", ""))
+    from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
+
   return [
     ...stdHeaders,
     ...iconHeader,
     ...meta_description,
     ...state.headers,
     ...extras,
+    ...from_cfg,
   ];
 };
 const get_brand = (state) => {
