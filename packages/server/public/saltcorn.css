@@ -163,14 +163,14 @@ div[data-inline-edit-dest-url]:hover .editicon {
 
   border-color: #95a5a6;
 }
-.search-bar input {
+.search-bar input[type="search"] {
   border-left: none;
   border-color: #95a5a6;
   padding-left: 0.3rem;
   background-color: #ffffff;
 }
 
-.search-bar button {
+.search-bar button.search-bar {
   border-color: #95a5a6;
   background-color: #ffffff;
 }

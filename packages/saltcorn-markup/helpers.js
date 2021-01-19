@@ -71,7 +71,7 @@ const search_bar = (
   const onClick = `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('input.search-bar').val())`;
   return `<div class="input-group search-bar">
   <div class="input-group-prepend">
-  <button class="btn btn-outline-secondary" ${
+  <button class="btn btn-outline-secondary search-bar" ${
     stateField ? `onClick="${onClick}"` : ""
   } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
@@ -105,7 +105,7 @@ const search_bar = (
   }
   ${
     has_dropdown
-      ? `<button class="btn btn-outline-secondary dropdown-toggle" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
       : ""
   }
   ${
