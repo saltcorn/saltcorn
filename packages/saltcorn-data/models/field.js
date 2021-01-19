@@ -54,7 +54,8 @@ class Field {
         o.type.replace("Key to ", "");
       this.reftable = o.reftable;
       this.type = "Key";
-      this.input_type = "select";
+      this.input_type =
+        !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
     }
 
     this.attributes =
