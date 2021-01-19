@@ -83,7 +83,7 @@ const search_bar = (
 }" 
   }" 
        id="input${text_attr(name)}" name="${name}" 
-       ${stateField ? `onsearch="${onClick}"` : ""}
+       ${stateField ? `onsearch="${onClick}" onChange="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
