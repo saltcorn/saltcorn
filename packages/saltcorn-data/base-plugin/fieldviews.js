@@ -1,5 +1,14 @@
 const View = require("../models/view");
 const Table = require("../models/table");
+const {
+  select,
+  option,
+  a,
+  h5,
+  span,
+  text_attr,
+} = require("@saltcorn/markup/tags");
+const { select_options } = require("@saltcorn/markup/helpers");
 
 const search_or_create = {
   type: "Key",
@@ -23,7 +32,20 @@ const search_or_create = {
     ];
   },
   run: (nm, v, attrs, cls, reqd, field) => {
-    return "BOO" + JSON.stringify(attrs);
+    return (
+      select(
+        {
+          class: `form-control ${cls} ${field.class || ""}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+        },
+        select_options(v, field)
+      ) +
+      a(
+        { href: `javascript:ajax_modal('/view/${attrs.viewname}')` },
+        attrs.label || "Or create new"
+      )
+    );
   },
 };
 module.exports = { search_or_create };
