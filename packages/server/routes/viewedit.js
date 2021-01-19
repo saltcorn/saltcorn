@@ -243,7 +243,6 @@ router.get(
 
     var viewrow = await View.findOne({ name: viewname });
     if (!viewrow) {
-      console.log("not found:", viewname);
       req.flash("error", `View not found: ${text(viewname)}`);
       res.redirect("/viewedit");
       return;
