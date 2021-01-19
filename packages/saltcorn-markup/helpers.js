@@ -77,13 +77,13 @@ const search_bar = (
   <i class="fas fa-search"></i>
   </button>
   </div>
-<input type="text" class="form-control search-bar ${
+<input type="search" class="form-control search-bar ${
     badges && badges.length > 0 ? "br-none" : ""
   }" placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 
        id="input${text_attr(name)}" name="${name}" 
-       ${stateField ? `onChange="${onClick}"` : ""}
+       ${stateField ? `onsearch="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
