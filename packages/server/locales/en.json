@@ -545,5 +545,6 @@
 	"Plugin up-to-date": "Plugin up-to-date",
 	"Upgrade here": "Upgrade here",
 	"An upgrade to Saltcorn is available! Current version: %s; latest version: %s.": "An upgrade to Saltcorn is available! Current version: %s; latest version: %s.",
-	"Passwords do not match": "Passwords do not match"
+	"Passwords do not match": "Passwords do not match",
+	"Not a valid e-mail address": "Not a valid e-mail address"
 }

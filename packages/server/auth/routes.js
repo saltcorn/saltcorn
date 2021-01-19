@@ -538,6 +538,11 @@ router.post(
         res.redirect("/auth/signup");
         return true;
       }
+      if (!User.valid_email(email)) {
+        req.flash("danger", req.__("Not a valid e-mail address"));
+        res.redirect("/auth/signup");
+        return true;
+      }
       if (typeof passwordRepeat === "string" && password !== passwordRepeat) {
         req.flash("danger", req.__("Passwords do not match"));
         res.redirect("/auth/signup");

@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
-
+const validator = require("email-validator");
 class User {
   constructor(o) {
     this.email = o.email;
@@ -148,6 +148,10 @@ class User {
     if (typeof pw !== "string") return "Not a string";
     if (pw.length < 8) return "Too short";
     if (dumbPasswords.check(pw)) return "Too common";
+  }
+
+  static valid_email(email) {
+    return validator.validate(email);
   }
 
   static async resetPasswordWithToken({
