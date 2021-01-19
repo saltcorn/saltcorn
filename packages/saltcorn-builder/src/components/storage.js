@@ -416,6 +416,7 @@ export const craftToSaltcorn = (nodes) => {
         type: "Field",
         field_name: node.props.name,
         fieldview: node.props.fieldview,
+        configuration: node.props.configuration,
       });
       return {
         type: "field",
