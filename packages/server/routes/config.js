@@ -81,7 +81,13 @@ const show_section = ({ name, keys }, cfgs, files, req) => {
 const sections = (req) => [
   {
     name: req.__("Site identity"),
-    keys: ["site_name", "site_logo_id", "base_url"],
+    keys: [
+      "site_name",
+      "site_logo_id",
+      "base_url",
+      "page_custom_css",
+      "page_custom_html",
+    ],
   },
   {
     name: req.__("Authentication"),

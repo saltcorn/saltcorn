@@ -146,6 +146,20 @@ const configTypes = {
     default: {},
     label: "Latest npm version cache",
   },
+  page_custom_css: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom CSS",
+    default: "",
+    hide_value: true,
+  },
+  page_custom_html: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom HTML",
+    default: "",
+    hide_value: true,
+  },
 };
 
 const available_languages = {

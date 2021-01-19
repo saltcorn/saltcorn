@@ -65,25 +65,25 @@ const pagination = ({
 const search_bar = (
   name,
   v,
-  { onClick, placeHolder, has_dropdown, contents, badges } = {}
+  { placeHolder, has_dropdown, contents, badges, stateField } = {}
 ) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
-
+  const onClick = `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('input.search-bar').val())`;
   return `<div class="input-group search-bar">
   <div class="input-group-prepend">
   <button class="btn btn-outline-secondary" ${
-    onClick ? `onClick="${onClick}"` : ""
+    stateField ? `onClick="${onClick}"` : ""
   } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
   </button>
   </div>
-<input type="text" class="form-control search-bar ${
-    badges && badges.length > 0 ? "br-none" : ""
+<input type="search" class="form-control search-bar ${
+    (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
   }" placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 
        id="input${text_attr(name)}" name="${name}" 
-       ${onClick ? `onChange="${onClick}"` : ""}
+       ${stateField ? `onsearch="${onClick}" onChange="${onClick}"` : ""}
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>

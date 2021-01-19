@@ -286,7 +286,6 @@ class View {
       const { table_id, ...configuration } = await oldOnDone(ctx);
 
       await View.update({ configuration }, this.id);
-      console.log(configuration);
       return {
         redirect: `/viewedit`,
         flash: ["success", `View ${this.name || ""} saved`],

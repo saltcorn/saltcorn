@@ -122,8 +122,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
-        onClick:
-          "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('input.search-bar').val())",
+        stateField: "_fts",
         has_dropdown,
         contents: rendered_contents,
         badges: show_badges ? badges : null,

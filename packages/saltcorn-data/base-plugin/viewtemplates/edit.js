@@ -47,11 +47,17 @@ const configuration_workflow = (req) =>
               type: "String",
             });
             fields.push({
+              name: "passwordRepeat",
+              label: "Password Repeat",
+              type: "String",
+            });
+            fields.push({
               name: "remember",
               label: "Remember me",
               type: "Bool",
             });
             field_view_options.password = ["password"];
+            field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
           }
           return {
@@ -176,6 +182,15 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({
             name: "password",
+            fieldview: column.fieldview,
+            type: "String",
+          });
+        } else if (
+          table.name === "users" &&
+          column.field_name === "passwordRepeat"
+        ) {
+          return new Field({
+            name: "passwordRepeat",
             fieldview: column.fieldview,
             type: "String",
           });

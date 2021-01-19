@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
-
+const validator = require("email-validator");
 class User {
   constructor(o) {
     this.email = o.email;
@@ -58,7 +58,7 @@ class User {
     }
   }
   static async create(uo) {
-    const { email, password, role_id, ...rest } = uo;
+    const { email, password, passwordRepeat, role_id, ...rest } = uo;
     const u = new User({ email, password, role_id });
     if (User.unacceptable_password_reason(u.password))
       return {
@@ -150,6 +150,10 @@ class User {
     if (dumbPasswords.check(pw)) return "Too common";
   }
 
+  static valid_email(email) {
+    return validator.validate(email);
+  }
+
   static async resetPasswordWithToken({
     email,
     reset_password_token,
@@ -208,7 +212,7 @@ User.contract = {
   variables: {
     id: is.maybe(is.posint),
     email: is.str,
-    password: is.str,
+    //password: is.str,
     disabled: is.bool,
     language: is.maybe(is.str),
     _attributes: is.maybe(is.obj({})),

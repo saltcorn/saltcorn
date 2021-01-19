@@ -369,10 +369,7 @@ const plugin_store_html = (items, req) => {
           storeNavPills(req),
           div(
             { class: "ml-auto" },
-            search_bar("q", req.query.q || "", {
-              onClick:
-                "(function(v){v ? set_state_field('q', v):unset_state_field('q');})($('input.search-bar').val())",
-            })
+            search_bar("q", req.query.q || "", { stateField: "q" })
           ),
           div({ class: "ml-auto" }, store_actions_dropdown(req))
         ),
