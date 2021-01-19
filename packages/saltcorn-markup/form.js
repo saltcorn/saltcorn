@@ -249,7 +249,8 @@ const displayEdit = (hdr, name, v, extracls) => {
     v,
     attributes,
     extracls + " " + hdr.class,
-    hdr.required
+    hdr.required,
+    hdr
   );
 };
 

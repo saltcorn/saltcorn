@@ -5,6 +5,7 @@ const feed = require("./viewtemplates/feed");
 const edit = require("./viewtemplates/edit");
 const filter = require("./viewtemplates/filter");
 const fileviews = require("./fileviews");
+const fieldviews = require("./fileviews");
 const actions = require("./actions");
 const { string, int, bool, date, float, color } = require("./types");
 
@@ -17,4 +18,5 @@ module.exports = {
   viewtemplates,
   fileviews,
   actions,
+  fieldviews,
 };
