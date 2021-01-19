@@ -27,11 +27,18 @@ const stringToJSON = (v) => {
     throw new Error(`stringToJSON(${JSON.stringify(v)}): ${e.message}`);
   }
 };
+const apply = (f, x) => (typeof f === "function" ? f(x) : f);
 
+const applyAsync = async (f, x) => {
+  if (typeof f === "function") return await f(x);
+  else return f;
+};
 module.exports = {
   removeEmptyStrings,
   isEmpty,
   asyncMap,
   numberToBool,
   stringToJSON,
+  applyAsync,
+  apply,
 };

@@ -26,7 +26,7 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
-          const fieldViewConfigForms = calcfldViewConfig(fields, false);
+          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });

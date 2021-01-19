@@ -7,6 +7,7 @@ const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text } = require("@saltcorn/markup/tags");
+const { applyAsync } = require("./utils");
 
 const link_view = (url, label, popup, link_style = "", link_size = "") => {
   if (popup) {
@@ -69,15 +70,21 @@ const calcfldViewOptions = contract(
   }
 );
 const calcfldViewConfig = contract(
-  is.fun([is.array(is.class("Field")), is.bool], is.obj()),
-  (fields, isEdit) => {
+  is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
+  async (fields, isEdit) => {
     const fieldViewConfigForms = {};
-    fields.forEach((f) => {
+    for (const f of fields) {
       fieldViewConfigForms[f.name] = {};
-      Object.entries(f.type.fieldviews || {}).forEach(([nm, fv]) => {
-        if (fv.configFields) fieldViewConfigForms[f.name][nm] = fv.configFields;
-      });
-    });
+      const fieldviews =
+        f.type === "Key" ? getState().keyFieldviews : f.type.fieldviews || {};
+      for (const [nm, fv] of Object.entries(fieldviews)) {
+        if (fv.configFields)
+          fieldViewConfigForms[f.name][nm] = await applyAsync(
+            fv.configFields,
+            f
+          );
+      }
+    }
     return fieldViewConfigForms;
   }
 );
