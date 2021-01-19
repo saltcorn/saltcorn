@@ -236,7 +236,9 @@ const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
   if (hdr.disabled) attributes.disabled = true;
-  if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
+  if (hdr.fieldviewObj) {
+    fieldview = hdr.fieldviewObj;
+  } else if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {
     //first isedit fieldview

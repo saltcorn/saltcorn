@@ -57,7 +57,7 @@ const calcfldViewOptions = contract(
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
-        fvs[f.name] = ["select"];
+        fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(
           ([k, fv]) => !fv.isEdit === !isEdit

@@ -14,6 +14,8 @@ const search_or_create = {
       //sublabel: "Do not pick time",
     },
   ],
-  run: (nm, v, attrs, cls, reqd, field) => {},
+  run: (nm, v, attrs, cls, reqd, field) => {
+    return "BOO";
+  },
 };
 module.exports = { search_or_create };
