@@ -527,7 +527,7 @@ router.post(
       return;
     }
 
-    const unsuitableEmailPassword = async (email, password) => {
+    const unsuitableEmailPassword = async (email, password, passwordRepeat) => {
       if (!email || !password) {
         req.flash("danger", req.__("E-mail and password required"));
         res.redirect("/auth/signup");
@@ -535,6 +535,11 @@ router.post(
       }
       if (email.length > 127) {
         req.flash("danger", req.__("E-mail too long"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if (typeof passwordRepeat === "string" && password !== passwordRepeat) {
+        req.flash("danger", req.__("Passwords do not match"));
         res.redirect("/auth/signup");
         return true;
       }
@@ -563,8 +568,9 @@ router.post(
           if (col.type === "Field")
             userObject[col.field_name] = req.body[col.field_name];
         });
-        const { email, password } = userObject;
-        if (await unsuitableEmailPassword(email, password)) return;
+        const { email, password, passwordRepeat } = userObject;
+        if (await unsuitableEmailPassword(email, password, passwordRepeat))
+          return;
         if (new_user_form) {
           const form = await getNewUserForm(new_user_form, req);
           Object.entries(userObject).forEach(([k, v]) => {

@@ -58,7 +58,7 @@ class User {
     }
   }
   static async create(uo) {
-    const { email, password, role_id, ...rest } = uo;
+    const { email, password, passwordRepeat, role_id, ...rest } = uo;
     const u = new User({ email, password, role_id });
     if (User.unacceptable_password_reason(u.password))
       return {
@@ -208,7 +208,7 @@ User.contract = {
   variables: {
     id: is.maybe(is.posint),
     email: is.str,
-    password: is.str,
+    //password: is.str,
     disabled: is.bool,
     language: is.maybe(is.str),
     _attributes: is.maybe(is.obj({})),
