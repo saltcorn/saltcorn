@@ -175,7 +175,15 @@ export const parseStyles = (styles) =>
     );
 const isCheckbox = (f) =>
   f && f.type && (f.type === "Bool" || f.type.name === "Bool");
-
+export const setInitialConfig = (setProp, fieldview, fields) => {
+  fields.forEach((f, ix) => {
+    if (f.input_type === "select")
+      setProp((prop) => {
+        if (!prop.configuration[f.name])
+          prop.configuration[f.name] = f.options[0] || "";
+      });
+  });
+};
 export const ConfigForm = ({ fields, configuration, setProp }) => (
   <Fragment>
     {fields.map((f, ix) => (
