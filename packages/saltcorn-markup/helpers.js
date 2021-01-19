@@ -78,7 +78,7 @@ const search_bar = (
   </button>
   </div>
 <input type="search" class="form-control search-bar ${
-    badges && badges.length > 0 ? "br-none" : ""
+    (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
   }" placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 

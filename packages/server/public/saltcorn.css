@@ -159,6 +159,27 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .search-bar .input-group-text {
   background-color: unset;
   border-left: none;
+  border-right: none;
+
+  border-color: #95a5a6;
+}
+.search-bar input {
+  border-left: none;
+  border-color: #95a5a6;
+  padding-left: 0.3rem;
+  background-color: #ffffff;
+}
+
+.search-bar button {
+  border-color: #95a5a6;
+  background-color: #ffffff;
+}
+.search-bar button.dropdown-toggle {
+  border-left: none;
+}
+#button-search-submit {
+  border-right: none;
+  padding-right: 0.3rem;
 }
 .br-none {
   border-right: none;
