@@ -13,18 +13,23 @@ const {
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
+const rmInitialDot = (s) => (s && s[0] === "." ? s.replace(".", "") : s);
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
       typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('[data-fieldname=${target}]').prop('checked')===${JSON.stringify(
-            value
-          )}`
+        ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').prop('checked')===${JSON.stringify(value)}`
         : Array.isArray(value)
         ? `[${value
             .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${target}]').val())`
-        : `e.closest('.form-namespace').find('[data-fieldname=${target}]').val()==='${value}'`
+            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val())`
+        : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val()==='${value}'`
     )
     .join(" && ");
 

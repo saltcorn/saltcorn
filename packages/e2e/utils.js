@@ -16,11 +16,11 @@ class Browser {
     b.page = await b.browser.newPage();
     //  await page.goto("http://localhost:3000/");
     b.page.on("pageerror", function (err) {
-      theTempValue = err.toString();
+      const theTempValue = err.toString();
       throw new Error("Page error: " + theTempValue);
     });
     b.page.on("error", function (err) {
-      theTempValue = err.toString();
+      const theTempValue = err.toString();
       throw new Error("Error: " + theTempValue);
     });
     b.page.on("dialog", async (dialog) => {
