@@ -179,10 +179,12 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
         if (f) {
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
-            f.input_type =
-              !f.fieldview || f.fieldview === "select" ? "select" : "fromtype";
             if (getState().keyFieldviews[column.fieldview])
               f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+                ? "select"
+                : "fromtype";
           }
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
