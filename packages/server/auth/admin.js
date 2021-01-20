@@ -66,7 +66,6 @@ const userForm = contract(
         new Field({
           label: req.__("Set random password"),
           name: "rnd_password",
-          class: "rnd_password",
           type: "Bool",
           default: true,
         })
@@ -76,7 +75,7 @@ const userForm = contract(
           label: req.__("Password"),
           name: "password",
           input_type: "password",
-          showIf: { ".rnd_password": false },
+          showIf: { rnd_password: false },
         })
       );
       can_reset &&
@@ -86,7 +85,7 @@ const userForm = contract(
             name: "send_pwreset_email",
             type: "Bool",
             default: true,
-            showIf: { ".rnd_password": true },
+            showIf: { rnd_password: true },
           })
         );
     }

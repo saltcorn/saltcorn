@@ -95,7 +95,6 @@ const configuration_workflow = (req) =>
                       name: "create_view_display",
                       label: req.__("Display create view as"),
                       type: "String",
-                      class: "create_view_display",
                       required: true,
                       attributes: {
                         options: "Link,Embedded,Popup",
@@ -108,7 +107,7 @@ const configuration_workflow = (req) =>
                         "Label in link or button to create. Leave blank for a default label"
                       ),
                       type: "String",
-                      showIf: { ".create_view_display": ["Link", "Popup"] },
+                      showIf: { create_view_display: ["Link", "Popup"] },
                     },
                   ]
                 : []),

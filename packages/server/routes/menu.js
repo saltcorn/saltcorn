@@ -99,7 +99,7 @@ const menuForm = async (req) => {
         label: req.__("URL"),
         class: "item-menu",
         input_type: "text",
-        showIf: { ".menutype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "pagename",
@@ -107,7 +107,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "item-menu",
         options: pages.map((r) => r.name),
-        showIf: { ".menutype": "Page" },
+        showIf: { type: "Page" },
       },
       {
         name: "viewname",
@@ -115,7 +115,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "item-menu",
         options: views.map((r) => r.name),
-        showIf: { ".menutype": "View" },
+        showIf: { type: "View" },
       },
     ],
   });

@@ -55,7 +55,6 @@ module.exports = {
           name: "to_email",
           label: "Recipient email address",
           input_type: "select",
-          class: "to_email",
           required: true,
 
           options: ["Fixed", "User", "Field"],
@@ -69,13 +68,13 @@ module.exports = {
 
           options: field_opts,
 
-          showIf: { ".to_email": "Field" },
+          showIf: { to_email: "Field" },
         },
         {
           name: "to_email_fixed",
           label: "Fixed address",
           type: "String",
-          showIf: { ".to_email": "Fixed" },
+          showIf: { to_email: "Fixed" },
         },
         {
           name: "subject",

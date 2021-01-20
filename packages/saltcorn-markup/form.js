@@ -17,14 +17,14 @@ const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
       typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
+        ? `e.closest('.form-namespace').find('[name=${target}]').prop('checked')===${JSON.stringify(
             value
           )}`
         : Array.isArray(value)
         ? `[${value
             .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('${target}').val())`
-        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+            .join()}].includes(e.closest('.form-namespace').find('[name=${target}]').val())`
+        : `e.closest('.form-namespace').find('[name=${target}]').val()==='${value}'`
     )
     .join(" && ");
 
