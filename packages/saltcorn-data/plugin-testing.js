@@ -28,8 +28,8 @@ const auto_test_type = (t) => {
   Object.values(fvs).forEach((fv) => {
     if (fv.isEdit) {
       const attr = generate_attributes(t.attributes, t.validate_attributes);
-      is.str(fv.run("foo", undefined, attr, "myclass", true));
-      is.str(fv.run("foo", undefined, attr, "myclass", false));
+      is.str(fv.run("foo", undefined, attr, "myclass", true, { name: "foo" }));
+      is.str(fv.run("foo", undefined, attr, "myclass", false, { name: "foo" }));
     }
   });
   //find examples, run all fieldview on each example
@@ -44,8 +44,10 @@ const auto_test_type = (t) => {
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
         Object.values(fvs).forEach((fv) => {
           if (fv.isEdit) {
-            is.str(fv.run("foo", x, attribs, "myclass", true));
-            is.str(fv.run("foo", x, attribs, "myclass", false));
+            is.str(fv.run("foo", x, attribs, "myclass", true, { name: "foo" }));
+            is.str(
+              fv.run("foo", x, attribs, "myclass", false, { name: "foo" })
+            );
           } else {
             is.str(fv.run(x));
           }

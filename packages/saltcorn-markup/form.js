@@ -13,18 +13,23 @@ const {
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
+const rmInitialDot = (s) => (s && s[0] === "." ? s.replace(".", "") : s);
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
       typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
-            value
-          )}`
+        ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').prop('checked')===${JSON.stringify(value)}`
         : Array.isArray(value)
         ? `[${value
             .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('${target}').val())`
-        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val())`
+        : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val()==='${value}'`
     )
     .join(" && ");
 
@@ -107,9 +112,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       const opts = select_options(v, hdr);
       return `<select class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}"${
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
         hdr.attributes && hdr.attributes.explainers
           ? ` data-explainers="${encodeURIComponent(
               JSON.stringify(hdr.attributes.explainers)
@@ -119,9 +124,11 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
     case "textarea":
       return `<textarea class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}">${text(v[hdr.form_name])}</textarea>`;
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+        v[hdr.form_name]
+      )}</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
         hdr.input_type = "select";
@@ -145,7 +152,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.input_type
       }" class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
@@ -236,7 +245,9 @@ const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
   if (hdr.disabled) attributes.disabled = true;
-  if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
+  if (hdr.fieldviewObj) {
+    fieldview = hdr.fieldviewObj;
+  } else if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {
     //first isedit fieldview
@@ -249,7 +260,8 @@ const displayEdit = (hdr, name, v, extracls) => {
     v,
     attributes,
     extracls + " " + hdr.class,
-    hdr.required
+    hdr.required,
+    hdr
   );
 };
 

@@ -48,38 +48,33 @@ module.exports = {
         {
           name: "viewname",
           label: "View to send",
-          type: "String",
-          required: true,
-          attributes: {
-            options: view_opts.join(),
-          },
+          input_type: "select",
+          options: view_opts,
         },
         {
           name: "to_email",
           label: "Recipient email address",
-          type: "String",
-          class: "to_email",
+          input_type: "select",
           required: true,
-          attributes: {
-            options: "Fixed,User,Field",
-          },
+
+          options: ["Fixed", "User", "Field"],
         },
         {
           name: "to_email_field",
           label: "Field with address",
           sublabel:
             "Field with email address a String, or Key to user who will receive email",
-          type: "String",
-          attributes: {
-            options: field_opts.join(),
-          },
-          showIf: { ".to_email": "Field" },
+          input_type: "select",
+
+          options: field_opts,
+
+          showIf: { to_email: "Field" },
         },
         {
           name: "to_email_fixed",
           label: "Fixed address",
           type: "String",
-          showIf: { ".to_email": "Fixed" },
+          showIf: { to_email: "Fixed" },
         },
         {
           name: "subject",

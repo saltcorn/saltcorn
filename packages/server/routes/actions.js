@@ -119,7 +119,6 @@ const triggerForm = async (req, trigger) => {
         name: "when_trigger",
         label: req.__("When"),
         input_type: "select",
-        class: "whentrig",
         required: true,
         options: Trigger.when_options.map((t) => ({ value: t, label: t })),
       },
@@ -128,7 +127,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Table"),
         input_type: "select",
         options: [...tables.map((t) => ({ value: t.id, label: t.name }))],
-        showIf: { ".whentrig": ["Insert", "Update", "Delete"] },
+        showIf: { when_trigger: ["Insert", "Update", "Delete"] },
       },
     ],
   });

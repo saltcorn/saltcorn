@@ -42,6 +42,7 @@ class State {
     this.headers = [];
     this.function_context = {};
     this.functions = {};
+    this.keyFieldviews = {};
     contract.class(this);
   }
   getLayout(user) {
@@ -119,6 +120,10 @@ class State {
       this.auth_methods[k] = v;
     });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
+      if (v.type === "Key") {
+        this.keyFieldviews[k] = v;
+        return;
+      }
       const type = this.types[v.type];
       if (type) {
         if (type.fieldviews) type.fieldviews[k] = v;
@@ -161,6 +166,7 @@ class State {
     this.headers = [];
     this.function_context = {};
     this.functions = {};
+    this.keyFieldviews = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });

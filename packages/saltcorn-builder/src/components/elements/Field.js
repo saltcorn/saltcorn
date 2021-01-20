@@ -1,7 +1,13 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleRow, ConfigForm } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  TextStyleRow,
+  ConfigForm,
+  setInitialConfig,
+} from "./utils";
 
 export const Field = ({ name, fieldview, block, textStyle }) => {
   const {
@@ -36,9 +42,9 @@ export const FieldSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const fvs = options.field_view_options[name];
-  const cfgFields = ((options.fieldViewConfigForms || {})[name] || {})[
-    fieldview
-  ];
+  const getCfgFields = (fv) =>
+    ((options.fieldViewConfigForms || {})[name] || {})[fv];
+  const cfgFields = getCfgFields(fieldview);
   return (
     <Fragment>
       <table className="w-100">
@@ -74,9 +80,14 @@ export const FieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.fieldview = e.target.value))
-                  }
+                  onChange={(e) => {
+                    setProp((prop) => (prop.fieldview = e.target.value));
+                    setInitialConfig(
+                      setProp,
+                      e.target.value,
+                      getCfgFields(e.target.value)
+                    );
+                  }}
                 >
                   {(fvs || []).map((fvnm, ix) => (
                     <option key={ix} value={fvnm}>

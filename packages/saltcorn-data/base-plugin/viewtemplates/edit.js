@@ -26,7 +26,7 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
-          const fieldViewConfigForms = calcfldViewConfig(fields, false);
+          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -178,6 +178,14 @@ const getForm = async (table, viewname, columns, layout, id, req) => {
         const f = fields.find((fld) => fld.name === column.field_name);
         if (f) {
           f.fieldview = column.fieldview;
+          if (f.type === "Key") {
+            if (getState().keyFieldviews[column.fieldview])
+              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+                ? "select"
+                : "fromtype";
+          }
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({

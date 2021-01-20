@@ -320,6 +320,7 @@ export const ToolboxShow = () => {
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
       <ImageElem connectors={connectors} images={images} />
+      <HTMLElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -342,6 +343,7 @@ export const ToolboxFilter = () => {
       <CardElem connectors={connectors} />
       <TabsElem connectors={connectors} />
       <ViewElem connectors={connectors} views={views} />
+      <HTMLElem connectors={connectors} />
     </Fragment>
   );
 };
@@ -366,6 +368,7 @@ export const ToolboxEdit = () => {
       <TabsElem connectors={connectors} />
       <LinkElem connectors={connectors} />
       <ImageElem connectors={connectors} images={images} />
+      <HTMLElem connectors={connectors} />
     </Fragment>
   );
 };

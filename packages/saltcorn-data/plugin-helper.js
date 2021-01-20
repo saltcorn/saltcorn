@@ -7,6 +7,7 @@ const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text } = require("@saltcorn/markup/tags");
+const { applyAsync } = require("./utils");
 
 const link_view = (url, label, popup, link_style = "", link_size = "") => {
   if (popup) {
@@ -57,7 +58,7 @@ const calcfldViewOptions = contract(
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
-        fvs[f.name] = ["select"];
+        fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(
           ([k, fv]) => !fv.isEdit === !isEdit
@@ -69,15 +70,21 @@ const calcfldViewOptions = contract(
   }
 );
 const calcfldViewConfig = contract(
-  is.fun([is.array(is.class("Field")), is.bool], is.obj()),
-  (fields, isEdit) => {
+  is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
+  async (fields, isEdit) => {
     const fieldViewConfigForms = {};
-    fields.forEach((f) => {
+    for (const f of fields) {
       fieldViewConfigForms[f.name] = {};
-      Object.entries(f.type.fieldviews || {}).forEach(([nm, fv]) => {
-        if (fv.configFields) fieldViewConfigForms[f.name][nm] = fv.configFields;
-      });
-    });
+      const fieldviews =
+        f.type === "Key" ? getState().keyFieldviews : f.type.fieldviews || {};
+      for (const [nm, fv] of Object.entries(fieldviews)) {
+        if (fv.configFields)
+          fieldViewConfigForms[f.name][nm] = await applyAsync(
+            fv.configFields,
+            f
+          );
+      }
+    }
     return fieldViewConfigForms;
   }
 );
@@ -151,8 +158,8 @@ const field_picker_fields = contract(
         actionConfigFields.push({
           ...field,
           showIf: {
-            ".action_name": name,
-            ".coltype": "Action",
+            action_name: name,
+            type: "Action",
             ...(field.showIf || {}),
           },
         });
@@ -180,8 +187,8 @@ const field_picker_fields = contract(
           .join(),
       },
       showIf: {
-        ".agg_relation": `${table.name}.${key_field.name}`,
-        ".coltype": "Aggregation",
+        agg_relation: `${table.name}.${key_field.name}`,
+        type: "Aggregation",
       },
     }));
     return [
@@ -189,7 +196,6 @@ const field_picker_fields = contract(
         name: "type",
         label: __("Type"),
         type: "String",
-        class: "coltype",
         required: true,
         attributes: {
           //TODO omit when no options
@@ -222,7 +228,7 @@ const field_picker_fields = contract(
         attributes: {
           options: fldOptions.join(),
         },
-        showIf: { ".coltype": "Field" },
+        showIf: { type: "Field" },
       },
       {
         name: "fieldview",
@@ -232,31 +238,30 @@ const field_picker_fields = contract(
         attributes: {
           calcOptions: [".field_name", fldViewOptions],
         },
-        showIf: { ".coltype": "Field" },
+        showIf: { type: "Field" },
       },
       {
         name: "action_name",
         label: __("Action"),
         type: "String",
-        class: "action_name",
         required: true,
         attributes: {
           options: actions.join(),
         },
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       {
         name: "action_label",
         label: __("Action Label"),
         type: "String",
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       {
         name: "action_label_formula",
         label: __("Action label is a formula?"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       {
         name: "action_style",
@@ -278,7 +283,7 @@ const field_picker_fields = contract(
           ],
         },
 
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       {
         name: "action_size",
@@ -294,13 +299,13 @@ const field_picker_fields = contract(
             { name: "btn-block btn-lg", label: "Large block" },
           ],
         },
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       {
         name: "confirm",
         label: __("User confirmation?"),
         type: "Bool",
-        showIf: { ".coltype": "Action" },
+        showIf: { type: "Action" },
       },
       ...actionConfigFields,
       {
@@ -311,7 +316,7 @@ const field_picker_fields = contract(
         attributes: {
           options: link_view_opts,
         },
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "view_label",
@@ -319,21 +324,21 @@ const field_picker_fields = contract(
         sublabel: __("Leave blank for default label."),
         type: "String",
         required: false,
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "view_label_formula",
         label: __("View label is a formula?"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "in_modal",
         label: __("Open in popup modal?"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "link_style",
@@ -358,7 +363,7 @@ const field_picker_fields = contract(
           ],
         },
 
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "link_size",
@@ -374,42 +379,42 @@ const field_picker_fields = contract(
             { name: "btn-block btn-lg", label: "Large block" },
           ],
         },
-        showIf: { ".coltype": "ViewLink" },
+        showIf: { type: "ViewLink" },
       },
       {
         name: "link_text",
         label: __("Link text"),
         type: "String",
         required: true,
-        showIf: { ".coltype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "link_text_formula",
         label: __("Link text is a formula?"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "link_url",
         label: __("Link URL"),
         type: "String",
         required: true,
-        showIf: { ".coltype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "link_url_formula",
         label: __("Link URL is a formula?"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "link_target_blank",
         label: __("Open in new tab"),
         type: "Bool",
         required: false,
-        showIf: { ".coltype": "Link" },
+        showIf: { type: "Link" },
       },
       {
         name: "join_field",
@@ -419,18 +424,17 @@ const field_picker_fields = contract(
         attributes: {
           options: parent_field_list.join(),
         },
-        showIf: { ".coltype": "JoinField" },
+        showIf: { type: "JoinField" },
       },
       {
         name: "agg_relation",
         label: __("Relation"),
         type: "String",
-        class: "agg_relation",
         required: true,
         attributes: {
           options: child_field_list.join(),
         },
-        showIf: { ".coltype": "Aggregation" },
+        showIf: { type: "Aggregation" },
       },
       ...agg_field_opts,
       {
@@ -441,13 +445,13 @@ const field_picker_fields = contract(
         attributes: {
           options: "Count,Avg,Sum,Max,Min",
         },
-        showIf: { ".coltype": "Aggregation" },
+        showIf: { type: "Aggregation" },
       },
       {
         name: "state_field",
         label: __("In search form"),
         type: "Bool",
-        showIf: { ".coltype": "Field" },
+        showIf: { type: "Field" },
       },
       {
         name: "header_label",

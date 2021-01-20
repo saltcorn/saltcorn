@@ -48,7 +48,6 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         label: req.__("Calculated"),
         name: "calculated",
         type: "Bool",
-        class: "iscalc",
         disabled: !!id,
       }),
       new Field({
@@ -56,12 +55,12 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "required",
         type: "Bool",
         disabled: !!id && db.isSQLite,
-        showIf: { ".iscalc": false },
+        showIf: { calculated: false },
       }),
       new Field({
         label: req.__("Unique"),
         name: "is_unique",
-        showIf: { ".iscalc": false },
+        showIf: { calculated: false },
         type: "Bool",
       }),
 
@@ -70,7 +69,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "stored",
         type: "Bool",
         disabled: !!id,
-        showIf: { ".iscalc": true },
+        showIf: { calculated: true },
       }),
     ],
   });

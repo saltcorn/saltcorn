@@ -278,7 +278,7 @@ function press_store_button(clicked) {
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
 }
 
-function ajax_modal(url) {
+function ajax_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal", class="modal" tabindex="-1">
     <div class="modal-dialog">
@@ -296,12 +296,18 @@ function ajax_modal(url) {
     </div>
   </div>`);
   }
+  if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
+  else $("#scmodal").removeClass("no-submit-reload");
   $.ajax(url, {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(title);
       $("#scmodal .modal-body").html(res);
       $("#scmodal").modal();
+      (opts.onOpen || function () {})(res);
+      $("#scmodal").on("hidden.bs.modal", function (e) {
+        (opts.onClose || function () {})(res);
+      });
     },
   });
 }
@@ -316,8 +322,9 @@ function ajaxSubmitForm(e) {
     },
     data: form_data,
     success: function () {
+      var no_reload = $("#scmodal").hasClass("no-submit-reload");
       $("#scmodal").modal("hide");
-      location.reload();
+      if (!no_reload) location.reload();
     },
     error: function (request) {
       var title = request.getResponseHeader("Page-Title");

@@ -65,7 +65,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const fieldViewConfigForms = calcfldViewConfig(fields, false);
+          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const field_view_options = calcfldViewOptions(fields, false);
 
           const link_view_opts = await get_link_view_opts(
