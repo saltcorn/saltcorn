@@ -7,6 +7,7 @@ const {
   h5,
   span,
   text_attr,
+  script,
 } = require("@saltcorn/markup/tags");
 const { select_options } = require("@saltcorn/markup/helpers");
 
@@ -42,9 +43,28 @@ const search_or_create = {
         select_options(v, field)
       ) +
       a(
-        { href: `javascript:ajax_modal('/view/${attrs.viewname}')` },
+        {
+          href: `javascript:ajax_modal('/view/${attrs.viewname}',{submitReload: false,onClose: soc_process_${nm}})`,
+        },
         attrs.label || "Or create new"
-      )
+      ) +
+      script(`
+      function soc_process_${nm}(){
+        $.ajax('/api/${field.reftable_name}', {
+          success: function (res, textStatus, request) {
+            console.log(res);
+            var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
+              attrs.summary_field
+            }+'</option>').join("")
+            ${reqd ? "" : `opts = '<option></option>'+opts`}
+            $('#input${text_attr(
+              nm
+            )}').html(opts).prop('selectedIndex', res.success.length${
+        reqd ? "-1" : ""
+      }); 
+          }
+        })
+      }`)
     );
   },
 };
