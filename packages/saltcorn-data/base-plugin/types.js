@@ -78,12 +78,13 @@ const string = {
           type: "String",
         },
       ],
-      run: (nm, v, attrs, cls, required) =>
+      run: (nm, v, attrs, cls, required, field) =>
         attrs.options
           ? select(
               {
                 class: ["form-control", cls],
                 name: text_attr(nm),
+                "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 disabled: attrs.disabled,
               },
@@ -100,6 +101,7 @@ const string = {
                 class: ["form-control", cls],
                 name: text_attr(nm),
                 disabled: attrs.disabled,
+                "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
@@ -113,6 +115,7 @@ const string = {
               disabled: attrs.disabled,
               class: ["form-control", cls],
               placeholder: attrs.placeholder,
+              "data-fieldname": text_attr(field.name),
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
               ...(isdef(v) && { value: text_attr(v) }),
@@ -120,11 +123,12 @@ const string = {
     },
     textarea: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
             class: ["form-control", cls],
             name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
             id: `input${text_attr(nm)}`,
             rows: 10,
@@ -134,11 +138,13 @@ const string = {
     },
     password: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "password",
           disabled: attrs.disabled,
           class: ["form-control", cls],
+          "data-fieldname": text_attr(field.name),
+
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
@@ -187,11 +193,12 @@ const int = {
     show: { isEdit: false, run: (s) => text(s) },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
           class: ["form-control", cls],
           disabled: attrs.disabled,
+          "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           step: "1",
@@ -242,11 +249,12 @@ const color = {
     },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "color",
           class: ["form-control", cls],
           disabled: attrs.disabled,
+          "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
@@ -275,11 +283,12 @@ const float = {
     show: { isEdit: false, run: (s) => text(s) },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
           class: ["form-control", cls],
           name: text_attr(nm),
+          "data-fieldname": text_attr(field.name),
           disabled: attrs.disabled,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
@@ -379,10 +388,11 @@ const date = {
     },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "text",
           class: ["form-control", cls],
+          "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
@@ -395,10 +405,11 @@ const date = {
     },
     editDay: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "text",
           class: ["form-control", cls],
+          "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
@@ -461,9 +472,10 @@ const bool = {
     },
     edit: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         input({
           class: ["form-check-input", cls],
+          "data-fieldname": text_attr(field.name),
           type: "checkbox",
           disabled: attrs.disabled,
           name: text_attr(nm),
@@ -473,7 +485,7 @@ const bool = {
     },
     tristate: {
       isEdit: true,
-      run: (nm, v, attrs, cls) =>
+      run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
             ? ""
@@ -482,6 +494,7 @@ const bool = {
             : "F"
           : input({
               type: "hidden",
+              "data-fieldname": text_attr(field.name),
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
               value: !isdef(v) || v === null ? "?" : v ? "on" : "off",

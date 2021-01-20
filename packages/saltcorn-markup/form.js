@@ -17,14 +17,14 @@ const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
       typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('[name=${target}]').prop('checked')===${JSON.stringify(
+        ? `e.closest('.form-namespace').find('[data-fieldname=${target}]').prop('checked')===${JSON.stringify(
             value
           )}`
         : Array.isArray(value)
         ? `[${value
             .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('[name=${target}]').val())`
-        : `e.closest('.form-namespace').find('[name=${target}]').val()==='${value}'`
+            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${target}]').val())`
+        : `e.closest('.form-namespace').find('[data-fieldname=${target}]').val()==='${value}'`
     )
     .join(" && ");
 
@@ -107,9 +107,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       const opts = select_options(v, hdr);
       return `<select class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}"${
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
         hdr.attributes && hdr.attributes.explainers
           ? ` data-explainers="${encodeURIComponent(
               JSON.stringify(hdr.attributes.explainers)
@@ -119,9 +119,11 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
     case "textarea":
       return `<textarea class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}">${text(v[hdr.form_name])}</textarea>`;
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+        v[hdr.form_name]
+      )}</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
         hdr.input_type = "select";
@@ -145,7 +147,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.input_type
       }" class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
