@@ -52,7 +52,6 @@ const search_or_create = {
       function soc_process_${nm}(){
         $.ajax('/api/${field.reftable_name}', {
           success: function (res, textStatus, request) {
-            console.log(res);
             var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
               attrs.summary_field
             }+'</option>').join("")
