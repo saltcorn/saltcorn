@@ -7,6 +7,7 @@ import {
   MinRoleSetting,
   OrFormula,
   ConfigForm,
+  setInitialConfig,
 } from "./utils";
 
 export const Action = ({
@@ -57,7 +58,8 @@ export const ActionSettings = () => {
     action_size,
   } = node;
   const options = useContext(optionsCtx);
-  const cfgFields = (options.actionConfigForms || {})[name];
+  const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
+  const cfgFields = getCfgFields(name);
   return (
     <div>
       <table className="w-100">
@@ -69,7 +71,14 @@ export const ActionSettings = () => {
             <select
               value={name}
               className="w-100 mr-2"
-              onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
+              onChange={(e) => {
+                setProp((prop) => (prop.name = e.target.value));
+                setInitialConfig(
+                  setProp,
+                  e.target.value,
+                  getCfgFields(e.target.value)
+                );
+              }}
             >
               {options.actions.map((f, ix) => (
                 <option key={ix} value={f}>
@@ -80,7 +89,7 @@ export const ActionSettings = () => {
           </td>
         </tr>
         <tr>
-          <td colspan="2">
+          <td colSpan="2">
             <label>Label (leave blank for default)</label>
             <OrFormula nodekey="action_label" {...{ setProp, isFormula, node }}>
               <input
@@ -163,6 +172,7 @@ export const ActionSettings = () => {
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}
+          node={node}
         />
       ) : null}
     </div>

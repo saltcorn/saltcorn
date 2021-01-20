@@ -45,7 +45,6 @@ export const FieldSettings = () => {
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
-  console.log(configuration);
   return (
     <Fragment>
       <table className="w-100">

@@ -62,7 +62,7 @@ export const ColumnsSettings = () => {
             <td>
               <label>Number of columns</label>
             </td>
-            <td colspan="2">
+            <td colSpan="2">
               <input
                 type="number"
                 value={ncols}
@@ -83,7 +83,7 @@ export const ColumnsSettings = () => {
             <Fragment key={ix}>
               <tr>
                 {" "}
-                <th colspan="3">Column {ix + 1}</th>
+                <th colSpan="3">Column {ix + 1}</th>
               </tr>
               <tr>
                 <td>

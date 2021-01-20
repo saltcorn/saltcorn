@@ -184,19 +184,30 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
       });
   });
 };
-export const ConfigForm = ({ fields, configuration, setProp }) => (
+export const ConfigForm = ({ fields, configuration, setProp, node }) => (
   <Fragment>
-    {fields.map((f, ix) => (
-      <Fragment key={ix}>
-        {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
-        <ConfigField
-          field={f}
-          configuration={configuration}
-          setProp={setProp}
-        />
-        {f.sublabel ? <i>{f.sublabel}</i> : null}
-      </Fragment>
-    ))}
+    {fields.map((f, ix) => {
+      if (f.showIf && node && node.configuration) {
+        let noshow = false;
+        Object.entries(f.showIf).forEach(([nm, value]) => {
+          if (Array.isArray(value))
+            noshow = noshow || value.includes(node.configuration[nm]);
+          else noshow = noshow || value !== node.configuration[nm];
+        });
+        if (noshow) return null;
+      }
+      return (
+        <Fragment key={ix}>
+          {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
+          <ConfigField
+            field={f}
+            configuration={configuration}
+            setProp={setProp}
+          />
+          {f.sublabel ? <i>{f.sublabel}</i> : null}
+        </Fragment>
+      );
+    })}
     <br />
   </Fragment>
 );
