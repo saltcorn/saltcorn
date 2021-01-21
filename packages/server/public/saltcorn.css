@@ -188,3 +188,6 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .plugin-section .nav-link {
   padding: 0.5rem 0.75rem;
 }
+.sidebar .nav-item .collapse .collapse-inner .collapse-item {
+  margin: 0px;
+}

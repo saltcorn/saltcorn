@@ -85,16 +85,15 @@ const get_menu = (req) => {
       subitems: [
         { link: "/plugins", icon: "fas fa-plug", label: req.__("Plugins") },
         { link: "/actions", icon: "fas fa-running", label: req.__("Actions") },
-        { link: "/menu", icon: "fas fa-bars", label: req.__("Menu") },
+        {
+          link: "/information-architecture",
+          icon: "fas fa-compass",
+          label: req.__("Information architecture"),
+        },
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
           label: req.__("Users and roles"),
-        },
-        {
-          link: "/search/config",
-          icon: "fas fa-search",
-          label: req.__("Search"),
         },
         {
           link: "/config",

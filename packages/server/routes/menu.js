@@ -12,6 +12,7 @@ const Page = require("@saltcorn/data/models/page");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
+const { send_settings_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -188,61 +189,52 @@ router.get(
         },
       ],
     });
-    res.sendWrap(
-      {
+    send_settings_page({
+      res,
+      req,
+      main_section: "Information architecture",
+      main_section_href: "/information-architecture",
+      sub_sections: [
+        { text: "Menu", href: "/menu" },
+        { text: "Search", href: "/search/config" },
+      ],
+      active_sub: "Menu",
+      headers: [
+        {
+          script: "/jquery-menu-editor.min.js",
+        },
+        {
+          script: "/iconset-fontawesome5-3-1.min.js",
+        },
+        {
+          script: "/bootstrap-iconpicker.min.js",
+        },
+        {
+          css: "/bootstrap-iconpicker.min.css",
+        },
+      ],
+      contents: {
+        type: "card",
         title: req.__(`Menu editor`),
-        headers: [
-          {
-            script: "/jquery-menu-editor.min.js",
-          },
-          {
-            script: "/iconset-fontawesome5-3-1.min.js",
-          },
-          {
-            script: "/bootstrap-iconpicker.min.js",
-          },
-          {
-            css: "/bootstrap-iconpicker.min.css",
-          },
-        ],
-      },
-      {
-        above: [
-          {
-            type: "breadcrumbs",
-            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
-          },
-          {
-            type: "card",
-            title: req.__(`Site identity`),
-            contents: renderForm(site_form, req.csrfToken()),
-          },
-          {
-            type: "card",
-            title: req.__(`Menu editor`),
-            contents: {
-              above: [
-                {
-                  besides: [
-                    div(
-                      ul({ id: "myEditor", class: "sortableLists list-group" })
-                    ),
-                    div(
-                      renderForm(form, req.csrfToken()),
-                      script(domReady(menuEditorScript(menu_items)))
-                    ),
-                  ],
-                },
-                {
-                  type: "blank",
-                  contents: renderForm(submit_form, req.csrfToken()),
-                },
+        contents: {
+          above: [
+            {
+              besides: [
+                div(ul({ id: "myEditor", class: "sortableLists list-group" })),
+                div(
+                  renderForm(form, req.csrfToken()),
+                  script(domReady(menuEditorScript(menu_items)))
+                ),
               ],
             },
-          },
-        ],
-      }
-    );
+            {
+              type: "blank",
+              contents: renderForm(submit_form, req.csrfToken()),
+            },
+          ],
+        },
+      },
+    });
   })
 );
 

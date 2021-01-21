@@ -7,6 +7,8 @@ const {
   i,
   a,
   span,
+  ul,
+  li,
 } = require("@saltcorn/markup/tags");
 
 const restore_backup = (csrf, inner) =>
@@ -51,6 +53,7 @@ const send_settings_page = ({
   sub_sections,
   active_sub,
   contents,
+  headers,
   no_nav_pills,
 }) => {
   const pillCard = no_nav_pills
@@ -78,7 +81,13 @@ const send_settings_page = ({
           ),
         },
       ];
-  res.sendWrap(req.__(active_sub), {
+  const title = headers
+    ? {
+        title: req.__(active_sub),
+        headers,
+      }
+    : req.__(active_sub);
+  res.sendWrap(title, {
     above: [
       {
         type: "breadcrumbs",
