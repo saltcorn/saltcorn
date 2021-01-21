@@ -86,16 +86,8 @@ const create_table_jsons = contract(
     await fs.mkdir(dirpath);
     const tables = await Table.find({});
     for (const t of tables) {
-      if (t.name !== "users") await create_table_json(t, dirpath);
+      await create_table_json(t, dirpath);
     }
-  }
-);
-
-const create_users_csv = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (root_dirpath) => {
-    const users = await db.select("users");
-    await create_csv_from_rows(users, path.join(root_dirpath, "users.csv"));
   }
 );
 
@@ -136,7 +128,6 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
 
   await create_pack(dir.path);
   await create_table_jsons(dir.path);
-  await create_users_csv(dir.path);
   await backup_files(dir.path);
   await backup_config(dir.path);
 
@@ -187,32 +178,29 @@ const restore_files = contract(
   }
 );
 
-const restore_users = contract(
-  is.fun(is.str, is.promise(is.maybe(is.str))),
-  async (dirpath) => {
-    const usertable = await Table.findOne({ name: "users" });
-    const res = await usertable.import_csv_file(
-      path.join(dirpath, "users.csv"),
-      false,
-      true
-    );
-    return res.error;
-  }
-);
-
 const restore_tables = contract(
   is.fun(is.str, is.promise(is.maybe(is.str))),
   async (dirpath) => {
     var err;
-    const tables = (await Table.find()).filter((t) => t.name !== "users");
+    const tables = await Table.find();
     for (const table of tables) {
-      const fnm_csv = path.join(dirpath, "tables", table.name + ".csv");
+      const fnm_csv =
+        table.name === "users"
+          ? path.join(dirpath, "users.csv")
+          : path.join(dirpath, "tables", table.name + ".csv");
       const fnm_json = path.join(dirpath, "tables", table.name + ".json");
       if (existsSync(fnm_json)) {
-        const res = await table.import_json_file(fnm_json);
+        const res = await table.import_json_file(
+          fnm_json,
+          table.name === "users"
+        );
         if (res.error) err = (err || "") + res.error;
       } else if (existsSync(fnm_csv)) {
-        const res = await table.import_csv_file(fnm_csv);
+        const res = await table.import_csv_file(
+          fnm_csv,
+          false,
+          table.name === "users"
+        );
         if (res.error) err = (err || "") + res.error;
       }
     }
@@ -264,9 +252,6 @@ const restore = contract(
     }
 
     await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
-
-    //users
-    await restore_users(dir.path);
 
     // files
     await restore_files(dir.path);

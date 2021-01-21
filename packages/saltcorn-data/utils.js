@@ -5,7 +5,13 @@ const removeEmptyStrings = (obj) => {
   });
   return o;
 };
-
+const removeDefaultColor = (obj) => {
+  var o = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== "#000000") o[k] = v;
+  });
+  return o;
+};
 const isEmpty = (o) => Object.keys(o).length === 0;
 
 const asyncMap = async (xs, asyncF) => {
@@ -35,6 +41,7 @@ const applyAsync = async (f, x) => {
 };
 module.exports = {
   removeEmptyStrings,
+  removeDefaultColor,
   isEmpty,
   asyncMap,
   numberToBool,

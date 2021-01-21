@@ -7,7 +7,7 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
-const { removeEmptyStrings } = require("../../utils");
+const { removeEmptyStrings, removeDefaultColor } = require("../../utils");
 const {
   field_picker_fields,
   picked_fields_to_query,
@@ -310,6 +310,9 @@ module.exports = {
   routes: { run_action },
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
-  default_state_form: ({ default_state }) =>
-    default_state && removeEmptyStrings(default_state),
+  default_state_form: ({ default_state }) => {
+    if (!default_state) return default_state;
+    const { _omit_state_form, _create_db_view, ...ds } = default_state;
+    return ds && removeDefaultColor(removeEmptyStrings(ds));
+  },
 };
