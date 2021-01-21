@@ -34,14 +34,7 @@ const add_edit_bar = ({ role, title, contents, what, url }) => {
     { class: "alert alert-light d-print-none" },
     title,
     what && span({ class: "ml-1 badge badge-primary" }, what),
-    a(
-      {
-        class: "ml-4",
-        href: url,
-      },
-      "Edit&nbsp;",
-      i({ class: "fas fa-edit" })
-    )
+    a({ class: "ml-4", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" }))
   );
 
   if (contents.above) {
@@ -50,4 +43,55 @@ const add_edit_bar = ({ role, title, contents, what, url }) => {
   } else return { above: [bar, contents] };
 };
 
-module.exports = { restore_backup, add_edit_bar };
+const send_settings_page = ({
+  req,
+  res,
+  main_section,
+  main_section_href,
+  sub_sections,
+  active_sub,
+  contents,
+  no_nav_pills,
+}) => {
+  const pillCard = no_nav_pills
+    ? []
+    : [
+        {
+          type: "card",
+          contents: div(
+            { class: "d-flex" },
+            ul(
+              { class: "nav nav-pills plugin-section" },
+              sub_sections.map(({ text, href }) =>
+                li(
+                  { class: "nav-item" },
+                  a(
+                    {
+                      href,
+                      class: ["nav-link", active_sub === text && "active"],
+                    },
+                    req.__(text)
+                  )
+                )
+              )
+            )
+          ),
+        },
+      ];
+  res.sendWrap(req.__(active_sub), {
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: req.__("Settings") },
+          { text: req.__(main_section), href: main_section_href },
+          { text: req.__(active_sub) },
+        ],
+      },
+      ...pillCard,
+      contents,
+    ],
+  });
+};
+
+module.exports = { restore_backup, add_edit_bar, send_settings_page };
