@@ -3,6 +3,7 @@ const { contract, is } = require("contractis");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
+const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -37,6 +38,29 @@ const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
+const getUserFields = async () => {
+  const userTable = await Table.findOne({ name: "users" });
+  const userFields = (await userTable.getFields()).filter((f) => !f.calculated);
+  const iterForm = async (cfgField) => {
+    const signup_form_name = getState().getConfig(cfgField, "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (signup_form) {
+        (signup_form.configuration.columns || []).forEach((f) => {
+          const uf = userFields.find((uff) => uff.name === f.field_name);
+          if (uf) {
+            uf.fieldview = f.fieldview;
+            uf.attributes = { ...f.configuration, ...uf.attributes };
+          }
+        });
+      }
+    }
+  };
+  await iterForm("signup_form");
+  await iterForm("new_user_form");
+
+  return userFields;
+};
 const userForm = contract(
   is.fun(
     [is.obj({}), is.maybe(is.class("User"))],
@@ -52,10 +76,7 @@ const userForm = contract(
     const roles = (await User.get_roles()).filter((r) => r.role !== "public");
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
     const can_reset = getState().getConfig("smtp_host", "") !== "";
-    const userTable = await Table.findOne({ name: "users" });
-    const userFields = (await userTable.getFields()).filter(
-      (f) => !f.calculated
-    );
+    const userFields = await getUserFields();
     const form = new Form({
       fields: [roleField, ...userFields],
       action: "/useradmin/save",
