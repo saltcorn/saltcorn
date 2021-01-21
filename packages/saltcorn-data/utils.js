@@ -6,11 +6,10 @@ const removeEmptyStrings = (obj) => {
   return o;
 };
 const removeDefaultColor = (obj) => {
-  var o = {};
   Object.entries(obj).forEach(([k, v]) => {
-    if (v === "#000000") delete o[k];
+    if (v === "#000000") delete obj[k];
   });
-  return o;
+  return obj;
 };
 const isEmpty = (o) => Object.keys(o).length === 0;
 
