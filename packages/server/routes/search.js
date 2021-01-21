@@ -8,7 +8,7 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
 const { pagination } = require("@saltcorn/markup/helpers");
-const { send_settings_page } = require("../markup/admin.js");
+const { send_infoarch_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -68,15 +68,9 @@ router.get(
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
     form.values = getState().getConfig("globalSearch");
-    send_settings_page({
+    send_infoarch_page({
       res,
       req,
-      main_section: "Information architecture",
-      main_section_href: "/information-architecture",
-      sub_sections: [
-        { text: "Menu", href: "/menu" },
-        { text: "Search", href: "/search/config" },
-      ],
       active_sub: "Search",
       contents: {
         type: "card",
@@ -101,15 +95,9 @@ router.post(
       await getState().setConfig("globalSearch", result.success);
       res.redirect("/search/config");
     } else {
-      send_settings_page({
+      send_infoarch_page({
         res,
         req,
-        main_section: "Information architecture",
-        main_section_href: "/information-architecture",
-        sub_sections: [
-          { text: "Menu", href: "/menu" },
-          { text: "Search", href: "/search/config" },
-        ],
         active_sub: "Search",
         contents: {
           type: "card",

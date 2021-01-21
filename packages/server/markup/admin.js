@@ -103,4 +103,20 @@ const send_settings_page = ({
   });
 };
 
-module.exports = { restore_backup, add_edit_bar, send_settings_page };
+const send_infoarch_page = (args) =>
+  send_settings_page({
+    main_section: "Information architecture",
+    main_section_href: "/information-architecture",
+    sub_sections: [
+      { text: "Menu", href: "/menu" },
+      { text: "Search", href: "/search/config" },
+    ],
+    ...args,
+  });
+
+module.exports = {
+  restore_backup,
+  add_edit_bar,
+  send_settings_page,
+  send_infoarch_page,
+};

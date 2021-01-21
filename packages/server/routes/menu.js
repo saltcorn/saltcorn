@@ -12,7 +12,7 @@ const Page = require("@saltcorn/data/models/page");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
-const { send_settings_page } = require("../markup/admin.js");
+const { send_infoarch_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -173,10 +173,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
-    const site_form = await siteIdForm(req);
     const state = getState();
-    site_form.values.site_name = state.getConfig("site_name");
-    site_form.values.site_logo_id = state.getConfig("site_logo_id");
     const menu_items = menuTojQME(state.getConfig("menu_items"));
     const submit_form = new Form({
       action: "/menu/",
@@ -189,15 +186,10 @@ router.get(
         },
       ],
     });
-    send_settings_page({
+    send_infoarch_page({
       res,
       req,
-      main_section: "Information architecture",
-      main_section_href: "/information-architecture",
-      sub_sections: [
-        { text: "Menu", href: "/menu" },
-        { text: "Search", href: "/search/config" },
-      ],
+
       active_sub: "Menu",
       headers: [
         {
