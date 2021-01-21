@@ -10,6 +10,7 @@ const {
   ul,
   li,
 } = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
 
 const restore_backup = (csrf, inner) =>
   form(
@@ -55,6 +56,7 @@ const send_settings_page = ({
   contents,
   headers,
   no_nav_pills,
+  sub2_page,
 }) => {
   const pillCard = no_nav_pills
     ? []
@@ -94,7 +96,19 @@ const send_settings_page = ({
         crumbs: [
           { text: req.__("Settings") },
           { text: req.__(main_section), href: main_section_href },
-          { text: req.__(active_sub) },
+          {
+            text: req.__(active_sub),
+            href: sub2_page
+              ? sub_sections.find((subsec) => subsec.text === active_sub).href
+              : null,
+          },
+          ...(sub2_page
+            ? [
+                {
+                  text: sub2_page,
+                },
+              ]
+            : []),
         ],
       },
       ...pillCard,
@@ -103,16 +117,21 @@ const send_settings_page = ({
   });
 };
 
-const send_infoarch_page = (args) =>
-  send_settings_page({
+const send_infoarch_page = (args) => {
+  const tenant_list =
+    db.is_it_multi_tenant() &&
+    db.getTenantSchema() === db.connectObj.default_schema;
+  return send_settings_page({
     main_section: "Information architecture",
     main_section_href: "/information-architecture",
     sub_sections: [
       { text: "Menu", href: "/menu" },
       { text: "Search", href: "/search/config" },
+      ...(tenant_list ? [{ text: "Tenants", href: "/tenant/list" }] : []),
     ],
     ...args,
   });
+};
 
 module.exports = {
   restore_backup,

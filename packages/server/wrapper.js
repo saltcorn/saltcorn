@@ -71,8 +71,6 @@ const get_menu = (req) => {
           : []),
       ];
   const schema = db.getTenantSchema();
-  const tenant_list =
-    db.is_it_multi_tenant() && schema === db.connectObj.default_schema;
   const isAdmin = role === 1;
   const adminItems = [
     { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
@@ -101,15 +99,6 @@ const get_menu = (req) => {
           label: req.__("Configuration"),
         },
         { link: "/admin", icon: "fas fa-tools", label: req.__("Admin") },
-        ...(tenant_list
-          ? [
-              {
-                link: "/tenant/list",
-                icon: "fas fa-boxes",
-                label: req.__("Tenants"),
-              },
-            ]
-          : []),
         ...(schema === db.connectObj.default_schema
           ? [
               {

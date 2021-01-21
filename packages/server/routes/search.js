@@ -46,19 +46,7 @@ const searchConfigForm = (tables, views, req) => {
     fields,
   });
 };
-const wrap = (response, req) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [{ text: req.__("Settings") }, { text: req.__("Search") }],
-    },
-    {
-      type: "card",
-      title: req.__("Search configuration"),
-      contents: response,
-    },
-  ],
-});
+
 router.get(
   "/config",
   setTenant,
