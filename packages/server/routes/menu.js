@@ -189,7 +189,6 @@ router.get(
     send_infoarch_page({
       res,
       req,
-
       active_sub: "Menu",
       headers: [
         {

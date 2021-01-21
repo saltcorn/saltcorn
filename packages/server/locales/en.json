@@ -549,5 +549,8 @@
 	"Not a valid e-mail address": "Not a valid e-mail address",
 	"Custom CSS": "Custom CSS",
 	"Custom HTML": "Custom HTML",
-	"Information architecture": "Information architecture"
+	"Information architecture": "Information architecture",
+	"SSL": "SSL",
+	"Users and security": "Users and security",
+	"User settings updated": "User settings updated"
 }

@@ -11,6 +11,17 @@ const {
   li,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
+const {
+  getConfig,
+  setConfig,
+  getAllConfigOrDefaults,
+  deleteConfig,
+  configTypes,
+  isFixedConfig,
+} = require("@saltcorn/data/models/config");
+const { getState } = require("@saltcorn/data/db/state");
+
+const Form = require("@saltcorn/data/models/form");
 
 const restore_backup = (csrf, inner) =>
   form(
@@ -133,9 +144,39 @@ const send_infoarch_page = (args) => {
   });
 };
 
+const send_users_page = (args) => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  return send_settings_page({
+    main_section: "Users and security",
+    main_section_href: "/useradmin",
+    sub_sections: [
+      { text: "Users", href: "/useradmin" },
+      { text: "Roles", href: "/useradmin/roles" },
+      { text: "Settings", href: "/useradmin/settings" },
+      ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
+    ],
+    ...args,
+  });
+};
+
+const config_fields_form = ({ field_names, ...formArgs }) => {
+  const values = {};
+  const state = getState();
+  const fields = field_names.map((name) => {
+    values[name] = state.getConfig(name);
+    return {
+      name,
+      ...configTypes[name],
+    };
+  });
+  return new Form({ fields, values, ...formArgs });
+};
+
 module.exports = {
   restore_backup,
   add_edit_bar,
   send_settings_page,
   send_infoarch_page,
+  config_fields_form,
+  send_users_page,
 };

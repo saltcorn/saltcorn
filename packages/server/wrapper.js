@@ -91,7 +91,7 @@ const get_menu = (req) => {
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
-          label: req.__("Users and roles"),
+          label: req.__("Users and security"),
         },
         {
           link: "/config",

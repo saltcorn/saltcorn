@@ -35,6 +35,7 @@ const {
   br,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
+const { send_users_page, config_fields_form } = require("../markup/admin");
 const router = new Router();
 module.exports = router;
 
@@ -211,63 +212,81 @@ router.get(
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
+    const can_reset = getState().getConfig("smtp_host", "") !== "";
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      contents: {
+        type: "card",
+        title: req.__("Users"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              {
+                label: req.__("Email"),
+                key: (r) => link(`/useradmin/${r.id}`, r.email),
+              },
+              {
+                label: "",
+                key: (r) =>
+                  r.disabled
+                    ? span({ class: "badge badge-danger" }, "Disabled")
+                    : "",
+              },
+              { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+              {
+                label: "",
+                key: (r) => user_dropdown(r, req, can_reset),
+              },
+            ],
+            users
+          ),
+          link(`/useradmin/new`, req.__("Add user")),
+        ],
+      },
+    });
+  })
+);
+
+router.get(
+  "/roles",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const roles = await User.get_roles();
+    var roleMap = {};
+    roles.forEach((r) => {
+      roleMap[r.id] = r.role;
+    });
     const layouts = Object.keys(getState().layouts).filter(
       (l) => l !== "emergency"
     );
     const layout_by_role = getState().getConfig("layout_by_role");
-    const can_reset = getState().getConfig("smtp_host", "") !== "";
-    res.sendWrap(
-      req.__("Users"),
-      wrap(req, [
-        {
-          type: "card",
-          title: req.__("Users"),
-          contents: [
-            mkTable(
-              [
-                { label: req.__("ID"), key: "id" },
-                {
-                  label: req.__("Email"),
-                  key: (r) => link(`/useradmin/${r.id}`, r.email),
-                },
-                {
-                  label: "",
-                  key: (r) =>
-                    r.disabled
-                      ? span({ class: "badge badge-danger" }, "Disabled")
-                      : "",
-                },
-                { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
-                {
-                  label: "",
-                  key: (r) => user_dropdown(r, req, can_reset),
-                },
-              ],
-              users
-            ),
-            link(`/useradmin/new`, req.__("Add user")),
-          ],
-        },
-        {
-          type: "card",
-          title: req.__("Roles"),
-          contents: [
-            mkTable(
-              [
-                { label: req.__("ID"), key: "id" },
-                { label: req.__("Role"), key: "role" },
-                {
-                  label: req.__("Theme"),
-                  key: (role) =>
-                    editRoleLayoutForm(role, layouts, layout_by_role, req),
-                },
-              ],
-              roles
-            ),
-          ],
-        },
-      ])
-    );
+    send_users_page({
+      res,
+      req,
+      active_sub: "Roles",
+      contents: {
+        type: "card",
+        title: req.__("Roles"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              { label: req.__("Role"), key: "role" },
+              {
+                label: req.__("Theme"),
+                key: (role) =>
+                  editRoleLayoutForm(role, layouts, layout_by_role, req),
+              },
+            ],
+            roles
+          ),
+        ],
+      },
+    });
   })
 );
 
@@ -277,25 +296,71 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm(req);
-    res.sendWrap(
-      req.__("New user"),
-      wrap(
-        req,
-        [
-          {
-            type: "card",
-            title: req.__("Users"),
-            contents: [renderForm(form, req.csrfToken())],
-          },
-        ],
-        {
-          text: req.__("New"),
-        }
-      )
-    );
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("New user"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
   })
 );
 
+const user_settings_form = () =>
+  config_fields_form({
+    field_names: ["allow_signup", "login_menu", "allow_forgot"],
+    action: "/useradmin/settings",
+  });
+router.get(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Settings"),
+        contents: [renderForm(user_settings_form(), req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = user_settings_form();
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Settings"),
+          contents: [renderForm(user_settings_form(), req.csrfToken())],
+        },
+      });
+    } else {
+      const state = getState();
+
+      for (const [k, v] of Object.entries(form.values)) {
+        await state.setConfig(k, v);
+      }
+      req.flash("success", req.__("User settings updated"));
+      res.redirect("/useradmin/settings");
+    }
+  })
+);
 router.get(
   "/:id",
   setTenant,
@@ -305,16 +370,12 @@ router.get(
     const user = await User.findOne({ id });
     const form = await userForm(req, user);
 
-    res.sendWrap(req.__("Edit user"), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings") },
-            { text: req.__("Users"), href: "/useradmin" },
-            { text: user.email },
-          ],
-        },
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: user.email,
+      contents: [
         {
           type: "card",
           title: req.__("Edit user %s", user.email),
