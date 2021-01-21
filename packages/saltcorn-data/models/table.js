@@ -471,7 +471,7 @@ class Table {
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
-  async import_json_file(filePath) {
+  async import_json_file(filePath, skip_first_data_row) {
     const file_rows = JSON.parse(await fs.readFile(filePath));
     const fields = await this.getFields();
     const { readState } = require("../plugin-helper");
@@ -481,6 +481,7 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      if (skip_first_data_row && i === 2) continue;
       fields
         .filter((f) => f.calculated && !f.stored)
         .forEach((f) => {
