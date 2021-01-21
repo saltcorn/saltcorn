@@ -311,6 +311,7 @@ module.exports = {
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
   default_state_form: ({ default_state }) => {
+    if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
