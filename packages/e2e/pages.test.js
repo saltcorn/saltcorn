@@ -64,22 +64,6 @@ describe("Dotcom and db page page", () => {
       "Plugin saltcorn-dotcom-pages installed"
     );
   });
-  it("sets home page", async () => {
-    await browser.goto("/pageedit");
-    expect(await browser.content()).toContain("Root pages");
-    await browser.page.select("#inputpublic", "root");
-    await browser.clickNav("button[type=submit]");
-  });
-  it("Logs out 2", async () => {
-    await browser.goto("/auth/logout");
-  });
-  it("displays root page", async () => {
-    await browser.goto("/");
-    const page = await browser.content();
-    expect(page).toContain(
-      "The Saltcorn wiki, issue tracker, blog and store are built with Saltcorn"
-    );
-  });
 });
 
 afterAll(async () => {
