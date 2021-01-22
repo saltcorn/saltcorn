@@ -161,17 +161,20 @@ const formForKey = async (req, key, value) => {
     const views = await View.find({ table_id: table.id, viewtemplate: "Edit" });
     return { options: views.map((v) => v.name).join(",") };
   };
+  const blurb = configTypes[key].blurb;
+  const sublabel = configTypes[key].sublabel;
+  const label = configTypes[key].label || key;
   const form = new Form({
     action: `/config/edit/${key}`,
-    blurb: req.__(configTypes[key].blurb),
+    blurb: blurb ? req.__(blurb) : undefined,
     submitLabel: req.__("Save"),
     fields: [
       {
         name: key,
-        label: req.__(configTypes[key].label || key),
+        label: label ? req.__(label) : undefined,
         type: isView ? "String" : configTypes[key].type,
         fieldview: configTypes[key].fieldview,
-        sublabel: req.__(configTypes[key].sublabel),
+        sublabel: sublabel ? req.__(sublabel) : undefined,
         attributes: isView
           ? await viewAttributes()
           : configTypes[key].attributes,
