@@ -93,9 +93,9 @@ const get_menu = (req) => {
           label: req.__("Users and security"),
         },
         {
-          link: "/information-architecture",
+          link: "/site-structure",
           icon: "fas fa-compass",
-          label: req.__("Information architecture"),
+          label: req.__("Site structure"),
         },
 
         {

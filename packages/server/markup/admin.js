@@ -135,8 +135,8 @@ const send_infoarch_page = (args) => {
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
-    main_section: "Information architecture",
-    main_section_href: "/information-architecture",
+    main_section: "Site structure",
+    main_section_href: "/site-structure",
     sub_sections: [
       { text: "Menu", href: "/menu" },
       { text: "Search", href: "/search/config" },

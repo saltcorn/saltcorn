@@ -39,7 +39,7 @@ module.exports = (app) => {
   app.use("/page", page);
   app.use("/pageedit", pageedit);
   app.use("/actions", actions);
-  app.use("/information-architecture", infoarch);
+  app.use("/site-structure", infoarch);
   app.use("/search", search);
   app.use("/admin", admin);
   app.use("/tenant", tenant);
