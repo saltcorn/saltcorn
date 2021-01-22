@@ -359,7 +359,7 @@ router.post(
         contents: {
           type: "card",
           title: req.__("Authentication settings"),
-          contents: [renderForm(user_settings_form(), req.csrfToken())],
+          contents: [renderForm(form, req.csrfToken())],
         },
       });
     } else {
@@ -389,12 +389,26 @@ router.get(
       return;
     }
     const letsencrypt = getState().getConfig("letsencrypt", false);
-    const has_custom = false;
+    const has_custom =
+      getState().getConfig("custom_ssl_certificate", false) &&
+      getState().getConfig("custom_ssl_private_key", false);
     send_users_page({
       res,
       req,
       active_sub: "SSL",
       contents: [
+        ...(letsencrypt && has_custom
+          ? [
+              {
+                type: "card",
+                contents: p(
+                  req.__(
+                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                  )
+                ),
+              },
+            ]
+          : []),
         {
           type: "card",
           title: req.__("HTTPS encryption with Let's Encrypt SSL certificate"),
@@ -440,10 +454,70 @@ router.get(
                 ? span({ class: "badge badge-primary" }, req.__("Enabled"))
                 : span({ class: "badge badge-secondary" }, req.__("Disabled"))
             ),
+            link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
           ],
         },
       ],
     });
+  })
+);
+
+const ssl_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
+    action: "/useradmin/ssl/custom",
+  });
+router.get(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Authentication settings"),
+        sub2_page: req.__("Custom SSL certificates"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Authentication settings"),
+          sub2_page: req.__("Custom SSL certificates"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      const state = getState();
+
+      for (const [k, v] of Object.entries(form.values)) {
+        await state.setConfig(k, v);
+      }
+      req.flash(
+        "success",
+        req.__("Custom SSL enabled. Restart for changes to take effect.")
+      );
+      res.redirect("/useradmin/ssl");
+    }
   })
 );
 router.get(

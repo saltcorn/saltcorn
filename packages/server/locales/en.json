@@ -558,5 +558,10 @@
 	"Saltcorn can automatically obtain an SSL certificate from <a href=\"https://letsencrypt.org/\">Let's Encrypt</a> for single domains": "Saltcorn can automatically obtain an SSL certificate from <a href=\"https://letsencrypt.org/\">Let's Encrypt</a> for single domains",
 	"Currently: ": "Currently: ",
 	"HTTPS encryption with custom SSL certificate": "HTTPS encryption with custom SSL certificate",
-	"Or use custom SSL certificates, including wildcard certificates for multitenant applications": "Or use custom SSL certificates, including wildcard certificates for multitenant applications"
+	"Or use custom SSL certificates, including wildcard certificates for multitenant applications": "Or use custom SSL certificates, including wildcard certificates for multitenant applications",
+	"Authentication settings": "Authentication settings",
+	"Custom SSL certificates": "Custom SSL certificates",
+	"Custom SSL enabled. Restart for changes to take effect.": "Custom SSL enabled. Restart for changes to take effect.",
+	"Enabled": "Enabled",
+	"You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored.": "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
 }
