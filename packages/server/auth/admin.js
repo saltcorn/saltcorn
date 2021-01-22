@@ -33,6 +33,9 @@ const {
   option,
   select,
   br,
+  h4,
+  h5,
+  p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { send_users_page, config_fields_form } = require("../markup/admin");
@@ -335,7 +338,7 @@ router.get(
       active_sub: "Settings",
       contents: {
         type: "card",
-        title: req.__("Settings"),
+        title: req.__("Authentication settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -355,7 +358,7 @@ router.post(
         active_sub: "Settings",
         contents: {
           type: "card",
-          title: req.__("Settings"),
+          title: req.__("Authentication settings"),
           contents: [renderForm(user_settings_form(), req.csrfToken())],
         },
       });
@@ -368,6 +371,79 @@ router.post(
       req.flash("success", req.__("User settings updated"));
       res.redirect("/useradmin/settings");
     }
+  })
+);
+
+router.get(
+  "/ssl",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot) {
+      req.flash(
+        "warning",
+        req.__("SSL settings not available for subdomain tenants")
+      );
+      res.redirect("/useradmin");
+      return;
+    }
+    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const has_custom = false;
+    send_users_page({
+      res,
+      req,
+      active_sub: "SSL",
+      contents: [
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with Let's Encrypt SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              letsencrypt
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+            letsencrypt
+              ? post_btn(
+                  "/config/delete/",
+                  req.__("Disable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { btnClass: "btn-danger", req }
+                )
+              : post_btn(
+                  "/admin/enable-letsencrypt",
+                  req.__("Enable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { confirm: true, req }
+                ),
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with custom SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Or use custom SSL certificates, including wildcard certificates for multitenant applications`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              has_custom
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+          ],
+        },
+      ],
+    });
   })
 );
 router.get(

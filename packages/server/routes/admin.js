@@ -280,7 +280,7 @@ router.post(
       const base_url = getState().getConfig("base_url");
       if (!base_url) {
         req.flash("error", req.__("Set Base URL configuration first"));
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       const domain = base_url
@@ -298,7 +298,7 @@ router.post(
             req.hostname
           )
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       const allTens = await getAllTenants();
@@ -307,7 +307,7 @@ router.post(
           "error",
           req.__("Cannot enable LetsEncrypt as there are subdomain tenants")
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       try {
@@ -333,14 +333,14 @@ router.post(
           "success",
           req.__("LetsEncrypt SSL enabled. Restart for changes to take effect.")
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
       } catch (e) {
         req.flash("error", e.message);
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
       }
     } else {
       req.flash("error", req.__("Not possible for tenant"));
-      res.redirect("/admin");
+      res.redirect("/useradmin/ssl");
     }
   })
 );
