@@ -197,6 +197,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};
   const state = getState();
   const fields = [];
+
   for (const name of field_names) {
     values[name] = state.getConfig(name);
     const isView = configTypes[name].type.startsWith("View ");
@@ -214,7 +215,9 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
         : configTypes[name].attributes,
     });
   }
-  return new Form({ fields, values, ...formArgs });
+  const form = new Form({ fields, values, ...formArgs });
+  await form.fill_fkey_options();
+  return form;
 };
 
 const save_config_from_form = async (form) => {
