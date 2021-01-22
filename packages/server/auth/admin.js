@@ -412,7 +412,7 @@ router.get(
             ),
             letsencrypt
               ? post_btn(
-                  "/config/delete/",
+                  "/config/delete/letsencrypt",
                   req.__("Disable LetsEncrypt HTTPS"),
                   req.csrfToken(),
                   { btnClass: "btn-danger", req }
