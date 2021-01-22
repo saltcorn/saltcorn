@@ -35,7 +35,7 @@ describe("admin page", () => {
     await request(app)
       .get("/admin")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Restart"));
+      .expect(toInclude("Site identity settings"));
   });
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
