@@ -200,6 +200,7 @@ router.get(
       req,
       active_sub: "System",
       contents: {
+        breakpoint: "md",
         besides: [
           {
             type: "card",
