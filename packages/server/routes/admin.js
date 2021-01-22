@@ -200,65 +200,74 @@ router.get(
       req,
       active_sub: "System",
       contents: {
-        type: "card",
-        title: req.__("Admin"),
-        contents: div(
-          div(
-            post_btn(
-              "/admin/restart",
-              req.__("Restart server"),
-              req.csrfToken(),
-              {
-                ajax: true,
-                reload_delay: 4000,
-                spinner: true,
-              }
-            )
-          ),
-          hr(),
-
-          a(
-            { href: "/admin/clear-all", class: "btn btn-danger" },
-            i({ class: "fas fa-trash-alt" }),
-            " ",
-            req.__("Clear all"),
-            " &raquo;"
-          ),
-          hr(),
-
-          h4(req.__("About Saltcorn")),
-          table(
-            tbody(
-              tr(
-                th(req.__("Saltcorn version")),
-                td(
-                  packagejson.version +
-                    (isRoot && can_update
-                      ? post_btn(
-                          "/admin/upgrade",
-                          req.__("Upgrade"),
-                          req.csrfToken(),
-                          {
-                            btnClass: "btn-primary btn-sm",
-                            formClass: "d-inline",
-                          }
-                        )
-                      : isRoot && !can_update
-                      ? span(
-                          { class: "badge badge-primary ml-2" },
-                          req.__("Latest")
-                        )
-                      : "")
+        besides: [
+          {
+            type: "card",
+            title: req.__("System operations"),
+            contents: div(
+              div(
+                post_btn(
+                  "/admin/restart",
+                  req.__("Restart server"),
+                  req.csrfToken(),
+                  {
+                    ajax: true,
+                    reload_delay: 4000,
+                    spinner: true,
+                  }
                 )
               ),
-              tr(th(req.__("Node.js version")), td(process.version)),
-              tr(
-                th(req.__("Database")),
-                td(db.isSQLite ? "SQLite" : "PostgreSQL")
+              hr(),
+
+              a(
+                { href: "/admin/clear-all", class: "btn btn-danger" },
+                i({ class: "fas fa-trash-alt" }),
+                " ",
+                req.__("Clear all"),
+                " &raquo;"
+              ),
+              hr()
+            ),
+          },
+          {
+            type: "card",
+            title: req.__("About the system"),
+            contents: div(
+              h4(req.__("About Saltcorn")),
+              table(
+                tbody(
+                  tr(
+                    th(req.__("Saltcorn version")),
+                    td(
+                      packagejson.version +
+                        (isRoot && can_update
+                          ? post_btn(
+                              "/admin/upgrade",
+                              req.__("Upgrade"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : isRoot && !can_update
+                          ? span(
+                              { class: "badge badge-primary ml-2" },
+                              req.__("Latest")
+                            )
+                          : "")
+                    )
+                  ),
+                  tr(th(req.__("Node.js version")), td(process.version)),
+                  tr(
+                    th(req.__("Database")),
+                    td(db.isSQLite ? "SQLite" : "PostgreSQL")
+                  )
+                )
               )
-            )
-          )
-        ),
+            ),
+          },
+        ],
       },
     });
   })
