@@ -125,20 +125,6 @@ const userForm = contract(
   }
 );
 
-const wrap = (req, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Users"), href: lastBc && "/useradmin" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    ...response,
-  ],
-});
-
 const user_dropdown = (user, req, can_reset) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(

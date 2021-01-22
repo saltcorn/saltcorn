@@ -81,28 +81,28 @@ const get_menu = (req) => {
       label: req.__("Settings"),
       icon: "fas fa-wrench",
       subitems: [
+        {
+          link: "/admin",
+          icon: "fas fa-tools",
+          label: req.__("About application"),
+        },
         { link: "/plugins", icon: "fas fa-plug", label: req.__("Plugins") },
-        {
-          link: "/events",
-          icon: "fas fa-calendar-check",
-          label: req.__("Events"),
-        },
-        {
-          link: "/information-architecture",
-          icon: "fas fa-compass",
-          label: req.__("Information architecture"),
-        },
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
           label: req.__("Users and security"),
         },
         {
-          link: "/config",
-          icon: "fas fa-cogs",
-          label: req.__("Configuration"),
+          link: "/information-architecture",
+          icon: "fas fa-compass",
+          label: req.__("Information architecture"),
         },
-        { link: "/admin", icon: "fas fa-tools", label: req.__("Admin") },
+
+        {
+          link: "/events",
+          icon: "fas fa-calendar-check",
+          label: req.__("Events"),
+        },
       ],
     },
   ];

@@ -32,12 +32,29 @@ const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
-const { restore_backup } = require("../markup/admin.js");
+const {
+  restore_backup,
+  send_admin_page,
+  config_fields_form,
+} = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
+
+const site_id_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "site_name",
+      "site_logo_id",
+      "base_url",
+      "page_custom_css",
+      "page_custom_html",
+    ],
+    action: "/admin",
+  });
 
 router.get(
   "/",
@@ -45,93 +62,148 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const letsencrypt = getState().getConfig("letsencrypt", false);
-    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
-    const can_update = packagejson.version !== latest;
-    res.sendWrap(req.__(`Admin`), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Settings") }, { text: req.__("Admin") }],
-        },
-        {
+    const form = await site_id_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Site identity",
+      contents: {
+        type: "card",
+        title: req.__("Admin"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const form = await site_id_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Site identity",
+        contents: {
           type: "card",
           title: req.__("Admin"),
-          contents: div(
-            div(
-              post_btn(
-                "/admin/restart",
-                req.__("Restart server"),
-                req.csrfToken(),
-                {
-                  ajax: true,
-                  reload_delay: 4000,
-                  spinner: true,
-                }
-              )
-            ),
-            hr(),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      const state = getState();
 
-            post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
-            hr(),
-            restore_backup(req.csrfToken(), [
-              i({ class: "fas fa-2x fa-upload" }),
-              "<br/>",
-              req.__("Restore"),
-            ]),
-            !letsencrypt && isRoot && hr(),
-            !letsencrypt &&
-              isRoot &&
-              post_btn(
-                "/admin/enable-letsencrypt",
-                req.__("Enable LetsEncrypt HTTPS"),
-                req.csrfToken()
-              ),
-            hr(),
-            a(
-              { href: "/admin/clear-all", class: "btn btn-danger" },
-              i({ class: "fas fa-trash-alt" }),
-              " ",
-              req.__("Clear all"),
-              " &raquo;"
-            ),
-            hr(),
+      for (const [k, v] of Object.entries(form.values)) {
+        await state.setConfig(k, v);
+      }
+      req.flash("success", req.__("Site identity settings updated"));
+      res.redirect("/admin");
+    }
+  })
+);
+router.get(
+  "/backup",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        type: "card",
+        title: req.__("Backup"),
+        contents: div(
+          post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
+          hr(),
+          restore_backup(req.csrfToken(), [
+            i({ class: "fas fa-2x fa-upload" }),
+            "<br/>",
+            req.__("Restore"),
+          ])
+        ),
+      },
+    });
+  })
+);
 
-            h4(req.__("About Saltcorn")),
-            table(
-              tbody(
-                tr(
-                  th(req.__("Saltcorn version")),
-                  td(
-                    packagejson.version +
-                      (isRoot && can_update
-                        ? post_btn(
-                            "/admin/upgrade",
-                            req.__("Upgrade"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : isRoot && !can_update
-                        ? span(
-                            { class: "badge badge-primary ml-2" },
-                            req.__("Latest")
-                          )
-                        : "")
-                  )
-                ),
-                tr(th(req.__("Node.js version")), td(process.version)),
-                tr(
-                  th(req.__("Database")),
-                  td(db.isSQLite ? "SQLite" : "PostgreSQL")
-                )
-              )
+router.get(
+  "/system",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
+    const can_update = packagejson.version !== latest;
+    send_admin_page({
+      res,
+      req,
+      active_sub: "System",
+      contents: {
+        type: "card",
+        title: req.__("Admin"),
+        contents: div(
+          div(
+            post_btn(
+              "/admin/restart",
+              req.__("Restart server"),
+              req.csrfToken(),
+              {
+                ajax: true,
+                reload_delay: 4000,
+                spinner: true,
+              }
             )
           ),
-        },
-      ],
+          hr(),
+
+          a(
+            { href: "/admin/clear-all", class: "btn btn-danger" },
+            i({ class: "fas fa-trash-alt" }),
+            " ",
+            req.__("Clear all"),
+            " &raquo;"
+          ),
+          hr(),
+
+          h4(req.__("About Saltcorn")),
+          table(
+            tbody(
+              tr(
+                th(req.__("Saltcorn version")),
+                td(
+                  packagejson.version +
+                    (isRoot && can_update
+                      ? post_btn(
+                          "/admin/upgrade",
+                          req.__("Upgrade"),
+                          req.csrfToken(),
+                          {
+                            btnClass: "btn-primary btn-sm",
+                            formClass: "d-inline",
+                          }
+                        )
+                      : isRoot && !can_update
+                      ? span(
+                          { class: "badge badge-primary ml-2" },
+                          req.__("Latest")
+                        )
+                      : "")
+                )
+              ),
+              tr(th(req.__("Node.js version")), td(process.version)),
+              tr(
+                th(req.__("Database")),
+                td(db.isSQLite ? "SQLite" : "PostgreSQL")
+              )
+            )
+          )
+        ),
+      },
     });
   })
 );

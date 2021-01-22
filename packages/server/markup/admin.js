@@ -173,6 +173,20 @@ const send_events_page = (args) => {
     ...args,
   });
 };
+const send_admin_page = (args) => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  return send_settings_page({
+    main_section: "About application",
+    main_section_href: "/admin",
+    sub_sections: [
+      { text: "Site identity", href: "/admin" },
+      { text: "Backup", href: "/admin/backup" },
+      { text: "Email", href: "/admin/email" },
+      { text: "System", href: "/admin/system" }, //clear all, restart, versions
+    ],
+    ...args,
+  });
+};
 const viewAttributes = async (key) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = await Table.findOne({ name: table_name });
@@ -211,4 +225,5 @@ module.exports = {
   config_fields_form,
   send_users_page,
   send_events_page,
+  send_admin_page,
 };

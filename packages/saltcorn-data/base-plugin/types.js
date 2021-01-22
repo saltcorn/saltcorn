@@ -131,7 +131,7 @@ const string = {
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
             id: `input${text_attr(nm)}`,
-            rows: 10,
+            rows: 5,
           },
           text(v) || ""
         ),
