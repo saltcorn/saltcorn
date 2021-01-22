@@ -52,8 +52,24 @@ const site_id_form = (req) =>
       "base_url",
       "page_custom_css",
       "page_custom_html",
+      "development_mode",
+      "log_sql",
     ],
     action: "/admin",
+  });
+
+const email_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "smtp_host",
+      "smtp_username",
+      "smtp_password",
+      "smtp_port",
+      "smtp_secure",
+      "email_from",
+    ],
+    action: "/admin/email",
   });
 
 router.get(
@@ -69,7 +85,7 @@ router.get(
       active_sub: "Site identity",
       contents: {
         type: "card",
-        title: req.__("Admin"),
+        title: req.__("Site identity settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -80,7 +96,6 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const form = await site_id_form(req);
     form.validate(req.body);
     if (form.hasErrors) {
@@ -90,7 +105,7 @@ router.post(
         active_sub: "Site identity",
         contents: {
           type: "card",
-          title: req.__("Admin"),
+          title: req.__("Site identity settings"),
           contents: [renderForm(form, req.csrfToken())],
         },
       });
@@ -102,6 +117,53 @@ router.post(
       }
       req.flash("success", req.__("Site identity settings updated"));
       res.redirect("/admin");
+    }
+  })
+);
+router.get(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Email",
+      contents: {
+        type: "card",
+        title: req.__("Email settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Email",
+        contents: {
+          type: "card",
+          title: req.__("Email settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      const state = getState();
+
+      for (const [k, v] of Object.entries(form.values)) {
+        await state.setConfig(k, v);
+      }
+      req.flash("success", req.__("Email settings updated"));
+      res.redirect("/admin/email");
     }
   })
 );

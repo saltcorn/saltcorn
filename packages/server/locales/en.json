@@ -567,5 +567,8 @@
 	"Events": "Events",
 	"About application": "About application",
 	"System": "System",
-	"Site identity settings updated": "Site identity settings updated"
+	"Site identity settings updated": "Site identity settings updated",
+	"Email settings": "Email settings",
+	"Site identity settings": "Site identity settings",
+	"Email settings updated": "Email settings updated"
 }
