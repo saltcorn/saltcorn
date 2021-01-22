@@ -230,7 +230,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         ix,
         div(
           {
-            class: `card shadow mt-4 ${segment.url ? "with-link" : ""}`,
+            class: [
+              "card shadow mt-4",
+              segment.class,
+              segment.url && "with-link",
+            ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
           },
           segment.title &&

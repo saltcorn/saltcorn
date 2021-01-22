@@ -191,3 +191,6 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .sidebar .nav-item .collapse .collapse-inner .collapse-item {
   margin: 0px;
 }
+.crashlog-entry {
+  overflow-x: scroll;
+}

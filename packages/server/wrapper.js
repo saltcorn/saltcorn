@@ -82,7 +82,11 @@ const get_menu = (req) => {
       icon: "fas fa-wrench",
       subitems: [
         { link: "/plugins", icon: "fas fa-plug", label: req.__("Plugins") },
-        { link: "/actions", icon: "fas fa-running", label: req.__("Actions") },
+        {
+          link: "/events",
+          icon: "fas fa-calendar-check",
+          label: req.__("Events"),
+        },
         {
           link: "/information-architecture",
           icon: "fas fa-compass",
@@ -99,15 +103,6 @@ const get_menu = (req) => {
           label: req.__("Configuration"),
         },
         { link: "/admin", icon: "fas fa-tools", label: req.__("Admin") },
-        ...(schema === db.connectObj.default_schema
-          ? [
-              {
-                link: "/crashlog",
-                icon: "fas fa-car-crash",
-                label: req.__("Crash log"),
-              },
-            ]
-          : []),
       ],
     },
   ];
