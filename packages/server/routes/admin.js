@@ -225,8 +225,7 @@ router.get(
                 " ",
                 req.__("Clear all"),
                 " &raquo;"
-              ),
-              hr()
+              )
             ),
           },
           {
@@ -468,7 +467,11 @@ router.post(
         await getState().setConfig("letsencrypt", true);
         req.flash(
           "success",
-          req.__("LetsEncrypt SSL enabled. Restart for changes to take effect.")
+          req.__(
+            "LetsEncrypt SSL enabled. Restart for changes to take effect."
+          ) +
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
         );
         res.redirect("/useradmin/ssl");
       } catch (e) {

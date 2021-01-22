@@ -435,9 +435,9 @@ router.post(
       if (store_plugin && store_plugin.has_auth) {
         req.flash(
           "warning",
-          req.__(
-            `Restart required for changes to take effect. Restart server from the <a href="/admin">Admin page</a>.`
-          )
+          req.__(`Restart required for changes to take effect.`) +
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
         );
       }
       res.redirect("/plugins");
