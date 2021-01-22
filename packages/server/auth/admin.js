@@ -38,7 +38,11 @@ const {
   p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { send_users_page, config_fields_form } = require("../markup/admin");
+const {
+  send_users_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 const router = new Router();
 module.exports = router;
 
@@ -349,11 +353,7 @@ router.post(
         },
       });
     } else {
-      const state = getState();
-
-      for (const [k, v] of Object.entries(form.values)) {
-        await state.setConfig(k, v);
-      }
+      await save_config_from_form(form);
       req.flash("success", req.__("User settings updated"));
       res.redirect("/useradmin/settings");
     }
@@ -493,11 +493,7 @@ router.post(
         },
       });
     } else {
-      const state = getState();
-
-      for (const [k, v] of Object.entries(form.values)) {
-        await state.setConfig(k, v);
-      }
+      await save_config_from_form(form);
       req.flash(
         "success",
         req.__("Custom SSL enabled. Restart for changes to take effect.")

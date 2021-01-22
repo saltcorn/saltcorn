@@ -207,7 +207,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
       ...configTypes[name],
       label: label ? req.__(label) : undefined,
       sublabel: sublabel ? req.__(sublabel) : undefined,
-
+      disabled: isFixedConfig(name),
       type: isView ? "String" : configTypes[name].type,
       attributes: isView
         ? await viewAttributes(name)
@@ -217,6 +217,15 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   return new Form({ fields, values, ...formArgs });
 };
 
+const save_config_from_form = async (form) => {
+  const state = getState();
+
+  for (const [k, v] of Object.entries(form.values)) {
+    if (!isFixedConfig(k)) {
+      await state.setConfig(k, v);
+    }
+  }
+};
 module.exports = {
   restore_backup,
   add_edit_bar,
@@ -226,4 +235,5 @@ module.exports = {
   send_users_page,
   send_events_page,
   send_admin_page,
+  save_config_from_form,
 };

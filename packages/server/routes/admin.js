@@ -36,6 +36,7 @@ const {
   restore_backup,
   send_admin_page,
   config_fields_form,
+  save_config_from_form,
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
@@ -110,11 +111,8 @@ router.post(
         },
       });
     } else {
-      const state = getState();
+      await save_config_from_form(form);
 
-      for (const [k, v] of Object.entries(form.values)) {
-        await state.setConfig(k, v);
-      }
       req.flash("success", req.__("Site identity settings updated"));
       res.redirect("/admin");
     }
@@ -157,11 +155,7 @@ router.post(
         },
       });
     } else {
-      const state = getState();
-
-      for (const [k, v] of Object.entries(form.values)) {
-        await state.setConfig(k, v);
-      }
+      await save_config_from_form(form);
       req.flash("success", req.__("Email settings updated"));
       res.redirect("/admin/email");
     }
