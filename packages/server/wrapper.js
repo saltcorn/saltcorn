@@ -71,8 +71,6 @@ const get_menu = (req) => {
           : []),
       ];
   const schema = db.getTenantSchema();
-  const tenant_list =
-    db.is_it_multi_tenant() && schema === db.connectObj.default_schema;
   const isAdmin = role === 1;
   const adminItems = [
     { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
@@ -83,43 +81,31 @@ const get_menu = (req) => {
       label: req.__("Settings"),
       icon: "fas fa-wrench",
       subitems: [
+        {
+          link: "/admin",
+          icon: "fas fa-tools",
+          label: req.__("About application"),
+        },
         { link: "/plugins", icon: "fas fa-plug", label: req.__("Plugins") },
-        { link: "/actions", icon: "fas fa-running", label: req.__("Actions") },
-        { link: "/menu", icon: "fas fa-bars", label: req.__("Menu") },
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
-          label: req.__("Users and roles"),
+          label: req.__("Users and security"),
         },
         {
-          link: "/search/config",
-          icon: "fas fa-search",
-          label: req.__("Search"),
+          link: "/site-structure",
+          altlinks: ["/menu", "/search/config", "/tenant/list"],
+          icon: "fas fa-compass",
+          label: req.__("Site structure"),
         },
+
         {
-          link: "/config",
-          icon: "fas fa-cogs",
-          label: req.__("Configuration"),
+          link: "/events",
+          altlinks: ["/actions", "/crashlog"],
+
+          icon: "fas fa-calendar-check",
+          label: req.__("Events"),
         },
-        { link: "/admin", icon: "fas fa-tools", label: req.__("Admin") },
-        ...(tenant_list
-          ? [
-              {
-                link: "/tenant/list",
-                icon: "fas fa-boxes",
-                label: req.__("Tenants"),
-              },
-            ]
-          : []),
-        ...(schema === db.connectObj.default_schema
-          ? [
-              {
-                link: "/crashlog",
-                icon: "fas fa-car-crash",
-                label: req.__("Crash log"),
-              },
-            ]
-          : []),
       ],
     },
   ];

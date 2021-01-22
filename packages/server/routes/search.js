@@ -8,6 +8,7 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
 const { pagination } = require("@saltcorn/markup/helpers");
+const { send_infoarch_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -45,19 +46,7 @@ const searchConfigForm = (tables, views, req) => {
     fields,
   });
 };
-const wrap = (response, req) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [{ text: req.__("Settings") }, { text: req.__("Search") }],
-    },
-    {
-      type: "card",
-      title: req.__("Search configuration"),
-      contents: response,
-    },
-  ],
-});
+
 router.get(
   "/config",
   setTenant,
@@ -67,10 +56,16 @@ router.get(
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
     form.values = getState().getConfig("globalSearch");
-    res.sendWrap(
-      req.__(`Search configuration`),
-      wrap(renderForm(form, req.csrfToken()), req)
-    );
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Search",
+      contents: {
+        type: "card",
+        title: req.__(`Search configuration`),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
   })
 );
 
@@ -88,10 +83,16 @@ router.post(
       await getState().setConfig("globalSearch", result.success);
       res.redirect("/search/config");
     } else {
-      res.sendWrap(
-        req.__(`Search configuration`),
-        wrap(renderForm(form, req.csrfToken()), req)
-      );
+      send_infoarch_page({
+        res,
+        req,
+        active_sub: "Search",
+        contents: {
+          type: "card",
+          title: req.__(`Search configuration`),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
     }
   })
 );

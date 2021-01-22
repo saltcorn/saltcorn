@@ -33,8 +33,16 @@ const {
   option,
   select,
   br,
+  h4,
+  h5,
+  p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
+const {
+  send_users_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 const router = new Router();
 module.exports = router;
 
@@ -121,20 +129,6 @@ const userForm = contract(
   }
 );
 
-const wrap = (req, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Users"), href: lastBc && "/useradmin" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    ...response,
-  ],
-});
-
 const user_dropdown = (user, req, can_reset) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(
@@ -211,63 +205,81 @@ router.get(
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
+    const can_reset = getState().getConfig("smtp_host", "") !== "";
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      contents: {
+        type: "card",
+        title: req.__("Users"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              {
+                label: req.__("Email"),
+                key: (r) => link(`/useradmin/${r.id}`, r.email),
+              },
+              {
+                label: "",
+                key: (r) =>
+                  r.disabled
+                    ? span({ class: "badge badge-danger" }, "Disabled")
+                    : "",
+              },
+              { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+              {
+                label: "",
+                key: (r) => user_dropdown(r, req, can_reset),
+              },
+            ],
+            users
+          ),
+          link(`/useradmin/new`, req.__("Add user")),
+        ],
+      },
+    });
+  })
+);
+
+router.get(
+  "/roles",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const roles = await User.get_roles();
+    var roleMap = {};
+    roles.forEach((r) => {
+      roleMap[r.id] = r.role;
+    });
     const layouts = Object.keys(getState().layouts).filter(
       (l) => l !== "emergency"
     );
     const layout_by_role = getState().getConfig("layout_by_role");
-    const can_reset = getState().getConfig("smtp_host", "") !== "";
-    res.sendWrap(
-      req.__("Users"),
-      wrap(req, [
-        {
-          type: "card",
-          title: req.__("Users"),
-          contents: [
-            mkTable(
-              [
-                { label: req.__("ID"), key: "id" },
-                {
-                  label: req.__("Email"),
-                  key: (r) => link(`/useradmin/${r.id}`, r.email),
-                },
-                {
-                  label: "",
-                  key: (r) =>
-                    r.disabled
-                      ? span({ class: "badge badge-danger" }, "Disabled")
-                      : "",
-                },
-                { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
-                {
-                  label: "",
-                  key: (r) => user_dropdown(r, req, can_reset),
-                },
-              ],
-              users
-            ),
-            link(`/useradmin/new`, req.__("Add user")),
-          ],
-        },
-        {
-          type: "card",
-          title: req.__("Roles"),
-          contents: [
-            mkTable(
-              [
-                { label: req.__("ID"), key: "id" },
-                { label: req.__("Role"), key: "role" },
-                {
-                  label: req.__("Theme"),
-                  key: (role) =>
-                    editRoleLayoutForm(role, layouts, layout_by_role, req),
-                },
-              ],
-              roles
-            ),
-          ],
-        },
-      ])
-    );
+    send_users_page({
+      res,
+      req,
+      active_sub: "Roles",
+      contents: {
+        type: "card",
+        title: req.__("Roles"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              { label: req.__("Role"), key: "role" },
+              {
+                label: req.__("Theme"),
+                key: (role) =>
+                  editRoleLayoutForm(role, layouts, layout_by_role, req),
+              },
+            ],
+            roles
+          ),
+        ],
+      },
+    });
   })
 );
 
@@ -277,25 +289,221 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm(req);
-    res.sendWrap(
-      req.__("New user"),
-      wrap(
-        req,
-        [
-          {
-            type: "card",
-            title: req.__("Users"),
-            contents: [renderForm(form, req.csrfToken())],
-          },
-        ],
-        {
-          text: req.__("New"),
-        }
-      )
-    );
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("New user"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
   })
 );
 
+const user_settings_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "allow_signup",
+      "login_menu",
+      "new_user_form",
+      "login_form",
+      "signup_form",
+      "allow_forgot",
+    ],
+    action: "/useradmin/settings",
+  });
+router.get(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await user_settings_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Authentication settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await user_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Authentication settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("User settings updated"));
+      res.redirect("/useradmin/settings");
+    }
+  })
+);
+
+router.get(
+  "/ssl",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot) {
+      req.flash(
+        "warning",
+        req.__("SSL settings not available for subdomain tenants")
+      );
+      res.redirect("/useradmin");
+      return;
+    }
+    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const has_custom =
+      getState().getConfig("custom_ssl_certificate", false) &&
+      getState().getConfig("custom_ssl_private_key", false);
+    send_users_page({
+      res,
+      req,
+      active_sub: "SSL",
+      contents: [
+        ...(letsencrypt && has_custom
+          ? [
+              {
+                type: "card",
+                contents: p(
+                  req.__(
+                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                  )
+                ),
+              },
+            ]
+          : []),
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with Let's Encrypt SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              letsencrypt
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+            letsencrypt
+              ? post_btn(
+                  "/config/delete/letsencrypt",
+                  req.__("Disable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { btnClass: "btn-danger", req }
+                )
+              : post_btn(
+                  "/admin/enable-letsencrypt",
+                  req.__("Enable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { confirm: true, req }
+                ),
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with custom SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Or use custom SSL certificates, including wildcard certificates for multitenant applications`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              has_custom
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+            link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
+          ],
+        },
+      ],
+    });
+  })
+);
+
+const ssl_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
+    action: "/useradmin/ssl/custom",
+  });
+router.get(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Authentication settings"),
+        sub2_page: req.__("Custom SSL certificates"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Authentication settings"),
+          sub2_page: req.__("Custom SSL certificates"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash(
+        "success",
+        req.__("Custom SSL enabled. Restart for changes to take effect.") +
+          " " +
+          a({ href: "/admin/system" }, req.__("Restart here"))
+      );
+      res.redirect("/useradmin/ssl");
+    }
+  })
+);
 router.get(
   "/:id",
   setTenant,
@@ -305,16 +513,12 @@ router.get(
     const user = await User.findOne({ id });
     const form = await userForm(req, user);
 
-    res.sendWrap(req.__("Edit user"), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings") },
-            { text: req.__("Users"), href: "/useradmin" },
-            { text: user.email },
-          ],
-        },
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: user.email,
+      contents: [
         {
           type: "card",
           title: req.__("Edit user %s", user.email),

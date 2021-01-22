@@ -42,8 +42,13 @@ const logit = (x, s) => {
 };
 const active = (currentUrl, item) =>
   (item.link && currentUrl.startsWith(item.link)) ||
+  (item.altlinks && item.altlinks.some((l) => currentUrl.startsWith(l))) ||
   (item.subitems &&
-    item.subitems.some((si) => si.link && currentUrl.startsWith(si.link)));
+    item.subitems.some(
+      (si) =>
+        (si.link && currentUrl.startsWith(si.link)) ||
+        (si.altlinks && si.altlinks.some((l) => currentUrl.startsWith(l)))
+    ));
 
 const sideBarItem = (currentUrl) => (item) => {
   const is_active = active(currentUrl, item);

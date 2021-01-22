@@ -32,12 +32,46 @@ const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
-const { restore_backup } = require("../markup/admin.js");
+const {
+  restore_backup,
+  send_admin_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
+
+const site_id_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "site_name",
+      "site_logo_id",
+      "base_url",
+      "page_custom_css",
+      "page_custom_html",
+      "development_mode",
+      "log_sql",
+    ],
+    action: "/admin",
+  });
+
+const email_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "smtp_host",
+      "smtp_username",
+      "smtp_password",
+      "smtp_port",
+      "smtp_secure",
+      "email_from",
+    ],
+    action: "/admin/email",
+  });
 
 router.get(
   "/",
@@ -45,93 +79,196 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const form = await site_id_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Site identity",
+      contents: {
+        type: "card",
+        title: req.__("Site identity settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await site_id_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Site identity",
+        contents: {
+          type: "card",
+          title: req.__("Site identity settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+
+      req.flash("success", req.__("Site identity settings updated"));
+      res.redirect("/admin");
+    }
+  })
+);
+router.get(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Email",
+      contents: {
+        type: "card",
+        title: req.__("Email settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Email",
+        contents: {
+          type: "card",
+          title: req.__("Email settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Email settings updated"));
+      res.redirect("/admin/email");
+    }
+  })
+);
+router.get(
+  "/backup",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        type: "card",
+        title: req.__("Backup"),
+        contents: div(
+          post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
+          hr(),
+          restore_backup(req.csrfToken(), [
+            i({ class: "fas fa-2x fa-upload" }),
+            "<br/>",
+            req.__("Restore"),
+          ])
+        ),
+      },
+    });
+  })
+);
+
+router.get(
+  "/system",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const can_update = packagejson.version !== latest;
-    res.sendWrap(req.__(`Admin`), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Settings") }, { text: req.__("Admin") }],
-        },
-        {
-          type: "card",
-          title: req.__("Admin"),
-          contents: div(
-            div(
-              post_btn(
-                "/admin/restart",
-                req.__("Restart server"),
-                req.csrfToken(),
-                {
-                  ajax: true,
-                  reload_delay: 4000,
-                  spinner: true,
-                }
+    send_admin_page({
+      res,
+      req,
+      active_sub: "System",
+      contents: {
+        breakpoint: "md",
+        besides: [
+          {
+            type: "card",
+            title: req.__("System operations"),
+            contents: div(
+              div(
+                post_btn(
+                  "/admin/restart",
+                  req.__("Restart server"),
+                  req.csrfToken(),
+                  {
+                    ajax: true,
+                    reload_delay: 4000,
+                    spinner: true,
+                  }
+                )
+              ),
+              hr(),
+
+              a(
+                { href: "/admin/clear-all", class: "btn btn-danger" },
+                i({ class: "fas fa-trash-alt" }),
+                " ",
+                req.__("Clear all"),
+                " &raquo;"
               )
             ),
-            hr(),
-
-            post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
-            hr(),
-            restore_backup(req.csrfToken(), [
-              i({ class: "fas fa-2x fa-upload" }),
-              "<br/>",
-              req.__("Restore"),
-            ]),
-            !letsencrypt && isRoot && hr(),
-            !letsencrypt &&
-              isRoot &&
-              post_btn(
-                "/admin/enable-letsencrypt",
-                req.__("Enable LetsEncrypt HTTPS"),
-                req.csrfToken()
-              ),
-            hr(),
-            a(
-              { href: "/admin/clear-all", class: "btn btn-danger" },
-              i({ class: "fas fa-trash-alt" }),
-              " ",
-              req.__("Clear all"),
-              " &raquo;"
-            ),
-            hr(),
-
-            h4(req.__("About Saltcorn")),
-            table(
-              tbody(
-                tr(
-                  th(req.__("Saltcorn version")),
-                  td(
-                    packagejson.version +
-                      (isRoot && can_update
-                        ? post_btn(
-                            "/admin/upgrade",
-                            req.__("Upgrade"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : isRoot && !can_update
-                        ? span(
-                            { class: "badge badge-primary ml-2" },
-                            req.__("Latest")
-                          )
-                        : "")
+          },
+          {
+            type: "card",
+            title: req.__("About the system"),
+            contents: div(
+              h4(req.__("About Saltcorn")),
+              table(
+                tbody(
+                  tr(
+                    th(req.__("Saltcorn version")),
+                    td(
+                      packagejson.version +
+                        (isRoot && can_update
+                          ? post_btn(
+                              "/admin/upgrade",
+                              req.__("Upgrade"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : isRoot && !can_update
+                          ? span(
+                              { class: "badge badge-primary ml-2" },
+                              req.__("Latest")
+                            )
+                          : "")
+                    )
+                  ),
+                  tr(th(req.__("Node.js version")), td(process.version)),
+                  tr(
+                    th(req.__("Database")),
+                    td(db.isSQLite ? "SQLite" : "PostgreSQL")
                   )
-                ),
-                tr(th(req.__("Node.js version")), td(process.version)),
-                tr(
-                  th(req.__("Database")),
-                  td(db.isSQLite ? "SQLite" : "PostgreSQL")
                 )
               )
-            )
-          ),
-        },
-      ],
+            ),
+          },
+        ],
+      },
     });
   })
 );
@@ -280,7 +417,7 @@ router.post(
       const base_url = getState().getConfig("base_url");
       if (!base_url) {
         req.flash("error", req.__("Set Base URL configuration first"));
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       const domain = base_url
@@ -298,7 +435,7 @@ router.post(
             req.hostname
           )
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       const allTens = await getAllTenants();
@@ -307,7 +444,7 @@ router.post(
           "error",
           req.__("Cannot enable LetsEncrypt as there are subdomain tenants")
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
         return;
       }
       try {
@@ -331,16 +468,20 @@ router.post(
         await getState().setConfig("letsencrypt", true);
         req.flash(
           "success",
-          req.__("LetsEncrypt SSL enabled. Restart for changes to take effect.")
+          req.__(
+            "LetsEncrypt SSL enabled. Restart for changes to take effect."
+          ) +
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
         );
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
       } catch (e) {
         req.flash("error", e.message);
-        res.redirect("/admin");
+        res.redirect("/useradmin/ssl");
       }
     } else {
       req.flash("error", req.__("Not possible for tenant"));
-      res.redirect("/admin");
+      res.redirect("/useradmin/ssl");
     }
   })
 );

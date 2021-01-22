@@ -12,37 +12,10 @@ const Page = require("@saltcorn/data/models/page");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
+const { send_infoarch_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
-
-const siteIdForm = async (req) => {
-  const imageFiles = await File.find(
-    { mime_super: "image" },
-    { orderBy: "filename" }
-  );
-  const images = [
-    { label: "None", value: 0 },
-    ...imageFiles.map((f) => ({ label: f.filename, value: f.id })),
-  ];
-  return new Form({
-    action: "/menu/setsiteid",
-    submitLabel: req.__("Save"),
-    fields: [
-      {
-        name: "site_name",
-        label: req.__("Site name"),
-        input_type: "text",
-      },
-      {
-        name: "site_logo_id",
-        label: req.__("Site logo"),
-        input_type: "select",
-        options: images,
-      },
-    ],
-  });
-};
 
 const menuForm = async (req) => {
   const views = await View.find({});
@@ -172,10 +145,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
-    const site_form = await siteIdForm(req);
     const state = getState();
-    site_form.values.site_name = state.getConfig("site_name");
-    site_form.values.site_logo_id = state.getConfig("site_logo_id");
     const menu_items = menuTojQME(state.getConfig("menu_items"));
     const submit_form = new Form({
       action: "/menu/",
@@ -188,93 +158,46 @@ router.get(
         },
       ],
     });
-    res.sendWrap(
-      {
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Menu",
+      headers: [
+        {
+          script: "/jquery-menu-editor.min.js",
+        },
+        {
+          script: "/iconset-fontawesome5-3-1.min.js",
+        },
+        {
+          script: "/bootstrap-iconpicker.min.js",
+        },
+        {
+          css: "/bootstrap-iconpicker.min.css",
+        },
+      ],
+      contents: {
+        type: "card",
         title: req.__(`Menu editor`),
-        headers: [
-          {
-            script: "/jquery-menu-editor.min.js",
-          },
-          {
-            script: "/iconset-fontawesome5-3-1.min.js",
-          },
-          {
-            script: "/bootstrap-iconpicker.min.js",
-          },
-          {
-            css: "/bootstrap-iconpicker.min.css",
-          },
-        ],
-      },
-      {
-        above: [
-          {
-            type: "breadcrumbs",
-            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
-          },
-          {
-            type: "card",
-            title: req.__(`Site identity`),
-            contents: renderForm(site_form, req.csrfToken()),
-          },
-          {
-            type: "card",
-            title: req.__(`Menu editor`),
-            contents: {
-              above: [
-                {
-                  besides: [
-                    div(
-                      ul({ id: "myEditor", class: "sortableLists list-group" })
-                    ),
-                    div(
-                      renderForm(form, req.csrfToken()),
-                      script(domReady(menuEditorScript(menu_items)))
-                    ),
-                  ],
-                },
-                {
-                  type: "blank",
-                  contents: renderForm(submit_form, req.csrfToken()),
-                },
+        contents: {
+          above: [
+            {
+              besides: [
+                div(ul({ id: "myEditor", class: "sortableLists list-group" })),
+                div(
+                  renderForm(form, req.csrfToken()),
+                  script(domReady(menuEditorScript(menu_items)))
+                ),
               ],
             },
-          },
-        ],
-      }
-    );
-  })
-);
-
-router.post(
-  "/setsiteid",
-  setTenant,
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await siteIdForm(req);
-
-    const valres = form.validate(req.body);
-    if (valres.errors)
-      res.sendWrap(req.__(`Menu editor`), {
-        above: [
-          {
-            type: "breadcrumbs",
-            crumbs: [{ text: req.__("Settings") }, { text: req.__("Menu") }],
-          },
-          {
-            type: "card",
-            title: req.__(`Site identity`),
-            contents: renderForm(form, req.csrfToken()),
-          },
-        ],
-      });
-    else {
-      await getState().setConfig("site_name", valres.success.site_name);
-      await getState().setConfig("site_logo_id", valres.success.site_logo_id);
-      req.flash("success", req.__(`Site identity updated`));
-
-      res.redirect(`/menu`);
-    }
+            {
+              type: "blank",
+              contents: renderForm(submit_form, req.csrfToken()),
+            },
+          ],
+        },
+      },
+    });
   })
 );
 

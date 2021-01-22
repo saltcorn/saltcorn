@@ -15,26 +15,11 @@ const {
 } = require("@saltcorn/markup/tags");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { send_events_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
-const wrap = (req, cardTitle, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Crash log"), href: lastBc && "/crashlog" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    {
-      type: "card",
-      title: cardTitle,
-      contents: response,
-    },
-  ],
-});
+
 router.get(
   "/",
   setTenant,
@@ -60,32 +45,34 @@ router.get(
         };
       }
     }
-    res.sendWrap(
-      req.__("Crash log"),
-      wrap(
-        req,
-        req.__("Crash log"),
-        crashes.length === 0
-          ? div(
-              h3(req.__("No errors reported")),
-              p(req.__("Everything is going extremely well."))
-            )
-          : mkTable(
-              [
-                {
-                  label: req.__("Show"),
-                  key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
-                },
-                { label: req.__("When"), key: (r) => r.reltime },
-                ...(db.is_it_multi_tenant()
-                  ? [{ label: req.__("Tenant"), key: "tenant" }]
-                  : []),
-              ],
-              crashes,
-              page_opts
-            )
-      )
-    );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      contents: {
+        type: "card",
+        contents:
+          crashes.length === 0
+            ? div(
+                h3(req.__("No errors reported")),
+                p(req.__("Everything is going extremely well."))
+              )
+            : mkTable(
+                [
+                  {
+                    label: req.__("Show"),
+                    key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
+                  },
+                  { label: req.__("When"), key: (r) => r.reltime },
+                  ...(db.is_it_multi_tenant()
+                    ? [{ label: req.__("Tenant"), key: "tenant" }]
+                    : []),
+                ],
+                crashes,
+                page_opts
+              ),
+      },
+    });
   })
 );
 
@@ -110,12 +97,15 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const crash = await Crash.findOne({ id });
-    res.sendWrap(
-      req.__("Crash log"),
-      wrap(
-        req,
-        req.__("Crash log entry %s", id),
-        table(
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      sub2_page: crash.id,
+      contents: {
+        type: "card",
+        class: "crashlog-entry",
+        contents: table(
           { class: "table" },
           tbody(
             Object.entries(crash).map(([k, v]) =>
@@ -134,8 +124,7 @@ router.get(
             )
           )
         ),
-        { text: `${id}` }
-      )
-    );
+      },
+    });
   })
 );

@@ -19,20 +19,8 @@ const Form = require("@saltcorn/data/models/form");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
+const { send_events_page } = require("../markup/admin.js");
 
-const wrap = (req, cardTitle, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Actions"), href: lastBc && "/actions" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    ...response,
-  ],
-});
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
     const hasConfig = !!v.configFields;
@@ -49,9 +37,11 @@ router.get(
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
-    res.sendWrap(
-      req.__("Actions"),
-      wrap(req, req.__("Actions"), [
+    send_events_page({
+      res,
+      req,
+      active_sub: "Actions",
+      contents: [
         {
           type: "card",
           title: req.__("Actions available"),
@@ -93,10 +83,11 @@ router.get(
             link("/actions/trigger/new", req.__("Add trigger"))
           ),
         },
-      ])
-    );
+      ],
+    });
   })
 );
+
 const triggerForm = async (req, trigger) => {
   const actions = await getActions();
   const tables = await Table.find({});
@@ -143,23 +134,17 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
-    res.sendWrap(
-      req.__("New trigger"),
-      wrap(
-        req,
-        req.__("New trigger"),
-        [
-          {
-            type: "card",
-            title: req.__("New trigger"),
-            contents: renderForm(form, req.csrfToken()),
-          },
-        ],
-        {
-          text: req.__("New trigger"),
-        }
-      )
-    );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Actions",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("New trigger"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
   })
 );
 
@@ -172,23 +157,17 @@ router.get(
     const trigger = await Trigger.findOne({ id });
 
     const form = await triggerForm(req, trigger);
-    res.sendWrap(
-      req.__("Edit trigger"),
-      wrap(
-        req,
-        req.__("Edit trigger"),
-        [
-          {
-            type: "card",
-            title: req.__("Edit trigger"),
-            contents: renderForm(form, req.csrfToken()),
-          },
-        ],
-        {
-          text: req.__("Edit trigger"),
-        }
-      )
-    );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Actions",
+      sub2_page: "Edit",
+      contents: {
+        type: "card",
+        title: req.__("Edit trigger"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
   })
 );
 
@@ -200,23 +179,17 @@ router.post(
     const form = await triggerForm(req);
     form.validate(req.body);
     if (form.hasErrors) {
-      res.sendWrap(
-        req.__("Edit trigger"),
-        wrap(
-          req,
-          req.__("Edit trigger"),
-          [
-            {
-              type: "card",
-              title: req.__("Edit trigger"),
-              contents: renderForm(form, req.csrfToken()),
-            },
-          ],
-          {
-            text: req.__("Edit trigger"),
-          }
-        )
-      );
+      send_events_page({
+        res,
+        req,
+        active_sub: "Actions",
+        sub2_page: "Edit",
+        contents: {
+          type: "card",
+          title: req.__("Edit trigger"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
     } else {
       let id;
       if (form.values.id) {
@@ -254,23 +227,17 @@ router.get(
         fields: cfgFields,
       });
       form.values = trigger.configuration;
-      res.sendWrap(
-        req.__("Configure trigger"),
-        wrap(
-          req,
-          req.__("Configure trigger"),
-          [
-            {
-              type: "card",
-              title: req.__("Configure trigger"),
-              contents: renderForm(form, req.csrfToken()),
-            },
-          ],
-          {
-            text: req.__("Configure trigger"),
-          }
-        )
-      );
+      send_events_page({
+        res,
+        req,
+        active_sub: "Actions",
+        sub2_page: "Configure",
+        contents: {
+          type: "card",
+          title: req.__("Configure trigger"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
     }
   })
 );
@@ -292,23 +259,17 @@ router.post(
     });
     form.validate(req.body);
     if (form.hasErrors) {
-      res.sendWrap(
-        req.__("Configure trigger"),
-        wrap(
-          req,
-          req.__("Configure trigger"),
-          [
-            {
-              type: "card",
-              title: req.__("Configure trigger"),
-              contents: renderForm(form, req.csrfToken()),
-            },
-          ],
-          {
-            text: req.__("Configure trigger"),
-          }
-        )
-      );
+      send_events_page({
+        res,
+        req,
+        active_sub: "Actions",
+        sub2_page: "Configure",
+        contents: {
+          type: "card",
+          title: req.__("Configure trigger"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
       req.flash("success", "Action configuration saved");
@@ -360,30 +321,24 @@ router.get(
       );
       res.redirect(`/actions/`);
     } else {
-      res.sendWrap(
-        req.__("Test run output"),
-        wrap(
-          req,
-          req.__("Test run"),
-          [
-            {
-              type: "card",
-              title: req.__("Test run output"),
-              contents: div(
-                div({ class: "testrunoutput" }, output),
+      send_events_page({
+        res,
+        req,
+        active_sub: "Actions",
+        sub2_page: "Test run output",
+        contents: {
+          type: "card",
+          title: req.__("Test run output"),
+          contents: div(
+            div({ class: "testrunoutput" }, output),
 
-                a(
-                  { href: `/actions`, class: "mt-4 btn btn-primary" },
-                  "&laquo;&nbsp;" + req.__("back to actions")
-                )
-              ),
-            },
-          ],
-          {
-            text: req.__("Run %s", trigger.action),
-          }
-        )
-      );
+            a(
+              { href: `/actions`, class: "mt-4 btn btn-primary" },
+              "&laquo;&nbsp;" + req.__("back to actions")
+            )
+          ),
+        },
+      });
     }
   })
 );

@@ -265,46 +265,30 @@ describe("Pack clash detection", () => {
   });
 });
 describe("config endpoints", () => {
-  itShouldRedirectUnauthToLogin("/config");
+  itShouldRedirectUnauthToLogin("/admin");
   it("should show get list", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/config/")
+      .get("/admin/")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Allow signups"));
-  });
-
-  it("should show get form", async () => {
-    const loginCookie = await getAdminLoginCookie();
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .get("/config/edit/site_name")
-      .set("Cookie", loginCookie)
+      .expect(toInclude("Site name"))
       .expect(toInclude("<form"));
   });
+
   it("should show post form", async () => {
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .post("/config/edit/site_name")
+      .post("/admin")
       .send("site_name=FooSiteName")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/admin"));
     await request(app)
-      .get("/config/")
+      .get("/admin")
       .set("Cookie", loginCookie)
       .expect(toInclude(">FooSiteName<"));
-    await request(app)
-      .post("/config/delete/site_name")
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
-    await request(app)
-      .get("/config/")
-      .set("Cookie", loginCookie)
-      .expect(toNotInclude("FooSiteName"));
   });
 });

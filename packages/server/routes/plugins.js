@@ -356,11 +356,10 @@ const plugin_store_html = (items, req) => {
     above: [
       {
         type: "breadcrumbs",
-        crumbs: [{ text: req.__("Settings") }, { text: req.__("Plugins") }],
-      },
-      {
-        type: "pageHeader",
-        title: req.__("Plugin and pack store"),
+        crumbs: [
+          { text: req.__("Settings") },
+          { text: req.__("Plugin and pack store") },
+        ],
       },
       {
         type: "card",
@@ -436,9 +435,9 @@ router.post(
       if (store_plugin && store_plugin.has_auth) {
         req.flash(
           "warning",
-          req.__(
-            `Restart required for changes to take effect. Restart server from the <a href="/admin">Admin page</a>.`
-          )
+          req.__(`Restart required for changes to take effect.`) +
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
         );
       }
       res.redirect("/plugins");
@@ -456,7 +455,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: req.__("New") },
           ],
         },
@@ -558,7 +557,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: plugin_db.name },
           ],
         },
