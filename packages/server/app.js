@@ -4,7 +4,8 @@ const mountRoutes = require("./routes");
 const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
+const CustomStrategy = require("passport-custom").Strategy;
+const BearerStrategy = require("passport-http-bearer");
 const session = require("express-session");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
@@ -25,6 +26,7 @@ const wrapper = require("./wrapper");
 const csrf = require("csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
+const is = require("contractis/is");
 
 const locales = Object.keys(available_languages);
 
@@ -36,11 +38,12 @@ const i18n = new I18n({
 const getApp = async (opts = {}) => {
   const app = express();
   const sql_log = await getConfig("log_sql");
-  const development_mode = await getConfig("development_mode", false);
   if (sql_log) db.set_sql_logging(); // dont override cli flag
-  await migrate();
+  if (!opts.disableMigrate) await migrate();
 
   await loadAllPlugins();
+  const development_mode = getState().getConfig("development_mode", false);
+  if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
@@ -56,7 +59,7 @@ const getApp = async (opts = {}) => {
   app.use(i18n.init);
 
   if (db.is_it_multi_tenant()) {
-    await init_multi_tenant(loadAllPlugins);
+    await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
   }
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
@@ -75,13 +78,14 @@ const getApp = async (opts = {}) => {
     app.use(
       session({
         store: new pgSession({
+          schemaName: db.connectObj.default_schema,
           pool: db.pool,
           tableName: "_sc_session",
         }),
-        secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
+        secret: db.connectObj.session_secret || is.str.generate(),
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
       })
     );
   }
@@ -104,30 +108,48 @@ const getApp = async (opts = {}) => {
 
   passport.use(
     "local",
-    new LocalStrategy(
-      { passReqToCallback: true, usernameField: "email" },
-      (req, email, password, done) => {
-        loginAttempt();
-        async function loginAttempt() {
-          const mu = await User.authenticate({ email, password });
-          if (mu)
-            return done(null, {
+    new CustomStrategy((req, done) => {
+      loginAttempt();
+      async function loginAttempt() {
+        const { remember, _csrf, ...userobj } = req.body;
+        const mu = await User.authenticate(userobj);
+        if (mu) return done(null, mu.session_object);
+        else {
+          return done(
+            null,
+            false,
+            req.flash("danger", req.__("Incorrect user or password"))
+          );
+        }
+      }
+    })
+  );
+  for (const [nm, auth] of Object.entries(getState().auth_methods)) {
+    passport.use(nm, auth.strategy);
+  }
+  passport.use(
+    "api-bearer",
+    new BearerStrategy(function (token, done) {
+      loginAttempt();
+      async function loginAttempt() {
+        const mu = await User.findOne({ api_token: token });
+        if (mu && token && token.length > 5)
+          return done(
+            null,
+            {
               email: mu.email,
               id: mu.id,
               role_id: mu.role_id,
               language: mu.language,
               tenant: db.getTenantSchema(),
-            });
-          else {
-            return done(
-              null,
-              false,
-              req.flash("danger", req.__("Incorrect user or password"))
-            );
-          }
+            },
+            { scope: "all" }
+          );
+        else {
+          return done(null, { role_id: 10 });
         }
       }
-    )
+    })
   );
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -137,7 +159,12 @@ const getApp = async (opts = {}) => {
   });
 
   app.use(wrapper);
-  if (!opts.disableCsrf) app.use(csrf());
+  const csurf = csrf();
+  if (!opts.disableCsrf)
+    app.use(function (req, res, next) {
+      if (req.url.startsWith("/api/")) return next();
+      csurf(req, res, next);
+    });
   else
     app.use((req, res, next) => {
       req.csrfToken = () => "";

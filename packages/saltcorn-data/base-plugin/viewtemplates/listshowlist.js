@@ -1,12 +1,9 @@
-const Field = require("../../models/field");
-const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
 const { get_child_views, get_parent_views } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
@@ -150,6 +147,7 @@ const run = async (
     if (state.id) id = state.id;
     else {
       myrow = await table.getRow(uniques);
+      if (!myrow) return `Not found`;
       id = myrow.id;
     }
     for (const relspec of Object.keys(subtables || {})) {
@@ -210,6 +208,8 @@ const run = async (
 
 module.exports = {
   name: "ListShowList",
+  description:
+    "Combine an optional list view on the left with displays on the right of a single selected row, with views of related rows from different tables underneath",
   configuration_workflow,
   run,
   get_state_fields,

@@ -121,6 +121,26 @@ const drop_reset_schema = async () => {
   sqliteDatabase = new sqlite3.Database(current_filepath);
 };
 
+const add_unique_constraint = async (table_name, field_names) => {
+  const sql = `create unique index ${sqlsanitize(
+    table_name
+  )}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique on "${sqlsanitize(table_name)}"(${field_names
+    .map((f) => `"${sqlsanitize(f)}"`)
+    .join(",")});`;
+  sql_log(sql);
+  await query(sql);
+};
+
+const drop_unique_constraint = async (table_name, field_names) => {
+  const sql = `drop index ${sqlsanitize(table_name)}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique;`;
+  sql_log(sql);
+  await query(sql);
+};
+
 module.exports = {
   sql_log,
   set_sql_logging,
@@ -136,4 +156,6 @@ module.exports = {
   drop_reset_schema,
   update,
   deleteWhere,
+  add_unique_constraint,
+  drop_unique_constraint,
 };

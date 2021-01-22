@@ -48,7 +48,6 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         label: req.__("Calculated"),
         name: "calculated",
         type: "Bool",
-        class: "iscalc",
         disabled: !!id,
       }),
       new Field({
@@ -56,12 +55,12 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "required",
         type: "Bool",
         disabled: !!id && db.isSQLite,
-        showIf: { ".iscalc": false },
+        showIf: { calculated: false },
       }),
       new Field({
         label: req.__("Unique"),
         name: "is_unique",
-        showIf: { ".iscalc": false },
+        showIf: { calculated: false },
         type: "Bool",
       }),
 
@@ -70,7 +69,7 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "stored",
         type: "Bool",
         disabled: !!id,
-        showIf: { ".iscalc": true },
+        showIf: { calculated: true },
       }),
     ],
   });
@@ -165,11 +164,7 @@ const fieldFlow = (req) =>
           const table = tables.find((t) => t.id === context.table_id);
           const existing_fields = await table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = [
-            ...tables.map((t) => `Key to ${t.name}`),
-            "Key to users",
-            "File",
-          ];
+          const fkey_opts = [...tables.map((t) => `Key to ${t.name}`), "File"];
           const form = fieldForm(req, fkey_opts, existingNames, context.id);
           if (context.type === "Key" && context.reftable_name) {
             form.values.type = `Key to ${context.reftable_name}`;
@@ -204,11 +199,15 @@ const fieldFlow = (req) =>
               ],
             });
           } else {
+            const type = getState().types[context.type];
             return new Form({
-              fields: translateAttributes(
-                getState().types[context.type].attributes,
-                req
-              ),
+              validator(vs) {
+                if (type.validate_attributes) {
+                  const res = type.validate_attributes(vs);
+                  if (!res) return req.__("Invalid attributes");
+                }
+              },
+              fields: translateAttributes(type.attributes, req),
             });
           }
         },
@@ -235,10 +234,7 @@ const fieldFlow = (req) =>
       {
         name: req.__("Summary"),
         onlyWhen: (context) =>
-          context.type !== "Key to users" &&
-          context.reftable_name !== "users" &&
-          context.type !== "File" &&
-          new Field(context).is_fkey,
+          context.type !== "File" && new Field(context).is_fkey,
         form: async (context) => {
           const fld = new Field(context);
           const table = await Table.findOne({ name: fld.reftable_name });
@@ -264,7 +260,6 @@ const fieldFlow = (req) =>
       {
         name: req.__("Default"),
         onlyWhen: async (context) => {
-          if (context.type === "Key to users") context.summary_field = "email";
           if (!context.required || context.id || context.calculated)
             return false;
           const table = await Table.findOne({ id: context.table_id });

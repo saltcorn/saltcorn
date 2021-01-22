@@ -4,6 +4,8 @@ const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate } = require("../contracts");
 const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
 const { remove_from_menu } = require("./config");
+const { div } = require("@saltcorn/markup/tags");
+const { renderForm } = require("@saltcorn/markup");
 
 class View {
   constructor(o) {
@@ -21,9 +23,9 @@ class View {
           ? 10
           : 8
         : +o.min_role;
-    this.on_root_page = numberToBool(o.on_root_page);
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
+    this.default_render_page = o.default_render_page;
     contract.class(this);
   }
   static async findOne(where) {
@@ -137,6 +139,14 @@ class View {
     await require("../db/state").getState().refresh();
   }
 
+  async authorise_post(arg) {
+    if (!this.viewtemplateObj.authorise_post) return false;
+    return await this.viewtemplateObj.authorise_post(arg);
+  }
+  async authorise_get(arg) {
+    if (!this.viewtemplateObj.authorise_get) return false;
+    return await this.viewtemplateObj.authorise_get(arg);
+  }
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.table_id,
@@ -146,6 +156,27 @@ class View {
       extraArgs
     );
   }
+
+  async run_possibly_on_page(query, req, res) {
+    const view = this;
+    if (view.default_render_page && !req.xhr) {
+      const Page = require("../models/page");
+      const db_page = await Page.findOne({ name: view.default_render_page });
+      if (db_page) {
+        const contents = await db_page.run(query, { res, req });
+        return contents;
+      }
+    }
+    const state = view.combine_state_and_default_state(query);
+    const resp = await view.run(state, { res, req });
+    const state_form = await view.get_state_form(state, req);
+    const contents = div(
+      state_form ? renderForm(state_form, req.csrfToken()) : "",
+      resp
+    );
+    return contents;
+  }
+
   async runMany(query, extraArgs) {
     if (this.viewtemplateObj.runMany)
       return await this.viewtemplateObj.runMany(
@@ -252,13 +283,12 @@ class View {
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || ((c) => c);
     configFlow.onDone = async (ctx) => {
-      const { table_id, ...configuration } = oldOnDone(ctx);
+      const { table_id, ...configuration } = await oldOnDone(ctx);
 
       await View.update({ configuration }, this.id);
-
       return {
         redirect: `/viewedit`,
-        flash: ["success", `View ${ctx.viewname || ""} saved`],
+        flash: ["success", `View ${this.name || ""} saved`],
       };
     };
     return configFlow;
@@ -273,6 +303,7 @@ View.contract = {
     viewtemplate: is.str,
     min_role: is.posint,
     viewtemplateObj: is.maybe(is_viewtemplate),
+    default_render_page: is.maybe(is.str),
   },
   methods: {
     get_state_fields: is.fun([], is.promise(is.array(fieldlike))),

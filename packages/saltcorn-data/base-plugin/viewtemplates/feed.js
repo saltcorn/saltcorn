@@ -1,15 +1,20 @@
 const Field = require("../../models/field");
-const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
+const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const {} = require("./viewable_fields");
 const pluralize = require("pluralize");
-const { link_view, stateToQueryString } = require("../../plugin-helper");
+const {
+  link_view,
+  stateToQueryString,
+  stateFieldsToWhere,
+  stateFieldsToQuery,
+} = require("../../plugin-helper");
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -133,8 +138,24 @@ const configuration_workflow = (req) =>
                 default: 1,
               },
               {
+                name: "rows_per_page",
+                label: req.__("Items per page"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                },
+                required: true,
+                default: 20,
+              },
+              {
                 name: "in_card",
                 label: req.__("Each in card?"),
+                type: "Bool",
+                required: true,
+              },
+              {
+                name: "hide_pagination",
+                label: req.__("Hide pagination"),
                 type: "Bool",
                 required: true,
               },
@@ -163,27 +184,62 @@ const run = async (
     view_to_create,
     create_view_display,
     in_card,
+    rows_per_page = 20,
+    hide_pagination,
     ...cols
   },
   state,
   extraArgs
 ) => {
   const table = await Table.findOne({ id: table_id });
-
+  const fields = await table.getFields();
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
+  const q = await stateFieldsToQuery({ state, fields });
+  let qextra = {};
+  if (!q.orderBy) {
+    qextra.orderBy = order_field;
+    if (descending) qextra.orderDesc = true;
+  }
+  qextra.limit = q.limit || rows_per_page;
+  const current_page = parseInt(state._page) || 1;
+
   const sresp = await sview.runMany(state, {
     ...extraArgs,
-    orderBy: order_field,
-    ...(descending && { orderDesc: true }),
+    ...qextra,
   });
+  let paginate = "";
+  if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
+    const fields = await table.getFields();
+
+    const where = await stateFieldsToWhere({ fields, state });
+
+    const nrows = await table.countRows(where);
+    if (nrows > qextra.limit || current_page > 1) {
+      paginate = pagination({
+        current_page,
+        pages: Math.ceil(nrows / qextra.limit),
+        get_page_link: (n) => `javascript:gopage(${n}, ${qextra.limit})`,
+      });
+    }
+  }
+
   const role =
     extraArgs && extraArgs.req && extraArgs.req.user
       ? extraArgs.req.user.role_id
       : 10;
   var create_link = "";
-  if (view_to_create && role <= table.min_role_write) {
+  const user_id =
+    extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
+  const about_user = fields.some(
+    (f) =>
+      f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
+  );
+  if (
+    view_to_create &&
+    (role <= table.min_role_write || (table.ownership_field_id && about_user))
+  ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
       create_link = await create_view.run(state, extraArgs);
@@ -210,13 +266,19 @@ const run = async (
       showRowInner(r)
     );
 
-  const inner = div(div({ class: "row" }, sresp.map(showRow)), create_link);
+  const inner = div(
+    div({ class: "row" }, sresp.map(showRow)),
+    paginate,
+    create_link
+  );
 
   return inner;
 };
 
 module.exports = {
   name: "Feed",
+  description:
+    "Show multiple rows by displaying a chosen view for each row, stacked or in columns",
   configuration_workflow,
   run,
   get_state_fields,

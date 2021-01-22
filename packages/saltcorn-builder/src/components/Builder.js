@@ -11,6 +11,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
+import { Tabs } from "./elements/Tabs";
 import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
@@ -103,7 +104,8 @@ const SaveButton = () => {
 
   const onClick = () => {
     const data = craftToSaltcorn(JSON.parse(query.serialize()));
-    fetch(`/pageedit/savebuilder/${options.page_id}`, {
+    const urlroot = options.page_id ? "pageedit" : "viewedit";
+    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
       headers: {
         "Content-Type": "application/json",
@@ -112,7 +114,7 @@ const SaveButton = () => {
       body: JSON.stringify(data),
     });
   };
-  return options.page_id ? (
+  return options.page_id || options.view_id ? (
     <button
       className="btn btn-outline-secondary mr-2 builder-save-ajax"
       onClick={onClick}
@@ -199,6 +201,7 @@ const Builder = ({ options, layout, mode }) => {
                   Container,
                   Column,
                   DropDownFilter,
+                  Tabs,
                   ToggleFilter,
                 }}
               >
@@ -207,7 +210,7 @@ const Builder = ({ options, layout, mode }) => {
             </div>
           </div>
           <div className="col-sm-auto builder-sidebar">
-            <div style={{ width: "13rem" }}>
+            <div style={{ width: "16rem" }}>
               <div className="card">
                 <div className="card-header">
                   Layers

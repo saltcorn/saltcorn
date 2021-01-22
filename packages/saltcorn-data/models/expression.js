@@ -7,7 +7,7 @@ const { asyncMap } = require("../utils");
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
-    const f = vm.runInNewContext(`()=>(${s})`);
+    const f = new vm.Script(s);
     return true;
   } catch (e) {
     return e.message;
@@ -44,14 +44,15 @@ function get_expression_function(expression, fields) {
     getState().function_context
   );
 }
-function get_async_expression_function(expression, fields) {
+function get_async_expression_function(expression, fields, extraContext = {}) {
   const args = `{${fields.map((f) => f.name).join()}}`;
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
-  return vm.runInNewContext(
-    `async (${args})=>(${expr_string})`,
-    getState().function_context
-  );
+  const evalStr = `async (${args})=>(${expr_string})`;
+  return vm.runInNewContext(evalStr, {
+    ...getState().function_context,
+    ...extraContext,
+  });
 }
 function apply_calculated_fields(rows, fields) {
   let hasExprs = false;

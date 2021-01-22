@@ -1,18 +1,21 @@
 const Field = require("../../models/field");
 const File = require("../../models/file");
-const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const User = require("../../models/user");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
+const { getState } = require("../../db/state");
 const { text } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const {
   initial_config_all_fields,
   calcfldViewOptions,
+  calcfldViewConfig,
+  get_parent_views,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
+
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -23,6 +26,7 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter((f) => !f.calculated);
 
           const field_view_options = calcfldViewOptions(fields, true);
+          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -31,11 +35,37 @@ const configuration_workflow = (req) =>
             "Save",
             //"Delete"
           ];
+          if (table.name === "users") {
+            actions.push("Login");
+            actions.push("Sign up");
+            Object.entries(getState().auth_methods).forEach(([k, v]) => {
+              actions.push(`Login with ${k}`);
+            });
+            fields.push({
+              name: "password",
+              label: "Password",
+              type: "String",
+            });
+            fields.push({
+              name: "passwordRepeat",
+              label: "Password Repeat",
+              type: "String",
+            });
+            fields.push({
+              name: "remember",
+              label: "Remember me",
+              type: "Bool",
+            });
+            field_view_options.password = ["password"];
+            field_view_options.passwordRepeat = ["password"];
+            field_view_options.remember = ["edit"];
+          }
           return {
             fields,
             field_view_options,
             roles,
             actions,
+            fieldViewConfigForms,
             images,
             mode: "edit",
           };
@@ -61,9 +91,8 @@ const configuration_workflow = (req) =>
           );
           var formFields = [];
           omitted_fields.forEach((f) => {
-            if (f.presets) {
-              f.required = false;
-            }
+            f.required = false;
+
             formFields.push(f);
             if (f.presets) {
               formFields.push(
@@ -98,14 +127,21 @@ const configuration_workflow = (req) =>
           return done_views.length > 0;
         },
         form: async (context) => {
-          const done_views = await View.find_all_views_where(
+          const own_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               (viewrow.table_id === context.table_id ||
                 state_fields.every((sf) => !sf.required))
           );
-          const done_view_opts = done_views.map((v) => v.name);
+          const table = await Table.findOne({ id: context.table_id });
+          const parent_views = await get_parent_views(table, context.viewname);
 
+          const done_view_opts = own_views.map((v) => v.name);
+          parent_views.forEach(({ relation, related_table, views }) =>
+            views.forEach((v) => {
+              done_view_opts.push(`${v.name}.${relation.name}`);
+            })
+          );
           return new Form({
             blurb: req.__(
               "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
@@ -133,7 +169,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   },
 ];
 
-const getForm = async (table, viewname, columns, layout, id) => {
+const getForm = async (table, viewname, columns, layout, id, req) => {
   const fields = await table.getFields();
 
   const tfields = (columns || [])
@@ -142,14 +178,45 @@ const getForm = async (table, viewname, columns, layout, id) => {
         const f = fields.find((fld) => fld.name === column.field_name);
         if (f) {
           f.fieldview = column.fieldview;
+          if (f.type === "Key") {
+            if (getState().keyFieldviews[column.fieldview])
+              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+                ? "select"
+                : "fromtype";
+          }
           return f;
+        } else if (table.name === "users" && column.field_name === "password") {
+          return new Field({
+            name: "password",
+            fieldview: column.fieldview,
+            type: "String",
+          });
+        } else if (
+          table.name === "users" &&
+          column.field_name === "passwordRepeat"
+        ) {
+          return new Field({
+            name: "passwordRepeat",
+            fieldview: column.fieldview,
+            type: "String",
+          });
+        } else if (table.name === "users" && column.field_name === "remember") {
+          return new Field({
+            name: "remember",
+            fieldview: column.fieldview,
+            type: "Bool",
+          });
         }
       }
     })
     .filter((tf) => !!tf);
-
+  const path = req.baseUrl + req.path;
+  let action = `/view/${viewname}`;
+  if (path && path.startsWith("/auth/")) action = path;
   const form = new Form({
-    action: `/view/${viewname}`,
+    action,
     fields: tfields,
     layout,
   });
@@ -173,7 +240,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, state.id);
+  const form = await getForm(table, viewname, columns, layout, state.id, req);
   const { uniques, nonUniques } = splitUniques(fields, state);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
@@ -211,7 +278,7 @@ const fill_presets = async (table, req, fixed) => {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find((f) => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user });
+        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
       }
       delete fixed[k];
     }
@@ -229,7 +296,7 @@ const runPost = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, body.id);
+  const form = await getForm(table, viewname, columns, layout, body.id, req);
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
@@ -294,7 +361,8 @@ const runPost = async (
     if (!view_when_done) {
       res.redirect(`/`);
     } else {
-      const nxview = await View.findOne({ name: view_when_done });
+      const [viewname_when_done, relation] = view_when_done.split(".");
+      const nxview = await View.findOne({ name: viewname_when_done });
       //console.log()
       if (!nxview) {
         req.flash(
@@ -305,22 +373,39 @@ const runPost = async (
       } else {
         const state_fields = await nxview.get_state_fields();
         if (
-          nxview.table_id === table_id &&
+          (nxview.table_id === table_id || relation) &&
           state_fields.some((sf) => sf.name === "id")
         )
-          res.redirect(`/view/${text(view_when_done)}?id=${text(id)}`);
-        else res.redirect(`/view/${text(view_when_done)}`);
+          res.redirect(
+            `/view/${text(viewname_when_done)}?id=${text(
+              relation ? row[relation] : id
+            )}`
+          );
+        else res.redirect(`/view/${text(viewname_when_done)}`);
       }
     }
   }
 };
-
+const authorise_post = async ({ body, table_id, req }) => {
+  const table = await Table.findOne({ id: table_id });
+  const user_id = req.user ? req.user.id : null;
+  if (table.ownership_field_id && user_id) {
+    const field_name = await table.owner_fieldname();
+    return field_name && `${body[field_name]}` === `${user_id}`;
+  }
+  if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
+  return false;
+};
 module.exports = {
   name: "Edit",
+  description: "Form for creating a new row or editing existing rows",
   configuration_workflow,
   run,
   runPost,
   get_state_fields,
   initial_config,
   display_state_form: false,
+  authorise_post,
+  authorise_get: async ({ query, ...rest }) =>
+    authorise_post({ body: query, ...rest }),
 };

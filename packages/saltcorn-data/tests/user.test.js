@@ -1,5 +1,7 @@
 const db = require("../db/index.js");
 const User = require("../models/user");
+const Table = require("../models/table");
+const Field = require("../models/field");
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -60,11 +62,64 @@ describe("User", () => {
       password: "newpaass",
     });
     expect(!!u2).toBe(true);
+    const res1 = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: "somerandomtoken",
+      password: "newpaass",
+    });
+    expect(res1).toEqual({ error: "User not found or expired token" });
+    const res2 = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: "",
+      password: "newpaass",
+    });
+    expect(res2).toEqual({ error: "Invalid token" });
+  });
+  it("should reset password", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    const token = await u.getNewAPIToken();
+    expect(token.length > 5).toBe(true);
+    const u1 = await User.findOne({ email: "foo@bar.com" });
+    expect(u1.api_token).toEqual(token);
+    await u1.getNewAPIToken();
+    const u2 = await User.findOne({ email: "foo@bar.com" });
+    expect(u2.api_token).not.toEqual(token);
+  });
+  it("should set language ", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    await u.set_language("fr");
   });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.delete();
     const us = await User.find({ email: "foo@bar.com" });
     expect(us.length).toBe(0);
+  });
+});
+
+describe("User fields", () => {
+  it("should add fields", async () => {
+    const table = await Table.findOne({ name: "users" });
+    const fc = await Field.create({
+      table,
+      label: "Height",
+      type: "Integer",
+    });
+    await User.create({
+      email: "foo1@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo1@bar.com",
+      password: "YEge56FGew",
+    });
+    expect(u.email).toBe("foo1@bar.com");
+    expect(u.role_id).toBe(8);
+    expect(u.height).toBe(undefined);
+    expect(u.password === "YEge56FGew").toBe(false);
+    const ut = await table.getRow({ id: u.id });
+    expect(ut.email).toBe("foo1@bar.com");
+    expect(ut.height).toBe(183);
   });
 });

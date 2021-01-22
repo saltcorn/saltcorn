@@ -13,18 +13,23 @@ const {
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
+const rmInitialDot = (s) => (s && s[0] === "." ? s.replace(".", "") : s);
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
       typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('${target}').prop('checked')===${JSON.stringify(
-            value
-          )}`
+        ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').prop('checked')===${JSON.stringify(value)}`
         : Array.isArray(value)
         ? `[${value
             .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('${target}').val())`
-        : `e.closest('.form-namespace').find('${target}').val()==='${value}'`
+            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val())`
+        : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+            target
+          )}]').val()==='${value}'`
     )
     .join(" && ");
 
@@ -107,9 +112,23 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       const opts = select_options(v, hdr);
       return `<select class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-        name
-      )}">${opts}</select>`;
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
+        hdr.attributes && hdr.attributes.explainers
+          ? ` data-explainers="${encodeURIComponent(
+              JSON.stringify(hdr.attributes.explainers)
+            )}"`
+          : ""
+      }>${opts}</select>`;
+    case "textarea":
+      return `<textarea class="form-control ${validClass} ${
+        hdr.class || ""
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+        v[hdr.form_name]
+      )}</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
         hdr.input_type = "select";
@@ -126,12 +145,16 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       return search_bar(name, v && v[hdr.form_name]);
     case "section_header":
       return "";
+    case "custom_html":
+      return hdr.attributes.html;
     default:
       const the_input = `<input type="${
         hdr.input_type
       }" class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} name="${name}" id="input${text_attr(name)}" ${
+      }" ${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])
           ? `value="${text_attr(v[hdr.form_name])}"`
           : ""
@@ -222,7 +245,9 @@ const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
   if (hdr.disabled) attributes.disabled = true;
-  if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
+  if (hdr.fieldviewObj) {
+    fieldview = hdr.fieldviewObj;
+  } else if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
   else {
     //first isedit fieldview
@@ -235,7 +260,8 @@ const displayEdit = (hdr, name, v, extracls) => {
     v,
     attributes,
     extracls + " " + hdr.class,
-    hdr.required
+    hdr.required,
+    hdr
   );
 };
 
@@ -268,22 +294,48 @@ const renderFormLayout = (form) => {
               form.errors[field.name]
             )}</div>`
           : "";
+        field.attributes = { ...field.attributes, ...segment.configuration };
         return innerField(form.values, form.errors)(field) + errorFeedback;
       } else return "";
     },
-    action({ action_name }) {
+    action({ action_name, action_label, confirm, action_style, action_size }) {
+      if (action_name && action_name.startsWith("Login with ")) {
+        const method_label = action_name.replace("Login with ", "");
+
+        return a(
+          {
+            href: `/auth/login-with/${method_label}`,
+            //TODO get url through form.req to reduce coupling
+            class: [
+              action_style !== "btn-link" &&
+                `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+            ],
+          },
+          action_label || action_name
+        );
+      }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';
-      return `<button ${submitAttr} class="btn btn-primary">${text(
-        form.submitLabel || "Save"
+      return `<button ${submitAttr} class="${
+        action_style === "btn-link"
+          ? ""
+          : `btn ${action_style || "btn-primary"} ${action_size || ""}`
+      }">${text(
+        action_label || form.submitLabel || action_name || "Save"
       )}</button>`;
     },
   };
   return renderLayout({ blockDispatch, layout: form.layout });
 };
 
-const renderForm = (form, csrfToken) => {
+const renderForm = (form, csrfToken0) => {
+  const csrfToken =
+    csrfToken0 === false || csrfToken0 === ""
+      ? csrfToken0
+      : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
+
+  if (typeof form === "string") return form;
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -291,7 +343,7 @@ const renderForm = (form, csrfToken) => {
     Object.entries(form.values).forEach(([k, v]) => {
       if (typeof v === "undefined") return;
       if (k[0] !== "_") collapsedSummary += ` ${text(k)}:${text_attr(v)} `;
-      if (k === "_fts") collapsedSummary += ` ${v} `;
+      if (k === "_fts") collapsedSummary += ` ${text_attr(v)} `;
     });
     return div(
       { class: "dropdown" },
@@ -355,16 +407,24 @@ const mkFormWithLayout = (form, csrfToken) => {
     "</form>"
   );
 };
-
+const displayAdditionalButtons = (additionalButtons) =>
+  additionalButtons
+    .map(
+      (btn) =>
+        `<button type="button" id="${btn.id}" class="${btn.class}">${btn.label}</button>&nbsp;`
+    )
+    .join("");
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField =
     csrfToken === false
       ? ""
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" class="form-namespace ${
-    form.isStateForm ? "stateForm" : ""
-  } ${form.class || ""}" method="${form.methodGET ? "get" : "post"}" ${
+  const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
+    form.action
+  }" class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
+    form.class || ""
+  }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);
@@ -393,23 +453,27 @@ const mkForm = (form, csrfToken, errors = {}) => {
     : "";
   const bot = `<div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn ${
-      form.submitButtonClass || "btn-primary"
-    }">${text(form.submitLabel || "Save")}</button>
+    ${
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons)
+        : ""
+    }
+    ${
+      form.noSubmitButton
+        ? ""
+        : `<button type="submit" class="btn ${
+            form.submitButtonClass || "btn-primary"
+          }">${text(form.submitLabel || "Save")}</button>`
+    }
   </div>
 </div>`;
-  return (
-    blurbp +
-    top +
-    csrfField +
-    flds +
-    fullFormError +
-    (form.noSubmitButton ? "" : bot) +
-    "</form>"
-  );
+  return blurbp + top + csrfField + flds + fullFormError + bot + "</form>";
 };
 
 module.exports = contract(
-  is.fun([is.class("Form"), is.or(is.str, is.eq(false))], is.str),
+  is.fun(
+    [is.or(is.str, is.class("Form")), is.maybe(is.or(is.str, is.eq(false)))],
+    is.str
+  ),
   renderForm
 );

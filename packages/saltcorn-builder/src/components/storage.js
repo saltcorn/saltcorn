@@ -5,6 +5,7 @@ import { Field } from "./elements/Field";
 import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
+import { Tabs } from "./elements/Tabs";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
@@ -45,6 +46,7 @@ export const layoutToNodes = (layout, query, actions) => {
           isFormula={segment.isFormula || {}}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+          labelFor={segment.labelFor || ""}
         />
       );
     } else if (segment.type === "image") {
@@ -63,6 +65,8 @@ export const layoutToNodes = (layout, query, actions) => {
           url={segment.url}
           text={segment.text}
           block={segment.block || false}
+          nofollow={segment.nofollow || false}
+          target_blank={segment.target_blank || false}
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
         />
@@ -79,7 +83,14 @@ export const layoutToNodes = (layout, query, actions) => {
     } else if (segment.type === "line_break") {
       return <LineBreak key={ix} />;
     } else if (segment.type === "search_bar") {
-      return <SearchBar key={ix} />;
+      return (
+        <SearchBar
+          key={ix}
+          contents={toTag(segment.contents)}
+          has_dropdown={segment.has_dropdown || false}
+          show_badges={segment.show_badges || false}
+        />
+      );
     } else if (segment.type === "field") {
       return (
         <Field
@@ -88,6 +99,7 @@ export const layoutToNodes = (layout, query, actions) => {
           fieldview={segment.fieldview}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
+          configuration={segment.configuration || {}}
         />
       );
     } else if (segment.type === "dropdown_filter") {
@@ -95,7 +107,9 @@ export const layoutToNodes = (layout, query, actions) => {
         <DropDownFilter
           key={ix}
           name={segment.field_name}
+          neutral_label={segment.neutral_label || ""}
           block={segment.block || false}
+          full_width={segment.full_width || false}
         />
       );
     } else if (segment.type === "toggle_filter") {
@@ -137,6 +151,9 @@ export const layoutToNodes = (layout, query, actions) => {
           block={segment.block || false}
           inModal={segment.in_modal || false}
           minRole={segment.minRole || 10}
+          isFormula={segment.isFormula || {}}
+          link_style={segment.link_style || ""}
+          link_size={segment.link_size || ""}
         />
       );
     } else if (segment.type === "action") {
@@ -144,14 +161,27 @@ export const layoutToNodes = (layout, query, actions) => {
         <Action
           key={ix}
           name={segment.action_name}
+          rndid={segment.rndid || "not_assigned"}
+          action_label={segment.action_label || ""}
+          action_style={segment.action_style || "btn-primary"}
+          action_size={segment.action_size || ""}
           confirm={segment.confirm}
+          configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
+          isFormula={segment.isFormula || {}}
         />
       );
     } else if (segment.type === "card") {
       return (
-        <Element key={ix} canvas title={segment.title} is={Card}>
+        <Element
+          key={ix}
+          canvas
+          title={segment.title}
+          url={segment.url}
+          isFormula={segment.isFormula || {}}
+          is={Card}
+        >
           {toTag(segment.contents)}
         </Element>
       );
@@ -162,24 +192,50 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
+          customClass={segment.customClass}
+          customCSS={segment.customCSS}
+          margin={segment.margin || [0, 0, 0, 0]}
+          padding={segment.padding || [0, 0, 0, 0]}
           minHeight={segment.minHeight}
+          height={segment.height}
+          width={segment.width}
+          minHeightUnit={segment.minHeightUnit || "px"}
+          heightUnit={segment.heightUnit || "px"}
+          widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
+          block={typeof segment.block === "undefined" ? true : segment.block}
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
+          isFormula={segment.isFormula || {}}
+          showIfFormula={segment.showIfFormula || ""}
+          showForRole={segment.showForRole || []}
+          minScreenWidth={segment.minScreenWidth || ""}
+          show_for_owner={!!segment.show_for_owner}
           is={Container}
         >
           {toTag(segment.contents)}
         </Element>
       );
+    } else if (segment.type === "tabs") {
+      return (
+        <Tabs
+          key={ix}
+          titles={segment.titles}
+          ntabs={segment.ntabs}
+          tabsStyle={segment.tabsStyle}
+          contents={segment.contents.map(toTag)}
+        />
+      );
     } else if (segment.besides) {
       return (
         <Columns
           key={ix}
+          breakpoint={segment.breakpoint || ""}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
@@ -200,6 +256,7 @@ export const layoutToNodes = (layout, query, actions) => {
         .parseReactElement(
           <Columns
             widths={getColWidths(segment)}
+            breakpoint={segment.breakpoint || ""}
             ncols={segment.besides.length}
             contents={segment.besides.map(toTag)}
           />
@@ -238,21 +295,38 @@ export const craftToSaltcorn = (nodes) => {
           type: "container",
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
+          customCSS: node.props.customCSS,
+          customClass: node.props.customClass,
           minHeight: node.props.minHeight,
+          height: node.props.height,
+          width: node.props.width,
+          minHeightUnit: node.props.minHeightUnit,
+          heightUnit: node.props.heightUnit,
+          widthUnit: node.props.widthUnit,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
+          margin: node.props.margin,
+          padding: node.props.padding,
+          block: node.props.block || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
           bgColor: node.props.bgColor,
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,
+          isFormula: node.props.isFormula,
+          showIfFormula: node.props.showIfFormula,
+          showForRole: node.props.showForRole,
+          minScreenWidth: node.props.minScreenWidth,
+          show_for_owner: node.props.show_for_owner,
         };
       else if (node.displayName === Card.craft.displayName)
         return {
           contents: get_nodes(node),
           type: "card",
           title: node.props.title,
+          isFormula: node.props.isFormula,
+          url: node.props.url,
         };
       else return get_nodes(node);
     }
@@ -264,6 +338,7 @@ export const craftToSaltcorn = (nodes) => {
         block: node.props.block,
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
+        labelFor: node.props.labelFor,
       };
     }
     if (node.displayName === HTMLCode.craft.displayName) {
@@ -277,13 +352,33 @@ export const craftToSaltcorn = (nodes) => {
       return { type: "line_break" };
     }
     if (node.displayName === SearchBar.craft.displayName) {
-      return { type: "search_bar" };
+      return {
+        type: "search_bar",
+        has_dropdown: node.props.has_dropdown,
+        show_badges: node.props.show_badges,
+        contents:
+          node.linkedNodes &&
+          node.props.has_dropdown &&
+          go(nodes[node.linkedNodes["search_drop"]]),
+      };
     }
     if (node.displayName === Columns.craft.displayName) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
+        breakpoint: node.props.breakpoint,
         widths,
+      };
+    }
+    if (node.displayName === Tabs.craft.displayName) {
+      return {
+        type: "tabs",
+        contents: ntimes(node.props.ntabs, (ix) =>
+          go(nodes[node.linkedNodes["Tab" + ix]])
+        ),
+        titles: node.props.titles,
+        tabsStyle: node.props.tabsStyle,
+        ntabs: node.props.ntabs,
       };
     }
 
@@ -301,6 +396,8 @@ export const craftToSaltcorn = (nodes) => {
         text: node.props.text,
         url: node.props.url,
         block: node.props.block,
+        nofollow: node.props.nofollow,
+        target_blank: node.props.target_blank,
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
       };
@@ -319,6 +416,7 @@ export const craftToSaltcorn = (nodes) => {
         type: "Field",
         field_name: node.props.name,
         fieldview: node.props.fieldview,
+        configuration: node.props.configuration,
       });
       return {
         type: "field",
@@ -326,6 +424,7 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
+        configuration: node.props.configuration,
       };
     }
     if (node.displayName === DropDownFilter.craft.displayName) {
@@ -336,6 +435,8 @@ export const craftToSaltcorn = (nodes) => {
       return {
         type: "dropdown_filter",
         block: node.props.block,
+        neutral_label: node.props.neutral_label,
+        full_width: node.props.full_width,
         field_name: node.props.name,
       };
     }
@@ -394,22 +495,38 @@ export const craftToSaltcorn = (nodes) => {
         in_modal: node.props.inModal,
         view_label: node.props.label,
         view: node.props.name,
+        isFormula: node.props.isFormula,
         minRole: node.props.minRole,
+        link_style: node.props.link_style,
+        link_size: node.props.link_size,
       };
     }
     if (node.displayName === Action.craft.displayName) {
+      const newid = rand_ident();
       columns.push({
         type: "Action",
         action_name: node.props.name,
+        action_label: node.props.action_label,
+        action_style: node.props.action_style,
+        action_size: node.props.action_size,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        configuration: node.props.configuration,
+        isFormula: node.props.isFormula,
+        rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       });
       return {
         type: "action",
         block: node.props.block,
+        configuration: node.props.configuration,
         confirm: node.props.confirm,
         action_name: node.props.name,
+        action_label: node.props.action_label,
+        action_style: node.props.action_style,
+        action_size: node.props.action_size,
         minRole: node.props.minRole,
+        isFormula: node.props.isFormula,
+        rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
       };
     }
   };

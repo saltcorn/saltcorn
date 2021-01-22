@@ -47,9 +47,26 @@ const configuration_workflow = () =>
       },
     ],
   });
-
+let actionCounter = 1;
+const getActionCounter = () => actionCounter;
+const resetActionCounter = () => {
+  actionCounter = 0;
+};
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
+  actions: {
+    incrementCounter: {
+      run: () => {
+        actionCounter += 1;
+      },
+    },
+    setCounter: {
+      configFields: [{ name: "number", type: "Int" }],
+      run: ({ configuration: { number } }) => {
+        actionCounter = number;
+      },
+    },
+  },
   functions: {
     add3: { run: (x) => x + 3 },
     add5: (x) => x + 5,
@@ -82,13 +99,24 @@ const plugin_with_routes = {
   ],
 };
 const mockReqRes = {
-  req: { csrfToken: () => "", getLocale: () => "en", __: (s) => s },
+  req: {
+    csrfToken: () => "",
+    getLocale: () => "en",
+    __: (s) => s,
+    user: { id: 1, role_id: 1 },
+  },
   res: { redirect() {}, json() {}, send() {}, __: (s) => s },
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 module.exports = {
   rick_file,
   plugin_with_routes,
   configuration_workflow,
   mockReqRes,
+  getActionCounter,
+  resetActionCounter,
+  sleep,
 };

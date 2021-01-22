@@ -58,9 +58,22 @@ describe("files admin", () => {
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
+
+  it("serve missing file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/files/serve/22")
+      .set("Cookie", loginCookie)
+      .expect(404);
+  });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/2").expect(toRedirect("/"));
+  });
+  it("not download file to public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/files/download/2").expect(toRedirect("/"));
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -81,6 +94,16 @@ describe("files admin", () => {
     await request(app)
       .post("/files/delete/2")
       .set("Cookie", loginCookie)
+      .expect(toRedirect("/files"));
+  });
+  it("upload file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/files/upload")
+      .set("Cookie", loginCookie)
+      .attach("file", Buffer.from("helloiamasmallfile", "utf-8"))
+
       .expect(toRedirect("/files"));
   });
 });
@@ -125,7 +148,6 @@ describe("files edit", () => {
         },
       },
       min_role: 10,
-      on_root_page: false,
     });
   });
   it("shows edit view", async () => {

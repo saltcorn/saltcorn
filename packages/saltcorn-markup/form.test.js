@@ -27,10 +27,10 @@ describe("form render", () => {
     const want = `<form action="/" class="form-namespace  " method="post" >
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <label for="inputname" >Name</label>
-<div><input type="text" class="form-control  "  name="name" id="inputname" >
+<div><input type="text" class="form-control  "  data-fieldname="name" name="name" id="inputname" >
 </div></div><div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
 </form>`;
@@ -64,9 +64,9 @@ describe("form render", () => {
     });
     const want = `<form action="/" class="form-namespace " method="post" >
 <input type="hidden" name="_csrf" value="">
-<span class="h2">
-<input type="text" class="form-control  "  name="name" id="inputname" >
-</span><br /></form>`;
+<h2>
+<input type="text" class="form-control  "  data-fieldname="name" name="name" id="inputname" >
+</h2><br /></form>`;
     expect(nolines(renderForm(form, ""))).toBe(nolines(want));
   });
   it("renders a simple form with errors", () => {
@@ -86,10 +86,10 @@ describe("form render", () => {
     const want = `<form action="/" class="form-namespace  " method="post" >
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <label for="inputname" >Name</label>
-<div><input type="text" class="form-control is-invalid "  name="name" id="inputname" value="Bar"><div>Not a foo</div>
+<div><input type="text" class="form-control is-invalid "  data-fieldname="name" name="name" id="inputname" value="Bar"><div>Not a foo</div>
 </div></div><div class="form-group row">
   <div class="col-sm-12">
-    <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
 </form>`;

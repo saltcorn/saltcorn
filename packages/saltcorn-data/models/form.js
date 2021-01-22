@@ -11,6 +11,7 @@ class Form {
     this.values = o.values || {};
     this.action = o.action;
     this.layout = o.layout;
+    this.id = o.id;
     this.labelCols = o.labelCols;
     this.collapsedSummary = o.collapsedSummary;
     this.isStateForm = !!o.isStateForm;
@@ -21,10 +22,12 @@ class Form {
     this.submitLabel = o.submitLabel;
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
+    this.additionalButtons = o.additionalButtons;
     this.validator = o.validator;
     this.hasErrors = false;
     this.xhrSubmit = !!o.xhrSubmit;
-    this.__ = o.__;
+    this.req = o.req;
+    this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
     contract.class(this);
   }
@@ -59,6 +62,7 @@ class Form {
 
   validate(v) {
     this.hasErrors = false;
+    this.errors = {};
     this.fields.forEach((f) => {
       if (f.disabled) return;
       const valres = f.validate(v);

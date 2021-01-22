@@ -23,6 +23,7 @@ const {
 const passport = require("passport");
 const {
   div,
+  text,
   table,
   tbody,
   th,
@@ -35,16 +36,26 @@ const {
 const { available_languages } = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 const router = new Router();
 module.exports = router;
 
-const loginForm = (req, isCreating) =>
-  new Form({
+const loginForm = (req, isCreating) => {
+  const postAuthMethods = Object.entries(getState().auth_methods)
+    .filter(([k, v]) => v.postUsernamePassword)
+    .map(([k, v]) => v);
+  const user_sublabel = postAuthMethods
+    .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
+    .join(", ");
+  return new Form({
+    class: "login",
     fields: [
       new Field({
         label: req.__("E-mail"),
         name: "email",
         input_type: "text",
+        sublabel: user_sublabel || undefined,
         validator: (s) => s.length < 128,
       }),
       new Field({
@@ -59,7 +70,7 @@ const loginForm = (req, isCreating) =>
     action: "/auth/login",
     submitLabel: req.__("Login"),
   });
-
+};
 const forgotForm = (req) =>
   new Form({
     blurb: req.__(
@@ -102,15 +113,26 @@ const resetForm = (body, req) => {
   form.values.token = body && body.token;
   return form;
 };
-const getAuthLinks = (current) => {
-  const links = {};
+const getAuthLinks = (current, noMethods) => {
+  const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
-
+  if (!noMethods)
+    Object.entries(getState().auth_methods).forEach(([name, auth]) => {
+      const url = auth.postUsernamePassword
+        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}').submit();`
+        : `/auth/login-with/${name}`;
+      links.methods.push({
+        icon: auth.icon,
+        label: auth.label,
+        name,
+        url,
+      });
+    });
   return links;
 };
 
@@ -118,7 +140,22 @@ router.get(
   "/login",
   setTenant,
   error_catcher(async (req, res) => {
-    res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
+    const login_form_name = getState().getConfig("login_form", "");
+    if (login_form_name) {
+      const login_form = await View.findOne({ name: login_form_name });
+      if (!login_form)
+        res.sendAuthWrap(
+          req.__(`Login`),
+          loginForm(req),
+          getAuthLinks("login")
+        );
+      else {
+        const resp = await login_form.run_possibly_on_page({}, req, res);
+        if (login_form.default_render_page) res.sendWrap(req.__(`Login`), resp);
+        else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
+      }
+    } else
+      res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
   })
 );
 
@@ -212,15 +249,28 @@ router.get(
   "/signup",
   setTenant,
   error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_signup")) {
+    if (!getState().getConfig("allow_signup")) {
+      req.flash("danger", req.__("Signups not enabled"));
+      res.redirect("/auth/login");
+      return;
+    }
+    const defaultSignup = () => {
       const form = loginForm(req, true);
       form.action = "/auth/signup";
       form.submitLabel = req.__("Sign up");
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
-    } else {
-      req.flash("danger", req.__("Signups not enabled"));
-      res.redirect("/auth/login");
-    }
+    };
+    const signup_form_name = getState().getConfig("signup_form", "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (!signup_form) defaultSignup();
+      else {
+        const resp = await signup_form.run_possibly_on_page({}, req, res);
+        if (signup_form.default_render_page)
+          res.sendWrap(req.__(`Sign up`), resp);
+        else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
+      }
+    } else defaultSignup();
   })
 );
 
@@ -285,51 +335,180 @@ router.post(
     }
   })
 );
+
+const getNewUserForm = async (new_user_view_name, req, askEmail) => {
+  const view = await View.findOne({ name: new_user_view_name });
+  const table = await Table.findOne({ name: "users" });
+  const fields = await table.getFields();
+  const { columns, layout } = view.configuration;
+
+  const tfields = (columns || [])
+    .map((column) => {
+      if (column.type === "Field") {
+        const f = fields.find((fld) => fld.name === column.field_name);
+        if (f) {
+          f.fieldview = column.fieldview;
+          return f;
+        }
+      }
+    })
+    .filter((tf) => !!tf);
+
+  const form = new Form({
+    action: `/auth/signup_final`,
+    fields: tfields,
+    layout,
+    submitLabel: req.__("Sign up"),
+  });
+  await form.fill_fkey_options();
+  if (askEmail) {
+    form.fields.push(
+      new Field({
+        name: "email",
+        label: req.__("Email"),
+        type: "String",
+        required: true,
+      })
+    );
+    form.layout = {
+      above: [
+        {
+          type: "blank",
+          contents: "Email",
+        },
+        {
+          type: "field",
+          fieldview: "edit",
+          field_name: "email",
+        },
+        {
+          type: "line_break",
+        },
+        form.layout,
+      ],
+    };
+  } else {
+    form.hidden("email");
+  }
+  form.hidden("password");
+  return form;
+};
+
+const signup_login_with_user = (u, req, res) =>
+  req.login(
+    {
+      email: u.email,
+      id: u.id,
+      role_id: u.role_id,
+      tenant: db.getTenantSchema(),
+    },
+    function (err) {
+      if (!err) {
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/auth/signup");
+      }
+    }
+  );
+
+router.get(
+  "/signup_final_ext",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const new_user_form = getState().getConfig("new_user_form");
+    if (!req.user || req.user.id || !new_user_form) {
+      req.flash("danger", "This is the wrong place");
+      res.redirect("/auth/login");
+      return;
+    }
+    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
+    form.values.email = req.user.email;
+    res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+  })
+);
+
 router.post(
-  "/signup",
+  "/signup_final_ext",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const new_user_form = getState().getConfig("new_user_form");
+    if (!req.user || req.user.id || !new_user_form) {
+      req.flash("danger", "This is the wrong place");
+      res.redirect("/auth/login");
+      return;
+    }
+    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    form.action = "/auth/signup_final_ext";
+
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      return;
+    }
+    try {
+      const uobj = { ...req.user, ...form.values };
+      const u = await User.create(uobj);
+      signup_login_with_user(u, req, res);
+    } catch (e) {
+      const table = await Table.findOne({ name: "users" });
+      const fields = await table.getFields();
+      form.hasErrors = true;
+      const unique_field_error = fields.find(
+        (f) =>
+          e.message ===
+          `duplicate key value violates unique constraint "users_${f.name}_unique"`
+      );
+      if (unique_field_error)
+        form.errors[unique_field_error.name] = req.__("Already in use");
+      else form.errors._form = e.message;
+      res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+    }
+  })
+);
+router.post(
+  "/signup_final",
   setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
-      const form = loginForm(req, true);
-      form.validate(req.body);
-
-      if (form.hasErrors) {
-        form.action = "/auth/signup";
-        form.submitLabel = req.__("Sign up");
-        res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
-      } else {
-        const { email, password } = form.values;
-        if (email.length > 127) {
-          req.flash("danger", req.__("E-mail too long"));
-          res.redirect("/auth/signup");
-          return;
-        }
-
-        const us = await User.find({ email });
-        if (us.length > 0) {
-          req.flash("danger", req.__("Account already exists"));
-          res.redirect("/auth/signup");
-          return;
-        }
-
-        const u = await User.create({ email, password });
-
-        req.login(
-          {
-            email: u.email,
-            id: u.id,
-            role_id: u.role_id,
-            tenant: db.getTenantSchema(),
-          },
-          function (err) {
-            if (!err) {
-              res.redirect("/");
-            } else {
-              req.flash("danger", err);
-              res.redirect("/auth/signup");
+      const new_user_form = getState().getConfig("new_user_form");
+      const form = await getNewUserForm(new_user_form, req);
+      const signup_form_name = getState().getConfig("signup_form", "");
+      if (signup_form_name) {
+        const signup_form = await View.findOne({ name: signup_form_name });
+        if (signup_form) {
+          signup_form.configuration.columns.forEach((col) => {
+            if (
+              col.type === "Field" &&
+              !["email", "password"].includes(col.field_name)
+            ) {
+              form.hidden(col.field_name);
             }
-          }
-        );
+          });
+        }
+      }
+      form.validate(req.body);
+      if (form.hasErrors) {
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      } else {
+        try {
+          const u = await User.create(form.values);
+          signup_login_with_user(u, req, res);
+        } catch (e) {
+          const table = await Table.findOne({ name: "users" });
+          const fields = await table.getFields();
+          form.hasErrors = true;
+          const unique_field_error = fields.find(
+            (f) =>
+              e.message ===
+              `duplicate key value violates unique constraint "users_${f.name}_unique"`
+          );
+          if (unique_field_error)
+            form.errors[unique_field_error.name] = req.__("Already in use");
+          else form.errors._form = e.message;
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+        }
       }
     } else {
       req.flash("danger", req.__("Signups not enabled"));
@@ -337,6 +516,104 @@ router.post(
     }
   })
 );
+
+router.post(
+  "/signup",
+  setTenant,
+  error_catcher(async (req, res) => {
+    if (!getState().getConfig("allow_signup")) {
+      req.flash("danger", req.__("Signups not enabled"));
+      res.redirect("/auth/login");
+      return;
+    }
+
+    const unsuitableEmailPassword = async (email, password, passwordRepeat) => {
+      if (!email || !password) {
+        req.flash("danger", req.__("E-mail and password required"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if (email.length > 127) {
+        req.flash("danger", req.__("E-mail too long"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if (!User.valid_email(email)) {
+        req.flash("danger", req.__("Not a valid e-mail address"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if (typeof passwordRepeat === "string" && password !== passwordRepeat) {
+        req.flash("danger", req.__("Passwords do not match"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+
+      const us = await User.find({ email });
+      if (us.length > 0) {
+        req.flash("danger", req.__("Account already exists"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      const pwcheck = User.unacceptable_password_reason(password);
+      if (pwcheck) {
+        req.flash("danger", pwcheck);
+        res.redirect("/auth/signup");
+        return true;
+      }
+    };
+    const new_user_form = getState().getConfig("new_user_form");
+
+    const signup_form_name = getState().getConfig("signup_form", "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (signup_form) {
+        const userObject = {};
+        signup_form.configuration.columns.forEach((col) => {
+          if (col.type === "Field")
+            userObject[col.field_name] = req.body[col.field_name];
+        });
+        const { email, password, passwordRepeat } = userObject;
+        if (await unsuitableEmailPassword(email, password, passwordRepeat))
+          return;
+        if (new_user_form) {
+          const form = await getNewUserForm(new_user_form, req);
+          Object.entries(userObject).forEach(([k, v]) => {
+            form.values[k] = v;
+            if (!form.fields.find((f) => f.name === k)) form.hidden(k);
+          });
+          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+        } else {
+          const u = await User.create(userObject);
+          signup_login_with_user(u, req, res);
+        }
+        return;
+      }
+    }
+
+    const form = loginForm(req, true);
+    form.validate(req.body);
+
+    if (form.hasErrors) {
+      form.action = "/auth/signup";
+      form.submitLabel = req.__("Sign up");
+      res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
+    } else {
+      const { email, password } = form.values;
+      if (await unsuitableEmailPassword(email, password)) return;
+      if (new_user_form) {
+        const form = await getNewUserForm(new_user_form, req);
+        form.values.email = email;
+        form.values.password = password;
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      } else {
+        const u = await User.create({ email, password });
+        signup_login_with_user(u, req, res);
+      }
+    }
+  })
+);
+
 function handler(req, res) {
   console.log(
     `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
@@ -350,6 +627,14 @@ function handler(req, res) {
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
 }
+// try to find a unique user id in login submit
+const userIdKey = (body) => {
+  if (body.email) return body.email;
+  const { remember, password, _csrf, passwordRepeat, ...rest } = body;
+  const kvs = Object.entries(rest);
+  if (kvs.length > 0) return kvs[0][1];
+  else return "nokey";
+};
 const ipLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // limit each IP to 100 requests per windowMs
@@ -359,7 +644,7 @@ const ipLimiter = rateLimit({
 const userLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => req.body.email,
+  keyGenerator: (req) => userIdKey(req.body),
   handler,
 });
 
@@ -375,14 +660,82 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
-    userLimiter.resetKey(req.body.email);
+    userLimiter.resetKey(userIdKey(req.body));
     if (req.body.remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
     } else {
       req.session.cookie.expires = false; // Cookie expires at end of session
     }
-    req.flash("success", req.__("Welcome, %s!", req.body.email));
+    req.flash("success", req.__("Welcome, %s!", req.user.email));
     res.redirect("/");
+  })
+);
+router.get(
+  "/login-with/:method",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    if (auth) {
+      passport.authenticate(method, auth.parameters)(req, res, next);
+    } else {
+      req.flash(
+        "danger",
+        req.__("Unknown authentication method %s", text(method))
+      );
+      res.redirect("/");
+    }
+  })
+);
+router.post(
+  "/login-with/:method",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    console.log(method, auth);
+    if (auth) {
+      passport.authenticate(method, auth.parameters)(
+        req,
+        res,
+        loginCallback(req, res)
+      );
+    } else {
+      req.flash(
+        "danger",
+        req.__("Unknown authentication method %s", text(method))
+      );
+      res.redirect("/");
+    }
+  })
+);
+
+const loginCallback = (req, res) => () => {
+  if (!req.user) return;
+  if (!req.user.id) {
+    res.redirect("/auth/signup_final_ext");
+  }
+  if (!req.user.email) {
+    res.redirect("/auth/set-email");
+  } else {
+    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    res.redirect("/");
+  }
+};
+
+router.get(
+  "/callback/:method",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { method } = req.params;
+    const auth = getState().auth_methods[method];
+    if (auth) {
+      passport.authenticate(method, { failureRedirect: "/auth/login" })(
+        req,
+        res,
+        loginCallback(req, res)
+      );
+    }
   })
 );
 
@@ -491,6 +844,69 @@ router.get(
     res.sendWrap(
       req.__("User settings"),
       userSettings(req, changPwForm(req), user)
+    );
+  })
+);
+
+const setEmailForm = (req) =>
+  new Form({
+    action: "/auth/set-email",
+    blurb: req.__("Please enter your email address"),
+    fields: [
+      { name: "email", label: req.__("Email"), type: "String", required: true },
+    ],
+  });
+
+router.get(
+  "/set-email",
+  setTenant,
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      req.__("Set Email"),
+      renderForm(setEmailForm(req), req.csrfToken())
+    );
+  })
+);
+
+router.post(
+  "/set-email",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const form = setEmailForm(req);
+    form.validate(req.body);
+    if (form.hasErrors || !req.user || !req.user.id) {
+      res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
+      return;
+    }
+    const existing = await User.findOne({ email: form.values.email });
+    if (existing) {
+      form.hasErrors = true;
+      form.errors.email = req.__(
+        "A user with this email address already exists"
+      );
+      res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
+      return;
+    }
+
+    const u = await User.findOne({ id: req.user.id });
+    await u.update({ email: form.values.email });
+    u.email = form.values.email;
+    req.login(
+      {
+        email: u.email,
+        id: u.id,
+        role_id: u.role_id,
+        tenant: db.getTenantSchema(),
+      },
+      function (err) {
+        if (!err) {
+          req.flash("success", req.__("Welcome, %s!", u.email));
+          res.redirect("/");
+        } else {
+          req.flash("danger", err);
+          res.redirect("/");
+        }
+      }
     );
   })
 );

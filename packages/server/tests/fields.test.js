@@ -1,6 +1,8 @@
 const request = require("supertest");
 const getApp = require("../app");
 const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
+
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -19,13 +21,13 @@ beforeAll(async () => {
 });
 
 describe("Field Endpoints", () => {
-  itShouldRedirectUnauthToLogin("/field/1");
+  itShouldRedirectUnauthToLogin("/field/2");
 
   it("should show existing", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/field/1")
+      .get("/field/2")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
   });
@@ -34,14 +36,16 @@ describe("Field Endpoints", () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .get("/field/new/1")
+      .get("/field/new/2")
       .set("Cookie", loginCookie)
       .expect(toInclude("Label"));
   });
 
   it("should post new int field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
@@ -56,9 +60,11 @@ describe("Field Endpoints", () => {
 
   it("should post new int field with attributes", async () => {
     const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
     const ctx = encodeURIComponent(
       JSON.stringify({
-        table_id: 1,
+        table_id: table.id,
         name: "AgeRating",
         label: "AgeRating",
         type: "Integer",
@@ -74,7 +80,7 @@ describe("Field Endpoints", () => {
       .send("min=0")
       .send("max=410")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/1"));
+      .expect(toRedirect("/table/2"));
   });
   it("should delete new field", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -83,11 +89,11 @@ describe("Field Endpoints", () => {
     await request(app)
       .post(`/field/delete/${fld.id}`)
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/1"));
+      .expect(toRedirect("/table/2"));
   });
   it("should post new string field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 1 }));
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -103,7 +109,7 @@ describe("Field Endpoints", () => {
 
   it("should post new fkey field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const ctx = encodeURIComponent(JSON.stringify({ table_id: 2 }));
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: 3 }));
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/field/")
@@ -216,5 +222,95 @@ describe("Field Endpoints", () => {
       .expect(toInclude("ZoWrote"))
       .expect(toInclude("weight"))
       .expect(toNotInclude("[object"));
+  });
+
+  it("should post new calculated int field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("label=PagesPlus10")
+      .send("type=Integer")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+    const ctx1 = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        type: "Integer",
+        label: "PagesPlus10",
+        calculated: true,
+      })
+    );
+
+    await request(app)
+      .post("/field/")
+      .send("stepName=Expression")
+      .send("expression=" + encodeURIComponent("pages+10"))
+      .send("contextEnc=" + ctx1)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+    const row = await table.getRow({ id: 1 });
+    expect(row.pagesplus10).toBe(977);
+  });
+  it("should post new calculated string field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=String")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
+  it("should post new calculated float field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Float")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
+  });
+  it("should post new calculated boolean field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Basic properties")
+      .send("name=AgeRating")
+      .send("label=AgeRating")
+      .send("type=Bool")
+      .send("calculated=on")
+      .send("contextEnc=" + ctx)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("Examples:"));
   });
 });

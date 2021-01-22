@@ -1,9 +1,11 @@
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
+const Trigger = require("./trigger");
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
+  recalculate_for_stored,
 } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
@@ -51,6 +53,7 @@ class Table {
     this.id = o.id;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
+    this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
     contract.class(this);
   }
@@ -64,6 +67,22 @@ class Table {
 
     return tbls.map((t) => new Table(t));
   }
+  owner_fieldname_from_fields(fields) {
+    if (!this.ownership_field_id) return null;
+    const field = fields.find((f) => f.id === this.ownership_field_id);
+    return field.name;
+  }
+  async owner_fieldname() {
+    if (this.name === "users") return "id";
+    if (!this.ownership_field_id) return null;
+    const fields = await this.getFields();
+    return this.owner_fieldname_from_fields(fields);
+  }
+  async is_owner(user, row) {
+    if (!user) return false;
+    const field_name = await this.owner_fieldname();
+    return field_name && row[field_name] === user.id;
+  }
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
@@ -76,6 +95,7 @@ class Table {
       versioned: options.versioned || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
+      ownership_field_id: options.ownership_field_id,
     };
     const id = await db.insert("_sc_tables", tblrow);
     const table = new Table({ ...tblrow, id });
@@ -85,7 +105,7 @@ class Table {
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
-
+    await this.update({ ownership_field_id: null });
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
@@ -98,6 +118,11 @@ class Table {
       await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
         this.id,
       ]);
+      if (this.versioned)
+        await client.query(
+          `drop table ${schema}"${sqlsanitize(this.name)}__history"`
+        );
+
       await client.query(`COMMIT`);
     } catch (e) {
       await client.query(`ROLLBACK`);
@@ -109,7 +134,17 @@ class Table {
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
+
   async deleteRows(where) {
+    const triggers = await Trigger.getTableTriggers("Delete", this);
+    if (triggers.length > 0) {
+      const rows = await this.getRows(where);
+      for (const trigger of triggers) {
+        for (const row of rows) {
+          await trigger.run(row);
+        }
+      }
+    }
     await db.deleteWhere(this.name, where);
   }
   readFromDB(row) {
@@ -121,7 +156,8 @@ class Table {
   }
   async getRow(where) {
     await this.getFields();
-    const row = await db.selectOne(this.name, where);
+    const row = await db.selectMaybeOne(this.name, where);
+    if (!row) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
@@ -172,7 +208,15 @@ class Table {
         _userid,
       });
     }
-    return await db.update(this.name, v, id);
+    await db.update(this.name, v, id);
+    if (typeof existing === "undefined") {
+      const triggers = await Trigger.getTableTriggers("Update", this);
+      if (triggers.length > 0) existing = await db.selectOne(this.name, { id });
+    }
+    const newRow = { ...existing, ...v, id };
+    await Trigger.runTableTriggers("Update", this, newRow);
+
+    return;
   }
   async tryUpdateRow(v, id, _userid) {
     try {
@@ -188,9 +232,16 @@ class Table {
     await db.query(
       `update ${schema}"${sqlsanitize(this.name)}" set "${sqlsanitize(
         field_name
-      )}"=NOT "${sqlsanitize(field_name)}" where id=$1`,
+      )}"=NOT coalesce("${sqlsanitize(field_name)}", false) where id=$1`,
       [id]
     );
+    const triggers = await Trigger.getTableTriggers("Update", this);
+    if (triggers.length > 0) {
+      const row = await this.getRow({ id });
+      for (const trigger of triggers) {
+        await trigger.run(row);
+      }
+    }
   }
 
   async insertRow(v_in, _userid) {
@@ -205,6 +256,7 @@ class Table {
         _userid,
         _time: new Date(),
       });
+    await Trigger.runTableTriggers("Insert", this, { id, ...v });
     return id;
   }
 
@@ -348,7 +400,7 @@ class Table {
     return parse_res;
   }
 
-  async import_csv_file(filePath) {
+  async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
@@ -387,6 +439,7 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      if (skip_first_data_row && i === 2) continue;
       try {
         renames.forEach(({ from, to }) => {
           rec[to] = rec[from];
@@ -408,13 +461,17 @@ class Table {
     if (!db.isSQLite) await client.release(true);
 
     if (db.reset_sequence) await db.reset_sequence(this.name);
+
+    if (recalc_stored && this.fields.some((f) => f.calculated && f.stored)) {
+      recalculate_for_stored(this);
+    }
     return {
       success:
         `Imported ${file_rows.length - rejects} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
-  async import_json_file(filePath) {
+  async import_json_file(filePath, skip_first_data_row) {
     const file_rows = JSON.parse(await fs.readFile(filePath));
     const fields = await this.getFields();
     const { readState } = require("../plugin-helper");
@@ -424,6 +481,7 @@ class Table {
     await client.query("BEGIN");
     for (const rec of file_rows) {
       i += 1;
+      if (skip_first_data_row && i === 2) continue;
       fields
         .filter((f) => f.calculated && !f.stored)
         .forEach((f) => {
@@ -450,26 +508,30 @@ class Table {
     };
   }
 
-  async get_parent_relations() {
+  async get_parent_relations(allow_double) {
     const fields = await this.getFields();
     var parent_relations = [];
     var parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
-        if (f.reftable_name === "users") {
-          parent_field_list.push(`${f.name}.email`);
-          const table = new Table({ name: "users " });
-          parent_relations.push({ key_field: f, table });
-        } else {
-          const table = await Table.findOne({ name: f.reftable_name });
-          await table.getFields();
-          table.fields
-            .filter((f) => !f.calculated || f.stored)
-            .forEach((pf) => {
-              parent_field_list.push(`${f.name}.${pf.name}`);
-            });
-          parent_relations.push({ key_field: f, table });
+        const table = await Table.findOne({ name: f.reftable_name });
+        await table.getFields();
+        for (const pf of table.fields.filter(
+          (f) => !f.calculated || f.stored
+        )) {
+          parent_field_list.push(`${f.name}.${pf.name}`);
+          if (pf.is_fkey && pf.type !== "File" && allow_double) {
+            const table1 = await Table.findOne({ name: pf.reftable_name });
+            await table1.getFields();
+            for (const gpf of table1.fields.filter(
+              (f) => !f.calculated || f.stored
+            )) {
+              parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+            }
+            parent_relations.push({ key_field: pf, through: f, table: table1 });
+          }
         }
+        parent_relations.push({ key_field: f, table });
       }
     }
     return { parent_relations, parent_field_list };
@@ -489,7 +551,7 @@ class Table {
     }
     return { child_relations, child_field_list };
   }
-  async getJoinedRows(opts = {}) {
+  async getJoinedQuery(opts = {}) {
     const fields = await this.getFields();
     var fldNms = ["a.id"];
     var joinq = "";
@@ -506,8 +568,9 @@ class Table {
           target: `filename`,
         };
       });
-
-    Object.entries(joinFields).forEach(([fldnm, { ref, target }]) => {
+    for (const [fldnm, { ref, target, through }] of Object.entries(
+      joinFields
+    )) {
       const reffield = fields.find((f) => f.name === ref);
       if (!reffield) throw new Error(`Key field not found: ${ref}`);
       const reftable = reffield.reftable_name;
@@ -518,8 +581,29 @@ class Table {
           reftable
         )}" ${jtNm} on ${jtNm}.id=a."${sqlsanitize(ref)}"`;
       }
-      fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
-    });
+      if (through) {
+        const throughTable = await Table.findOne({
+          name: reffield.reftable_name,
+        });
+        const throughTableFields = await throughTable.getFields();
+        const throughRefField = throughTableFields.find(
+          (f) => f.name === through
+        );
+        const finalTable = throughRefField.reftable_name;
+        const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
+          through
+        )}_jt_${sqlsanitize(ref)}`;
+        if (!joinTables.includes(jtNm1)) {
+          joinTables.push(jtNm1);
+          joinq += ` left join ${schema}"${sqlsanitize(
+            finalTable
+          )}" ${jtNm1} on ${jtNm1}.id=${jtNm}."${sqlsanitize(through)}"`;
+        }
+        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      } else {
+        fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      }
+    }
     for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
@@ -556,7 +640,8 @@ class Table {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts = {
       limit: opts.limit,
-      orderBy: opts.orderBy && "a." + opts.orderBy,
+      orderBy:
+        opts.orderBy && (opts.orderBy.sql ? opts.orderBy : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
@@ -564,9 +649,15 @@ class Table {
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    return { sql, values };
+  }
+  async getJoinedRows(opts = {}) {
+    const fields = await this.getFields();
+
+    const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
 
-    return apply_calculated_fields(res.rows, this.fields);
+    return apply_calculated_fields(res.rows, fields);
   }
 }
 
@@ -577,13 +668,14 @@ Table.contract = {
     delete: is.fun([], is.promise(is.eq(undefined))),
     update: is.fun(is.obj(), is.promise(is.eq(undefined))),
     deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
-    getRow: is.fun(is.obj(), is.promise(is.obj())),
+    getRow: is.fun(is.obj(), is.promise(is.maybe(is.obj()))),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
     updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
     toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.posint)),
     get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
+    distinctValues: is.fun(is.str, is.promise(is.array(is.any))),
     tryInsertRow: is.fun(
       [is.obj(), is.maybe(is.posint)],
       is.promise(

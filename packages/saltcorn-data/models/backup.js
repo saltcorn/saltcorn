@@ -91,14 +91,6 @@ const create_table_jsons = contract(
   }
 );
 
-const create_users_csv = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (root_dirpath) => {
-    const users = await db.select("users");
-    await create_csv_from_rows(users, path.join(root_dirpath, "users.csv"));
-  }
-);
-
 const backup_files = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
@@ -136,7 +128,6 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
 
   await create_pack(dir.path);
   await create_table_jsons(dir.path);
-  await create_users_csv(dir.path);
   await backup_files(dir.path);
   await backup_config(dir.path);
 
@@ -144,7 +135,9 @@ const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
 
   const ten = db.getTenantSchema();
   const tens =
-    ten === "public" ? getState().getConfig("site_name", "") : "-" + ten;
+    ten === db.connectObj.default_schema
+      ? getState().getConfig("site_name", "")
+      : "-" + ten;
   const zipFileName = `sc-backup-${tens}-${day}.zip`;
 
   var zip = new Zip();
@@ -185,31 +178,29 @@ const restore_files = contract(
   }
 );
 
-const restore_users = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (dirpath) => {
-    const user_rows = await csvtojson().fromFile(
-      path.join(dirpath, "users.csv")
-    );
-    for (const user of user_rows) {
-      if (user.id > 1) await db.insert("users", new User(user));
-    }
-  }
-);
-
 const restore_tables = contract(
   is.fun(is.str, is.promise(is.maybe(is.str))),
   async (dirpath) => {
     var err;
     const tables = await Table.find();
     for (const table of tables) {
-      const fnm_csv = path.join(dirpath, "tables", table.name + ".csv");
+      const fnm_csv =
+        table.name === "users"
+          ? path.join(dirpath, "users.csv")
+          : path.join(dirpath, "tables", table.name + ".csv");
       const fnm_json = path.join(dirpath, "tables", table.name + ".json");
       if (existsSync(fnm_json)) {
-        const res = await table.import_json_file(fnm_json);
+        const res = await table.import_json_file(
+          fnm_json,
+          table.name === "users"
+        );
         if (res.error) err = (err || "") + res.error;
       } else if (existsSync(fnm_csv)) {
-        const res = await table.import_csv_file(fnm_csv);
+        const res = await table.import_csv_file(
+          fnm_csv,
+          false,
+          table.name === "users"
+        );
         if (res.error) err = (err || "") + res.error;
       }
     }
@@ -253,17 +244,14 @@ const restore = contract(
     );
 
     const can_restore = await can_install_pack(pack);
-    if (can_restore.error || can_restore.warning) {
+    if (can_restore.error) {
       return `Cannot restore backup, clashing entities: 
-      ${can_restore.error || ""} ${can_restore.warning || ""}
+      ${can_restore.error || ""}
       Delete these entities or restore to a pristine instance.
       `;
     }
 
     await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
-
-    //users
-    await restore_users(dir.path);
 
     // files
     await restore_files(dir.path);

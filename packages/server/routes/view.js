@@ -1,9 +1,16 @@
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
+const Page = require("@saltcorn/data/models/page");
+
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
-const { setTenant, error_catcher } = require("../routes/utils.js");
+const {
+  setTenant,
+  error_catcher,
+  scan_for_page_title,
+} = require("../routes/utils.js");
+const { add_edit_bar } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -20,38 +27,29 @@ router.get(
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
-    } else if (role > view.min_role) {
+      return;
+    }
+    if (
+      role > view.min_role &&
+      !(await view.authorise_get({ query: req.query, req, ...view }))
+    ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
-    } else {
-      const state = view.combine_state_and_default_state(req.query);
-      const resp = await view.run(state, { res, req });
-      const state_form = await view.get_state_form(state, req);
-      const rendered = div(
-        state_form ? renderForm(state_form, req.csrfToken()) : "",
-        resp
-      );
-      const showThis =
-        role === 1 && !req.xhr
-          ? {
-              type: "card",
-              title: [
-                view.name,
-
-                a(
-                  {
-                    class: "ml-4",
-                    href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-                  },
-                  req.__("Edit") + "&nbsp;",
-                  i({ class: "fas fa-edit" })
-                ),
-              ],
-              contents: rendered,
-            }
-          : rendered;
-      res.sendWrap(view.name, showThis);
+      return;
     }
+    const contents = await view.run_possibly_on_page(req.query, req, res);
+
+    const title = scan_for_page_title(contents, view.name);
+    res.sendWrap(
+      title,
+      add_edit_bar({
+        role: req.xhr ? 10 : role,
+        title: view.name,
+        what: req.__("View"),
+        url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        contents,
+      })
+    );
   })
 );
 router.post(
@@ -85,7 +83,10 @@ router.post(
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
-    } else if (role > view.min_role) {
+    } else if (
+      role > view.min_role &&
+      !(await view.authorise_post({ body: req.body, req, ...view }))
+    ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
     } else {

@@ -14,6 +14,7 @@ const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
   span,
   h5,
+  h1,
   h4,
   nbsp,
   p,
@@ -64,7 +65,14 @@ router.get(
       "Files",
       mkTable(
         [
-          { label: req.__("Filename"), key: "filename" },
+          {
+            label: req.__("Filename"),
+            key: (r) =>
+              div(
+                { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                r.filename
+              ),
+          },
           { label: req.__("Size (KiB)"), key: "size_kb" },
           { label: req.__("Media type"), key: (r) => r.mimetype },
           {
@@ -100,6 +108,7 @@ router.get(
           class: "form-control-file",
           type: "file",
           onchange: "form.submit()",
+          multiple: true,
         })
       )
     );
@@ -132,6 +141,12 @@ router.get(
     const user_id = req.user && req.user.id;
     const { id } = req.params;
     const file = await File.findOne({ id });
+    if (!file) {
+      res
+        .status(404)
+        .sendWrap(res.__("Not found"), h1(res.__("File not found")));
+      return;
+    }
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
@@ -165,21 +180,58 @@ router.post(
     res.redirect("/files");
   })
 );
+router.post(
+  "/setname/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const filename = req.body.value;
+    await File.update(+id, { filename });
+
+    res.redirect("/files");
+  })
+);
 
 router.post(
   "/upload",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    let jsonResp = {};
     if (!req.files && !req.files.file) {
-      req.flash("warning", req.__("No file found"));
+      if (!req.xhr) req.flash("warning", req.__("No file found"));
+      else jsonResp = { error: "No file found" };
     } else {
-      const f = await File.from_req_files(req.files.file, req.user.id);
-      req.flash("success", req.__(`File %s uploaded`, text(f.filename)));
+      const min_role_read = req.body ? req.body.min_role_read || 1 : 1;
+      const f = await File.from_req_files(
+        req.files.file,
+        req.user.id,
+        +min_role_read
+      );
+      const many = Array.isArray(f);
+      if (!req.xhr)
+        req.flash(
+          "success",
+          req.__(
+            `File %s uploaded`,
+            many
+              ? f.map((fl) => text(fl.filename)).join(", ")
+              : text(f.filename)
+          )
+        );
+      else
+        jsonResp = {
+          success: {
+            url: many
+              ? f.map((fl) => `/files/serve/${fl.id}`)
+              : `/files/serve/${f.id}`,
+          },
+        };
       if (f.filename === "favicon.png") await getState().refresh();
     }
-
-    res.redirect("/files");
+    if (!req.xhr) res.redirect("/files");
+    else res.json(jsonResp);
   })
 );
 

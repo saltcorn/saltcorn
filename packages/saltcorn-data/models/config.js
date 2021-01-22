@@ -1,5 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const latestVersion = require("latest-version");
 
 const configTypes = {
   site_name: {
@@ -40,6 +41,7 @@ const configTypes = {
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },
   admin_home: { type: "String", label: "Admin home page", default: "" },
+  layout_by_role: { type: "hidden", label: "Layout by role", default: {} },
   allow_signup: {
     type: "Bool",
     label: "Allow signups",
@@ -58,6 +60,24 @@ const configTypes = {
     label: "Login in menu",
     default: true,
     blurb: "Show the login link in the menu",
+  },
+  new_user_form: {
+    type: "View users",
+    label: "New user form",
+    default: "",
+    blurb: "A view to show to new users",
+  },
+  login_form: {
+    type: "View users",
+    label: "Login view",
+    blurb: "A view with the login form",
+    default: "",
+  },
+  signup_form: {
+    type: "View users",
+    label: "Signup view",
+    blurb: "A view with the signup form",
+    default: "",
   },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
@@ -100,6 +120,46 @@ const configTypes = {
     blurb:
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
   },
+  custom_ssl_certificate: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL certificate",
+    default: "",
+    hide_value: true,
+  },
+  custom_ssl_private_key: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL private key",
+    hide_value: true,
+    default: "",
+  },
+  letsencrypt: {
+    label: "LetsEncrypt enabled",
+    default: false,
+    type: "hidden",
+    blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
+  },
+  latest_npm_version: {
+    type: "hidden",
+    label: "Layout by role",
+    default: {},
+    label: "Latest npm version cache",
+  },
+  page_custom_css: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom CSS",
+    default: "",
+    hide_value: true,
+  },
+  page_custom_html: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom HTML",
+    default: "",
+    hide_value: true,
+  },
 };
 
 const available_languages = {
@@ -127,6 +187,11 @@ const getConfig = contract(
     else return configTypes[key] ? configTypes[key].default : undefined;
   }
 );
+
+const isFixedConfig = (key) =>
+  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
+  (db.connectObj.inherit_configuration.includes(key) &&
+    db.getTenantSchema() !== db.connectObj.default_schema);
 
 const getAllConfig = contract(
   is.fun([], is.promise(is.objVals(is.any))),
@@ -162,7 +227,7 @@ const getAllConfigOrDefaults = contract(
     Object.entries(configTypes).forEach(([key, v]) => {
       const value =
         typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-      cfgs[key] = { value, ...v };
+      if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
     });
     return cfgs;
   }
@@ -219,6 +284,25 @@ const remove_from_menu = contract(
     await getState().setConfig("menu_items", new_menu);
   }
 );
+
+const get_latest_npm_version = async (pkg) => {
+  const { getState } = require("../db/state");
+  const { is_stale } = require("./pack");
+  const stored = getState().getConfig("latest_npm_version", {});
+
+  if (stored[pkg] && !is_stale(stored[pkg].time, 6)) {
+    return stored[pkg].version;
+  }
+
+  const latest = await latestVersion(pkg);
+  const stored1 = getState().getConfig("latest_npm_version", {});
+  await getState().setConfig("latest_npm_version", {
+    ...stored1,
+    [pkg]: { time: new Date(), version: latest },
+  });
+  return latest;
+};
+
 module.exports = {
   getConfig,
   getAllConfig,
@@ -228,4 +312,6 @@ module.exports = {
   configTypes,
   remove_from_menu,
   available_languages,
+  isFixedConfig,
+  get_latest_npm_version,
 };

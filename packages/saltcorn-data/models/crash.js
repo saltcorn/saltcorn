@@ -7,8 +7,9 @@ class Crash {
     this.id = o.id;
     this.stack = o.stack;
     this.message = o.message;
-    this.occur_at =
-      typeof o.occur_at === "string" ? new Date(o.occur_at) : o.occur_at;
+    this.occur_at = ["string", "number"].includes(typeof o.occur_at)
+      ? new Date(o.occur_at)
+      : o.occur_at;
     this.tenant = o.tenant;
     this.user_id = o.user_id;
     this.body = o.body;
@@ -17,8 +18,8 @@ class Crash {
       typeof o.headers === "string" ? JSON.parse(o.headers) : o.headers;
     contract.class(this);
   }
-  static async find(where) {
-    const us = await db.select("_sc_errors", where);
+  static async find(where, selopts) {
+    const us = await db.select("_sc_errors", where, selopts);
     return us.map((u) => new Crash(u));
   }
   static async findOne(where) {
@@ -28,7 +29,9 @@ class Crash {
   get reltime() {
     return moment(this.occur_at).fromNow();
   }
-
+  static async count(where) {
+    return await db.count("_sc_errors", where || {});
+  }
   get msg_short() {
     return this.message.length > 90
       ? this.message.substring(0, 90)
@@ -36,7 +39,7 @@ class Crash {
   }
   static async create(err, req) {
     const schema = db.getTenantSchema();
-    await db.runWithTenant("public", async () => {
+    await db.runWithTenant(db.connectObj.default_schema, async () => {
       await db.insert("_sc_errors", {
         stack: err.stack,
         message: err.message,

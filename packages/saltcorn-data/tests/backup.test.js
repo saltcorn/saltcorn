@@ -28,11 +28,13 @@ describe("Backup and restore", () => {
     expect(!!t1).toBe(true);
 
     await reset();
-    await User.create({
+    const admu = await User.create({
       email: "admin@foo.com",
       password: "AhGGr6rhu45",
       role_id: 1,
     });
+    expect(typeof admu.password).toBe("string");
+
     const t2 = await Table.findOne({ name: "books" });
     expect(t2).toBe(null);
     const sn0 = await getConfig("site_name");
@@ -49,5 +51,10 @@ describe("Backup and restore", () => {
     const sn = await getConfig("site_name");
     expect(sn).toBe("backups rule!");
     await t3.insertRow({ author: "Marcus Rediker", pages: 224 });
+    const staff = await User.findOne({ email: "staff@foo.com" });
+    expect(!!staff).toBe(true);
+    expect(typeof staff.password).toBe("string");
+
+    expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
   });
 });

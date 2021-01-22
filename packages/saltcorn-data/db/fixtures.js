@@ -73,7 +73,6 @@ module.exports = async () => {
       ],
     },
     min_role: 10,
-    on_root_page: true,
   });
   await View.create({
     table_id: table.id,
@@ -96,7 +95,6 @@ module.exports = async () => {
       },
     },
     min_role: 10,
-    on_root_page: true,
   });
   await View.create({
     table_id: table.id,
@@ -112,7 +110,6 @@ module.exports = async () => {
       },
     },
     min_role: 10,
-    on_root_page: true,
   });
   await View.create({
     table_id: patients.id,
@@ -129,7 +126,6 @@ module.exports = async () => {
       ],
     },
     min_role: 8,
-    on_root_page: true,
   });
   const readings = await Table.create("readings");
   await Field.create({

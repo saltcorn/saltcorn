@@ -5,7 +5,13 @@ const removeEmptyStrings = (obj) => {
   });
   return o;
 };
-
+const removeDefaultColor = (obj) => {
+  var o = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== "#000000") o[k] = v;
+  });
+  return o;
+};
 const isEmpty = (o) => Object.keys(o).length === 0;
 
 const asyncMap = async (xs, asyncF) => {
@@ -27,11 +33,19 @@ const stringToJSON = (v) => {
     throw new Error(`stringToJSON(${JSON.stringify(v)}): ${e.message}`);
   }
 };
+const apply = (f, x) => (typeof f === "function" ? f(x) : f);
 
+const applyAsync = async (f, x) => {
+  if (typeof f === "function") return await f(x);
+  else return f;
+};
 module.exports = {
   removeEmptyStrings,
+  removeDefaultColor,
   isEmpty,
   asyncMap,
   numberToBool,
   stringToJSON,
+  applyAsync,
+  apply,
 };

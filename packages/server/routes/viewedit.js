@@ -30,6 +30,8 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const Page = require("@saltcorn/data/models/page");
+
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const router = new Router();
@@ -155,7 +157,10 @@ router.get(
   })
 );
 
-const viewForm = (req, tableOptions, roles, values) => {
+const mapObjectValues = (o, f) =>
+  Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
+
+const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   return new Form({
@@ -177,6 +182,12 @@ const viewForm = (req, tableOptions, roles, values) => {
         input_type: "select",
         sublabel: req.__("Views are based on a view template"),
         options: Object.keys(getState().viewtemplates),
+        attributes: {
+          explainers: mapObjectValues(
+            getState().viewtemplates,
+            ({ description }) => description
+          ),
+        },
         disabled: isEdit,
       }),
       new Field({
@@ -196,9 +207,16 @@ const viewForm = (req, tableOptions, roles, values) => {
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       }),
       new Field({
-        label: req.__("On root page"),
-        name: "on_root_page",
-        type: "Bool",
+        name: "default_render_page",
+        label: req.__("Show on page"),
+        sublabel: req.__(
+          "Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements."
+        ),
+        input_type: "select",
+        options: [
+          { value: "", label: "" },
+          ...pages.map((p) => ({ value: p.name, label: p.name })),
+        ],
       }),
       ...(isEdit
         ? [
@@ -225,7 +243,6 @@ router.get(
 
     var viewrow = await View.findOne({ name: viewname });
     if (!viewrow) {
-      console.log("not found:", viewname);
       req.flash("error", `View not found: ${text(viewname)}`);
       res.redirect("/viewedit");
       return;
@@ -235,7 +252,8 @@ router.get(
     viewrow.table_name = currentTable.name;
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles, viewrow);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages, viewrow);
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -264,7 +282,8 @@ router.get(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -295,7 +314,8 @@ router.post(
     const tables = await Table.find();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
-    const form = viewForm(req, tableOptions, roles);
+    const pages = await Page.find();
+    const form = viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {
@@ -381,12 +401,13 @@ const respondWorkflow = (view, wfres, req, res) => {
       req.__(`View configuration`),
       wrap(renderForm(wfres.renderForm, req.csrfToken()))
     );
-  else if (wfres.renderBuilder)
+  else if (wfres.renderBuilder) {
+    wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
       req.__(`View configuration`),
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
-  else res.redirect(wfres.redirect);
+  } else res.redirect(wfres.redirect);
 };
 router.get(
   "/config/:name",
@@ -471,5 +492,23 @@ router.post(
     await View.delete({ id });
     req.flash("success", req.__("View deleted"));
     res.redirect(`/viewedit`);
+  })
+);
+
+router.post(
+  "/savebuilder/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id && req.body) {
+      const exview = await View.findOne({ id });
+      let newcfg = { ...exview.configuration, ...req.body };
+      await View.update({ configuration: newcfg }, +id);
+      res.json({ success: "ok" });
+    } else {
+      res.json({ error: "no view" });
+    }
   })
 );

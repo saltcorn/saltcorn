@@ -4,8 +4,9 @@ const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const vm = require("vm");
 const readKey = (v) => {
-  const parsed = parseInt(v);
-  return isNaN(parsed) ? null : parsed;
+  if (v === "") return null;
+  const parsed = +v;
+  return !isNaN(parsed) ? parsed : v ? { error: "Unable to read key" } : null;
 };
 
 class Field {
@@ -53,7 +54,8 @@ class Field {
         o.type.replace("Key to ", "");
       this.reftable = o.reftable;
       this.type = "Key";
-      this.input_type = "select";
+      this.input_type =
+        !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
     }
 
     this.attributes =
@@ -120,7 +122,8 @@ class Field {
       this.options = [...new Set(allOpts)];
     }
   }
-  async distinct_values() {
+  async distinct_values(req) {
+    const __ = req && req.__ ? req.__ : (s) => s;
     if (
       this.type.name === "String" &&
       this.attributes &&
@@ -137,13 +140,24 @@ class Field {
       await this.fill_fkey_options();
       return this.options || [];
     }
+    if (this.type.name === "Bool") {
+      return [
+        { label: "", value: "" },
+        { label: __("True"), value: "on", jsvalue: true },
+        { label: __("False"), value: "off", jsvalue: false },
+      ];
+    }
     await this.fill_table();
-    const rows = await db.select(this.table.name);
+    const { rows } = await db.query(
+      `select distinct "${db.sqlsanitize(this.name)}" from ${
+        this.table.sql_name
+      } order by "${db.sqlsanitize(this.name)}"`
+    );
     const dbOpts = rows.map((r) => ({
-      label: r[this.name],
+      label: `${r[this.name]}`,
       value: r[this.name],
     }));
-    return [...new Set([{ label: "", value: "" }, ...dbOpts])];
+    return [{ label: "", value: "" }, ...dbOpts];
   }
 
   get sql_type() {
@@ -174,10 +188,8 @@ class Field {
       );
       if (rows.length === 1) return rows[0].id;
     } else {
-      if (this.type.contract) {
-        if (this.type.contract)
-          return this.type.contract(this.attributes).generate();
-      }
+      if (this.type && this.type.contract)
+        return this.type.contract(this.attributes).generate();
     }
   }
 
@@ -215,43 +227,13 @@ class Field {
   }
 
   async add_unique_constraint() {
-    const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    if (db.isSQLite)
-      await db.query(
-        `create unique index ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique on "${sqlsanitize(this.table.name)}"("${sqlsanitize(
-          this.name
-        )}")`
-      );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" add CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique UNIQUE ("${sqlsanitize(this.name)}")`
-      );
+    await db.add_unique_constraint(this.table.name, [this.name]);
   }
 
   async remove_unique_constraint() {
-    const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    if (db.isSQLite)
-      await db.query(
-        `drop index ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique;`
-      );
-    else
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop CONSTRAINT ${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_unique;`
-      );
+    await db.drop_unique_constraint(this.table.name, [this.name]);
   }
 
   async toggle_not_null(not_null) {
@@ -449,6 +431,8 @@ Field.contract = {
         "text",
         "password",
         "section_header",
+        "textarea",
+        "custom_html",
       ])
     ),
     is_fkey: is.bool,
@@ -485,6 +469,10 @@ Field.contract = {
     fill_table: is.fun([], is.promise(is.undefined)),
     update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
     fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
+    distinct_values: is.fun(
+      [],
+      is.promise(is.array(is.obj({ label: is.any, value: is.any })))
+    ),
   },
   static_methods: {
     find: is.fun(

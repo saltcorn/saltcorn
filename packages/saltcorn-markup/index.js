@@ -11,7 +11,7 @@ const post_btn = (
   s,
   csrfToken,
   {
-    btnClass = "primary",
+    btnClass = "btn-primary",
     onClick,
     small,
     ajax,
@@ -44,7 +44,7 @@ const post_btn = (
       : ""
   } class="${klass} btn ${
     small ? "btn-sm" : ""
-  } btn-${btnClass}">${s}</button></form>`;
+  } ${btnClass}">${s}</button></form>`;
 
 const post_delete_btn = (href, req, what) =>
   `<form action="${text(href)}" method="post" >

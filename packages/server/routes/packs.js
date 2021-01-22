@@ -22,7 +22,7 @@ const {
   can_install_pack,
   uninstall_pack,
 } = require("@saltcorn/data/models/pack");
-const { h5, pre, code, p, text } = require("@saltcorn/markup/tags");
+const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
 
 const router = new Router();
 module.exports = router;
@@ -125,7 +125,10 @@ router.post(
                 "You can copy the pack contents below to another Saltcorn installation."
               )
             ),
-            pre({ class: "pack-display" }, code(JSON.stringify(pack))),
+            pre(
+              { class: "pack-display" },
+              code(text_attr(JSON.stringify(pack)))
+            ),
           ],
         },
       ],

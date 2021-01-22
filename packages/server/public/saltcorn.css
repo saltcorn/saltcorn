@@ -129,3 +129,68 @@ div.dropdown-menu.search-form {
   max-height: 75vh;
   overflow-y: auto;
 }
+
+div.card.with-link:hover {
+  cursor: pointer;
+}
+
+div.testrunoutput code {
+  color: unset;
+}
+.w-1em {
+  width: 1em;
+  display: inline-block;
+}
+
+.mr-05 {
+  margin-right: 0.125rem !important;
+}
+
+div[data-inline-edit-dest-url] .editicon {
+  display: none;
+}
+
+div[data-inline-edit-dest-url]:hover .editicon {
+  display: inline;
+}
+.searchbar-dropdown {
+  left: unset;
+}
+.search-bar .input-group-text {
+  background-color: unset;
+  border-left: none;
+  border-right: none;
+
+  border-color: #95a5a6;
+}
+.search-bar input[type="search"] {
+  border-left: none;
+  border-color: #95a5a6;
+  padding-left: 0.3rem;
+  background-color: #ffffff;
+}
+
+.search-bar button.search-bar {
+  border-color: #95a5a6;
+  background-color: #ffffff;
+}
+.search-bar button.dropdown-toggle {
+  border-left: none;
+}
+#button-search-submit {
+  border-right: none;
+  padding-right: 0.3rem;
+}
+.br-none {
+  border-right: none;
+}
+
+.plugin-section .nav-link {
+  padding: 0.5rem 0.75rem;
+}
+.sidebar .nav-item .collapse .collapse-inner .collapse-item {
+  margin: 0px;
+}
+.crashlog-entry {
+  overflow-x: scroll;
+}

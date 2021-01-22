@@ -25,6 +25,7 @@ const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
+const { send_infoarch_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -51,7 +52,10 @@ router.get(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -88,7 +92,8 @@ const getNewURL = (req, subdomain) => {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const newurl = `${req.protocol}://${subdomain}.${req.hostname}${ports}/`;
+  const hostname = req.hostname.replace(/^(www\.)/, "");
+  const newurl = `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 
   return newurl;
 };
@@ -97,7 +102,10 @@ router.post(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -152,7 +160,10 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -160,49 +171,46 @@ router.get(
       return;
     }
     const tens = await db.select("_sc_tenants");
-    res.sendWrap("Tenant", {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Settings") }, { text: "Tenants" }],
-        },
-        {
-          type: "card",
-          title: "Tenants",
-          contents: [
-            mkTable(
-              [
-                {
-                  label: "Subdomain",
-                  key: (r) =>
-                    link(getNewURL(req, r.subdomain), text(r.subdomain)),
-                },
-                {
-                  label: "Information",
-                  key: (r) =>
-                    a(
-                      { href: `/tenant/info/${text(r.subdomain)}` },
-                      i({ class: "fas fa-lg fa-info-circle" })
-                    ),
-                },
-                {
-                  label: "Delete",
-                  key: (r) =>
-                    post_btn(
-                      `/tenant/delete/${r.subdomain}`,
-                      "Delete",
-                      req.csrfToken(),
-                      { small: true }
-                    ),
-                },
-              ],
-              tens
-            ),
-            div(`Found ${tens.length} tenants`),
-            div(link("/tenant/create", "Create new tenant")),
-          ],
-        },
-      ],
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Tenants",
+      contents: {
+        type: "card",
+        title: "Tenants",
+        contents: [
+          mkTable(
+            [
+              {
+                label: "Subdomain",
+                key: (r) =>
+                  link(getNewURL(req, r.subdomain), text(r.subdomain)),
+              },
+              {
+                label: "Information",
+                key: (r) =>
+                  a(
+                    { href: `/tenant/info/${text(r.subdomain)}` },
+                    i({ class: "fas fa-lg fa-info-circle" })
+                  ),
+              },
+              {
+                label: "Delete",
+                key: (r) =>
+                  post_btn(
+                    `/tenant/delete/${r.subdomain}`,
+                    "Delete",
+                    req.csrfToken(),
+                    { small: true }
+                  ),
+              },
+            ],
+            tens
+          ),
+          div(`Found ${tens.length} tenants`),
+          div(link("/tenant/create", "Create new tenant")),
+        ],
+      },
     });
   })
 );
@@ -228,7 +236,10 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -237,31 +248,25 @@ router.get(
     }
     const { subdomain } = req.params;
     const info = await get_tenant_info(subdomain);
-    res.sendWrap(`${text(subdomain)} tenant`, {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings") },
-            { text: "Tenants", href: "/tenant/list" },
-            { text: text(subdomain) },
-          ],
-        },
-        {
-          type: "card",
-          title: `${text(subdomain)} tenant`,
-          contents: [
-            table(
-              tr(th(req.__("E-mail")), td(info.first_user_email)),
-              tr(th(req.__("Users")), td(info.nusers)),
-              tr(th(req.__("Tables")), td(info.ntables)),
-              tr(th(req.__("Views")), td(info.nviews)),
-              tr(th(req.__("Pages")), td(info.npages)),
-              tr(th(req.__("Files")), td(info.nfiles))
-            ),
-          ],
-        },
-      ],
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Tenants",
+      sub2_page: text(subdomain),
+      contents: {
+        type: "card",
+        title: `${text(subdomain)} tenant`,
+        contents: [
+          table(
+            tr(th(req.__("E-mail")), td(info.first_user_email)),
+            tr(th(req.__("Users")), td(info.nusers)),
+            tr(th(req.__("Tables")), td(info.ntables)),
+            tr(th(req.__("Views")), td(info.nviews)),
+            tr(th(req.__("Pages")), td(info.npages)),
+            tr(th(req.__("Files")), td(info.nfiles))
+          ),
+        ],
+      },
     });
   })
 );
@@ -271,7 +276,10 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant() || db.getTenantSchema() !== "public") {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")

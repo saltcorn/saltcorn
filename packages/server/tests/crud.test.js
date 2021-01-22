@@ -43,16 +43,6 @@ describe("standard edit form", () => {
 });
 
 describe("homepage", () => {
-  it("shows to public", async () => {
-    const app = await getApp({ disableCsrf: true });
-    await request(app).get("/").expect(toInclude("authorlist"));
-  });
-  it("shows single on_root_page view", async () => {
-    await db.query("update _sc_views set on_root_page=false where id<>1;");
-    const app = await getApp({ disableCsrf: true });
-    await request(app).get("/").expect(toInclude("Melville"));
-  });
-
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -67,23 +57,24 @@ describe("homepage", () => {
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .post("/config/edit/public_home")
-      .send("public_home=/view/authorlist")
+      .post("/pageedit/set_root_page")
+      .send("public=/view/authorlist")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
 
     await request(app).get("/").expect(toRedirect("/view/authorlist"));
 
     await request(app)
-      .post("/config/edit/public_home")
-      .send("public_home=a_page")
+      .post("/pageedit/set_root_page")
+      .send("public=a_page")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
     await request(app).get("/").expect(toInclude("Hello world"));
     await request(app)
-      .post("/config/delete/public_home")
+      .post("/pageedit/set_root_page")
+      .send("public=")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
   });
   it("resets", async () => {
     await reset();
@@ -120,13 +111,14 @@ describe("homepage", () => {
       .expect(toInclude("You have no views!"));
   });
   it("shows with-view quick start", async () => {
+    const table = await Table.findOne({ name: "mytable" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: false,
     });
     const loginCookie = await getAdminLoginCookie();
 
@@ -156,17 +148,19 @@ describe("bool toggle", () => {
 
 describe("history", () => {
   it("should enable history", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const loginCookie = await getAdminLoginCookie();
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("id=1")
+      .send("id=" + table.id)
       .send("versioned=on")
-      .expect(toRedirect("/table/1"));
-    const table = await Table.findOne({ name: "books" });
-    expect(table.versioned).toBe(true);
+      .expect(toRedirect("/table/" + table.id));
+    const table1 = await Table.findOne({ name: "books" });
+    expect(table1.versioned).toBe(true);
   });
   it("create new row in versioned table", async () => {
     const loginCookie = await getAdminLoginCookie();

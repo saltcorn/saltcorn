@@ -19,7 +19,6 @@ const { mockReqRes } = require("./mocks");
 const Table = require("../models/table");
 const tmp = require("tmp-promise");
 const path = require("path");
-const { logit } = require("@saltcorn/markup/layout_utils");
 
 jest.setTimeout(60000);
 
@@ -80,7 +79,8 @@ describe("Random tables", () => {
       expect(editres).toContain("<form");
       if (id) {
         const showres = await show.run({ id }, mockReqRes);
-        expect(showres).toContain("<div");
+        if (fields.length > 1 && showres !== "<br /><br />")
+          expect(showres).toContain("<div");
         const editres1 = await edit.run({ id }, mockReqRes);
         expect(editres1).toContain("<form");
       }
@@ -92,7 +92,8 @@ describe("Random tables", () => {
     const tables = await Table.find({});
     for (const table of tables) {
       const count = await table.countRows();
-      tableCounts.push([table.name, count]);
+      await table.getFields();
+      tableCounts.push([table, count]);
     }
 
     fnm = await create_backup();
@@ -105,11 +106,14 @@ describe("Random tables", () => {
       role_id: 1,
     });
     const restoreres = await restore(fnm, (p) => {});
-    for (const [name, n] of tableCounts) {
-      const table = await Table.findOne({ name });
+    for (const [oldtable, n] of tableCounts) {
+      const table = await Table.findOne({ name: oldtable.name });
       expect(!!table).toBe(true);
       const count = await table.countRows();
-      expect([table.name, count]).toEqual([name, n]);
+      expect([table.name, count]).toEqual([oldtable.name, n]);
+      expect(await table.owner_fieldname()).toEqual(
+        await oldtable.owner_fieldname()
+      );
     }
 
     expect(restoreres).toBe(undefined);

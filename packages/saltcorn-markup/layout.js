@@ -1,38 +1,163 @@
 const { contract, is } = require("contractis");
-const { div, a, span, h6, text, img, p, h1 } = require("./tags");
+const {
+  div,
+  a,
+  span,
+  text,
+  img,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label,
+  ul,
+  button,
+  li,
+} = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
+const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
+
 const makeSegments = (body, alerts) => {
-  const alertsSegments =
-    alerts && alerts.length > 0
-      ? [{ type: "blank", contents: alerts.map((a) => alert(a.type, a.msg)) }]
-      : [];
+  const alertsSegments = couldHaveAlerts(alerts)
+    ? [
+        {
+          type: "blank",
+          contents: div(
+            { id: "alerts-area" },
+            (alerts || []).map((a) => alert(a.type, a.msg))
+          ),
+        },
+      ]
+    : [];
+
   if (typeof body === "string")
     return {
       above: [...alertsSegments, { type: "blank", contents: body }],
     };
   else if (body.above) {
-    if (alerts && alerts.length > 0) body.above.unshift(alertsSegments[0]);
+    if (couldHaveAlerts(alerts)) body.above.unshift(alertsSegments[0]);
     return body;
-  } else {
-    if (alerts && alerts.length > 0)
-      return { above: [...alertsSegments, body] };
-    else return body;
+  } else return { above: [...alertsSegments, body] };
+};
+const applyTextStyle = (textStyle, inner, isBlock) => {
+  switch (textStyle) {
+    case "h1":
+      return h1(inner);
+    case "h2":
+      return h2(inner);
+    case "h3":
+      return h3(inner);
+    case "h4":
+      return h4(inner);
+    case "h5":
+      return h5(inner);
+    case "h6":
+      return h6(inner);
+    default:
+      return isBlock
+        ? div({ class: textStyle || "" }, inner)
+        : textStyle
+        ? span({ class: textStyle || "" }, inner)
+        : inner;
   }
 };
 
-const render = ({ blockDispatch, layout, role, alerts }) => {
+const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
+  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  if (tabsStyle === "Accordion")
+    return div(
+      { class: "accordion", id: `${rndid}top` },
+      contents.map((t, ix) =>
+        div(
+          { class: "card" },
+          div(
+            { class: "card-header", id: `${rndid}head${ix}` },
+            h2(
+              { class: "mb-0" },
+              button(
+                {
+                  class: "btn btn-link btn-block text-left",
+                  type: "button",
+                  "data-toggle": "collapse",
+                  "data-target": `#${rndid}tab${ix}`,
+                  "aria-expanded": ix === 0 ? "true" : "false",
+                  "aria-controls": `${rndid}tab${ix}`,
+                },
+                titles[ix]
+              )
+            )
+          ),
+          div(
+            {
+              class: ["collapse", ix === 0 && "show"],
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}head${ix}`,
+              "data-parent": `#${rndid}top`,
+            },
+            div({ class: "card-body" }, go(t, false, ix))
+          )
+        )
+      )
+    );
+  else
+    return (
+      ul(
+        {
+          role: "tablist",
+          id: `${rndid}`,
+          class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
+        },
+        contents.map((t, ix) =>
+          li(
+            { class: "nav-item", role: "presentation" },
+            a(
+              {
+                class: ["nav-link", ix === 0 && "active"],
+                id: `${rndid}link${ix}`,
+                "data-toggle": "tab",
+                href: `#${rndid}tab${ix}`,
+                role: "tab",
+                "aria-controls": `${rndid}tab${ix}`,
+                "aria-selected": ix === 0 ? "true" : "false",
+              },
+              titles[ix]
+            )
+          )
+        )
+      ) +
+      div(
+        { class: "tab-content", id: `${rndid}content` },
+        contents.map((t, ix) =>
+          div(
+            {
+              class: ["tab-pane fade", ix === 0 && "show active"],
+              role: "tabpanel",
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}link${ix}`,
+            },
+            go(t, false, ix)
+          )
+        )
+      )
+    );
+};
+const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
-      return segment.block
-        ? div({ class: segment.textStyle || "" }, inner)
-        : segment.textStyle
-        ? span({ class: segment.textStyle || "" }, inner)
-        : inner;
+      return segment.labelFor
+        ? label(
+            { for: `input${text(segment.labelFor)}` },
+            applyTextStyle(segment.textStyle, inner, segment.block)
+          )
+        : applyTextStyle(segment.textStyle, inner, segment.block);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
@@ -84,7 +209,19 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
       );
     }
     if (segment.type === "link") {
-      return wrap(segment, isTop, ix, a({ href: segment.url }, segment.text));
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        a(
+          {
+            href: segment.url,
+            target: segment.target_blank ? "_blank" : false,
+            rel: segment.nofollow ? "nofollow" : false,
+          },
+          segment.text
+        )
+      );
     }
     if (segment.type === "card")
       return wrap(
@@ -92,7 +229,14 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         isTop,
         ix,
         div(
-          { class: "card shadow mt-4" },
+          {
+            class: [
+              "card shadow mt-4",
+              segment.class,
+              segment.url && "with-link",
+            ],
+            onclick: segment.url ? `location.href='${segment.url}'` : false,
+          },
           segment.title &&
             div(
               { class: "card-header" },
@@ -102,6 +246,8 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
+    if (segment.type === "tabs")
+      return wrap(segment, isTop, ix, renderTabs(segment, go));
     if (segment.type === "container") {
       const {
         bgFileId,
@@ -109,18 +255,48 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         bgColor,
         vAlign,
         hAlign,
+        block,
         imageSize,
-        minHeight,
         borderWidth,
         borderStyle,
         setTextColor,
         textColor,
+        showForRole,
+        hide,
+        customClass,
+        customCSS,
+        minScreenWidth,
+        show_for_owner,
       } = segment;
+      if (hide) return "";
+      if (
+        showForRole &&
+        showForRole[role] === false &&
+        !(show_for_owner && is_owner)
+      )
+        return "";
       const renderBg = !(
         isTop &&
         blockDispatch.noBackgroundAtTop &&
         blockDispatch.noBackgroundAtTop()
       );
+      const sizeProp = (segKey, cssNm, unit) =>
+        typeof segment[segKey] === "undefined"
+          ? ""
+          : `${cssNm}: ${segment[segKey]}${
+              unit || segment[segKey + "Unit"] || "px"
+            };`;
+      const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
+      const baseDisplayClass = block === false ? "inline-block" : "block";
+      const displayClass = minScreenWidth
+        ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
+        : baseDisplayClass === "block"
+        ? false // no need
+        : `d-${baseDisplayClass}`;
+      const ppBox = (what) =>
+        !segment[what] || segment[what] === [0, 0, 0, 0]
+          ? ""
+          : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       return wrap(
         segment,
         isTop,
@@ -128,27 +304,33 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         div(
           {
             class: [
-              `text-${hAlign}`,
+              customClass || false,
+              hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "middle" &&
                 hAlign === "center" &&
                 "justify-content-center",
+              displayClass,
             ],
-            style: `min-height: ${minHeight || 0}px; 
-          border: ${borderWidth || 0}px ${borderStyle} black; 
-          ${
-            renderBg && bgType === "Image" && bgFileId && +bgFileId
-              ? `background-image: url('/files/serve/${bgFileId}');
-          background-size: ${imageSize || "contain"};
-          background-repeat: no-repeat;`
-              : ""
-          }
-          ${
-            renderBg && bgType === "Color"
-              ? `background-color: ${bgColor};`
-              : ""
-          }
-          ${setTextColor ? `color: ${textColor};` : ""}`,
+            style: `${ppCustomCSS(customCSS || "")}${sizeProp(
+              "minHeight",
+              "min-height"
+            )}${sizeProp("height", "height")}${sizeProp(
+              "width",
+              "width"
+            )}${sizeProp("widthPct", "width", "%")}border: ${
+              borderWidth || 0
+            }px ${borderStyle} black;${ppBox("padding")}${ppBox("margin")} ${
+              renderBg && bgType === "Image" && bgFileId && +bgFileId
+                ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
+                    imageSize || "contain"
+                  }; background-repeat: no-repeat;`
+                : ""
+            } ${
+              renderBg && bgType === "Color"
+                ? `background-color: ${bgColor};`
+                : ""
+            } ${setTextColor ? `color: ${textColor};` : ""}`,
           },
           go(segment.contents)
         )
@@ -170,9 +352,11 @@ const render = ({ blockDispatch, layout, role, alerts }) => {
         segment.besides.map((t, ixb) =>
           div(
             {
-              class: `col-sm-${
-                segment.widths ? segment.widths[ixb] : defwidth
-              } text-${segment.aligns ? segment.aligns[ixb] : ""}`,
+              class: `col-${
+                segment.breakpoint ? segment.breakpoint + "-" : ""
+              }${segment.widths ? segment.widths[ixb] : defwidth}${
+                segment.aligns ? " text-" + segment.aligns[ixb] : ""
+              }`,
             },
             go(t, false, ixb)
           )

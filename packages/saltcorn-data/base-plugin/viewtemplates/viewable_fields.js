@@ -1,5 +1,5 @@
 const { post_btn, link } = require("@saltcorn/markup");
-const { text, a } = require("@saltcorn/markup/tags");
+const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
@@ -9,12 +9,18 @@ const Field = require("../../models/field");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
-  (viewname, table, action_name, r) => {
+  (viewname, table, action_name, r, colId, colIdNm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
     else if (action_name.startsWith("Toggle")) {
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    }
+    const state_action = getState().actions[action_name];
+    if (state_action) {
+      return {
+        javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
+      };
     }
   }
 );
@@ -59,13 +65,39 @@ const make_link = contract(
     };
   }
 );
+const parse_view_select = (s) => {
+  const colonSplit = s.split(":");
+  if (colonSplit.length === 1) return { type: "Own", viewname: s };
+  const [type, vrest] = colonSplit;
+  switch (type) {
+    case "Own":
+      return { type, viewname: vrest };
+    case "ChildList":
+      const [viewnm, tbl, fld] = vrest.split(".");
+      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+    case "ParentShow":
+      const [pviewnm, ptbl, pfld] = vrest.split(".");
+      return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+  }
+};
 
+//todo: use above to simplify code
 const view_linker = contract(
   is.fun(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
     is.obj({ key: is.fun(is.obj(), is.str), label: is.str })
   ),
-  ({ view, view_label, in_modal, view_label_formula }, fields) => {
+  (
+    {
+      view,
+      view_label,
+      in_modal,
+      view_label_formula,
+      link_style = "",
+      link_size = "",
+    },
+    fields
+  ) => {
     const get_label = (def, row) => {
       if (!view_label || view_label.length === 0) return def;
       if (!view_label_formula) return view_label;
@@ -83,7 +115,9 @@ const view_linker = contract(
             link_view(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
               get_label(vnm, r),
-              in_modal
+              in_modal,
+              link_style,
+              link_size
             ),
         };
       case "ChildList":
@@ -94,7 +128,9 @@ const view_linker = contract(
             link_view(
               `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
               get_label(viewnm, r),
-              in_modal
+              in_modal,
+              link_style,
+              link_size
             ),
         };
       case "ParentShow":
@@ -113,7 +149,9 @@ const view_linker = contract(
                       : summary_field,
                     r
                   ),
-                  in_modal
+                  in_modal,
+                  link_style,
+                  link_size
                 )
               : "";
           },
@@ -123,6 +161,11 @@ const view_linker = contract(
     }
   }
 );
+
+const action_requires_write = (nm) => {
+  if (nm === "Delete") return true;
+  if (nm.startsWith("Toggle")) return true;
+};
 
 const get_viewable_fields = contract(
   is.fun(
@@ -145,24 +188,57 @@ const get_viewable_fields = contract(
   (viewname, table, fields, columns, isShow, req) =>
     columns
       .map((column) => {
+        const role = req.user ? req.user.role_id : 10;
+        const user_id = req.user ? req.user.id : null;
         if (column.type === "Action")
           return {
             label: column.header_label ? text(column.header_label) : "",
-            key: (r) =>
-              post_btn(
-                action_url(viewname, table, column.action_name, r),
-                column.action_label || column.action_name,
-                req.csrfToken(),
-                {
+            key: (r) => {
+              if (action_requires_write(column.action_name)) {
+                const owner_field = table.owner_fieldname_from_fields(fields);
+                if (
+                  table.min_role_write < role &&
+                  (!owner_field || r[owner_field] !== user_id)
+                )
+                  return "";
+              }
+              const url = action_url(
+                viewname,
+                table,
+                column.action_name,
+                r,
+                column.action_name,
+                "action_name"
+              );
+              const label = column.action_label_formula
+                ? get_expression_function(column.action_label, fields)(r)
+                : column.action_label || column.action_name;
+              if (url.javascript)
+                return a(
+                  {
+                    href: "javascript:" + url.javascript,
+                    class:
+                      column.action_style === "btn-link"
+                        ? ""
+                        : `btn ${column.action_style || "btn-primary"} ${
+                            column.action_size || ""
+                          }`,
+                  },
+                  label
+                );
+              else
+                return post_btn(url, label, req.csrfToken(), {
                   small: true,
                   ajax: true,
                   reload_on_done: true,
                   confirm: column.confirm,
+                  btnClass: column.action_style || "btn-primary",
                   req,
-                }
-              ),
+                });
+            },
           };
         else if (column.type === "ViewLink") {
+          if (!column.view) return;
           const r = view_linker(column, fields);
           if (column.header_label) r.label = text(column.header_label);
           return r;
@@ -171,12 +247,21 @@ const get_viewable_fields = contract(
           if (column.header_label) r.label = text(column.header_label);
           return r;
         } else if (column.type === "JoinField") {
-          const [refNm, targetNm] = column.join_field.split(".");
+          const keypath = column.join_field.split(".");
+          let refNm, targetNm, through, key;
+          if (keypath.length === 2) {
+            [refNm, targetNm] = keypath;
+            key = `${refNm}_${targetNm}`;
+          } else {
+            [refNm, through, targetNm] = keypath;
+            key = `${refNm}_${through}_${targetNm}`;
+          }
+
           return {
             label: column.header_label
               ? text(column.header_label)
               : text(targetNm),
-            key: `${refNm}_${targetNm}`,
+            key,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {
@@ -203,9 +288,7 @@ const get_viewable_fields = contract(
             f = new Field({ name: "id", label: "id", type: "Integer" });
           return (
             f && {
-              label: column.header_label
-                ? text(column.header_label)
-                : text(f.label),
+              label: headerLabelForName(column, f, req),
               key:
                 column.fieldview && f.type === "File"
                   ? (row) =>
@@ -224,14 +307,34 @@ const get_viewable_fields = contract(
                     ? (row) => f.type.showAs(row[f.name])
                     : (row) => text(row[f.name])
                   : f.listKey,
-              sortlink: `javascript:sortby('${text(f.name)}')`,
+              sortlink: sortlinkForName(f.name, req),
             }
           );
         }
       })
       .filter((v) => !!v)
 );
-
+const sortlinkForName = (fname, req) => {
+  const { _sortby, _sortdesc } = req.query || {};
+  const desc =
+    typeof _sortdesc == "undefined"
+      ? _sortby === fname
+      : _sortdesc
+      ? "false"
+      : "true";
+  return `javascript:sortby('${text(fname)}', ${desc})`;
+};
+const headerLabelForName = (column, f, req) => {
+  const label = column.header_label ? text(column.header_label) : text(f.label);
+  const { _sortby, _sortdesc } = req.query || {};
+  let arrow =
+    _sortby !== f.name
+      ? ""
+      : _sortdesc
+      ? i({ class: "fas fa-caret-down" })
+      : i({ class: "fas fa-caret-up" });
+  return label + arrow;
+};
 const splitUniques = contract(
   is.fun(
     [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
@@ -262,5 +365,6 @@ module.exports = {
   get_viewable_fields,
   action_url,
   view_linker,
+  parse_view_select,
   splitUniques,
 };

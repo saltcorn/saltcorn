@@ -1,9 +1,17 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
+import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
 
-export const ViewLink = ({ name, block, minRole, inModal, label }) => {
+export const ViewLink = ({
+  name,
+  block,
+  minRole,
+  link_style,
+  link_size,
+  inModal,
+  label,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -14,7 +22,7 @@ export const ViewLink = ({ name, block, minRole, inModal, label }) => {
     <span
       className={`${inModal ? "btn btn-secondary btn-sm" : ""} ${
         selected ? "selected-node" : "is-builder-link"
-      }`}
+      } ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
@@ -24,20 +32,27 @@ export const ViewLink = ({ name, block, minRole, inModal, label }) => {
 };
 
 export const ViewLinkSettings = () => {
+  const node = useNode((node) => ({
+    name: node.data.props.name,
+    block: node.data.props.block,
+    minRole: node.data.props.minRole,
+    isFormula: node.data.props.isFormula,
+    label: node.data.props.label,
+    inModal: node.data.props.inModal,
+    link_style: node.data.props.link_style,
+    link_size: node.data.props.link_size,
+  }));
   const {
     actions: { setProp },
     name,
     block,
     minRole,
     label,
+    isFormula,
     inModal,
-  } = useNode((node) => ({
-    name: node.data.props.name,
-    block: node.data.props.block,
-    minRole: node.data.props.minRole,
-    label: node.data.props.label,
-    inModal: node.data.props.inModal,
-  }));
+    link_style,
+    link_size,
+  } = node;
   const options = useContext(optionsCtx);
   return (
     <div>
@@ -57,12 +72,50 @@ export const ViewLinkSettings = () => {
       </div>
       <div>
         <label>Label (leave blank for default)</label>
-        <input
-          type="text"
-          className="viewlink-label w-100"
-          value={label}
-          onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
-        />
+        <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="viewlink-label form-control"
+            value={label}
+            onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
+          />
+        </OrFormula>
+      </div>
+      <div>
+        <label>Link style</label>
+        <select
+          className="w-100 mr-2"
+          value={link_style}
+          onChange={(e) =>
+            setProp((prop) => (prop.link_style = e.target.value))
+          }
+        >
+          <option value="">Link</option>
+          <option value="btn btn-primary">Primary button</option>
+          <option value="btn btn-secondary">Secondary button</option>
+          <option value="btn btn-success">Success button</option>
+          <option value="btn btn-danger">Danger button</option>
+          <option value="btn btn-outline-primary">
+            Primary outline button
+          </option>
+          <option value="btn btn-outline-secondary">
+            Secondary outline button
+          </option>
+        </select>
+      </div>
+      <div>
+        <label>Link size</label>
+        <select
+          className="w-100 mr-2"
+          value={link_size}
+          onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
+        >
+          <option value="">Standard</option>
+          <option value="btn-lg">Large</option>
+          <option value="btn-sm">Small</option>
+          <option value="btn-block">Block</option>
+          <option value="btn-block btn-lg">Large block</option>
+        </select>
       </div>
       <div className="form-check">
         <input
@@ -82,6 +135,9 @@ export const ViewLinkSettings = () => {
 
 ViewLink.craft = {
   displayName: "ViewLink",
+  defaultProps: {
+    isFormula: {},
+  },
   related: {
     settings: ViewLinkSettings,
   },

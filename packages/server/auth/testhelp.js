@@ -18,7 +18,9 @@ const toRedirect = (loc) => (res) => {
 const toInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
-    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    throw new Error(
+      `Expected status ${expCode} when lookinng for "${txt}", received ${res.statusCode}`
+    );
   }
 
   if (!res.text.includes(txt)) {
@@ -37,7 +39,9 @@ const toSucceed = (expCode = 200) => (res) => {
 const toNotInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
-    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    throw new Error(
+      `Expected status ${expCode} when not lookinng for "${txt}", received ${res.statusCode}`
+    );
   }
 
   if (res.text.includes(txt)) {
@@ -95,6 +99,17 @@ const succeedJsonWith = (pred) => (res) => {
   }
 };
 
+const respondJsonWith = (code, pred) => (res) => {
+  if (res.statusCode !== code) {
+    console.log(res.text);
+    throw new Error(`Expected status ${code}, received ${res.statusCode}`);
+  }
+
+  if (!pred(res.body)) {
+    console.log(res.body);
+    throw new Error(`Not satisfied`);
+  }
+};
 const notAuthorized = (res) => {
   if (res.statusCode !== 401) {
     console.log(res.text);
@@ -112,4 +127,5 @@ module.exports = {
   resetToFixtures,
   succeedJsonWith,
   notAuthorized,
+  respondJsonWith,
 };

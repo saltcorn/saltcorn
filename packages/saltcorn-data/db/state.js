@@ -33,16 +33,28 @@ class State {
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
+    this.actions = {};
+    this.auth_methods = {};
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};
+    this.keyFieldviews = {};
     contract.class(this);
   }
-
+  getLayout(user) {
+    const role_id = user ? +user.role_id : 10;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.layouts[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
+    const layoutvs = Object.values(this.layouts);
+    return layoutvs[layoutvs.length - 1];
+  }
   async refresh() {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
@@ -52,6 +64,13 @@ class State {
   }
 
   getConfig(key, def) {
+    const fixed = db.connectObj.fixed_configuration[key];
+    if (typeof fixed !== "undefined") return fixed;
+    if (db.connectObj.inherit_configuration.includes(key)) {
+      if (typeof singleton.configs[key] !== "undefined")
+        return singleton.configs[key].value;
+      else return def || configTypes[key].default;
+    }
     if (this.configs[key] && typeof this.configs[key].value !== "undefined")
       return this.configs[key].value;
     if (def) return def;
@@ -94,7 +113,17 @@ class State {
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
+    Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
+      this.actions[k] = v;
+    });
+    Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
+      this.auth_methods[k] = v;
+    });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
+      if (v.type === "Key") {
+        this.keyFieldviews[k] = v;
+        return;
+      }
       const type = this.types[v.type];
       if (type) {
         if (type.fieldviews) type.fieldviews[k] = v;
@@ -103,7 +132,7 @@ class State {
     });
     const layout = withCfg("layout");
     if (layout) {
-      this.layout = contract(is_plugin_layout, layout);
+      this.layouts[name] = contract(is_plugin_layout, layout);
     }
     withCfg("headers", []).forEach((h) => {
       if (!this.headers.includes(h)) this.headers.push(h);
@@ -130,11 +159,14 @@ class State {
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
+    this.actions = {};
+    this.auth_methods = {};
     this.favicon = null;
-    this.layout = { wrap: emergency_layout };
+    this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
     this.functions = {};
+    this.keyFieldviews = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
@@ -162,7 +194,7 @@ const getState = contract(is.fun([], is.class("State")), () => {
   if (!db.is_it_multi_tenant()) return singleton;
 
   const ten = db.getTenantSchema();
-  if (ten === "public") return singleton;
+  if (ten === db.connectObj.default_schema) return singleton;
   else return tenants[ten];
 });
 
@@ -170,12 +202,13 @@ var tenants = {};
 
 const getTenant = (ten) => tenants[ten];
 
-const init_multi_tenant = async (plugin_loader) => {
+const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State();
-      await db.runWithTenant(domain, () => migrate(domain));
+      if (!disableMigrate)
+        await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
     } catch (err) {
       console.error(

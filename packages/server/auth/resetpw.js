@@ -1,12 +1,7 @@
 const { getState } = require("@saltcorn/data/db/state");
+const { getMailTransport } = require("@saltcorn/data/models/email");
 const { get_base_url } = require("../routes/utils");
-const nodemailer = require("nodemailer");
 
-const { port, secure } = (() => {
-  const port = getState().getConfig("smtp_port");
-  const secure = getState().getConfig("smtp_secure", port === 465);
-  return { port, secure };
-})();
 const generate_email = (link, user, req) => ({
   from: getState().getConfig("email_from"),
   to: user.email,
@@ -42,15 +37,7 @@ ${req.__(
 });
 const send_reset_email = async (user, req) => {
   const link = await get_reset_link(user, req);
-  const transporter = nodemailer.createTransport({
-    host: getState().getConfig("smtp_host"),
-    port,
-    secure,
-    auth: {
-      user: getState().getConfig("smtp_username"),
-      pass: getState().getConfig("smtp_password"),
-    },
-  });
+  const transporter = getMailTransport();
   await transporter.sendMail(generate_email(link, user, req));
 };
 

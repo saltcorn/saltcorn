@@ -73,7 +73,7 @@ describe("PM packs", () => {
     await browser.delete_tenant("sub1");
     await browser.create_tenant("sub1");
     await browser.install_pack("Issue  tracker");
-    await browser.clickNav(".card-body > div > a");
+    await browser.clickNav(".card-body > a");
     await browser.page.type("#inputdescription", "my new task");
     await browser.page.type("#inputdetails", "some stuff");
     await browser.clickNav("button[type=submit]");
@@ -87,6 +87,7 @@ describe("todo packs", () => {
     await browser.create_tenant("sub4");
     await browser.install_pack("Todo list");
     expect(await browser.content()).toContain("Description");
+    expect(await browser.content()).toContain("Show items that are done");
     expect(await browser.content()).toContain('id="inputdescription"');
 
     await browser.page.type(
@@ -96,6 +97,8 @@ describe("todo packs", () => {
     await browser.clickNav('form[action="/view/EditTodo"] button');
 
     expect(await browser.content()).toContain("Description");
+    expect(await browser.content()).toContain("Show items that are done");
+
     await browser.page.type(
       'form[action="/view/EditTodo"] input[type="text"]',
       "Clean bathroom"
@@ -103,47 +106,24 @@ describe("todo packs", () => {
     await browser.clickNav('form[action="/view/EditTodo"] button');
     expect(await browser.content()).toContain("Take out trash");
     expect(await browser.content()).toContain("Clean bathroom");
+    //take our trash is done
     await browser.clickNav(
       'form[action^="/edit/toggle/TodoItems/1/done"] button'
     );
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).toContain("Clean bathroom");
+
+    await browser.page.select('select[name="ddfilterdone"]', "on");
+    await browser.page.waitFor(250);
+    //await browser.page.waitForNavigation();
+    expect(await browser.content()).toContain("Take out trash");
+    expect(await browser.content()).not.toContain("Clean bathroom");
+
+    await browser.page.select('select[name="ddfilterdone"]', "off");
+    await browser.page.waitFor(250);
+
     expect(await browser.content()).not.toContain("Take out trash");
     expect(await browser.content()).toContain("Clean bathroom");
-
-    await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
-    expect(await browser.getInnerText("button#tribdone")).toBe("F");
-    await browser.page.click("button#tribdone");
-    expect(await browser.getInnerText("button#tribdone")).toBe("?");
-
-    await browser.clickNav(
-      'form[action="/view/List%20Todos"] button[type="submit"]'
-    );
-    expect(await browser.content()).toContain("Take out trash");
-    expect(await browser.content()).toContain("Clean bathroom");
-
-    await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
-    expect(await browser.getInnerText("button#tribdone")).toBe("?");
-    await browser.page.click("button#tribdone");
-    expect(await browser.getInnerText("button#tribdone")).toBe("T");
-    await browser.clickNav(
-      'form[action="/view/List%20Todos"] button[type="submit"]'
-    );
-
-    expect(await browser.content()).toContain("Take out trash");
-    expect(await browser.content()).not.toContain("Clean bathroom");
-    await browser.page.click("button#dropdownMenuButton");
-    await browser.page.waitFor(250);
-    expect(await browser.getInnerText("button#tribdone")).toBe("T");
-    await browser.page.click("button#tribdone");
-    await browser.page.click("button#tribdone");
-    expect(await browser.getInnerText("button#tribdone")).toBe("?");
-    await browser.page.type("#input_fts", "trash");
-    await browser.clickNav(
-      'form[action="/view/List%20Todos"] button[type="submit"]'
-    );
-    expect(await browser.content()).toContain("Take out trash");
-    expect(await browser.content()).not.toContain("Clean bathroom");
   });
 });
 

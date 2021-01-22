@@ -67,7 +67,21 @@ class Page {
     const item = menu_items.find((mi) => mi.pagename === this.name);
     return item ? item.label : undefined;
   }
-
+  async clone() {
+    const basename = this.name + " copy";
+    let newname;
+    for (let i = 0; i < 100; i++) {
+      newname = i ? `${basename} (${i})` : basename;
+      const existing = await Page.findOne({ name: newname });
+      if (!existing) break;
+    }
+    const createObj = {
+      ...this,
+      name: newname,
+    };
+    delete createObj.id;
+    return await Page.create(createObj);
+  }
   async run(querystate, extraArgs) {
     await eachView(this.layout, async (segment) => {
       const view = await View.findOne({ name: segment.view });

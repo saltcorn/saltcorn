@@ -16,7 +16,6 @@ describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
     expect(v.min_role).toBe(10);
-    expect(v.on_root_page).toBe(true);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
@@ -61,8 +60,9 @@ describe("View", () => {
     expect(rows).toContainEqual({ author: "James Joyce", id: 3, pages: 678 });
   });
   it("should find", async () => {
+    const table = await Table.findOne({ name: "books" });
     const link_views = await View.find({
-      table_id: 1,
+      table_id: table.id,
     });
     expect(link_views.length).toBe(3);
   });
@@ -73,21 +73,30 @@ describe("View", () => {
     expect(link_views.length).toBe(1);
   });
   it("should create and delete", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
-      on_root_page: true,
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
 
     const st = v.combine_state_and_default_state({ baz: 3 });
     expect(st).toStrictEqual({ baz: 3, foo: "bar" });
-    await View.update({ on_root_page: false }, v.id);
     await v.delete();
+  });
+  it("should clone", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    await v.clone();
+    const v1 = await View.findOne({ name: "authorlist copy" });
+    expect(!!v1).toBe(true);
+    const res = await v1.run({ author: "Mel" }, mockReqRes);
+
+    expect(res.length > 0).toBe(true);
   });
 });
 describe("View with routes", () => {
@@ -103,13 +112,14 @@ describe("View with routes", () => {
         json = h;
       },
     };
+    const table = await Table.findOne({ name: "books" });
+
     const v = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
       min_role: 10,
-      on_root_page: true,
     });
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
@@ -123,8 +133,10 @@ describe("View with routes", () => {
 });
 describe("nested views", () => {
   it("should create and run", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const small = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "small",
       viewtemplate: "Show",
       configuration: {
@@ -150,10 +162,9 @@ describe("nested views", () => {
         viewname: "small",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const medium = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "medium",
       viewtemplate: "Show",
       configuration: {
@@ -186,7 +197,6 @@ describe("nested views", () => {
         viewname: "medium",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const res = await medium.run({ id: 2 }, mockReqRes);
 
@@ -196,8 +206,10 @@ describe("nested views", () => {
     expect(res).not.toContain("Melville");
   });
   it("should create and run feed of nested", async () => {
+    const table = await Table.findOne({ name: "books" });
+
     const large = await View.create({
-      table_id: 1,
+      table_id: table.id,
       name: "large",
       viewtemplate: "Feed",
       configuration: {
@@ -214,7 +226,6 @@ describe("nested views", () => {
         create_view_display: "Link",
       },
       min_role: 10,
-      on_root_page: false,
     });
     const res = await large.run({}, mockReqRes);
 

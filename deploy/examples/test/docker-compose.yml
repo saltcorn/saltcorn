@@ -1,0 +1,20 @@
+version: "2"
+
+services:
+  app:
+    image: saltcorn/saltcorn
+    command: "serve"
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+  database:
+    image: postgres:13-alpine
+    volumes:
+      - ./docker-entrypoint-initdb.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - "POSTGRES_USER=${PGUSER}"
+      - "POSTGRES_PASSWORD=${PGPASSWORD}"
+      - "POSTGRES_DB=${PGDATABASE}"
+

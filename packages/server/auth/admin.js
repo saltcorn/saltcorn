@@ -3,6 +3,7 @@ const { contract, is } = require("contractis");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
+const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -13,13 +14,61 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
+const {
+  isAdmin,
+  setTenant,
+  error_catcher,
+  csrfField,
+} = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, button, text, span, code } = require("@saltcorn/markup/tags");
+const {
+  a,
+  div,
+  button,
+  text,
+  span,
+  code,
+  form,
+  option,
+  select,
+  br,
+  h4,
+  h5,
+  p,
+} = require("@saltcorn/markup/tags");
+const Table = require("@saltcorn/data/models/table");
+const {
+  send_users_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 const router = new Router();
 module.exports = router;
 
+const getUserFields = async () => {
+  const userTable = await Table.findOne({ name: "users" });
+  const userFields = (await userTable.getFields()).filter((f) => !f.calculated);
+  const iterForm = async (cfgField) => {
+    const signup_form_name = getState().getConfig(cfgField, "");
+    if (signup_form_name) {
+      const signup_form = await View.findOne({ name: signup_form_name });
+      if (signup_form) {
+        (signup_form.configuration.columns || []).forEach((f) => {
+          const uf = userFields.find((uff) => uff.name === f.field_name);
+          if (uf) {
+            uf.fieldview = f.fieldview;
+            uf.attributes = { ...f.configuration, ...uf.attributes };
+          }
+        });
+      }
+    }
+  };
+  await iterForm("signup_form");
+  await iterForm("new_user_form");
+
+  return userFields;
+};
 const userForm = contract(
   is.fun(
     [is.obj({}), is.maybe(is.class("User"))],
@@ -35,15 +84,9 @@ const userForm = contract(
     const roles = (await User.get_roles()).filter((r) => r.role !== "public");
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
     const can_reset = getState().getConfig("smtp_host", "") !== "";
+    const userFields = await getUserFields();
     const form = new Form({
-      fields: [
-        new Field({
-          label: req.__("E-mail"),
-          name: "email",
-          input_type: "text",
-        }),
-        roleField,
-      ],
+      fields: [roleField, ...userFields],
       action: "/useradmin/save",
       submitLabel: user ? req.__("Save") : req.__("Create"),
     });
@@ -52,7 +95,6 @@ const userForm = contract(
         new Field({
           label: req.__("Set random password"),
           name: "rnd_password",
-          class: "rnd_password",
           type: "Bool",
           default: true,
         })
@@ -62,7 +104,7 @@ const userForm = contract(
           label: req.__("Password"),
           name: "password",
           input_type: "password",
-          showIf: { ".rnd_password": false },
+          showIf: { rnd_password: false },
         })
       );
       can_reset &&
@@ -72,7 +114,7 @@ const userForm = contract(
             name: "send_pwreset_email",
             type: "Bool",
             default: true,
-            showIf: { ".rnd_password": true },
+            showIf: { rnd_password: true },
           })
         );
     }
@@ -87,23 +129,6 @@ const userForm = contract(
   }
 );
 
-const wrap = (req, cardTitle, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Users"), href: lastBc && "/useradmin" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    {
-      type: "card",
-      title: cardTitle,
-      contents: response,
-    },
-  ],
-});
 const user_dropdown = (user, req, can_reset) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(
@@ -147,46 +172,114 @@ const user_dropdown = (user, req, can_reset) =>
       user.email
     ),
   ]);
+const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
+  form(
+    {
+      action: `/useradmin/setrolelayout/${role.id}`,
+      method: "post",
+    },
+    csrfField(req),
+    select(
+      { name: "layout", onchange: "form.submit()" },
+      layouts.map((layout, ix) =>
+        option(
+          {
+            value: layout,
+            ...((layout_by_role[role.id]
+              ? layout_by_role[role.id] === layout
+              : ix == layouts.length - 1) && { selected: true }),
+          },
+          text(layout)
+        )
+      )
+    )
+  );
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const users = await User.find();
+    const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
     var roleMap = {};
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
     const can_reset = getState().getConfig("smtp_host", "") !== "";
-    res.sendWrap(
-      req.__("Users"),
-      wrap(req, req.__("Users"), [
-        mkTable(
-          [
-            { label: req.__("ID"), key: "id" },
-            {
-              label: req.__("Email"),
-              key: (r) => link(`/useradmin/${r.id}`, r.email),
-            },
-            {
-              label: "",
-              key: (r) =>
-                r.disabled
-                  ? span({ class: "badge badge-danger" }, "Disabled")
-                  : "",
-            },
-            { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
-            {
-              label: "",
-              key: (r) => user_dropdown(r, req, can_reset),
-            },
-          ],
-          users
-        ),
-        link(`/useradmin/new`, req.__("Add user")),
-      ])
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      contents: {
+        type: "card",
+        title: req.__("Users"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              {
+                label: req.__("Email"),
+                key: (r) => link(`/useradmin/${r.id}`, r.email),
+              },
+              {
+                label: "",
+                key: (r) =>
+                  r.disabled
+                    ? span({ class: "badge badge-danger" }, "Disabled")
+                    : "",
+              },
+              { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+              {
+                label: "",
+                key: (r) => user_dropdown(r, req, can_reset),
+              },
+            ],
+            users
+          ),
+          link(`/useradmin/new`, req.__("Add user")),
+        ],
+      },
+    });
+  })
+);
+
+router.get(
+  "/roles",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const roles = await User.get_roles();
+    var roleMap = {};
+    roles.forEach((r) => {
+      roleMap[r.id] = r.role;
+    });
+    const layouts = Object.keys(getState().layouts).filter(
+      (l) => l !== "emergency"
     );
+    const layout_by_role = getState().getConfig("layout_by_role");
+    send_users_page({
+      res,
+      req,
+      active_sub: "Roles",
+      contents: {
+        type: "card",
+        title: req.__("Roles"),
+        contents: [
+          mkTable(
+            [
+              { label: req.__("ID"), key: "id" },
+              { label: req.__("Role"), key: "role" },
+              {
+                label: req.__("Theme"),
+                key: (role) =>
+                  editRoleLayoutForm(role, layouts, layout_by_role, req),
+              },
+            ],
+            roles
+          ),
+        ],
+      },
+    });
   })
 );
 
@@ -196,15 +289,221 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm(req);
-    res.sendWrap(
-      req.__("New user"),
-      wrap(req, req.__("New user"), renderForm(form, req.csrfToken()), {
-        text: req.__("New"),
-      })
-    );
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("New user"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
   })
 );
 
+const user_settings_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "allow_signup",
+      "login_menu",
+      "new_user_form",
+      "login_form",
+      "signup_form",
+      "allow_forgot",
+    ],
+    action: "/useradmin/settings",
+  });
+router.get(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await user_settings_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Authentication settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await user_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Authentication settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("User settings updated"));
+      res.redirect("/useradmin/settings");
+    }
+  })
+);
+
+router.get(
+  "/ssl",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot) {
+      req.flash(
+        "warning",
+        req.__("SSL settings not available for subdomain tenants")
+      );
+      res.redirect("/useradmin");
+      return;
+    }
+    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const has_custom =
+      getState().getConfig("custom_ssl_certificate", false) &&
+      getState().getConfig("custom_ssl_private_key", false);
+    send_users_page({
+      res,
+      req,
+      active_sub: "SSL",
+      contents: [
+        ...(letsencrypt && has_custom
+          ? [
+              {
+                type: "card",
+                contents: p(
+                  req.__(
+                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                  )
+                ),
+              },
+            ]
+          : []),
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with Let's Encrypt SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              letsencrypt
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+            letsencrypt
+              ? post_btn(
+                  "/config/delete/letsencrypt",
+                  req.__("Disable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { btnClass: "btn-danger", req }
+                )
+              : post_btn(
+                  "/admin/enable-letsencrypt",
+                  req.__("Enable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { confirm: true, req }
+                ),
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("HTTPS encryption with custom SSL certificate"),
+          contents: [
+            p(
+              req.__(
+                `Or use custom SSL certificates, including wildcard certificates for multitenant applications`
+              )
+            ),
+            h5(
+              req.__("Currently: "),
+              has_custom
+                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+            ),
+            link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
+          ],
+        },
+      ],
+    });
+  })
+);
+
+const ssl_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
+    action: "/useradmin/ssl/custom",
+  });
+router.get(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Authentication settings"),
+        sub2_page: req.__("Custom SSL certificates"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/ssl/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await ssl_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Authentication settings"),
+          sub2_page: req.__("Custom SSL certificates"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash(
+        "success",
+        req.__("Custom SSL enabled. Restart for changes to take effect.") +
+          " " +
+          a({ href: "/admin/system" }, req.__("Restart here"))
+      );
+      res.redirect("/useradmin/ssl");
+    }
+  })
+);
 router.get(
   "/:id",
   setTenant,
@@ -214,17 +513,39 @@ router.get(
     const user = await User.findOne({ id });
     const form = await userForm(req, user);
 
-    res.sendWrap(
-      req.__("Edit user"),
-      wrap(
-        req,
-        req.__("Edit user %s", user.email),
-        renderForm(form, req.csrfToken()),
+    send_users_page({
+      res,
+      req,
+      active_sub: "Users",
+      sub2_page: user.email,
+      contents: [
         {
-          text: user.email,
-        }
-      )
-    );
+          type: "card",
+          title: req.__("Edit user %s", user.email),
+          contents: renderForm(form, req.csrfToken()),
+        },
+        {
+          type: "card",
+          title: req.__("API token"),
+          contents: [
+            div(
+              user.api_token
+                ? span({ class: "mr-1" }, "API token for this user: ") +
+                    code(user.api_token)
+                : req.__("No API token issued")
+            ),
+            div(
+              { class: "mt-4" },
+              post_btn(
+                `/useradmin/gen-api-token/${user.id}`,
+                user.api_token ? "Reset" : "Generate",
+                req.csrfToken()
+              )
+            ),
+          ],
+        },
+      ],
+    });
   })
 );
 
@@ -240,17 +561,24 @@ router.post(
       id,
       rnd_password,
       send_pwreset_email,
+      _csrf,
+      ...rest
     } = req.body;
     if (id) {
       try {
-        await db.update("users", { email, role_id }, id);
+        await db.update("users", { email, role_id, ...rest }, id);
         req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {
-      if (rnd_password) password = generate_password();
-      const u = await User.create({ email, password, role_id: +role_id });
+      if (rnd_password) password = User.generate_password();
+      const u = await User.create({
+        email,
+        password,
+        role_id: +role_id,
+        ...rest,
+      });
       const pwflash =
         rnd_password && !send_pwreset_email
           ? req.__(` with password %s`, code(password))
@@ -276,11 +604,34 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
-const generate_password = () => {
-  const candidate = is.str.generate().split(" ").join("");
-  if (candidate.length < 10) return generate_password();
-  else return candidate;
-};
+
+router.post(
+  "/gen-api-token/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.getNewAPIToken();
+    req.flash("success", req.__(`New API token generated`));
+
+    res.redirect(`/useradmin/${u.id}`);
+  })
+);
+router.post(
+  "/setrolelayout/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const layout_by_role = getState().getConfig("layout_by_role");
+    layout_by_role[+id] = req.body.layout;
+    await getState().setConfig("layout_by_role", layout_by_role);
+    req.flash("success", req.__(`Saved layout for role`));
+
+    res.redirect(`/useradmin/`);
+  })
+);
 
 router.post(
   "/set-random-password/:id",
@@ -289,7 +640,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    const newpw = generate_password();
+    const newpw = User.generate_password();
     await u.changePasswordTo(newpw);
     await u.destroy_sessions();
     req.flash(
@@ -335,7 +686,6 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    await u.destroy_sessions();
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 

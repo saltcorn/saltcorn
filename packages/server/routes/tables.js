@@ -10,8 +10,11 @@ const {
   renderForm,
   link,
   post_btn,
+  settingsDropdown,
   post_delete_btn,
+  post_dropdown_item,
 } = require("@saltcorn/markup");
+const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -30,6 +33,7 @@ const {
   text,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
 
 const router = new Router();
@@ -42,10 +46,28 @@ const roleOptions = [
   { value: 10, label: "Public" },
 ];
 
-const tableForm = (table, req) => {
+const tableForm = async (table, req) => {
+  const fields = await table.getFields();
+
+  const userFields = fields
+    .filter((f) => f.reftable_name === "users")
+    .map((f) => ({ value: f.id, label: f.name }));
   const form = new Form({
     action: "/table",
     fields: [
+      ...(userFields.length > 0
+        ? [
+            {
+              label: req.__("Ownership field"),
+              name: "ownership_field_id",
+              sublabel: req.__(
+                "The user referred to in this field will be the owner of the row"
+              ),
+              input_type: "select",
+              options: [{ value: "", label: req.__("None") }, ...userFields],
+            },
+          ]
+        : []),
       {
         label: req.__("Minimum role for read"),
         name: "min_role_read",
@@ -210,13 +232,21 @@ const attribBadges = (f) => {
   }
   return s;
 };
+
 router.get(
-  "/:id",
+  "/:idorname",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const table = await Table.findOne({ id });
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) table = await Table.findOne({ id });
+    else {
+      table = await Table.findOne({ name: idorname });
+      id = table.id;
+    }
+
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -224,6 +254,10 @@ router.get(
     }
     const nrows = await table.countRows();
     const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+    const { child_relations } = await table.get_child_relations();
+    const inbound_refs = [
+      ...new Set(child_relations.map(({ table }) => table.name)),
+    ];
     var fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -241,12 +275,12 @@ router.get(
       const tableHtml = mkTable(
         [
           { label: req.__("Label"), key: "label" },
-
           {
             label: req.__("Type"),
             key: (r) =>
               r.type === "Key"
-                ? `Key to ${r.reftable_name}`
+                ? `Key to ` +
+                  a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
                 : r.type.name || r.type,
           },
           {
@@ -257,23 +291,32 @@ router.get(
             label: req.__("Attributes"),
             key: (r) => attribBadges(r),
           },
+          { label: req.__("Variable name"), key: "name" },
           {
             label: req.__("Edit"),
             key: (r) => link(`/field/${r.id}`, req.__("Edit")),
           },
           {
             label: req.__("Delete"),
-            key: (r) => post_delete_btn(`/field/delete/${r.id}`, req, r.name),
+            key: (r) =>
+              table.name === "users" && r.name === "email"
+                ? ""
+                : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
           },
         ],
         fields
       );
       fieldCard = [
         tableHtml,
+        inbound_refs.length > 0
+          ? req.__("Inbound keys: ") +
+            inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            "<br>"
+          : "",
         a(
           {
             href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field",
+            class: "btn btn-primary add-field mt-2",
           },
           req.__("Add field")
         ),
@@ -376,8 +419,34 @@ router.get(
             onchange: "this.form.submit();",
           })
         )
+      ),
+      div(
+        { class: "mx-auto" },
+        settingsDropdown(`dataMenuButton`, [
+          a(
+            {
+              class: "dropdown-item",
+              href: `/table/constraints/${table.id}`,
+            },
+            '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
+          ),
+          post_dropdown_item(
+            `/table/recalc-stored/${table.name}`,
+            '<i class="fas fa-sync"></i>&nbsp;' +
+              req.__("Recalculate stored fields"),
+            req
+          ),
+          post_dropdown_item(
+            `/table/delete-all-rows/${table.name}`,
+            '<i class="far fa-trash-alt"></i>&nbsp;' +
+              req.__("Delete all rows"),
+            req,
+            true
+          ),
+        ])
       )
     );
+    const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
         {
@@ -409,7 +478,7 @@ router.get(
         {
           type: "card",
           title: req.__("Edit table properties"),
-          contents: renderForm(tableForm(table, req), req.csrfToken()),
+          contents: renderForm(tblForm, req.csrfToken()),
         },
       ],
     });
@@ -471,6 +540,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = await Table.findOne({ id });
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
     try {
       await t.delete();
       req.flash("success", req.__(`Table %s deleted`, t.name));
@@ -499,7 +573,9 @@ router.get(
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+                  r.name === "users"
+                    ? ""
+                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },
             ],
             rows
@@ -559,6 +635,131 @@ router.get(
   })
 );
 
+router.get(
+  "/constraints/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const cons = await TableConstraint.find({ table_id: table.id });
+    res.sendWrap(req.__(`%s constraints`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { text: req.__("Constraints") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`%s constraints`, table.name),
+          contents: [
+            mkTable(
+              [
+                { label: req.__("Type"), key: "type" },
+                {
+                  label: req.__("Fields"),
+                  key: (r) => r.configuration.fields.join(", "),
+                },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    post_delete_btn(`/table/delete-constraint/${r.id}`, req),
+                },
+              ],
+              cons
+            ),
+            link(`/table/add-constraint/${id}`, req.__("Add constraint")),
+          ],
+        },
+      ],
+    });
+  })
+);
+
+const constraintForm = (table_id, fields) =>
+  new Form({
+    action: `/table/add-constraint/${table_id}`,
+    blurb: "Tick the boxes for the fields that should be jointly unique",
+    fields: fields.map((f) => ({
+      name: f.name,
+      label: f.label,
+      type: "Bool",
+    })),
+  });
+
+router.get(
+  "/add-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const fields = await table.getFields();
+    const form = constraintForm(table.id, fields);
+    res.sendWrap(req.__(`Add constraint to %s`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            {
+              text: req.__("Constraints"),
+              href: `/table/constraints/${table.id}`,
+            },
+            { text: req.__("New") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`Add constraint to %s`, table.name),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
+    });
+  })
+);
+
+router.post(
+  "/add-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const fields = await table.getFields();
+    const form = constraintForm(table.id, fields);
+    form.validate(req.body);
+    if (form.hasErrors) req.flash("error", req.__("An error occurred"));
+    else {
+      await TableConstraint.create({
+        table_id: table.id,
+        type: "Unique",
+        configuration: {
+          fields: fields.map((f) => f.name).filter((f) => form.values[f]),
+        },
+      });
+    }
+    res.redirect(`/table/constraints/${table.id}`);
+  })
+);
+
+router.post(
+  "/delete-constraint/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const cons = await TableConstraint.findOne({ id });
+    await cons.delete();
+    res.redirect(`/table/constraints/${cons.table_id}`);
+  })
+);
+
 router.post(
   "/upload_to_table/:name",
   setTenant,
@@ -570,7 +771,7 @@ router.post(
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
     try {
-      const parse_res = await table.import_csv_file(newPath);
+      const parse_res = await table.import_csv_file(newPath, true);
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
@@ -578,6 +779,41 @@ router.post(
     }
 
     await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/delete-all-rows/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    try {
+      await table.deleteRows({});
+      req.flash("success", req.__("Deleted all rows"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/recalc-stored/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const table = await Table.findOne({ name });
+
+    recalculate_for_stored(table);
+
+    req.flash("success", req.__("Started recalculating stored fields"));
+
     res.redirect(`/table/${table.id}`);
   })
 );

@@ -1,15 +1,7 @@
-const Form = require("../../models/form");
 const User = require("../../models/user");
-const Field = require("../../models/field");
 const View = require("../../models/view");
-const File = require("../../models/file");
 const Table = require("../../models/table");
-const FieldRepeat = require("../../models/fieldrepeat");
-const { mkTable } = require("@saltcorn/markup");
 const Workflow = require("../../models/workflow");
-const { post_btn, link } = require("@saltcorn/markup");
-const { getState } = require("../../db/state");
-const { eachView } = require("../../models/layout");
 
 const {
   div,
@@ -18,21 +10,13 @@ const {
   option,
   select,
   button,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
-const {
-  stateFieldsToWhere,
-  get_link_view_opts,
-  picked_fields_to_query,
-  initial_config_all_fields,
-  calcfldViewOptions,
-  readState,
-} = require("../../plugin-helper");
-const { action_url, view_linker } = require("./viewable_fields");
-const db = require("../../db");
-const { relativeTimeRounding } = require("moment");
+const { readState } = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
+const { eachView } = require("../../models/layout");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -42,12 +26,36 @@ const configuration_workflow = () =>
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-
+          const {
+            child_field_list,
+            child_relations,
+          } = await table.get_child_relations();
           const roles = await User.get_roles();
-
+          for (const cr of child_relations) {
+            const cfields = await cr.table.getFields();
+            cfields.forEach((cf) => {
+              if (cf.name !== cr.key_field.name)
+                fields.push({
+                  ...cf,
+                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                });
+            });
+          }
+          const actions = ["Clear"];
+          const own_link_views = await View.find_table_views_where(
+            table.id,
+            ({ viewrow }) => viewrow.name !== context.viewname
+          );
+          const views = own_link_views.map((v) => ({
+            label: v.name,
+            name: v.name,
+          }));
           return {
             fields,
             roles,
+            actions,
+            views,
             mode: "filter",
           };
         },
@@ -71,27 +79,87 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
     if (col.type === "DropDownFilter") {
       const field = fields.find((f) => f.name === col.field_name);
       if (field)
-        distinct_values[col.field_name] = await field.distinct_values();
+        distinct_values[col.field_name] = await field.distinct_values(
+          extra.req
+        );
+      else if (col.field_name.includes(".")) {
+        const kpath = col.field_name.split(".");
+        if (kpath.length === 3) {
+          const [jtNm, jFieldNm, lblField] = kpath;
+          const jtable = await Table.findOne({ name: jtNm });
+          const jfields = await jtable.getFields();
+          const jfield = jfields.find((f) => f.name === lblField);
+          if (jfield)
+            distinct_values[col.field_name] = await jfield.distinct_values();
+        }
+      }
     }
   }
+
+  const badges = [];
+  Object.entries(state).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
+    if (k[0] !== "_") {
+      let showv = v;
+      if (distinct_values[k]) {
+        const realv = distinct_values[k].find((dv) => dv.value === v);
+        if (realv) showv = realv.label;
+      }
+      badges.push({
+        text: `${text_attr(k)}:${text_attr(showv)}`,
+        onclick: `unset_state_field('${text_attr(k)}')`,
+      });
+    }
+  });
+  await eachView(layout, async (segment) => {
+    const view = await View.findOne({ name: segment.view });
+    if (!view)
+      segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+    else segment.contents = await view.run(state, extra);
+  });
+
   const blockDispatch = {
-    search_bar() {
-      return search_bar(
-        "_fts",
-        state["_fts"],
-        "(function(v){v ? set_state_field('_fts', v):unset_state_field('_fts');})($('.search-bar').val())"
-      );
+    search_bar({ has_dropdown, contents, show_badges }, go) {
+      const rendered_contents = go(contents);
+      return search_bar("_fts", state["_fts"], {
+        stateField: "_fts",
+        has_dropdown,
+        contents: rendered_contents,
+        badges: show_badges ? badges : null,
+      });
     },
-    dropdown_filter({ field_name }) {
+    dropdown_filter({ field_name, neutral_label, full_width }) {
       return select(
         {
-          name: "role",
+          name: `ddfilter${field_name}`,
+          class: "form-control d-inline",
+          style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
-        distinct_values[field_name].map(({ label, value }) =>
-          option({ value, selected: state[field_name] === value }, label)
+        distinct_values[field_name].map(({ label, value, jsvalue }) =>
+          option(
+            {
+              value,
+              selected: state[field_name] === or_if_undef(jsvalue, value),
+              class: !value && !label ? "text-muted" : undefined,
+            },
+            !value && !label ? neutral_label : label
+          )
         )
       );
+    },
+    action({ block, action_label, action_style, action_size, action_name }) {
+      const label = action_label || action_name;
+      if (action_style === "btn-link")
+        return a({ href: "javascript:clear_state()" }, label);
+      else
+        return button(
+          {
+            onClick: "clear_state()",
+            class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          },
+          label
+        );
     },
     toggle_filter({ field_name, value, label }) {
       const field = fields.find((f) => f.name === field_name);
@@ -103,7 +171,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             off: state[field_name] === false,
             "?": state[field_name] === null,
           }[value]
-        : state[field_name] === value;
+        : eq_string(state[field_name], value);
       return button(
         {
           class: ["btn", active ? "btn-primary" : "btn-outline-primary"],
@@ -121,8 +189,12 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   return renderLayout({ blockDispatch, layout, role });
 };
 
+const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
+const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
   name: "Filter",
+  description:
+    "Elements that limit the rows shown in other views on the same page. Filter views do not show any rows on their own.",
   get_state_fields,
   configuration_workflow,
   run,

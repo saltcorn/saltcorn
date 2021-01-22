@@ -4,7 +4,7 @@ const { getState, getTenant } = require("@saltcorn/data/db/state");
 const { input } = require("@saltcorn/markup/tags");
 
 function loggedIn(req, res, next) {
-  if (req.user && req.user.tenant === db.getTenantSchema()) {
+  if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
     next();
   } else {
     req.flash("danger", req.__("Must be logged in first"));
@@ -34,7 +34,7 @@ const setLanguage = (req) => {
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
     if (req.subdomains.length === 0 || req.subdomains[0] === "www")
-      db.runWithTenant("public", () => {
+      db.runWithTenant(db.connectObj.default_schema, () => {
         setLanguage(req);
         next();
       });
@@ -79,7 +79,15 @@ const csrfField = (req) =>
 const error_catcher = (fn) => (request, response, next) => {
   Promise.resolve(fn(request, response, next)).catch(next);
 };
+const scan_for_page_title = (contents, viewname) => {
+  if (typeof contents === "string" && contents.includes("<!--SCPT:")) {
+    const start = contents.indexOf("<!--SCPT:");
+    const end = contents.indexOf("-->", start);
+    return contents.substring(start + 9, end);
+  }
 
+  return viewname;
+};
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -88,4 +96,5 @@ module.exports = {
   setTenant,
   get_base_url,
   error_catcher,
+  scan_for_page_title,
 };

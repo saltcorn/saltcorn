@@ -6,8 +6,6 @@ Saltcorn is an extensible open source no-code database application builder. Use 
 
 This repository contains the core codebase, including the code necessary to self host an instance and to host a multitenant instance.
 
-**WARNING: In early stages of development. Expect poor usability, limited functionality and security vulnerabilities**
-
 ## Trying out Saltcorn
 
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create)
@@ -17,7 +15,15 @@ For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn un
 
 ## Acknowledgements
 
-Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/) and other awesome free and open source projects.
+Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/), [jQuery-Menu-Editor](https://github.com/davicotico/jQuery-Menu-Editor) and other awesome free and open source projects.
+
+## Quickstart with Docker
+
+You can run a local instance for quick test by running the following command
+
+`cd ./deploy/examples/test && docker-compose up -d`
+
+and then point your browser to http://localhost:3000
 
 ## Install from packages
 
@@ -54,7 +60,7 @@ cd
 mkdir -p ~/.config/
 ```
 
-run
+then run
 
 `saltcorn setup` and follow instructions
 

@@ -2,13 +2,7 @@ const db = require("../db");
 const { getState } = require("../db/state");
 const Field = require("./field");
 const { contract, is } = require("contractis");
-
-const apply = (f, x) => (typeof f === "function" ? f(x) : f);
-
-const applyAsync = async (f, x) => {
-  if (typeof f === "function") return await f(x);
-  else return f;
-};
+const { applyAsync, apply } = require("../utils");
 
 class Workflow {
   constructor(o) {
@@ -75,7 +69,7 @@ class Workflow {
   }
   async runStep(context, stepIx) {
     if (stepIx >= this.steps.length) {
-      return this.onDone(context);
+      return await this.onDone(context);
     }
     const step = this.steps[stepIx];
     if (step.onlyWhen) {

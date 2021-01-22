@@ -1,4 +1,5 @@
 const Table = require("../models/table");
+const TableConstraint = require("../models/table_constraints");
 const Field = require("../models/field");
 const View = require("../models/view");
 const db = require("../db");
@@ -7,6 +8,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file } = require("./mocks");
 const { mockReqRes } = require("./mocks");
+const { findAllWithTableName, runTableTriggers } = require("../models/trigger");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -91,6 +93,11 @@ describe("Table create", () => {
       (async () => await db.selectOne("mytable1", { id: 789 }))()
     ).rejects.toThrow(Error);
   });
+  it("should get distinct values", async () => {
+    const table = await Table.findOne({ name: "mytable1" });
+    const vs = await table.distinctValues("height1");
+    expect(vs).toEqual([7]);
+  });
   it("should delete", async () => {
     const table = await Table.findOne({ name: "mytable1" });
     await table.delete();
@@ -126,6 +133,24 @@ describe("Table get data", () => {
     });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe(2);
+  });
+  it("should get rows in id range", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const rows = await patients.getRows({ id: [{ gt: 0 }, { lt: 10 }] });
+    expect(rows.length).toStrictEqual(2);
+  });
+  it("should get rows by subselect", async () => {
+    const books = await Table.findOne({ name: "books" });
+    const nrows = await books.countRows({
+      id: {
+        inSelect: {
+          table: "patients",
+          field: "favbook",
+          where: { author: "Leo Tolstoy" },
+        },
+      },
+    });
+    expect(nrows).toStrictEqual(1);
   });
   it("should get joined rows with arbitrary fieldnames", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -174,6 +199,17 @@ describe("Table get data", () => {
     });
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
+  });
+  it("should get double joined rows", async () => {
+    const readings = await Table.findOne({ name: "readings" });
+    const reads = await readings.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        author: { ref: "patient_id", through: "favbook", target: "author" },
+      },
+    });
+    expect(reads.length).toStrictEqual(3);
+    expect(reads[0].author).toBe("Herman Melville");
   });
   it("should get joined rows with aggregations and joins", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -596,7 +632,6 @@ describe("Table and view deletion ", () => {
       viewtemplate: "List",
       configuration: { columns: [], default_state: {} },
       min_role: 10,
-      on_root_page: true,
     });
     let error;
     try {
@@ -681,7 +716,6 @@ describe("Tables with name clashes", () => {
         ],
       },
       min_role: 10,
-      on_root_page: true,
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toContain("Mustang");
@@ -706,10 +740,43 @@ describe("Tables with name clashes", () => {
         },
       },
       min_role: 10,
-      on_root_page: true,
     });
     const res = await v.run({ id: 1 }, mockReqRes);
     expect(res).toContain("Mustang");
     expect(res).toContain("Sally");
+  });
+});
+describe("Table joint unique constraint", () => {
+  it("should create table", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rows = await table.getRows();
+    const { id, ...row0 } = rows[0];
+    const tc = await TableConstraint.create({
+      table_id: table.id,
+      type: "Unique",
+      configuration: { fields: ["author", "pages"] },
+    });
+    const res = await table.tryInsertRow(row0);
+    expect(!!res.error).toBe(true);
+    await tc.delete();
+    const res1 = await table.tryInsertRow(row0);
+    expect(!!res1.error).toBe(false);
+  });
+});
+describe("Table with row ownership", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwned");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_field_id: owner.id });
+    await persons.delete();
   });
 });

@@ -2,7 +2,7 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
-const { a, script, domReady, div } = require("@saltcorn/markup/tags");
+const { a, script, domReady, div, text } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
@@ -138,7 +138,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { tname } = req.params;
     const table = await Table.findOne({ name: tname });
-
+    if (!table) {
+      req.flash("error", req.__("Table %s not found", text(tname)));
+      res.redirect(`/table`);
+      return;
+    }
     const fields = await table.getFields();
     for (const f of fields) {
       if (f.type === "File") f.attributes = { select_file_where: {} };
@@ -154,6 +158,13 @@ router.get(
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
     jsfields.push({ type: "control" });
+    jsfields.unshift({
+      name: "id",
+      title: "id",
+      type: "number",
+      editing: false,
+      inserting: false,
+    });
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -204,9 +215,8 @@ router.get(
             ],
           },
           {
-            type: "card",
-            title: req.__(`%s data table`, table.name),
-            contents: [
+            type: "blank",
+            contents: div(
               script(`var edit_fields=${JSON.stringify(jsfields)};`),
               script(domReady(versionsField(table.name))),
               script(
@@ -228,8 +238,8 @@ router.get(
          `)
               ),
               div({ id: "jsGridNotify" }),
-              div({ id: "jsGrid" }),
-            ],
+              div({ id: "jsGrid" })
+            ),
           },
         ],
       }

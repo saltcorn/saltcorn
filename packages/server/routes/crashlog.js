@@ -15,57 +15,64 @@ const {
 } = require("@saltcorn/markup/tags");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { send_events_page } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
-const wrap = (req, cardTitle, response, lastBc) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [
-        { text: req.__("Settings") },
-        { text: req.__("Crash log"), href: lastBc && "/crashlog" },
-        ...(lastBc ? [lastBc] : []),
-      ],
-    },
-    {
-      type: "card",
-      title: cardTitle,
-      contents: response,
-    },
-  ],
-});
+
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const crashes = await Crash.find({});
-    res.sendWrap(
-      req.__("Crash log"),
-      wrap(
-        req,
-        req.__("Crash log"),
-        crashes.length === 0
-          ? div(
-              h3(req.__("No errors reported")),
-              p(req.__("Everything is going extremely well."))
-            )
-          : mkTable(
-              [
-                {
-                  label: req.__("Show"),
-                  key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
-                },
-                { label: req.__("When"), key: (r) => r.reltime },
-                ...(db.is_it_multi_tenant()
-                  ? [{ label: req.__("Tenant"), key: "tenant" }]
-                  : []),
-              ],
-              crashes
-            )
-      )
+    const state = req.query,
+      rows_per_page = 20,
+      page_opts = {},
+      current_page = parseInt(state._page) || 1,
+      offset = (parseInt(state._page) - 1) * rows_per_page;
+
+    const crashes = await Crash.find(
+      {},
+      { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
     );
+    if (crashes.length === rows_per_page || current_page > 1) {
+      const nrows = await Crash.count();
+      if (nrows > rows_per_page || current_page > 1) {
+        page_opts.pagination = {
+          current_page,
+          pages: Math.ceil(nrows / rows_per_page),
+          get_page_link: (n) => `javascript:gopage(${n}, ${rows_per_page})`,
+        };
+      }
+    }
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      contents: {
+        type: "card",
+        contents:
+          crashes.length === 0
+            ? div(
+                h3(req.__("No errors reported")),
+                p(req.__("Everything is going extremely well."))
+              )
+            : mkTable(
+                [
+                  {
+                    label: req.__("Show"),
+                    key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
+                  },
+                  { label: req.__("When"), key: (r) => r.reltime },
+                  ...(db.is_it_multi_tenant()
+                    ? [{ label: req.__("Tenant"), key: "tenant" }]
+                    : []),
+                ],
+                crashes,
+                page_opts
+              ),
+      },
+    });
   })
 );
 
@@ -90,12 +97,15 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const crash = await Crash.findOne({ id });
-    res.sendWrap(
-      req.__("Crash log"),
-      wrap(
-        req,
-        req.__("Crash log entry %s", id),
-        table(
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      sub2_page: crash.id,
+      contents: {
+        type: "card",
+        class: "crashlog-entry",
+        contents: table(
           { class: "table" },
           tbody(
             Object.entries(crash).map(([k, v]) =>
@@ -114,8 +124,7 @@ router.get(
             )
           )
         ),
-        { text: `${id}` }
-      )
-    );
+      },
+    });
   })
 );
