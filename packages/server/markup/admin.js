@@ -224,7 +224,7 @@ const save_config_from_form = async (form) => {
   const state = getState();
 
   for (const [k, v] of Object.entries(form.values)) {
-    if (!isFixedConfig(k)) {
+    if (!isFixedConfig(k) && typeof v !== "undefined") {
       await state.setConfig(k, v);
     }
   }
