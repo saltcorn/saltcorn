@@ -22,6 +22,8 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 
 const Form = require("@saltcorn/data/models/form");
+const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 
 const restore_backup = (csrf, inner) =>
   form(
@@ -158,17 +160,33 @@ const send_users_page = (args) => {
     ...args,
   });
 };
-
-const config_fields_form = ({ field_names, ...formArgs }) => {
+const viewAttributes = async (key) => {
+  const [v, table_name] = configTypes[key].type.split(" ");
+  const table = await Table.findOne({ name: table_name });
+  const views = await View.find({ table_id: table.id, viewtemplate: "Edit" });
+  return { options: views.map((v) => v.name).join(",") };
+};
+const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};
   const state = getState();
-  const fields = field_names.map((name) => {
+  const fields = [];
+  for (const name of field_names) {
     values[name] = state.getConfig(name);
-    return {
+    const isView = configTypes[name].type.startsWith("View ");
+    const label = configTypes[name].label || name;
+    const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
+    fields.push({
       name,
       ...configTypes[name],
-    };
-  });
+      label: label ? req.__(label) : undefined,
+      sublabel: sublabel ? req.__(sublabel) : undefined,
+
+      type: isView ? "String" : configTypes[name].type,
+      attributes: isView
+        ? await viewAttributes(name)
+        : configTypes[name].attributes,
+    });
+  }
   return new Form({ fields, values, ...formArgs });
 };
 

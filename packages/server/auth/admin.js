@@ -310,9 +310,17 @@ router.get(
   })
 );
 
-const user_settings_form = () =>
+const user_settings_form = (req) =>
   config_fields_form({
-    field_names: ["allow_signup", "login_menu", "allow_forgot"],
+    req,
+    field_names: [
+      "allow_signup",
+      "login_menu",
+      "new_user_form",
+      "login_form",
+      "signup_form",
+      "allow_forgot",
+    ],
     action: "/useradmin/settings",
   });
 router.get(
@@ -320,6 +328,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    const form = await user_settings_form(req);
     send_users_page({
       res,
       req,
@@ -327,7 +336,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Settings"),
-        contents: [renderForm(user_settings_form(), req.csrfToken())],
+        contents: [renderForm(form, req.csrfToken())],
       },
     });
   })
@@ -337,7 +346,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = user_settings_form();
+    const form = await user_settings_form(req);
     form.validate(req.body);
     if (form.hasErrors) {
       send_users_page({
