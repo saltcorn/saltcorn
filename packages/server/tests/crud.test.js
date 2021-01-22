@@ -57,23 +57,24 @@ describe("homepage", () => {
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .post("/config/edit/public_home")
-      .send("public_home=/view/authorlist")
+      .post("/pageedit/set_root_page")
+      .send("public=/view/authorlist")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
 
     await request(app).get("/").expect(toRedirect("/view/authorlist"));
 
     await request(app)
-      .post("/config/edit/public_home")
-      .send("public_home=a_page")
+      .post("/pageedit/set_root_page")
+      .send("public=a_page")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
     await request(app).get("/").expect(toInclude("Hello world"));
     await request(app)
-      .post("/config/delete/public_home")
+      .post("/pageedit/set_root_page")
+      .send("public=")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/config/"));
+      .expect(toRedirect("/pageedit"));
   });
   it("resets", async () => {
     await reset();
