@@ -17,15 +17,10 @@ describe("Dotcom and db page page", () => {
     await browser.clickNav("button[type=submit]", true);
   });
   it("sets home page", async () => {
-    await browser.goto("/config");
-    await browser.goto("/config/edit/public_home");
-    expect(await browser.content()).toContain("Public home page");
-    await browser.page.type("#inputpublic_home", "a_page");
-    await browser.clickNav("button[type=submit]");
-
-    await browser.goto("/config/edit/admin_home");
-    expect(await browser.content()).toContain("Admin home page");
-    await browser.page.type("#inputadmin_home", "");
+    await browser.goto("/pageedit");
+    //await browser.goto("/config/edit/public_home");
+    expect(await browser.content()).toContain("Root pages");
+    await browser.page.select("#inputpublic", "a_page");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     const page = await browser.page.content();
@@ -70,11 +65,9 @@ describe("Dotcom and db page page", () => {
     );
   });
   it("sets home page", async () => {
-    await browser.goto("/config");
-    await browser.goto("/config/edit/public_home");
-    expect(await browser.content()).toContain("Public home page");
-    await browser.erase_input("#inputpublic_home");
-    await browser.page.type("#inputpublic_home", "root");
+    await browser.goto("/pageedit");
+    expect(await browser.content()).toContain("Root pages");
+    await browser.page.select("#inputpublic", "root");
     await browser.clickNav("button[type=submit]");
   });
   it("Logs out 2", async () => {

@@ -189,10 +189,9 @@ describe("Table create", () => {
     expect(await browser.content()).not.toContain("startbootstrap-sb-admin-2");
   });
   it("Changes site name", async () => {
-    await browser.goto("/config");
+    await browser.goto("/admin");
     expect(await browser.content()).toContain("Site name");
     expect(await browser.content()).toContain('"Saltcorn"');
-    await browser.goto("/config/edit/site_name");
     await browser.page.type("#inputsite_name", "MyFabSite");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
@@ -202,7 +201,7 @@ describe("Table create", () => {
     const page = await browser.content();
     expect(page).toContain('href="/table"');
     expect(page).toContain('href="/viewedit"');
-    expect(page).toContain('href="/config"');
+    expect(page).toContain('href="/admin"');
     expect(page).toContain('href="/plugins"');
   });
   it("Logs out", async () => {
