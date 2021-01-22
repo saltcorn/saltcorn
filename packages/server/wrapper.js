@@ -94,12 +94,15 @@ const get_menu = (req) => {
         },
         {
           link: "/site-structure",
+          altlinks: ["/menu", "/search/config", "/tenant/list"],
           icon: "fas fa-compass",
           label: req.__("Site structure"),
         },
 
         {
           link: "/events",
+          altlinks: ["/actions", "/crashlog"],
+
           icon: "fas fa-calendar-check",
           label: req.__("Events"),
         },
