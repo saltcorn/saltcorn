@@ -356,11 +356,10 @@ const plugin_store_html = (items, req) => {
     above: [
       {
         type: "breadcrumbs",
-        crumbs: [{ text: req.__("Settings") }, { text: req.__("Plugins") }],
-      },
-      {
-        type: "pageHeader",
-        title: req.__("Plugin and pack store"),
+        crumbs: [
+          { text: req.__("Settings") },
+          { text: req.__("Plugin and pack store") },
+        ],
       },
       {
         type: "card",
@@ -456,7 +455,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: req.__("New") },
           ],
         },
@@ -558,7 +557,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: plugin_db.name },
           ],
         },
