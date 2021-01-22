@@ -563,5 +563,6 @@
 	"Custom SSL certificates": "Custom SSL certificates",
 	"Custom SSL enabled. Restart for changes to take effect.": "Custom SSL enabled. Restart for changes to take effect.",
 	"Enabled": "Enabled",
-	"You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored.": "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+	"You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored.": "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored.",
+	"Events": "Events"
 }

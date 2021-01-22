@@ -10,6 +10,7 @@ const menu = require("./menu");
 const admin = require("./admin");
 const actions = require("./actions");
 const infoarch = require("./infoarch");
+const events = require("./events");
 const tenant = require("./tenant");
 const api = require("./api");
 const plugins = require("./plugins");
@@ -34,6 +35,7 @@ module.exports = (app) => {
   app.use("/menu", menu);
   app.use("/view", view);
   app.use("/crashlog", crashlog);
+  app.use("/events", events);
   app.use("/page", page);
   app.use("/pageedit", pageedit);
   app.use("/actions", actions);

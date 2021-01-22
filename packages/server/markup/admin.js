@@ -160,6 +160,19 @@ const send_users_page = (args) => {
     ...args,
   });
 };
+
+const send_events_page = (args) => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  return send_settings_page({
+    main_section: "Events",
+    main_section_href: "/events",
+    sub_sections: [
+      { text: "Actions", href: "/actions" },
+      ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
+    ],
+    ...args,
+  });
+};
 const viewAttributes = async (key) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = await Table.findOne({ name: table_name });
@@ -197,4 +210,5 @@ module.exports = {
   send_infoarch_page,
   config_fields_form,
   send_users_page,
+  send_events_page,
 };
