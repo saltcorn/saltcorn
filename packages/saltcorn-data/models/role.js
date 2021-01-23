@@ -10,7 +10,7 @@ class Role {
     const u = new Role(uo);
 
     const ex = await Role.findOne({ id: u.id });
-    if (ex) return { error: `Role with this email already exists` };
+    if (ex) return { error: `Role with this id already exists` };
     await db.insert("_sc_roles", {
       id: u.id,
       role: u.role,
