@@ -26,7 +26,17 @@ beforeAll(async () => {
   );
 });
 afterAll(db.close);
-
+const adminPageContains = (specs) =>
+  it("adminPageContains " + specs.map((s) => s[1]).join(","), async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    for (const [url, text] of specs) {
+      await request(app)
+        .get(url)
+        .set("Cookie", loginCookie)
+        .expect(toInclude(text));
+    }
+  });
 describe("admin page", () => {
   itShouldRedirectUnauthToLogin("/admin");
   it("show admin page", async () => {
@@ -37,6 +47,23 @@ describe("admin page", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Site identity settings"));
   });
+  adminPageContains([
+    ["/admin/backup", "Download a backup"],
+    ["/admin/email", "Email settings"],
+    ["/admin/system", "Restart server"],
+  ]);
+  adminPageContains([
+    ["/useradmin", "Add user"],
+    ["/useradmin/roles", "Theme"],
+    ["/useradmin/settings", "Authentication settings"],
+    ["/useradmin/ssl", "HTTPS encryption"],
+  ]);
+  adminPageContains([
+    ["/menu", "jquery-menu-editor"],
+    ["/search/config", "Search configuration"],
+    ["/tenant/list", "Subdomain"],
+  ]);
+  adminPageContains([["/actions", "Actions available"]]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
