@@ -575,5 +575,7 @@
 	"About the system": "About the system",
 	"Restart here": "Restart here",
 	"Download a backup": "Download a backup",
-	"Restore a backup": "Restore a backup"
+	"Restore a backup": "Restore a backup",
+	"Add new role": "Add new role",
+	"Role updated": "Role updated"
 }

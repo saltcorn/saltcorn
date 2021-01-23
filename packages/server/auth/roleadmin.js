@@ -3,7 +3,7 @@ const { contract, is } = require("contractis");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
-const View = require("@saltcorn/data/models/view");
+const Role = require("@saltcorn/data/models/role");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -67,6 +67,22 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
       )
     )
   );
+
+const roleForm = () =>
+  new Form({
+    action: "/roleadmin/edit",
+    fields: [
+      {
+        name: "id",
+        type: "Integer",
+        label: "ID",
+        sublabel: "This is the rank...",
+        attributes: { max: 10, min: 1 },
+      },
+      { name: "role", label: "Role name", type: "String" },
+    ],
+  });
+
 router.get(
   "/",
   setTenant,
@@ -101,9 +117,63 @@ router.get(
             ],
             roles
           ),
+          link("/roleadmin/new", req.__("Add new role")),
         ],
       },
     });
+  })
+);
+
+router.get(
+  "/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await roleForm(req);
+
+    send_users_page({
+      res,
+      req,
+      active_sub: "Roles",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("Roles"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/edit",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await roleForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Roles",
+        sub2_page: "New",
+        contents: {
+          type: "card",
+          title: req.__("Roles"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      const r = new Role(form.values);
+      const ex = await Role.findOne({ id: r.id });
+      if (ex) {
+        await ex.update(r);
+      } else {
+        await Role.create(r);
+      }
+      req.flash("success", req.__(`Role updated`));
+      res.redirect(`/roleadmin`);
+    }
   })
 );
 
