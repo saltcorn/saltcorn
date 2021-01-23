@@ -61,7 +61,6 @@ describe("admin page", () => {
   adminPageContains([
     ["/menu", "jquery-menu-editor"],
     ["/search/config", "Search configuration"],
-    ["/tenant/list", "Subdomain"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
   it("show download backup", async () => {
