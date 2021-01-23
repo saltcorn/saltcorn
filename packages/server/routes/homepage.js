@@ -194,7 +194,7 @@ const no_views_logged_in = async (req, res) => {
           latest
         ) +
           " " +
-          a({ href: "/admin" }, req.__("Upgrade here"))
+          a({ href: "/admin/system" }, req.__("Upgrade here"))
       );
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
