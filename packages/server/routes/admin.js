@@ -25,6 +25,7 @@ const {
   tr,
   button,
   span,
+  p,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { getState, restart_tenant } = require("@saltcorn/data/db/state");
@@ -173,14 +174,28 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Backup"),
-        contents: div(
-          post_btn("/admin/backup", req.__("Backup"), req.csrfToken()),
-          hr(),
-          restore_backup(req.csrfToken(), [
-            i({ class: "fas fa-2x fa-upload" }),
-            "<br/>",
-            req.__("Restore"),
-          ])
+        contents: table(
+          tbody(
+            tr(
+              td(
+                div(
+                  post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
+                )
+              ),
+              td(p({ class: "ml-4 pt-2" }, req.__("Download a backup")))
+            ),
+            tr(td(div({ class: "my-4" }))),
+            tr(
+              td(
+                restore_backup(req.csrfToken(), [
+                  i({ class: "fas fa-2x fa-upload" }),
+                  "<br/>",
+                  req.__("Restore"),
+                ])
+              ),
+              td(p({ class: "ml-4" }, req.__("Restore a backup")))
+            )
+          )
         ),
       },
     });
