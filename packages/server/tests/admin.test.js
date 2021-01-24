@@ -54,7 +54,7 @@ describe("admin page", () => {
   ]);
   adminPageContains([
     ["/useradmin", "Add user"],
-    ["/useradmin/roles", "Theme"],
+    ["/roleadmin", "Theme"],
     ["/useradmin/settings", "Authentication settings"],
     ["/useradmin/ssl", "HTTPS encryption"],
   ]);

@@ -282,8 +282,14 @@ const no_views_logged_in = async (req, res) => {
   }
 };
 
-const get_config_response = async (cfgKey, res, req) => {
-  const homeCfg = getState().getConfig(cfgKey);
+const get_config_response = async (role_id, res, req) => {
+  const modernCfg = getState().getConfig("home_page_by_role", false);
+  const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
+    role_id
+  ];
+  let homeCfg = modernCfg && modernCfg[role_id];
+  if (typeof homeCfg !== "string")
+    homeCfg = getState().getConfig(legacy_role + "_home");
   if (homeCfg) {
     if (getState().pages[homeCfg]) {
       const page = getState().pages[homeCfg];
@@ -314,8 +320,7 @@ const get_config_response = async (cfgKey, res, req) => {
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
   const role_id = req.user ? req.user.role_id : 10;
-  const role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[role_id];
-  const cfgResp = await get_config_response(role + "_home", res, req);
+  const cfgResp = await get_config_response(role_id, res, req);
   if (cfgResp) return;
 
   if (!isAuth) {

@@ -37,6 +37,7 @@ const configTypes = {
     type: "Date",
     label: "Available plugins fetched",
   },
+  home_page_by_role: { type: "hidden", label: "Home Page by Role" },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },

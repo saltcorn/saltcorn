@@ -172,28 +172,7 @@ const user_dropdown = (user, req, can_reset) =>
       user.email
     ),
   ]);
-const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
-  form(
-    {
-      action: `/useradmin/setrolelayout/${role.id}`,
-      method: "post",
-    },
-    csrfField(req),
-    select(
-      { name: "layout", onchange: "form.submit()" },
-      layouts.map((layout, ix) =>
-        option(
-          {
-            value: layout,
-            ...((layout_by_role[role.id]
-              ? layout_by_role[role.id] === layout
-              : ix == layouts.length - 1) && { selected: true }),
-          },
-          text(layout)
-        )
-      )
-    )
-  );
+
 router.get(
   "/",
   setTenant,
@@ -237,46 +216,6 @@ router.get(
             users
           ),
           link(`/useradmin/new`, req.__("Add user")),
-        ],
-      },
-    });
-  })
-);
-
-router.get(
-  "/roles",
-  setTenant,
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const roles = await User.get_roles();
-    var roleMap = {};
-    roles.forEach((r) => {
-      roleMap[r.id] = r.role;
-    });
-    const layouts = Object.keys(getState().layouts).filter(
-      (l) => l !== "emergency"
-    );
-    const layout_by_role = getState().getConfig("layout_by_role");
-    send_users_page({
-      res,
-      req,
-      active_sub: "Roles",
-      contents: {
-        type: "card",
-        title: req.__("Roles"),
-        contents: [
-          mkTable(
-            [
-              { label: req.__("ID"), key: "id" },
-              { label: req.__("Role"), key: "role" },
-              {
-                label: req.__("Theme"),
-                key: (role) =>
-                  editRoleLayoutForm(role, layouts, layout_by_role, req),
-              },
-            ],
-            roles
-          ),
         ],
       },
     });
@@ -616,20 +555,6 @@ router.post(
     req.flash("success", req.__(`New API token generated`));
 
     res.redirect(`/useradmin/${u.id}`);
-  })
-);
-router.post(
-  "/setrolelayout/:id",
-  setTenant,
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const layout_by_role = getState().getConfig("layout_by_role");
-    layout_by_role[+id] = req.body.layout;
-    await getState().setConfig("layout_by_role", layout_by_role);
-    req.flash("success", req.__(`Saved layout for role`));
-
-    res.redirect(`/useradmin/`);
   })
 );
 

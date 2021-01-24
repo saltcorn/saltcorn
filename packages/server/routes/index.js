@@ -22,6 +22,7 @@ const crashlog = require("./crashlog");
 const del = require("./delete");
 const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
+const roleadmin = require("../auth/roleadmin");
 
 module.exports = (app) => {
   app.use("/table", table);
@@ -48,4 +49,5 @@ module.exports = (app) => {
   app.use("/delete", del);
   app.use("/auth", auth);
   app.use("/useradmin", useradmin);
+  app.use("/roleadmin", roleadmin);
 };

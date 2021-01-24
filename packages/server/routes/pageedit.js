@@ -227,8 +227,11 @@ const getRootPageForm = (pages, roles, req) => {
         })
     ),
   });
+  const modernCfg = getState().getConfig("home_page_by_role", false);
   for (const role of roles) {
-    form.values[role.role] = getState().getConfig(role.role + "_home", "");
+    form.values[role.role] = modernCfg && modernCfg[role.id];
+    if (typeof form.values[role.role] !== "string")
+      form.values[role.role] = getState().getConfig(role.role + "_home", "");
   }
   return form;
 };
@@ -372,12 +375,12 @@ router.post(
     const form = await getRootPageForm(pages, roles, req);
     const valres = form.validate(req.body);
     if (valres.success) {
+      const home_page_by_role =
+        getState().getConfig("home_page_by_role", []) || [];
       for (const role of roles) {
-        await getState().setConfig(
-          role.role + "_home",
-          valres.success[role.role]
-        );
+        home_page_by_role[role.id] = valres.success[role.role];
       }
+      await getState().setConfig("home_page_by_role", home_page_by_role);
       req.flash("success", req.__(`Root pages updated`));
     } else req.flash("danger", req.__(`Error reading pages`));
     res.redirect(`/pageedit`);

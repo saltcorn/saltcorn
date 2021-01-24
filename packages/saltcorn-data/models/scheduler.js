@@ -1,6 +1,7 @@
 const Crash = require("./crash");
 const { eachTenant } = require("./tenant");
 const Trigger = require("./trigger");
+const db = require("../db");
 
 const sleepUntil = (date, plusSeconds) => {
   const waitTill = new Date();
@@ -19,15 +20,18 @@ const runScheduler = async ({
     stopit = await stop_when();
     if (stopit) return;
     await eachTenant(async () => {
+      const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
       const triggers = await Trigger.find({ when_trigger: "Often" });
       for (const trigger of triggers) {
         try {
           await trigger.runWithoutRow();
         } catch (e) {
-          await Crash.create(e, {
-            url: `trigger: action ${trigger.action} id ${trigger.id}`,
-            headers: {},
-          });
+          if (isRoot)
+            await Crash.create(e, {
+              url: `trigger: action ${trigger.action} id ${trigger.id}`,
+              headers: {},
+            });
         }
       }
     });

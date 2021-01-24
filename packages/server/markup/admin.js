@@ -153,7 +153,7 @@ const send_users_page = (args) => {
     main_section_href: "/useradmin",
     sub_sections: [
       { text: "Users", href: "/useradmin" },
-      { text: "Roles", href: "/useradmin/roles" },
+      { text: "Roles", href: "/roleadmin" },
       { text: "Settings", href: "/useradmin/settings" },
       ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
     ],
