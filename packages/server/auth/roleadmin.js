@@ -120,7 +120,10 @@ router.get(
               },
               {
                 label: req.__("Delete"),
-                key: (r) => post_delete_btn(`/roleadmin/delete/${r.id}`, req),
+                key: (r) =>
+                  unDeletableRoles.includes(r.id)
+                    ? ""
+                    : post_delete_btn(`/roleadmin/delete/${r.id}`, req),
               },
             ],
             roles
@@ -199,7 +202,7 @@ router.post(
     res.redirect(`/roleadmin/`);
   })
 );
-
+const unDeletableRoles = [1, 8, 10];
 router.post(
   "/delete/:id",
   setTenant,
@@ -208,7 +211,9 @@ router.post(
     const { id } = req.params;
     const u = await Role.findOne({ id });
     const nuser = await User.count({ role_id: id });
-    if (nuser > 0) {
+    if (unDeletableRoles.includes(+id))
+      req.flash("warning", req.__(`Cannot delete this role`));
+    else if (nuser > 0) {
       req.flash("warning", req.__(`First delete users with this role`));
     } else {
       try {
