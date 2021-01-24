@@ -287,9 +287,9 @@ const get_config_response = async (role_id, res, req) => {
   const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
     role_id
   ];
-  const homeCfg =
-    (modernCfg && modernCfg[role_id]) ||
-    (legacy_role && getState().getConfig(legacy_role + "_home"));
+  let homeCfg = modernCfg && modernCfg[role_id];
+  if (typeof homeCfg !== "string")
+    homeCfg = getState().getConfig(legacy_role + "_home");
   if (homeCfg) {
     if (getState().pages[homeCfg]) {
       const page = getState().pages[homeCfg];
