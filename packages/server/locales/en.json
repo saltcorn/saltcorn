@@ -577,5 +577,7 @@
 	"Download a backup": "Download a backup",
 	"Restore a backup": "Restore a backup",
 	"Add new role": "Add new role",
-	"Role updated": "Role updated"
+	"Role updated": "Role updated",
+	"First delete users with this role": "First delete users with this role",
+	"Role %s deleted": "Role %s deleted"
 }

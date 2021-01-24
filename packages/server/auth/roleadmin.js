@@ -13,6 +13,7 @@ const {
   post_btn,
   settingsDropdown,
   post_dropdown_item,
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const {
   isAdmin,
@@ -114,6 +115,10 @@ router.get(
                 key: (role) =>
                   editRoleLayoutForm(role, layouts, layout_by_role, req),
               },
+              {
+                label: req.__("Delete"),
+                key: (r) => post_delete_btn(`/roleadmin/delete/${r.id}`, req),
+              },
             ],
             roles
           ),
@@ -189,5 +194,27 @@ router.post(
     req.flash("success", req.__(`Saved layout for role`));
 
     res.redirect(`/roleadmin/`);
+  })
+);
+
+router.post(
+  "/delete/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await Role.findOne({ id });
+    const nuser = await User.count({ role_id: id });
+    if (nuser > 0) {
+      req.flash("warning", req.__(`First delete users with this role`));
+    } else {
+      try {
+        await u.delete();
+        req.flash("success", req.__(`Role %s deleted`, u.role));
+      } catch (e) {
+        req.flash("error", e.message);
+      }
+    }
+    res.redirect(`/roleadmin`);
   })
 );

@@ -184,6 +184,9 @@ class User {
       return { error: "User not found or expired token" };
     }
   }
+  static async count(where) {
+    return await db.count("users", where || {});
+  }
 
   static async get_roles() {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
