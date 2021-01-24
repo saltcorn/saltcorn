@@ -5,6 +5,7 @@ const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
+const User = require("@saltcorn/data/models/user");
 const {
   mkTable,
   renderForm,
@@ -39,16 +40,12 @@ const fs = require("fs").promises;
 const router = new Router();
 module.exports = router;
 
-const roleOptions = [
-  { value: 1, label: "Admin" },
-  { value: 4, label: "Staff" },
-  { value: 8, label: "User" },
-  { value: 10, label: "Public" },
-];
-
 const tableForm = async (table, req) => {
   const fields = await table.getFields();
-
+  const roleOptions = (await User.get_roles()).map((r) => ({
+    value: r.id,
+    label: r.role,
+  }));
   const userFields = fields
     .filter((f) => f.reftable_name === "users")
     .map((f) => ({ value: f.id, label: f.name }));
