@@ -69,18 +69,21 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
     )
   );
 
-const roleForm = () =>
+const roleForm = (req) =>
   new Form({
     action: "/roleadmin/edit",
     fields: [
       {
         name: "id",
         type: "Integer",
-        label: "ID",
-        sublabel: "This is the rank...",
+        label: req.__("ID"),
+        sublabel: req.__(
+          "This is the rank of the user role, lower role IDs will be able to access more resources."
+        ),
+        default: 7,
         attributes: { max: 10, min: 1 },
       },
-      { name: "role", label: "Role name", type: "String" },
+      { name: "role", label: req.__("Role name"), type: "String" },
     ],
   });
 

@@ -579,5 +579,7 @@
 	"Add new role": "Add new role",
 	"Role updated": "Role updated",
 	"First delete users with this role": "First delete users with this role",
-	"Role %s deleted": "Role %s deleted"
+	"Role %s deleted": "Role %s deleted",
+	"This is the rank of the user role, lower role IDs will be able to access more resources.": "This is the rank of the user role, lower role IDs will be able to access more resources.",
+	"Role name": "Role name"
 }
