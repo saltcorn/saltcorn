@@ -22,6 +22,7 @@ describe("Dotcom and db page page", () => {
     expect(await browser.content()).toContain("Root pages");
     await browser.page.select("#inputpublic", "a_page");
     await browser.clickNav("button[type=submit]");
+    expect(await browser.content()).toContain("Root pages updated");
     await browser.goto("/");
     const page = await browser.page.content();
     expect(page).toContain("Logout");
