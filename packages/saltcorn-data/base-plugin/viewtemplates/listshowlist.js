@@ -122,9 +122,7 @@ const run = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  console.log(state);
   readState(state, fields);
-  console.log(state);
 
   var lresp;
   if (list_view) {
