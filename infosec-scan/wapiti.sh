@@ -9,5 +9,12 @@ fi
 
 source infosec_scan_tmp/wapiti/bin/activate
 
+if [[ $# -eq 1 ]] ; then
+   wapiti -u $1
+fi
 
-wapiti -u $1
+if [[ $# -eq 3 ]] ; then
+   wapiti-getcookie -c /tmp/cookies.txt -u $1/auth/login -a $2%$3 
+   wapiti -u $1 -x $1/auth/logout -c /tmp/cookies.txt
+fi
+
