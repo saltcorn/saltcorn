@@ -621,7 +621,7 @@ const stateFieldsToWhere = contract(
     var qstate = {};
     Object.entries(state).forEach(([k, v]) => {
       if (k === "_fts") {
-        qstate[k] = { searchTerm: v, fields };
+        qstate[k] = { searchTerm: v.replace(/\0/g, ""), fields };
         return;
       }
       const field = fields.find((fld) => fld.name == k);
