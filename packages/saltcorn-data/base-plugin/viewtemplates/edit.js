@@ -13,6 +13,7 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   get_parent_views,
+  strictParseInt,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
@@ -314,7 +315,7 @@ const runPost = async (
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;
-    var id = body.id;
+    var id = strictParseInt(body.id);
     if (typeof id === "undefined") {
       const use_fixed = await fill_presets(table, req, fixed);
       row = { ...use_fixed, ...form.values };
@@ -348,7 +349,7 @@ const runPost = async (
     } else {
       const upd_res = await table.tryUpdateRow(
         row,
-        parseInt(id),
+        id,
         req.user ? +req.user.id : undefined
       );
       if (upd_res.error) {
