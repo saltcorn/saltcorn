@@ -161,6 +161,21 @@ const configTypes = {
     default: "",
     hide_value: true,
   },
+  next_hourly_event: {
+    type: "Date",
+    label: "Next hourly event",
+    default: null,
+  },
+  next_daily_event: {
+    type: "Date",
+    label: "Next daily event",
+    default: null,
+  },
+  next_weekly_event: {
+    type: "Date",
+    label: "Next weekly event",
+    default: null,
+  },
 };
 
 const available_languages = {

@@ -106,7 +106,11 @@ class Trigger {
       "Insert",
       "Update",
       "Delete",
-      "Often" /*"Weekly", "Daily", "Hourly", */,
+      "Weekly",
+      "Daily",
+      "Hourly",
+      "Often",
+      "Never",
     ];
   }
 }
