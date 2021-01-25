@@ -179,8 +179,8 @@ const restore_files = contract(
 );
 
 const restore_tables = contract(
-  is.fun(is.str, is.promise(is.maybe(is.str))),
-  async (dirpath) => {
+  is.fun([is.str, is.maybe(is.bool)], is.promise(is.maybe(is.str))),
+  async (dirpath, restore_first_user) => {
     var err;
     const tables = await Table.find();
     for (const table of tables) {
@@ -199,7 +199,7 @@ const restore_tables = contract(
         const res = await table.import_csv_file(
           fnm_csv,
           false,
-          table.name === "users"
+          table.name === "users" && !restore_first_user
         );
         if (res.error) err = (err || "") + res.error;
       }
@@ -230,10 +230,10 @@ const restore_config = contract(
 
 const restore = contract(
   is.fun(
-    [is.str, is.fun(is_plugin, is.undefined)],
+    [is.str, is.fun(is_plugin, is.undefined), is.maybe(is.bool)],
     is.promise(is.or(is.undefined, is.str))
   ),
-  async (fnm, loadAndSaveNewPlugin) => {
+  async (fnm, loadAndSaveNewPlugin, restore_first_user) => {
     const dir = await tmp.dir({ unsafeCleanup: true });
     //unzip
     await extract(fnm, dir.path);
@@ -257,7 +257,7 @@ const restore = contract(
     await restore_files(dir.path);
 
     //table csvs
-    const tabres = await restore_tables(dir.path);
+    const tabres = await restore_tables(dir.path, restore_first_user);
     if (tabres) err = (err || "") + tabres;
     //config
     await restore_config(dir.path);
