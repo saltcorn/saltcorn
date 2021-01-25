@@ -769,6 +769,11 @@ const initial_config_all_fields = contract(
   }
 );
 
+const strictParseInt = (x) => {
+  const y = +x;
+  return !isNaN(y) && y ? y : undefined;
+};
+
 const readState = (state, fields) => {
   fields.forEach((f) => {
     const current = state[f.name];
@@ -778,11 +783,10 @@ const readState = (state, fields) => {
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null
-            : +current;
+            : strictParseInt(current);
     }
   });
-  if (typeof state.id !== "undefined") state.id = +state.id;
-  if (isNaN(state.id)) delete state.id;
+  if (typeof state.id !== "undefined") state.id = strictParseInt(state.id);
   return state;
 };
 
@@ -831,4 +835,5 @@ module.exports = {
   link_view,
   getActionConfigFields,
   calcfldViewConfig,
+  strictParseInt,
 };
