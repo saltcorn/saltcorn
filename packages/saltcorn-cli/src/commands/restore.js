@@ -22,7 +22,7 @@ class RestoreCommand extends Command {
     const { restore } = require("@saltcorn/data/models/backup");
     const User = require("@saltcorn/data/models/user");
     const load_plugins = require("@saltcorn/server/load_plugins");
-
+    await load_plugins.loadAllPlugins();
     const hasUsers = await User.nonEmpty();
     const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
     const err = await restore(fnm, savePlugin, !hasUsers);
