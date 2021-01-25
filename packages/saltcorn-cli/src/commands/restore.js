@@ -29,7 +29,7 @@ class RestoreCommand extends Command {
     if (err) {
       console.error(err);
       this.exit(1);
-    } else this.exit(0);
+    }
   }
   async run() {
     const { args } = this.parse(RestoreCommand);
