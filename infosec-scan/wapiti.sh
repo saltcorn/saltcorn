@@ -10,7 +10,7 @@ fi
 source infosec_scan_tmp/wapiti/bin/activate
 
 if [[ $# -eq 1 ]] ; then
-   wapiti -u $1
+   wapiti -u $1 --flush-session
 fi
 
 if [[ $# -eq 3 ]] ; then
