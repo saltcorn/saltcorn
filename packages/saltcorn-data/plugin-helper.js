@@ -781,6 +781,8 @@ const readState = (state, fields) => {
             : +current;
     }
   });
+  if (typeof state.id !== "undefined") state.id = +state.id;
+  if (isNaN(state.id)) delete state.id;
   return state;
 };
 
