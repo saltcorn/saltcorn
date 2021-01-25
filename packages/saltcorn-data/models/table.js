@@ -304,7 +304,8 @@ class Table {
 
   async update(new_table_rec) {
     //TODO RENAME TABLE
-
+    if (new_table_rec.ownership_field_id === "")
+      delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
     await db.update("_sc_tables", new_table_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
