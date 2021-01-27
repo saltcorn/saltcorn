@@ -298,14 +298,6 @@ describe("actions", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
   });
-  it("deletes trigger", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await request(app)
-      .post("/actions/delete/1")
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/actions/"));
-  });
   it("create api trigger", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -314,7 +306,6 @@ describe("actions", () => {
       .set("Cookie", loginCookie)
       .send("name=myact")
       .send("action=run_js_code")
-      .send("table_id=2")
       .send("when_trigger=API+call")
       .expect(toRedirect("/actions/configure/2"));
     await request(app)
@@ -328,6 +319,14 @@ describe("actions", () => {
       .expect(
         respondJsonWith(200, ({ success, data }) => success && data === 27)
       );
+  });
+  it("deletes trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/delete/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/actions/"));
   });
 });
 describe("clear all page", () => {
