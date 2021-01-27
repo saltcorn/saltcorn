@@ -110,6 +110,7 @@ class Trigger {
       "Daily",
       "Hourly",
       "Often",
+      "API call",
       "Never",
     ];
   }

@@ -5,6 +5,7 @@ const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
+const Trigger = require("@saltcorn/data/models/trigger");
 const load_plugins = require("../load_plugins");
 const passport = require("passport");
 
@@ -84,7 +85,30 @@ router.get(
     )(req, res, next);
   })
 );
+router.post(
+  "/action/:actionname/",
+  setTenant,
+  error_catcher(async (req, res, next) => {
+    const { actionname } = req.params;
 
+    const trigger = await Trigger.findOne({
+      name: actionname,
+      when_trigger: "API call",
+    });
+    if (!trigger) res.status(400).json({ error: req.__("Not found") });
+    try {
+      const action = getState().actions[trigger.action];
+      const resp = await action.run({
+        configuration: trigger.configuration,
+        body: req.body,
+        req,
+      });
+      res.json({ success: true, data: resp });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  })
+);
 router.post(
   "/:tableName/",
   setTenant,
