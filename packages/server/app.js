@@ -46,8 +46,15 @@ const getApp = async (opts = {}) => {
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
   app.use(helmet());
+  app.use(
+    express.json({
+      verify: (req, res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
+
   app.use(
     fileUpload({
       useTempFiles: true,
