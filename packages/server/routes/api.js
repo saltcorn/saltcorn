@@ -98,11 +98,11 @@ router.post(
     if (!trigger) res.status(400).json({ error: req.__("Not found") });
     try {
       const action = getState().actions[trigger.action];
-      const res = await action.run({
+      const resp = await action.run({
         configuration: trigger.configuration,
         body: req.body,
       });
-      res.json(res || { success: true });
+      res.json({ success: typeof resp !== "undefined" ? resp : true });
     } catch (e) {
       res.status(400).json({ error: e.message });
     }

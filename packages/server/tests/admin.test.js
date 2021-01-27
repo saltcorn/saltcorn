@@ -9,6 +9,7 @@ const {
   toSucceed,
   toNotInclude,
   resetToFixtures,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
@@ -304,6 +305,27 @@ describe("actions", () => {
       .post("/actions/delete/1")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
+  });
+  it("create api trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/trigger")
+      .set("Cookie", loginCookie)
+      .send("name=myact")
+      .send("action=run_js_code")
+      .send("table_id=2")
+      .send("when_trigger=API+call")
+      .expect(toRedirect("/actions/configure/2"));
+    await request(app)
+      .post("/actions/configure/2")
+      .set("Cookie", loginCookie)
+      .send("code=return 27")
+      .expect(toRedirect("/actions/"));
+    await request(app)
+      .post("/api/action/myact")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((success) => success === 27));
   });
 });
 describe("clear all page", () => {
