@@ -37,6 +37,7 @@ router.get(
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
+    const base_url = getState().getConfig("base_url") || "";
     send_events_page({
       res,
       req,
@@ -60,7 +61,13 @@ router.get(
                 { label: req.__("Name"), key: "name" },
                 { label: req.__("Action"), key: "action" },
                 { label: req.__("Table"), key: "table_name" },
-                { label: req.__("When"), key: "when_trigger" },
+                {
+                  label: req.__("When"),
+                  key: (a) =>
+                    a.when_trigger === "API call"
+                      ? `API: ${base_url}/api/action/${a.name}`
+                      : a.when_trigger,
+                },
                 {
                   label: req.__("Test run"),
                   key: (r) =>
