@@ -17,6 +17,7 @@ const {
   stateFieldsToQuery,
   link_view,
   getActionConfigFields,
+  readState,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
@@ -202,6 +203,7 @@ const run = async (
     false,
     extraOpts.req
   );
+  readState(stateWithId, fields);
   const { id, ...state } = stateWithId || {};
   const where = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });

@@ -3,7 +3,7 @@ const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column } = require("../../contracts");
-const { link_view } = require("../../plugin-helper");
+const { link_view, strictParseInt } = require("../../plugin-helper");
 const { get_expression_function } = require("../../models/expression");
 const Field = require("../../models/field");
 
@@ -345,7 +345,7 @@ const splitUniques = contract(
     var nonUniques = [];
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find((f) => f.name === k);
-      if (k === "id") uniques[k] = v;
+      if (k === "id") uniques[k] = strictParseInt(v);
       else if (
         field &&
         field.is_unique &&

@@ -4,7 +4,11 @@ const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
-const { get_child_views, get_parent_views } = require("../../plugin-helper");
+const {
+  get_child_views,
+  get_parent_views,
+  readState,
+} = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
 
 const configuration_workflow = (req) =>
@@ -118,6 +122,7 @@ const run = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
+  readState(state, fields);
 
   var lresp;
   if (list_view) {

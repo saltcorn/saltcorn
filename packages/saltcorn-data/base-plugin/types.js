@@ -154,7 +154,8 @@ const string = {
   read: (v) => {
     switch (typeof v) {
       case "string":
-        return v;
+        //PG dislikes null bytes
+        return v.replace(/\0/g, "");
       default:
         return undefined;
     }

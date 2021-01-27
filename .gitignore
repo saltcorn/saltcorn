@@ -110,3 +110,5 @@ plugin_packages/
 sessions.sqlite
 
 .greenlockrc
+
+infosec_scan_tmp/
