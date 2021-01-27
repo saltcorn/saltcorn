@@ -103,9 +103,9 @@ router.post(
         body: req.body,
         req,
       });
-      res.json({ success: typeof resp !== "undefined" ? resp : true });
+      res.json({ success: true, data: resp });
     } catch (e) {
-      res.status(400).json({ error: e.message });
+      res.status(400).json({ success: false, error: e.message });
     }
   })
 );

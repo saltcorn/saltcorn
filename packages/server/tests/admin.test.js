@@ -9,7 +9,7 @@ const {
   toSucceed,
   toNotInclude,
   resetToFixtures,
-  succeedJsonWith,
+  respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
@@ -325,7 +325,9 @@ describe("actions", () => {
     await request(app)
       .post("/api/action/myact")
       .set("Cookie", loginCookie)
-      .expect(succeedJsonWith((success) => success === 27));
+      .expect(
+        respondJsonWith(200, ({ success, data }) => success && data === 27)
+      );
   });
 });
 describe("clear all page", () => {
