@@ -101,6 +101,7 @@ router.post(
       const resp = await action.run({
         configuration: trigger.configuration,
         body: req.body,
+        req,
       });
       res.json({ success: typeof resp !== "undefined" ? resp : true });
     } catch (e) {
