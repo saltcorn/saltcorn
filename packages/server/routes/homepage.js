@@ -37,6 +37,23 @@ const viewTable = (views) =>
     views
   );
 
+const pageTable = (pages) =>
+  mkTable(
+    [
+      { label: "Name", key: "name" },
+      {
+        label: "Run",
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, "Run"),
+      },
+      {
+        label: "Edit",
+        key: (r) =>
+          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+      },
+    ],
+    pages
+  );
+
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
@@ -198,6 +215,7 @@ const no_views_logged_in = async (req, res) => {
       );
     const tables = await Table.find({}, { orderBy: "name" });
     const views = await View.find({});
+    const pages = await Page.find({});
     if (tables.length <= 1) {
       //users
       res.sendWrap(req.__("Hello"), await welcome_page(req));
@@ -272,6 +290,19 @@ const no_views_logged_in = async (req, res) => {
                 a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
                   req.__("Create a view")
+                )
+              ),
+            ],
+          },
+          {
+            type: "card",
+            title: link("/pageedit", req.__("Pages")),
+            contents: [
+              pageTable(pages),
+              div(
+                a(
+                  { href: `/pageedit/new`, class: "btn btn-primary" },
+                  req.__("Create a page")
                 )
               ),
             ],

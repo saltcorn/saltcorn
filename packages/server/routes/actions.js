@@ -1,5 +1,10 @@
 const Router = require("express-promise-router");
-const { isAdmin, setTenant, error_catcher } = require("./utils.js");
+const {
+  isAdmin,
+  setTenant,
+  error_catcher,
+  get_base_url,
+} = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
@@ -37,7 +42,7 @@ router.get(
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
-    const base_url = getState().getConfig("base_url") || "";
+    const base_url = get_base_url(req);
     send_events_page({
       res,
       req,
@@ -65,7 +70,7 @@ router.get(
                   label: req.__("When"),
                   key: (a) =>
                     a.when_trigger === "API call"
-                      ? `API: ${base_url}/api/action/${a.name}`
+                      ? `API: ${base_url}api/action/${a.name}`
                       : a.when_trigger,
                 },
                 {

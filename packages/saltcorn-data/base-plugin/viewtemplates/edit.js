@@ -16,6 +16,7 @@ const {
   strictParseInt,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
+const { traverseSync } = require("../../models/layout");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -32,10 +33,16 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
 
-          const actions = [
-            "Save",
-            //"Delete"
-          ];
+          const actions = ["Save", "Delete"];
+          const actionConfigForms = {
+            Delete: [
+              {
+                name: "after_delete_url",
+                label: "URL after delete",
+                type: "String",
+              },
+            ],
+          };
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -67,6 +74,7 @@ const configuration_workflow = (req) =>
             roles,
             actions,
             fieldViewConfigForms,
+            actionConfigForms,
             images,
             mode: "edit",
           };
@@ -241,8 +249,9 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   //console.log(JSON.stringify(layout, null,2))
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  const form = await getForm(table, viewname, columns, layout, state.id, req);
   const { uniques, nonUniques } = splitUniques(fields, state);
+
+  const form = await getForm(table, viewname, columns, layout, state.id, req);
   if (Object.keys(uniques).length > 0) {
     const row = await table.getRow(uniques);
     form.values = row;
@@ -255,6 +264,18 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     }
     form.hidden("id");
   }
+  traverseSync(form.layout, {
+    action(segment) {
+      if (segment.action_name === "Delete") {
+        if (form.values.id) {
+          segment.action_url = `/delete/${table.name}/${form.values.id}`;
+        } else {
+          segment.type = "blank";
+          segment.contents = "";
+        }
+      }
+    },
+  });
   Object.entries(nonUniques).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {

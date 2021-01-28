@@ -107,6 +107,7 @@ describe("Action", () => {
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
     await table.updateRow({ pages: 210 }, row.id);
   });
+
   it("should list triggers", async () => {
     const table = await Table.findOne({ name: "books" });
 
@@ -137,6 +138,22 @@ describe("Action", () => {
       when_trigger: "Insert",
     });
     expect(ins_trigger1.length).toBe(1);
+  });
+  it("should run webhook on insert", async () => {
+    const table = await Table.findOne({ name: "books" });
+
+    await Trigger.create({
+      action: "webhook",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        // from https://requestbin.com/
+        // to inspect https://pipedream.com/sources/dc_jku44wk
+        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+        body: "",
+      },
+    });
+    await table.insertRow({ author: "NK Jemisin", pages: 901 });
   });
 });
 describe("Scheduler", () => {
