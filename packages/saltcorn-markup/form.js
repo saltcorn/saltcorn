@@ -298,7 +298,15 @@ const renderFormLayout = (form) => {
         return innerField(form.values, form.errors)(field) + errorFeedback;
       } else return "";
     },
-    action({ action_name, action_label, confirm, action_style, action_size }) {
+    action({
+      action_name,
+      action_label,
+      action_url,
+      confirm,
+      action_style,
+      action_size,
+      configuration,
+    }) {
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
 
@@ -314,16 +322,27 @@ const renderFormLayout = (form) => {
           action_label || action_name
         );
       }
+      const mkBtn = (onclick_or_type) =>
+        `<button ${onclick_or_type} class="${
+          action_style === "btn-link"
+            ? ""
+            : `btn ${action_style || "btn-primary"} ${action_size || ""}`
+        }">${text(
+          action_label || form.submitLabel || action_name || "Save"
+        )}</button>`;
+
+      if (action_name === "Delete") {
+        if (action_url) {
+          const dest = (configuration && configuration.after_delete_url) || "/";
+          return mkBtn(
+            `onClick="ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
+          );
+        } else return "";
+      }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';
-      return `<button ${submitAttr} class="${
-        action_style === "btn-link"
-          ? ""
-          : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-      }">${text(
-        action_label || form.submitLabel || action_name || "Save"
-      )}</button>`;
+      return mkBtn(submitAttr);
     },
   };
   return renderLayout({ blockDispatch, layout: form.layout });

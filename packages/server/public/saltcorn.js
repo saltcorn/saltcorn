@@ -336,6 +336,16 @@ function ajaxSubmitForm(e) {
 
   return false;
 }
+
+function ajax_post(url, args) {
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    ...(args || {}),
+  });
+}
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
   var url = form.attr("action");
