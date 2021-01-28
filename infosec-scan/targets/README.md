@@ -1,6 +1,6 @@
 ### projman target
 
-project manbagement app
+project management pack, with users
 
 admin user: admin@admins.com password secret123
 staff user: staff@foo.com fidelio1
