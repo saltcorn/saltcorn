@@ -561,15 +561,23 @@ const picked_fields_to_query = contract(
         }
       } else if (column.type === "Aggregation") {
         //console.log(column)
-        const [table, fld] = column.agg_relation.split(".");
-        const field = column.agg_field;
-        const targetNm = (column.stat + "_" + table + "_" + fld).toLowerCase();
-        aggregations[targetNm] = {
-          table,
-          ref: fld,
-          field,
-          aggregate: column.stat,
-        };
+        if (column.agg_relation && column.agg_relation.split) {
+          const [table, fld] = column.agg_relation.split(".");
+          const field = column.agg_field;
+          const targetNm = (
+            column.stat +
+            "_" +
+            table +
+            "_" +
+            fld
+          ).toLowerCase();
+          aggregations[targetNm] = {
+            table,
+            ref: fld,
+            field,
+            aggregate: column.stat,
+          };
+        }
       }
     });
 
