@@ -279,6 +279,11 @@ router.get(
                     td(db.isSQLite ? "SQLite" : "PostgreSQL")
                   )
                 )
+              ),
+              p(
+                req.__(
+                  `Saltcorn is <a href="https://www.gnu.org/philosophy/free-sw.en.html">Free</a> and <a href="https://opensource.org/">Open Source</a> Software, <a href="https://github.com/saltcorn/saltcorn/">released</a> under the <a href="https://github.com/saltcorn/saltcorn/blob/master/LICENSE">MIT license</a>.`
+                )
               )
             ),
           },
