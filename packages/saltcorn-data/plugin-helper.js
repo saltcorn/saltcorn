@@ -648,7 +648,7 @@ const stateFieldsToWhere = contract(
         qstate[k] = { ilike: v };
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
-      } else if (field || k === "id") qstate[k] = v;
+      } else if (field || k === "id") qstate[k] = strictParseInt(v);
       else if (k.includes(".")) {
         const kpath = k.split(".");
         if (kpath.length === 3) {
