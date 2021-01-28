@@ -53,6 +53,13 @@ const configuration_workflow = (req) =>
                   options: show_view_opts.join(),
                 },
               },
+              {
+                name: "_omit_state_form",
+                label: req.__("Omit search form"),
+                sublabel: req.__("Do not display the search filter form"),
+                type: "Bool",
+                default: true,
+              },
             ],
           });
         },
@@ -218,5 +225,6 @@ module.exports = {
   configuration_workflow,
   run,
   get_state_fields,
-  display_state_form: ({ list_view }) => !!list_view,
+  display_state_form: ({ list_view, _omit_state_form }) =>
+    !!list_view && !_omit_state_form,
 };
