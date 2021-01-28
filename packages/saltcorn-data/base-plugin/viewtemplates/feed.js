@@ -14,6 +14,7 @@ const {
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
+  readState,
 } = require("../../plugin-helper");
 const configuration_workflow = (req) =>
   new Workflow({
@@ -193,6 +194,8 @@ const run = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
+  readState(state, fields);
+
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
