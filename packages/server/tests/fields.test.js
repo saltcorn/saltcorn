@@ -11,6 +11,7 @@ const {
   toNotInclude,
   toRedirect,
   resetToFixtures,
+  respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -312,5 +313,37 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(200)
       .expect(toInclude("Examples:"));
+  });
+  it("should test expression", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/test-formula")
+      .send({
+        formula: "1+1",
+        tablename: "books",
+        stored: false,
+      })
+      .set("Cookie", loginCookie)
+      .expect(toInclude(" is: <pre>2</pre>"));
+  });
+  it("should test stored expression", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/test-formula")
+      .send({
+        formula: "1+1",
+        tablename: "books",
+        stored: true,
+      })
+      .set("Cookie", loginCookie)
+      .expect(toInclude(" is: <pre>2</pre>"));
   });
 });

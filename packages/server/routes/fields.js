@@ -7,7 +7,11 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
-const { expressionValidator } = require("@saltcorn/data/models/expression");
+const {
+  expressionValidator,
+  get_async_expression_function,
+  get_expression_function,
+} = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -227,6 +231,21 @@ const fieldFlow = (req) =>
                 type: "String",
                 validator: expressionValidator,
               }),
+              new Field({
+                name: "test_btn",
+                label: req.__("Test"),
+                input_type: "custom_html",
+                attributes: {
+                  html: `<button type="button" id="test_formula_btn" onclick="test_formula('${
+                    table.name
+                  }', ${JSON.stringify(
+                    context.stored
+                  )})" class="btn btn-outline-secondary">${req.__(
+                    "Test"
+                  )}</button>
+                  <div id="test_formula_output"></div>`,
+                },
+              }),
             ],
           });
         },
@@ -405,6 +424,38 @@ router.post(
     } else {
       if (wfres.flash) req.flash(...wfres.flash);
       res.redirect(wfres.redirect);
+    }
+  })
+);
+
+router.post(
+  "/test-formula",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { formula, tablename, stored } = req.body;
+    const table = await Table.findOne({ name: tablename });
+    const fields = await table.getFields();
+    const rows = await table.getRows({}, { orderBy: "RANDOM()", limit: 1 });
+    if (rows.length < 1) return "No rows in table";
+    let result;
+    try {
+      if (stored) {
+        const f = get_async_expression_function(formula, fields);
+        result = await f(rows[0]);
+      } else {
+        const f = get_expression_function(formula, fields);
+        result = f(rows[0]);
+      }
+      res.send(
+        `Result of running on row with id=${
+          rows[0].id
+        } is: <pre>${JSON.stringify(result)}</pre>`
+      );
+    } catch (e) {
+      return res.send(
+        `Error on running on row with id=${rows[0].id}: ${e.message}`
+      );
     }
   })
 );
