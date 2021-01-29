@@ -227,6 +227,17 @@ const fieldFlow = (req) =>
                 type: "String",
                 validator: expressionValidator,
               }),
+              new Field({
+                name: "test_btn",
+                label: req.__("Test"),
+                input_type: "custom_html",
+                attributes: {
+                  html: `<button type="button" id="test_formula_btn" onclick="test_formula" class="btn btn-outline-secondary">${req.__(
+                    "Test"
+                  )}</button>
+                  <div id="test_formula_output"></div>`,
+                },
+              }),
             ],
           });
         },
