@@ -370,10 +370,10 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
   return false;
 }
 
-function test_formula(tablename) {
+function test_formula(tablename, stored) {
   var formula = $("input[name=expression]").val();
   ajax_post(`/field/test-formula`, {
-    data: { formula, tablename },
+    data: { formula, tablename, stored },
     success: (data) => {
       $("#test_formula_output").html(data);
     },

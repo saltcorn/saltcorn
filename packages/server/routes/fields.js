@@ -10,6 +10,7 @@ const User = require("@saltcorn/data/models/user");
 const {
   expressionValidator,
   get_async_expression_function,
+  get_expression_function,
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
@@ -237,7 +238,9 @@ const fieldFlow = (req) =>
                 attributes: {
                   html: `<button type="button" id="test_formula_btn" onclick="test_formula('${
                     table.name
-                  }')" class="btn btn-outline-secondary">${req.__(
+                  }', ${JSON.stringify(
+                    context.stored
+                  )})" class="btn btn-outline-secondary">${req.__(
                     "Test"
                   )}</button>
                   <div id="test_formula_output"></div>`,
@@ -430,15 +433,20 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const { formula, tablename } = req.body;
+    const { formula, tablename, stored } = req.body;
     const table = await Table.findOne({ name: tablename });
     const fields = await table.getFields();
     const rows = await table.getRows({}, { orderBy: "RANDOM()", limit: 1 });
     if (rows.length < 1) return "No rows in table";
-
+    let result;
     try {
-      const f = get_async_expression_function(formula, fields);
-      const result = await f(rows[0]);
+      if (stored) {
+        const f = get_async_expression_function(formula, fields);
+        result = await f(rows[0]);
+      } else {
+        const f = get_expression_function(formula, fields);
+        result = f(rows[0]);
+      }
       res.send(
         `Result of running on row with id=${
           rows[0].id
