@@ -267,7 +267,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
   traverseSync(form.layout, {
     action(segment) {
       if (segment.action_name === "Delete") {
-        if (form.values.id) {
+        if (form.values && form.values.id) {
           segment.action_url = `/delete/${table.name}/${form.values.id}`;
         } else {
           segment.type = "blank";
