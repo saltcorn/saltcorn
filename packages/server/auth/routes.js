@@ -348,6 +348,14 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
         const f = fields.find((fld) => fld.name === column.field_name);
         if (f) {
           f.fieldview = column.fieldview;
+          if (f.type === "Key") {
+            if (getState().keyFieldviews[column.fieldview])
+              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+                ? "select"
+                : "fromtype";
+          }
           return f;
         }
       }
