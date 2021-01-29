@@ -6,7 +6,7 @@ const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { getState } = require("../../db/state");
-const { text } = require("@saltcorn/markup/tags");
+const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const {
   initial_config_all_fields,
@@ -363,7 +363,7 @@ const runPost = async (
       );
       if (ins_res.success) id = ins_res.success;
       else {
-        req.flash("error", ins_res.error);
+        req.flash("error", text_attr(ins_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
       }
@@ -374,7 +374,7 @@ const runPost = async (
         req.user ? +req.user.id : undefined
       );
       if (upd_res.error) {
-        req.flash("error", upd_res.error);
+        req.flash("error", text_attr(upd_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
       }
