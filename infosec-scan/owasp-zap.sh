@@ -8,12 +8,6 @@ if [[ $# -eq 0 ]] ; then
 fi
 
 source infosec_scan_tmp/zapcli/bin/activate
+export ZAP_PATH=$PWD/infosec_scan_tmp/ZAP_2.10.0
 
-infosec_scan_tmp/ZAP_2.10.0/zap.sh \
-   -daemon -config api.disablekey=true -port 8090 &
-
-while ! nc -z localhost 8090; do   
-  sleep 0.1 
-done
-
-zap-cli shutdown
+ zap-cli quick-scan --self-contained --spider -r -s xss $1
