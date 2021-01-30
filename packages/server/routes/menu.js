@@ -97,23 +97,25 @@ const menuForm = async (req) => {
 //create -- new
 
 const menuEditorScript = (menu_items) => `
-  // icon picker options
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
-  // sortable list options
-  var sortableListOptions = {
-      placeholderCss: {'background-color': "#cccccc"}
-  };
+  let lastState;
   let editor;  
   function ajax_save_menu() {
     const s = editor.getString()    
+    if(s===lastState) return;
+    lastState=s;
     ajax_post('/menu', {data: s, 
       success: ()=>{}, dataType : 'json', contentType: 'application/json;charset=UTF-8'})
   }
+  var sortableListOptions = {
+      placeholderCss: {'background-color': "#cccccc"},
+      onChange: ajax_save_menu,
+  };
   editor = new MenuEditor('myEditor', 
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
-              onChange: ajax_save_menu,
+              
               maxLevel: 1 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
@@ -131,6 +133,8 @@ const menuEditorScript = (menu_items) => `
       editor.add();
       ajax_save_menu();
   });
+  lastState=editor.getString()
+  setInterval(ajax_save_menu, 500)
   `;
 const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
