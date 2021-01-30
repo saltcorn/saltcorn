@@ -26,7 +26,7 @@ const menuForm = async (req) => {
     action: "/menu/",
     submitLabel: req.__("Save"),
     id: "menuForm",
-    labelCols:3,
+    labelCols: 3,
     noSubmitButton: true,
     additionalButtons: [
       { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
@@ -159,7 +159,7 @@ router.get(
     const form = await menuForm(req);
     const state = getState();
     const menu_items = menuTojQME(state.getConfig("menu_items"));
-    
+
     send_infoarch_page({
       res,
       req,
@@ -191,7 +191,7 @@ router.get(
                   script(domReady(menuEditorScript(menu_items)))
                 ),
               ],
-            },            
+            },
           ],
         },
       },
@@ -204,16 +204,16 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if(req.xhr) {
-      const new_menu = req.body
+    if (req.xhr) {
+      const new_menu = req.body;
       await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-      res.json({success: true})
+      res.json({ success: true });
     } else {
-    const new_menu = JSON.parse(req.body.menu);
-    await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-    req.flash("success", req.__(`Menu updated`));
+      const new_menu = JSON.parse(req.body.menu);
+      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
+      req.flash("success", req.__(`Menu updated`));
 
-    res.redirect(`/menu`);
+      res.redirect(`/menu`);
     }
   })
 );
