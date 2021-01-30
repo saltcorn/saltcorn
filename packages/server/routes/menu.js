@@ -26,6 +26,7 @@ const menuForm = async (req) => {
     action: "/menu/",
     submitLabel: req.__("Save"),
     id: "menuForm",
+    labelCols:3,
     noSubmitButton: true,
     additionalButtons: [
       { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
