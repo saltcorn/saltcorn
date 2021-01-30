@@ -115,7 +115,7 @@ const menuEditorScript = (menu_items) => `
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
-              
+              labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
               maxLevel: 1 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
