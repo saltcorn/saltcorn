@@ -216,7 +216,7 @@ Sitemap: ${base}sitemap.xml
   await File.ensure_file_store();
 
   app.get("*", function (req, res) {
-    res.status(404).sendWrap(res.__("Not found"), h1(res.__("Page not found")));
+    res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
   });
   return app;
 };
