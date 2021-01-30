@@ -3,6 +3,7 @@ import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
+import CKEditor from "ckeditor4-react";
 
 export const Text = ({ text, block, isFormula, textStyle }) => {
   const {
@@ -28,13 +29,23 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
     >
-      {isFormula.text && "="}
-      <ContentEditable
-        html={text}
-        style={{ display: "inline" }}
-        disabled={!editable}
-        onChange={(e) => setProp((props) => (props.text = e.target.value))}
-      />
+      {isFormula.text ? (
+        <Fragment>
+          =
+          <ContentEditable
+            html={text}
+            style={{ display: "inline" }}
+            disabled={!editable}
+            onChange={(e) => setProp((props) => (props.text = e.target.value))}
+          />
+        </Fragment>
+      ) : (
+        <CKEditor 
+          data={text}
+          onChange={(e) => setProp((props) => (props.text = e.editor.getData()))}
+
+          type="inline" />
+      )}
     </span>
   );
 };
