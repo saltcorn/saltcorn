@@ -26,6 +26,7 @@ const menuForm = async (req) => {
     action: "/menu/",
     submitLabel: req.__("Save"),
     id: "menuForm",
+    labelCols: 3,
     noSubmitButton: true,
     additionalButtons: [
       { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
@@ -97,16 +98,25 @@ const menuForm = async (req) => {
 //create -- new
 
 const menuEditorScript = (menu_items) => `
-  // icon picker options
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
-  // sortable list options
+  let lastState;
+  let editor;  
+  function ajax_save_menu() {
+    const s = editor.getString()    
+    if(s===lastState) return;
+    lastState=s;
+    ajax_post('/menu', {data: s, 
+      success: ()=>{}, dataType : 'json', contentType: 'application/json;charset=UTF-8'})
+  }
   var sortableListOptions = {
-      placeholderCss: {'background-color': "#cccccc"}
+      placeholderCss: {'background-color': "#cccccc"},
+      onChange: ajax_save_menu,
   };
-  var editor = new MenuEditor('myEditor', 
+  editor = new MenuEditor('myEditor', 
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
+              labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
               maxLevel: 1 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
@@ -114,16 +124,18 @@ const menuEditorScript = (menu_items) => `
   editor.setUpdateButton($('#btnUpdate'));
   editor.setData(${JSON.stringify(menu_items)});
   //Calling the update method
+
   $("#btnUpdate").click(function(){
       editor.update();
+      ajax_save_menu();
   });
   // Calling the add method
   $('#btnAdd').click(function(){
       editor.add();
+      ajax_save_menu();
   });
-  $('#menuSubmitForm button').click(function(){
-    $('#menuSubmitForm input[name="menu"]').val(editor.getString());
-});
+  lastState=editor.getString()
+  setInterval(ajax_save_menu, 500)
   `;
 const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
@@ -147,17 +159,7 @@ router.get(
     const form = await menuForm(req);
     const state = getState();
     const menu_items = menuTojQME(state.getConfig("menu_items"));
-    const submit_form = new Form({
-      action: "/menu/",
-      submitLabel: req.__("Save"),
-      id: "menuSubmitForm",
-      fields: [
-        {
-          input_type: "hidden",
-          name: "menu",
-        },
-      ],
-    });
+
     send_infoarch_page({
       res,
       req,
@@ -190,10 +192,6 @@ router.get(
                 ),
               ],
             },
-            {
-              type: "blank",
-              contents: renderForm(submit_form, req.csrfToken()),
-            },
           ],
         },
       },
@@ -206,10 +204,16 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const new_menu = JSON.parse(req.body.menu);
-    await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-    req.flash("success", req.__(`Menu updated`));
+    if (req.xhr) {
+      const new_menu = req.body;
+      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
+      res.json({ success: true });
+    } else {
+      const new_menu = JSON.parse(req.body.menu);
+      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
+      req.flash("success", req.__(`Menu updated`));
 
-    res.redirect(`/menu`);
+      res.redirect(`/menu`);
+    }
   })
 );

@@ -453,7 +453,7 @@ router.post(
     await add_to_menu({
       label: view.name,
       type: "View",
-      min_role: 10,
+      min_role: view.min_role,
       viewname: view.name,
     });
     req.flash(

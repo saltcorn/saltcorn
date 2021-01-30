@@ -144,7 +144,7 @@ router.get(
     if (!file) {
       res
         .status(404)
-        .sendWrap(res.__("Not found"), h1(res.__("File not found")));
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
       return;
     }
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
