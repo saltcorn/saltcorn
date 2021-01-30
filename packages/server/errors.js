@@ -10,7 +10,7 @@ module.exports = async function (err, req, res, next) {
   if (err.message && err.message.includes("invalid csrf token")) {
     console.error(err.message);
 
-    req.flash("error", res.__("Invalid form data, try again"));
+    req.flash("error", req.__("Invalid form data, try again"));
     if (req.url && req.url.includes("/auth/login")) res.redirect("/auth/login");
     else res.redirect("/");
     return;
@@ -22,17 +22,17 @@ module.exports = async function (err, req, res, next) {
     res
       .status(500)
       .send(
-        devmode || role === 1 ? text(err.message) : res.__("An error occurred")
+        devmode || role === 1 ? text(err.message) : req.__("An error occurred")
       );
   } else
     res
       .status(500)
       .sendWrap(
-        res.__("Internal Error"),
-        devmode ? pre(text(err.stack)) : h3(res.__("An error occurred")),
+        req.__("Internal Error"),
+        devmode ? pre(text(err.stack)) : h3(req.__("An error occurred")),
         role === 1 && !devmode ? pre(text(err.message)) : "",
         p(
-          res.__(
+          req.__(
             `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
           )
         )
