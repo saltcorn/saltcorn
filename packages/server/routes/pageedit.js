@@ -397,7 +397,7 @@ router.post(
     await add_to_menu({
       label: page.name,
       type: "Page",
-      min_role: 10,
+      min_role: page.min_role,
       pagename: page.name,
     });
     req.flash(
