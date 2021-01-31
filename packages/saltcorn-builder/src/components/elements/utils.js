@@ -1,5 +1,10 @@
 import React, { Fragment, useContext, useState } from "react";
 import optionsCtx from "../context";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChevronDown,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
@@ -132,7 +137,13 @@ export const Accordion = ({ titles, children }) => {
               } pl-1 text-white w-100 mt-1`}
               onClick={() => setCurrentTab(ix)}
             >
-              <span className="w-1em">{isCurrent ? "⏷" : "⏵"}</span>
+              <span className="w-1em">
+                {isCurrent ? (
+                  <FontAwesomeIcon icon={faChevronDown} />
+                ) : (
+                  <FontAwesomeIcon icon={faChevronRight} />
+                )}
+              </span>
               {child.props.accordiontitle || titles[ix]}
             </div>
             {isCurrent ? child : null}
@@ -176,7 +187,7 @@ export const parseStyles = (styles) =>
 const isCheckbox = (f) =>
   f && f.type && (f.type === "Bool" || f.type.name === "Bool");
 export const setInitialConfig = (setProp, fieldview, fields) => {
-  (fields||[]).forEach((f, ix) => {
+  (fields || []).forEach((f, ix) => {
     if (f.input_type === "select")
       setProp((prop) => {
         if (!prop.configuration[f.name])
