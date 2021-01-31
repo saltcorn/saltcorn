@@ -16,6 +16,7 @@ const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
+const { readState } = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
@@ -468,7 +469,22 @@ router.post(
     const table = await Table.findOne({ name: tableName });
     const fields = await table.getFields();
     const field = fields.find((f) => f.name === fieldName);
-    console.log(field);
-    res.send("Not Sure!");
+    const formula = field.expression;
+    const row = req.body;
+    readState(row, fields);
+    let result;
+    try {
+      if (field.stored) {
+        const f = get_async_expression_function(formula, fields);
+        result = await f(row);
+      } else {
+        const f = get_expression_function(formula, fields);
+        result = f(row);
+      }
+      const fv = field.type.fieldviews[fieldview];
+      res.send(fv.run(result));
+    } catch (e) {
+      return res.status(400).send(`Error: ${e.message}`);
+    }
   })
 );
