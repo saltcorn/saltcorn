@@ -289,6 +289,8 @@ const renderFormLayout = (form) => {
     field(segment) {
       const field = form.fields.find((f) => f.name === segment.field_name);
       if (field && field.input_type !== "hidden") {
+        if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
+
         const errorFeedback = form.errors[field.name]
           ? `<div class="invalid-feedback">${text(
               form.errors[field.name]

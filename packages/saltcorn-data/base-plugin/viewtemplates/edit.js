@@ -25,7 +25,7 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = (await table.getFields()).filter((f) => !f.calculated);
+          const fields = await table.getFields();
 
           const field_view_options = calcfldViewOptions(fields, true);
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);

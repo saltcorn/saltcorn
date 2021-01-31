@@ -74,9 +74,8 @@ function get_form_record(e) {
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
-  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
-    get_form_record(e)
-  );
+  const rec = get_form_record(e);
+  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
 }
 
 function rep_del(e) {
@@ -362,7 +361,6 @@ function ajaxSubmitForm(e) {
 function ajax_post_json(url, data, args) {
   ajax_post(url, {
     data: JSON.stringify(data),
-    dataType: "json",
     contentType: "application/json;charset=UTF-8",
     ...args,
   });

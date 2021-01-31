@@ -380,6 +380,9 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
                 ? "select"
                 : "fromtype";
           }
+          if (f.calculated)
+            f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
+
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({
