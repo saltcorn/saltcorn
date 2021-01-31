@@ -165,6 +165,7 @@ export const layoutToNodes = (layout, query, actions) => {
           action_label={segment.action_label || ""}
           action_style={segment.action_style || "btn-primary"}
           action_size={segment.action_size || ""}
+          action_icon={segment.action_icon || ""}
           confirm={segment.confirm}
           configuration={segment.configuration || {}}
           block={segment.block || false}
@@ -509,6 +510,7 @@ export const craftToSaltcorn = (nodes) => {
         action_label: node.props.action_label,
         action_style: node.props.action_style,
         action_size: node.props.action_size,
+        action_icon: node.props.action_icon,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
         configuration: node.props.configuration,
@@ -524,6 +526,7 @@ export const craftToSaltcorn = (nodes) => {
         action_label: node.props.action_label,
         action_style: node.props.action_style,
         action_size: node.props.action_size,
+        action_icon: node.props.action_icon,
         minRole: node.props.minRole,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,

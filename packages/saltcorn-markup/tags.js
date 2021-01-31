@@ -89,6 +89,7 @@ module.exports = {
   nav: mkTag("nav"),
   i: mkTag("i", true),
   hr: mkTag("hr"),
+  link: mkTag("link"),
   domReady,
   input,
   text,
