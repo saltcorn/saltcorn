@@ -459,3 +459,16 @@ router.post(
     }
   })
 );
+router.post(
+  "/show-calculated/:tableName/:fieldName/:fieldview",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { tableName, fieldName, fieldview } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    const fields = await table.getFields();
+    const field = fields.find((f) => f.name === fieldName);
+    console.log(field);
+    res.send("Not Sure!");
+  })
+);
