@@ -100,9 +100,9 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Action button");
     await browser.page.click("div.is-text");
-    await browser.page.waitForSelector("input.text-to-display");
-    await browser.erase_input("input.text-to-display");
-    await browser.slowly_type("input.text-to-display", "MyOwnInput");
+    await browser.page.waitForSelector("div.cke_editable");
+    await browser.erase_input("div.cke_editable");
+    await browser.slowly_type("div.cke_editable", "MyOwnInput");
     await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
 
@@ -151,10 +151,10 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Join field");
     await browser.page.click("div.is-text");
-    await browser.page.waitForSelector("input.text-to-display");
+    await browser.page.waitForSelector("div.cke_editable");
     await browser.page.waitFor(100);
-    await browser.erase_input("input.text-to-display");
-    await browser.slowly_type("input.text-to-display", "MyOtherInput");
+    await browser.erase_input("div.cke_editable");
+    await browser.slowly_type("div.cke_editable", "MyOtherInput");
     await browser.page.waitFor(100);
     await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
