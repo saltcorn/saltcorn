@@ -31,7 +31,9 @@ const ckConfig = {
   removeButtons:
     "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
 };
-
+function escape_tags(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 export const Text = ({ text, block, isFormula, textStyle }) => {
   const {
     connectors: { connect, drag },
@@ -51,7 +53,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
     <span
       className={`${textStyle} is-text ${
         isFormula.text ? "text-monospace" : ""
-      } ${selected ? "selected-node" : ""}`}
+      } ${selected && isFormula.text ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
@@ -60,7 +62,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
         <Fragment>
           =
           <ContentEditable
-            html={text}
+            html={escape_tags(text)}
             style={{ display: "inline" }}
             disabled={!editable}
             onChange={(e) => setProp((props) => (props.text = e.target.value))}
