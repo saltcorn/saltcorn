@@ -307,6 +307,7 @@ const renderFormLayout = (form) => {
       confirm,
       action_style,
       action_size,
+      action_icon,
       configuration,
     }) {
       if (action_name && action_name.startsWith("Login with ")) {
@@ -321,6 +322,7 @@ const renderFormLayout = (form) => {
                 `btn ${action_style || "btn-primary"} ${action_size || ""}`,
             ],
           },
+          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           action_label || action_name
         );
       }
@@ -329,7 +331,7 @@ const renderFormLayout = (form) => {
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }">${text(
+        }">${action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""}${text(
           action_label || form.submitLabel || action_name || "Save"
         )}</button>`;
 
