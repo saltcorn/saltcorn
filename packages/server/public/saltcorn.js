@@ -56,6 +56,16 @@ function apply_showif() {
   });
 }
 
+function showIfFormulaInputs(e, fml) {
+  const rec = {};
+  e.closest("form")
+    .find("input[name],select[name]")
+    .each(function () {
+      rec[$(this).attr("name")] = $(this).val();
+    });
+  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
+}
+
 function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
   var ix = myrep.index();
