@@ -17,6 +17,7 @@ export const Action = ({
   block,
   action_label,
   action_style,
+  action_icon,
   action_size,
 }) => {
   const {
@@ -29,6 +30,7 @@ export const Action = ({
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
+      {action_icon ? <i className={`${action_icon} mr-1`}></i> : ""}
       {action_label || name}
     </button>
   );
