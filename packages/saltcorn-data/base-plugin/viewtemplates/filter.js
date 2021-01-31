@@ -7,6 +7,7 @@ const {
   div,
   text,
   span,
+  i,
   option,
   select,
   button,
@@ -148,16 +149,28 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         )
       );
     },
-    action({ block, action_label, action_style, action_size, action_name }) {
+    action({
+      block,
+      action_label,
+      action_style,
+      action_size,
+      action_icon,
+      action_name,
+    }) {
       const label = action_label || action_name;
       if (action_style === "btn-link")
-        return a({ href: "javascript:clear_state()" }, label);
+        return a(
+          { href: "javascript:clear_state()" },
+          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+          label
+        );
       else
         return button(
           {
             onClick: "clear_state()",
             class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
+          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           label
         );
     },
