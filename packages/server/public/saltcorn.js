@@ -61,6 +61,10 @@ function apply_showif() {
       success: (data) => {
         e.html(data);
       },
+      error: (err) => {
+        console.error(err);
+        e.html("");
+      },
     });
   });
 }

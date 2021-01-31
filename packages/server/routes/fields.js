@@ -470,7 +470,7 @@ router.post(
     const fields = await table.getFields();
     const field = fields.find((f) => f.name === fieldName);
     const formula = field.expression;
-    const row = req.body;
+    const row = { ...req.body };
     readState(row, fields);
     let result;
     try {
