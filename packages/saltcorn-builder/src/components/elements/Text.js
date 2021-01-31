@@ -5,6 +5,33 @@ import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
 import CKEditor from "ckeditor4-react";
 
+const ckConfig = {
+  toolbarGroups: [
+    { name: "document", groups: ["mode", "document", "doctools"] },
+    { name: "clipboard", groups: ["clipboard", "undo"] },
+    { name: "forms", groups: ["forms"] },
+    { name: "basicstyles", groups: ["basicstyles", "cleanup"] },
+    {
+      name: "editing",
+      groups: ["find", "selection", "spellchecker", "editing"],
+    },
+    {
+      name: "paragraph",
+      groups: ["list", "indent", "blocks", "align", "bidi", "paragraph"],
+    },
+    { name: "links", groups: ["links"] },
+    "/",
+    { name: "insert", groups: ["insert"] },
+    { name: "styles", groups: ["styles"] },
+    { name: "colors", groups: ["colors"] },
+    { name: "tools", groups: ["tools"] },
+    { name: "others", groups: ["others"] },
+    { name: "about", groups: ["about"] },
+  ],
+  removeButtons:
+    "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
+};
+
 export const Text = ({ text, block, isFormula, textStyle }) => {
   const {
     connectors: { connect, drag },
@@ -45,39 +72,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
           onChange={(e) =>
             setProp((props) => (props.text = e.editor.getData()))
           }
-          config={{
-            toolbarGroups: [
-              { name: "document", groups: ["mode", "document", "doctools"] },
-              { name: "clipboard", groups: ["clipboard", "undo"] },
-              { name: "forms", groups: ["forms"] },
-              { name: "basicstyles", groups: ["basicstyles", "cleanup"] },
-              {
-                name: "editing",
-                groups: ["find", "selection", "spellchecker", "editing"],
-              },
-              {
-                name: "paragraph",
-                groups: [
-                  "list",
-                  "indent",
-                  "blocks",
-                  "align",
-                  "bidi",
-                  "paragraph",
-                ],
-              },
-              { name: "links", groups: ["links"] },
-              "/",
-              { name: "insert", groups: ["insert"] },
-              { name: "styles", groups: ["styles"] },
-              { name: "colors", groups: ["colors"] },
-              { name: "tools", groups: ["tools"] },
-              { name: "others", groups: ["others"] },
-              { name: "about", groups: ["about"] },
-            ],
-            removeButtons:
-              "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
-          }}
+          config={ckConfig}
           type="inline"
         />
       )}
@@ -104,15 +99,37 @@ export const TextSettings = () => {
   const { mode, fields } = useContext(optionsCtx);
   return (
     <div>
-      <label>Text to display</label>
-      <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
+      {mode === "show" && (
+        <div className="form-check">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            checked={isFormula.text}
+            onChange={(e) =>
+              setProp((prop) => (prop.isFormula.text = e.target.checked))
+            }
+          />
+          <label className="form-check-label">Formula?</label>
+        </div>
+      )}
+      <label>Text to display:</label>
+      {mode === "show" && isFormula.text ? (
         <input
           type="text"
           className="text-to-display form-control"
           value={text}
           onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
         />
-      </OrFormula>
+      ) : (
+        <CKEditor
+          data={text}
+          onChange={(e) =>
+            setProp((props) => (props.text = e.editor.getData()))
+          }
+          config={ckConfig}
+          type="inline"
+        />
+      )}
       {mode === "edit" && (
         <Fragment>
           <label>Label for Field</label>
