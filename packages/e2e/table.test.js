@@ -99,7 +99,7 @@ describe("Table create", () => {
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Action button");
-    await browser.page.click("span.is-text");
+    await browser.page.click("div.is-text");
     await browser.page.waitForSelector("input.text-to-display");
     await browser.erase_input("input.text-to-display");
     await browser.slowly_type("input.text-to-display", "MyOwnInput");
@@ -150,7 +150,7 @@ describe("Table create", () => {
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Join field");
-    await browser.page.click("span.is-text");
+    await browser.page.click("div.is-text");
     await browser.page.waitForSelector("input.text-to-display");
     await browser.page.waitFor(100);
     await browser.erase_input("input.text-to-display");
