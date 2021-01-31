@@ -40,11 +40,46 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
           />
         </Fragment>
       ) : (
-        <CKEditor 
+        <CKEditor
           data={text}
-          onChange={(e) => setProp((props) => (props.text = e.editor.getData()))}
-
-          type="inline" />
+          onChange={(e) =>
+            setProp((props) => (props.text = e.editor.getData()))
+          }
+          config={{
+            toolbarGroups: [
+              { name: "document", groups: ["mode", "document", "doctools"] },
+              { name: "clipboard", groups: ["clipboard", "undo"] },
+              { name: "forms", groups: ["forms"] },
+              { name: "basicstyles", groups: ["basicstyles", "cleanup"] },
+              {
+                name: "editing",
+                groups: ["find", "selection", "spellchecker", "editing"],
+              },
+              {
+                name: "paragraph",
+                groups: [
+                  "list",
+                  "indent",
+                  "blocks",
+                  "align",
+                  "bidi",
+                  "paragraph",
+                ],
+              },
+              { name: "links", groups: ["links"] },
+              "/",
+              { name: "insert", groups: ["insert"] },
+              { name: "styles", groups: ["styles"] },
+              { name: "colors", groups: ["colors"] },
+              { name: "tools", groups: ["tools"] },
+              { name: "others", groups: ["others"] },
+              { name: "about", groups: ["about"] },
+            ],
+            removeButtons:
+              "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
+          }}
+          type="inline"
+        />
       )}
     </span>
   );
