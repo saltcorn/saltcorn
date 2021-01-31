@@ -11,7 +11,10 @@ class Browser {
       executablePath: "/usr/bin/google-chrome",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
       dumpio: true,
-      defaultViewport: null,
+      defaultViewport: {
+        width: 1200,
+        height: 800,
+      },
     });
 
     b.page = await b.browser.newPage();
