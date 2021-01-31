@@ -512,12 +512,12 @@ export const ContainerSettings = () => {
       </table>
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
-          {options.mode === "show" && (
+          {["show", "edit"].includes(options.mode) && (
             <tr>
               <th colSpan="2">Formula - show if true</th>
             </tr>
           )}
-          {options.mode === "show" && (
+          {["show", "edit"].includes(options.mode) && (
             <tr>
               <td>
                 <input
