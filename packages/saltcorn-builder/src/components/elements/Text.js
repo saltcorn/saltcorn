@@ -48,12 +48,11 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
   useEffect(() => {
     !selected && setEditable(false);
   }, [selected]);
-
   return (
-    <span
-      className={`${textStyle} is-text ${
+    <div
+      className={`${!block ? "d-inline-block" : ""} ${textStyle} is-text ${
         isFormula.text ? "text-monospace" : ""
-      } ${selected && isFormula.text ? "selected-node" : ""}`}
+      } ${selected ? "selected-node" : ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
@@ -62,13 +61,13 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
         <Fragment>
           =
           <ContentEditable
-            html={escape_tags(text)}
+            html={text}
             style={{ display: "inline" }}
             disabled={!editable}
             onChange={(e) => setProp((props) => (props.text = e.target.value))}
           />
         </Fragment>
-      ) : (
+      ) : editable ? (
         <CKEditor
           data={text}
           onChange={(e) =>
@@ -77,10 +76,16 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
           config={ckConfig}
           type="inline"
         />
+      ) : (
+        <div
+          style={{ display: "inline" }}
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
       )}
-    </span>
+    </div>
   );
 };
+//<div dangerouslySetInnerHTML={{ __html: text }} />
 
 export const TextSettings = () => {
   const node = useNode((node) => ({
