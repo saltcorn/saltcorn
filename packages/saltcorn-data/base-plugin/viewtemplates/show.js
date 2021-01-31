@@ -28,14 +28,9 @@ const {
   parse_view_select,
 } = require("./viewable_fields");
 const db = require("../../db");
-const { asyncMap } = require("../../utils");
+const { asyncMap, structuredClone } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
-const v8 = require("v8");
-
-const structuredClone = (obj) => {
-  return v8.deserialize(v8.serialize(obj));
-};
 
 const configuration_workflow = (req) =>
   new Workflow({

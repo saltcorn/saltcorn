@@ -1,3 +1,5 @@
+const v8 = require("v8");
+
 const removeEmptyStrings = (obj) => {
   var o = {};
   Object.entries(obj).forEach(([k, v]) => {
@@ -39,6 +41,10 @@ const applyAsync = async (f, x) => {
   if (typeof f === "function") return await f(x);
   else return f;
 };
+
+const structuredClone = (obj) => {
+  return v8.deserialize(v8.serialize(obj));
+};
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -48,4 +54,5 @@ module.exports = {
   stringToJSON,
   applyAsync,
   apply,
+  structuredClone,
 };
