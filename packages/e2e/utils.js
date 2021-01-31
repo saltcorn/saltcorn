@@ -64,18 +64,22 @@ class Browser {
   }
 
   // https://stackoverflow.com/a/52633235
-  async erase_input(selector) {
+  async erase_input(selector, nchars) {
     await this.page.click(selector);
     await this.page.waitFor(50);
     const inputValue = await this.page.$eval(selector, (el) => el.value);
-    for (let i = 0; i < inputValue.length; i++) {
+    for (let i = 0; i < (nchars || inputValue.length); i++) {
+      await this.page.waitFor(10);
+      await this.page.keyboard.press("ArrowRight");
+    }
+    for (let j = 0; j < (nchars || inputValue.length); j++) {
       await this.page.waitFor(10);
       await this.page.keyboard.press("Backspace");
     }
     await this.page.waitFor(20);
   }
-  async slowly_type(selector, text) {
-    await this.page.click(selector);
+  async slowly_type(selector, text, noclick) {
+    if (!noclick) await this.page.click(selector);
     await this.page.waitFor(50);
     for (let i = 0; i < text.length; i++) {
       await this.page.waitFor(20);
