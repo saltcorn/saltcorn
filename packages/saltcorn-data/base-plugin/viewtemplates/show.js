@@ -9,7 +9,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
 
-const { div, text, span, a, text_attr } = require("@saltcorn/markup/tags");
+const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -28,14 +28,9 @@ const {
   parse_view_select,
 } = require("./viewable_fields");
 const db = require("../../db");
-const { asyncMap } = require("../../utils");
+const { asyncMap, structuredClone } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
-const v8 = require("v8");
-
-const structuredClone = (obj) => {
-  return v8.deserialize(v8.serialize(obj));
-};
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -379,6 +374,7 @@ const render = (
       rndid,
       action_style,
       action_size,
+      action_icon,
     }) {
       const url = action_url(viewname, table, action_name, row, rndid, "rndid");
       const label = action_label || action_name;
@@ -391,12 +387,14 @@ const render = (
                 ? ""
                 : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
+          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           label
         );
       else
         return post_btn(url, label, req.csrfToken(), {
           confirm,
           req,
+          icon: action_icon,
           btnClass: `${action_style} ${action_size}`,
         });
     },

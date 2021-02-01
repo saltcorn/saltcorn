@@ -6,6 +6,9 @@ const { is_column } = require("../../contracts");
 const { link_view, strictParseInt } = require("../../plugin-helper");
 const { get_expression_function } = require("../../models/expression");
 const Field = require("../../models/field");
+const Form = require("../../models/form");
+const { traverseSync } = require("../../models/layout");
+const { structuredClone } = require("../../utils");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
@@ -360,11 +363,77 @@ const splitUniques = contract(
     return { uniques, nonUniques };
   }
 );
+const getForm = async (table, viewname, columns, layout0, id, req) => {
+  const fields = await table.getFields();
 
+  const tfields = (columns || [])
+    .map((column) => {
+      if (column.type === "Field") {
+        const f = fields.find((fld) => fld.name === column.field_name);
+        if (f) {
+          f.fieldview = column.fieldview;
+          if (f.type === "Key") {
+            if (getState().keyFieldviews[column.fieldview])
+              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+                ? "select"
+                : "fromtype";
+          }
+          if (f.calculated)
+            f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
+
+          return f;
+        } else if (table.name === "users" && column.field_name === "password") {
+          return new Field({
+            name: "password",
+            fieldview: column.fieldview,
+            type: "String",
+          });
+        } else if (
+          table.name === "users" &&
+          column.field_name === "passwordRepeat"
+        ) {
+          return new Field({
+            name: "passwordRepeat",
+            fieldview: column.fieldview,
+            type: "String",
+          });
+        } else if (table.name === "users" && column.field_name === "remember") {
+          return new Field({
+            name: "remember",
+            fieldview: column.fieldview,
+            type: "Bool",
+          });
+        }
+      }
+    })
+    .filter((tf) => !!tf);
+  const path = req.baseUrl + req.path;
+  let action = `/view/${viewname}`;
+  if (path && path.startsWith("/auth/")) action = path;
+  const layout = structuredClone(layout0);
+  traverseSync(layout, {
+    container(segment) {
+      if (segment.showIfFormula) {
+        segment.showIfFormulaInputs = segment.showIfFormula;
+      }
+    },
+  });
+  const form = new Form({
+    action,
+    fields: tfields,
+    layout,
+  });
+  await form.fill_fkey_options();
+  if (id) form.hidden("id");
+  return form;
+};
 module.exports = {
   get_viewable_fields,
   action_url,
   view_linker,
   parse_view_select,
   splitUniques,
+  getForm,
 };

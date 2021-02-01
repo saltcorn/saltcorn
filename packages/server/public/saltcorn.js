@@ -54,6 +54,32 @@ function apply_showif() {
       e.attr("data-selected", ec.target.value);
     });
   });
+  $("[data-source-url]").each(function (ix, element) {
+    const e = $(element);
+    const rec = get_form_record(e);
+    ajax_post_json(e.attr("data-source-url"), rec, {
+      success: (data) => {
+        e.html(data);
+      },
+      error: (err) => {
+        console.error(err);
+        e.html("");
+      },
+    });
+  });
+}
+function get_form_record(e) {
+  const rec = {};
+  e.closest("form")
+    .find("input[name],select[name]")
+    .each(function () {
+      rec[$(this).attr("name")] = $(this).val();
+    });
+  return rec;
+}
+function showIfFormulaInputs(e, fml) {
+  const rec = get_form_record(e);
+  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
 }
 
 function rep_del(e) {
@@ -336,7 +362,13 @@ function ajaxSubmitForm(e) {
 
   return false;
 }
-
+function ajax_post_json(url, data, args) {
+  ajax_post(url, {
+    data: JSON.stringify(data),
+    contentType: "application/json;charset=UTF-8",
+    ...args,
+  });
+}
 function ajax_post(url, args) {
   $.ajax(url, {
     type: "POST",

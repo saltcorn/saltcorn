@@ -22,6 +22,7 @@ const post_btn = (
     spinner,
     req,
     confirm,
+    icon,
   } = {}
 ) =>
   `<form action="${text(href)}" method="post"${
@@ -42,9 +43,9 @@ const post_btn = (
       : confirm
       ? `onclick="return confirm('${req.__("Are you sure?")}')"`
       : ""
-  } class="${klass} btn ${
-    small ? "btn-sm" : ""
-  } ${btnClass}">${s}</button></form>`;
+  } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}">${
+    icon ? `<i class="${icon}"></i>&nbsp;` : ""
+  }${s}</button></form>`;
 
 const post_delete_btn = (href, req, what) =>
   `<form action="${text(href)}" method="post" >

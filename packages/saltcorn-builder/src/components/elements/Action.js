@@ -1,6 +1,7 @@
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
+import faIcons from "./faicons";
 import {
   blockProps,
   BlockSetting,
@@ -9,12 +10,14 @@ import {
   ConfigForm,
   setInitialConfig,
 } from "./utils";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 
 export const Action = ({
   name,
   block,
   action_label,
   action_style,
+  action_icon,
   action_size,
 }) => {
   const {
@@ -27,6 +30,7 @@ export const Action = ({
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
+      {action_icon ? <i className={`${action_icon} mr-1`}></i> : ""}
       {action_label || name}
     </button>
   );
@@ -44,6 +48,7 @@ export const ActionSettings = () => {
     isFormula: node.data.props.isFormula,
     action_style: node.data.props.action_style,
     action_size: node.data.props.action_size,
+    action_icon: node.data.props.action_icon,
   }));
   const {
     actions: { setProp },
@@ -56,10 +61,12 @@ export const ActionSettings = () => {
     action_label,
     action_style,
     action_size,
+    action_icon,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
+  console.log({ action_icon });
   return (
     <div>
       <table className="w-100">
@@ -148,6 +155,21 @@ export const ActionSettings = () => {
               <option value="btn-block">Block</option>
               <option value="btn-block btn-lg">Large block</option>
             </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Icon</label>
+          </td>
+          <td>
+            <FontIconPicker
+              value={action_icon}
+              icons={faIcons}
+              onChange={(value) =>
+                setProp((prop) => (prop.action_icon = value))
+              }
+              isMulti={false}
+            />
           </td>
         </tr>
       </table>

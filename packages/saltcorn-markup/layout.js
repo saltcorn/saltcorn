@@ -266,6 +266,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         customClass,
         customCSS,
         minScreenWidth,
+        showIfFormulaInputs,
         show_for_owner,
       } = segment;
       if (hide) return "";
@@ -331,6 +332,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 ? `background-color: ${bgColor};`
                 : ""
             } ${setTextColor ? `color: ${textColor};` : ""}`,
+            ...(showIfFormulaInputs
+              ? {
+                  "data-show-if": `showIfFormulaInputs(e, '${showIfFormulaInputs}')`,
+                }
+              : {}),
           },
           go(segment.contents)
         )

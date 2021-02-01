@@ -35,6 +35,7 @@ class Field {
     this.calculated = !!o.calculated;
     this.stored = !!o.stored;
     this.expression = o.expression;
+    this.sourceURL = o.sourceURL;
 
     this.is_fkey =
       o.type === "Key" ||

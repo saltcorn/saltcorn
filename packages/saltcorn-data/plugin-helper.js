@@ -60,8 +60,8 @@ const calcfldViewOptions = contract(
       } else if (f.type === "Key") {
         fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
       } else if (f.type && f.type.fieldviews) {
-        const tfvs = Object.entries(f.type.fieldviews).filter(
-          ([k, fv]) => !fv.isEdit === !isEdit
+        const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
+          f.calculated ? !fv.isEdit : !fv.isEdit === !isEdit
         );
         fvs[f.name] = tfvs.map(([k, fv]) => k);
       }

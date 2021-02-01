@@ -15,7 +15,7 @@ const {
   get_parent_views,
   strictParseInt,
 } = require("../../plugin-helper");
-const { splitUniques } = require("./viewable_fields");
+const { splitUniques, getForm } = require("./viewable_fields");
 const { traverseSync } = require("../../models/layout");
 
 const configuration_workflow = (req) =>
@@ -25,7 +25,7 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = (await table.getFields()).filter((f) => !f.calculated);
+          const fields = await table.getFields();
 
           const field_view_options = calcfldViewOptions(fields, true);
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
@@ -177,62 +177,6 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
     type: "Integer",
   },
 ];
-
-const getForm = async (table, viewname, columns, layout, id, req) => {
-  const fields = await table.getFields();
-
-  const tfields = (columns || [])
-    .map((column) => {
-      if (column.type === "Field") {
-        const f = fields.find((fld) => fld.name === column.field_name);
-        if (f) {
-          f.fieldview = column.fieldview;
-          if (f.type === "Key") {
-            if (getState().keyFieldviews[column.fieldview])
-              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
-            f.input_type =
-              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
-                ? "select"
-                : "fromtype";
-          }
-          return f;
-        } else if (table.name === "users" && column.field_name === "password") {
-          return new Field({
-            name: "password",
-            fieldview: column.fieldview,
-            type: "String",
-          });
-        } else if (
-          table.name === "users" &&
-          column.field_name === "passwordRepeat"
-        ) {
-          return new Field({
-            name: "passwordRepeat",
-            fieldview: column.fieldview,
-            type: "String",
-          });
-        } else if (table.name === "users" && column.field_name === "remember") {
-          return new Field({
-            name: "remember",
-            fieldview: column.fieldview,
-            type: "Bool",
-          });
-        }
-      }
-    })
-    .filter((tf) => !!tf);
-  const path = req.baseUrl + req.path;
-  let action = `/view/${viewname}`;
-  if (path && path.startsWith("/auth/")) action = path;
-  const form = new Form({
-    action,
-    fields: tfields,
-    layout,
-  });
-  await form.fill_fkey_options();
-  if (id) form.hidden("id");
-  return form;
-};
 
 const setDateLocales = (form, locale) => {
   form.fields.forEach((f) => {

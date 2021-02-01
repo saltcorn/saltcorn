@@ -23,10 +23,18 @@
   "dependencies": {
     "@craftjs/core": "0.1.0-beta.10",
     "@craftjs/layers": "0.1.0-beta.10",
+    "@fonticonpicker/react-fonticonpicker": "^1.2.0",
+    "@fortawesome/fontawesome-svg-core": "^1.2.34",
+    "@fortawesome/free-regular-svg-icons": "^5.15.2",
+    "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "@fortawesome/react-fontawesome": "^0.1.14",
     "ckeditor4-react": "^1.4.0",
+    "classnames": "^2.2.6",
+    "prop-types": "^15.7.2",
     "react": "^16.13.1",
     "react-contenteditable": "^3.3.5",
-    "react-dom": "^16.13.1"
+    "react-dom": "^16.13.1",
+    "react-transition-group": "^4.4.1"
   },
   "publishConfig": {
     "access": "public"

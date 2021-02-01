@@ -64,7 +64,7 @@ class Form {
     this.hasErrors = false;
     this.errors = {};
     this.fields.forEach((f) => {
-      if (f.disabled) return;
+      if (f.disabled || f.calculated) return;
       const valres = f.validate(v);
       if (valres.error) {
         this.errors[f.name] = valres.error;
