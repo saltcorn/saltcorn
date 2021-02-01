@@ -613,7 +613,7 @@ class Table {
         if (subselect)
           fldNms.push(
             `(select ${sqlsanitize(aggregate)}(${
-              sqlsanitize(field) || "*"
+              field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
               ref
             )} in (select "${subselect.field}" from ${schema}"${
@@ -623,10 +623,10 @@ class Table {
         else
           fldNms.push(
             `(select ${sqlsanitize(aggregate)}(${
-              sqlsanitize(field) || "*"
-            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+              field ? `"${sqlsanitize(field)}"` : "*"
+            }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}=a.id) ${sqlsanitize(fldnm)}`
+            )}"=a.id) ${sqlsanitize(fldnm)}`
           );
       }
     );
