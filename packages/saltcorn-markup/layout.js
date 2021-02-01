@@ -356,7 +356,6 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       const cardDeck =
         segment.besides.every((s) => s && s.type === "card") &&
         (!segment.widths || segment.widths.every((w) => w === defwidth));
-      console.log(segment, cardDeck);
       let markup;
       if (cardDeck)
         markup = div(
