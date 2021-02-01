@@ -155,6 +155,13 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
+                name: "masonry_columns",
+                label: req.__("Masonry columns"),
+                type: "Bool",
+                showIf: { in_card: true },
+                required: true,
+              },
+              {
                 name: "hide_pagination",
                 label: req.__("Hide pagination"),
                 type: "Bool",
@@ -185,6 +192,7 @@ const run = async (
     view_to_create,
     create_view_display,
     in_card,
+    masonry_columns,
     rows_per_page = 20,
     hide_pagination,
     ...cols
@@ -258,7 +266,10 @@ const run = async (
 
   const showRowInner = (r) =>
     in_card
-      ? div({ class: "card shadow mt-4" }, div({ class: "card-body" }, r.html))
+      ? div(
+          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          div({ class: "card-body" }, r.html)
+        )
       : r.html;
 
   const showRow = (r) =>
@@ -269,11 +280,14 @@ const run = async (
       showRowInner(r)
     );
 
-  const inner = div(
-    div({ class: "row" }, sresp.map(showRow)),
-    paginate,
-    create_link
-  );
+  const inner =
+    in_card && masonry_columns
+      ? div(
+          div({ class: "card-columns" }, sresp.map(showRowInner)),
+          paginate,
+          create_link
+        )
+      : div(div({ class: "row" }, sresp.map(showRow)), paginate, create_link);
 
   return inner;
 };
