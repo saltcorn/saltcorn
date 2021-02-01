@@ -1,6 +1,10 @@
 import React, { Fragment, useState } from "react";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCaretDown,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
   const {
@@ -45,7 +49,7 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
               className="btn btn-outline-secondary"
               onClick={() => setDropdown(!showDropdown)}
             >
-              {showDropdown ? "⏷" : "⏴"}
+              <FontAwesomeIcon icon={faCaretDown} />
             </button>
             <div
               className={`dropdown-menu searchbar-dropdown ${
