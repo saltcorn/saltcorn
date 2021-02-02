@@ -353,21 +353,31 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const markup = div(
-        { class: "row" },
-        segment.besides.map((t, ixb) =>
-          div(
-            {
-              class: `col-${
-                segment.breakpoint ? segment.breakpoint + "-" : ""
-              }${segment.widths ? segment.widths[ixb] : defwidth}${
-                segment.aligns ? " text-" + segment.aligns[ixb] : ""
-              }`,
-            },
-            go(t, false, ixb)
+      const cardDeck =
+        segment.besides.every((s) => s && s.type === "card") &&
+        (!segment.widths || segment.widths.every((w) => w === defwidth));
+      let markup;
+      if (cardDeck)
+        markup = div(
+          { class: "card-deck" },
+          segment.besides.map((t, ixb) => go(t, false, ixb))
+        );
+      else
+        markup = div(
+          { class: "row" },
+          segment.besides.map((t, ixb) =>
+            div(
+              {
+                class: `col-${
+                  segment.breakpoint ? segment.breakpoint + "-" : ""
+                }${segment.widths ? segment.widths[ixb] : defwidth}${
+                  segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                }`,
+              },
+              go(t, false, ixb)
+            )
           )
-        )
-      );
+        );
       return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }

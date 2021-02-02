@@ -586,5 +586,6 @@
 	"Saltcorn is <a href=\"https://www.gnu.org/philosophy/free-sw.en.html\">Free</a> and <a href=\"https://opensource.org/\">Open Source</a> Software, <a href=\"https://github.com/saltcorn/saltcorn/\">released</a> under the <a href=\"https://github.com/saltcorn/saltcorn/blob/master/LICENSE\">MIT license</a>.": "Saltcorn is <a href=\"https://www.gnu.org/philosophy/free-sw.en.html\">Free</a> and <a href=\"https://opensource.org/\">Open Source</a> Software, <a href=\"https://github.com/saltcorn/saltcorn/\">released</a> under the <a href=\"https://github.com/saltcorn/saltcorn/blob/master/LICENSE\">MIT license</a>.",
 	"Create a page": "Create a page",
 	"Test": "Test",
-	"E-mail and password required": "E-mail and password required"
+	"E-mail and password required": "E-mail and password required",
+	"Masonry columns": "Masonry columns"
 }
