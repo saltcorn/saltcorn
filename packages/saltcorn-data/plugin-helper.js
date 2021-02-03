@@ -175,22 +175,39 @@ const field_picker_fields = contract(
       child_field_list,
       child_relations,
     } = await table.get_child_relations();
-    const agg_field_opts = child_relations.map(({ table, key_field }) => ({
-      name: `agg_field`,
-      label: __("On Field"),
-      type: "String",
-      required: true,
-      attributes: {
-        options: table.fields
-          .filter((f) => !f.calculated || f.stored)
-          .map((f) => f.name)
-          .join(),
-      },
-      showIf: {
-        agg_relation: `${table.name}.${key_field.name}`,
-        type: "Aggregation",
-      },
-    }));
+    const aggStatOptions = {};
+    const agg_field_opts = child_relations.map(({ table, key_field }) => {
+      aggStatOptions[`${table.name}.${key_field.name}`] = [
+        "Count",
+        "Avg",
+        "Sum",
+        "Max",
+        "Min",
+      ];
+      table.fields.forEach((f) => {
+        if (f.type && f.type.name === "Date") {
+          aggStatOptions[`${table.name}.${key_field.name}`].push(
+            `Latest ${f.name}`
+          );
+        }
+      });
+      return {
+        name: `agg_field`,
+        label: __("On Field"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => f.name)
+            .join(),
+        },
+        showIf: {
+          agg_relation: `${table.name}.${key_field.name}`,
+          type: "Aggregation",
+        },
+      };
+    });
     return [
       {
         name: "type",
@@ -442,6 +459,9 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
+          calcOptions: ["agg_relation", aggStatOptions],
+        },
+        oldAttributes: {
           options: "Count,Avg,Sum,Max,Min",
         },
         showIf: { type: "Aggregation" },
