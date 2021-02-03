@@ -610,7 +610,18 @@ class Table {
     }
     Object.entries(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, aggregate, subselect }]) => {
-        if (subselect)
+        if (aggregate.startsWith("Latest ")) {
+          const dateField = aggregate.replace("Latest ", "");
+          fldNms.push(
+            `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
+              table
+            )}" where ${dateField}=(select max(${dateField}) from ${schema}"${sqlsanitize(
+              table
+            )}" where "${sqlsanitize(ref)}"=a.id) and "${sqlsanitize(
+              ref
+            )}"=a.id) ${sqlsanitize(fldnm)}`
+          );
+        } else if (subselect)
           fldNms.push(
             `(select ${sqlsanitize(aggregate)}(${
               field ? `"${sqlsanitize(field)}"` : "*"
