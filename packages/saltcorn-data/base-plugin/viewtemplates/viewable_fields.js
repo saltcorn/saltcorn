@@ -271,7 +271,7 @@ const get_viewable_fields = contract(
           //console.log(column)
           const [table, fld] = column.agg_relation.split(".");
           const targetNm = (
-            column.stat +
+            column.stat.replace(" ", "") +
             "_" +
             table +
             "_" +

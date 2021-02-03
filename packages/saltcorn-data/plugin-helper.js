@@ -584,7 +584,7 @@ const picked_fields_to_query = contract(
           const [table, fld] = column.agg_relation.split(".");
           const field = column.agg_field;
           const targetNm = (
-            column.stat +
+            column.stat.replace(" ", "") +
             "_" +
             table +
             "_" +
