@@ -194,6 +194,10 @@ const run = async (
   //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
+  const role =
+    extraOpts && extraOpts.req && extraOpts.req.user
+      ? extraOpts.req.user.role_id
+      : 10;
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const tfields = get_viewable_fields(
     viewname,
@@ -212,6 +216,17 @@ const run = async (
   if (!q.orderBy) q.orderBy = "id";
 
   const current_page = parseInt(state._page) || 1;
+
+  if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
+    const owner_field = fields.find((f) => f.id === table.ownership_field_id);
+    if (where[owner_field.name])
+      where[owner_field.name] = [
+        where[owner_field.name],
+        extraOpts.req.user ? extraOpts.req.user.id : -1,
+      ];
+    else
+      where[owner_field.name] = extraOpts.req.user ? extraOpts.req.user.id : -1;
+  }
   const rows = await table.getJoinedRows({
     where,
     joinFields,
@@ -234,10 +249,6 @@ const run = async (
       };
     }
   }
-  const role =
-    extraOpts && extraOpts.req && extraOpts.req.user
-      ? extraOpts.req.user.role_id
-      : 10;
 
   var create_link = "";
   const user_id =

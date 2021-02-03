@@ -2,8 +2,6 @@ const vm = require("vm");
 let acorn = require("acorn");
 const estraverse = require("estraverse");
 const astring = require("astring");
-const { asyncMap } = require("../utils");
-
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
@@ -13,7 +11,10 @@ function expressionValidator(s) {
     return e.message;
   }
 }
-
+function jsexprToSQL(expression) {
+  if (!expression) return expression;
+  return expression.replace(/===/g, "=").replace(/==/g, "=").replace(/"/g, "'");
+}
 function transform_for_async(expression, statefuns) {
   var isAsync = false;
   const ast = acorn.parseExpressionAt(expression, 0, {
@@ -136,4 +137,5 @@ module.exports = {
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,
+  jsexprToSQL,
 };

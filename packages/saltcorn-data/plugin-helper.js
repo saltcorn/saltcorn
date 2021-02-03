@@ -8,6 +8,7 @@ const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
+const { jsexprToSQL } = require("./models/expression");
 
 const link_view = (url, label, popup, link_style = "", link_size = "") => {
   if (popup) {
@@ -175,22 +176,39 @@ const field_picker_fields = contract(
       child_field_list,
       child_relations,
     } = await table.get_child_relations();
-    const agg_field_opts = child_relations.map(({ table, key_field }) => ({
-      name: `agg_field`,
-      label: __("On Field"),
-      type: "String",
-      required: true,
-      attributes: {
-        options: table.fields
-          .filter((f) => !f.calculated || f.stored)
-          .map((f) => f.name)
-          .join(),
-      },
-      showIf: {
-        agg_relation: `${table.name}.${key_field.name}`,
-        type: "Aggregation",
-      },
-    }));
+    const aggStatOptions = {};
+    const agg_field_opts = child_relations.map(({ table, key_field }) => {
+      aggStatOptions[`${table.name}.${key_field.name}`] = [
+        "Count",
+        "Avg",
+        "Sum",
+        "Max",
+        "Min",
+      ];
+      table.fields.forEach((f) => {
+        if (f.type && f.type.name === "Date") {
+          aggStatOptions[`${table.name}.${key_field.name}`].push(
+            `Latest ${f.name}`
+          );
+        }
+      });
+      return {
+        name: `agg_field`,
+        label: __("On Field"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => f.name)
+            .join(),
+        },
+        showIf: {
+          agg_relation: `${table.name}.${key_field.name}`,
+          type: "Aggregation",
+        },
+      };
+    });
     return [
       {
         name: "type",
@@ -221,7 +239,6 @@ const field_picker_fields = contract(
       },
       {
         name: "field_name",
-        class: "field_name",
         label: __("Field"),
         type: "String",
         required: true,
@@ -236,7 +253,7 @@ const field_picker_fields = contract(
         type: "String",
         required: false,
         attributes: {
-          calcOptions: [".field_name", fldViewOptions],
+          calcOptions: ["field_name", fldViewOptions],
         },
         showIf: { type: "Field" },
       },
@@ -443,8 +460,17 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
-          options: "Count,Avg,Sum,Max,Min",
+          calcOptions: ["agg_relation", aggStatOptions],
         },
+
+        showIf: { type: "Aggregation" },
+      },
+      {
+        name: "aggwhere",
+        label: __("Where"),
+        sublabel: __("Formula"),
+        type: "String",
+        required: false,
         showIf: { type: "Aggregation" },
       },
       {
@@ -565,15 +591,17 @@ const picked_fields_to_query = contract(
           const [table, fld] = column.agg_relation.split(".");
           const field = column.agg_field;
           const targetNm = (
-            column.stat +
+            column.stat.replace(" ", "") +
             "_" +
             table +
             "_" +
-            fld
+            fld +
+            db.sqlsanitize(column.aggwhere || "")
           ).toLowerCase();
           aggregations[targetNm] = {
             table,
             ref: fld,
+            where: jsexprToSQL(column.aggwhere),
             field,
             aggregate: column.stat,
           };

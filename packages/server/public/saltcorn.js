@@ -40,7 +40,10 @@ function apply_showif() {
     var e = $(element);
     var data = JSON.parse(decodeURIComponent(e.attr("data-calc-options")));
 
-    var val = e.closest(".form-namespace").find(data[0]).val();
+    var val = e
+      .closest(".form-namespace")
+      .find(`[data-fieldname=${data[0]}]`)
+      .val();
 
     var options = data[1][val];
     var current = e.attr("data-selected");
