@@ -461,9 +461,15 @@ const field_picker_fields = contract(
         attributes: {
           calcOptions: ["agg_relation", aggStatOptions],
         },
-        oldAttributes: {
-          options: "Count,Avg,Sum,Max,Min",
-        },
+
+        showIf: { type: "Aggregation" },
+      },
+      {
+        name: "aggwhere",
+        label: __("Where"),
+        sublabel: __("Formula"),
+        type: "String",
+        required: false,
         showIf: { type: "Aggregation" },
       },
       {
@@ -593,6 +599,7 @@ const picked_fields_to_query = contract(
           aggregations[targetNm] = {
             table,
             ref: fld,
+            where: column.aggwhere,
             field,
             aggregate: column.stat,
           };
