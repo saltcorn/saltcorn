@@ -13,7 +13,17 @@ function expressionValidator(s) {
     return e.message;
   }
 }
-
+function jsexprToSQL(expression) {
+  if (!expression) return expression;
+  console.log(expression);
+  const ast = acorn.parseExpressionAt(expression, 0, {
+    ecmaVersion: 2020,
+    allowAwaitOutsideFunction: true,
+    locations: false,
+  });
+  console.log(ast);
+  return expression.replace("==", "=");
+}
 function transform_for_async(expression, statefuns) {
   var isAsync = false;
   const ast = acorn.parseExpressionAt(expression, 0, {
@@ -136,4 +146,5 @@ module.exports = {
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,
+  jsexprToSQL,
 };

@@ -9,6 +9,7 @@ const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
+const db = require("../../db");
 
 const action_url = contract(
   is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
@@ -275,7 +276,8 @@ const get_viewable_fields = contract(
             "_" +
             table +
             "_" +
-            fld
+            fld +
+            db.sqlsanitize(column.aggwhere || "")
           ).toLowerCase();
 
           return {

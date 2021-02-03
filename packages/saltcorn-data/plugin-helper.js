@@ -8,6 +8,7 @@ const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
+const { jsexprToSQL } = require("./models/expression");
 
 const link_view = (url, label, popup, link_style = "", link_size = "") => {
   if (popup) {
@@ -594,12 +595,13 @@ const picked_fields_to_query = contract(
             "_" +
             table +
             "_" +
-            fld
+            fld +
+            db.sqlsanitize(column.aggwhere || "")
           ).toLowerCase();
           aggregations[targetNm] = {
             table,
             ref: fld,
-            where: column.aggwhere,
+            where: jsexprToSQL(column.aggwhere),
             field,
             aggregate: column.stat,
           };
