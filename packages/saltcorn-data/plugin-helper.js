@@ -221,7 +221,6 @@ const field_picker_fields = contract(
       },
       {
         name: "field_name",
-        class: "field_name",
         label: __("Field"),
         type: "String",
         required: true,
@@ -236,7 +235,7 @@ const field_picker_fields = contract(
         type: "String",
         required: false,
         attributes: {
-          calcOptions: [".field_name", fldViewOptions],
+          calcOptions: ["field_name", fldViewOptions],
         },
         showIf: { type: "Field" },
       },
