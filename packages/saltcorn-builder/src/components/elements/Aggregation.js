@@ -43,6 +43,7 @@ export const AggregationSettings = () => {
     textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
+  console.log(options.fields);
   return (
     <table>
       <tbody>
@@ -105,6 +106,11 @@ export const AggregationSettings = () => {
               <option value={"Sum"}>Sum</option>
               <option value={"Max"}>Max</option>
               <option value={"Min"}>Min</option>
+              {options.fields
+                .filter((f) => f.type.name === "Date")
+                .map((f) => (
+                  <option value={`Latest ${f.name}`}>Latest {f.name}</option>
+                ))}
             </select>
           </td>
         </tr>
