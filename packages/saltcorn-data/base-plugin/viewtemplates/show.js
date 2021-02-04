@@ -4,6 +4,7 @@ const Field = require("../../models/field");
 const View = require("../../models/view");
 const File = require("../../models/file");
 const Table = require("../../models/table");
+const Page = require("../../models/page");
 const Workflow = require("../../models/workflow");
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
@@ -82,6 +83,7 @@ const configuration_workflow = (req) =>
               .map((f) => f.name);
           });
           const views = link_view_opts;
+          const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           return {
             fields,
@@ -96,6 +98,7 @@ const configuration_workflow = (req) =>
             agg_field_opts,
             roles,
             views,
+            pages,
             mode: "show",
             ownership: !!table.ownership_field_id || table.name === "users",
           };

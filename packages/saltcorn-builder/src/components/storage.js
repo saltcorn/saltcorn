@@ -69,6 +69,7 @@ export const layoutToNodes = (layout, query, actions) => {
           target_blank={segment.target_blank || false}
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
+          link_src={segment.link_src || "URL"}
         />
       );
     } else if (segment.type === "view") {
@@ -402,6 +403,7 @@ export const craftToSaltcorn = (nodes) => {
         target_blank: node.props.target_blank,
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
+        link_src: node.props.link_src,
       };
     }
     if (node.displayName === View.craft.displayName) {

@@ -120,12 +120,14 @@ const pageFlow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const views = await View.find();
+          const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           const roles = await User.get_roles();
 
           return {
             views,
             images,
+            pages,
             page_name: context.name,
             page_id: context.id,
             mode: "page",
