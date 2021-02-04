@@ -1,9 +1,10 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
-const { eachView } = require("./layout");
+const { eachView, traverseSync } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
+const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
 
 class Page {
   constructor(o) {
@@ -101,6 +102,15 @@ class Page {
         const mystate = view.combine_state_and_default_state(state || {});
         segment.contents = await view.run(mystate, extraArgs);
       }
+    });
+    const pagename = this.name;
+    traverseSync(this.layout, {
+      action(segment) {
+        const url = `javascript:ajax_post_json('/page/${pagename}/action/${segment.rndid}')`;
+        const html = action_link(url, extraArgs.req, segment);
+        segment.type = "blank";
+        segment.contents = html;
+      },
     });
     return this.layout;
   }
