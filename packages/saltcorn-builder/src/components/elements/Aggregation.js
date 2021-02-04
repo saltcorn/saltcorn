@@ -43,7 +43,6 @@ export const AggregationSettings = () => {
     textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
-  console.log(options.fields);
   return (
     <table>
       <tbody>
