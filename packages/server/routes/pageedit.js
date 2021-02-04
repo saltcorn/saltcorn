@@ -23,6 +23,8 @@ const {
   renderBuilder,
   settingsDropdown,
 } = require("@saltcorn/markup");
+const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
+
 const router = new Router();
 module.exports = router;
 const page_dropdown = (page, req) =>
@@ -132,10 +134,7 @@ const pageFlow = (req) =>
           for (const name of actions) {
             const action = stateActions[name];
             if (action.configFields) {
-              actionConfigForms[name] = await getActionConfigFields(
-                action,
-                table
-              );
+              actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
           return {
