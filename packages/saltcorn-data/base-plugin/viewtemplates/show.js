@@ -27,6 +27,7 @@ const {
   action_url,
   view_linker,
   parse_view_select,
+  action_link,
 } = require("./viewable_fields");
 const db = require("../../db");
 const { asyncMap, structuredClone } = require("../../utils");
@@ -370,36 +371,16 @@ const render = (
       const val = row[targetNm];
       return text(val);
     },
-    action({
-      action_name,
-      action_label,
-      confirm,
-      rndid,
-      action_style,
-      action_size,
-      action_icon,
-    }) {
-      const url = action_url(viewname, table, action_name, row, rndid, "rndid");
-      const label = action_label || action_name;
-      if (url.javascript)
-        return a(
-          {
-            href: "javascript:" + url.javascript,
-            class:
-              action_style === "btn-link"
-                ? ""
-                : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
-          },
-          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
-          label
-        );
-      else
-        return post_btn(url, label, req.csrfToken(), {
-          confirm,
-          req,
-          icon: action_icon,
-          btnClass: `${action_style} ${action_size}`,
-        });
+    action(segment) {
+      const url = action_url(
+        viewname,
+        table,
+        segment.action_name,
+        row,
+        segment.rndid,
+        "rndid"
+      );
+      return action_link(url, req, segment);
     },
     view_link(view) {
       const { key } = view_linker(view, fields);
