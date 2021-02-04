@@ -123,11 +123,27 @@ const pageFlow = (req) =>
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           const roles = await User.get_roles();
+          const stateActions = getState().actions;
+          const actions = Object.entries(stateActions)
+            .filter(([k, v]) => !v.requireRow)
+            .map(([k, v]) => k);
 
+          const actionConfigForms = {};
+          for (const name of actions) {
+            const action = stateActions[name];
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(
+                action,
+                table
+              );
+            }
+          }
           return {
             views,
             images,
             pages,
+            actions,
+            actionConfigForms,
             page_name: context.name,
             page_id: context.id,
             mode: "page",

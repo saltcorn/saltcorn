@@ -389,6 +389,7 @@ export const ToolboxPage = () => {
       <LinkElem connectors={connectors} />
       <ViewElem connectors={connectors} views={views} />
       <SearchElem connectors={connectors} />
+      <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
       <TabsElem connectors={connectors} />
     </Fragment>
