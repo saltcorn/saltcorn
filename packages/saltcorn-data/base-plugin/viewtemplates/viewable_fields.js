@@ -28,6 +28,41 @@ const action_url = contract(
     }
   }
 );
+
+const action_link = (
+  url,
+  req,
+  {
+    action_name,
+    action_label,
+    confirm,
+    rndid,
+    action_style,
+    action_size,
+    action_icon,
+  }
+) => {
+  const label = action_label || action_name;
+  if (url.javascript)
+    return a(
+      {
+        href: "javascript:" + url.javascript,
+        class:
+          action_style === "btn-link"
+            ? ""
+            : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+      },
+      action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+      label
+    );
+  else
+    return post_btn(url, label, req.csrfToken(), {
+      confirm,
+      req,
+      icon: action_icon,
+      btnClass: `${action_style} ${action_size}`,
+    });
+};
 const get_view_link_query = contract(
   is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
   (fields) => {
@@ -434,6 +469,7 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
 module.exports = {
   get_viewable_fields,
   action_url,
+  action_link,
   view_linker,
   parse_view_select,
   splitUniques,

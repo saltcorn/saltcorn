@@ -365,7 +365,7 @@ function ajaxSubmitForm(e) {
 
   return false;
 }
-function ajax_post_json(url, data, args) {
+function ajax_post_json(url, data, args = {}) {
   ajax_post(url, {
     data: JSON.stringify(data),
     contentType: "application/json;charset=UTF-8",

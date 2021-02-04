@@ -87,6 +87,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
   return (
     <select
       value={textStyle}
+      className="form-control"
       onChange={(e) => setProp((prop) => (prop.textStyle = e.target.value))}
     >
       <option value="">Normal</option>

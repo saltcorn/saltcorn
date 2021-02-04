@@ -23,6 +23,8 @@ const {
   renderBuilder,
   settingsDropdown,
 } = require("@saltcorn/markup");
+const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
+
 const router = new Router();
 module.exports = router;
 const page_dropdown = (page, req) =>
@@ -120,12 +122,27 @@ const pageFlow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const views = await View.find();
+          const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           const roles = await User.get_roles();
+          const stateActions = getState().actions;
+          const actions = Object.entries(stateActions)
+            .filter(([k, v]) => !v.requireRow)
+            .map(([k, v]) => k);
 
+          const actionConfigForms = {};
+          for (const name of actions) {
+            const action = stateActions[name];
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(action);
+            }
+          }
           return {
             views,
             images,
+            pages,
+            actions,
+            actionConfigForms,
             page_name: context.name,
             page_id: context.id,
             mode: "page",

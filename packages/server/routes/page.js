@@ -10,6 +10,7 @@ const {
   scan_for_page_title,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
+const { traverseSync } = require("@saltcorn/data/models/layout");
 
 const router = new Router();
 module.exports = router;
@@ -48,5 +49,35 @@ router.get(
           .status(404)
           .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
     }
+  })
+);
+router.post(
+  "/:pagename/action/:rndid",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { pagename, rndid } = req.params;
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const db_page = await Page.findOne({ name: pagename });
+    if (db_page && role <= db_page.min_role) {
+      let col;
+      traverseSync(db_page.layout, {
+        action(segment) {
+          if (segment.rndid === rndid) col = segment;
+        },
+      });
+      if (col) {
+        const state_action = getState().actions[col.action_name];
+
+        try {
+          const result = await state_action.run({
+            configuration: col.configuration,
+            user: req.user,
+          });
+          res.status(404).json({ success: "ok", ...(result || {}) });
+        } catch (e) {
+          res.status(404).json({ error: e.message || e });
+        }
+      } else res.status(404).json({ error: "Action not found" });
+    } else res.status(404).json({ error: "Action not found" });
   })
 );

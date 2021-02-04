@@ -280,6 +280,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
       agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
       stat={"Count"}
       textStyle={""}
+      aggwhere={""}
       block={false}
     />
   </WrapElem>
@@ -388,6 +389,7 @@ export const ToolboxPage = () => {
       <LinkElem connectors={connectors} />
       <ViewElem connectors={connectors} views={views} />
       <SearchElem connectors={connectors} />
+      <ActionElem connectors={connectors} options={options} />
       <ContainerElem connectors={connectors} />
       <TabsElem connectors={connectors} />
     </Fragment>

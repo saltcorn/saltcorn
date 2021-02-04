@@ -48,6 +48,8 @@ module.exports = {
         {
           name: "viewname",
           label: "View to send",
+          sublabel:
+            "Select a view that can render a single record - for instance, of the Show template.",
           input_type: "select",
           options: view_opts,
         },
@@ -84,6 +86,7 @@ module.exports = {
         },
       ];
     },
+    requireRow: true,
     run: async ({
       row,
       table,
@@ -143,6 +146,7 @@ module.exports = {
         },
       ];
     },
+    requireRow: true,
     run: async ({ row, table, configuration: { joined_table }, user }) => {
       const [join_table_name, join_field] = joined_table.split(".");
       const joinTable = await Table.findOne({ name: join_table_name });

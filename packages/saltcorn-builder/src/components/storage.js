@@ -69,6 +69,7 @@ export const layoutToNodes = (layout, query, actions) => {
           target_blank={segment.target_blank || false}
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
+          link_src={segment.link_src || "URL"}
         />
       );
     } else if (segment.type === "view") {
@@ -137,6 +138,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           agg_relation={segment.agg_relation}
           agg_field={segment.agg_field}
+          aggwhere={segment.aggwhere || ""}
           stat={segment.stat}
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
@@ -401,6 +403,7 @@ export const craftToSaltcorn = (nodes) => {
         target_blank: node.props.target_blank,
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
+        link_src: node.props.link_src,
       };
     }
     if (node.displayName === View.craft.displayName) {
@@ -472,6 +475,7 @@ export const craftToSaltcorn = (nodes) => {
         type: "Aggregation",
         agg_relation: node.props.agg_relation,
         agg_field: node.props.agg_field,
+        aggwhere: node.props.aggwhere,
         stat: node.props.stat,
       });
       return {
@@ -479,6 +483,7 @@ export const craftToSaltcorn = (nodes) => {
         block: node.props.block,
         agg_relation: node.props.agg_relation,
         agg_field: node.props.agg_field,
+        aggwhere: node.props.aggwhere,
         stat: node.props.stat,
         textStyle: node.props.textStyle,
       };
