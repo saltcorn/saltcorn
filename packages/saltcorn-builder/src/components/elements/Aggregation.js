@@ -31,11 +31,13 @@ export const AggregationSettings = () => {
     agg_relation,
     agg_field,
     stat,
+    aggwhere,
     block,
     textStyle,
   } = useNode((node) => ({
     agg_relation: node.data.props.agg_relation,
     agg_field: node.data.props.agg_field,
+    aggwhere: node.data.props.aggwhere,
     stat: node.data.props.stat,
     block: node.data.props.block,
     textStyle: node.data.props.textStyle,
@@ -106,7 +108,22 @@ export const AggregationSettings = () => {
             </select>
           </td>
         </tr>
-
+        <tr>
+          <td>
+            <label>Where</label>
+          </td>
+          <td>
+            {" "}
+            <input
+              type="text"
+              className="form-control"
+              value={aggwhere}
+              onChange={(e) =>
+                setProp((prop) => (prop.aggwhere = e.target.value))
+              }
+            />
+          </td>
+        </tr>
         <TextStyleRow textStyle={textStyle} setProp={setProp} />
         <tr>
           <td colSpan="2">
