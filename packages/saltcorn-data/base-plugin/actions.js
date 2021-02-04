@@ -48,6 +48,8 @@ module.exports = {
         {
           name: "viewname",
           label: "View to send",
+          sublabel:
+            "Select a view that can render a single record - for instance, of the Show template.",
           input_type: "select",
           options: view_opts,
         },
