@@ -206,7 +206,7 @@ class View {
     }
 
     throw new Error(
-      `runMany on view ${this.name}: viewtemplate does not have renderRows or runMany methods`
+      `runMany on view ${this.name}: viewtemplate ${this.viewtemplate} does not have renderRows or runMany methods`
     );
   }
   async runPost(query, body, extraArgs) {
