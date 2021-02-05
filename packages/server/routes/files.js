@@ -223,7 +223,7 @@ router.post(
       else
         jsonResp = {
           success: {
-            filename: many ? f.map((fl) => fl.filename) : fl.filename,
+            filename: many ? f.map((fl) => fl.filename) : f.filename,
             url: many
               ? f.map((fl) => `/files/serve/${fl.id}`)
               : `/files/serve/${f.id}`,
