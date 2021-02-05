@@ -73,9 +73,9 @@ router.post(
             configuration: col.configuration,
             user: req.user,
           });
-          res.status(404).json({ success: "ok", ...(result || {}) });
+          res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
-          res.status(404).json({ error: e.message || e });
+          res.status(400).json({ error: e.message || e });
         }
       } else res.status(404).json({ error: "Action not found" });
     } else res.status(404).json({ error: "Action not found" });
