@@ -30,6 +30,8 @@ class BackupCommand extends Command {
       });
     } else if (flags.zip) {
       const { create_backup } = require("@saltcorn/data/models/backup");
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      await loadAllPlugins();
       const fnm = await create_backup(flags.output);
       console.log(fnm);
     } else {
