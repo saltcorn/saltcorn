@@ -138,8 +138,8 @@ const create_backup = contract(
     const ten = db.getTenantSchema();
     const tens =
       ten === db.connectObj.default_schema
-        ? getState().getConfig("site_name", "")
-        : "-" + ten;
+        ? getState().getConfig("site_name", "Saltcorn")
+        : ten;
     const zipFileName = fnm || `sc-backup-${tens}-${day}.zip`;
 
     var zip = new Zip();
