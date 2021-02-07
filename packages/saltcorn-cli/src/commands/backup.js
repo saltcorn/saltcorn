@@ -16,6 +16,7 @@ class BackupCommand extends Command {
     const { flags } = this.parse(BackupCommand);
 
     if (flags.tenant) {
+      console.log("tenant backup");
       const { create_backup } = require("@saltcorn/data/models/backup");
 
       const db = require("@saltcorn/data/db");
@@ -29,10 +30,14 @@ class BackupCommand extends Command {
         console.log(fnm);
       });
     } else if (flags.zip) {
+      console.log("zip backup");
+
       const { create_backup } = require("@saltcorn/data/models/backup");
       const fnm = await create_backup(flags.output);
       console.log(fnm);
     } else {
+      console.log("pg_dump backup");
+
       const pguser = connobj.user;
       const pghost = connobj.host || "localhost";
       const outfnm = flags.output || default_filenm;
@@ -43,6 +48,7 @@ class BackupCommand extends Command {
       });
       console.log(outfnm);
     }
+    this.exit(0);
   }
 }
 
