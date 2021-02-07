@@ -20,6 +20,8 @@ class BackupCommand extends Command {
 
       const db = require("@saltcorn/data/db");
       await db.runWithTenant(flags.tenant, async () => {
+        const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+        await loadAllPlugins();
         const fnm = await create_backup(flags.output);
         console.log(fnm);
       });
