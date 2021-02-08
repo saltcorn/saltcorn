@@ -169,6 +169,9 @@ const mapObjectValues = (o, f) =>
 const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
+  const hasTable = Object.entries(getState().viewtemplates)
+    .filter(([k, v]) => !v.tableless)
+    .map(([k, v]) => k);
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -203,6 +206,7 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
+        showIf: { viewtemplate: hasTable },
       }),
       new Field({
         name: "min_role",
