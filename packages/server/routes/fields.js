@@ -20,7 +20,7 @@ const { readState } = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
-const fieldForm = (req, fkey_opts, existing_names, id) =>
+const fieldForm = (req, fkey_opts, existing_names, id, hasData) =>
   new Form({
     action: "/field",
     validator: (vs) => {
@@ -47,7 +47,10 @@ const fieldForm = (req, fkey_opts, existing_names, id) =>
         name: "type",
         input_type: "select",
         options: getState().type_names.concat(fkey_opts || []),
-        disabled: !!id && !getState().getConfig("development_mode", false),
+        disabled:
+          !!id &&
+          !getState().getConfig("development_mode", false) &&
+          (hasData || db.isSQLite),
       }),
       new Field({
         label: req.__("Calculated"),
@@ -167,10 +170,17 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const tables = await Table.find({});
           const table = tables.find((t) => t.id === context.table_id);
+          const nrows = await table.countRows({});
           const existing_fields = await table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
           const fkey_opts = [...tables.map((t) => `Key to ${t.name}`), "File"];
-          const form = fieldForm(req, fkey_opts, existingNames, context.id);
+          const form = fieldForm(
+            req,
+            fkey_opts,
+            existingNames,
+            context.id,
+            nrows > 0
+          );
           if (context.type === "Key" && context.reftable_name) {
             form.values.type = `Key to ${context.reftable_name}`;
           }

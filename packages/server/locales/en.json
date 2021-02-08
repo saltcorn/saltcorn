@@ -588,5 +588,8 @@
 	"Test": "Test",
 	"E-mail and password required": "E-mail and password required",
 	"Masonry columns": "Masonry columns",
-	"Where": "Where"
+	"Where": "Where",
+	"Access Read/Write": "Access Read/Write",
+	"History": "History",
+	"Owned": "Owned"
 }

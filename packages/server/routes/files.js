@@ -29,30 +29,18 @@ const {
   label,
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("./utils");
+const { editRoleForm } = require("../markup/forms.js");
 
 const router = new Router();
 module.exports = router;
 
-const editRoleForm = (file, roles, req) =>
-  form(
-    {
-      action: `/files/setrole/${file.id}`,
-      method: "post",
-    },
-    csrfField(req),
-    select(
-      { name: "role", onchange: "form.submit()" },
-      roles.map((role) =>
-        option(
-          {
-            value: role.id,
-            ...(file.min_role_read === role.id && { selected: true }),
-          },
-          text(role.role)
-        )
-      )
-    )
-  );
+const editFileRoleForm = (file, roles, req) =>
+  editRoleForm({
+    url: `/files/setrole/${file.id}`,
+    current_role: file.min_role_read,
+    roles,
+    req,
+  });
 
 router.get(
   "/",
@@ -77,7 +65,7 @@ router.get(
           { label: req.__("Media type"), key: (r) => r.mimetype },
           {
             label: req.__("Role to access"),
-            key: (r) => editRoleForm(r, roles, req),
+            key: (r) => editFileRoleForm(r, roles, req),
           },
           {
             label: req.__("Link"),

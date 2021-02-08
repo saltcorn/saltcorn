@@ -552,13 +552,20 @@ router.post(
     }
   })
 );
-
+const tableBadges = (t, req) => {
+  let s = "";
+  if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
+  if (t.versioned) s += badge("success", req.__("History"));
+  return s;
+};
 router.get(
   "/",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await Table.find({}, { orderBy: "name" });
+    const roles = await User.get_roles();
+    const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard =
       rows.length > 0
         ? mkTable(
@@ -566,6 +573,15 @@ router.get(
               {
                 label: req.__("Name"),
                 key: (r) => link(`/table/${r.id}`, text(r.name)),
+              },
+              {
+                label: "",
+                key: (r) => tableBadges(r, req),
+              },
+              {
+                label: req.__("Access Read/Write"),
+                key: (t) =>
+                  `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
               },
               {
                 label: req.__("Delete"),

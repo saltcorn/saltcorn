@@ -24,9 +24,19 @@ const {
   settingsDropdown,
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
+const { editRoleForm } = require("../markup/forms.js");
 
 const router = new Router();
 module.exports = router;
+
+const editPageRoleForm = (page, roles, req) =>
+  editRoleForm({
+    url: `/pageedit/setrole/${page.id}`,
+    current_role: page.min_role,
+    roles,
+    req,
+  });
+
 const page_dropdown = (page, req) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     a(
@@ -202,10 +212,7 @@ const getPageList = (rows, roles, req) => {
         },
         {
           label: req.__("Role to access"),
-          key: (row) => {
-            const role = roles.find((r) => r.id === row.min_role);
-            return role ? role.role : "?";
-          },
+          key: (row) => editPageRoleForm(row, roles, req),
         },
         {
           label: req.__("Edit"),
@@ -440,5 +447,26 @@ router.post(
       req.__("Page %s duplicated as %s", page.name, newpage.name)
     );
     res.redirect(`/pageedit`);
+  })
+);
+router.post(
+  "/setrole/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const role = req.body.role;
+    await Page.update(+id, { min_role: role });
+    const page = await Page.findOne({ id });
+    const roles = await User.get_roles();
+    const roleRow = roles.find((r) => r.id === +role);
+    if (roleRow && page)
+      req.flash(
+        "success",
+        req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
+      );
+    else req.flash("success", req.__(`Minimum role updated`));
+
+    res.redirect("/pageedit");
   })
 );

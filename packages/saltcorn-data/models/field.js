@@ -248,6 +248,20 @@ class Field {
     );
   }
 
+  async alter_sql_type(new_sql_type) {
+    const schema = db.getTenantSchemaPrefix();
+    await this.fill_table();
+    await db.query(
+      `alter table ${schema}"${sqlsanitize(
+        this.table.name
+      )}" alter column "${sqlsanitize(
+        this.name
+      )}" TYPE ${new_sql_type} USING ("${sqlsanitize(
+        this.name
+      )}"::${new_sql_type});`
+    );
+  }
+
   async fill_table() {
     if (!this.table) {
       const Table = require("./table");
@@ -267,6 +281,11 @@ class Field {
 
     if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
       await this.toggle_not_null(!!v.required);
+
+    const f = new Field({ ...this, ...v });
+    if (f.sql_type !== this.sql_type) {
+      await this.alter_sql_type(f.sql_type);
+    }
 
     await db.update("_sc_fields", v, this.id);
     Object.entries(v).forEach(([k, v]) => {
