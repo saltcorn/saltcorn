@@ -123,29 +123,32 @@ const backup_config = contract(
     }
   }
 );
-const create_backup = contract(is.fun([], is.promise(is.str)), async () => {
-  const dir = await tmp.dir({ unsafeCleanup: true });
+const create_backup = contract(
+  is.fun([is.maybe(is.str)], is.promise(is.str)),
+  async (fnm) => {
+    const dir = await tmp.dir({ unsafeCleanup: true });
 
-  await create_pack(dir.path);
-  await create_table_jsons(dir.path);
-  await backup_files(dir.path);
-  await backup_config(dir.path);
+    await create_pack(dir.path);
+    await create_table_jsons(dir.path);
+    await backup_files(dir.path);
+    await backup_config(dir.path);
 
-  var day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
+    var day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
-  const ten = db.getTenantSchema();
-  const tens =
-    ten === db.connectObj.default_schema
-      ? getState().getConfig("site_name", "")
-      : "-" + ten;
-  const zipFileName = `sc-backup-${tens}-${day}.zip`;
+    const ten = db.getTenantSchema();
+    const tens =
+      ten === db.connectObj.default_schema
+        ? getState().getConfig("site_name", "Saltcorn")
+        : ten;
+    const zipFileName = fnm || `sc-backup-${tens}-${day}.zip`;
 
-  var zip = new Zip();
-  zip.addLocalFolder(dir.path);
-  zip.writeZip(zipFileName);
-  await dir.cleanup();
-  return zipFileName;
-});
+    var zip = new Zip();
+    zip.addLocalFolder(dir.path);
+    zip.writeZip(zipFileName);
+    await dir.cleanup();
+    return zipFileName;
+  }
+);
 
 const extract = contract(
   is.fun([is.str, is.str], is.promise(is.undefined)),
