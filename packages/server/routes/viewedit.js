@@ -33,9 +33,18 @@ const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 
 const { add_to_menu } = require("@saltcorn/data/models/pack");
+const { editRoleForm } = require("../markup/forms.js");
 
 const router = new Router();
 module.exports = router;
+
+const editViewRoleForm = (view, roles, req) =>
+  editRoleForm({
+    url: `/viewedit/setrole/${view.id}`,
+    current_role: view.min_role,
+    roles,
+    req,
+  });
 
 const view_dropdown = (view, req) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
@@ -113,10 +122,7 @@ router.get(
               },
               {
                 label: req.__("Role to access"),
-                key: (row) => {
-                  const role = roles.find((r) => r.id === row.min_role);
-                  return role ? role.role : "?";
-                },
+                key: (row) => editViewRoleForm(row, roles, req),
               },
               {
                 label: "",
@@ -510,5 +516,26 @@ router.post(
     } else {
       res.json({ error: "no view" });
     }
+  })
+);
+router.post(
+  "/setrole/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const role = req.body.role;
+    await View.update({ min_role: role }, +id);
+    const view = await View.findOne({ id });
+    const roles = await User.get_roles();
+    const roleRow = roles.find((r) => r.id === +role);
+    if (roleRow && view)
+      req.flash(
+        "success",
+        req.__(`Minimum role for %s updated to %s`, view.name, roleRow.role)
+      );
+    else req.flash("success", req.__(`Minimum role updated`));
+
+    res.redirect("/viewedit");
   })
 );
