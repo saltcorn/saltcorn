@@ -365,11 +365,10 @@ router.post(
         }
 
         var v = result.success;
-
-        const table = await Table.findOne({ name: v.table_name });
-
-        v.table_id = table.id;
-
+        if (v.table_name) {
+          const table = await Table.findOne({ name: v.table_name });
+          v.table_id = table.id;
+        }
         delete v.table_name;
 
         if (req.body.id) {
@@ -378,6 +377,7 @@ router.post(
           const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
+          console.log(v);
           await View.create(v);
         }
         res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);

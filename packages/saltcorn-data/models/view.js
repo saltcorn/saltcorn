@@ -349,7 +349,7 @@ View.contract = {
     create: is.fun(
       is.obj({
         name: is.str,
-        table_id: is.posint,
+        table_id: is.maybe(is.posint),
         viewtemplate: is.str,
       }),
       is.promise(is.class("View"))
