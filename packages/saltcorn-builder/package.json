@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.3.5-beta.0",
+  "version": "0.3.5",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
