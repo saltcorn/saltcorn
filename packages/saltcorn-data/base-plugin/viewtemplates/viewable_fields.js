@@ -66,6 +66,12 @@ const action_link = (
 const get_view_link_query = contract(
   is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
   (fields) => {
+    const fUniqueString = fields.find(
+      (f) => f.is_unique && f.type.name === "String"
+    );
+    if (fUniqueString)
+      return (r) =>
+        `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`;
     const fUnique = fields.find((f) => f.is_unique);
     if (fUnique)
       return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
