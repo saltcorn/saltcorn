@@ -21,7 +21,7 @@ describe("Table create", () => {
     await browser.page.type("#inputname", "Persons");
     await browser.clickNav("button[type=submit]");
     const page = await browser.page.content();
-    expect(page).toContain("No fields defined in Persons table");
+    expect(page).toContain(">Persons table<");
   });
   it("creates string field", async () => {
     await browser.clickNav(".btn.add-field");
@@ -62,7 +62,7 @@ describe("Table create", () => {
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).toContain(">Useless<");
-    await browser.clickNav("tr:nth-child(3) button");
+    await browser.clickNav("tr:nth-child(4) button");
     await browser.page.waitFor(1000);
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).not.toContain(">Useless<");
