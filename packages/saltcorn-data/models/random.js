@@ -40,7 +40,7 @@ const fill_table_row = async (table) => {
   const fields = await table.getFields();
   const row = {};
   for (const f of fields) {
-    if (!f.calculated && (f.required || is.bool.generate()))
+    if (!f.calculated && (f.required || is.bool.generate()) && !f.primary_key)
       row[f.name] = await f.generate();
   }
   //console.log(fields, row);

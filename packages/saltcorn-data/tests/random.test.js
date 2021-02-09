@@ -40,7 +40,7 @@ describe("Random tables", () => {
       const table = await random_table();
       const rows = await table.getJoinedRows({});
       const fields = await table.getFields();
-      const nonFkey = fields.filter((f) => !f.is_fkey);
+      const nonFkey = fields.filter((f) => !f.is_fkey && !f.primary_key);
       expect(rows.length > -1).toBe(true);
       //enable versioning
       if (is.bool.generate()) await table.update({ versioned: true });
