@@ -96,6 +96,16 @@ const plugin_with_routes = {
         the_null_route: () => null,
       },
     },
+    {
+      name: "TablelessView",
+      display_state_form: false,
+      tableless: true,
+      get_state_fields() {
+        return [];
+      },
+      configuration_workflow,
+      run: async () => {},
+    },
   ],
 };
 const mockReqRes = {
