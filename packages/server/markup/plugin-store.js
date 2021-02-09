@@ -20,6 +20,13 @@ const { link } = require("@saltcorn/markup");
 const show_function_arguments = (args) =>
   (args || []).map(({ name, type }) => `${name}: ${type}`).join(", ");
 
+const withCfg = (plugin, key, def) =>
+  plugin.plugin_module.configuration_workflow
+    ? plugin.plugin_module[key]
+      ? plugin.plugin_module[key](plugin.configuration || {})
+      : def
+    : plugin.plugin_module[key] || def;
+
 const plugin_types_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("Types"),
@@ -31,7 +38,7 @@ const plugin_types_info_card = (plugin, req) => ({
 const plugin_functions_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("Functions"),
-  contents: Object.entries(plugin.plugin_module.functions)
+  contents: Object.entries(withCfg(plugin, "functions", {}))
     .map(([nm, v]) =>
       div(
         h4(
@@ -49,7 +56,7 @@ const plugin_functions_info_card = (plugin, req) => ({
 const plugin_viewtemplates_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("View templates"),
-  contents: plugin.plugin_module.viewtemplates
+  contents: withCfg(plugin, "viewtemplates", [])
     .map(({ name, description }) => div(h4(name), p(description)))
     .join("<hr>"),
 });

@@ -93,7 +93,8 @@ router.get(
     const tables = await Table.find();
     const getTable = (tid) => tables.find((t) => t.id === tid).name;
     views.forEach((v) => {
-      v.table = getTable(v.table_id);
+      if (v.table_id) v.table = getTable(v.table_id);
+      else v.table = "";
     });
     if (req.query._sortby === "table")
       views.sort((a, b) =>
@@ -169,6 +170,9 @@ const mapObjectValues = (o, f) =>
 const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
+  const hasTable = Object.entries(getState().viewtemplates)
+    .filter(([k, v]) => !v.tableless)
+    .map(([k, v]) => k);
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -203,6 +207,7 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
+        showIf: { viewtemplate: hasTable },
       }),
       new Field({
         name: "min_role",
@@ -361,11 +366,10 @@ router.post(
         }
 
         var v = result.success;
-
-        const table = await Table.findOne({ name: v.table_name });
-
-        v.table_id = table.id;
-
+        if (v.table_name) {
+          const table = await Table.findOne({ name: v.table_name });
+          v.table_id = table.id;
+        }
         delete v.table_name;
 
         if (req.body.id) {
@@ -374,6 +378,7 @@ router.post(
           const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
+          console.log(v);
           await View.create(v);
         }
         res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
