@@ -378,7 +378,6 @@ router.post(
           const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
-          console.log(v);
           await View.create(v);
         }
         res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
