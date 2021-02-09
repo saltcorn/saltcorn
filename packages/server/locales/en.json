@@ -591,5 +591,6 @@
 	"Where": "Where",
 	"Access Read/Write": "Access Read/Write",
 	"History": "History",
-	"Owned": "Owned"
+	"Owned": "Owned",
+	"Primary key": "Primary key"
 }
