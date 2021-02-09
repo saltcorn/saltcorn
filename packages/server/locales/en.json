@@ -592,5 +592,6 @@
 	"Access Read/Write": "Access Read/Write",
 	"History": "History",
 	"Owned": "Owned",
-	"Primary key": "Primary key"
+	"Primary key": "Primary key",
+	"Users already present": "Users already present"
 }
