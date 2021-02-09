@@ -32,7 +32,7 @@ describe("TableIO", () => {
     expect(fs.table_id > 0).toBe(true);
     expect(fs.id > 0).toBe(true);
     const fields = await tc.getFields();
-    expect(fields[0].attributes).toStrictEqual({ max: 18 });
+    expect(fields[1].attributes).toStrictEqual({ max: 18 });
   });
 });
 describe("Table create", () => {
