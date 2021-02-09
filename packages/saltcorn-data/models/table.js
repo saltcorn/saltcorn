@@ -288,15 +288,15 @@ class Table {
     const flds = fields.map(
       (f) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
     );
+    const pk = fields.find((f) => f.primary_key).name;
 
     await db.query(
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
-          id integer not null,
           _version integer,
           _time timestamp,
           _userid integer
           ${flds.join("")}
-          ,PRIMARY KEY(id, _version)
+          ,PRIMARY KEY("${pk}", _version)
           );`
     );
   }
