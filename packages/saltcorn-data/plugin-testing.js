@@ -90,7 +90,7 @@ const auto_test_viewtemplate = async (vt) => {
     const sfs = await vt.get_state_fields(1, "newview", cfg);
     const res = await vt.run(2, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
-    if (sfs.some((sf) => (sf.name = "id"))) {
+    if (sfs.some((sf) => sf.name === "id")) {
       const resid = await vt.run(2, "newview", cfg, { id: 1 }, mockReqRes);
       is.or(is.str, is.array(is.str))(resid);
     }

@@ -139,7 +139,6 @@ const field_picker_fields = contract(
   async ({ table, viewname, req }) => {
     const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
-    fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
 
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
 
@@ -676,8 +675,7 @@ const stateFieldsToWhere = contract(
         qstate[k] = { ilike: v };
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
-      } else if (k === "id") qstate[k] = strictParseInt(v);
-      else if (field && field.type && field.type.read)
+      } else if (field && field.type && field.type.read)
         qstate[k] = field.type.read(v);
       else if (field) qstate[k] = v;
       else if (k.includes(".")) {

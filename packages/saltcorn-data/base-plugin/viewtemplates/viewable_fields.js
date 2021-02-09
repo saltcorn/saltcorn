@@ -324,8 +324,7 @@ const get_viewable_fields = contract(
           };
         } else if (column.type === "Field") {
           let f = fields.find((fld) => fld.name === column.field_name);
-          if (!f && column.field_name === "id")
-            f = new Field({ name: "id", label: "id", type: "Integer" });
+
           return (
             f && {
               label: headerLabelForName(column, f, req),
@@ -385,8 +384,7 @@ const splitUniques = contract(
     var nonUniques = [];
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find((f) => f.name === k);
-      if (k === "id") uniques[k] = strictParseInt(v);
-      else if (
+      if (
         field &&
         field.is_unique &&
         fuzzyStrings &&
@@ -394,7 +392,8 @@ const splitUniques = contract(
         field.type.name === "String"
       )
         uniques[k] = { ilike: v };
-      else if (field && field.is_unique) uniques[k] = v;
+      else if (field && field.is_unique)
+        uniques[k] = field.type.read ? field.type.read(v) : v;
       else nonUniques[k] = v;
     });
     return { uniques, nonUniques };
