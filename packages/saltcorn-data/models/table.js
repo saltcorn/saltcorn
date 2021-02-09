@@ -559,7 +559,7 @@ class Table {
   }
   async getJoinedQuery(opts = {}) {
     const fields = await this.getFields();
-    var fldNms = ["a.id"];
+    var fldNms = [];
     var joinq = "";
     var joinTables = [];
     var joinFields = opts.joinFields || [];
