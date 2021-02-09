@@ -850,7 +850,7 @@ const readStateStrict = (state, fields) => {
           current === "null" || current === "" || current === null
             ? null
             : +current;
-    } else if (f.required) hasErrors = true;
+    } else if (f.required && !f.primary_key) hasErrors = true;
   });
   return hasErrors ? false : state;
 };

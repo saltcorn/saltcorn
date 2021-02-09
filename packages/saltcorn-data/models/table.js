@@ -425,7 +425,7 @@ class Table {
       else if (headers.includes(f.label)) {
         okHeaders[f.label] = f;
         renames.push({ from: f.label, to: f.name });
-      } else if (f.required)
+      } else if (f.required && !f.primary_key)
         return { error: `Required field missing: ${f.label}` };
     }
     // also id

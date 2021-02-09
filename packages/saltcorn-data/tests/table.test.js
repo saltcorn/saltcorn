@@ -409,7 +409,7 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice1", fnm);
-    expect(res.table.fields.length).toEqual(3);
+    expect(res.table.fields.length).toEqual(4); //and id
   });
   it("should fail non-int id", async () => {
     const csv = `id,cost,!, vatable
@@ -444,7 +444,7 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice3", fnm);
-    expect(res.table.fields.length).toEqual(3);
+    expect(res.table.fields.length).toEqual(4); // incl id
     const table = await Table.findOne({ name: "Invoice3" });
     const rows = await table.getRows();
     expect(rows.length).toBe(2);
