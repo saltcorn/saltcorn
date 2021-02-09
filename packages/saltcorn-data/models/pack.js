@@ -135,6 +135,7 @@ const can_install_pack = contract(
 const uninstall_pack = contract(
   is.fun([is_pack, is.str], is.promise(is.undefined)),
   async (pack, name) => {
+    db.set_sql_logging();
     for (const pageSpec of pack.pages || []) {
       const page = await Page.findOne({ name: pageSpec.name });
       if (page) await page.delete();
@@ -148,7 +149,7 @@ const uninstall_pack = contract(
       if (table) {
         const fields = await table.getFields();
         for (const field of fields) {
-          await field.delete();
+          if (field.is_fkey) await field.delete();
         }
         const triggers = await Trigger.find({ table_id: table.id });
         for (const trigger of triggers) {
