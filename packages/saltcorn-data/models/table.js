@@ -98,6 +98,11 @@ class Table {
       ownership_field_id: options.ownership_field_id,
     };
     const id = await db.insert("_sc_tables", tblrow);
+    await db.query(
+      `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+          values($1,'id','ID','Integer', '{}', true, true, true)`,
+      [id]
+    );
     const table = new Table({ ...tblrow, id });
     if (table.versioned) await table.create_history_table();
     return table;
