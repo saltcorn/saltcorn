@@ -610,7 +610,7 @@ describe("Table with users and files", () => {
     });
     await table.insertRow({ name: "Rocket", owner: 1, mugshot: rick.id });
     const rels = await table.get_parent_relations();
-    expect(rels.parent_field_list).toEqual(["owner.email"]);
+    expect(rels.parent_field_list).toEqual(["owner.email", "owner.id"]);
     const joined = await table.getJoinedRows();
     // expect(joined).toEqual("rick.png")
     expect(joined[0].mugshot__filename).toEqual("rick.png");
