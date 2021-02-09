@@ -562,6 +562,7 @@ router.post(
         table_id: { sql: "is not null" },
       });
       const tables = await Table.find();
+
       for (const table of tables) {
         await table.update({ ownership_field_id: null });
         const fields = await table.getFields();
@@ -601,7 +602,7 @@ router.post(
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {
-        if (f.name !== "email") await f.delete();
+        if (f.name !== "email" && f.name !== "id") await f.delete();
       }
       await db.deleteWhere("users");
       if (db.reset_sequence) await db.reset_sequence("users");
