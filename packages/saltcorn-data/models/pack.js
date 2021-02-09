@@ -135,7 +135,6 @@ const can_install_pack = contract(
 const uninstall_pack = contract(
   is.fun([is_pack, is.str], is.promise(is.undefined)),
   async (pack, name) => {
-    db.set_sql_logging();
     for (const pageSpec of pack.pages || []) {
       const page = await Page.findOne({ name: pageSpec.name });
       if (page) await page.delete();
