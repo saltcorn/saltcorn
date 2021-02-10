@@ -48,6 +48,12 @@ jobs:
           PGUSER: postgres
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
+      - run: psql -d saltcorn_test -c "select uuid_generate_v4();"
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
       - run: npm install -g lerna
       - run: lerna bootstrap
         env:
