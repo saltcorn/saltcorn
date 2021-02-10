@@ -103,6 +103,8 @@ describe("Random tables", () => {
   });
   it("can restore random tables with seed " + seed, async () => {
     await reset();
+    if (!db.isSQLite)
+      await db.query('create extension if not exists "uuid-ossp";');
     await User.create({
       email: "admin@foo.com",
       password: "AhGGr6rhu45",
@@ -128,6 +130,8 @@ describe("Random table CSV io", () => {
     for (let index = 0; index < 20; index++) {
       const dir = await tmp.dir({ unsafeCleanup: false });
       await reset();
+      if (!db.isSQLite)
+        await db.query('create extension if not exists "uuid-ossp";');
       await User.create({
         email: "admin@foo.com",
         password: "AhGGr6rhu45",
