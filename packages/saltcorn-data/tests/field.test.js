@@ -63,8 +63,8 @@ describe("Field", () => {
     const f = await Field.findOne({ name: "favbook" });
     await f.fill_fkey_options();
     expect(f.options).toContainEqual({ label: "Leo Tolstoy", value: 2 });
-    if (db.isSQLite) expect(f.sql_type).toBe('int references "books" (id)');
-    else expect(f.sql_type).toBe('int references "public"."books" (id)');
+    if (db.isSQLite) expect(f.sql_type).toBe('int references "books" ("id")');
+    else expect(f.sql_type).toBe('int references "public"."books" ("id")');
 
     expect(f.is_fkey).toBe(true);
     expect(f.sql_bare_type).toBe("int");

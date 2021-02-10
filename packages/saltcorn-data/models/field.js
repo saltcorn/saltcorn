@@ -382,10 +382,12 @@ class Field {
     if (f.is_fkey) {
       //need to check ref types
       const reftable = await Table.findOne({ name: f.reftable_name });
-      const reffields = await reftable.getFields();
-      const refpk = reffields.find((rf) => rf.primary_key);
-      f.reftype = refpk.type.name;
-      f.refname = refpk.name;
+      if (reftable) {
+        const reffields = await reftable.getFields();
+        const refpk = reffields.find((rf) => rf.primary_key);
+        f.reftype = refpk.type.sql_name;
+        f.refname = refpk.name;
+      }
     }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
