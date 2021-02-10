@@ -507,7 +507,9 @@ class Table {
     }
     await client.query("COMMIT");
     if (!db.isSQLite) await client.release(true);
-    if (db.reset_sequence) await db.reset_sequence(this.name);
+    const pk = fields.find((f) => f.primary_key);
+    if (db.reset_sequence && pk.type.name === "Integer")
+      await db.reset_sequence(this.name);
 
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,

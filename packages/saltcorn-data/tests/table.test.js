@@ -810,6 +810,17 @@ describe("Table with UUID pks", () => {
     const row = await table.getRow({ id: rows[0].id });
     expect(row.name).toBe("Jim");
   });
+  it("should import json", async () => {
+    const json = [{ name: "Alex", id: "750d07fc-943d-4afc-9084-3911bcdbd0f7" }];
+    const fnm = "/tmp/test1.json";
+    await fs.writeFile(fnm, JSON.stringify(json));
+    const table = await Table.findOne({ name: "TableUUID" });
+    expect(!!table).toBe(true);
+    const impres = await table.import_json_file(fnm);
+    expect(impres).toEqual({ success: "Imported 1 rows into table TableUUID" });
+    const rows = await table.getRows();
+    expect(rows.length).toBe(2);
+  });
   it("should be joinable to", async () => {
     const uuidtable1 = await Table.findOne({ name: "TableUUID" });
 

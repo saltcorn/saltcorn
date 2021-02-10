@@ -820,10 +820,9 @@ const readState = (state, fields) => {
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null
-            : strictParseInt(current);
+            : getState().types[f.reftype].read(current);
     }
   });
-  if (typeof state.id !== "undefined") state.id = strictParseInt(state.id);
   return state;
 };
 
