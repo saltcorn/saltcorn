@@ -48,7 +48,7 @@ class Field {
       this.type = "File";
       this.input_type = "file";
       this.reftable_name = "_sc_files";
-      this.reftype = "int";
+      this.reftype = "Integer";
       this.refname = "id";
     } else {
       this.reftable_name =
@@ -59,7 +59,7 @@ class Field {
       this.type = "Key";
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
-      this.reftype = o.reftype || "int";
+      this.reftype = o.reftype || "Integer";
       this.refname = o.refname || "id";
     }
 
@@ -91,6 +91,9 @@ class Field {
       reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required,
+      primary_key: this.primary_key,
+      reftype: this.reftype,
+      refname: this.refname,
     };
   }
 
@@ -168,9 +171,13 @@ class Field {
   get sql_type() {
     if (this.is_fkey) {
       const schema = db.getTenantSchemaPrefix();
-      return `${this.reftype} references ${schema}"${sqlsanitize(
-        this.reftable_name
-      )}" ("${this.refname}")`;
+      const { getState } = require("../db/state");
+
+      return `${
+        getState().types[this.reftype].sql_name
+      } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
+        this.refname
+      }")`;
     } else {
       return this.type.sql_name;
     }
@@ -178,7 +185,9 @@ class Field {
 
   get sql_bare_type() {
     if (this.is_fkey) {
-      return this.reftype;
+      const { getState } = require("../db/state");
+
+      return getState().types[this.reftype].sql_name;
     } else {
       return this.type.sql_name;
     }
@@ -385,7 +394,7 @@ class Field {
       if (reftable) {
         const reffields = await reftable.getFields();
         const refpk = reffields.find((rf) => rf.primary_key);
-        f.reftype = refpk.type.sql_name;
+        f.reftype = refpk.type.name;
         f.refname = refpk.name;
       }
     }
