@@ -465,8 +465,9 @@ class Table {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
-
-    if (db.reset_sequence) await db.reset_sequence(this.name);
+    const pk = fields.find((f) => f.primary_key);
+    if (db.reset_sequence && pk.type.name === "Integer")
+      await db.reset_sequence(this.name);
 
     if (recalc_stored && this.fields.some((f) => f.calculated && f.stored)) {
       recalculate_for_stored(this);
