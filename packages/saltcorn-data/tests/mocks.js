@@ -59,7 +59,7 @@ const plugin_with_routes = {
     {
       name: "UUID",
       sql_name: "uuid",
-      primaryKey: { default_sql: "uuid_generate_v4()" },
+      primaryKey: { default_sql: "public.uuid_generate_v4()" },
       fieldviews: {
         show: { isEdit: false, run: (v) => v || "" },
         editHTML: {
