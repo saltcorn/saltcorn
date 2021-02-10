@@ -794,6 +794,8 @@ describe("Table with row ownership", () => {
 describe("Table with UUID pks", () => {
   it("should select uuid", async () => {
     console.log(db.connectObj);
+    await db.query('create extension if not exists "uuid-ossp";');
+
     const { rows } = await db.query("select uuid_generate_v4();");
     expect(rows.length).toBe(1);
     expect(typeof rows[0].uuid_generate_v4).toBe("string");
