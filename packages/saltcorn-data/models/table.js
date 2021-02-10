@@ -689,7 +689,7 @@ Table.contract = {
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
     updateRow: is.fun([is.obj(), is.any], is.promise(is.eq(undefined))),
-    toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
+    toggleBool: is.fun([is.any, is.str], is.promise(is.eq(undefined))),
     insertRow: is.fun(is.obj(), is.promise(is.any)),
     get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
     distinctValues: is.fun(is.str, is.promise(is.array(is.any))),

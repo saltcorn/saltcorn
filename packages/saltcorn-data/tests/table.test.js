@@ -807,6 +807,9 @@ describe("Table with UUID pks", () => {
     expect(typeof rows1[0].id).toBe("string");
     expect(rows1[0].id).toBe(rows[0].id);
     expect(rows1[0].name).toBe("Jim");
+    const row = await table.getRow({ id: rows[0].id });
+    expect(row.name).toBe("Jim");
+
     await table.delete();
   });
   it("should create and delete table", async () => {
