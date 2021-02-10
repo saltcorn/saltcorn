@@ -809,7 +809,23 @@ describe("Table with UUID pks", () => {
     expect(rows1[0].name).toBe("Jim");
     const row = await table.getRow({ id: rows[0].id });
     expect(row.name).toBe("Jim");
+  });
+  it("should be joinable to", async () => {
+    const table = await Table.create("JoinUUID");
+    const myname = await Field.create({
+      table: table,
+      name: "myname",
+      type: "String",
+    });
+    //db.set_sql_logging();
+    await Field.create({
+      table: table,
+      name: "follows",
+      type: "Key to TableUUID",
+    });
 
+    const uuidtable1 = await Table.findOne({ name: "TableUUID" });
+    await uuidtable1.delete();
     await table.delete();
   });
   it("should create and delete table", async () => {
