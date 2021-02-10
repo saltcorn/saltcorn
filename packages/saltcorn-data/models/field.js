@@ -249,7 +249,15 @@ class Field {
     );
   }
 
-  async alter_sql_type(new_sql_type) {
+  async alter_sql_type(new_field) {
+    let new_sql_type = new_field.sql_type;
+    let def = "";
+    if (new_field.primary_key && new_field.type.primaryKey) {
+      if (new_field.type.primaryKey.sql_type)
+        new_sql_type = new_field.type.primaryKey.sql_type;
+      if (new_field.type.primaryKey.default_sql)
+        def = new_field.type.primaryKey.default_sql;
+    }
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
     await db.query(
@@ -257,7 +265,7 @@ class Field {
         this.table.name
       )}" alter column "${sqlsanitize(
         this.name
-      )}" TYPE ${new_sql_type} USING ("${sqlsanitize(
+      )}" TYPE ${new_sql_type} ${def} USING ("${sqlsanitize(
         this.name
       )}"::${new_sql_type});`
     );
@@ -285,7 +293,7 @@ class Field {
 
     const f = new Field({ ...this, ...v });
     if (f.sql_type !== this.sql_type) {
-      await this.alter_sql_type(f.sql_type);
+      await this.alter_sql_type(f);
     }
 
     await db.update("_sc_fields", v, this.id);
