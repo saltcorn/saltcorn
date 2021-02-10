@@ -6,8 +6,7 @@ const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
-const { rick_file } = require("./mocks");
-const { mockReqRes } = require("./mocks");
+const { rick_file, plugin_with_routes, mockReqRes } = require("./mocks");
 const { findAllWithTableName, runTableTriggers } = require("../models/trigger");
 
 afterAll(db.close);
@@ -766,7 +765,7 @@ describe("Table joint unique constraint", () => {
 describe("Table with row ownership", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
-    await Field.create({
+    const name = await Field.create({
       table: persons,
       name: "name",
       type: "String",
@@ -777,6 +776,21 @@ describe("Table with row ownership", () => {
       type: "Key to users",
     });
     await persons.update({ ownership_field_id: owner.id });
+    await name.update({ type: "Integer" });
     await persons.delete();
+  });
+});
+describe("Table with UUID pks", () => {
+  it("should create and delete table", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    db.set_sql_logging();
+    const table = await Table.create("TableUUID");
+    const [pk] = await table.getFields();
+    await pk.update({ type: "UUID" });
+    table.fields = null;
+    const [pk1] = await table.getFields();
+
+    await pk1.update({ type: "Integer" });
+    await table.delete();
   });
 });
