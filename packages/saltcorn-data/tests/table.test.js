@@ -782,12 +782,14 @@ describe("Table with row ownership", () => {
       type: "Key to users",
     });
     await persons.update({ ownership_field_id: owner.id });
-    await age.update({ type: "Integer" });
-    await name.update({ name: "lastname" });
-    await persons.insertRow({ lastname: "Joe", age: 12 });
-    const row = await persons.getRow({});
-    expect(row.lastname).toBe("Joe");
-    expect(row.age).toBe(12);
+    if (!db.isSQLite) {
+      await age.update({ type: "Integer" });
+      await name.update({ name: "lastname" });
+      await persons.insertRow({ lastname: "Joe", age: 12 });
+      const row = await persons.getRow({});
+      expect(row.lastname).toBe("Joe");
+      expect(row.age).toBe(12);
+    }
     await persons.delete();
   });
 });
