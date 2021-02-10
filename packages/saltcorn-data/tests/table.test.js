@@ -60,6 +60,7 @@ describe("Table create", () => {
   });
   it("should create required field in empty table without default", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
+    expect(!!mytable1).toBe(true);
     await Field.create({
       table: mytable1,
       name: "height1",
@@ -783,7 +784,6 @@ describe("Table with row ownership", () => {
 describe("Table with UUID pks", () => {
   it("should create and delete table", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
-    db.set_sql_logging();
     const table = await Table.create("TableUUID");
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });

@@ -252,23 +252,37 @@ class Field {
   async alter_sql_type(new_field) {
     let new_sql_type = new_field.sql_type;
     let def = "";
-    if (new_field.primary_key && new_field.type.primaryKey) {
-      if (new_field.type.primaryKey.sql_type)
-        new_sql_type = new_field.type.primaryKey.sql_type;
-      if (new_field.type.primaryKey.default_sql)
-        def = new_field.type.primaryKey.default_sql;
-    }
+    let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
+
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    await db.query(
-      `alter table ${schema}"${sqlsanitize(
-        this.table.name
-      )}" alter column "${sqlsanitize(
-        this.name
-      )}" TYPE ${new_sql_type} ${def} USING ("${sqlsanitize(
-        this.name
-      )}"::${new_sql_type});`
-    );
+    if (new_field.primary_key) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop column "${sqlsanitize(this.name)}";`
+      );
+
+      if (new_field.type.primaryKey.sql_type)
+        new_sql_type = new_field.type.primaryKey.sql_type;
+      if (new_field.type.primaryKey.default_sql) {
+        def = `default ${new_field.type.primaryKey.default_sql}`;
+      }
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" add column "${sqlsanitize(
+          this.name
+        )}" ${new_sql_type} primary key ${def};`
+      );
+    } else
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" alter column "${sqlsanitize(
+          this.name
+        )}" TYPE ${new_sql_type} ${using} ${def};`
+      );
   }
 
   async fill_table() {
