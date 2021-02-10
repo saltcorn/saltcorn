@@ -792,6 +792,11 @@ describe("Table with row ownership", () => {
   });
 });
 describe("Table with UUID pks", () => {
+  it("should select uuid", async () => {
+    const { rows } = await db.query("select uuid_generate_v4();");
+    expect(rows.length).toBe(1);
+    expect(typeof rows[0].uuid_generate_v4).toBe("string");
+  });
   it("should create and insert stuff in table", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     const table = await Table.create("TableUUID");
