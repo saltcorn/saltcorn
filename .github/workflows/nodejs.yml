@@ -36,6 +36,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "14.x"
+      - run: psql -c "CREATE EXTENSION \"uuid-ossp\";"
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
       - run: npm install -g lerna
       - run: lerna bootstrap
         env:
