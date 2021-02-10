@@ -43,12 +43,13 @@ class RunTestsCommand extends Command {
     const { args, flags } = this.parse(RunTestsCommand);
     var env;
     const db = require("@saltcorn/data/db");
-
+    const { rows } = await db.query("select uuid_generate_v4();");
+    console.log(rows[0].uuid_generate_v4);
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });
       env = { ...process.env, SQLITE_FILEPATH: testdbpath };
-    } else {
+    } else if (db.connectObj.database !== "saltcorn_test") {
       await db.changeConnection({ database: "saltcorn_test" });
       env = { ...process.env, PGDATABASE: "saltcorn_test" };
     }
