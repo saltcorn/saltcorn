@@ -199,8 +199,15 @@ const install_pack = contract(
       }
     }
     for (const tableSpec of pack.tables) {
-      if (tableSpec.name !== "users")
-        await Table.create(tableSpec.name, tableSpec);
+      if (tableSpec.name !== "users") {
+        const table = await Table.create(tableSpec.name, tableSpec);
+        const [tbl_pk] = await table.getFields();
+        //set pk
+        const pack_pk = tableSpec.fields.find((f) => f.primary_key);
+        if (pack_pk) {
+          await tbl_pk.update(pack_pk);
+        }
+      }
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
