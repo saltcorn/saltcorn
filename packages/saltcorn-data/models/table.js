@@ -688,19 +688,17 @@ Table.contract = {
     getRow: is.fun(is.obj(), is.promise(is.maybe(is.obj()))),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
-    updateRow: is.fun([is.obj(), is.posint], is.promise(is.eq(undefined))),
+    updateRow: is.fun([is.obj(), is.any], is.promise(is.eq(undefined))),
     toggleBool: is.fun([is.posint, is.str], is.promise(is.eq(undefined))),
-    insertRow: is.fun(is.obj(), is.promise(is.posint)),
+    insertRow: is.fun(is.obj(), is.promise(is.any)),
     get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
     distinctValues: is.fun(is.str, is.promise(is.array(is.any))),
     tryInsertRow: is.fun(
       [is.obj(), is.maybe(is.posint)],
-      is.promise(
-        is.or(is.obj({ error: is.str }), is.obj({ success: is.posint }))
-      )
+      is.promise(is.or(is.obj({ error: is.str }), is.obj({ success: is.any })))
     ),
     tryUpdateRow: is.fun(
-      [is.obj(), is.posint, is.maybe(is.posint)],
+      [is.obj(), is.any, is.maybe(is.posint)],
       is.promise(
         is.or(is.obj({ error: is.str }), is.obj({ success: is.eq(true) }))
       )

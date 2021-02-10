@@ -782,15 +782,43 @@ describe("Table with row ownership", () => {
   });
 });
 describe("Table with UUID pks", () => {
-  it("should create and delete table", async () => {
+  it("should create and insert stuff in table", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     const table = await Table.create("TableUUID");
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
+
+    const name = await Field.create({
+      table: table,
+      name: "name",
+      type: "String",
+    });
+    table.fields = null;
+    await table.insertRow({ name: "Sam" });
+    const rows = await table.getRows();
+    expect(rows.length).toBe(1);
+    expect(typeof rows[0].id).toBe("string");
+    expect(rows[0].id.length > 10).toBe(true);
+    expect(rows[0].name).toBe("Sam");
+
+    await table.updateRow({ name: "Jim" }, rows[0].id);
+    const rows1 = await table.getJoinedRows();
+    expect(rows1.length).toBe(1);
+    expect(typeof rows1[0].id).toBe("string");
+    expect(rows1[0].id).toBe(rows[0].id);
+    expect(rows1[0].name).toBe("Jim");
+    await table.delete();
+  });
+  it("should create and delete table", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    const table = await Table.create("TableUUID1");
+    const [pk] = await table.getFields();
+    await pk.update({ type: "UUID" });
+
     table.fields = null;
     const [pk1] = await table.getFields();
-
     await pk1.update({ type: "Integer" });
+
     await table.delete();
   });
 });
