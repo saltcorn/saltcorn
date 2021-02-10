@@ -7,7 +7,7 @@ const { initial_config_all_fields } = require("../plugin-helper");
 const { contract, is } = require("contractis");
 const db = require("../db");
 
-const random_table = async () => {
+const random_table = async (opts = {}) => {
   const name = is
     .and(
       is.sat((s) => db.sqlsanitize(s).length > 2),
@@ -15,7 +15,7 @@ const random_table = async () => {
     )
     .generate();
   const table = await Table.create(name);
-  if (Math.random() < 0.3) {
+  if (Math.random() < 0.3 && !opts.force_int_pk) {
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
     table.fields = null;

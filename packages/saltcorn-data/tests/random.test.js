@@ -132,7 +132,7 @@ describe("Random table CSV io", () => {
         role_id: 1,
       });
       await random_table();
-      const table = await random_table();
+      const table = await random_table({ force_int_pk: true });
       const rows1 = await table.getRows({}, { orderBy: "id" });
       if (rows1.length > 0) {
         const fnm = path.join(dir.path, table.name + ".csv");
