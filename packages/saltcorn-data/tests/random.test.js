@@ -35,7 +35,8 @@ describe("Random tables", () => {
   let fnm;
   let tableCounts = [];
   it("can create with seed " + seed, async () => {
-    await db.query('create extension if not exists "uuid-ossp";');
+    if (!db.isSQLite)
+      await db.query('create extension if not exists "uuid-ossp";');
     let has_rows = false;
     for (let index = 0; index < 20; index++) {
       //db.set_sql_logging(true);

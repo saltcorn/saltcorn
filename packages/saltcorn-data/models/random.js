@@ -15,7 +15,7 @@ const random_table = async (opts = {}) => {
     )
     .generate();
   const table = await Table.create(name);
-  if (Math.random() < 0.3 && !opts.force_int_pk) {
+  if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
     table.fields = null;
