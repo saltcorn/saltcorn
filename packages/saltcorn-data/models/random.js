@@ -15,6 +15,11 @@ const random_table = async () => {
     )
     .generate();
   const table = await Table.create(name);
+  if (Math.random() < 0.3) {
+    const [pk] = await table.getFields();
+    await pk.update({ type: "UUID" });
+    table.fields = null;
+  }
   //fields
   const nfields = is.integer({ gte: 2, lte: 10 }).generate();
   const existing_field_names = ["id"];

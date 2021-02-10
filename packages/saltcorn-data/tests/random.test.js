@@ -15,7 +15,7 @@ const {
   create_csv_from_rows,
 } = require("../models/backup");
 const reset = require("../db/reset_schema");
-const { mockReqRes } = require("./mocks");
+const { mockReqRes, plugin_with_routes } = require("./mocks");
 const Table = require("../models/table");
 const tmp = require("tmp-promise");
 const path = require("path");
@@ -27,6 +27,7 @@ afterAll(db.close);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+  getState().registerPlugin("mock_plugin", plugin_with_routes);
 });
 const seed = set_seed();
 const one_of = (xs) => is.one_of(xs).generate();
