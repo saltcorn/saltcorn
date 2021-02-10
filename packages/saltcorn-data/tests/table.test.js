@@ -824,9 +824,10 @@ describe("Table with UUID pks", () => {
       type: "Key to TableUUID",
     });
 
+    await table.delete();
+
     const uuidtable1 = await Table.findOne({ name: "TableUUID" });
     await uuidtable1.delete();
-    await table.delete();
   });
   it("should create and delete table", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);

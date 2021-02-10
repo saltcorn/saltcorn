@@ -48,6 +48,8 @@ class Field {
       this.type = "File";
       this.input_type = "file";
       this.reftable_name = "_sc_files";
+      this.reftype = "int";
+      this.refname = "id";
     } else {
       this.reftable_name =
         o.reftable_name ||
@@ -57,6 +59,8 @@ class Field {
       this.type = "Key";
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
+      this.reftype = o.reftype || "int";
+      this.refname = o.refname || "id";
     }
 
     this.attributes =
@@ -164,9 +168,9 @@ class Field {
   get sql_type() {
     if (this.is_fkey) {
       const schema = db.getTenantSchemaPrefix();
-      return `int references ${schema}"${sqlsanitize(
+      return `${this.reftype} references ${schema}"${sqlsanitize(
         this.reftable_name
-      )}" (id)`;
+      )}" ("${this.refname}")`;
     } else {
       return this.type.sql_name;
     }
@@ -174,7 +178,7 @@ class Field {
 
   get sql_bare_type() {
     if (this.is_fkey) {
-      return `int`;
+      return this.reftype;
     } else {
       return this.type.sql_name;
     }
@@ -375,6 +379,14 @@ class Field {
     const is_sqlite = db.isSQLite;
     //const tables = await Table.find();
     //console.log({ tables, fld });
+    if (f.is_fkey) {
+      //need to check ref types
+      const reftable = await Table.findOne({ name: f.reftable_name });
+      const reffields = await reftable.getFields();
+      const refpk = reffields.find((rf) => rf.primary_key);
+      f.reftype = refpk.type.name;
+      f.refname = refpk.name;
+    }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
     const table = await Table.findOne({ id: f.table_id });
@@ -421,6 +433,8 @@ class Field {
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
+      reftype: f.is_fkey ? f.reftype : undefined,
+      refname: f.is_fkey ? f.refname : undefined,
       required: f.required,
       is_unique: f.is_unique,
       attributes: f.attributes,
