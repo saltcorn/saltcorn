@@ -148,7 +148,7 @@ const uninstall_pack = contract(
       if (table) {
         const fields = await table.getFields();
         for (const field of fields) {
-          await field.delete();
+          if (field.is_fkey) await field.delete();
         }
         const triggers = await Trigger.find({ table_id: table.id });
         for (const trigger of triggers) {

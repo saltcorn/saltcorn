@@ -42,7 +42,6 @@ const configuration_workflow = (req) =>
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
-          fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
 
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
@@ -336,8 +335,7 @@ const render = (
     field({ field_name, fieldview, configuration }) {
       const val = row[field_name];
       let field = fields.find((fld) => fld.name === field_name);
-      if (!field && field_name === "id")
-        field = new Field({ name: "id", label: "id", type: "Integer" });
+
       if (!field) return "";
       if (fieldview && field.type === "File") {
         return val

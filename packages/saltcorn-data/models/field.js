@@ -32,6 +32,7 @@ class Field {
     this.hidden = o.hidden || false;
     this.disabled = !!o.disabled;
     this.calculated = !!o.calculated;
+    this.primary_key = !!o.primary_key;
     this.stored = !!o.stored;
     this.expression = o.expression;
     this.sourceURL = o.sourceURL;

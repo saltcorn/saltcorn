@@ -149,7 +149,11 @@ router.post(
             }
           });
           fields.forEach((field) => {
-            if (field.required && typeof row[field.name] === "undefined") {
+            if (
+              field.required &&
+              !field.primary_key &&
+              typeof row[field.name] === "undefined"
+            ) {
               hasErrors = true;
               errors.push(`${field.name}: required`);
             }

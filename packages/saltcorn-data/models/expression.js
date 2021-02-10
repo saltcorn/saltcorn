@@ -38,7 +38,7 @@ function transform_for_async(expression, statefuns) {
 }
 
 function get_expression_function(expression, fields) {
-  const args = `{${["id", ...fields.map((f) => f.name)].join()}}`;
+  const args = `{${fields.map((f) => f.name).join()}}`;
   const { getState } = require("../db/state");
   return vm.runInNewContext(
     `(${args})=>(${expression})`,

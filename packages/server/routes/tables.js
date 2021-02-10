@@ -213,6 +213,7 @@ const badge = (col, lbl) =>
   `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
 const typeBadges = (f, req) => {
   let s = "";
+  if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
   if (f.is_unique) s += badge("success", req.__("Unique"));
   if (f.calculated) s += badge("info", req.__("Calculated"));
@@ -296,7 +297,7 @@ router.get(
           {
             label: req.__("Delete"),
             key: (r) =>
-              table.name === "users" && r.name === "email"
+              (table.name === "users" && r.name === "email") || r.primary_key
                 ? ""
                 : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
           },

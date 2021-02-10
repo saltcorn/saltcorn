@@ -88,7 +88,10 @@ const configuration_workflow = (req) =>
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           return fields.some(
-            (f) => !in_form_fields.includes(f.name) && !f.calculated
+            (f) =>
+              !in_form_fields.includes(f.name) &&
+              !f.calculated &&
+              !f.primary_key
           );
         },
         form: async (context) => {
@@ -96,7 +99,10 @@ const configuration_workflow = (req) =>
           const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
-            (f) => !in_form_fields.includes(f.name) && !f.calculated
+            (f) =>
+              !in_form_fields.includes(f.name) &&
+              !f.calculated &&
+              !f.primary_key
           );
           var formFields = [];
           omitted_fields.forEach((f) => {

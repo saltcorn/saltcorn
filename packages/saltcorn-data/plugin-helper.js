@@ -139,7 +139,6 @@ const field_picker_fields = contract(
   async ({ table, viewname, req }) => {
     const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
-    fields.push(new Field({ name: "id", label: "id", type: "Integer" }));
 
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
 
@@ -676,8 +675,7 @@ const stateFieldsToWhere = contract(
         qstate[k] = { ilike: v };
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
-      } else if (k === "id") qstate[k] = strictParseInt(v);
-      else if (field && field.type && field.type.read)
+      } else if (field && field.type && field.type.read)
         qstate[k] = field.type.read(v);
       else if (field) qstate[k] = v;
       else if (k.includes(".")) {
@@ -714,7 +712,7 @@ const initial_config_all_fields = contract(
     const table = await Table.findOne({ id: table_id });
 
     const fields = (await table.getFields()).filter(
-      (f) => !isEdit || !f.calculated
+      (f) => !f.primary_key && (!isEdit || !f.calculated)
     );
     var cfg = { columns: [] };
     var aboves = [null];
@@ -852,7 +850,7 @@ const readStateStrict = (state, fields) => {
           current === "null" || current === "" || current === null
             ? null
             : +current;
-    } else if (f.required) hasErrors = true;
+    } else if (f.required && !f.primary_key) hasErrors = true;
   });
   return hasErrors ? false : state;
 };

@@ -32,7 +32,7 @@ describe("TableIO", () => {
     expect(fs.table_id > 0).toBe(true);
     expect(fs.id > 0).toBe(true);
     const fields = await tc.getFields();
-    expect(fields[0].attributes).toStrictEqual({ max: 18 });
+    expect(fields[1].attributes).toStrictEqual({ max: 18 });
   });
 });
 describe("Table create", () => {
@@ -409,7 +409,7 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice1", fnm);
-    expect(res.table.fields.length).toEqual(3);
+    expect(res.table.fields.length).toEqual(4); //and id
   });
   it("should fail non-int id", async () => {
     const csv = `id,cost,!, vatable
@@ -444,7 +444,7 @@ Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await fs.writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice3", fnm);
-    expect(res.table.fields.length).toEqual(3);
+    expect(res.table.fields.length).toEqual(4); // incl id
     const table = await Table.findOne({ name: "Invoice3" });
     const rows = await table.getRows();
     expect(rows.length).toBe(2);
@@ -610,7 +610,7 @@ describe("Table with users and files", () => {
     });
     await table.insertRow({ name: "Rocket", owner: 1, mugshot: rick.id });
     const rels = await table.get_parent_relations();
-    expect(rels.parent_field_list).toEqual(["owner.email"]);
+    expect(rels.parent_field_list).toEqual(["owner.email", "owner.id"]);
     const joined = await table.getJoinedRows();
     // expect(joined).toEqual("rick.png")
     expect(joined[0].mugshot__filename).toEqual("rick.png");

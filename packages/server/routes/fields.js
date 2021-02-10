@@ -36,8 +36,6 @@ const fieldForm = (req, fkey_opts, existing_names, id, hasData) =>
         input_type: "text",
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
-          if (s.toLowerCase() === "id")
-            return req.__("Column %s already exists (but is hidden)", s);
           if (!id && existing_names.includes(Field.labelToName(s)))
             return req.__("Column %s already exists", s);
         },

@@ -54,6 +54,9 @@ const migrate = async (schema0) => {
       if (contents.sql_sqlite && is_sqlite) {
         await execMany(contents.sql_sqlite);
       }
+      if (contents.js) {
+        await contents.js();
+      }
       await db.insert("_sc_migrations", { migration: name }, true);
     }
   }
