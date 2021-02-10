@@ -811,8 +811,10 @@ describe("Table with UUID pks", () => {
     expect(row.name).toBe("Jim");
   });
   it("should be joinable to", async () => {
+    const uuidtable1 = await Table.findOne({ name: "TableUUID" });
+
     const table = await Table.create("JoinUUID");
-    const myname = await Field.create({
+    await Field.create({
       table: table,
       name: "myname",
       type: "String",
@@ -823,10 +825,21 @@ describe("Table with UUID pks", () => {
       name: "follows",
       type: "Key to TableUUID",
     });
+    const refrows = await uuidtable1.getRows({});
+
+    table.insertRow({ myname: "Fred", follows: refrows[0].id });
+    const rows = await table.getJoinedRows({
+      where: {},
+      joinFields: {
+        leader: { ref: "follows", target: "name" },
+      },
+    });
+    expect(rows.length).toBe(1);
+    expect(rows[0].leader).toBe("Jim");
+    expect(rows[0].myname).toBe("Fred");
 
     await table.delete();
 
-    const uuidtable1 = await Table.findOne({ name: "TableUUID" });
     await uuidtable1.delete();
   });
   it("should create and delete table", async () => {
