@@ -20,8 +20,18 @@ const { readState } = require("@saltcorn/data/plugin-helper");
 const router = new Router();
 module.exports = router;
 
-const fieldForm = (req, fkey_opts, existing_names, id, hasData) =>
-  new Form({
+const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
+  let isPrimary = false;
+  let primaryTypes = Object.entries(getState().types)
+    .filter(([k, v]) => v.primaryKey)
+    .map(([k, v]) => k);
+  if (id) {
+    const field = await Field.findOne({ id });
+    if (field) {
+      isPrimary = !!field.primary_key;
+    }
+  }
+  return new Form({
     action: "/field",
     validator: (vs) => {
       if (vs.calculated && vs.type == "File")
@@ -44,7 +54,9 @@ const fieldForm = (req, fkey_opts, existing_names, id, hasData) =>
         label: req.__("Type"),
         name: "type",
         input_type: "select",
-        options: getState().type_names.concat(fkey_opts || []),
+        options: isPrimary
+          ? primaryTypes
+          : getState().type_names.concat(fkey_opts || []),
         disabled:
           !!id &&
           !getState().getConfig("development_mode", false) &&
@@ -79,7 +91,7 @@ const fieldForm = (req, fkey_opts, existing_names, id, hasData) =>
       }),
     ],
   });
-
+};
 const calcFieldType = (ctxType) =>
   ctxType.startsWith("Key to")
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
@@ -172,7 +184,7 @@ const fieldFlow = (req) =>
           const existing_fields = await table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
           const fkey_opts = [...tables.map((t) => `Key to ${t.name}`), "File"];
-          const form = fieldForm(
+          const form = await fieldForm(
             req,
             fkey_opts,
             existingNames,
