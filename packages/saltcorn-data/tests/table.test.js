@@ -793,6 +793,7 @@ describe("Table with row ownership", () => {
 });
 describe("Table with UUID pks", () => {
   it("should select uuid", async () => {
+    console.log(db.connectObj);
     const { rows } = await db.query("select uuid_generate_v4();");
     expect(rows.length).toBe(1);
     expect(typeof rows[0].uuid_generate_v4).toBe("string");
