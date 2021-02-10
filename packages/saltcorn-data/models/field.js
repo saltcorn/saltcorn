@@ -322,6 +322,15 @@ class Field {
     if (f.sql_type !== this.sql_type) {
       await this.alter_sql_type(f);
     }
+    if (f.name !== this.name) {
+      const schema = db.getTenantSchemaPrefix();
+
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
+      );
+    }
 
     await db.update("_sc_fields", v, this.id);
     Object.entries(v).forEach(([k, v]) => {

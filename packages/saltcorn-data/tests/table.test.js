@@ -771,13 +771,23 @@ describe("Table with row ownership", () => {
       name: "name",
       type: "String",
     });
+    const age = await Field.create({
+      table: persons,
+      name: "age",
+      type: "String",
+    });
     const owner = await Field.create({
       table: persons,
       name: "owner",
       type: "Key to users",
     });
     await persons.update({ ownership_field_id: owner.id });
-    await name.update({ type: "Integer" });
+    await age.update({ type: "Integer" });
+    await name.update({ name: "lastname" });
+    await persons.insertRow({ lastname: "Joe", age: 12 });
+    const row = await persons.getRow({});
+    expect(row.lastname).toBe("Joe");
+    expect(row.age).toBe(12);
     await persons.delete();
   });
 });
