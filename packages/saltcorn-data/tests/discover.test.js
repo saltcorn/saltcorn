@@ -31,7 +31,7 @@ describe("Table Discovery", () => {
       "discperson",
     ]);
   });
-  it("should make pack", async () => {
+  it("should make simple pack", async () => {
     const pack = await discover_tables(["discperson"]);
     expect(pack).toStrictEqual({
       tables: [
@@ -53,9 +53,8 @@ describe("Table Discovery", () => {
         },
       ],
     });
-    await implement_discovery(pack);
   });
-  it("should make pack with fkey", async () => {
+  it("should make and implement pack with fkey", async () => {
     const pack = await discover_tables(["discperson", "discdog"]);
     expect(pack).toStrictEqual({
       tables: [
@@ -85,7 +84,15 @@ describe("Table Discovery", () => {
               primary_key: true,
             },
             { label: "name", name: "name", required: false, type: "String" },
-            { label: "owner", name: "owner", required: false, type: "Integer" },
+            {
+              label: "owner",
+              name: "owner",
+              required: false,
+              refname: "id",
+              reftable_name: "discperson",
+              reftype: "Integer",
+              type: "Key",
+            },
           ],
           name: "discdog",
           min_role_read: 1,
@@ -93,6 +100,6 @@ describe("Table Discovery", () => {
         },
       ],
     });
-    //await implement_discovery(pack);
+    await implement_discovery(pack);
   });
 });
