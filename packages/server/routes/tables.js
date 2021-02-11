@@ -39,6 +39,7 @@ const fs = require("fs").promises;
 const {
   discoverable_tables,
   discover_tables,
+  implement_discovery,
 } = require("@saltcorn/data/models/discovery");
 
 const router = new Router();
@@ -167,7 +168,12 @@ router.post(
     const tableNames = tbls
       .filter((t) => form.values[t.table_name])
       .map((t) => t.table_name);
-    await discover_tables(tableNames);
+    const pack = await discover_tables(tableNames);
+    await implement_discovery(pack);
+    req.flash(
+      "success",
+      req.__("Discovered tables: %s", tableNames.join(", "))
+    );
     res.redirect("/table");
   })
 );
