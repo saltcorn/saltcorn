@@ -1,6 +1,7 @@
 const File = require("../models/file");
 const fs = require("fs").promises;
 const Workflow = require("../models/workflow");
+const db = require("../db");
 const { input } = require("@saltcorn/markup/tags");
 
 const rick_file = async () => {
@@ -55,6 +56,10 @@ const resetActionCounter = () => {
 };
 const plugin_with_routes = {
   sc_plugin_api_version: 1,
+  onLoad: async () => {
+    if (!db.isSQLite)
+      await db.query('create extension if not exists "uuid-ossp";');
+  },
   types: [
     {
       name: "UUID",
