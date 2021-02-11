@@ -221,6 +221,7 @@ const int = {
       case "number":
         return Math.round(v);
       case "string":
+        if (v === "") return undefined;
         const parsed = +v;
         return isNaN(parsed) ? undefined : parsed;
       default:
