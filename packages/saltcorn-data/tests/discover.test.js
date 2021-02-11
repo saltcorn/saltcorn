@@ -21,4 +21,25 @@ describe("Table Discovery", () => {
     const tbls = await discoverable_tables();
     expect(tbls.map((t) => t.table_name)).toStrictEqual(["discperson"]);
   });
+  it("should make pack", async () => {
+    const pack = await discover_tables(["discperson"]);
+    expect(pack).toStrictEqual({
+      tables: [
+        {
+          fields: [
+            {
+              label: "id",
+              name: "id",
+              required: true,
+              type: "Integer",
+              primary_key: true,
+            },
+            { label: "name", name: "name", required: false, type: "String" },
+            { label: "age", name: "age", required: true, type: "Integer" },
+          ],
+          name: "discperson",
+        },
+      ],
+    });
+  });
 });
