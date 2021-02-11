@@ -1,4 +1,8 @@
-const { discoverable_tables, discover_tables } = require("../models/discovery");
+const {
+  discoverable_tables,
+  discover_tables,
+  implement_discovery,
+} = require("../models/discovery");
 const { getState } = require("../db/state");
 const db = require("../db");
 
@@ -38,8 +42,11 @@ describe("Table Discovery", () => {
             { label: "age", name: "age", required: true, type: "Integer" },
           ],
           name: "discperson",
+          min_role_read: 1,
+          min_role_write: 1,
         },
       ],
     });
+    await implement_discovery(pack);
   });
 });

@@ -1,5 +1,6 @@
 const db = require("../db");
 const { getState } = require("../db/state");
+const { available_languages } = require("./config");
 const Table = require("./table");
 
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
@@ -50,7 +51,7 @@ const discover_tables = async (tableNames, schema0) => {
         required: c.is_nullable === "NO",
       }))
       .filter((f) => f.type);
-    packTables.push({ name: tnm, fields });
+    packTables.push({ name: tnm, fields, min_role_read: 1, min_role_write: 1 });
     const pkq = await db.query(
       `SELECT c.column_name
       FROM information_schema.table_constraints tc 
@@ -66,4 +67,17 @@ const discover_tables = async (tableNames, schema0) => {
     return { tables: packTables };
   }
 };
-module.exports = { discoverable_tables, discover_tables };
+
+const implement_discovery = async (pack) => {
+  for (const table of pack.tables) {
+    const { fields, ...tblRow } = table;
+    const id = await db.insert("_sc_tables", tblRow);
+    table.id = id;
+  }
+  for (const table of pack.tables) {
+    for (const field of table.fields) {
+      await db.insert("_sc_fields", { ...field, table_id: table.id });
+    }
+  }
+};
+module.exports = { discoverable_tables, discover_tables, implement_discovery };
