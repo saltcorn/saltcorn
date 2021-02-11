@@ -36,6 +36,7 @@ const {
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
+const { discoverable_tables } = require("@saltcorn/data/models/discovery");
 
 const router = new Router();
 module.exports = router;
@@ -126,6 +127,17 @@ router.get(
         },
       ],
     });
+  })
+);
+
+router.get(
+  "/discover",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tbls = await discoverable_tables();
+    console.log(tbls);
+    res.sendWrap(req.__("Discover tables"), "Nothing to see here");
   })
 );
 
@@ -599,10 +611,20 @@ router.get(
             p(req.__("Tables hold collections of similar data"))
           );
     const createCard = div(
-      a({ href: `/table/new`, class: "btn btn-primary" }, req.__("New table")),
       a(
-        { href: `/table/create-from-csv`, class: "btn btn-secondary mx-3" },
+        { href: `/table/new`, class: "btn btn-primary" },
+        i({ class: "fas fa-plus-square mr-1" }),
+        req.__("New table")
+      ),
+      a(
+        { href: `/table/create-from-csv`, class: "btn btn-secondary ml-3" },
+        i({ class: "fas fa-upload mr-1" }),
         req.__("Create from CSV upload")
+      ),
+      a(
+        { href: `/table/discover`, class: "btn btn-secondary ml-3" },
+        i({ class: "fas fa-map-signs mr-1" }),
+        req.__("Discover tables")
       )
     );
     res.sendWrap(req.__("Tables"), {
