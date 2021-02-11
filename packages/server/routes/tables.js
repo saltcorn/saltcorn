@@ -36,7 +36,10 @@ const {
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
-const { discoverable_tables } = require("@saltcorn/data/models/discovery");
+const {
+  discoverable_tables,
+  discover_tables,
+} = require("@saltcorn/data/models/discovery");
 
 const router = new Router();
 module.exports = router;
@@ -130,17 +133,44 @@ router.get(
   })
 );
 
+const discoverForm = (tables) => {
+  return new Form({
+    action: "/table/discover",
+    fields: tables.map((t) => ({
+      name: t.table_name,
+      label: t.table_name,
+      type: "Bool",
+    })),
+  });
+};
+
 router.get(
   "/discover",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
-    console.log(tbls);
-    res.sendWrap(req.__("Discover tables"), "Nothing to see here");
+
+    const form = discoverForm(tbls);
+    res.sendWrap(req.__("Discover tables"), renderForm(form, req.csrfToken()));
   })
 );
 
+router.post(
+  "/discover",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tbls = await discoverable_tables();
+    const form = discoverForm(tbls);
+    form.validate(req.body);
+    const tableNames = tbls
+      .filter((t) => form.values[t.table_name])
+      .map((t) => t.table_name);
+    await discover_tables(tableNames);
+    res.redirect("/table");
+  })
+);
 router.get(
   "/create-from-csv",
   setTenant,
