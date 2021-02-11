@@ -35,6 +35,7 @@ const findType = (sql_name) => {
 const discover_tables = async (tableNames, schema0) => {
   const schema = schema0 || db.getTenantSchema();
   const packTables = [];
+
   for (const tnm of tableNames) {
     const {
       rows,
@@ -42,7 +43,6 @@ const discover_tables = async (tableNames, schema0) => {
       "select * from information_schema.columns where table_schema=$1 and table_name=$2",
       [schema, tnm]
     );
-    //console.log(rows);
     const fields = rows
       .map((c) => ({
         name: c.column_name,
@@ -64,8 +64,8 @@ const discover_tables = async (tableNames, schema0) => {
     pkq.rows.forEach(({ column_name }) => {
       fields.find((f) => f.name === column_name).primary_key = true;
     });
-    return { tables: packTables };
   }
+  return { tables: packTables };
 };
 
 const implement_discovery = async (pack) => {
