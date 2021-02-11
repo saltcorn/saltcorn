@@ -7,7 +7,6 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file, plugin_with_routes, mockReqRes } = require("./mocks");
-const { findAllWithTableName, runTableTriggers } = require("../models/trigger");
 
 afterAll(db.close);
 beforeAll(async () => {
