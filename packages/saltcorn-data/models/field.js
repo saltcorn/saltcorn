@@ -2,10 +2,14 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
-const readKey = (v) => {
+
+const readKey = (v, field) => {
   if (v === "") return null;
-  const parsed = +v;
-  return !isNaN(parsed) ? parsed : v ? { error: "Unable to read key" } : null;
+  const { getState } = require("../db/state");
+
+  const type = getState().types[field.reftype];
+  const parsed = type.read(v);
+  return parsed || (v ? { error: "Unable to read key" } : null);
 };
 
 class Field {
@@ -210,7 +214,7 @@ class Field {
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval = this.is_fkey
-      ? readKey(whole_rec[this.form_name])
+      ? readKey(whole_rec[this.form_name], this)
       : !type || !type.read
       ? whole_rec[this.form_name]
       : type.readFromFormRecord
