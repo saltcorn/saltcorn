@@ -651,11 +651,12 @@ router.get(
         i({ class: "fas fa-upload mr-1" }),
         req.__("Create from CSV upload")
       ),
-      a(
-        { href: `/table/discover`, class: "btn btn-secondary ml-3" },
-        i({ class: "fas fa-map-signs mr-1" }),
-        req.__("Discover tables")
-      )
+      !db.isSQLite &&
+        a(
+          { href: `/table/discover`, class: "btn btn-secondary ml-3" },
+          i({ class: "fas fa-map-signs mr-1" }),
+          req.__("Discover tables")
+        )
     );
     res.sendWrap(req.__("Tables"), {
       above: [
