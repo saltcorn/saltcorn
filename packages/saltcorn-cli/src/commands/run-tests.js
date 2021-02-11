@@ -48,7 +48,7 @@ class RunTestsCommand extends Command {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });
       env = { ...process.env, SQLITE_FILEPATH: testdbpath };
-    } else {
+    } else if (db.connectObj.database !== "saltcorn_test") {
       await db.changeConnection({ database: "saltcorn_test" });
       env = { ...process.env, PGDATABASE: "saltcorn_test" };
     }

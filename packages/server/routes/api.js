@@ -136,7 +136,7 @@ router.post(
           let hasErrors = false;
           Object.keys(row).forEach((k) => {
             const field = fields.find((f) => f.name === k);
-            if (!field || field.calculated) {
+            if (!field || field.calculated || row[k] === undefined) {
               delete row[k];
               return;
             }
@@ -221,7 +221,7 @@ router.post(
           }
           const ins_res = await table.tryUpdateRow(
             row,
-            +id,
+            id,
             req.user ? +req.user.id : undefined
           );
 

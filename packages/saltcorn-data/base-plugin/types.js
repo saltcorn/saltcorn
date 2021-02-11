@@ -190,6 +190,7 @@ const int = {
   name: "Integer",
   sql_name: "int",
   contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
+  primaryKey: { sql_type: "serial" },
   fieldviews: {
     show: { isEdit: false, run: (s) => text(s) },
     edit: {
@@ -220,7 +221,8 @@ const int = {
       case "number":
         return Math.round(v);
       case "string":
-        const parsed = parseInt(v);
+        if (v === "") return undefined;
+        const parsed = +v;
         return isNaN(parsed) ? undefined : parsed;
       default:
         return undefined;

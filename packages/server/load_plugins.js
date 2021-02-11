@@ -69,7 +69,14 @@ const loadAllPlugins = async () => {
   await getState().refresh();
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
-    await loadPlugin(plugin);
+    try {
+      const res = await loadPlugin(plugin);
+      if (res.plugin_module.onLoad) {
+        await res.plugin_module.onLoad();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
   await getState().refresh();
 };

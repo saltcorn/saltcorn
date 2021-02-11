@@ -2,7 +2,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
   var url = "/api/" + table_name + "/";
   var fixKeys = function (item) {
     keyfields.forEach((kf) => {
-      item[kf] = +item[kf];
+      if (kf.type === "Integer") item[kf.name] = +item[kf.name];
     });
     return item;
   };

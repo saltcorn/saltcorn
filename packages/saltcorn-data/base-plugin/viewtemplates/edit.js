@@ -286,7 +286,8 @@ const runPost = async (
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;
-    var id = strictParseInt(body.id);
+    const pk = fields.find((f) => f.primary_key);
+    let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
       const use_fixed = await fill_presets(table, req, fixed);
       row = { ...use_fixed, ...form.values };

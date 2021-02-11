@@ -15,7 +15,7 @@ const {
   create_csv_from_rows,
 } = require("../models/backup");
 const reset = require("../db/reset_schema");
-const { mockReqRes } = require("./mocks");
+const { mockReqRes, plugin_with_routes } = require("./mocks");
 const Table = require("../models/table");
 const tmp = require("tmp-promise");
 const path = require("path");
@@ -27,6 +27,7 @@ afterAll(db.close);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+  getState().registerPlugin("mock_plugin", plugin_with_routes);
 });
 const seed = set_seed();
 const one_of = (xs) => is.one_of(xs).generate();
@@ -34,6 +35,8 @@ describe("Random tables", () => {
   let fnm;
   let tableCounts = [];
   it("can create with seed " + seed, async () => {
+    if (!db.isSQLite)
+      await db.query('create extension if not exists "uuid-ossp";');
     let has_rows = false;
     for (let index = 0; index < 20; index++) {
       //db.set_sql_logging(true);
@@ -100,6 +103,8 @@ describe("Random tables", () => {
   });
   it("can restore random tables with seed " + seed, async () => {
     await reset();
+    if (!db.isSQLite)
+      await db.query('create extension if not exists "uuid-ossp";');
     await User.create({
       email: "admin@foo.com",
       password: "AhGGr6rhu45",
@@ -125,13 +130,15 @@ describe("Random table CSV io", () => {
     for (let index = 0; index < 20; index++) {
       const dir = await tmp.dir({ unsafeCleanup: false });
       await reset();
+      if (!db.isSQLite)
+        await db.query('create extension if not exists "uuid-ossp";');
       await User.create({
         email: "admin@foo.com",
         password: "AhGGr6rhu45",
         role_id: 1,
       });
       await random_table();
-      const table = await random_table();
+      const table = await random_table({ force_int_pk: true });
       const rows1 = await table.getRows({}, { orderBy: "id" });
       if (rows1.length > 0) {
         const fnm = path.join(dir.path, table.name + ".csv");

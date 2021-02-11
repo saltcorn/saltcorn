@@ -2,10 +2,14 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
-const readKey = (v) => {
+
+const readKey = (v, field) => {
   if (v === "") return null;
-  const parsed = +v;
-  return !isNaN(parsed) ? parsed : v ? { error: "Unable to read key" } : null;
+  const { getState } = require("../db/state");
+
+  const type = getState().types[field.reftype];
+  const parsed = type.read(v);
+  return parsed || (v ? { error: "Unable to read key" } : null);
 };
 
 class Field {
@@ -48,6 +52,8 @@ class Field {
       this.type = "File";
       this.input_type = "file";
       this.reftable_name = "_sc_files";
+      this.reftype = "Integer";
+      this.refname = "id";
     } else {
       this.reftable_name =
         o.reftable_name ||
@@ -57,6 +63,8 @@ class Field {
       this.type = "Key";
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
+      this.reftype = o.reftype || "Integer";
+      this.refname = o.refname || "id";
     }
 
     this.attributes =
@@ -87,6 +95,9 @@ class Field {
       reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required,
+      primary_key: this.primary_key,
+      reftype: this.reftype,
+      refname: this.refname,
     };
   }
 
@@ -164,9 +175,13 @@ class Field {
   get sql_type() {
     if (this.is_fkey) {
       const schema = db.getTenantSchemaPrefix();
-      return `int references ${schema}"${sqlsanitize(
-        this.reftable_name
-      )}" (id)`;
+      const { getState } = require("../db/state");
+
+      return `${
+        getState().types[this.reftype].sql_name
+      } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
+        this.refname
+      }")`;
     } else {
       return this.type.sql_name;
     }
@@ -174,7 +189,9 @@ class Field {
 
   get sql_bare_type() {
     if (this.is_fkey) {
-      return `int`;
+      const { getState } = require("../db/state");
+
+      return getState().types[this.reftype].sql_name;
     } else {
       return this.type.sql_name;
     }
@@ -197,7 +214,7 @@ class Field {
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval = this.is_fkey
-      ? readKey(whole_rec[this.form_name])
+      ? readKey(whole_rec[this.form_name], this)
       : !type || !type.read
       ? whole_rec[this.form_name]
       : type.readFromFormRecord
@@ -249,18 +266,40 @@ class Field {
     );
   }
 
-  async alter_sql_type(new_sql_type) {
+  async alter_sql_type(new_field) {
+    let new_sql_type = new_field.sql_type;
+    let def = "";
+    let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
+
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
-    await db.query(
-      `alter table ${schema}"${sqlsanitize(
-        this.table.name
-      )}" alter column "${sqlsanitize(
-        this.name
-      )}" TYPE ${new_sql_type} USING ("${sqlsanitize(
-        this.name
-      )}"::${new_sql_type});`
-    );
+    if (new_field.primary_key) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop column "${sqlsanitize(this.name)}";`
+      );
+
+      if (new_field.type.primaryKey.sql_type)
+        new_sql_type = new_field.type.primaryKey.sql_type;
+      if (new_field.type.primaryKey.default_sql) {
+        def = `default ${new_field.type.primaryKey.default_sql}`;
+      }
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" add column "${sqlsanitize(
+          this.name
+        )}" ${new_sql_type} primary key ${def};`
+      );
+    } else
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" alter column "${sqlsanitize(
+          this.name
+        )}" TYPE ${new_sql_type} ${using} ${def};`
+      );
   }
 
   async fill_table() {
@@ -285,7 +324,16 @@ class Field {
 
     const f = new Field({ ...this, ...v });
     if (f.sql_type !== this.sql_type) {
-      await this.alter_sql_type(f.sql_type);
+      await this.alter_sql_type(f);
+    }
+    if (f.name !== this.name) {
+      const schema = db.getTenantSchemaPrefix();
+
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
+      );
     }
 
     await db.update("_sc_fields", v, this.id);
@@ -353,6 +401,16 @@ class Field {
     const is_sqlite = db.isSQLite;
     //const tables = await Table.find();
     //console.log({ tables, fld });
+    if (f.is_fkey) {
+      //need to check ref types
+      const reftable = await Table.findOne({ name: f.reftable_name });
+      if (reftable) {
+        const reffields = await reftable.getFields();
+        const refpk = reffields.find((rf) => rf.primary_key);
+        f.reftype = refpk.type.name;
+        f.refname = refpk.name;
+      }
+    }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
     const table = await Table.findOne({ id: f.table_id });
@@ -399,6 +457,8 @@ class Field {
       label: f.label,
       type: f.is_fkey ? f.type : f.type.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
+      reftype: f.is_fkey ? f.reftype : undefined,
+      refname: f.is_fkey ? f.refname : undefined,
       required: f.required,
       is_unique: f.is_unique,
       attributes: f.attributes,

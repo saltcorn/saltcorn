@@ -6,8 +6,7 @@ const db = require("../db");
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
-const { rick_file } = require("./mocks");
-const { mockReqRes } = require("./mocks");
+const { rick_file, plugin_with_routes, mockReqRes } = require("./mocks");
 const { findAllWithTableName, runTableTriggers } = require("../models/trigger");
 
 afterAll(db.close);
@@ -61,6 +60,7 @@ describe("Table create", () => {
   });
   it("should create required field in empty table without default", async () => {
     const mytable1 = await Table.findOne({ name: "mytable1" });
+    expect(!!mytable1).toBe(true);
     await Field.create({
       table: mytable1,
       name: "height1",
@@ -766,9 +766,14 @@ describe("Table joint unique constraint", () => {
 describe("Table with row ownership", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
-    await Field.create({
+    const name = await Field.create({
       table: persons,
       name: "name",
+      type: "String",
+    });
+    const age = await Field.create({
+      table: persons,
+      name: "age",
       type: "String",
     });
     const owner = await Field.create({
@@ -777,6 +782,112 @@ describe("Table with row ownership", () => {
       type: "Key to users",
     });
     await persons.update({ ownership_field_id: owner.id });
+    if (!db.isSQLite) {
+      await age.update({ type: "Integer" });
+      await name.update({ name: "lastname" });
+      await persons.insertRow({ lastname: "Joe", age: 12 });
+      const row = await persons.getRow({});
+      expect(row.lastname).toBe("Joe");
+      expect(row.age).toBe(12);
+    }
     await persons.delete();
   });
+});
+describe("Table with UUID pks", () => {
+  if (!db.isSQLite) {
+    it("should select uuid", async () => {
+      await db.query('create extension if not exists "uuid-ossp";');
+
+      const { rows } = await db.query("select uuid_generate_v4();");
+      expect(rows.length).toBe(1);
+      expect(typeof rows[0].uuid_generate_v4).toBe("string");
+    });
+    it("should create and insert stuff in table", async () => {
+      getState().registerPlugin("mock_plugin", plugin_with_routes);
+      const table = await Table.create("TableUUID");
+      const [pk] = await table.getFields();
+      await pk.update({ type: "UUID" });
+
+      const name = await Field.create({
+        table: table,
+        name: "name",
+        type: "String",
+      });
+      table.fields = null;
+      await table.insertRow({ name: "Sam" });
+      const rows = await table.getRows();
+      expect(rows.length).toBe(1);
+      expect(typeof rows[0].id).toBe("string");
+      expect(rows[0].id.length > 10).toBe(true);
+      expect(rows[0].name).toBe("Sam");
+
+      await table.updateRow({ name: "Jim" }, rows[0].id);
+      const rows1 = await table.getJoinedRows();
+      expect(rows1.length).toBe(1);
+      expect(typeof rows1[0].id).toBe("string");
+      expect(rows1[0].id).toBe(rows[0].id);
+      expect(rows1[0].name).toBe("Jim");
+      const row = await table.getRow({ id: rows[0].id });
+      expect(row.name).toBe("Jim");
+    });
+    it("should import json", async () => {
+      const json = [
+        { name: "Alex", id: "750d07fc-943d-4afc-9084-3911bcdbd0f7" },
+      ];
+      const fnm = "/tmp/test1.json";
+      await fs.writeFile(fnm, JSON.stringify(json));
+      const table = await Table.findOne({ name: "TableUUID" });
+      expect(!!table).toBe(true);
+      const impres = await table.import_json_file(fnm);
+      expect(impres).toEqual({
+        success: "Imported 1 rows into table TableUUID",
+      });
+      const rows = await table.getRows();
+      expect(rows.length).toBe(2);
+    });
+    it("should be joinable to", async () => {
+      const uuidtable1 = await Table.findOne({ name: "TableUUID" });
+
+      const table = await Table.create("JoinUUID");
+      await Field.create({
+        table: table,
+        name: "myname",
+        type: "String",
+      });
+      //db.set_sql_logging();
+      await Field.create({
+        table: table,
+        name: "follows",
+        type: "Key to TableUUID",
+      });
+      const refrows = await uuidtable1.getRows({});
+
+      table.insertRow({ myname: "Fred", follows: refrows[0].id });
+      const rows = await table.getJoinedRows({
+        where: {},
+        joinFields: {
+          leader: { ref: "follows", target: "name" },
+        },
+      });
+      expect(rows.length).toBe(1);
+      expect(rows[0].leader).toBe("Jim");
+      expect(rows[0].myname).toBe("Fred");
+
+      await table.delete();
+
+      await uuidtable1.delete();
+    });
+    it("should create and delete table", async () => {
+      getState().registerPlugin("mock_plugin", plugin_with_routes);
+      const table = await Table.create("TableUUID1");
+      const [pk] = await table.getFields();
+      await pk.update({ type: "UUID" });
+
+      table.fields = null;
+      const [pk1] = await table.getFields();
+      await pk1.update({ type: "Integer" });
+
+      await table.delete();
+    });
+  }
 });
