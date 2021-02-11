@@ -134,9 +134,17 @@ router.get(
   })
 );
 
-const discoverForm = (tables) => {
+const discoverForm = (tables, req) => {
   return new Form({
     action: "/table/discover",
+    blurb:
+      tables.length > 0
+        ? req.__(
+            "The following tables in your database can be imported into Saltcorn:"
+          )
+        : req.__(
+            "There are no tables in the database that can be imported into Saltcorn."
+          ),
     fields: tables.map((t) => ({
       name: t.table_name,
       label: t.table_name,
@@ -152,7 +160,7 @@ router.get(
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
 
-    const form = discoverForm(tbls);
+    const form = discoverForm(tbls, req);
     res.sendWrap(req.__("Discover tables"), renderForm(form, req.csrfToken()));
   })
 );
@@ -163,7 +171,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
-    const form = discoverForm(tbls);
+    const form = discoverForm(tbls, req);
     form.validate(req.body);
     const tableNames = tbls
       .filter((t) => form.values[t.table_name])

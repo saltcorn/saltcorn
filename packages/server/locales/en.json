@@ -594,5 +594,8 @@
 	"Owned": "Owned",
 	"Primary key": "Primary key",
 	"Users already present": "Users already present",
-	"Discover tables": "Discover tables"
+	"Discover tables": "Discover tables",
+	"The following tables in your database can be imported into Saltcorn:": "The following tables in your database can be imported into Saltcorn:",
+	"Discovered tables: %s": "Discovered tables: %s",
+	"There are no tables in the database that can be imported into Saltcorn.": "There are no tables in the database that can be imported into Saltcorn."
 }
