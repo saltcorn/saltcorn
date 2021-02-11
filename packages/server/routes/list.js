@@ -152,7 +152,7 @@ router.get(
     //console.log(fields);
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
-      .map((f) => f.name);
+      .map((f) => ({ name: f.name, type: f.reftype }));
     const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
     if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
