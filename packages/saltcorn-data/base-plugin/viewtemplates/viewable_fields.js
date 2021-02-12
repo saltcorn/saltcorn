@@ -187,11 +187,13 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: (r) => {
-            //console.log(fields);
+            const reffield = fields.find((f) => f.name === pfld);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             return r[pfld]
               ? link_view(
-                  `/view/${encodeURIComponent(pviewnm)}?id=${r[pfld]}`,
+                  `/view/${encodeURIComponent(pviewnm)}?${reffield.refname}=${
+                    r[pfld]
+                  }`,
                   get_label(
                     typeof summary_field === "undefined"
                       ? pviewnm
