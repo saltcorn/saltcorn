@@ -103,5 +103,9 @@ describe("Table Discovery", () => {
       });
       await implement_discovery(pack);
     });
+  } else {
+    it("doesnt run on sqlite", async () => {
+      expect(2 + 2).toBe(4);
+    });
   }
 });
