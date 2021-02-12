@@ -36,6 +36,11 @@ const {
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
+const {
+  discoverable_tables,
+  discover_tables,
+  implement_discovery,
+} = require("@saltcorn/data/models/discovery");
 
 const router = new Router();
 module.exports = router;
@@ -129,6 +134,57 @@ router.get(
   })
 );
 
+const discoverForm = (tables, req) => {
+  return new Form({
+    action: "/table/discover",
+    blurb:
+      tables.length > 0
+        ? req.__(
+            "The following tables in your database can be imported into Saltcorn:"
+          )
+        : req.__(
+            "There are no tables in the database that can be imported into Saltcorn."
+          ),
+    fields: tables.map((t) => ({
+      name: t.table_name,
+      label: t.table_name,
+      type: "Bool",
+    })),
+  });
+};
+
+router.get(
+  "/discover",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tbls = await discoverable_tables();
+
+    const form = discoverForm(tbls, req);
+    res.sendWrap(req.__("Discover tables"), renderForm(form, req.csrfToken()));
+  })
+);
+
+router.post(
+  "/discover",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tbls = await discoverable_tables();
+    const form = discoverForm(tbls, req);
+    form.validate(req.body);
+    const tableNames = tbls
+      .filter((t) => form.values[t.table_name])
+      .map((t) => t.table_name);
+    const pack = await discover_tables(tableNames);
+    await implement_discovery(pack);
+    req.flash(
+      "success",
+      req.__("Discovered tables: %s", tableNames.join(", "))
+    );
+    res.redirect("/table");
+  })
+);
 router.get(
   "/create-from-csv",
   setTenant,
@@ -599,11 +655,22 @@ router.get(
             p(req.__("Tables hold collections of similar data"))
           );
     const createCard = div(
-      a({ href: `/table/new`, class: "btn btn-primary" }, req.__("New table")),
       a(
-        { href: `/table/create-from-csv`, class: "btn btn-secondary mx-3" },
+        { href: `/table/new`, class: "btn btn-primary" },
+        i({ class: "fas fa-plus-square mr-1" }),
+        req.__("New table")
+      ),
+      a(
+        { href: `/table/create-from-csv`, class: "btn btn-secondary ml-3" },
+        i({ class: "fas fa-upload mr-1" }),
         req.__("Create from CSV upload")
-      )
+      ),
+      !db.isSQLite &&
+        a(
+          { href: `/table/discover`, class: "btn btn-secondary ml-3" },
+          i({ class: "fas fa-map-signs mr-1" }),
+          req.__("Discover tables")
+        )
     );
     res.sendWrap(req.__("Tables"), {
       above: [
