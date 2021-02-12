@@ -75,7 +75,10 @@ const get_view_link_query = contract(
     const fUnique = fields.find((f) => f.is_unique);
     if (fUnique)
       return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
-    else return (r) => `?id=${r.id}`;
+    else {
+      const pk_name = fields.find((f) => f.primary_key).name;
+      return (r) => `?${pk_name}=${r[pk_name]}`;
+    }
   }
 );
 
@@ -184,6 +187,7 @@ const view_linker = contract(
         return {
           label: pviewnm,
           key: (r) => {
+            //console.log(fields);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             return r[pfld]
               ? link_view(

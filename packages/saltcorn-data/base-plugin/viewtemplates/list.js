@@ -213,7 +213,7 @@ const run = async (
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = 20;
   if (!q.limit) q.limit = rows_per_page;
-  if (!q.orderBy) q.orderBy = "id";
+  if (!q.orderBy) q.orderBy = table.pk_name;
 
   const current_page = parseInt(state._page) || 1;
 
