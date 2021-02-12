@@ -452,7 +452,7 @@ class Table {
           delete rec[from];
         });
         const rowOk = readStateStrict(rec, fields);
-        if (rowOk) await db.insert(this.name, rec, true, client);
+        if (rowOk) await db.insert(this.name, rec, { noid: true, client });
         else rejects += 1;
       } catch (e) {
         await client.query("ROLLBACK");
@@ -498,7 +498,7 @@ class Table {
         });
       try {
         readState(rec, fields);
-        await db.insert(this.name, rec, true, client);
+        await db.insert(this.name, rec, { noid: true, client });
       } catch (e) {
         await client.query("ROLLBACK");
 

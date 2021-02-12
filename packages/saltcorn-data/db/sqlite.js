@@ -77,7 +77,7 @@ const deleteWhere = async (tbl, whereObj) => {
   return;
 };
 
-const insert = async (tbl, obj, noid = false) => {
+const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
@@ -89,7 +89,7 @@ const insert = async (tbl, obj, noid = false) => {
   )}"(${fnameList}) values(${valPosList})`;
 
   await query(sql, valList);
-  if (noid) return;
+  if (opts.noid) return;
   const ids = await query("SELECT last_insert_rowid() as id");
   return ids.rows[0].id;
 };

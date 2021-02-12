@@ -19,7 +19,7 @@ const createTenant = contract(
     const id = await db.insert(
       "_sc_tenants",
       { subdomain: saneDomain, email: "" },
-      true
+      { noid: true }
     );
     //create schema
     await db.query(`CREATE SCHEMA "${saneDomain}";`);
