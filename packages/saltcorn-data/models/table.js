@@ -190,8 +190,9 @@ class Table {
     let existing;
     let v;
     const fields = await this.getFields();
+    const pk_name = this.pk_name;
     if (fields.some((f) => f.calculated && f.stored)) {
-      existing = await db.selectOne(this.name, { id });
+      existing = await db.selectOne(this.name, { [pk_name]: id });
       v = await apply_calculated_fields_stored(
         { ...existing, ...v_in },
         this.fields
@@ -199,11 +200,12 @@ class Table {
     } else v = v_in;
     if (this.versioned) {
       const schema = db.getTenantSchemaPrefix();
-      if (!existing) existing = await db.selectOne(this.name, { id });
+      if (!existing)
+        existing = await db.selectOne(this.name, { [pk_name]: id });
       await db.insert(this.name + "__history", {
         ...existing,
         ...v,
-        id,
+        [pk_name]: id,
         _version: {
           sql: `coalesce((select max(_version) from ${schema}"${
             this.name + "__history"
@@ -216,9 +218,10 @@ class Table {
     await db.update(this.name, v, id);
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
-      if (triggers.length > 0) existing = await db.selectOne(this.name, { id });
+      if (triggers.length > 0)
+        existing = await db.selectOne(this.name, { [pk_name]: id });
     }
-    const newRow = { ...existing, ...v, id };
+    const newRow = { ...existing, ...v, [pk_name]: id };
     await Trigger.runTableTriggers("Update", this, newRow);
 
     return;
@@ -249,20 +252,24 @@ class Table {
     }
   }
 
+  get pk_name() {
+    return this.fields.find((f) => f.primary_key).name;
+  }
+
   async insertRow(v_in, _userid) {
     await this.getFields();
     const v = await apply_calculated_fields_stored(v_in, this.fields);
-    const pk_name = this.fields.find((f) => f.primary_key).name;
+    const pk_name = this.pk_name;
     const id = await db.insert(this.name, v, { pk_name });
     if (this.versioned)
       await db.insert(this.name + "__history", {
         ...v,
-        id,
+        [pk_name]: id,
         _version: 1,
         _userid,
         _time: new Date(),
       });
-    await Trigger.runTableTriggers("Insert", this, { id, ...v });
+    await Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v });
     return id;
   }
 
@@ -420,6 +427,7 @@ class Table {
     }
     const fields = (await this.getFields()).filter((f) => !f.calculated);
     const okHeaders = {};
+    const pk_name = this.pk_name;
     const renames = [];
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -453,7 +461,8 @@ class Table {
           delete rec[from];
         });
         const rowOk = readStateStrict(rec, fields);
-        if (rowOk) await db.insert(this.name, rec, { noid: true, client });
+        if (rowOk)
+          await db.insert(this.name, rec, { noid: true, client, pk_name });
         else rejects += 1;
       } catch (e) {
         await client.query("ROLLBACK");
@@ -482,6 +491,7 @@ class Table {
   async import_json_file(filePath, skip_first_data_row) {
     const file_rows = JSON.parse(await fs.readFile(filePath));
     const fields = await this.getFields();
+    const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
 
     var i = 1;
@@ -499,7 +509,7 @@ class Table {
         });
       try {
         readState(rec, fields);
-        await db.insert(this.name, rec, { noid: true, client });
+        await db.insert(this.name, rec, { noid: true, client, pk_name });
       } catch (e) {
         await client.query("ROLLBACK");
 
