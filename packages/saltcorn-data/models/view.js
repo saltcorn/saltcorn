@@ -55,9 +55,12 @@ class View {
   }
   static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
-    const link_views = await View.find({
-      table_id,
-    });
+    const link_views = await View.find(
+      {
+        table_id,
+      },
+      { orderBy: "name" }
+    );
 
     for (const viewrow of link_views) {
       // may fail if incomplete view
@@ -76,7 +79,7 @@ class View {
 
   static async find_all_views_where(pred) {
     var link_view_opts = [];
-    const link_views = await View.find({});
+    const link_views = await View.find({}, { orderBy: "name" });
 
     for (const viewrow of link_views) {
       // may fail if incomplete view
