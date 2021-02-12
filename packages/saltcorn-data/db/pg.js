@@ -72,7 +72,7 @@ const deleteWhere = async (tbl, whereObj) => {
   return tq.rows;
 };
 
-const insert = async (tbl, obj, noid = false, client) => {
+const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   var valPosList = [];
@@ -88,15 +88,15 @@ const insert = async (tbl, obj, noid = false, client) => {
   const sql = `insert into "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList.join()}) returning ${
-    noid ? "*" : "id"
+    opts.noid ? "*" : opts.pk_name || "id"
   }`;
   sql_log(sql, valList);
-  const { rows } = await (client || pool).query(sql, valList);
-  if (noid) return;
-  else return rows[0].id;
+  const { rows } = await (opts.client || pool).query(sql, valList);
+  if (opts.noid) return;
+  else return rows[0][opts.pk_name || "id"];
 };
 
-const update = async (tbl, obj, id) => {
+const update = async (tbl, obj, id, opts = {}) => {
   const kvs = Object.entries(obj);
   const assigns = kvs
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
@@ -105,7 +105,7 @@ const update = async (tbl, obj, id) => {
   valList.push(id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where id=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
   await pool.query(q, valList);
 };

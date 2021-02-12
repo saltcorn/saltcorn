@@ -57,7 +57,7 @@ const migrate = async (schema0) => {
       if (contents.js) {
         await contents.js();
       }
-      await db.insert("_sc_migrations", { migration: name }, true);
+      await db.insert("_sc_migrations", { migration: name }, { noid: true });
     }
   }
   if (!is_sqlite) client.release(true);
