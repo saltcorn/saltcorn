@@ -93,7 +93,7 @@ const insert = async (tbl, obj, opts = {}) => {
   sql_log(sql, valList);
   const { rows } = await (opts.client || pool).query(sql, valList);
   if (opts.noid) return;
-  else return rows[0].id;
+  else return rows[0][opts.pk_name || "id"];
 };
 
 const update = async (tbl, obj, id, opts = {}) => {
