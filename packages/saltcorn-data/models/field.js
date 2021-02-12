@@ -120,12 +120,22 @@ class Field {
         this.reftable_name,
         this.type === "File" ? this.attributes.select_file_where : undefined
       );
+      const pk = await Field.findOne({
+        table_id: {
+          inSelect: {
+            table: "_sc_tables",
+            field: "id",
+            where: { name: this.reftable_name },
+          },
+        },
+        primary_key: true,
+      });
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");
       const dbOpts = rows.map((r) => ({
         label: r[summary_field],
-        value: r.id,
+        value: r[pk.name],
       }));
       const allOpts =
         !this.required || force_allow_none
