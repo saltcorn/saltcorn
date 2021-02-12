@@ -62,7 +62,7 @@ class Table {
 
     return tbl ? new Table(tbl) : tbl;
   }
-  static async find(where, selectopts) {
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const tbls = await db.select("_sc_tables", where, selectopts);
 
     return tbls.map((t) => new Table(t));

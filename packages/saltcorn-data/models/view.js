@@ -32,7 +32,7 @@ class View {
     const v = await db.selectMaybeOne("_sc_views", where);
     return v ? new View(v) : v;
   }
-  static async find(where, selectopts) {
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const views = await db.select("_sc_views", where, selectopts);
 
     return views.map((v) => new View(v));

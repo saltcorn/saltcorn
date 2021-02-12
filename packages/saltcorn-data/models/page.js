@@ -21,7 +21,7 @@ class Page {
         : o.fixed_states || {};
     contract.class(this);
   }
-  static async find(where, selectopts) {
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const db_flds = await db.select("_sc_pages", where, selectopts);
     return db_flds.map((dbf) => new Page(dbf));
   }
