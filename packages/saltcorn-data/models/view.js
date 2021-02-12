@@ -32,7 +32,7 @@ class View {
     const v = await db.selectMaybeOne("_sc_views", where);
     return v ? new View(v) : v;
   }
-  static async find(where, selectopts) {
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const views = await db.select("_sc_views", where, selectopts);
 
     return views.map((v) => new View(v));
@@ -55,9 +55,12 @@ class View {
   }
   static async find_table_views_where(table_id, pred) {
     var link_view_opts = [];
-    const link_views = await View.find({
-      table_id,
-    });
+    const link_views = await View.find(
+      {
+        table_id,
+      },
+      { orderBy: "name", nocase: true }
+    );
 
     for (const viewrow of link_views) {
       // may fail if incomplete view
@@ -76,7 +79,7 @@ class View {
 
   static async find_all_views_where(pred) {
     var link_view_opts = [];
-    const link_views = await View.find({});
+    const link_views = await View.find({}, { orderBy: "name", nocase: true });
 
     for (const viewrow of link_views) {
       // may fail if incomplete view

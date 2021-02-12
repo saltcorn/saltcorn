@@ -234,7 +234,7 @@ class Field {
     else return { error: "Not accepted" };
   }
 
-  static async find(where, selectopts) {
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map((dbf) => new Field(dbf));
   }

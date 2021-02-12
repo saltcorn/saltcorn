@@ -176,11 +176,13 @@ const configuration_workflow = (req) =>
 
 const get_state_fields = async (table_id, viewname, { show_view }) => {
   const table_fields = await Field.find({ table_id });
-  return table_fields.map((f) => {
-    const sf = new Field(f);
-    sf.required = false;
-    return sf;
-  });
+  return table_fields
+    .filter((f) => !f.primary_key)
+    .map((f) => {
+      const sf = new Field(f);
+      sf.required = false;
+      return sf;
+    });
 };
 const run = async (
   table_id,
