@@ -23,8 +23,13 @@ const getStrOptions = (v, optsStr) =>
         .split(",")
         .map((o) => text_attr(o.trim()))
         .map((o) => option({ value: o, ...(v === o && { selected: true }) }, o))
-    : optsStr.map(({ name, label }) =>
-        option({ value: name, ...(v === name && { selected: true }) }, label)
+    : optsStr.map((o) =>
+        o.name && o.label
+          ? option(
+              { value: o.name, ...(v === o.name && { selected: true }) },
+              o.label
+            )
+          : option({ value: o, ...(v === o && { selected: true }) }, o)
       );
 
 const string = {

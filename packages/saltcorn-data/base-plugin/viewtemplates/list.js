@@ -89,7 +89,7 @@ const configuration_workflow = (req) =>
                       ),
                       type: "String",
                       attributes: {
-                        options: create_view_opts.join(),
+                        options: create_view_opts
                       },
                     },
                     {
@@ -191,7 +191,6 @@ const run = async (
   stateWithId,
   extraOpts
 ) => {
-  //console.log({ columns, view_to_create, state });
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const role =
@@ -266,7 +265,9 @@ const run = async (
       create_link = await create_view.run(state, extraOpts);
     } else {
       create_link = link_view(
-        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
+          state
+        )}`,
         create_view_label || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );

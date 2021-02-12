@@ -258,7 +258,7 @@ const run = async (
       create_link = await create_view.run(state, extraArgs);
     } else {
       create_link = link_view(
-        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(state)}`,
         `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
