@@ -31,10 +31,10 @@ const reset = async (dontDrop = false, schema0) => {
     )
   `);
 
-  await db.insert(`_sc_roles`, { role: "admin", id: 1 }, true);
-  await db.insert(`_sc_roles`, { role: "staff", id: 4 }, true);
-  await db.insert(`_sc_roles`, { role: "user", id: 8 }, true);
-  await db.insert(`_sc_roles`, { role: "public", id: 10 }, true);
+  await db.insert(`_sc_roles`, { role: "admin", id: 1 }, { noid: true });
+  await db.insert(`_sc_roles`, { role: "staff", id: 4 }, { noid: true });
+  await db.insert(`_sc_roles`, { role: "user", id: 8 }, { noid: true });
+  await db.insert(`_sc_roles`, { role: "public", id: 10 }, { noid: true });
 
   await db.query(`
     CREATE TABLE ${schemaQdot}_sc_tables
