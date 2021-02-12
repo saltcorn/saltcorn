@@ -145,6 +145,7 @@ const discoverForm = (tables, req) => {
         : req.__(
             "There are no tables in the database that can be imported into Saltcorn."
           ),
+    submitLabel: req.__("Import"),
     fields: tables.map((t) => ({
       name: t.table_name,
       label: t.table_name,
@@ -161,7 +162,22 @@ router.get(
     const tbls = await discoverable_tables();
 
     const form = discoverForm(tbls, req);
-    res.sendWrap(req.__("Discover tables"), renderForm(form, req.csrfToken()));
+    res.sendWrap(req.__("Discover tables"), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { text: req.__("Discover") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Discover tables"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
+    });
   })
 );
 
@@ -656,18 +672,21 @@ router.get(
           );
     const createCard = div(
       a(
-        { href: `/table/new`, class: "btn btn-primary" },
+        { href: `/table/new`, class: "btn btn-primary mt-1 mr-3" },
         i({ class: "fas fa-plus-square mr-1" }),
         req.__("New table")
       ),
       a(
-        { href: `/table/create-from-csv`, class: "btn btn-secondary ml-3" },
+        {
+          href: `/table/create-from-csv`,
+          class: "btn btn-secondary mr-3 mt-1",
+        },
         i({ class: "fas fa-upload mr-1" }),
         req.__("Create from CSV upload")
       ),
       !db.isSQLite &&
         a(
-          { href: `/table/discover`, class: "btn btn-secondary ml-3" },
+          { href: `/table/discover`, class: "btn btn-secondary mt-1" },
           i({ class: "fas fa-map-signs mr-1" }),
           req.__("Discover tables")
         )
