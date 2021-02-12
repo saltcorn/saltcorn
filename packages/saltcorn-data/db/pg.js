@@ -96,7 +96,7 @@ const insert = async (tbl, obj, opts = {}) => {
   else return rows[0].id;
 };
 
-const update = async (tbl, obj, id) => {
+const update = async (tbl, obj, id, opts = {}) => {
   const kvs = Object.entries(obj);
   const assigns = kvs
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
@@ -105,7 +105,7 @@ const update = async (tbl, obj, id) => {
   valList.push(id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where id=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
   await pool.query(q, valList);
 };

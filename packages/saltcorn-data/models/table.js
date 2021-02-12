@@ -215,7 +215,7 @@ class Table {
         _userid,
       });
     }
-    await db.update(this.name, v, id);
+    await db.update(this.name, v, id, { pk_name });
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
       if (triggers.length > 0)

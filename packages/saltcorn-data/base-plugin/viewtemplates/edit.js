@@ -212,7 +212,7 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
         form.values[field.name] = file.filename;
       }
     }
-    form.hidden("id");
+    form.hidden(table.pk_name);
   }
   traverseSync(form.layout, {
     action(segment) {
@@ -347,10 +347,10 @@ const runPost = async (
         const state_fields = await nxview.get_state_fields();
         if (
           (nxview.table_id === table_id || relation) &&
-          state_fields.some((sf) => sf.name === "id")
+          state_fields.some((sf) => sf.name === pk.name)
         )
           res.redirect(
-            `/view/${text(viewname_when_done)}?id=${text(
+            `/view/${text(viewname_when_done)}?${pk.name}=${text(
               relation ? row[relation] : id
             )}`
           );
