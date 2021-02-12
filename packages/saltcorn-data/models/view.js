@@ -59,7 +59,7 @@ class View {
       {
         table_id,
       },
-      { orderBy: "name" }
+      { orderBy: "name", nocase: true }
     );
 
     for (const viewrow of link_views) {
@@ -79,7 +79,7 @@ class View {
 
   static async find_all_views_where(pred) {
     var link_view_opts = [];
-    const link_views = await View.find({}, { orderBy: "name" });
+    const link_views = await View.find({}, { orderBy: "name", nocase: true });
 
     for (const viewrow of link_views) {
       // may fail if incomplete view

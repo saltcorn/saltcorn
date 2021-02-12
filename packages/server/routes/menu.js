@@ -18,8 +18,8 @@ const router = new Router();
 module.exports = router;
 
 const menuForm = async (req) => {
-  const views = await View.find({});
-  const pages = await Page.find({});
+  const views = await View.find({}, { orderBy: "name", nocase: true });
+  const pages = await Page.find({}, { orderBy: "name", nocase: true });
   const roles = await User.get_roles();
 
   return new Form({
