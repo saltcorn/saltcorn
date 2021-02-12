@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.3.5 linux-x64 node-v14.4.0
+@saltcorn/cli/0.4.0-beta.0 linux-x64 node-v14.4.0
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
@@ -31,6 +31,7 @@ USAGE
 # Commands
 
 <!-- commands -->
+* [`saltcorn add-schema`](#saltcorn-add-schema)
 * [`saltcorn backup`](#saltcorn-backup)
 * [`saltcorn create-user`](#saltcorn-create-user)
 * [`saltcorn fixtures`](#saltcorn-fixtures)
@@ -49,6 +50,17 @@ USAGE
 * [`saltcorn test-plugin PATH`](#saltcorn-test-plugin-path)
 * [`saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`](#saltcorn-transform-field-expression-field-table-tenant)
 
+## `saltcorn add-schema`
+
+Add Saltcorn schema to existing database
+
+```
+USAGE
+  $ saltcorn add-schema
+```
+
+_See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/add-schema.js)_
+
 ## `saltcorn backup`
 
 Backup the PostgreSQL database to a file with pg_dump or zip
@@ -63,7 +75,7 @@ OPTIONS
   -z, --zip            zip format
 ```
 
-_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/backup.js)_
+_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/backup.js)_
 
 ## `saltcorn create-user`
 
@@ -77,7 +89,7 @@ OPTIONS
   -a, --admin  Admin user
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/create-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -95,7 +107,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/fixtures.js)_
 
 ## `saltcorn help [COMMAND]`
 
@@ -127,7 +139,7 @@ ARGUMENTS
   PATH    path to local plugin
 ```
 
-_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/localize-plugin.js)_
+_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/localize-plugin.js)_
 
 ## `saltcorn make-migration`
 
@@ -143,7 +155,7 @@ DESCRIPTION
   normally need to run this unless you are a developer.
 ```
 
-_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/make-migration.js)_
+_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/make-migration.js)_
 
 ## `saltcorn migrate`
 
@@ -160,7 +172,7 @@ DESCRIPTION
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/migrate.js)_
 
 ## `saltcorn paths`
 
@@ -175,7 +187,7 @@ DESCRIPTION
   Show configuration and file store paths
 ```
 
-_See code: [src/commands/paths.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/paths.js)_
+_See code: [src/commands/paths.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/paths.js)_
 
 ## `saltcorn plugins`
 
@@ -194,7 +206,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/plugins.js)_
+_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/plugins.js)_
 
 ## `saltcorn reset-schema`
 
@@ -212,7 +224,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -226,7 +238,7 @@ ARGUMENTS
   FILE  backup file to restore
 ```
 
-_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/restore.js)_
 
 ## `saltcorn rm-tenant TENANT`
 
@@ -240,7 +252,7 @@ ARGUMENTS
   TENANT  Tenant to remove
 ```
 
-_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/rm-tenant.js)_
+_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/rm-tenant.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -258,7 +270,7 @@ OPTIONS
   -f, --forever   Run forever till failure
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/run-tests.js)_
 
 ## `saltcorn serve`
 
@@ -274,7 +286,7 @@ OPTIONS
   -v, --verbose    Verbose
 ```
 
-_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/serve.js)_
 
 ## `saltcorn setup`
 
@@ -293,7 +305,7 @@ DESCRIPTION
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/setup.js)_
 
 ## `saltcorn test-plugin PATH`
 
@@ -311,7 +323,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/test-plugin.js)_
+_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/test-plugin.js)_
 
 ## `saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`
 
@@ -328,5 +340,5 @@ ARGUMENTS
   TENANT      tenant name
 ```
 
-_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v0.3.5/src/commands/transform-field.js)_
+_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v0.4.0-beta.0/src/commands/transform-field.js)_
 <!-- commandsstop -->
