@@ -252,7 +252,8 @@ class Table {
   async insertRow(v_in, _userid) {
     await this.getFields();
     const v = await apply_calculated_fields_stored(v_in, this.fields);
-    const id = await db.insert(this.name, v);
+    const pk_name = this.fields.find((f) => f.primary_key).name;
+    const id = await db.insert(this.name, v, { pk_name });
     if (this.versioned)
       await db.insert(this.name + "__history", {
         ...v,

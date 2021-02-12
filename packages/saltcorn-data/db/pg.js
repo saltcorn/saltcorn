@@ -88,7 +88,7 @@ const insert = async (tbl, obj, opts = {}) => {
   const sql = `insert into "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList.join()}) returning ${
-    opts.noid ? "*" : "id"
+    opts.noid ? "*" : opts.pk_name || "id"
   }`;
   sql_log(sql, valList);
   const { rows } = await (opts.client || pool).query(sql, valList);
