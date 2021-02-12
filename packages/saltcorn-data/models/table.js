@@ -599,7 +599,7 @@ class Table {
         joinTables.push(jtNm);
         joinq += ` left join ${schema}"${sqlsanitize(
           reftable
-        )}" ${jtNm} on ${jtNm}.id=a."${sqlsanitize(ref)}"`;
+        )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
       if (through) {
         const throughTable = await Table.findOne({
