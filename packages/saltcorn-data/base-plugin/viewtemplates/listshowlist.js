@@ -41,7 +41,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: false,
                 attributes: {
-                  options: list_view_opts.join(),
+                  options: list_view_opts,
                 },
               },
               {
@@ -50,7 +50,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: false,
                 attributes: {
-                  options: show_view_opts.join(),
+                  options: show_view_opts,
                 },
               },
               {

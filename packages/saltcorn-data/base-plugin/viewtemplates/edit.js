@@ -115,7 +115,7 @@ const configuration_workflow = (req) =>
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
-                  attributes: { options: Object.keys(f.presets).join() },
+                  attributes: { options: Object.keys(f.presets)},
                 })
               );
             }
@@ -168,7 +168,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: done_view_opts.join(),
+                  options: done_view_opts,
                 },
               },
             ],

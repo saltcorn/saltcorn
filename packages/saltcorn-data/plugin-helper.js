@@ -199,8 +199,7 @@ const field_picker_fields = contract(
         attributes: {
           options: table.fields
             .filter((f) => !f.calculated || f.stored)
-            .map((f) => f.name)
-            .join(),
+            .map((f) => f.name),
         },
         showIf: {
           agg_relation: `${table.name}.${key_field.name}`,
@@ -242,7 +241,7 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
-          options: fldOptions.join(),
+          options: fldOptions,
         },
         showIf: { type: "Field" },
       },
@@ -262,7 +261,7 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
-          options: actions.join(),
+          options: actions,
         },
         showIf: { type: "Action" },
       },
@@ -438,7 +437,7 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
-          options: parent_field_list.join(),
+          options: parent_field_list,
         },
         showIf: { type: "JoinField" },
       },
@@ -448,7 +447,7 @@ const field_picker_fields = contract(
         type: "String",
         required: true,
         attributes: {
-          options: child_field_list.join(),
+          options: child_field_list,
         },
         showIf: { type: "Aggregation" },
       },
