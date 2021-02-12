@@ -62,7 +62,9 @@ const discover_tables = async (tableNames, schema0) => {
       [schema, tnm]
     );
     pkq.rows.forEach(({ column_name }) => {
-      fields.find((f) => f.name === column_name).primary_key = true;
+      const field = fields.find((f) => f.name === column_name);
+      field.primary_key = true;
+      field.is_unique = true;
     });
     const fkq = await db.query(
       `SELECT
