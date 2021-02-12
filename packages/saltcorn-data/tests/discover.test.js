@@ -44,6 +44,7 @@ describe("Table Discovery", () => {
                 required: true,
                 type: "Integer",
                 primary_key: true,
+                is_unique: true,
               },
               { label: "name", name: "name", required: false, type: "String" },
               { label: "age", name: "age", required: true, type: "Integer" },
@@ -67,6 +68,7 @@ describe("Table Discovery", () => {
                 required: true,
                 type: "Integer",
                 primary_key: true,
+                is_unique: true,
               },
               { label: "name", name: "name", required: false, type: "String" },
               { label: "age", name: "age", required: true, type: "Integer" },
@@ -83,6 +85,7 @@ describe("Table Discovery", () => {
                 required: true,
                 type: "Integer",
                 primary_key: true,
+                is_unique: true,
               },
               { label: "name", name: "name", required: false, type: "String" },
               {
