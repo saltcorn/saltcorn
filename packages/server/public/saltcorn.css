@@ -202,3 +202,12 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .wizardStep.active {
   border-bottom: 3px solid black;
 }
+.breadcrumb-workflow+.breadcrumb-workflow::before {
+  content: ">";
+}
+.breadcrumb-workflow span {
+  border-bottom: 1px solid var(--secondary);
+}
+.breadcrumb-workflow.active-step span {
+  border-bottom: 2px solid var(--primary);
+}

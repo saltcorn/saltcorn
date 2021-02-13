@@ -156,19 +156,37 @@ const logit = (x, s) => {
   return x;
 };
 
+const standardBreadcrumbItem = len =>({ href, text }, ix) =>
+  li(
+    {
+      class: ["breadcrumb-item", ix == len - 1 && "active"],
+      "aria-current": ix == len - 1 && "page",
+    },
+    href ? a({ href }, text) : text
+  );
+
+const workflowBreadcrumbItem = ({ workflow, step }) =>
+  workflow.steps
+    .map((wfstep, ix) =>
+      li(
+        {
+          class: [
+            "breadcrumb-item breadcrumb-workflow",
+            step.currentStep - 1 === ix && "active-step font-weight-bold",
+          ],
+        },
+        span(wfstep.name)
+      )
+    )
+    .join("");
+
 const breadcrumbs = (crumbs) =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
       { class: "breadcrumb" },
-      crumbs.map(({ href, text }, ix) =>
-        li(
-          {
-            class: ["breadcrumb-item", ix == crumbs.length - 1 && "active"],
-            "aria-current": ix == crumbs.length - 1 && "page",
-          },
-          href ? a({ href }, text) : text
-        )
+      crumbs.map((c) =>
+        c.workflow ? workflowBreadcrumbItem(c) : standardBreadcrumbItem(crumbs.length)(c)
       )
     )
   );
