@@ -24,7 +24,7 @@ const {
   settingsDropdown,
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
-const { editRoleForm, wizardSteps } = require("../markup/forms.js");
+const { editRoleForm, wizardCardTitle } = require("../markup/forms.js");
 
 const router = new Router();
 module.exports = router;
@@ -301,7 +301,7 @@ const respondWorkflow = (page, wf, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: wizardSteps(page ? page.name : req.__("New"), wf, wfres),
+        title: wizardCardTitle(page ? page.name : req.__("New"), wf, wfres),
         contents,
       },
     ],

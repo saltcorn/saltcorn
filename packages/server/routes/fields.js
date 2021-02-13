@@ -17,7 +17,7 @@ const db = require("@saltcorn/data/db");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
-const { wizardSteps } = require("../markup/forms.js");
+const { wizardCardTitle } = require("../markup/forms.js");
 const router = new Router();
 module.exports = router;
 
@@ -358,7 +358,7 @@ router.get(
         },
         {
           type: "card",
-          title: wizardSteps(field.label, wf, wfres),
+          title: wizardCardTitle(field.label, wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -389,7 +389,7 @@ router.get(
         },
         {
           type: "card",
-          title: wizardSteps(req.__(`New field:`), wf, wfres),
+          title: wizardCardTitle(req.__(`New field`), wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -439,7 +439,7 @@ router.post(
           },
           {
             type: "card",
-            title: wizardSteps(
+            title: wizardCardTitle(
               wfres.context.label || req.__("New field"),
               wf,
               wfres

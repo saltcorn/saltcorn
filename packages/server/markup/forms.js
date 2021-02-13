@@ -30,29 +30,7 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
     )
   );
 
-const wizardSteps = (wizardTitle, wf, wfres) => {
-  return div(
-    h5(wizardTitle),
-    div(
-      { class: "d-flex" },
-      wf.steps.map(
-        (s, ix) =>
-          (ix > 0 ? i({ class: "fas fa-chevron-right ml-1" }) : "") +
-          div(
-            {
-              class: [
-                "wizardStep",
-                ix > 0 && "ml-1",
-                wfres.currentStep - 1 === ix
-                  ? "active font-weight-bold"
-                  : "text-muted",
-              ],
-            },
-            s.name
-          )
-      )
-    )
-  );
-};
+const wizardCardTitle = (wizardTitle, wf, wfres) => 
+  `${wizardTitle}: ${wfres.stepName}`
 
-module.exports = { editRoleForm, wizardSteps };
+module.exports = { editRoleForm, wizardCardTitle };
