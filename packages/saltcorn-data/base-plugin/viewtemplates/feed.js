@@ -35,8 +35,8 @@ const configuration_workflow = (req) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
           );
-          const show_view_opts = show_views.map((v) => v.name);
-          const create_view_opts = create_views.map((v) => v.name);
+          const show_view_opts = show_views.map((v) => v.select_option);
+          const create_view_opts = create_views.map((v) => v.select_option);
           return new Form({
             fields: [
               {

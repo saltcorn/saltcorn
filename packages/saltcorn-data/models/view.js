@@ -77,6 +77,15 @@ class View {
     return link_view_opts;
   }
 
+  get select_option() {
+    return {
+      name: this.name,
+      label: `${this.name} [${this.viewtemplate}${
+        this.table ? ` ${this.table.name}` : ""
+      }]`,
+    };
+  }
+
   static async find_all_views_where(pred) {
     var link_view_opts = [];
     const link_views = await View.find({}, { orderBy: "name", nocase: true });

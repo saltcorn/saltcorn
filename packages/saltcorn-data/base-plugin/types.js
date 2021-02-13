@@ -24,7 +24,7 @@ const getStrOptions = (v, optsStr) =>
         .map((o) => text_attr(o.trim()))
         .map((o) => option({ value: o, ...(v === o && { selected: true }) }, o))
     : optsStr.map((o) =>
-        o.name && o.label
+        o && o.name && o.label
           ? option(
               { value: o.name, ...(v === o.name && { selected: true }) },
               o.label

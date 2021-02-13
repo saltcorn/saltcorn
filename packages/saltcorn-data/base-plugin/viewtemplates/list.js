@@ -71,7 +71,7 @@ const configuration_workflow = (req) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
           );
-          const create_view_opts = create_views.map((v) => v.name);
+          const create_view_opts = create_views.map((v) => v.select_option);
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),
             fields: [
