@@ -16,6 +16,7 @@ class View {
     if (o.table && !o.table_id) {
       this.table_id = o.table.id;
     }
+    if (o.table_name) this.table_name = o.table_name;
     this.configuration = stringToJSON(o.configuration);
     this.min_role =
       !o.min_role && typeof o.is_public !== "undefined"
@@ -81,7 +82,11 @@ class View {
     return {
       name: this.name,
       label: `${this.name} [${this.viewtemplate}${
-        this.table ? ` ${this.table.name}` : ""
+        this.table
+          ? ` ${this.table.name}`
+          : this.table_name
+          ? ` ${this.table_name}`
+          : ""
       }]`,
     };
   }
