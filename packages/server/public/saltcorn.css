@@ -194,3 +194,11 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .crashlog-entry {
   overflow-x: scroll;
 }
+
+.wizardStep {
+  border-bottom: 3px solid grey;
+}
+
+.wizardStep.active {
+  border-bottom: 3px solid black;
+}
