@@ -353,7 +353,6 @@ router.get(
             { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             { text: req.__(`Edit %s field`, field.label) },
-            //{ text: wfres.stepName },
             { workflow: wf, step: wfres },
           ],
         },
@@ -436,7 +435,6 @@ router.post(
                 ),
               },
               { workflow: wf, step: wfres },
-              //{ text: `${wfres.stepName}` },
             ],
           },
           {

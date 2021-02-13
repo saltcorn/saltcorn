@@ -89,7 +89,7 @@ const pageFlow = (req) =>
     },
     steps: [
       {
-        name: req.__("Page"),
+        name: req.__("Identity"),
         form: async (context) => {
           const roles = await User.get_roles();
 
@@ -296,7 +296,7 @@ const respondWorkflow = (page, wf, wfres, req, res) => {
           page
             ? { href: `/pageedit/edit/${page.name}`, text: page.name }
             : { text: req.__("New") },
-          { text: wfres.stepName },
+          { workflow: wf, step: wfres },
         ],
       },
       {
