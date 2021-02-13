@@ -115,7 +115,7 @@ const configuration_workflow = (req) =>
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
-                  attributes: { options: Object.keys(f.presets).join() },
+                  attributes: { options: Object.keys(f.presets)},
                 })
               );
             }
@@ -151,7 +151,7 @@ const configuration_workflow = (req) =>
           const table = await Table.findOne({ id: context.table_id });
           const parent_views = await get_parent_views(table, context.viewname);
 
-          const done_view_opts = own_views.map((v) => v.name);
+          const done_view_opts = own_views.map((v) => v.select_option);
           parent_views.forEach(({ relation, related_table, views }) =>
             views.forEach((v) => {
               done_view_opts.push(`${v.name}.${relation.name}`);
@@ -168,7 +168,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: done_view_opts.join(),
+                  options: done_view_opts,
                 },
               },
             ],

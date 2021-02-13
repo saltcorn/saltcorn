@@ -600,5 +600,12 @@
 	"There are no tables in the database that can be imported into Saltcorn.": "There are no tables in the database that can be imported into Saltcorn.",
 	"Import": "Import",
 	"Discover": "Discover",
-	"Discover tables in database": "Discover tables in database"
+	"Discover tables in database": "Discover tables in database",
+	"Single item view": "Single item view",
+	"The underlying individual view of each table row": "The underlying individual view of each table row",
+	"Minimum role to read": "Minimum role to read",
+	"Minimum role to write": "Minimum role to write",
+	"Create page": "Create page",
+	"Multi-tenancy not enabled": "Multi-tenancy not enabled",
+	"Identity": "Identity"
 }

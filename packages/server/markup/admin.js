@@ -191,7 +191,12 @@ const viewAttributes = async (key) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = await Table.findOne({ name: table_name });
   const views = await View.find({ table_id: table.id, viewtemplate: "Edit" });
-  return { options: views.map((v) => v.name).join(",") };
+  return {
+    options: views.map((v) => {
+      v.table = table;
+      return v.select_option;
+    }),
+  };
 };
 const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};

@@ -54,7 +54,7 @@ describe("admin page", () => {
     ["/admin/system", "Restart server"],
   ]);
   adminPageContains([
-    ["/useradmin", "Add user"],
+    ["/useradmin", "Create user"],
     ["/roleadmin", "Theme"],
     ["/useradmin/settings", "Authentication settings"],
     ["/useradmin/ssl", "HTTPS encryption"],

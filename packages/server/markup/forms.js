@@ -1,4 +1,12 @@
-const { form, select, option, text } = require("@saltcorn/markup/tags");
+const {
+  form,
+  select,
+  option,
+  text,
+  div,
+  i,
+  h5,
+} = require("@saltcorn/markup/tags");
 const { csrfField } = require("../routes/utils");
 
 const editRoleForm = ({ url, current_role, roles, req }) =>
@@ -21,4 +29,8 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
       )
     )
   );
-module.exports = { editRoleForm };
+
+const wizardCardTitle = (wizardTitle, wf, wfres) => 
+  `${wizardTitle}: ${wfres.stepName}`
+
+module.exports = { editRoleForm, wizardCardTitle };

@@ -43,7 +43,7 @@ describe("page create", () => {
     await request(app)
       .post("/pageedit/edit")
       .send(
-        "name=whales&title=Whales&description=about+whales&min_role=10&stepName=Page&contextEnc=%257B%257D"
+        "name=whales&title=Whales&description=about+whales&min_role=10&stepName=Identity&contextEnc=%257B%257D"
       )
       .set("Cookie", loginCookie)
       .expect(toInclude("builder.renderBuilder("));
@@ -57,7 +57,7 @@ describe("page create", () => {
         "contextEnc=%257B%2522name%2522%253A%2522whales%2522%252C%2522title%2522%253A%2522Whales%2522%252C%2522description%2522%253A%2522about%2520whales%2522%252C%2522min_role%2522%253A%252210%2522%257D&stepName=Layout&columns=%255B%255D&layout=%257B%2522above%2522%253A%255B%257B%2522type%2522%253A%2522blank%2522%252C%2522contents%2522%253A%2522Hello%2520world%2522%252C%2522block%2522%253Afalse%252C%2522textStyle%2522%253A%2522%2522%257D%252C%257B%2522type%2522%253A%2522view%2522%252C%2522view%2522%253A%2522authorlist%2522%252C%2522name%2522%253A%2522d51d4b%2522%252C%2522state%2522%253A%2522fixed%2522%257D%255D%257D"
       )
       .set("Cookie", loginCookie)
-      .expect(toInclude("Fixed states (step 3"));
+      .expect(toInclude(">Fixed states<"));
   });
   it("fills fixed states", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -104,7 +104,7 @@ describe("pageedit", () => {
       .post("/pageedit/edit")
       .set("Cookie", loginCookie)
       .send("name=a_page")
-      .send("stepName=Page")
+      .send("stepName=Identity")
       .send("contextEnc=" + ctx)
       .expect(toInclude("builder.renderBuilder"));
   });

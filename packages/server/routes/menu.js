@@ -86,9 +86,10 @@ const menuForm = async (req) => {
       {
         name: "viewname",
         label: req.__("Views"),
-        input_type: "select",
+        type: "String",
         class: "item-menu",
-        options: views.map((r) => r.name),
+        required: true, 
+        attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
       },
     ],

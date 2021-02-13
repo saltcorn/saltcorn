@@ -73,7 +73,7 @@ describe("Table create", () => {
   });
   it("creates list view", async () => {
     await browser.goto("/viewedit");
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     await browser.goto("/viewedit/new");
     await browser.page.type("#inputname", "PersonList");
     await browser.page.select("#inputviewtemplate", "List");
@@ -84,7 +84,7 @@ describe("Table create", () => {
     );
     await browser.clickNav("button[type=submit]");
     await browser.clickNav("button[type=submit]");
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     expect(await browser.content()).toContain("PersonList");
     await browser.goto("/view/PersonList");
     expect(await browser.content()).toContain("<title>PersonList</title>");
@@ -92,7 +92,7 @@ describe("Table create", () => {
 
   it("creates edit view", async () => {
     await browser.goto("/viewedit");
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     await browser.goto("/viewedit/new");
     await browser.page.type("#inputname", "PersonEdit");
     await browser.page.select("#inputviewtemplate", "Edit");
@@ -109,7 +109,7 @@ describe("Table create", () => {
     await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
 
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     expect(await browser.content()).toContain("PersonEdit");
   });
 
@@ -147,7 +147,7 @@ describe("Table create", () => {
   });
   it("creates show view", async () => {
     await browser.goto("/viewedit");
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     await browser.goto("/viewedit/new");
     await browser.page.type("#inputname", "PersonShow");
     await browser.page.select("#inputviewtemplate", "Show");
@@ -163,7 +163,7 @@ describe("Table create", () => {
     await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
 
-    expect(await browser.content()).toContain("Add view");
+    expect(await browser.content()).toContain("Create view");
     expect(await browser.content()).toContain("PersonShow");
     await browser.goto("/view/PersonShow?id=1");
     expect(await browser.content()).toContain("<title>PersonShow</title>");

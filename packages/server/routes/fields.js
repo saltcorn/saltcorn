@@ -17,6 +17,7 @@ const db = require("@saltcorn/data/db");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
+const { wizardCardTitle } = require("../markup/forms.js");
 const router = new Router();
 module.exports = router;
 
@@ -336,7 +337,8 @@ router.get(
     const { id } = req.params;
     const field = await Field.findOne({ id });
     const table = await Table.findOne({ id: field.table_id });
-    const wfres = await fieldFlow(req).run(
+    const wf = fieldFlow(req);
+    const wfres = await wf.run(
       {
         ...field.toJson,
         ...field.attributes,
@@ -351,12 +353,12 @@ router.get(
             { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             { text: req.__(`Edit %s field`, field.label) },
-            { text: wfres.stepName },
+            { workflow: wf, step: wfres },
           ],
         },
         {
           type: "card",
-          title: `${field.label}: ${wfres.title}`,
+          title: wizardCardTitle(field.label, wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -371,8 +373,8 @@ router.get(
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
     const table = await Table.findOne({ id: table_id });
-
-    const wfres = await fieldFlow(req).run({ table_id: +table_id }, req);
+    const wf = fieldFlow(req);
+    const wfres = await wf.run({ table_id: +table_id }, req);
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -381,12 +383,13 @@ router.get(
             { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             { text: req.__(`Add field`) },
-            { text: wfres.stepName },
+            //{ text: wfres.stepName },
+            { workflow: wf, step: wfres },
           ],
         },
         {
           type: "card",
-          title: req.__(`New field:`) + ` ${wfres.title}`,
+          title: wizardCardTitle(req.__(`New field`), wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
       ],
@@ -414,7 +417,8 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await fieldFlow(req).run(req.body, req);
+    const wf = fieldFlow(req);
+    const wfres = await wf.run(req.body, req);
     if (wfres.renderForm) {
       const table = await Table.findOne({ id: wfres.context.table_id });
       res.sendWrap(req.__(`Field attributes`), {
@@ -430,14 +434,16 @@ router.post(
                   wfres.context.label || req.__("new")
                 ),
               },
-              { text: `${wfres.stepName}` },
+              { workflow: wf, step: wfres },
             ],
           },
           {
             type: "card",
-            title: `${wfres.context.label || req.__("New field")}: ${
-              wfres.title
-            }`,
+            title: wizardCardTitle(
+              wfres.context.label || req.__("New field"),
+              wf,
+              wfres
+            ),
             contents: renderForm(wfres.renderForm, req.csrfToken()),
           },
         ],

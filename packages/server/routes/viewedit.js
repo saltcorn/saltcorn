@@ -150,7 +150,7 @@ router.get(
             tables.length > 0
               ? a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Add view")
+                  req.__("Create view")
                 )
               : p(
                   req.__(
@@ -387,7 +387,7 @@ router.post(
     }
   })
 );
-const respondWorkflow = (view, wfres, req, res) => {
+const respondWorkflow = (view, wf, wfres, req, res) => {
   const wrap = (contents, noCard) => ({
     above: [
       {
@@ -395,7 +395,7 @@ const respondWorkflow = (view, wfres, req, res) => {
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
           { href: `/viewedit/edit/${view.name}`, text: view.name },
-          { text: wfres.stepName },
+          { workflow: wf, step: wfres },
         ],
       },
       {
@@ -436,7 +436,7 @@ router.get(
       },
       req
     );
-    respondWorkflow(view, wfres, req, res);
+    respondWorkflow(view, configFlow, wfres, req, res);
   })
 );
 
@@ -450,7 +450,7 @@ router.post(
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(req.body, req);
-    respondWorkflow(view, wfres, req, res);
+    respondWorkflow(view, configFlow, wfres, req, res);
   })
 );
 router.post(

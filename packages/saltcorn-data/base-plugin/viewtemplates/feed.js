@@ -35,17 +35,18 @@ const configuration_workflow = (req) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
           );
-          const show_view_opts = show_views.map((v) => v.name);
-          const create_view_opts = create_views.map((v) => v.name);
+          const show_view_opts = show_views.map((v) => v.select_option);
+          const create_view_opts = create_views.map((v) => v.select_option);
           return new Form({
             fields: [
               {
                 name: "show_view",
-                label: req.__("Item View"),
+                label: req.__("Single item view"),
                 type: "String",
+                sublabel: req.__("The underlying individual view of each table row"),
                 required: true,
                 attributes: {
-                  options: show_view_opts.join(),
+                  options: show_view_opts,
                 },
               },
               {
@@ -56,7 +57,7 @@ const configuration_workflow = (req) =>
                 ),
                 type: "String",
                 attributes: {
-                  options: create_view_opts.join(),
+                  options: create_view_opts,
                 },
               },
               {
@@ -85,7 +86,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: fields.map((f) => f.name).join(),
+                  options: fields.map((f) => f.name),
                 },
               },
               {
@@ -258,7 +259,7 @@ const run = async (
       create_link = await create_view.run(state, extraArgs);
     } else {
       create_link = link_view(
-        `/view/${view_to_create}${stateToQueryString(state)}`,
+        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(state)}`,
         `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
