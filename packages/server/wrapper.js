@@ -23,9 +23,9 @@ const get_extra_menu = (role) => {
           item.type === "Link"
             ? item.url
             : item.type === "View"
-            ? `/view/${item.viewname}`
+            ? `/view/${encodeURIComponent(item.viewname)}`
             : item.type === "Page"
-            ? `/page/${item.pagename}`
+            ? `/page/${encodeURIComponent(item.pagename)}`
             : undefined,
         ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
       }));
