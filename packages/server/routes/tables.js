@@ -71,13 +71,13 @@ const tableForm = async (table, req) => {
           ]
         : []),
       {
-        label: req.__("Minimum role for read"),
+        label: req.__("Minimum role to read"),
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
       },
       {
-        label: req.__("Minimum role for writing"),
+        label: req.__("Minimum role to write"),
         name: "min_role_write",
         input_type: "select",
         options: roleOptions,
@@ -441,7 +441,7 @@ router.get(
               href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
               class: "btn btn-primary",
             },
-            req.__("Add view")
+            req.__("Create view")
           ),
       };
     }

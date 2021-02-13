@@ -150,7 +150,7 @@ router.get(
             tables.length > 0
               ? a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Add view")
+                  req.__("Create view")
                 )
               : p(
                   req.__(
