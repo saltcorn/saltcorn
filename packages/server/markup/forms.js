@@ -31,7 +31,6 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
   );
 
 const wizardSteps = (wizardTitle, wf, wfres) => {
-  console.log(wf, wfres);
   return div(
     h5(wizardTitle),
     div(
