@@ -66,7 +66,7 @@ const string = {
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
       ? is.str
-      : is.one_of(options.map((o) => o.name)),
+      : is.one_of(options.map((o) => typeof o === "string" ? o : o.name)),
   fieldviews: {
     as_text: { isEdit: false, run: (s) => text_attr(s || "") },
     as_link: {
