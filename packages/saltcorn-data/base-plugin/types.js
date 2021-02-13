@@ -66,7 +66,7 @@ const string = {
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
       ? is.str
-      : is.one_of(options.map((o) => typeof o === "string" ? o : o.name)),
+      : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
   fieldviews: {
     as_text: { isEdit: false, run: (s) => text_attr(s || "") },
     as_link: {
@@ -84,7 +84,7 @@ const string = {
         },
       ],
       run: (nm, v, attrs, cls, required, field) =>
-        attrs.options
+        attrs.options && (attrs.options.length > 0 || !required)
           ? select(
               {
                 class: ["form-control", cls],
@@ -100,6 +100,8 @@ const string = {
                     ...getStrOptions(v, attrs.options),
                   ]
             )
+          : attrs.options
+          ? i("None available")
           : attrs.calcOptions
           ? select(
               {

@@ -600,5 +600,7 @@
 	"There are no tables in the database that can be imported into Saltcorn.": "There are no tables in the database that can be imported into Saltcorn.",
 	"Import": "Import",
 	"Discover": "Discover",
-	"Discover tables in database": "Discover tables in database"
+	"Discover tables in database": "Discover tables in database",
+	"Single item view": "Single item view",
+	"The underlying individual view of each table row": "The underlying individual view of each table row"
 }

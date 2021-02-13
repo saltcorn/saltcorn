@@ -41,7 +41,7 @@ const configuration_workflow = (req) =>
             fields: [
               {
                 name: "show_view",
-                label: req.__("Item View"),
+                label: req.__("Single item view"),
                 type: "String",
                 sublabel: req.__("The underlying individual view of each table row"),
                 required: true,
