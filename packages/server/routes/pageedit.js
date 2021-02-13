@@ -230,7 +230,7 @@ const getPageList = (rows, roles, req) => {
         href: `/pageedit/new`,
         class: "btn btn-primary",
       },
-      req.__("Add page")
+      req.__("Create page")
     )
   );
 };

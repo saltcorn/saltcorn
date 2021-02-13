@@ -215,7 +215,7 @@ router.get(
             ],
             users
           ),
-          link(`/useradmin/new`, req.__("Add user")),
+          link(`/useradmin/new`, req.__("Create user")),
         ],
       },
     });

@@ -674,7 +674,7 @@ router.get(
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 mr-3" },
         i({ class: "fas fa-plus-square mr-1" }),
-        req.__("New table")
+        req.__("Create table")
       ),
       a(
         {
