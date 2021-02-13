@@ -43,7 +43,7 @@ describe("page create", () => {
     await request(app)
       .post("/pageedit/edit")
       .send(
-        "name=whales&title=Whales&description=about+whales&min_role=10&stepName=Page&contextEnc=%257B%257D"
+        "name=whales&title=Whales&description=about+whales&min_role=10&stepName=Identity&contextEnc=%257B%257D"
       )
       .set("Cookie", loginCookie)
       .expect(toInclude("builder.renderBuilder("));
@@ -104,7 +104,7 @@ describe("pageedit", () => {
       .post("/pageedit/edit")
       .set("Cookie", loginCookie)
       .send("name=a_page")
-      .send("stepName=Page")
+      .send("stepName=Identity")
       .send("contextEnc=" + ctx)
       .expect(toInclude("builder.renderBuilder"));
   });
