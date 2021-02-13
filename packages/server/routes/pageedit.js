@@ -24,7 +24,7 @@ const {
   settingsDropdown,
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
-const { editRoleForm } = require("../markup/forms.js");
+const { editRoleForm, wizardSteps } = require("../markup/forms.js");
 
 const router = new Router();
 module.exports = router;
@@ -286,7 +286,7 @@ router.get("/", setTenant, isAdmin, async (req, res) => {
   });
 });
 
-const respondWorkflow = (page, wfres, req, res) => {
+const respondWorkflow = (page, wf, wfres, req, res) => {
   const wrap = (contents, noCard) => ({
     above: [
       {
@@ -301,7 +301,7 @@ const respondWorkflow = (page, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
-        title: wfres.title,
+        title: wizardSteps(page ? page.name : req.__("New"), wf, wfres),
         contents,
       },
     ],
@@ -331,8 +331,9 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
-      const wfres = await pageFlow(req).run(page, req);
-      respondWorkflow(page, wfres, req, res);
+      const wf = pageFlow(req);
+      const wfres = await wf.run(page, req);
+      respondWorkflow(page, wf, wfres, req, res);
     }
   })
 );
@@ -342,8 +343,9 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run({}, req);
-    respondWorkflow(null, wfres, req, res);
+    const wf = pageFlow(req);
+    const wfres = await wf.run({}, req);
+    respondWorkflow(null, wf, wfres, req, res);
   })
 );
 
@@ -352,11 +354,12 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wfres = await pageFlow(req).run(req.body, req);
+    const wf = pageFlow(req);
+    const wfres = await wf.run(req.body, req);
     const page =
       wfres.context && (await Page.findOne({ name: wfres.context.name }));
 
-    respondWorkflow(page, wfres, req, res);
+    respondWorkflow(page, wf, wfres, req, res);
   })
 );
 
