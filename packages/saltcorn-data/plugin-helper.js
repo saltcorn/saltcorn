@@ -724,6 +724,7 @@ const initial_config_all_fields = contract(
             block: false,
             contents: f.label,
             textStyle: "",
+            ...(isEdit ? { labelFor: f.name } : {}),
           },
         ],
       };
