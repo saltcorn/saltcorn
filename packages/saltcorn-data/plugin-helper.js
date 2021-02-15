@@ -65,7 +65,7 @@ const calcfldViewOptions = contract(
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
-        Object.keys(getState().keyFieldviews).forEach(([k, v]) => {
+        Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
       } else if (f.type && f.type.fieldviews) {
