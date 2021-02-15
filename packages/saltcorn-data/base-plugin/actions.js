@@ -121,7 +121,6 @@ module.exports = {
       const view = await View.findOne({ name: viewname });
       const htmlBs = await view.run({ id: row.id }, mockReqRes);
       const html = await transformBootstrapEmail(htmlBs);
-      console.log(htmlBs);
       const email = {
         from: getState().getConfig("email_from"),
         to: to_addr,
