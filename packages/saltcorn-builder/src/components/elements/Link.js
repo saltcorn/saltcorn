@@ -70,7 +70,7 @@ export const LinkSettings = () => {
       >
         <option>URL</option>
         {(options.pages || []).length > 0 && <option>Page</option>}
-        {(options.views || []).length > 0 && <option>View</option>}
+        {(options.views || []).length > 0 && options.mode==="page" && <option>View</option>}
       </select>
       {link_src === "URL" && (
         <Fragment>
@@ -121,7 +121,7 @@ export const LinkSettings = () => {
           >
             <option></option>
             {(options.views || []).map((p) => (
-              <option value={`/view/${p.name}`}>{p.name}</option>
+              <option value={`/view/${p.name}`}>{p.name} [{p.viewtemplate}]</option>
             ))}
           </select>
         </Fragment>
