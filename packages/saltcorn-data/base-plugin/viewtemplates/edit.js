@@ -25,7 +25,9 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const fields = (await table.getFields()).filter(
+            (f) => !f.primary_key
+          );
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
