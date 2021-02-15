@@ -51,23 +51,34 @@ const stateToQueryString = contract(
 );
 
 const calcfldViewOptions = contract(
-  is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
+  is.fun(
+    [is.array(is.class("Field")), is.bool],
+    is.obj({ field_view_options: is.objVals(is.array(is.str)) })
+  ),
   (fields, isEdit) => {
     var fvs = {};
+    const handlesTextStyle = {};
     fields.forEach((f) => {
+      handlesTextStyle[f.name] = [];
       if (f.type === "File") {
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
+        Object.keys(getState().keyFieldviews).forEach(([k, v]) => {
+          if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
+        });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
           f.calculated ? !fv.isEdit : !fv.isEdit === !isEdit
         );
-        fvs[f.name] = tfvs.map(([k, fv]) => k);
+        fvs[f.name] = tfvs.map(([k, fv]) => {
+          if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
+          return k;
+        });
       }
     });
-    return fvs;
+    return { field_view_options: fvs, handlesTextStyle };
   }
 );
 const calcfldViewConfig = contract(

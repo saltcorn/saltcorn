@@ -42,6 +42,7 @@ export const FieldSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const fvs = options.field_view_options[name];
+  const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
@@ -106,7 +107,9 @@ export const FieldSettings = () => {
               <BlockSetting block={block} setProp={setProp} />
             </td>
           </tr>
-          <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          {!(handlesTextStyle && handlesTextStyle.includes(fieldview)) && (
+            <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          )}
         </tbody>
       </table>{" "}
       {cfgFields ? (

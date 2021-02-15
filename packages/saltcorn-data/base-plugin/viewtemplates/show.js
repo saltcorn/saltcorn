@@ -62,7 +62,10 @@ const configuration_workflow = (req) =>
             }
           }
           const fieldViewConfigForms = await calcfldViewConfig(fields, false);
-          const field_view_options = calcfldViewOptions(fields, false);
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            false
+          );
 
           const link_view_opts = await get_link_view_opts(
             table,
@@ -99,6 +102,7 @@ const configuration_workflow = (req) =>
             roles,
             views,
             pages,
+            handlesTextStyle,
             mode: "show",
             ownership: !!table.ownership_field_id || table.name === "users",
           };
