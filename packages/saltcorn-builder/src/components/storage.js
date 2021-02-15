@@ -70,6 +70,8 @@ export const layoutToNodes = (layout, query, actions) => {
           isFormula={segment.isFormula || {}}
           textStyle={segment.textStyle || ""}
           link_src={segment.link_src || "URL"}
+          link_style={segment.link_style || ""}
+          link_size={segment.link_size || ""}
         />
       );
     } else if (segment.type === "view") {
@@ -404,6 +406,8 @@ export const craftToSaltcorn = (nodes) => {
         isFormula: node.props.isFormula,
         textStyle: node.props.textStyle,
         link_src: node.props.link_src,
+        link_style: node.props.link_style,
+        link_size: node.props.link_size,
       };
     }
     if (node.displayName === View.craft.displayName) {
