@@ -6,17 +6,25 @@ const db = require("./db");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
-const { button, a, label, text } = require("@saltcorn/markup/tags");
+const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
 const { jsexprToSQL } = require("./models/expression");
 
-const link_view = (url, label, popup, link_style = "", link_size = "") => {
+const link_view = (
+  url,
+  label,
+  popup,
+  link_style = "",
+  link_size = "",
+  link_icon = ""
+) => {
   if (popup) {
     return button(
       {
         class: "btn btn-secondary btn-sm",
         onClick: `ajax_modal('${url}')`,
       },
+      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       label
     );
   } else
@@ -27,6 +35,7 @@ const link_view = (url, label, popup, link_style = "", link_size = "") => {
           ? { class: `${link_style} ${link_size}` }
           : {}),
       },
+      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       text(label)
     );
 };

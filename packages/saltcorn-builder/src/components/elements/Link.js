@@ -2,6 +2,8 @@ import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 import optionsCtx from "../context";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
+import faIcons from "./faicons";
 
 export const Link = ({
   text,
@@ -10,6 +12,7 @@ export const Link = ({
   textStyle,
   link_style,
   link_size,
+  link_icon,
 }) => {
   const {
     selected,
@@ -23,6 +26,7 @@ export const Link = ({
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
+      {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
       {isFormula.text ? `=${text}` : text}
     </span>
   );
@@ -40,6 +44,7 @@ export const LinkSettings = () => {
     target_blank: node.data.props.target_blank,
     link_style: node.data.props.link_style,
     link_size: node.data.props.link_size,
+    link_icon: node.data.props.link_icon,
   }));
   const {
     actions: { setProp },
@@ -53,6 +58,7 @@ export const LinkSettings = () => {
     link_src,
     link_style,
     link_size,
+    link_icon,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -177,7 +183,13 @@ export const LinkSettings = () => {
           <option value="btn-block btn-lg">Large block</option>
         </select>
       </div>
-
+      <label className="mr-2">Icon</label>
+      <FontIconPicker
+        value={link_icon}
+        icons={faIcons}
+        onChange={(value) => setProp((prop) => (prop.link_icon = value))}
+        isMulti={false}
+      />
       <div className="form-check">
         <input
           className="form-check-input"

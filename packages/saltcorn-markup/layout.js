@@ -16,6 +16,7 @@ const {
   ul,
   button,
   li,
+  i
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
@@ -220,6 +221,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
           },
+          segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
           segment.text
         )
       );

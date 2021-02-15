@@ -71,6 +71,7 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
           link_src={segment.link_src || "URL"}
           link_style={segment.link_style || ""}
+          link_icon={segment.link_icon || ""}
           link_size={segment.link_size || ""}
         />
       );
@@ -157,6 +158,7 @@ export const layoutToNodes = (layout, query, actions) => {
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
           link_style={segment.link_style || ""}
+          link_icon={segment.link_icon || ""}
           link_size={segment.link_size || ""}
         />
       );
@@ -408,6 +410,7 @@ export const craftToSaltcorn = (nodes) => {
         link_src: node.props.link_src,
         link_style: node.props.link_style,
         link_size: node.props.link_size,
+        link_icon: node.props.link_icon,
       };
     }
     if (node.displayName === View.craft.displayName) {
@@ -508,6 +511,7 @@ export const craftToSaltcorn = (nodes) => {
         isFormula: node.props.isFormula,
         minRole: node.props.minRole,
         link_style: node.props.link_style,
+        link_icon: node.props.link_icon,
         link_size: node.props.link_size,
       };
     }
