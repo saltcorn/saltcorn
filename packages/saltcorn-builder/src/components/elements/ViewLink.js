@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
+import { blockProps, BlockSetting, MinRoleSettingRow, OrFormula } from "./utils";
 
 export const ViewLink = ({
   name,
@@ -60,7 +60,7 @@ export const ViewLinkSettings = () => {
         <label>View to link to</label>
         <select
           value={name}
-          className="w-100"
+          className="form-control"
           onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.link_view_opts.map((f, ix) => (
@@ -84,7 +84,8 @@ export const ViewLinkSettings = () => {
       <div>
         <label>Link style</label>
         <select
-          className="w-100 mr-2"
+                    className="form-control"
+
           value={link_style}
           onChange={(e) =>
             setProp((prop) => (prop.link_style = e.target.value))
@@ -106,7 +107,8 @@ export const ViewLinkSettings = () => {
       <div>
         <label>Link size</label>
         <select
-          className="w-100 mr-2"
+                   className="form-control"
+
           value={link_size}
           onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
         >
@@ -128,7 +130,8 @@ export const ViewLinkSettings = () => {
         <label className="form-check-label">Open in popup modal?</label>
       </div>
       <BlockSetting block={block} setProp={setProp} />
-      <MinRoleSetting minRole={minRole} setProp={setProp} />
+      <table><tbody>
+      <MinRoleSettingRow minRole={minRole} setProp={setProp} /></tbody></table>
     </div>
   );
 };
