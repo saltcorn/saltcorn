@@ -66,7 +66,7 @@ export const ColumnsSettings = () => {
               <input
                 type="number"
                 value={ncols}
-                className="w-100 ml-2"
+                className="form-control"
                 step="1"
                 min="1"
                 max="4"
@@ -94,7 +94,7 @@ export const ColumnsSettings = () => {
                     <input
                       type="number"
                       value={widths[ix]}
-                      className="w-100 ml-2"
+                      className="form-control"
                       step="1"
                       min="1"
                       max={12 - (sum(widths) - widths[ix]) - 1}
@@ -116,6 +116,7 @@ export const ColumnsSettings = () => {
             </td>
             <td>
               <select
+                className="form-control"
                 value={breakpoint}
                 onChange={(e) =>
                   setProp((prop) => (prop.breakpoint = e.target.value))
