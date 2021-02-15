@@ -56,6 +56,7 @@ export const FieldSettings = () => {
             <td>
               <select
                 value={name}
+                className="form-control"
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   const newfvs = options.field_view_options[e.target.value];
@@ -80,6 +81,7 @@ export const FieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
+                  className="form-control"
                   onChange={(e) => {
                     setProp((prop) => (prop.fieldview = e.target.value));
                     setInitialConfig(
