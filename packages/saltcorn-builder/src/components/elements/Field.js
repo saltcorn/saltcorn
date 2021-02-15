@@ -42,6 +42,7 @@ export const FieldSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const fvs = options.field_view_options[name];
+  const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
@@ -56,6 +57,7 @@ export const FieldSettings = () => {
             <td>
               <select
                 value={name}
+                className="form-control"
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   const newfvs = options.field_view_options[e.target.value];
@@ -80,6 +82,7 @@ export const FieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
+                  className="form-control"
                   onChange={(e) => {
                     setProp((prop) => (prop.fieldview = e.target.value));
                     setInitialConfig(
@@ -104,7 +107,9 @@ export const FieldSettings = () => {
               <BlockSetting block={block} setProp={setProp} />
             </td>
           </tr>
-          <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          {!(handlesTextStyle && handlesTextStyle.includes(fieldview)) && (
+            <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          )}
         </tbody>
       </table>{" "}
       {cfgFields ? (

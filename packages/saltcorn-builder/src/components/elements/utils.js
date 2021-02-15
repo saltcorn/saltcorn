@@ -83,6 +83,30 @@ export const MinRoleSetting = ({ minRole, setProp }) => {
     </div>
   );
 };
+export const MinRoleSettingRow = ({ minRole, setProp }) => {
+  const options = useContext(optionsCtx);
+  return (
+    <tr>
+      <td>
+        <label>Minimum Role</label>
+      </td>
+      <td>
+        <select
+          value={minRole}
+          className="form-control"
+
+          onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
+        >
+          {options.roles.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.role}
+            </option>
+          ))}
+        </select>
+      </td>
+    </tr>
+  );
+};
 const TextStyleSelect = ({ textStyle, setProp }) => {
   return (
     <select

@@ -25,9 +25,14 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const fields = (await table.getFields()).filter(
+            (f) => !f.primary_key
+          );
 
-          const field_view_options = calcfldViewOptions(fields, true);
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            true
+          );
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
@@ -71,6 +76,7 @@ const configuration_workflow = (req) =>
           return {
             fields,
             field_view_options,
+            handlesTextStyle,
             roles,
             actions,
             fieldViewConfigForms,
@@ -115,7 +121,7 @@ const configuration_workflow = (req) =>
                   name: "preset_" + f.name,
                   label: "Preset " + f.label,
                   type: "String",
-                  attributes: { options: Object.keys(f.presets)},
+                  attributes: { options: Object.keys(f.presets) },
                 })
               );
             }

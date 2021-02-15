@@ -6,17 +6,25 @@ const db = require("./db");
 const { contract, is } = require("contractis");
 const { fieldlike, is_table_query, is_column } = require("./contracts");
 const { link } = require("@saltcorn/markup");
-const { button, a, label, text } = require("@saltcorn/markup/tags");
+const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
 const { jsexprToSQL } = require("./models/expression");
 
-const link_view = (url, label, popup, link_style = "", link_size = "") => {
+const link_view = (
+  url,
+  label,
+  popup,
+  link_style = "",
+  link_size = "",
+  link_icon = ""
+) => {
   if (popup) {
     return button(
       {
         class: "btn btn-secondary btn-sm",
         onClick: `ajax_modal('${url}')`,
       },
+      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       label
     );
   } else
@@ -27,6 +35,7 @@ const link_view = (url, label, popup, link_style = "", link_size = "") => {
           ? { class: `${link_style} ${link_size}` }
           : {}),
       },
+      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       text(label)
     );
 };
@@ -51,23 +60,34 @@ const stateToQueryString = contract(
 );
 
 const calcfldViewOptions = contract(
-  is.fun([is.array(is.class("Field")), is.bool], is.objVals(is.array(is.str))),
+  is.fun(
+    [is.array(is.class("Field")), is.bool],
+    is.obj({ field_view_options: is.objVals(is.array(is.str)) })
+  ),
   (fields, isEdit) => {
     var fvs = {};
+    const handlesTextStyle = {};
     fields.forEach((f) => {
+      handlesTextStyle[f.name] = [];
       if (f.type === "File") {
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
+        Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
+          if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
+        });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
           f.calculated ? !fv.isEdit : !fv.isEdit === !isEdit
         );
-        fvs[f.name] = tfvs.map(([k, fv]) => k);
+        fvs[f.name] = tfvs.map(([k, fv]) => {
+          if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
+          return k;
+        });
       }
     });
-    return fvs;
+    return { field_view_options: fvs, handlesTextStyle };
   }
 );
 const calcfldViewConfig = contract(
@@ -100,7 +120,7 @@ const get_link_view_opts = contract(
     const link_view_opts = own_link_views
       .filter((v) => v.name !== viewname)
       .map((v) => ({
-        label: v.name,
+        label: `${v.name} [${v.viewtemplate} ${table.name}]`,
         name: `Own:${v.name}`,
       }));
     const child_views = await get_child_views(table, viewname);
@@ -108,7 +128,7 @@ const get_link_view_opts = contract(
       for (const view of views) {
         link_view_opts.push({
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
-          label: `${view.name} of ${relation.label} on ${related_table.name}`,
+          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
         });
       }
     }
@@ -118,7 +138,7 @@ const get_link_view_opts = contract(
       for (const view of views) {
         link_view_opts.push({
           name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
-          label: `${view.name} of ${relation.name} on ${related_table.name}`,
+          label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
         });
       }
     }

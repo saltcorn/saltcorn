@@ -1,7 +1,9 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting, OrFormula } from "./utils";
+import { blockProps, BlockSetting, MinRoleSettingRow, OrFormula } from "./utils";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
+import faIcons from "./faicons";
 
 export const ViewLink = ({
   name,
@@ -9,6 +11,7 @@ export const ViewLink = ({
   minRole,
   link_style,
   link_size,
+  link_icon,
   inModal,
   label,
 }) => {
@@ -26,6 +29,7 @@ export const ViewLink = ({
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
+      {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
       {displabel}
     </span>
   );
@@ -41,6 +45,7 @@ export const ViewLinkSettings = () => {
     inModal: node.data.props.inModal,
     link_style: node.data.props.link_style,
     link_size: node.data.props.link_size,
+    link_icon: node.data.props.link_icon,
   }));
   const {
     actions: { setProp },
@@ -51,6 +56,7 @@ export const ViewLinkSettings = () => {
     isFormula,
     inModal,
     link_style,
+    link_icon,
     link_size,
   } = node;
   const options = useContext(optionsCtx);
@@ -60,7 +66,7 @@ export const ViewLinkSettings = () => {
         <label>View to link to</label>
         <select
           value={name}
-          className="w-100"
+          className="form-control"
           onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
         >
           {options.link_view_opts.map((f, ix) => (
@@ -84,7 +90,8 @@ export const ViewLinkSettings = () => {
       <div>
         <label>Link style</label>
         <select
-          className="w-100 mr-2"
+                    className="form-control"
+
           value={link_style}
           onChange={(e) =>
             setProp((prop) => (prop.link_style = e.target.value))
@@ -106,7 +113,8 @@ export const ViewLinkSettings = () => {
       <div>
         <label>Link size</label>
         <select
-          className="w-100 mr-2"
+                   className="form-control"
+
           value={link_size}
           onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
         >
@@ -117,6 +125,13 @@ export const ViewLinkSettings = () => {
           <option value="btn-block btn-lg">Large block</option>
         </select>
       </div>
+      <label className="mr-2">Icon</label>
+      <FontIconPicker
+        value={link_icon}
+        icons={faIcons}
+        onChange={(value) => setProp((prop) => (prop.link_icon = value))}
+        isMulti={false}
+      />
       <div className="form-check">
         <input
           className="form-check-input"
@@ -128,7 +143,8 @@ export const ViewLinkSettings = () => {
         <label className="form-check-label">Open in popup modal?</label>
       </div>
       <BlockSetting block={block} setProp={setProp} />
-      <MinRoleSetting minRole={minRole} setProp={setProp} />
+      <table><tbody>
+      <MinRoleSettingRow minRole={minRole} setProp={setProp} /></tbody></table>
     </div>
   );
 };

@@ -8,6 +8,11 @@ export const View = ({ name, view, state }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const options = useContext(optionsCtx);
+
+  const views = options.views;
+  const theview = views.find(v=>v.name===view)
+  const label = theview ? theview.label : view
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -15,7 +20,7 @@ export const View = ({ name, view, state }) => {
         selected ? "selected-node" : ""
       }`}
     >
-      {view} view
+      View: {label}
     </div>
   );
 };
@@ -40,7 +45,7 @@ export const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
-          className="w-100"
+          className="form-control"
           onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
           {views.map((f, ix) => (
@@ -55,6 +60,7 @@ export const ViewSettings = () => {
           <label>State</label>
           <select
             value={state}
+            className="form-control"
             onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
           >
             <option value="shared">Shared</option>
