@@ -5,7 +5,7 @@ import faIcons from "./faicons";
 import {
   blockProps,
   BlockSetting,
-  MinRoleSetting,
+  MinRoleSettingRow,
   OrFormula,
   ConfigForm,
   setInitialConfig,
@@ -77,7 +77,7 @@ export const ActionSettings = () => {
           <td>
             <select
               value={name}
-              className="w-100 mr-2"
+              className="form-control"
               onChange={(e) => {
                 setProp((prop) => (prop.name = e.target.value));
                 setInitialConfig(
@@ -116,7 +116,7 @@ export const ActionSettings = () => {
           </td>
           <td>
             <select
-              className="w-100 mr-2"
+              className="form-control"
               value={action_style}
               onChange={(e) =>
                 setProp((prop) => (prop.action_style = e.target.value))
@@ -143,7 +143,7 @@ export const ActionSettings = () => {
           <td>
             {" "}
             <select
-              className="w-100 mr-2"
+              className="form-control"
               value={action_size}
               onChange={(e) =>
                 setProp((prop) => (prop.action_size = e.target.value))
@@ -171,7 +171,7 @@ export const ActionSettings = () => {
               isMulti={false}
             />
           </td>
-        </tr>
+        </tr><MinRoleSettingRow minRole={minRole} setProp={setProp} />
       </table>
       {options.mode === "show" ? (
         <div className="form-check">
@@ -188,7 +188,7 @@ export const ActionSettings = () => {
         </div>
       ) : null}
       <BlockSetting block={block} setProp={setProp} />
-      <MinRoleSetting minRole={minRole} setProp={setProp} />
+      
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}
