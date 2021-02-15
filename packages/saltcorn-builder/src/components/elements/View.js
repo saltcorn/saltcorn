@@ -40,7 +40,7 @@ export const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
-          className="w-100"
+          className="form-control"
           onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
         >
           {views.map((f, ix) => (
@@ -55,6 +55,7 @@ export const ViewSettings = () => {
           <label>State</label>
           <select
             value={state}
+            className="form-control"
             onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
           >
             <option value="shared">Shared</option>
