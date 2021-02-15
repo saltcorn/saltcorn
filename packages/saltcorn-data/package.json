@@ -12,7 +12,7 @@
   "dependencies": {
     "@saltcorn/markup": "^0.4.0-beta.1",
     "acorn": "^8.0.3",
-    "adm-zip": "^0.4.16",
+    "adm-zip": "^0.5.2",
     "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
     "bootstrap-email": "^1.1.1",
