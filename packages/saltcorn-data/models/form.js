@@ -23,6 +23,7 @@ class Form {
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
     this.additionalButtons = o.additionalButtons;
+    this.onChange = o.onChange;
     this.validator = o.validator;
     this.hasErrors = false;
     this.xhrSubmit = !!o.xhrSubmit;

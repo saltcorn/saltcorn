@@ -60,8 +60,8 @@ const site_id_form = (req) =>
     action: "/admin",
   });
 
-const email_form = (req) =>
-  config_fields_form({
+const email_form = async (req) => {
+  const form = await config_fields_form({
     req,
     field_names: [
       "smtp_host",
@@ -73,7 +73,10 @@ const email_form = (req) =>
     ],
     action: "/admin/email",
   });
-
+  form.submitButtonClass = "btn-outline-primary";
+  form.onChange = "remove_outline(this)";
+  return form;
+};
 router.get(
   "/",
   setTenant,
