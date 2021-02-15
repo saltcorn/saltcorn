@@ -42,6 +42,8 @@ const {
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+const { getMailTransport } = require("@saltcorn/data/models/email");
+
 const router = new Router();
 module.exports = router;
 
@@ -60,8 +62,8 @@ const site_id_form = (req) =>
     action: "/admin",
   });
 
-const email_form = (req) =>
-  config_fields_form({
+const email_form = async (req) => {
+  const form = await config_fields_form({
     req,
     field_names: [
       "smtp_host",
@@ -73,7 +75,11 @@ const email_form = (req) =>
     ],
     action: "/admin/email",
   });
-
+  form.submitButtonClass = "btn-outline-primary";
+  form.onChange =
+    "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
+  return form;
+};
 router.get(
   "/",
   setTenant,
@@ -132,9 +138,42 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Email settings"),
-        contents: [renderForm(form, req.csrfToken())],
+        contents: [
+          renderForm(form, req.csrfToken()),
+          a(
+            {
+              id: "testemail",
+              href: "/admin/send-test-email",
+              class: "btn btn-primary",
+            },
+            "Send test email"
+          ),
+        ],
       },
     });
+  })
+);
+
+router.get(
+  "/send-test-email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const from = getState().getConfig("email_from");
+    const email = {
+      from,
+      to: from,
+      subject: "Saltcorn test email",
+      html: "Hello from Saltcorn",
+    };
+    try {
+      await getMailTransport().sendMail(email);
+      req.flash("success", req.__("Email sent to %s with no errors", from));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
+    res.redirect("/admin/email");
   })
 );
 router.post(

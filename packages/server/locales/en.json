@@ -607,5 +607,6 @@
 	"Minimum role to write": "Minimum role to write",
 	"Create page": "Create page",
 	"Multi-tenancy not enabled": "Multi-tenancy not enabled",
-	"Identity": "Identity"
+	"Identity": "Identity",
+	"Email sent to %s with no errors": "Email sent to %s with no errors"
 }

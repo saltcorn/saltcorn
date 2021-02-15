@@ -398,11 +398,11 @@ const renderForm = (form, csrfToken0) => {
 const mkFormWithLayout = (form, csrfToken) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" class="form-namespace ${
-    form.class || ""
-  }" method="${form.methodGET ? "get" : "post"}" ${
-    hasFile ? 'encType="multipart/form-data"' : ""
-  }>`;
+  const top = `<form action="${form.action}" ${
+    form.onChange ? ` onchange="${form.onChange}"` : ""
+  }class="form-namespace ${form.class || ""}" method="${
+    form.methodGET ? "get" : "post"
+  }" ${hasFile ? 'encType="multipart/form-data"' : ""}>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -445,7 +445,9 @@ const mkForm = (form, csrfToken, errors = {}) => {
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
     form.action
-  }" class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
+  }" ${
+    form.onChange ? ` onchange="${form.onChange}"` : ""
+  }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
     form.class || ""
   }" method="${form.methodGET ? "get" : "post"}" ${
     hasFile ? 'encType="multipart/form-data"' : ""

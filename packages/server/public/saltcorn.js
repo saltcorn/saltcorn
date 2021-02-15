@@ -427,3 +427,7 @@ function align_dropdown(id) {
     }
   }, 0);
 }
+
+function remove_outline(form) {
+  $(form).find("button[type=submit]").removeClass("btn-outline-primary").addClass("btn-primary");
+}
