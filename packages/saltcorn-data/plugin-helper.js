@@ -874,6 +874,39 @@ const readStateStrict = (state, fields) => {
   return hasErrors ? false : state;
 };
 
+const json_list_to_external_table = (get_json_list, fields0) => {
+  const fields = fields0.map((f) =>
+    f.constructor.name === Object.name ? new Field(f) : f
+  );
+  const getRows = async (where = {}, selopts = {}) => {
+    let data_in = await get_json_list();
+    const restricts = Object.entries(where);
+    const data_filtered =
+      restricts.length === 0
+        ? data_in
+        : data_in.filter((x) => restricts.every(([k, v]) => x[k] === v));
+    if (selopts.orderBy) {
+      const cmp = selopts.orderDesc
+        ? new Function("a,b", `b.${selopts.orderBy}-a.${selopts.orderBy}`)
+        : new Function("a,b", `a.${selopts.orderBy}-b.${selopts.orderBy}`);
+      data_filtered.sort(cmp);
+    }
+    if (selopts.limit)
+      return data_filtered.slice(
+        selopts.offset || 0,
+        (selopts.offset || 0) + selopts.limit
+      );
+    else return data_filtered;
+  };
+  return {
+    getFields() {
+      return fields;
+    },
+    fields,
+    getRows,
+  };
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -892,4 +925,5 @@ module.exports = {
   getActionConfigFields,
   calcfldViewConfig,
   strictParseInt,
+  json_list_to_external_table,
 };
