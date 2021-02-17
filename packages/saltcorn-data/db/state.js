@@ -121,6 +121,7 @@ class State {
       this.auth_methods[k] = v;
     });
     Object.entries(withCfg("external_tables", {})).forEach(([k, v]) => {
+      if (!v.name) v.name = k;
       this.external_tables[k] = v;
     });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {

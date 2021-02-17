@@ -69,10 +69,21 @@ class Table {
     const tbl = await db.selectMaybeOne("_sc_tables", where);
     return tbl ? new Table(tbl) : tbl;
   }
-  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
-    const tbls = await db.select("_sc_tables", where, selectopts);
-
-    return tbls.map((t) => new Table(t));
+  static async find(where0, selectopts = { orderBy: "name", nocase: true }) {
+    const { external, ...where } = where0;
+    let externals = [],
+      dbs = [];
+    if (external !== false) {
+      //do include externals
+      const { getState } = require("../db/state");
+      externals = Object.values(getState().external_tables);
+    }
+    if (external !== true) {
+      //do include db tables
+      const tbls = await db.select("_sc_tables", where, selectopts);
+      dbs = tbls.map((t) => new Table(t));
+    }
+    return [...dbs, ...externals];
   }
   owner_fieldname_from_fields(fields) {
     if (!this.ownership_field_id) return null;
