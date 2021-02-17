@@ -43,6 +43,7 @@ class State {
     this.function_context = {};
     this.functions = {};
     this.keyFieldviews = {};
+    this.external_tables = {};
     contract.class(this);
   }
   getLayout(user) {
@@ -119,6 +120,9 @@ class State {
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
     });
+    Object.entries(withCfg("external_tables", {})).forEach(([k, v]) => {
+      this.external_tables[k] = v;
+    });
     Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
       if (v.type === "Key") {
         this.keyFieldviews[k] = v;
@@ -167,6 +171,7 @@ class State {
     this.function_context = {};
     this.functions = {};
     this.keyFieldviews = {};
+    this.external_tables = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });

@@ -61,8 +61,12 @@ class Table {
   external = false;
 
   static async findOne(where) {
+    if (where.name) {
+      const { getState } = require("../db/state");
+      const extTable = getState().external_tables[where.name];
+      if (extTable) return extTable;
+    }
     const tbl = await db.selectMaybeOne("_sc_tables", where);
-
     return tbl ? new Table(tbl) : tbl;
   }
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
@@ -323,7 +327,7 @@ class Table {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
-    const {external, ...upd_rec} = new_table_rec
+    const { external, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
 
@@ -763,9 +767,12 @@ Table.contract = {
   static_methods: {
     find: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("Table")))
+      is.promise(is.array(is.or(is.class("Table"), is.obj({ external: true }))))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
+    findOne: is.fun(
+      is.obj(),
+      is.promise(is.maybe(is.or(is.class("Table"), is.obj({ external: true }))))
+    ),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     create_from_csv: is.fun(
       [is.str, is.str],
