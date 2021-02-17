@@ -69,7 +69,10 @@ class Table {
     const tbl = await db.selectMaybeOne("_sc_tables", where);
     return tbl ? new Table(tbl) : tbl;
   }
-  static async find(where0, selectopts = { orderBy: "name", nocase: true }) {
+  static async find(
+    where0 = {},
+    selectopts = { orderBy: "name", nocase: true }
+  ) {
     const { external, ...where } = where0;
     let externals = [],
       dbs = [];
