@@ -37,7 +37,8 @@ describe("Table create", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });
-
+    expect(tf.external).toBe(false)
+    expect(tc.external).toBe(false)
     expect(tf.name).toStrictEqual("mytable1");
     expect(tf.sql_name).toStrictEqual(
       db.isSQLite ? '"mytable1"' : '"public"."mytable1"'

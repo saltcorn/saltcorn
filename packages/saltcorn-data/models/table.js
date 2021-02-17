@@ -57,6 +57,9 @@ class Table {
     this.versioned = !!o.versioned;
     contract.class(this);
   }
+
+  external = false;
+
   static async findOne(where) {
     const tbl = await db.selectMaybeOne("_sc_tables", where);
 
@@ -320,7 +323,8 @@ class Table {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
-    await db.update("_sc_tables", new_table_rec, this.id);
+    const {external, ...upd_rec} = new_table_rec
+    await db.update("_sc_tables", upd_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
 
     if (new_table.versioned && !existing.versioned) {

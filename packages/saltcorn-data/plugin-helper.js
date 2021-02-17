@@ -904,6 +904,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     },
     fields,
     getRows,
+    external: true,
   };
 };
 
