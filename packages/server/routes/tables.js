@@ -82,11 +82,15 @@ const tableForm = async (table, req) => {
         input_type: "select",
         options: roleOptions,
       },
-      {
-        label: req.__("Version history"),
-        name: "versioned",
-        type: "Bool",
-      },
+      ...(table.external
+        ? []
+        : [
+            {
+              label: req.__("Version history"),
+              name: "versioned",
+              type: "Bool",
+            },
+          ]),
     ],
   });
   if (table) {
@@ -472,55 +476,57 @@ router.get(
           req.__("Download CSV")
         )
       ),
-      div(
-        { class: "mx-auto" },
-        form(
-          {
-            method: "post",
-            action: `/table/upload_to_table/${table.name}`,
-            encType: "multipart/form-data",
-          },
-          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-          label(
-            { class: "btn-link", for: "upload_to_table" },
-            i({ class: "fas fa-2x fa-upload" }),
-            "<br/>",
-            req.__("Upload CSV")
-          ),
-          input({
-            id: "upload_to_table",
-            name: "file",
-            type: "file",
-            accept: "text/csv,.csv",
-            onchange: "this.form.submit();",
-          })
-        )
-      ),
-      div(
-        { class: "mx-auto" },
-        settingsDropdown(`dataMenuButton`, [
-          a(
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          form(
             {
-              class: "dropdown-item",
-              href: `/table/constraints/${table.id}`,
+              method: "post",
+              action: `/table/upload_to_table/${table.name}`,
+              encType: "multipart/form-data",
             },
-            '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-          ),
-          post_dropdown_item(
-            `/table/recalc-stored/${table.name}`,
-            '<i class="fas fa-sync"></i>&nbsp;' +
-              req.__("Recalculate stored fields"),
-            req
-          ),
-          post_dropdown_item(
-            `/table/delete-all-rows/${table.name}`,
-            '<i class="far fa-trash-alt"></i>&nbsp;' +
-              req.__("Delete all rows"),
-            req,
-            true
-          ),
-        ])
-      )
+            input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+            label(
+              { class: "btn-link", for: "upload_to_table" },
+              i({ class: "fas fa-2x fa-upload" }),
+              "<br/>",
+              req.__("Upload CSV")
+            ),
+            input({
+              id: "upload_to_table",
+              name: "file",
+              type: "file",
+              accept: "text/csv,.csv",
+              onchange: "this.form.submit();",
+            })
+          )
+        ),
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          settingsDropdown(`dataMenuButton`, [
+            a(
+              {
+                class: "dropdown-item",
+                href: `/table/constraints/${table.id}`,
+              },
+              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
+            ),
+            post_dropdown_item(
+              `/table/recalc-stored/${table.name}`,
+              '<i class="fas fa-sync"></i>&nbsp;' +
+                req.__("Recalculate stored fields"),
+              req
+            ),
+            post_dropdown_item(
+              `/table/delete-all-rows/${table.name}`,
+              '<i class="far fa-trash-alt"></i>&nbsp;' +
+                req.__("Delete all rows"),
+              req,
+              true
+            ),
+          ])
+        )
     );
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
