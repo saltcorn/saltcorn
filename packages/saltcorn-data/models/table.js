@@ -69,24 +69,10 @@ class Table {
     const tbl = await db.selectMaybeOne("_sc_tables", where);
     return tbl ? new Table(tbl) : tbl;
   }
-  static async find(
-    where0 = {},
-    selectopts = { orderBy: "name", nocase: true }
-  ) {
-    const { external, ...where } = where0;
-    let externals = [],
-      dbs = [];
-    if (external !== false) {
-      //do include externals
-      const { getState } = require("../db/state");
-      externals = Object.values(getState().external_tables);
-    }
-    if (external !== true) {
-      //do include db tables
-      const tbls = await db.select("_sc_tables", where, selectopts);
-      dbs = tbls.map((t) => new Table(t));
-    }
-    return [...dbs, ...externals];
+  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+    const tbls = await db.select("_sc_tables", where, selectopts);
+
+    return tbls.map((t) => new Table(t));
   }
   static async find_with_external(
     where0 = {},
@@ -798,14 +784,18 @@ Table.contract = {
     ),
   },
   static_methods: {
-    /*find: is.fun(
+    find: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.or(is.class("Table"), is.obj({ external: true }))))
+      is.promise(is.array(is.class("Table")))
+    ),
+    find_with_external: is.fun(
+      [is.maybe(is.obj()), is.maybe(is.obj())],
+      is.promise(is.array(is.or(is.class("Table"), is.obj({ external: is.eq(true) }))))
     ),
     findOne: is.fun(
       is.obj(),
-      is.promise(is.maybe(is.or(is.class("Table"), is.obj({ external: true }))))
-    ),*/
+      is.promise(is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) }))))
+    ),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     create_from_csv: is.fun(
       [is.str, is.str],

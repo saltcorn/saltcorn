@@ -900,11 +900,14 @@ describe("external tables", () => {
     expect(!!table).toBe(true);
     const notable = await Table.findOne({ name: "exttnosuchab" });
     expect(!!notable).toBe(false);
-    const tables = await Table.find();
+    const tables = await Table.find_with_external();
     expect(tables.map((t) => t.name)).toContain("exttab");
-    const etables = await Table.find({ external: true });
+    expect(tables.map((t) => t.name)).toContain("books");
+
+    const etables = await Table.find_with_external({ external: true });
     expect(etables.map((t) => t.name)).toEqual(["exttab"]);
-    const dbtables = await Table.find({ external: false });
+    const dbtables = await Table.find_with_external({ external: false });
     expect(dbtables.map((t) => t.name)).not.toContain("exttab");
+    expect(dbtables.map((t) => t.name)).toContain("books");
   });
 });
