@@ -323,7 +323,7 @@ router.get(
       return;
     }
     const nrows = await table.countRows();
-    const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+    const fields = await table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
       ...new Set(child_relations.map(({ table }) => table.name)),
@@ -362,17 +362,22 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: "name" },
-          {
-            label: req.__("Edit"),
-            key: (r) => link(`/field/${r.id}`, req.__("Edit")),
-          },
-          {
-            label: req.__("Delete"),
-            key: (r) =>
-              (table.name === "users" && r.name === "email") || r.primary_key
-                ? ""
-                : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
-          },
+          ...(table.external
+            ? []
+            : [
+                {
+                  label: req.__("Edit"),
+                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+                },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    (table.name === "users" && r.name === "email") ||
+                    r.primary_key
+                      ? ""
+                      : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
+                },
+              ]),
         ],
         fields
       );
@@ -383,13 +388,14 @@ router.get(
             inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
             "<br>"
           : "",
-        a(
-          {
-            href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field mt-2",
-          },
-          req.__("Add field")
-        ),
+        !table.external &&
+          a(
+            {
+              href: `/field/new/${table.id}`,
+              class: "btn btn-primary add-field mt-2",
+            },
+            req.__("Add field")
+          ),
       ];
     }
     var viewCard;
@@ -629,6 +635,7 @@ const tableBadges = (t, req) => {
   let s = "";
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
+  if (t.external) s += badge("info", req.__("External"));
   return s;
 };
 router.get(
@@ -636,16 +643,16 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find({}, { orderBy: "name" });
+    const rows = await Table.find_with_external({}, { orderBy: "name" });
     const roles = await User.get_roles();
-    const getRole = (rid) => roles.find((r) => r.id === rid).role;
+    const getRole = (rid) => (roles.find((r) => r.id === rid) || {}).role;
     const mainCard =
       rows.length > 0
         ? mkTable(
             [
               {
                 label: req.__("Name"),
-                key: (r) => link(`/table/${r.id}`, text(r.name)),
+                key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
               },
               {
                 label: "",
@@ -659,7 +666,7 @@ router.get(
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  r.name === "users"
+                  r.name === "users" || r.external
                     ? ""
                     : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },

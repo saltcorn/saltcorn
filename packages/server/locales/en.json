@@ -608,5 +608,6 @@
 	"Create page": "Create page",
 	"Multi-tenancy not enabled": "Multi-tenancy not enabled",
 	"Identity": "Identity",
-	"Email sent to %s with no errors": "Email sent to %s with no errors"
+	"Email sent to %s with no errors": "Email sent to %s with no errors",
+	"External": "External"
 }

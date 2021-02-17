@@ -904,6 +904,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     },
     fields,
     getRows,
+    async countRows() {
+      let data_in = await get_json_list();
+      return data_in.length;
+    },
+    get_child_relations() {
+      return { child_relations : [] }
+    },
     external: true,
   };
 };
