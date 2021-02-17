@@ -434,6 +434,7 @@ router.get(
     const wfres = await configFlow.run(
       {
         table_id: view.table_id,
+        exttable_name: view.exttable_name,
         viewname: name,
         ...view.configuration,
       },

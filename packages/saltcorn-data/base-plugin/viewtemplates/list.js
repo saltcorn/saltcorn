@@ -58,7 +58,11 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Columns"),
         form: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id
+              ? { id: context.table_id }
+              : { name: context.exttable_name }
+          );
           //console.log(context);
           const field_picker_repeat = await field_picker_fields({
             table,
