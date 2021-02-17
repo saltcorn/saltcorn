@@ -12,6 +12,7 @@ class View {
     this.name = o.name;
     this.id = o.id;
     this.viewtemplate = o.viewtemplate;
+    this.exttable_name = o.exttable_name;
     if (o.table_id) this.table_id = o.table_id;
     if (o.table && !o.table_id) {
       this.table_id = o.table.id;
@@ -166,7 +167,7 @@ class View {
   }
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
-      this.table_id,
+      this.exttable_name || this.table_id,
       this.name,
       this.configuration,
       removeEmptyStrings(query),

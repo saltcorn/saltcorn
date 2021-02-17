@@ -4,7 +4,12 @@ const Table = require("./models/table");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { contract, is } = require("contractis");
-const { fieldlike, is_table_query, is_column } = require("./contracts");
+const {
+  fieldlike,
+  is_table_query,
+  is_column,
+  is_tablely,
+} = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
@@ -112,7 +117,7 @@ const calcfldViewConfig = contract(
 
 const get_link_view_opts = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(is.array(is.obj({ label: is.str, name: is.str })))
   ),
   async (table, viewname) => {
@@ -153,7 +158,7 @@ const getActionConfigFields = async (action, table) =>
 
 const field_picker_fields = contract(
   is.fun(
-    is.obj({ table: is.class("Table"), viewname: is.str }),
+    is.obj({ table: is_tablely, viewname: is.str }),
     is.promise(is.array(fieldlike))
   ),
   async ({ table, viewname, req }) => {
@@ -727,8 +732,10 @@ const initial_config_all_fields = contract(
       is.promise(is.obj({ columns: is.array(is.obj()), layout: is.obj() }))
     )
   ),
-  (isEdit) => async ({ table_id }) => {
-    const table = await Table.findOne({ id: table_id });
+  (isEdit) => async ({ table_id, exttable_name }) => {
+    const table = await Table.findOne(
+      table_id ? { id: table_id } : { name: exttable_name }
+    );
 
     const fields = (await table.getFields()).filter(
       (f) => !f.primary_key && (!isEdit || !f.calculated)
@@ -909,7 +916,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       return data_in.length;
     },
     get_child_relations() {
-      return { child_relations : [] }
+      return { child_relations: [] };
     },
     external: true,
   };

@@ -89,7 +89,7 @@ const configuration_workflow = (req) =>
                       ),
                       type: "String",
                       attributes: {
-                        options: create_view_opts
+                        options: create_view_opts,
                       },
                     },
                     {
@@ -191,7 +191,9 @@ const run = async (
   stateWithId,
   extraOpts
 ) => {
-  const table = await Table.findOne({ id: table_id });
+  const table = await Table.findOne(
+    typeof table_id === "string" ? { name: table_id } : { id: table_id }
+  );
   const fields = await table.getFields();
   const role =
     extraOpts && extraOpts.req && extraOpts.req.user
