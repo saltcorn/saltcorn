@@ -37,8 +37,8 @@ describe("Table create", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });
-    expect(tf.external).toBe(false)
-    expect(tc.external).toBe(false)
+    expect(tf.external).toBe(false);
+    expect(tc.external).toBe(false);
     expect(tf.name).toStrictEqual("mytable1");
     expect(tf.sql_name).toStrictEqual(
       db.isSQLite ? '"mytable1"' : '"public"."mytable1"'
@@ -890,4 +890,21 @@ describe("Table with UUID pks", () => {
       await table.delete();
     });
   }
+});
+describe("external tables", () => {
+  it("should register plugin", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+  });
+  it("should find table", async () => {
+    const table = await Table.findOne({ name: "exttab" });
+    expect(!!table).toBe(true);
+    const notable = await Table.findOne({ name: "exttnosuchab" });
+    expect(!!notable).toBe(false);
+    const tables = await Table.find();
+    expect(tables.map((t) => t.name)).toContain("exttab");
+    const etables = await Table.find({ external: true });
+    expect(etables.map((t) => t.name)).toEqual(["exttab"]);
+    const dbtables = await Table.find({ external: false });
+    expect(dbtables.map((t) => t.name)).not.toContain("exttab");
+  });
 });

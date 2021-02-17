@@ -3,6 +3,7 @@ const fs = require("fs").promises;
 const Workflow = require("../models/workflow");
 const db = require("../db");
 const { input } = require("@saltcorn/markup/tags");
+const { json_list_to_external_table } = require("../plugin-helper");
 
 const rick_file = async () => {
   await File.ensure_file_store();
@@ -59,6 +60,12 @@ const plugin_with_routes = {
   onLoad: async () => {
     if (!db.isSQLite)
       await db.query('create extension if not exists "uuid-ossp";');
+  },
+  external_tables: {
+    exttab: json_list_to_external_table(() => [{ name: "Sam", age: 56 }], [
+      { name: "name", type: "String" },
+      { name: "age", type: "Integer" },
+    ]),
   },
   types: [
     {
