@@ -886,7 +886,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     f.constructor.name === Object.name ? new Field(f) : f
   );
   const getRows = async (where = {}, selopts = {}) => {
-    let data_in = await get_json_list();
+    let data_in = await get_json_list({ where, ...selopts });
     const restricts = Object.entries(where);
     const data_filtered =
       restricts.length === 0
@@ -921,8 +921,8 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
     },
-    async countRows() {
-      let data_in = await get_json_list();
+    async countRows(where) {
+      let data_in = await get_json_list({ where });
       return data_in.length;
     },
     get_child_relations() {
@@ -936,10 +936,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       return null;
     },
     async distinctValues(fldNm) {
-      let data_in = await get_json_list();
-      const s = new Set(data_in.map(x=>x[fldNm]))
-      return [...s]
-    }
+      let data_in = await get_json_list({});
+      const s = new Set(data_in.map((x) => x[fldNm]));
+      return [...s];
+    },
   };
 };
 
