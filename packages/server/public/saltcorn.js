@@ -20,8 +20,8 @@ function add_repeater(nm) {
   var newix = es.length;
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
-    var newnm = element.name.replace("_0", "_" + newix);
-    var newid = element.id.replace("_0", "_" + newix);
+    var newnm = (element.name || "").replace("_0", "_" + newix);
+    var newid = (element.id || "").replace("_0", "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
   });
   newe.appendTo($("div.repeats-" + nm));
@@ -429,5 +429,8 @@ function align_dropdown(id) {
 }
 
 function remove_outline(form) {
-  $(form).find("button[type=submit]").removeClass("btn-outline-primary").addClass("btn-primary");
+  $(form)
+    .find("button[type=submit]")
+    .removeClass("btn-outline-primary")
+    .addClass("btn-primary");
 }
