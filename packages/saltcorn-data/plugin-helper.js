@@ -911,6 +911,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     },
     fields,
     getRows,
+    getJoinedRows(opts = {}) {
+      const { where, ...rest } = opts;
+      return getRows(where || {}, rest || {});
+    },
     async countRows() {
       let data_in = await get_json_list();
       return data_in.length;
