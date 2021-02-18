@@ -40,7 +40,9 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id || context.exttable_name
+          );
           const fields = await table.getFields();
 
           const boolfields = fields.filter(
