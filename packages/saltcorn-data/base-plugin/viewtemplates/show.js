@@ -154,7 +154,7 @@ const run = async (
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const tbl = await Table.findOne({ id: table_id });
+  const tbl = await Table.findOne(table_id);
   const fields = await tbl.getFields();
 
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
