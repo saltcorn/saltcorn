@@ -94,6 +94,7 @@ router.get(
     const getTable = (tid) => tables.find((t) => t.id === tid).name;
     views.forEach((v) => {
       if (v.table_id) v.table = getTable(v.table_id);
+      else if (v.exttable_name) v.table = v.exttable_name;
       else v.table = "";
     });
     if (req.query._sortby === "table")
