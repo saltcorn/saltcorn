@@ -70,7 +70,7 @@ const configuration_workflow = (req) =>
             req,
           });
           const create_views = await View.find_table_views_where(
-            context.table_id,
+            context.table_id || context.exttable_name,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
@@ -124,7 +124,11 @@ const configuration_workflow = (req) =>
         name: req.__("Default state"),
         contextField: "default_state",
         form: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id
+              ? { id: context.table_id }
+              : { name: context.exttable_name }
+          );
           const table_fields = await table.getFields();
           const formfields = table_fields
             .filter((f) => !f.calculated || f.stored)

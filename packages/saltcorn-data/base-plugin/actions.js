@@ -35,7 +35,7 @@ module.exports = {
     configFields: async ({ table }) => {
       if (!table) return [];
       const views = await View.find_table_views_where(
-        table.id,
+        table,
         ({ viewtemplate }) => viewtemplate.runMany || viewtemplate.renderRows
       );
 

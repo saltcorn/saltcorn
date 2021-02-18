@@ -1,7 +1,7 @@
 const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
-const { fieldlike, is_viewtemplate } = require("../contracts");
+const { fieldlike, is_viewtemplate, is_tablely } = require("../contracts");
 const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
@@ -55,12 +55,18 @@ class View {
     const item = menu_items.find((mi) => mi.viewname === this.name);
     return item ? item.label : undefined;
   }
-  static async find_table_views_where(table_id, pred) {
+  static async find_table_views_where(table, pred) {
     var link_view_opts = [];
     const link_views = await View.find(
-      {
-        table_id,
-      },
+      table.id
+        ? {
+            table_id: table.id,
+          }
+        : table.name
+        ? { exttable_name: table.name }
+        : typeof table === "string"
+        ? { exttable_name: table }
+        : { table_id: table },
       { orderBy: "name", nocase: true }
     );
 
@@ -111,8 +117,8 @@ class View {
     return link_view_opts;
   }
 
-  static async find_possible_links_to_table(table_id) {
-    return View.find_table_views_where(table_id, ({ state_fields }) =>
+  static async find_possible_links_to_table(table) {
+    return View.find_table_views_where(table, ({ state_fields }) =>
       state_fields.some((sf) => sf.name === "id")
     );
   }
@@ -376,7 +382,7 @@ View.contract = {
     delete: is.fun(is.obj(), is.promise(is.undefined)),
 
     find_possible_links_to_table: is.fun(
-      is.posint,
+      is.or(is.posint, is_tablely, is.str),
       is.promise(is.array(is.class("View")))
     ),
     find_all_views_where: is.fun(
@@ -392,7 +398,7 @@ View.contract = {
     ),
     find_table_views_where: is.fun(
       [
-        is.posint,
+        is.or(is.posint, is_tablely, is.str),
         is.fun(
           is.obj({
             viewrow: is.class("View"),

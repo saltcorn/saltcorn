@@ -121,7 +121,7 @@ const get_link_view_opts = contract(
     is.promise(is.array(is.obj({ label: is.str, name: is.str })))
   ),
   async (table, viewname) => {
-    const own_link_views = await View.find_possible_links_to_table(table.id);
+    const own_link_views = await View.find_possible_links_to_table(table);
     const link_view_opts = own_link_views
       .filter((v) => v.name !== viewname)
       .map((v) => ({
@@ -513,7 +513,7 @@ const field_picker_fields = contract(
 
 const get_child_views = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(
       is.array(
         is.obj({
@@ -530,7 +530,7 @@ const get_child_views = contract(
     for (const relation of rels) {
       const related_table = await Table.findOne({ id: relation.table_id });
       const views = await View.find_table_views_where(
-        relation.table_id,
+        relation,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
@@ -542,7 +542,7 @@ const get_child_views = contract(
 
 const get_parent_views = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(
       is.array(
         is.obj({
@@ -563,7 +563,7 @@ const get_parent_views = contract(
         name: relation.reftable_name,
       });
       const views = await View.find_table_views_where(
-        related_table.id,
+        related_table,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname &&
           state_fields.some((sf) => sf.name === "id")
@@ -916,7 +916,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       return data_in.length;
     },
     get_child_relations() {
-      return { child_relations: [] };
+      return { child_relations: [], child_field_list: [] };
+    },
+    get_parent_relations() {
+      return { parent_relations: [], parent_field_list: [] };
     },
     external: true,
   };
