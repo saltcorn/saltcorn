@@ -55,10 +55,11 @@ class Table {
     this.min_role_write = o.min_role_write;
     this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
+    this.external = false;
     contract.class(this);
   }
 
-  external = false;
+  
 
   static async findOne(where) {
     if (
