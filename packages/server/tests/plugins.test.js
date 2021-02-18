@@ -141,8 +141,8 @@ describe("Plugin dependency resolution and upgrade", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
     const tabler = await Plugin.findOne({ name: "tabler" });
-    expect(tabler.version > "0.1.2").toBe(true);
-    expect(tabler.version > "9.1.2").toBe(false);
+    expect(tabler.version).toBeGreaterThan("0.1.2");
+    expect(tabler.version).toBeLessThan("9.1.2");
   });
 });
 describe("Pack Endpoints", () => {
