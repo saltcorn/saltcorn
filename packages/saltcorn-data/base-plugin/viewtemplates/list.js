@@ -125,9 +125,7 @@ const configuration_workflow = (req) =>
         contextField: "default_state",
         form: async (context) => {
           const table = await Table.findOne(
-            context.table_id
-              ? { id: context.table_id }
-              : { name: context.exttable_name }
+            context.table_id || context.exttable_name
           );
           const table_fields = await table.getFields();
           const formfields = table_fields
@@ -151,7 +149,7 @@ const configuration_workflow = (req) =>
             type: "Bool",
             default: true,
           });
-          if (!db.isSQLite)
+          if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
               label: req.__("Create database view"),
