@@ -894,8 +894,8 @@ const json_list_to_external_table = (get_json_list, fields0) => {
         : data_in.filter((x) => restricts.every(([k, v]) => x[k] === v));
     if (selopts.orderBy) {
       const cmp = selopts.orderDesc
-        ? new Function("a,b", `b.${selopts.orderBy}-a.${selopts.orderBy}`)
-        : new Function("a,b", `a.${selopts.orderBy}-b.${selopts.orderBy}`);
+        ? new Function("a,b", `return b.${selopts.orderBy}-a.${selopts.orderBy}`)
+        : new Function("a,b", `return a.${selopts.orderBy}-b.${selopts.orderBy}`);
       data_filtered.sort(cmp);
     }
     if (selopts.limit)
