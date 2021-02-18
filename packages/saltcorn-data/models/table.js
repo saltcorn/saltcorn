@@ -61,6 +61,12 @@ class Table {
   external = false;
 
   static async findOne(where) {
+    if (
+      where &&
+      ((where.constructor && where.constructor.name === "Table") ||
+        where.getRows)
+    )
+      return where;
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
     if (where.name) {
