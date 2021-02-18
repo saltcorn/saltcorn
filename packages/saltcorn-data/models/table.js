@@ -61,6 +61,8 @@ class Table {
   external = false;
 
   static async findOne(where) {
+    if (typeof where === "string") return Table.findOne({ name: where });
+    if (typeof where === "number") return Table.findOne({ id: where });
     if (where.name) {
       const { getState } = require("../db/state");
       const extTable = getState().external_tables[where.name];
@@ -790,11 +792,15 @@ Table.contract = {
     ),
     find_with_external: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.or(is.class("Table"), is.obj({ external: is.eq(true) }))))
+      is.promise(
+        is.array(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
+      )
     ),
     findOne: is.fun(
-      is.obj(),
-      is.promise(is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) }))))
+      is.or(is.obj(), is.str, is.posint),
+      is.promise(
+        is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
+      )
     ),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     create_from_csv: is.fun(
