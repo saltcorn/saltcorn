@@ -162,13 +162,13 @@ router.get(
     const from = getState().getConfig("email_from");
     const email = {
       from,
-      to: from,
+      to: req.user.email,
       subject: "Saltcorn test email",
       html: "Hello from Saltcorn",
     };
     try {
       await getMailTransport().sendMail(email);
-      req.flash("success", req.__("Email sent to %s with no errors", from));
+      req.flash("success", req.__("Email sent to %s with no errors", req.user.email));
     } catch (e) {
       req.flash("error", e.message);
     }
