@@ -110,10 +110,10 @@ const configTypes = {
   smtp_port: { type: "Integer", label: "SMTP port", default: "25" },
   smtp_secure: {
     type: "Bool",
-    label: "SMTP secure",
+    label: "Force TLS",
     default: false,
-    blurb:
-      "Is the connection to the SMTP server over a secure transport protocol?",
+    sublabel:
+      "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
   },
   email_from: {
     type: "String",
