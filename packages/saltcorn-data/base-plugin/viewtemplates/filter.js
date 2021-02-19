@@ -25,7 +25,9 @@ const configuration_workflow = () =>
       {
         name: "Layout",
         builder: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id || context.exttable_name
+          );
           const fields = await table.getFields();
           const {
             child_field_list,
@@ -45,7 +47,7 @@ const configuration_workflow = () =>
           }
           const actions = ["Clear"];
           const own_link_views = await View.find_table_views_where(
-            table.id,
+            context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname
           );
           const views = own_link_views.map((v) => ({
@@ -71,7 +73,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const table = await Table.findOne({ id: table_id });
+  const table = await Table.findOne(table_id);
   const fields = await table.getFields();
   readState(state, fields);
   const role = extra.req.user ? extra.req.user.role_id : 10;
@@ -79,7 +81,11 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   for (const col of columns) {
     if (col.type === "DropDownFilter") {
       const field = fields.find((f) => f.name === col.field_name);
-      if (field)
+      if (table.external) {
+        distinct_values[col.field_name] = (
+          await table.distinctValues(col.field_name)
+        ).map((x) => ({ label: x, value: x }));
+      } else if (field)
         distinct_values[col.field_name] = await field.distinct_values(
           extra.req
         );

@@ -94,6 +94,7 @@ router.get(
     const getTable = (tid) => tables.find((t) => t.id === tid).name;
     views.forEach((v) => {
       if (v.table_id) v.table = getTable(v.table_id);
+      else if (v.exttable_name) v.table = v.exttable_name;
       else v.table = "";
     });
     if (req.query._sortby === "table")
@@ -258,8 +259,10 @@ router.get(
       res.redirect("/viewedit");
       return;
     }
-    const tables = await Table.find();
-    const currentTable = tables.find((t) => t.id === viewrow.table_id);
+    const tables = await Table.find_with_external();
+    const currentTable = tables.find(
+      (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
+    );
     viewrow.table_name = currentTable.name;
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
@@ -290,7 +293,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const tables = await Table.find();
+    const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
@@ -322,7 +325,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const tables = await Table.find();
+    const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
@@ -368,7 +371,8 @@ router.post(
         var v = result.success;
         if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
-          v.table_id = table.id;
+          if (table && table.id) v.table_id = table.id;
+          else if (table && table.external) v.exttable_name = v.table_name;
         }
         delete v.table_name;
 
@@ -431,6 +435,7 @@ router.get(
     const wfres = await configFlow.run(
       {
         table_id: view.table_id,
+        exttable_name: view.exttable_name,
         viewname: name,
         ...view.configuration,
       },

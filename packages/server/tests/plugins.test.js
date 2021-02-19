@@ -141,10 +141,15 @@ describe("Plugin dependency resolution and upgrade", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
     const tabler = await Plugin.findOne({ name: "tabler" });
-    expect(tabler.version > "0.1.2").toBe(true);
-    expect(tabler.version > "9.1.2").toBe(false);
+    expect(tabler.version).not.toBe("0.1.2");
+
+    expect(version_to_int(tabler.version)).toBeGreaterThan(1);
+    expect(version_to_int(tabler.version)).toBeLessThan(912);
   });
 });
+
+const version_to_int = (v) => +v.split(".").join("");
+
 describe("Pack Endpoints", () => {
   it("should show get create", async () => {
     const loginCookie = await getAdminLoginCookie();

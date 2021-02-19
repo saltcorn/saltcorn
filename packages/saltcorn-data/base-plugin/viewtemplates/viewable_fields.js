@@ -2,7 +2,7 @@ const { post_btn, link } = require("@saltcorn/markup");
 const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
-const { is_column } = require("../../contracts");
+const { is_column, is_tablely } = require("../../contracts");
 const { link_view, strictParseInt } = require("../../plugin-helper");
 const { get_expression_function } = require("../../models/expression");
 const Field = require("../../models/field");
@@ -12,7 +12,7 @@ const { structuredClone } = require("../../utils");
 const db = require("../../db");
 
 const action_url = contract(
-  is.fun([is.str, is.class("Table"), is.str, is.obj()], is.any),
+  is.fun([is.str, is_tablely, is.str, is.obj()], is.any),
   (viewname, table, action_name, r, colId, colIdNm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
@@ -226,7 +226,7 @@ const get_viewable_fields = contract(
   is.fun(
     [
       is.str,
-      is.class("Table"),
+      is_tablely,
       is.array(is.class("Field")),
       is.array(is_column),
       is.bool,

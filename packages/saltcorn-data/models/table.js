@@ -55,17 +55,52 @@ class Table {
     this.min_role_write = o.min_role_write;
     this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
+    this.external = false;
     contract.class(this);
   }
-  static async findOne(where) {
-    const tbl = await db.selectMaybeOne("_sc_tables", where);
 
+  
+
+  static async findOne(where) {
+    if (
+      where &&
+      ((where.constructor && where.constructor.name === "Table") ||
+        where.getRows)
+    )
+      return where;
+    if (typeof where === "string") return Table.findOne({ name: where });
+    if (typeof where === "number") return Table.findOne({ id: where });
+    if (where.name) {
+      const { getState } = require("../db/state");
+      const extTable = getState().external_tables[where.name];
+      if (extTable) return extTable;
+    }
+    const tbl = await db.selectMaybeOne("_sc_tables", where);
     return tbl ? new Table(tbl) : tbl;
   }
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const tbls = await db.select("_sc_tables", where, selectopts);
 
     return tbls.map((t) => new Table(t));
+  }
+  static async find_with_external(
+    where0 = {},
+    selectopts = { orderBy: "name", nocase: true }
+  ) {
+    const { external, ...where } = where0;
+    let externals = [],
+      dbs = [];
+    if (external !== false) {
+      //do include externals
+      const { getState } = require("../db/state");
+      externals = Object.values(getState().external_tables);
+    }
+    if (external !== true) {
+      //do include db tables
+      const tbls = await db.select("_sc_tables", where, selectopts);
+      dbs = tbls.map((t) => new Table(t));
+    }
+    return [...dbs, ...externals];
   }
   owner_fieldname_from_fields(fields) {
     if (!this.ownership_field_id) return null;
@@ -320,7 +355,8 @@ class Table {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
-    await db.update("_sc_tables", new_table_rec, this.id);
+    const { external, ...upd_rec } = new_table_rec;
+    await db.update("_sc_tables", upd_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
 
     if (new_table.versioned && !existing.versioned) {
@@ -761,7 +797,18 @@ Table.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("Table")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Table")))),
+    find_with_external: is.fun(
+      [is.maybe(is.obj()), is.maybe(is.obj())],
+      is.promise(
+        is.array(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
+      )
+    ),
+    findOne: is.fun(
+      is.or(is.obj(), is.str, is.posint),
+      is.promise(
+        is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
+      )
+    ),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     create_from_csv: is.fun(
       [is.str, is.str],

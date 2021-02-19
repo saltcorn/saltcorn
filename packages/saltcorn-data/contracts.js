@@ -233,6 +233,9 @@ const is_column = is.obj({
     "Field",
   ]),
 });
+
+const is_tablely = is.or(is.class("Table"), is.obj({ external: is.eq(true) }));
+
 module.exports = {
   is_table_query,
   is_plugin_wrap,
@@ -245,4 +248,5 @@ module.exports = {
   is_pack,
   is_column,
   is_plugin_layout,
+  is_tablely,
 };

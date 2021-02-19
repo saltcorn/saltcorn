@@ -40,7 +40,9 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id || context.exttable_name
+          );
           const fields = await table.getFields();
 
           const boolfields = fields.filter(
@@ -152,7 +154,7 @@ const run = async (
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const tbl = await Table.findOne({ id: table_id });
+  const tbl = await Table.findOne(table_id);
   const fields = await tbl.getFields();
 
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);

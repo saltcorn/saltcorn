@@ -41,6 +41,7 @@ const {
   discover_tables,
   implement_discovery,
 } = require("@saltcorn/data/models/discovery");
+const { getState } = require("@saltcorn/data/db/state");
 
 const router = new Router();
 module.exports = router;
@@ -57,7 +58,7 @@ const tableForm = async (table, req) => {
   const form = new Form({
     action: "/table",
     fields: [
-      ...(userFields.length > 0
+      ...(userFields.length > 0 && !table.external
         ? [
             {
               label: req.__("Ownership field"),
@@ -76,21 +77,27 @@ const tableForm = async (table, req) => {
         input_type: "select",
         options: roleOptions,
       },
-      {
-        label: req.__("Minimum role to write"),
-        name: "min_role_write",
-        input_type: "select",
-        options: roleOptions,
-      },
-      {
-        label: req.__("Version history"),
-        name: "versioned",
-        type: "Bool",
-      },
+      ...(table.external
+        ? []
+        : [
+            {
+              label: req.__("Minimum role to write"),
+              name: "min_role_write",
+              input_type: "select",
+              options: roleOptions,
+            },
+            {
+              label: req.__("Version history"),
+              name: "versioned",
+              type: "Bool",
+            },
+          ]),
     ],
   });
   if (table) {
     if (table.id) form.hidden("id");
+    if (table.external) form.hidden("name");
+    if (table.external) form.hidden("external");
     form.values = table;
   }
   return form;
@@ -323,7 +330,7 @@ router.get(
       return;
     }
     const nrows = await table.countRows();
-    const fields = await Field.find({ table_id: id }, { orderBy: "name" });
+    const fields = await table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
       ...new Set(child_relations.map(({ table }) => table.name)),
@@ -362,17 +369,22 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: "name" },
-          {
-            label: req.__("Edit"),
-            key: (r) => link(`/field/${r.id}`, req.__("Edit")),
-          },
-          {
-            label: req.__("Delete"),
-            key: (r) =>
-              (table.name === "users" && r.name === "email") || r.primary_key
-                ? ""
-                : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
-          },
+          ...(table.external
+            ? []
+            : [
+                {
+                  label: req.__("Edit"),
+                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+                },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    (table.name === "users" && r.name === "email") ||
+                    r.primary_key
+                      ? ""
+                      : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
+                },
+              ]),
         ],
         fields
       );
@@ -383,13 +395,14 @@ router.get(
             inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
             "<br>"
           : "",
-        a(
-          {
-            href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field mt-2",
-          },
-          req.__("Add field")
-        ),
+        !table.external &&
+          a(
+            {
+              href: `/field/new/${table.id}`,
+              class: "btn btn-primary add-field mt-2",
+            },
+            req.__("Add field")
+          ),
       ];
     }
     var viewCard;
@@ -466,55 +479,57 @@ router.get(
           req.__("Download CSV")
         )
       ),
-      div(
-        { class: "mx-auto" },
-        form(
-          {
-            method: "post",
-            action: `/table/upload_to_table/${table.name}`,
-            encType: "multipart/form-data",
-          },
-          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-          label(
-            { class: "btn-link", for: "upload_to_table" },
-            i({ class: "fas fa-2x fa-upload" }),
-            "<br/>",
-            req.__("Upload CSV")
-          ),
-          input({
-            id: "upload_to_table",
-            name: "file",
-            type: "file",
-            accept: "text/csv,.csv",
-            onchange: "this.form.submit();",
-          })
-        )
-      ),
-      div(
-        { class: "mx-auto" },
-        settingsDropdown(`dataMenuButton`, [
-          a(
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          form(
             {
-              class: "dropdown-item",
-              href: `/table/constraints/${table.id}`,
+              method: "post",
+              action: `/table/upload_to_table/${table.name}`,
+              encType: "multipart/form-data",
             },
-            '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-          ),
-          post_dropdown_item(
-            `/table/recalc-stored/${table.name}`,
-            '<i class="fas fa-sync"></i>&nbsp;' +
-              req.__("Recalculate stored fields"),
-            req
-          ),
-          post_dropdown_item(
-            `/table/delete-all-rows/${table.name}`,
-            '<i class="far fa-trash-alt"></i>&nbsp;' +
-              req.__("Delete all rows"),
-            req,
-            true
-          ),
-        ])
-      )
+            input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+            label(
+              { class: "btn-link", for: "upload_to_table" },
+              i({ class: "fas fa-2x fa-upload" }),
+              "<br/>",
+              req.__("Upload CSV")
+            ),
+            input({
+              id: "upload_to_table",
+              name: "file",
+              type: "file",
+              accept: "text/csv,.csv",
+              onchange: "this.form.submit();",
+            })
+          )
+        ),
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          settingsDropdown(`dataMenuButton`, [
+            a(
+              {
+                class: "dropdown-item",
+                href: `/table/constraints/${table.id}`,
+              },
+              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
+            ),
+            post_dropdown_item(
+              `/table/recalc-stored/${table.name}`,
+              '<i class="fas fa-sync"></i>&nbsp;' +
+                req.__("Recalculate stored fields"),
+              req
+            ),
+            post_dropdown_item(
+              `/table/delete-all-rows/${table.name}`,
+              '<i class="far fa-trash-alt"></i>&nbsp;' +
+                req.__("Delete all rows"),
+              req,
+              true
+            ),
+          ])
+        )
     );
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
@@ -561,7 +576,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const v = req.body;
-    if (typeof v.id === "undefined") {
+    if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
       const { name, ...rest } = v;
       const alltables = await Table.find({});
@@ -579,6 +594,22 @@ router.post(
         const table = await Table.create(name, rest);
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
+      }
+    } else if (v.external) {
+      //we can only save min role
+      const table = await Table.findOne(v.name);
+      if (table) {
+        const exttables_min_role_read = getState().getConfig(
+          "exttables_min_role_read",
+          {}
+        );
+        exttables_min_role_read[table.name] = +v.min_role_read;
+        await getState().setConfig(
+          "exttables_min_role_read",
+          exttables_min_role_read
+        );
+        req.flash("success", req.__("Table saved"));
+        res.redirect(`/table/${table.name}`);
       }
     } else {
       const { id, _csrf, ...rest } = v;
@@ -629,6 +660,7 @@ const tableBadges = (t, req) => {
   let s = "";
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
+  if (t.external) s += badge("info", req.__("External"));
   return s;
 };
 router.get(
@@ -636,7 +668,7 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find({}, { orderBy: "name" });
+    const rows = await Table.find_with_external({}, { orderBy: "name" });
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard =
@@ -645,7 +677,7 @@ router.get(
             [
               {
                 label: req.__("Name"),
-                key: (r) => link(`/table/${r.id}`, text(r.name)),
+                key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
               },
               {
                 label: "",
@@ -654,12 +686,16 @@ router.get(
               {
                 label: req.__("Access Read/Write"),
                 key: (t) =>
-                  `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
+                  t.external
+                    ? `${getRole(t.min_role_read)} (read only)`
+                    : `${getRole(t.min_role_read)}/${getRole(
+                        t.min_role_write
+                      )}`,
               },
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  r.name === "users"
+                  r.name === "users" || r.external
                     ? ""
                     : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },

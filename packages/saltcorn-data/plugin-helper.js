@@ -4,7 +4,12 @@ const Table = require("./models/table");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { contract, is } = require("contractis");
-const { fieldlike, is_table_query, is_column } = require("./contracts");
+const {
+  fieldlike,
+  is_table_query,
+  is_column,
+  is_tablely,
+} = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync } = require("./utils");
@@ -112,11 +117,11 @@ const calcfldViewConfig = contract(
 
 const get_link_view_opts = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(is.array(is.obj({ label: is.str, name: is.str })))
   ),
   async (table, viewname) => {
-    const own_link_views = await View.find_possible_links_to_table(table.id);
+    const own_link_views = await View.find_possible_links_to_table(table);
     const link_view_opts = own_link_views
       .filter((v) => v.name !== viewname)
       .map((v) => ({
@@ -153,7 +158,7 @@ const getActionConfigFields = async (action, table) =>
 
 const field_picker_fields = contract(
   is.fun(
-    is.obj({ table: is.class("Table"), viewname: is.str }),
+    is.obj({ table: is_tablely, viewname: is.str }),
     is.promise(is.array(fieldlike))
   ),
   async ({ table, viewname, req }) => {
@@ -508,7 +513,7 @@ const field_picker_fields = contract(
 
 const get_child_views = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(
       is.array(
         is.obj({
@@ -525,7 +530,7 @@ const get_child_views = contract(
     for (const relation of rels) {
       const related_table = await Table.findOne({ id: relation.table_id });
       const views = await View.find_table_views_where(
-        relation.table_id,
+        relation.id,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
@@ -537,7 +542,7 @@ const get_child_views = contract(
 
 const get_parent_views = contract(
   is.fun(
-    [is.class("Table"), is.str],
+    [is_tablely, is.str],
     is.promise(
       is.array(
         is.obj({
@@ -558,7 +563,7 @@ const get_parent_views = contract(
         name: relation.reftable_name,
       });
       const views = await View.find_table_views_where(
-        related_table.id,
+        related_table,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname &&
           state_fields.some((sf) => sf.name === "id")
@@ -727,8 +732,10 @@ const initial_config_all_fields = contract(
       is.promise(is.obj({ columns: is.array(is.obj()), layout: is.obj() }))
     )
   ),
-  (isEdit) => async ({ table_id }) => {
-    const table = await Table.findOne({ id: table_id });
+  (isEdit) => async ({ table_id, exttable_name }) => {
+    const table = await Table.findOne(
+      table_id ? { id: table_id } : { name: exttable_name }
+    );
 
     const fields = (await table.getFields()).filter(
       (f) => !f.primary_key && (!isEdit || !f.calculated)
@@ -874,6 +881,73 @@ const readStateStrict = (state, fields) => {
   return hasErrors ? false : state;
 };
 
+const json_list_to_external_table = (get_json_list, fields0) => {
+  const fields = fields0.map((f) =>
+    f.constructor.name === Object.name ? new Field(f) : f
+  );
+  const getRows = async (where = {}, selopts = {}) => {
+    let data_in = await get_json_list({ where, ...selopts });
+    const restricts = Object.entries(where);
+    const data_filtered =
+      restricts.length === 0
+        ? data_in
+        : data_in.filter((x) => restricts.every(([k, v]) => x[k] === v));
+    if (selopts.orderBy) {
+      const cmp = selopts.orderDesc
+        ? new Function(
+            "a,b",
+            `return b.${selopts.orderBy}-a.${selopts.orderBy}`
+          )
+        : new Function(
+            "a,b",
+            `return a.${selopts.orderBy}-b.${selopts.orderBy}`
+          );
+      data_filtered.sort(cmp);
+    }
+    if (selopts.limit)
+      return data_filtered.slice(
+        selopts.offset || 0,
+        (selopts.offset || 0) + selopts.limit
+      );
+    else return data_filtered;
+  };
+  const tbl = {
+    getFields() {
+      return fields;
+    },
+    fields,
+    getRows,
+    get min_role_read() {
+      const roles = getState().getConfig("exttables_min_role_read", {});
+      return roles[tbl.name] || 10;
+    },
+    getJoinedRows(opts = {}) {
+      const { where, ...rest } = opts;
+      return getRows(where || {}, rest || {});
+    },
+    async countRows(where) {
+      let data_in = await get_json_list({ where });
+      return data_in.length;
+    },
+    get_child_relations() {
+      return { child_relations: [], child_field_list: [] };
+    },
+    get_parent_relations() {
+      return { parent_relations: [], parent_field_list: [] };
+    },
+    external: true,
+    owner_fieldname() {
+      return null;
+    },
+    async distinctValues(fldNm) {
+      let data_in = await get_json_list({});
+      const s = new Set(data_in.map((x) => x[fldNm]));
+      return [...s];
+    },
+  };
+  return tbl;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -892,4 +966,5 @@ module.exports = {
   getActionConfigFields,
   calcfldViewConfig,
   strictParseInt,
+  json_list_to_external_table,
 };

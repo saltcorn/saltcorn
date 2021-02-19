@@ -58,7 +58,11 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Columns"),
         form: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id
+              ? { id: context.table_id }
+              : { name: context.exttable_name }
+          );
           //console.log(context);
           const field_picker_repeat = await field_picker_fields({
             table,
@@ -66,7 +70,7 @@ const configuration_workflow = (req) =>
             req,
           });
           const create_views = await View.find_table_views_where(
-            context.table_id,
+            context.table_id || context.exttable_name,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
@@ -89,7 +93,7 @@ const configuration_workflow = (req) =>
                       ),
                       type: "String",
                       attributes: {
-                        options: create_view_opts
+                        options: create_view_opts,
                       },
                     },
                     {
@@ -120,7 +124,9 @@ const configuration_workflow = (req) =>
         name: req.__("Default state"),
         contextField: "default_state",
         form: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
+          const table = await Table.findOne(
+            context.table_id || context.exttable_name
+          );
           const table_fields = await table.getFields();
           const formfields = table_fields
             .filter((f) => !f.calculated || f.stored)
@@ -143,7 +149,7 @@ const configuration_workflow = (req) =>
             type: "Bool",
             default: true,
           });
-          if (!db.isSQLite)
+          if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
               label: req.__("Create database view"),
@@ -191,7 +197,9 @@ const run = async (
   stateWithId,
   extraOpts
 ) => {
-  const table = await Table.findOne({ id: table_id });
+  const table = await Table.findOne(
+    typeof table_id === "string" ? { name: table_id } : { id: table_id }
+  );
   const fields = await table.getFields();
   const role =
     extraOpts && extraOpts.req && extraOpts.req.user
