@@ -911,12 +911,16 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       );
     else return data_filtered;
   };
-  return {
+  const tbl = {
     getFields() {
       return fields;
     },
     fields,
     getRows,
+    get min_role_read() {
+      const roles = getState().getConfig("exttables_min_role_read", {});
+      return roles[tbl.name] || 10;
+    },
     getJoinedRows(opts = {}) {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
@@ -941,6 +945,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       return [...s];
     },
   };
+  return tbl;
 };
 
 module.exports = {

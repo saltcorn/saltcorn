@@ -41,6 +41,7 @@ const {
   discover_tables,
   implement_discovery,
 } = require("@saltcorn/data/models/discovery");
+const { getState } = require("@saltcorn/data/db/state");
 
 const router = new Router();
 module.exports = router;
@@ -57,7 +58,7 @@ const tableForm = async (table, req) => {
   const form = new Form({
     action: "/table",
     fields: [
-      ...(userFields.length > 0
+      ...(userFields.length > 0 && !table.external
         ? [
             {
               label: req.__("Ownership field"),
@@ -76,15 +77,15 @@ const tableForm = async (table, req) => {
         input_type: "select",
         options: roleOptions,
       },
-      {
-        label: req.__("Minimum role to write"),
-        name: "min_role_write",
-        input_type: "select",
-        options: roleOptions,
-      },
       ...(table.external
         ? []
         : [
+            {
+              label: req.__("Minimum role to write"),
+              name: "min_role_write",
+              input_type: "select",
+              options: roleOptions,
+            },
             {
               label: req.__("Version history"),
               name: "versioned",
@@ -95,6 +96,8 @@ const tableForm = async (table, req) => {
   });
   if (table) {
     if (table.id) form.hidden("id");
+    if (table.external) form.hidden("name");
+    if (table.external) form.hidden("external");
     form.values = table;
   }
   return form;
@@ -573,7 +576,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const v = req.body;
-    if (typeof v.id === "undefined") {
+    if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
       const { name, ...rest } = v;
       const alltables = await Table.find({});
@@ -591,6 +594,22 @@ router.post(
         const table = await Table.create(name, rest);
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
+      }
+    } else if (v.external) {
+      //we can only save min role
+      const table = await Table.findOne(v.name);
+      if (table) {
+        const exttables_min_role_read = getState().getConfig(
+          "exttables_min_role_read",
+          {}
+        );
+        exttables_min_role_read[table.name] = +v.min_role_read;
+        await getState().setConfig(
+          "exttables_min_role_read",
+          exttables_min_role_read
+        );
+        req.flash("success", req.__("Table saved"));
+        res.redirect(`/table/${table.name}`);
       }
     } else {
       const { id, _csrf, ...rest } = v;
@@ -651,7 +670,7 @@ router.get(
   error_catcher(async (req, res) => {
     const rows = await Table.find_with_external({}, { orderBy: "name" });
     const roles = await User.get_roles();
-    const getRole = (rid) => (roles.find((r) => r.id === rid) || {}).role;
+    const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard =
       rows.length > 0
         ? mkTable(
@@ -667,7 +686,11 @@ router.get(
               {
                 label: req.__("Access Read/Write"),
                 key: (t) =>
-                  `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
+                  t.external
+                    ? `${getRole(t.min_role_read)} (read only)`
+                    : `${getRole(t.min_role_read)}/${getRole(
+                        t.min_role_write
+                      )}`,
               },
               {
                 label: req.__("Delete"),
