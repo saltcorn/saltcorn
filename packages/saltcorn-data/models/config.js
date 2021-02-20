@@ -38,7 +38,11 @@ const configTypes = {
     label: "Available plugins fetched",
   },
   home_page_by_role: { type: "hidden", label: "Home Page by Role" },
-  exttables_min_role_read: { type: "hidden", label: "Home Page by Role", default: {} },
+  exttables_min_role_read: {
+    type: "hidden",
+    label: "Home Page by Role",
+    default: {},
+  },
   public_home: { type: "String", label: "Public home page", default: "" },
   user_home: { type: "String", label: "User home page", default: "" },
   staff_home: { type: "String", label: "Staff home page", default: "" },
@@ -106,14 +110,19 @@ const configTypes = {
       "The host address of your SMTP server. For instance, smtp.postmarkapp.com",
   },
   smtp_username: { type: "String", label: "SMTP username", default: "" },
-  smtp_password: { type: "String", label: "SMTP password", default: "" },
+  smtp_password: {
+    type: "String",
+    label: "SMTP password",
+    default: "",
+    input_type: "password",
+  },
   smtp_port: { type: "Integer", label: "SMTP port", default: "25" },
   smtp_secure: {
     type: "Bool",
-    label: "SMTP secure",
+    label: "Force TLS",
     default: false,
-    blurb:
-      "Is the connection to the SMTP server over a secure transport protocol?",
+    sublabel:
+      "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
   },
   email_from: {
     type: "String",
