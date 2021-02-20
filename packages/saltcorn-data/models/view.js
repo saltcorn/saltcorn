@@ -163,7 +163,7 @@ class View {
   }
   static async delete(where) {
     const vs = await View.find(where);
-    for (const v in vs) await v.delete();
+    for (const v of vs) await v.delete();
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
