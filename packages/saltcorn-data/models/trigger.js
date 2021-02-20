@@ -140,7 +140,7 @@ Trigger.contract = {
       [
         is.one_of(Trigger.when_options),
         is.class("Table"),
-        is.obj({ id: is.posint }),
+        is.obj({}),
       ],
       is.promise(is.undefined)
     ),
