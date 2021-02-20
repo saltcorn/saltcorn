@@ -162,8 +162,8 @@ class View {
     await require("../db/state").getState().refresh();
   }
   static async delete(where) {
-    const v = await View.findOne(where);
-    await v.delete();
+    const vs = await View.find(where);
+    for (const v in vs) await v.delete();
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
