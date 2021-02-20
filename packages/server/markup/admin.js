@@ -214,7 +214,12 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
       label: label ? req.__(label) : undefined,
       sublabel: sublabel ? req.__(sublabel) : undefined,
       disabled: isFixedConfig(name),
-      type: isView ? "String" : configTypes[name].type,
+      type: isView
+        ? "String"
+        : configTypes[name].input_type
+        ? undefined
+        : configTypes[name].type,
+      input_type: configTypes[name].input_type,
       attributes: isView
         ? await viewAttributes(name)
         : configTypes[name].attributes,
