@@ -46,6 +46,11 @@ const create_db_view = async (context) => {
   );
 };
 
+const on_delete = async (table_id, viewname) => {
+  const schema = db.getTenantSchemaPrefix();
+  await db.query(`drop view if exists ${schema}"${db.sqlsanitize(viewname)}";`);
+};
+
 const configuration_workflow = (req) =>
   new Workflow({
     onDone: async (ctx) => {
@@ -329,6 +334,7 @@ module.exports = {
   view_quantity: "Many",
   get_state_fields,
   initial_config,
+  on_delete,
   routes: { run_action },
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),

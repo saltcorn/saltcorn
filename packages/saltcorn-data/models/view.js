@@ -151,12 +151,19 @@ class View {
   }
 
   async delete() {
-    await View.delete({ id: this.id });
+    if (this.viewtemplateObj && this.viewtemplateObj.on_delete)
+      await this.viewtemplateObj.on_delete(
+        this.table_id,
+        this.name,
+        this.configuration
+      );
+    await db.deleteWhere("_sc_views", { id: this.id });
     await remove_from_menu({ name: this.name, type: "View" });
+    await require("../db/state").getState().refresh();
   }
   static async delete(where) {
-    await db.deleteWhere("_sc_views", where);
-    await require("../db/state").getState().refresh();
+    const v = await View.findOne(where);
+    await v.delete();
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
