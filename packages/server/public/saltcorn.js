@@ -279,8 +279,11 @@ function view_post(viewname, route, data, onDone) {
     headers: {
       "CSRF-Token": _sc_globalCsrf,
     },
-    contentType: "application/json",
-    data: JSON.stringify(data),
+    contentType:
+      typeof data === "string"
+        ? "application/x-www-form-urlencoded"
+        : "application/json",
+    data: typeof data === "string" ? data : JSON.stringify(data),
   }).done(function (res) {
     if (onDone) onDone(res);
     if (res.notify) notifyAlert(res.notify);
