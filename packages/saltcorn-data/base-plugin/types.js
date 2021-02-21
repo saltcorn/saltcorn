@@ -23,10 +23,17 @@ const getStrOptions = (v, optsStr) =>
         .split(",")
         .map((o) => text_attr(o.trim()))
         .map((o) => option({ value: o, ...(v === o && { selected: true }) }, o))
-    : optsStr.map((o) =>
-        o && o.name && o.label
+    : optsStr.map((o, ix) =>
+        o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
           ? option(
-              { value: o.name, ...(v === o.name && { selected: true }) },
+              {
+                value: o.name,
+                ...((v === o.name ||
+                  (ix === 0 && typeof v === "undefined" && o.disabled)) && {
+                  selected: true,
+                }),
+                ...(o.disabled && { disabled: true }),
+              },
               o.label
             )
           : option({ value: o, ...(v === o && { selected: true }) }, o)
