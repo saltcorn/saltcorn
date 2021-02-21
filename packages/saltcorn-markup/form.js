@@ -434,7 +434,7 @@ const displayAdditionalButtons = (additionalButtons) =>
   additionalButtons
     .map(
       (btn) =>
-        `<button type="button" id="${btn.id}" class="${btn.class}">${btn.label}</button>&nbsp;`
+        `<button type="button" id="${btn.id}" class="${btn.class}"${btn.onclick?` onclick="${btn.onclick}"`:''}>${btn.label}</button>&nbsp;`
     )
     .join("");
 const mkForm = (form, csrfToken, errors = {}) => {

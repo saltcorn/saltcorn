@@ -4,6 +4,8 @@ const Crash = require("@saltcorn/data/models/crash");
 const { getState } = require("@saltcorn/data/db/state");
 
 module.exports = async function (err, req, res, next) {
+  if (!req.__) req.__ = (s) => s;
+
   const devmode = getState().getConfig("development_mode", false);
   const log_sql = getState().getConfig("log_sql", false);
   const role = (req.user || {}).role_id || 10;
