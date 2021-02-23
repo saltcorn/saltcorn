@@ -255,14 +255,16 @@ const displayEdit = (hdr, name, v, extracls) => {
       ([nm, fv]) => fv.isEdit
     )[1];
   }
-  return fieldview.run(
-    name,
-    v,
-    attributes,
-    extracls + " " + hdr.class,
-    hdr.required,
-    hdr
-  );
+  if (fieldview.isEdit)
+    return fieldview.run(
+      name,
+      v,
+      attributes,
+      extracls + " " + hdr.class,
+      hdr.required,
+      hdr
+    );
+  else return fieldview.run(v, undefined, attributes);
 };
 
 const mkFormRowForField = (v, errors, formStyle, labelCols, nameAdd = "") => (
@@ -434,7 +436,9 @@ const displayAdditionalButtons = (additionalButtons) =>
   additionalButtons
     .map(
       (btn) =>
-        `<button type="button" id="${btn.id}" class="${btn.class}"${btn.onclick?` onclick="${btn.onclick}"`:''}>${btn.label}</button>&nbsp;`
+        `<button type="button" id="${btn.id}" class="${btn.class}"${
+          btn.onclick ? ` onclick="${btn.onclick}"` : ""
+        }>${btn.label}</button>&nbsp;`
     )
     .join("");
 const mkForm = (form, csrfToken, errors = {}) => {
