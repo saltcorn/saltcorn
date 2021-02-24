@@ -361,7 +361,7 @@ const runPost = async (
   setDateLocales(form, req.getLocale());
   form.validate(body);
   if (form.hasErrors) {
-    res.status(422);
+    if (req.xhr) res.status(422);
     transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
