@@ -17,6 +17,7 @@ const {
 } = require("../../plugin-helper");
 const { splitUniques, getForm } = require("./viewable_fields");
 const { traverseSync } = require("../../models/layout");
+const { asyncMap } = require("../../utils");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -200,9 +201,13 @@ const setDateLocales = (form, locale) => {
 
 const initial_config = initial_config_all_fields(true);
 
-const run = async (table_id, viewname, config, state, { res, req }) => {
-  const { columns, layout } = config;
-  //console.log(JSON.stringify(layout, null,2))
+const run = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  state,
+  { res, req }
+) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const { uniques, nonUniques } = splitUniques(fields, state);
@@ -219,6 +224,43 @@ const run = async (table_id, viewname, config, state, { res, req }) => {
     row,
     req,
     state,
+  });
+};
+const runMany = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  state,
+  extra
+) => {
+  const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  const qstate = await stateFieldsToWhere({ fields, state });
+  const q = await stateFieldsToQuery({ state, fields });
+
+  const rows = await tbl.getJoinedRows({
+    where: qstate,
+    joinFields,
+    aggregations,
+    ...(extra && extra.limit && { limit: extra.limit }),
+    ...(extra && extra.offset && { offset: extra.offset }),
+    ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
+    ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
+    ...q,
+  });
+  return await asyncMap(rows, async (row) => {
+    const html = await render({
+      table,
+      fields,
+      viewname,
+      columns,
+      layout,
+      row,
+      req: extra.req,
+      state,
+    });
+    return { html, row };
   });
 };
 
@@ -262,7 +304,7 @@ const render = async ({
     }
     form.hidden(table.pk_name);
   }
-  
+
   const { nonUniques } = splitUniques(fields, state);
   Object.entries(nonUniques).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
@@ -409,6 +451,7 @@ module.exports = {
   description: "Form for creating a new row or editing existing rows",
   configuration_workflow,
   run,
+  runMany,
   runPost,
   get_state_fields,
   initial_config,
