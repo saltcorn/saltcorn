@@ -13,6 +13,9 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   get_parent_views,
+  picked_fields_to_query,
+  stateFieldsToWhere,
+  stateFieldsToQuery,
   strictParseInt,
 } = require("../../plugin-helper");
 const { splitUniques, getForm } = require("./viewable_fields");
@@ -239,7 +242,7 @@ const runMany = async (
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
 
-  const rows = await tbl.getJoinedRows({
+  const rows = await table.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
