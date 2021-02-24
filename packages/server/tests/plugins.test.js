@@ -224,7 +224,7 @@ describe("Pack Endpoints", () => {
       .send("description=ZAP&done=on&user=2%2F2&project=&status=Ideas")
 
       .expect(422)
-      .expect(toInclude("Unable to read key"));
+      .expect(toInclude("Unable to read key", 422));
   });
   it("should uninstall named", async () => {
     const loginCookie = await getAdminLoginCookie();
