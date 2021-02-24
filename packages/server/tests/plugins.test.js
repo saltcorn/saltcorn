@@ -223,7 +223,7 @@ describe("Pack Endpoints", () => {
       .post("/view/todoedit")
       .send("description=ZAP&done=on&user=2%2F2&project=&status=Ideas")
 
-      .expect(200)
+      .expect(422)
       .expect(toInclude("Unable to read key"));
   });
   it("should uninstall named", async () => {
