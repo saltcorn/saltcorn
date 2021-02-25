@@ -16,7 +16,7 @@ const {
   ul,
   button,
   li,
-  i
+  i,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
@@ -243,7 +243,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
           segment.title &&
             div(
               { class: "card-header" },
-              h6({ class: "m-0 font-weight-bold text-primary" }, segment.title)
+              typeof segment.title === "string"
+                ? h6(
+                    { class: "m-0 font-weight-bold text-primary" },
+                    segment.title
+                  )
+                : segment.title
             ),
           div({ class: "card-body" }, go(segment.contents)),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
