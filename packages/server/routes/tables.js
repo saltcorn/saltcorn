@@ -33,6 +33,8 @@ const {
   input,
   text,
   tr,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -287,6 +289,59 @@ router.post(
       req.flash("error", req.__("Error: missing name or file"));
       res.redirect(`/table/create-from-csv`);
     }
+  })
+);
+
+router.get(
+  "/relationship-diagram",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const data = {
+      nodes: tables.map((t, id) => ({ id, label: t.name })),
+      edges: [],
+    };
+    res.sendWrap(
+      {
+        title: req.__("Tables"),
+        headers: [
+          {
+            script:
+              "https://unpkg.com/vis-network@9.0.2/standalone/umd/vis-network.min.js",
+          },
+        ],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: req.__("Tables") }],
+          },
+          {
+            type: "card",
+            title: cardHeaderTabs([
+              { label: req.__("Your tables"), href: "/table" },
+              {
+                label: req.__("Relationship diagram"),
+                href: "/table/relationship-diagram",
+                active: true,
+              },
+            ]),
+            contents: [
+              div({ id: "erdvis" }),
+              script(
+                domReady(`
+            var container = document.getElementById('erdvis');        
+            var data = ${JSON.stringify(data)};
+            var options = {};        
+            var network = new vis.Network(container, data, options);`)
+              ),
+            ],
+          },
+        ],
+      }
+    );
   })
 );
 
@@ -740,10 +795,13 @@ router.get(
           type: "card",
           title: cardHeaderTabs([
             { label: req.__("Your tables"), href: "/table", active: true },
-            { label: req.__("Relationship diagram"), href: "/table/relationship-diagram" },
+            {
+              label: req.__("Relationship diagram"),
+              href: "/table/relationship-diagram",
+            },
           ]),
-          contents: mainCard+createCard,
-        }
+          contents: mainCard + createCard,
+        },
       ],
     });
   })
