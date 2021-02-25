@@ -32,6 +32,7 @@ const {
   label,
   input,
   text,
+  tr,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -42,6 +43,7 @@ const {
   implement_discovery,
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
+const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 
 const router = new Router();
 module.exports = router;
@@ -707,6 +709,7 @@ router.get(
             p(req.__("Tables hold collections of similar data"))
           );
     const createCard = div(
+      h5(req.__("Create table")),
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 mr-3" },
         i({ class: "fas fa-plus-square mr-1" }),
@@ -735,14 +738,12 @@ router.get(
         },
         {
           type: "card",
-          title: req.__("Your tables"),
-          contents: mainCard,
-        },
-        {
-          type: "card",
-          title: req.__("Create table"),
-          contents: createCard,
-        },
+          title: cardHeaderTabs([
+            { label: req.__("Your tables"), href: "/table", active: true },
+            { label: req.__("Relationship diagram"), href: "/table/relationship-diagram" },
+          ]),
+          contents: mainCard+createCard,
+        }
       ],
     });
   })

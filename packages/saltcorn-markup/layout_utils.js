@@ -156,7 +156,7 @@ const logit = (x, s) => {
   return x;
 };
 
-const standardBreadcrumbItem = len =>({ href, text }, ix) =>
+const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
   li(
     {
       class: ["breadcrumb-item", ix == len - 1 && "active"],
@@ -186,7 +186,9 @@ const breadcrumbs = (crumbs) =>
     ol(
       { class: "breadcrumb" },
       crumbs.map((c) =>
-        c.workflow ? workflowBreadcrumbItem(c) : standardBreadcrumbItem(crumbs.length)(c)
+        c.workflow
+          ? workflowBreadcrumbItem(c)
+          : standardBreadcrumbItem(crumbs.length)(c)
       )
     )
   );
@@ -222,6 +224,17 @@ const headersInBody = (headers) =>
     .map((h) => `<script>${h.scriptBody}</script>`)
     .join("");
 
+const cardHeaderTabs = (tabList) =>
+  ul(
+    { class: "nav nav-tabs card-header-tabs" },
+    tabList.map(({ href, label, active }) =>
+      li(
+        { class: "nav-item" },
+        a({ class: ["nav-link", active && "active"], href }, label)
+      )
+    )
+  );
+
 module.exports = {
   navbar,
   alert,
@@ -230,4 +243,5 @@ module.exports = {
   breadcrumbs,
   headersInHead,
   headersInBody,
+  cardHeaderTabs
 };
