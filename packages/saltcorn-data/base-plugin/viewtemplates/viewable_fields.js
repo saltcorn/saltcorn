@@ -60,7 +60,7 @@ const action_link = (
       confirm,
       req,
       icon: action_icon,
-      btnClass: `${action_style} ${action_size}`,
+      btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
     });
 };
 const get_view_link_query = contract(

@@ -34,15 +34,8 @@ module.exports = (
       type: "text/css",
       media: "screen",
       href:
-        "https://unpkg.com/@fonticonpicker/react-fonticonpicker/dist/fonticonpicker.base-theme.react.css",
-    }),
-    link({
-      rel: "stylesheet",
-      type: "text/css",
-      media: "screen",
-      href:
-        "https://unpkg.com/@fonticonpicker/react-fonticonpicker/dist/fonticonpicker.material-theme.react.css",
-    }),
+        "/fonticonpicker.react.css",
+    }),    
     div({ id: "saltcorn-builder" }),
     form(
       { action, method: "post", id: "scbuildform" },
