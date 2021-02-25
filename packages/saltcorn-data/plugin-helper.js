@@ -84,9 +84,16 @@ const calcfldViewOptions = contract(
         });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-          f.calculated ? !fv.isEdit : !fv.isEdit === !isEdit
+          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit
         );
-        fvs[f.name] = tfvs.map(([k, fv]) => {
+        let tfvs_ordered = [];
+        if (isEdit) {
+          tfvs_ordered = [
+            ...tfvs.filter(([k, fv]) => fv.isEdit),
+            ...tfvs.filter(([k, fv]) => !fv.isEdit),
+          ];
+        } else tfvs_ordered = tfvs;
+        fvs[f.name] = tfvs_ordered.map(([k, fv]) => {
           if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
           return k;
         });
