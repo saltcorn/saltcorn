@@ -298,9 +298,21 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const edges = [];
+    for (const table of tables) {
+      const fields = await table.getFields();
+      for (const field of fields) {
+        if (field.reftable_name)
+          edges.push({
+            from: table.name,
+            to: field.reftable_name,
+            arrows: "to",
+          });
+      }
+    }
     const data = {
-      nodes: tables.map((t, id) => ({ id, label: t.name })),
-      edges: [],
+      nodes: tables.map((t) => ({ id: t.name, label: t.name })),
+      edges,
     };
     res.sendWrap(
       {
