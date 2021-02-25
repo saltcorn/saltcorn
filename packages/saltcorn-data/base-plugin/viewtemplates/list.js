@@ -46,9 +46,13 @@ const create_db_view = async (context) => {
   );
 };
 
-const on_delete = async (table_id, viewname) => {
-  const schema = db.getTenantSchemaPrefix();
-  await db.query(`drop view if exists ${schema}"${db.sqlsanitize(viewname)}";`);
+const on_delete = async (table_id, viewname, { default_state }) => {
+  if (default_state && default_state._create_db_view) {
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `drop view if exists ${schema}"${db.sqlsanitize(viewname)}";`
+    );
+  }
 };
 
 const configuration_workflow = (req) =>
