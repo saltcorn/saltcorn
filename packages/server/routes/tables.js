@@ -311,7 +311,10 @@ router.get(
       }
     }
     const data = {
-      nodes: tables.map((t) => ({ id: t.name, label: t.name })),
+      nodes: tables.map((t) => ({
+        id: t.name,
+        label: `<b>${t.name}</b>\n${t.fields.map((f) => f.name).join("\n")}`,
+      })),
       edges,
     };
     res.sendWrap(
@@ -346,8 +349,23 @@ router.get(
                 domReady(`
             var container = document.getElementById('erdvis');        
             var data = ${JSON.stringify(data)};
-            var options = {};        
-            var network = new vis.Network(container, data, options);`)
+            var options = {
+              edges: {length: 250},
+              nodes: {
+                font: { align: 'left', multi: "html", size: 20 },
+                shape: "box"
+              },
+              physics: {
+                // Even though it's disabled the options still apply to network.stabilize().
+                enabled: false,
+                solver: "repulsion",
+                repulsion: {
+                  nodeDistance: 100 // Put more distance between the nodes.
+                }
+              }
+            };        
+            var network = new vis.Network(container, data, options);
+            network.stabilize();`)
               ),
             ],
           },

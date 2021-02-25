@@ -211,3 +211,7 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .breadcrumb-workflow.active-step span {
   border-bottom: 2px solid var(--primary);
 }
+
+#erdvis {
+  height: 600px;
+}
