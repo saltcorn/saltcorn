@@ -32,6 +32,9 @@ const {
   label,
   input,
   text,
+  tr,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -42,6 +45,7 @@ const {
   implement_discovery,
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
+const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 
 const router = new Router();
 module.exports = router;
@@ -285,6 +289,91 @@ router.post(
       req.flash("error", req.__("Error: missing name or file"));
       res.redirect(`/table/create-from-csv`);
     }
+  })
+);
+
+router.get(
+  "/relationship-diagram",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const edges = [];
+    for (const table of tables) {
+      const fields = await table.getFields();
+      for (const field of fields) {
+        if (field.reftable_name)
+          edges.push({
+            from: table.name,
+            to: field.reftable_name,
+            arrows: "to",
+          });
+      }
+    }
+    const data = {
+      nodes: tables.map((t) => ({
+        id: t.name,
+        label: `<b>${t.name}</b>\n${t.fields
+          .map((f) => `${f.name} : ${f.pretty_type}`)
+          .join("\n")}`,
+      })),
+      edges,
+    };
+    res.sendWrap(
+      {
+        title: req.__("Tables"),
+        headers: [
+          {
+            script:
+              "https://unpkg.com/vis-network@9.0.2/standalone/umd/vis-network.min.js",
+          },
+        ],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: req.__("Tables") }],
+          },
+          {
+            type: "card",
+            title: cardHeaderTabs([
+              { label: req.__("Your tables"), href: "/table" },
+              {
+                label: req.__("Relationship diagram"),
+                href: "/table/relationship-diagram",
+                active: true,
+              },
+            ]),
+            contents: [
+              div({ id: "erdvis" }),
+              script(
+                domReady(`
+            var container = document.getElementById('erdvis');        
+            var data = ${JSON.stringify(data)};
+            var options = {
+              edges: {length: 250},
+              nodes: {
+                font: { align: 'left', multi: "html", size: 20 },
+                shape: "box"
+              },
+              physics: {
+                // Even though it's disabled the options still apply to network.stabilize().
+                enabled: false,
+                solver: "repulsion",
+                repulsion: {
+                  nodeDistance: 100 // Put more distance between the nodes.
+                }
+              }
+            };        
+            var network = new vis.Network(container, data, options);
+            network.stabilize();`)
+              ),
+            ],
+          },
+        ],
+      }
+    );
   })
 );
 
@@ -707,6 +796,7 @@ router.get(
             p(req.__("Tables hold collections of similar data"))
           );
     const createCard = div(
+      h5(req.__("Create table")),
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 mr-3" },
         i({ class: "fas fa-plus-square mr-1" }),
@@ -735,13 +825,14 @@ router.get(
         },
         {
           type: "card",
-          title: req.__("Your tables"),
-          contents: mainCard,
-        },
-        {
-          type: "card",
-          title: req.__("Create table"),
-          contents: createCard,
+          title: cardHeaderTabs([
+            { label: req.__("Your tables"), href: "/table", active: true },
+            {
+              label: req.__("Relationship diagram"),
+              href: "/table/relationship-diagram",
+            },
+          ]),
+          contents: mainCard + createCard,
         },
       ],
     });
