@@ -313,7 +313,9 @@ router.get(
     const data = {
       nodes: tables.map((t) => ({
         id: t.name,
-        label: `<b>${t.name}</b>\n${t.fields.map((f) => f.name).join("\n")}`,
+        label: `<b>${t.name}</b>\n${t.fields
+          .map((f) => `${f.name} : ${f.pretty_type}`)
+          .join("\n")}`,
       })),
       edges,
     };
