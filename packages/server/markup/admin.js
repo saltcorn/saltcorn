@@ -190,7 +190,7 @@ const send_admin_page = (args) => {
 const viewAttributes = async (key) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = await Table.findOne({ name: table_name });
-  const views = await View.find({ table_id: table.id, viewtemplate: "Edit" });
+  const views = await View.find({ table_id: table.id });
   return {
     options: views.map((v) => {
       v.table = table;

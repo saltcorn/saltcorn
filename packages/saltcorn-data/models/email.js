@@ -6,6 +6,8 @@ const fs = require("fs").promises;
 const { div } = require("@saltcorn/markup/tags");
 const View = require("./view");
 const { v4: uuidv4 } = require("uuid");
+const db = require("../db");
+const { mockReqRes } = require("../tests/mocks");
 
 const getMailTransport = () => {
   const port = getState().getConfig("smtp_port");
@@ -46,14 +48,15 @@ const send_verification_email = async (user) => {
       const html = await transformBootstrapEmail(htmlBs);
       const email = {
         from: getState().getConfig("email_from"),
-        to: u.email,
+        to: user.email,
         subject: "Please verify your email address",
         html,
       };
       await getMailTransport().sendMail(email);
-    }
+      return true;
+    } else return {error: "Verification form specified but not found"};
   } else {
-    return false;
+    return {error: "Verification form not specified"};
   }
 };
 

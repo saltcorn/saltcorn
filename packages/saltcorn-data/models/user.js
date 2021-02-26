@@ -82,7 +82,11 @@ class User {
     });
     u.id = id;
     const { send_verification_email } = require("./email");
-    await send_verification_email(u);
+    try {
+      await send_verification_email(u);
+    } catch (e) {
+      console.error(e);
+    }
     return u;
   }
 

@@ -342,7 +342,7 @@ const get_base_url = (req) => {
 
   const cfg = getState().getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
-
+  if (!req.get) return "/";
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {

@@ -70,11 +70,13 @@ const configuration_workflow = (req) =>
             false
           );
           if (table.name === "users") {
-            fields.push({
-              name: "verification_url",
-              label: "Verification URL",
-              type: "String",
-            });
+            fields.push(
+              new Field({
+                name: "verification_url",
+                label: "Verification URL",
+                type: "String",
+              })
+            );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
           const link_view_opts = await get_link_view_opts(
@@ -165,11 +167,13 @@ const run = async (
   const tbl = await Table.findOne(table_id);
   const fields = await tbl.getFields();
   if (tbl.name === "users") {
-    fields.push({
-      name: "verification_token",
-      label: "Verification Token",
-      type: "String",
-    });
+    fields.push(
+      new Field({
+        name: "verification_token",
+        label: "Verification Token",
+        type: "String",
+      })
+    );
   }
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
@@ -181,7 +185,7 @@ const run = async (
   });
   if (rows.length !== 1) return extra.req.__("No record selected");
   if (tbl.name === "users") {
-    const base = get_base_url(req);
+    const base = get_base_url(extra.req);
     for (const row of rows) {
       row.verification_url = `${base}auth/verify?token=${
         row.verification_token

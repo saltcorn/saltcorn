@@ -570,8 +570,14 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    await send_verification_email(u);
-    req.flash("success", req.__(`Email verification link sent to %s`, u.email));
+    const result = await send_verification_email(u);
+    console.log(result);
+    if (result.error) req.flash("danger", result.error);
+    else
+      req.flash(
+        "success",
+        req.__(`Email verification link sent to %s`, u.email)
+      );
 
     res.redirect(`/useradmin`);
   })
