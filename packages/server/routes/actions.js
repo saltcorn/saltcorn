@@ -47,55 +47,57 @@ router.get(
       res,
       req,
       active_sub: "Actions",
-      contents: [
-        {
-          type: "card",
-          title: req.__("Actions available"),
-          contents: div(
-            actions
-              .map((a) => span({ class: "badge badge-primary" }, a.name))
-              .join("&nbsp;")
-          ),
-        },
-        {
-          type: "card",
-          title: req.__("Triggers"),
-          contents: div(
-            mkTable(
-              [
-                { label: req.__("Name"), key: "name" },
-                { label: req.__("Action"), key: "action" },
-                { label: req.__("Table"), key: "table_name" },
-                {
-                  label: req.__("When"),
-                  key: (a) =>
-                    a.when_trigger === "API call"
-                      ? `API: ${base_url}api/action/${a.name}`
-                      : a.when_trigger,
-                },
-                {
-                  label: req.__("Test run"),
-                  key: (r) =>
-                    r.table_id
-                      ? ""
-                      : link(`/actions/testrun/${r.id}`, req.__("Test run")),
-                },
-                {
-                  label: req.__("Configure"),
-                  key: (r) =>
-                    link(`/actions/configure/${r.id}`, req.__("Configure")),
-                },
-                {
-                  label: req.__("Delete"),
-                  key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
-                },
-              ],
-              triggers
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Actions available"),
+            contents: div(
+              actions
+                .map((a) => span({ class: "badge badge-primary" }, a.name))
+                .join("&nbsp;")
             ),
-            link("/actions/trigger/new", req.__("Add trigger"))
-          ),
-        },
-      ],
+          },
+          {
+            type: "card",
+            title: req.__("Triggers"),
+            contents: div(
+              mkTable(
+                [
+                  { label: req.__("Name"), key: "name" },
+                  { label: req.__("Action"), key: "action" },
+                  { label: req.__("Table"), key: "table_name" },
+                  {
+                    label: req.__("When"),
+                    key: (a) =>
+                      a.when_trigger === "API call"
+                        ? `API: ${base_url}api/action/${a.name}`
+                        : a.when_trigger,
+                  },
+                  {
+                    label: req.__("Test run"),
+                    key: (r) =>
+                      r.table_id
+                        ? ""
+                        : link(`/actions/testrun/${r.id}`, req.__("Test run")),
+                  },
+                  {
+                    label: req.__("Configure"),
+                    key: (r) =>
+                      link(`/actions/configure/${r.id}`, req.__("Configure")),
+                  },
+                  {
+                    label: req.__("Delete"),
+                    key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
+                  },
+                ],
+                triggers
+              ),
+              link("/actions/trigger/new", req.__("Add trigger"))
+            ),
+          },
+        ],
+      },
     });
   })
 );
