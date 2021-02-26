@@ -617,5 +617,6 @@
 	"Send verification email": "Send verification email",
 	"Email verification link sent to %s": "Email verification link sent to %s",
 	"Verification view": "Verification view",
-	"A view with the view to be emailed to users for email address verification": "A view with the view to be emailed to users for email address verification"
+	"A view with the view to be emailed to users for email address verification": "A view with the view to be emailed to users for email address verification",
+	"Email verified": "Email verified"
 }
