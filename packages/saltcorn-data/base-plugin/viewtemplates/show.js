@@ -186,6 +186,13 @@ const run = async (
   if (rows.length !== 1) return extra.req.__("No record selected");
   if (tbl.name === "users") {
     const base = get_base_url(extra.req);
+    fields.push(
+      new Field({
+        name: "verification_url",
+        label: "Verification URL",
+        type: "String",
+      })
+    );
     for (const row of rows) {
       row.verification_url = `${base}auth/verify?token=${
         row.verification_token
