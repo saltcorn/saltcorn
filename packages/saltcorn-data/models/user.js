@@ -282,8 +282,16 @@ User.contract = {
     nonEmpty: is.fun([], is.promise(is.bool)),
     hashPassword: is.fun(is.str, is.promise(is.str)),
     authenticate: is.fun(
-      is.obj({ password: is.str }),
+      is.objVals(is.str),
       is.promise(is.or(is.class("User"), is.eq(false)))
+    ),
+    verifyWithToken: is.fun(
+      is.obj({ email: is.str, verification_token: is.str }),
+      is.promise(is.any)
+    ),
+    resetPasswordWithToken: is.fun(
+      is.obj({ email: is.str, reset_password_token: is.str, password: is.str }),
+      is.promise(is.any)
     ),
     create: is.fun(
       is.obj({ email: is.str }),
