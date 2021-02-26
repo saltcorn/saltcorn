@@ -31,7 +31,7 @@ const transformBootstrapEmail = async (bsHtml) => {
   return email;
 };
 
-const send_verification_email = async (user, req) => {
+const send_verification_email = async (user) => {
   const verification_form_name = getState().getConfig("verification_form");
   if (verification_form_name) {
     const verification_form = await View.findOne({
@@ -41,6 +41,7 @@ const send_verification_email = async (user, req) => {
       const verification_token = uuidv4();
 
       await db.update("users", { verification_token }, user.id);
+      user.verification_token = verification_token;
       const htmlBs = await verification_form.run({ id: user.id }, mockReqRes);
       const html = await transformBootstrapEmail(htmlBs);
       const email = {

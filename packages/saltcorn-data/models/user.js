@@ -81,6 +81,8 @@ class User {
       ...rest,
     });
     u.id = id;
+    const { send_verification_email } = require("./email");
+    await send_verification_email(u);
     return u;
   }
 
