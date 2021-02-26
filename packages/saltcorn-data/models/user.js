@@ -4,6 +4,7 @@ const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
 const validator = require("email-validator");
+
 class User {
   constructor(o) {
     this.email = o.email;
@@ -11,6 +12,7 @@ class User {
     this.language = o.language;
     this._attributes = o._attributes || {};
     this.api_token = o.api_token;
+    this.verification_token = o.verification_token;
     this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
@@ -78,7 +80,7 @@ class User {
     u.id = id;
     return u;
   }
-
+  
   get session_object() {
     return {
       email: this.email,
@@ -128,7 +130,7 @@ class User {
     reset_password_expiry.setDate(new Date().getDate() + 1);
     const reset_password_token = await bcrypt.hash(
       reset_password_token_uuid,
-      5
+      10
     );
     await db.update(
       "users",

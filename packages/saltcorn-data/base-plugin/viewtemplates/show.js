@@ -33,6 +33,7 @@ const db = require("../../db");
 const { asyncMap, structuredClone } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
+const { get_base_url } = require("../../models/config");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -68,7 +69,14 @@ const configuration_workflow = (req) =>
             fields,
             false
           );
-
+          if (table.name === "users") {
+            fields.push({
+              name: "verification_url",
+              label: "Verification URL",
+              type: "String",
+            });
+            field_view_options.verification_url = ["as_text", "as_link"];
+          }
           const link_view_opts = await get_link_view_opts(
             table,
             context.viewname
@@ -156,7 +164,13 @@ const run = async (
   if (!columns || !layout) return "View not yet built";
   const tbl = await Table.findOne(table_id);
   const fields = await tbl.getFields();
-
+  if (tbl.name === "users") {
+    fields.push({
+      name: "verification_token",
+      label: "Verification Token",
+      type: "String",
+    });
+  }
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   const rows = await tbl.getJoinedRows({
@@ -166,6 +180,14 @@ const run = async (
     limit: 2,
   });
   if (rows.length !== 1) return extra.req.__("No record selected");
+  if (tbl.name === "users") {
+    const base = get_base_url(req);
+    for (const row of rows) {
+      row.verification_url = `${base}auth/verify?token=${
+        row.verification_token
+      }&email=${encodeURIComponent(row.email)}`;
+    }
+  }
   const rendered = (
     await renderRows(tbl, viewname, { columns, layout }, extra, rows)
   )[0];
