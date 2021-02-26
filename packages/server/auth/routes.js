@@ -197,6 +197,21 @@ router.get(
   })
 );
 
+router.get(
+  "/verify",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { token, email } = req.query;
+    const result = await User.verifyWithToken({
+      email,
+      verification_token: token,
+    });
+    if (result.error) req.flash("danger", result.error);
+    else if (result) req.flash("success", req.__("Email verified"));
+    res.redirect("/");
+  })
+);
+
 router.post(
   "/reset",
   setTenant,

@@ -162,6 +162,7 @@ class User {
   static async verifyWithToken({ email, verification_token }) {
     if (
       typeof verification_token !== "string" ||
+      typeof email !== "string" ||
       verification_token.length < 10 ||
       !email
     )
