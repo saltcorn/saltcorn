@@ -238,6 +238,8 @@ const getPageList = (rows, roles, req) => {
 const getRootPageForm = (pages, roles, req) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
     blurb: req.__(
       "The root page is the page that is served when the user visits the home location (/). This can be set for each user role."
     ),

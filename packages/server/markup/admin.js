@@ -225,7 +225,13 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
         : configTypes[name].attributes,
     });
   }
-  const form = new Form({ fields, values, ...formArgs });
+  const form = new Form({
+    fields,
+    values,
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    ...formArgs,
+  });
   await form.fill_fkey_options();
   return form;
 };
