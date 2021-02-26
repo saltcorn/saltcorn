@@ -180,6 +180,7 @@ class User {
   }) {
     if (
       typeof reset_password_token !== "string" ||
+      typeof email !== "string" ||
       reset_password_token.length < 10
     )
       return { error: "Invalid token" };
