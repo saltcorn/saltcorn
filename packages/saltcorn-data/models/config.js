@@ -88,7 +88,8 @@ const configTypes = {
   verification_form: {
     type: "View users",
     label: "Verification view",
-    blurb: "A view with the view to be emailed to users for email address verification",
+    blurb:
+      "A view with the view to be emailed to users for email address verification",
     default: "",
   },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
@@ -335,6 +336,19 @@ const get_latest_npm_version = async (pkg) => {
   return latest;
 };
 
+const get_base_url = (req) => {
+  const cfg = getState().getConfig("base_url", "");
+  if (cfg) return ensure_final_slash(cfg);
+
+  var ports = "";
+  const host = req.get("host");
+  if (typeof host === "string") {
+    const hosts = host.split(":");
+    if (hosts.length > 1) ports = `:${hosts[1]}`;
+  }
+  return `${req.protocol}://${req.hostname}${ports}/`;
+};
+
 module.exports = {
   getConfig,
   getAllConfig,
@@ -346,4 +360,5 @@ module.exports = {
   available_languages,
   isFixedConfig,
   get_latest_npm_version,
+  get_base_url,
 };

@@ -1,6 +1,7 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
 const { getState, getTenant } = require("@saltcorn/data/db/state");
+const { get_base_url } = require("@saltcorn/data/models/config");
 const { input } = require("@saltcorn/markup/tags");
 
 function loggedIn(req, res, next) {
@@ -55,19 +56,6 @@ const setTenant = (req, res, next) => {
   }
 };
 const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
-
-const get_base_url = (req) => {
-  const cfg = getState().getConfig("base_url", "");
-  if (cfg) return ensure_final_slash(cfg);
-
-  var ports = "";
-  const host = req.get("host");
-  if (typeof host === "string") {
-    const hosts = host.split(":");
-    if (hosts.length > 1) ports = `:${hosts[1]}`;
-  }
-  return `${req.protocol}://${req.hostname}${ports}/`;
-};
 
 const csrfField = (req) =>
   input({
