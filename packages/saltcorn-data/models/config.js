@@ -337,6 +337,8 @@ const get_latest_npm_version = async (pkg) => {
 };
 
 const get_base_url = (req) => {
+  const { getState } = require("../db/state");
+
   const cfg = getState().getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
 
