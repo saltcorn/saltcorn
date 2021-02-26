@@ -13,6 +13,9 @@ class User {
     this._attributes = o._attributes || {};
     this.api_token = o.api_token;
     this.verification_token = o.verification_token;
+    this.verified_on = ["string", "number"].includes(typeof o.verified_on)
+      ? new Date(o.verified_on)
+      : o.verified_on;
     this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
@@ -80,7 +83,7 @@ class User {
     u.id = id;
     return u;
   }
-  
+
   get session_object() {
     return {
       email: this.email,
@@ -154,6 +157,20 @@ class User {
 
   static valid_email(email) {
     return validator.validate(email);
+  }
+
+  static async verifyWithToken({ email, verification_token }) {
+    if (
+      typeof verification_token !== "string" ||
+      verification_token.length < 10 ||
+      !email
+    )
+      return { error: "Invalid token" };
+    const u = await User.findOne({ email, verification_token });
+    if (!u) return { error: "Invalid token" };
+    const upd = { verified_on: new Date() };
+    await db.update("users", upd, u.id);
+    return true;
   }
 
   static async resetPasswordWithToken({
