@@ -49,57 +49,70 @@ router.get(
   error_catcher(async (req, res) => {
     const rows = await File.find({}, { orderBy: "filename" });
     const roles = await User.get_roles();
-    res.sendWrap(
-      "Files",
-      mkTable(
-        [
-          {
-            label: req.__("Filename"),
-            key: (r) =>
-              div(
-                { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
-                r.filename
-              ),
-          },
-          { label: req.__("Size (KiB)"), key: "size_kb" },
-          { label: req.__("Media type"), key: (r) => r.mimetype },
-          {
-            label: req.__("Role to access"),
-            key: (r) => editFileRoleForm(r, roles, req),
-          },
-          {
-            label: req.__("Link"),
-            key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
-          },
-          {
-            label: req.__("Download"),
-            key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
-          },
-          {
-            label: req.__("Delete"),
-            key: (r) =>
-              post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
-          },
-        ],
-        rows
-      ),
-      form(
+    res.sendWrap("Files", {
+      above: [
         {
-          action: "/files/upload",
-          method: "post",
-          encType: "multipart/form-data",
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Files") },
+          ],
         },
-        csrfField(req),
-        label(req.__("Upload file ")),
-        input({
-          name: "file",
-          class: "form-control-file",
-          type: "file",
-          onchange: "form.submit()",
-          multiple: true,
-        })
-      )
-    );
+        {
+          type: "card",
+          contents: [
+            mkTable(
+              [
+                {
+                  label: req.__("Filename"),
+                  key: (r) =>
+                    div(
+                      { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                      r.filename
+                    ),
+                },
+                { label: req.__("Size (KiB)"), key: "size_kb" },
+                { label: req.__("Media type"), key: (r) => r.mimetype },
+                {
+                  label: req.__("Role to access"),
+                  key: (r) => editFileRoleForm(r, roles, req),
+                },
+                {
+                  label: req.__("Link"),
+                  key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
+                },
+                {
+                  label: req.__("Download"),
+                  key: (r) =>
+                    link(`/files/download/${r.id}`, req.__("Download")),
+                },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
+                },
+              ],
+              rows
+            ),
+            form(
+              {
+                action: "/files/upload",
+                method: "post",
+                encType: "multipart/form-data",
+              },
+              csrfField(req),
+              label(req.__("Upload file ")),
+              input({
+                name: "file",
+                class: "form-control-file",
+                type: "file",
+                onchange: "form.submit()",
+                multiple: true,
+              })
+            ),
+          ],
+        },
+      ],
+    });
   })
 );
 
