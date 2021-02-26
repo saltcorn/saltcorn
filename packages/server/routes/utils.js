@@ -55,7 +55,6 @@ const setTenant = (req, res, next) => {
     next();
   }
 };
-const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
 
 const csrfField = (req) =>
   input({

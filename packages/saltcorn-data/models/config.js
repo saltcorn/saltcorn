@@ -335,6 +335,7 @@ const get_latest_npm_version = async (pkg) => {
   });
   return latest;
 };
+const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
 
 const get_base_url = (req) => {
   const { getState } = require("../db/state");
