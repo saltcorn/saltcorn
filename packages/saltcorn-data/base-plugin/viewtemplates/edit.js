@@ -73,9 +73,15 @@ const configuration_workflow = (req) =>
               label: "Remember me",
               type: "Bool",
             });
+            fields.push({
+              name: "verification_url",
+              label: "Verification URL",
+              type: "String",
+            });
             field_view_options.password = ["password"];
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
+            field_view_options.verification_url = ["as_text", "as_link"];
           }
           return {
             fields,

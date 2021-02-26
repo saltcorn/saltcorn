@@ -85,6 +85,12 @@ const configTypes = {
     blurb: "A view with the signup form",
     default: "",
   },
+  verification_form: {
+    type: "View users",
+    label: "Verification view",
+    blurb: "A view with the view to be emailed to users for email address verification",
+    default: "",
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
