@@ -168,7 +168,10 @@ router.get(
     };
     try {
       await getMailTransport().sendMail(email);
-      req.flash("success", req.__("Email sent to %s with no errors", req.user.email));
+      req.flash(
+        "success",
+        req.__("Email sent to %s with no errors", req.user.email)
+      );
     } catch (e) {
       req.flash("error", e.message);
     }
@@ -597,12 +600,13 @@ router.post(
     }
     if (form.values.tables) {
       await db.deleteWhere("_sc_table_constraints");
-      await db.deleteWhere("_sc_triggers", {
-        table_id: { sql: "is not null" },
-      });
+
       const tables = await Table.find();
 
       for (const table of tables) {
+        await db.deleteWhere("_sc_triggers", {
+          table_id: table.id,
+        });
         await table.update({ ownership_field_id: null });
         const fields = await table.getFields();
         for (const f of fields) {
