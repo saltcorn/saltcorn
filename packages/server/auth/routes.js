@@ -751,6 +751,8 @@ const changPwForm = (req) =>
   new Form({
     action: "/auth/settings",
     submitLabel: req.__("Change"),
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
     fields: [
       {
         label: req.__("Old password"),

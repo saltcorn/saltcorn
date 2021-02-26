@@ -61,6 +61,8 @@ const tableForm = async (table, req) => {
     .map((f) => ({ value: f.id, label: f.name }));
   const form = new Form({
     action: "/table",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
     fields: [
       ...(userFields.length > 0 && !table.external
         ? [

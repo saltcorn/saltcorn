@@ -280,7 +280,11 @@ const fieldFlow = (req) =>
           const fld = new Field(context);
           const table = await Table.findOne({ name: fld.reftable_name });
           const fields = await table.getFields();
-          const keyfields = fields
+          const orderedFields = [
+            ...fields.filter((f) => !f.primary_key),
+            ...fields.filter((f) => f.primary_key),
+          ];
+          const keyfields = orderedFields
             .filter((f) => !f.calculated || f.stored)
             .map((f) => ({
               value: f.name,
