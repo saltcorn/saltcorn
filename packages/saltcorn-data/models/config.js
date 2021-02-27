@@ -95,7 +95,14 @@ const configTypes = {
   elevate_verified: {
     type: "Role",
     label: "Elevate verified to role",
-    blurb: "Elevate users to a higher role when their email addresses have been verified",    
+    blurb:
+      "Elevate users to a higher role when their email addresses have been verified",
+  },
+  email_mask: {
+    type: "String",
+    label: "Email mask",
+    default: "",
+    blurb: "Emails used for signup must end with this string",
   },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
@@ -356,7 +363,14 @@ const get_base_url = (req) => {
   }
   return `${req.protocol}://${req.hostname}${ports}/`;
 };
+const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
+  const { getState } = require("../db/state");
 
+  const cfg = getState().getConfig("email_mask", "");
+  if (cfg) {
+    return email.endsWith(cfg);
+  } else return true;
+});
 module.exports = {
   getConfig,
   getAllConfig,
@@ -369,4 +383,5 @@ module.exports = {
   isFixedConfig,
   get_latest_npm_version,
   get_base_url,
+  check_email_mask,
 };

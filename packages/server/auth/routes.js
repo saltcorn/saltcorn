@@ -34,7 +34,7 @@ const {
   select,
   option,
 } = require("@saltcorn/markup/tags");
-const { available_languages } = require("@saltcorn/data/models/config");
+const { available_languages, check_email_mask } = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
@@ -327,8 +327,7 @@ router.post(
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
         const { email, password } = form.values;
-        const u = await User.create({ email, password, role_id: 1 });
-        await send_verification_email(u, req);
+        const u = await User.create({ email, password, role_id: 1 });        
         req.login(
           {
             email: u.email,
@@ -569,6 +568,11 @@ router.post(
       }
       if (!User.valid_email(email)) {
         req.flash("danger", req.__("Not a valid e-mail address"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if(!check_email_mask(email)) {
+        req.flash("danger", req.__("Signups with this email address are not accepted"));
         res.redirect("/auth/signup");
         return true;
       }
