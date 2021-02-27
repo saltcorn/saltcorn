@@ -49,7 +49,13 @@ class User {
     if (u) return u;
     else {
       const { getState } = require("../db/state");
-
+      const email_mask = getState().getConfig("email_mask");
+      if (email_mask && uo.email) {
+        const { check_email_mask } = require("./config");
+        if (!check_email_mask(uo.email)) {
+          throw new Error("Signups with this email address are not accepted");
+        }
+      }
       const new_user_form = getState().getConfig("new_user_form");
       if (new_user_form) {
         // cannot create user, return pseudo-user
