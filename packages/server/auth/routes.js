@@ -34,7 +34,10 @@ const {
   select,
   option,
 } = require("@saltcorn/markup/tags");
-const { available_languages } = require("@saltcorn/data/models/config");
+const {
+  available_languages,
+  check_email_mask,
+} = require("@saltcorn/data/models/config");
 const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
@@ -328,7 +331,6 @@ router.post(
       } else {
         const { email, password } = form.values;
         const u = await User.create({ email, password, role_id: 1 });
-        await send_verification_email(u, req);
         req.login(
           {
             email: u.email,
@@ -474,6 +476,13 @@ router.post(
     }
     try {
       const uobj = { ...req.user, ...form.values };
+      if (uobj.email && !check_email_mask(uobj.email)) {
+        form.errors._form = req.__(
+          "Signups with this email address are not accepted"
+        );
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+        return;
+      }
       const u = await User.create(uobj);
       await send_verification_email(u, req);
 
@@ -517,6 +526,11 @@ router.post(
       }
       form.validate(req.body);
       if (form.hasErrors) {
+        res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+      } else if (form.values.email && !check_email_mask(form.values.email)) {
+        form.errors._form = req.__(
+          "Signups with this email address are not accepted"
+        );
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         try {
@@ -569,6 +583,14 @@ router.post(
       }
       if (!User.valid_email(email)) {
         req.flash("danger", req.__("Not a valid e-mail address"));
+        res.redirect("/auth/signup");
+        return true;
+      }
+      if (!check_email_mask(email)) {
+        req.flash(
+          "danger",
+          req.__("Signups with this email address are not accepted")
+        );
         res.redirect("/auth/signup");
         return true;
       }

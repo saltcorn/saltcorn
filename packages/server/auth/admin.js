@@ -271,6 +271,7 @@ const user_settings_form = (req) =>
       "signup_form",
       "verification_view",
       "elevate_verified",
+      "email_mask",
       "allow_forgot",
     ],
     action: "/useradmin/settings",
