@@ -270,6 +270,7 @@ const user_settings_form = (req) =>
       "login_form",
       "signup_form",
       "verification_view",
+      "elevate_verified",
       "allow_forgot",
     ],
     action: "/useradmin/settings",

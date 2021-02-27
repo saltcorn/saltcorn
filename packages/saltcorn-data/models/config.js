@@ -92,6 +92,11 @@ const configTypes = {
       "A view with the view to be emailed to users for email address verification",
     default: "",
   },
+  elevate_verified: {
+    type: "Role",
+    label: "Elevate verified to role",
+    blurb: "Elevate users to a higher role when their email addresses have been verified",    
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
