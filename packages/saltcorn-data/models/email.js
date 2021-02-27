@@ -56,7 +56,7 @@ const send_verification_email = async (user, req) => {
         if (req)
           req.flash(
             "success",
-            req.__("An email has been sent to %s to verify your address")
+            req.__("An email has been sent to %s to verify your address", user.email)
           );
         return true;
       } catch (e) {
