@@ -621,5 +621,8 @@
 	"Email verified": "Email verified",
 	"An email has been sent to %s to verify your address": "An email has been sent to %s to verify your address",
 	"Elevate verified to role": "Elevate verified to role",
-	"Elevate users to a higher role when their email addresses have been verified": "Elevate users to a higher role when their email addresses have been verified"
+	"Elevate users to a higher role when their email addresses have been verified": "Elevate users to a higher role when their email addresses have been verified",
+	"Email mask": "Email mask",
+	"Emails used for signup must end with this string": "Emails used for signup must end with this string",
+	"Signups with this email address are not accepted": "Signups with this email address are not accepted"
 }
