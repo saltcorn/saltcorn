@@ -24,6 +24,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
+const User = require("@saltcorn/data/models/user");
 
 const restore_backup = (csrf, inner) =>
   form(
@@ -206,22 +207,32 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   for (const name of field_names) {
     values[name] = state.getConfig(name);
     const isView = configTypes[name].type.startsWith("View ");
+    const isRole = configTypes[name].type === "Role";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
+    const roleAttribs = {
+      options: (await User.get_roles()).map((r) => ({
+        label: r.role,
+        name: `${r.id}`,
+      })),
+    };
     fields.push({
       name,
       ...configTypes[name],
       label: label ? req.__(label) : undefined,
       sublabel: sublabel ? req.__(sublabel) : undefined,
       disabled: isFixedConfig(name),
-      type: isView
-        ? "String"
-        : configTypes[name].input_type
-        ? undefined
-        : configTypes[name].type,
+      type:
+        isView || isRole
+          ? "String"
+          : configTypes[name].input_type
+          ? undefined
+          : configTypes[name].type,
       input_type: configTypes[name].input_type,
       attributes: isView
         ? await viewAttributes(name)
+        : isRole
+        ? roleAttribs
         : configTypes[name].attributes,
     });
   }

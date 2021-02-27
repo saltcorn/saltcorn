@@ -76,18 +76,11 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
           div(
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
             inner,
-            text(error)
+            text(error),
+            hdr.sublabel &&i(text(hdr.sublabel))
           ),
         ],
-    hdr.sublabel &&
-      div(
-        {
-          class:
-            isHoriz(fStyle) &&
-            `col-sm-${12 - labelCols} offset-md-${labelCols}`,
-        },
-        i(text(hdr.sublabel))
-      )
+
   );
 
 const innerField = (v, errors, nameAdd = "") => (hdr) => {

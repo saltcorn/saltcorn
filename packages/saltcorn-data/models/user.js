@@ -170,6 +170,10 @@ class User {
     const u = await User.findOne({ email, verification_token });
     if (!u) return { error: "Invalid token" };
     const upd = { verified_on: new Date() };
+    const { getState } = require("../db/state");
+
+    const elevate_verified = +getState().getConfig("elevate_verified");
+    if (elevate_verified) upd.role_id = Math.min(elevate_verified, u.role_id);
     await db.update("users", upd, u.id);
     return true;
   }

@@ -34,17 +34,17 @@ const transformBootstrapEmail = async (bsHtml) => {
 };
 
 const send_verification_email = async (user, req) => {
-  const verification_form_name = getState().getConfig("verification_form");
-  if (verification_form_name) {
-    const verification_form = await View.findOne({
-      name: verification_form_name,
+  const verification_view_name = getState().getConfig("verification_view");
+  if (verification_view_name) {
+    const verification_view = await View.findOne({
+      name: verification_view_name,
     });
-    if (verification_form) {
+    if (verification_view) {
       const verification_token = uuidv4();
       try {
         await db.update("users", { verification_token }, user.id);
         user.verification_token = verification_token;
-        const htmlBs = await verification_form.run({ id: user.id }, mockReqRes);
+        const htmlBs = await verification_view.run({ id: user.id }, mockReqRes);
         const html = await transformBootstrapEmail(htmlBs);
         const email = {
           from: getState().getConfig("email_from"),
