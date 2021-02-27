@@ -85,6 +85,13 @@ const configTypes = {
     blurb: "A view with the signup form",
     default: "",
   },
+  verification_form: {
+    type: "View users",
+    label: "Verification view",
+    blurb:
+      "A view with the view to be emailed to users for email address verification",
+    default: "",
+  },
   installed_packs: { type: "String[]", label: "Installed packs", default: [] },
   log_sql: {
     type: "Bool",
@@ -328,6 +335,22 @@ const get_latest_npm_version = async (pkg) => {
   });
   return latest;
 };
+const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
+
+const get_base_url = (req) => {
+  const { getState } = require("../db/state");
+
+  const cfg = getState().getConfig("base_url", "");
+  if (cfg) return ensure_final_slash(cfg);
+  if (!req.get) return "/";
+  var ports = "";
+  const host = req.get("host");
+  if (typeof host === "string") {
+    const hosts = host.split(":");
+    if (hosts.length > 1) ports = `:${hosts[1]}`;
+  }
+  return `${req.protocol}://${req.hostname}${ports}/`;
+};
 
 module.exports = {
   getConfig,
@@ -340,4 +363,5 @@ module.exports = {
   available_languages,
   isFixedConfig,
   get_latest_npm_version,
+  get_base_url,
 };

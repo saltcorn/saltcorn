@@ -73,6 +73,7 @@ const configuration_workflow = (req) =>
               label: "Remember me",
               type: "Bool",
             });
+           
             field_view_options.password = ["password"];
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];

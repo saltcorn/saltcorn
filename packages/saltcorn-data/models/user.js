@@ -4,6 +4,7 @@ const { contract, is } = require("contractis");
 const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
 const validator = require("email-validator");
+
 class User {
   constructor(o) {
     this.email = o.email;
@@ -11,6 +12,10 @@ class User {
     this.language = o.language;
     this._attributes = o._attributes || {};
     this.api_token = o.api_token;
+    this.verification_token = o.verification_token;
+    this.verified_on = ["string", "number"].includes(typeof o.verified_on)
+      ? new Date(o.verified_on)
+      : o.verified_on;
     this.disabled = !!o.disabled;
     this.id = o.id ? +o.id : o.id;
     this.reset_password_token = o.reset_password_token || null;
@@ -128,7 +133,7 @@ class User {
     reset_password_expiry.setDate(new Date().getDate() + 1);
     const reset_password_token = await bcrypt.hash(
       reset_password_token_uuid,
-      5
+      10
     );
     await db.update(
       "users",
@@ -154,6 +159,21 @@ class User {
     return validator.validate(email);
   }
 
+  static async verifyWithToken({ email, verification_token }) {
+    if (
+      typeof verification_token !== "string" ||
+      typeof email !== "string" ||
+      verification_token.length < 10 ||
+      !email
+    )
+      return { error: "Invalid token" };
+    const u = await User.findOne({ email, verification_token });
+    if (!u) return { error: "Invalid token" };
+    const upd = { verified_on: new Date() };
+    await db.update("users", upd, u.id);
+    return true;
+  }
+
   static async resetPasswordWithToken({
     email,
     reset_password_token,
@@ -161,6 +181,7 @@ class User {
   }) {
     if (
       typeof reset_password_token !== "string" ||
+      typeof email !== "string" ||
       reset_password_token.length < 10
     )
       return { error: "Invalid token" };
@@ -255,8 +276,16 @@ User.contract = {
     nonEmpty: is.fun([], is.promise(is.bool)),
     hashPassword: is.fun(is.str, is.promise(is.str)),
     authenticate: is.fun(
-      is.obj({ password: is.str }),
+      is.objVals(is.str),
       is.promise(is.or(is.class("User"), is.eq(false)))
+    ),
+    verifyWithToken: is.fun(
+      is.obj({ email: is.str, verification_token: is.str }),
+      is.promise(is.any)
+    ),
+    resetPasswordWithToken: is.fun(
+      is.obj({ email: is.str, reset_password_token: is.str, password: is.str }),
+      is.promise(is.any)
     ),
     create: is.fun(
       is.obj({ email: is.str }),

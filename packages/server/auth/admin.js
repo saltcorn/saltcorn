@@ -35,6 +35,7 @@ const {
   br,
   h4,
   h5,
+  i,
   p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
@@ -43,6 +44,7 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin");
+const { send_verification_email } = require("@saltcorn/data/models/email");
 const router = new Router();
 module.exports = router;
 
@@ -143,12 +145,19 @@ const user_dropdown = (user, req, can_reset) =>
       '<i class="fas fa-random"></i>&nbsp;' + req.__("Set random password"),
       req
     ),
-
     can_reset &&
       post_dropdown_item(
         `/useradmin/reset-password/${user.id}`,
         '<i class="fas fa-envelope"></i>&nbsp;' +
           req.__("Send password reset email"),
+        req
+      ),
+    can_reset &&
+      !user.verified_on &&
+      post_dropdown_item(
+        `/useradmin/send-verification/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req.__("Send verification email"),
         req
       ),
     user.disabled &&
@@ -207,6 +216,15 @@ router.get(
                     ? span({ class: "badge badge-danger" }, "Disabled")
                     : "",
               },
+              {
+                label: req.__("Verified"),
+                key: (r) =>
+                  !!r.verified_on
+                    ? i({
+                        class: "fas fa-check-circle text-success",
+                      })
+                    : "",
+              },
               { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
               {
                 label: "",
@@ -251,6 +269,7 @@ const user_settings_form = (req) =>
       "new_user_form",
       "login_form",
       "signup_form",
+      "verification_form",
       "allow_forgot",
     ],
     action: "/useradmin/settings",
@@ -539,6 +558,26 @@ router.post(
     const u = await User.findOne({ id });
     await send_reset_email(u, req);
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
+
+    res.redirect(`/useradmin`);
+  })
+);
+
+router.post(
+  "/send-verification/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    const result = await send_verification_email(u);
+    console.log(result);
+    if (result.error) req.flash("danger", result.error);
+    else
+      req.flash(
+        "success",
+        req.__(`Email verification link sent to %s`, u.email)
+      );
 
     res.redirect(`/useradmin`);
   })

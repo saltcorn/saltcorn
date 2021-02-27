@@ -4,6 +4,7 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
+const { send_verification_email } = require("@saltcorn/data/models/email");
 const {
   setTenant,
   error_catcher,
@@ -197,6 +198,21 @@ router.get(
   })
 );
 
+router.get(
+  "/verify",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { token, email } = req.query;
+    const result = await User.verifyWithToken({
+      email,
+      verification_token: token,
+    });
+    if (result.error) req.flash("danger", result.error);
+    else if (result) req.flash("success", req.__("Email verified"));
+    res.redirect("/");
+  })
+);
+
 router.post(
   "/reset",
   setTenant,
@@ -312,6 +328,7 @@ router.post(
       } else {
         const { email, password } = form.values;
         const u = await User.create({ email, password, role_id: 1 });
+        await send_verification_email(u, req);
         req.login(
           {
             email: u.email,
@@ -458,6 +475,8 @@ router.post(
     try {
       const uobj = { ...req.user, ...form.values };
       const u = await User.create(uobj);
+      await send_verification_email(u, req);
+
       signup_login_with_user(u, req, res);
     } catch (e) {
       const table = await Table.findOne({ name: "users" });
@@ -502,6 +521,8 @@ router.post(
       } else {
         try {
           const u = await User.create(form.values);
+          await send_verification_email(u, req);
+
           signup_login_with_user(u, req, res);
         } catch (e) {
           const table = await Table.findOne({ name: "users" });
@@ -593,6 +614,8 @@ router.post(
           res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         } else {
           const u = await User.create(userObject);
+          await send_verification_email(u, req);
+
           signup_login_with_user(u, req, res);
         }
         return;
@@ -616,6 +639,8 @@ router.post(
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         const u = await User.create({ email, password });
+        await send_verification_email(u, req);
+
         signup_login_with_user(u, req, res);
       }
     }
