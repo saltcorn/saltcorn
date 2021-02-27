@@ -53,7 +53,7 @@ class User {
       if (email_mask && uo.email) {
         const { check_email_mask } = require("./config");
         if (!check_email_mask(uo.email)) {
-          throw new Error("Signups with this email address are not accepted");
+          return false;
         }
       }
       const new_user_form = getState().getConfig("new_user_form");
