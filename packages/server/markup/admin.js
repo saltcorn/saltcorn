@@ -216,7 +216,6 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
         name: `${r.id}`,
       })),
     };
-    console.log(name, isRole, roleAttribs);
     fields.push({
       name,
       ...configTypes[name],
