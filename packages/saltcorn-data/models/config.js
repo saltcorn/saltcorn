@@ -85,7 +85,7 @@ const configTypes = {
     blurb: "A view with the signup form",
     default: "",
   },
-  verification_form: {
+  verification_view: {
     type: "View users",
     label: "Verification view",
     blurb:
