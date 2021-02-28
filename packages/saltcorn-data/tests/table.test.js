@@ -7,6 +7,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file, plugin_with_routes, mockReqRes } = require("./mocks");
+const { isFunction } = require("util");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -862,13 +863,18 @@ describe("Table with UUID pks", () => {
       });
       const refrows = await uuidtable1.getRows({});
 
-      table.insertRow({ myname: "Fred", follows: refrows[0].id });
+      await table.insertRow({ myname: "Fred", follows: refrows[0].id });
       const rows = await table.getJoinedRows({
         where: {},
         joinFields: {
           leader: { ref: "follows", target: "name" },
         },
       });
+      //trying to debug intermittant CI failure
+      if(rows.length === 0) {
+        const allRows = await table.getRows()
+        console.log(allRows);
+      }
       expect(rows.length).toBe(1);
       expect(rows[0].leader).toBe("Jim");
       expect(rows[0].myname).toBe("Fred");
