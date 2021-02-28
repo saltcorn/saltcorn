@@ -154,6 +154,7 @@ const user_dropdown = (user, req, can_reset) =>
       ),
     can_reset &&
       !user.verified_on &&
+      getState().getConfig("verification_view", "") &&
       post_dropdown_item(
         `/useradmin/send-verification/${user.id}`,
         '<i class="fas fa-envelope"></i>&nbsp;' +
