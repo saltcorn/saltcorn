@@ -7,7 +7,6 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 const fs = require("fs").promises;
 const { rick_file, plugin_with_routes, mockReqRes } = require("./mocks");
-const { isFunction } = require("util");
 
 afterAll(db.close);
 beforeAll(async () => {
