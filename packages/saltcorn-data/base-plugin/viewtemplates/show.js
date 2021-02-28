@@ -183,7 +183,7 @@ const run = async (
     aggregations,
     limit: 2,
   });
-  if (rows.length !== 1) return extra.req.__("No record selected");
+  if (rows.length !== 1) return extra.req.__("No row selected");
   if (tbl.name === "users") {
     const base = get_base_url(extra.req);
     fields.push(
