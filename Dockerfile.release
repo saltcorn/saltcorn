@@ -1,5 +1,5 @@
 FROM node:14
 
-RUN npm install -g @saltcorn/cli@0.3.1-beta.1 --unsafe
+RUN npm install -g @saltcorn/cli@0.4.1-beta.0 --unsafe
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
