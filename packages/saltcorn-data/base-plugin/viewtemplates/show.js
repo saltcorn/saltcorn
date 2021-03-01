@@ -149,6 +149,7 @@ const get_state_fields = () => [
     name: "id",
     type: "Integer",
     required: true,
+    primary_key: true
   },
 ];
 

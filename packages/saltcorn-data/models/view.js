@@ -119,7 +119,7 @@ class View {
 
   static async find_possible_links_to_table(table) {
     return View.find_table_views_where(table, ({ state_fields }) =>
-      state_fields.some((sf) => sf.name === "id")
+      state_fields.some((sf) => sf.name === "id" || sf.primary_key )
     );
   }
 
