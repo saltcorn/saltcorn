@@ -53,9 +53,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Files") },
-          ],
+          crumbs: [{ text: req.__("Files") }],
         },
         {
           type: "card",
@@ -91,7 +89,8 @@ router.get(
                     post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
                 },
               ],
-              rows
+              rows,
+              { hover: true }
             ),
             form(
               {

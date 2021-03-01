@@ -223,7 +223,8 @@ const getPageList = (rows, roles, req) => {
           key: (r) => page_dropdown(r, req),
         },
       ],
-      rows
+      rows,
+      { hover: true }
     ),
     a(
       {

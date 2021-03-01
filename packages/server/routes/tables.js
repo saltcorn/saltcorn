@@ -477,7 +477,8 @@ router.get(
                 },
               ]),
         ],
-        fields
+        fields,
+        { hover: true }
       );
       fieldCard = [
         tableHtml,
@@ -527,7 +528,8 @@ router.get(
                 ),
             },
           ],
-          views
+          views,
+          { hover: true }
         );
       } else {
         viewCardContents = div(
@@ -791,7 +793,8 @@ router.get(
                     : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
               },
             ],
-            rows
+            rows,
+            { hover: true }
           )
         : div(
             h4(req.__("No tables defined")),
@@ -899,7 +902,8 @@ router.get(
                     post_delete_btn(`/table/delete-constraint/${r.id}`, req),
                 },
               ],
-              cons
+              cons,
+              { hover: true }
             ),
             link(`/table/add-constraint/${id}`, req.__("Add constraint")),
           ],

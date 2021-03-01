@@ -33,6 +33,7 @@ const mkTable = contract(
             })
           ),
           noHeader: is.maybe(is.bool),
+          hover: is.maybe(is.bool),
         })
       ),
     ],
@@ -46,7 +47,8 @@ const mkTable = contract(
           class: [
             "table table-sm",
             opts.class,
-            opts.onRowSelect && "table-hover",
+            (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
+              "table-hover",
           ],
           style: opts.style,
         },

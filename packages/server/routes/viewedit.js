@@ -131,7 +131,8 @@ router.get(
                 key: (r) => view_dropdown(r, req),
               },
             ],
-            views
+            views,
+            { hover: true }
           )
         : div(
             h4(req.__("No views defined")),
