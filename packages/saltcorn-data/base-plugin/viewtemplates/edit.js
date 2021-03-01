@@ -192,6 +192,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   {
     name: "id",
     type: "Integer",
+    primary_key: true
   },
 ];
 

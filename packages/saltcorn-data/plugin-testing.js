@@ -87,7 +87,7 @@ const auto_test_viewtemplate = async (vt) => {
         table_id: 2,
         viewname: "newview",
       });
-    const sfs = await vt.get_state_fields(1, "newview", cfg);
+    const sfs = vt.get_state_fields ? await vt.get_state_fields(1, "newview", cfg) : [];
     const res = await vt.run(2, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
     if (sfs.some((sf) => sf.name === "id")) {
