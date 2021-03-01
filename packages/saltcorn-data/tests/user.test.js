@@ -75,7 +75,7 @@ describe("User", () => {
     });
     expect(res2).toEqual({ error: "Invalid token" });
   });
-  it("should reset password", async () => {
+  it("should reset API token", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     const token = await u.getNewAPIToken();
     expect(token.length > 5).toBe(true);
@@ -89,11 +89,51 @@ describe("User", () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.set_language("fr");
   });
+  it("should generate password ", async () => {
+    const rndpass = User.generate_password();
+    expect(typeof rndpass).toBe("string");
+    expect(rndpass.length).toBeGreaterThan(9);
+  });
+  it("should validate email", async () => {
+    expect(User.valid_email("foobar")).toBe(false);
+    expect(User.valid_email("foo@bar.com")).toBe(true);
+  });
+
+  it("should verify with token", async () => {
+    await getState().setConfig("elevate_verified", "4");
+
+    const u = await User.findOne({ email: "foo@bar.com" });
+    await u.update({ verification_token: "foobarbazfoobarbaz" });
+    expect(!!u.verified_on).toBe(false);
+    const res1 = await User.verifyWithToken({
+      email: "foo@bar.com",
+      verification_token: "foobar",
+    });
+    expect(res1.error).toBe("Invalid token");
+    const res2 = await User.verifyWithToken({
+      email: "foo@bar.com",
+      verification_token: "foobarbazfoobarbaz",
+    });
+    expect(res2).toBe(true);
+    const u2 = await User.findOne({ email: "foo@bar.com" });
+    expect(!!u2.verified_on).toBe(true);
+    expect(u2.role_id).toBe(4);
+  });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.delete();
     const us = await User.find({ email: "foo@bar.com" });
     expect(us.length).toBe(0);
+  });
+  it("should find or create by attribute ", async () => {
+    const u = await User.findOrCreateByAttribute("googleId", 5, {
+      email: "tom@yahoo.com",
+    });
+    expect(typeof u.password).toBe("string");
+    const u1 = await User.findOrCreateByAttribute("googleId", 5, {
+      email: "tom@yahoo.com",
+    });
+    expect(u.id).toEqual(u1.id);
   });
 });
 
