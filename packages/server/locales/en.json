@@ -624,5 +624,9 @@
 	"Elevate users to a higher role when their email addresses have been verified": "Elevate users to a higher role when their email addresses have been verified",
 	"Email mask": "Email mask",
 	"Emails used for signup must end with this string": "Emails used for signup must end with this string",
-	"Signups with this email address are not accepted": "Signups with this email address are not accepted"
+	"Signups with this email address are not accepted": "Signups with this email address are not accepted",
+	"Default order by": "Default order by",
+	"Default descending?": "Default descending?",
+	"Omit header": "Omit header",
+	"Do not display the header": "Do not display the header"
 }

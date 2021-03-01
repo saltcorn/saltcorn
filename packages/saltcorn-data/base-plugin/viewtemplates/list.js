@@ -136,27 +136,47 @@ const configuration_workflow = (req) =>
           const table = await Table.findOne(
             context.table_id || context.exttable_name
           );
-          const table_fields = await table.getFields();
-          const formfields = table_fields
-            .filter((f) => !f.calculated || f.stored)
-            .map((f) => {
-              return {
-                name: f.name,
-                label: f.label,
-                type: f.type,
-                reftable_name: f.reftable_name,
-                attributes: f.attributes,
-                fieldview:
-                  f.type && f.type.name === "Bool" ? "tristate" : undefined,
-                required: false,
-              };
-            });
+          const table_fields = (await table.getFields()).filter(
+            (f) => !f.calculated || f.stored
+          );
+          const formfields = table_fields.map((f) => {
+            return {
+              name: f.name,
+              label: f.label,
+              type: f.type,
+              reftable_name: f.reftable_name,
+              attributes: f.attributes,
+              fieldview:
+                f.type && f.type.name === "Bool" ? "tristate" : undefined,
+              required: false,
+            };
+          });
+          formfields.push({
+            name: "_order_field",
+            label: req.__("Default order by"),
+            type: "String",
+            attributes: {
+              options: table_fields.map((f) => f.name),
+            },
+          });
+          formfields.push({
+            name: "_descending",
+            label: req.__("Default descending?"),
+            type: "Bool",
+            required: true,
+          });
           formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
             type: "Bool",
             default: true,
+          });
+          formfields.push({
+            name: "_omit_header",
+            label: req.__("Omit header"),
+            sublabel: req.__("Do not display the header"),
+            type: "Bool",
           });
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -202,7 +222,13 @@ const initial_config = initial_config_all_fields(false);
 const run = async (
   table_id,
   viewname,
-  { columns, view_to_create, create_view_display, create_view_label },
+  {
+    columns,
+    view_to_create,
+    create_view_display,
+    create_view_label,
+    default_state,
+  },
   stateWithId,
   extraOpts
 ) => {
@@ -229,8 +255,9 @@ const run = async (
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = 20;
   if (!q.limit) q.limit = rows_per_page;
-  if (!q.orderBy) q.orderBy = table.pk_name;
-
+  if (!q.orderBy)
+    q.orderBy = (default_state && default_state._order_field) || table.pk_name;
+  if (!q.orderDesc) q.orderDesc = default_state && default_state._descending;
   const current_page = parseInt(state._page) || 1;
 
   if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
@@ -265,7 +292,9 @@ const run = async (
       };
     }
   }
-
+  if (default_state && default_state._omit_header) {
+    page_opts.noHeader = true;
+  }
   var create_link = "";
   const user_id =
     extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
