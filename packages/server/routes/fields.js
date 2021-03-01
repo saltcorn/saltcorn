@@ -184,7 +184,7 @@ const fieldFlow = (req) =>
           const nrows = await table.countRows({});
           const existing_fields = await table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = [...tables.map((t) => `Key to ${t.name}`), "File"];
+          const fkey_opts = ["File", ...tables.map((t) => `Key to ${t.name}`)];
           const form = await fieldForm(
             req,
             fkey_opts,
