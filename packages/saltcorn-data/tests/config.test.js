@@ -8,6 +8,9 @@ const {
   getAllConfig,
   setConfig,
   getAllConfigOrDefaults,
+  get_base_url,
+  check_email_mask,
+  get_latest_npm_version,
 } = require("../models/config");
 afterAll(db.close);
 
@@ -60,5 +63,29 @@ describe("Config", () => {
     const d = await getAllConfigOrDefaults();
     expect(d.cfg1).toBe(undefined);
     expect(d.log_sql.value).toBe(false);
+  });
+  it("should get base url", async () => {
+    expect(get_base_url()).toBe("/");
+    await getState().setConfig("base_url", "foo");
+    const s = get_base_url();
+    expect(s).toBe("foo/");
+    await getState().setConfig("base_url", "bar/");
+    const s1 = get_base_url();
+    expect(s1).toBe("bar/");
+  });
+  it("should check email mask", async () => {
+    expect(check_email_mask("foo@bar.com")).toBe(true);
+    await getState().setConfig("email_mask", "bar.com");
+    expect(check_email_mask("foo@bar.com")).toBe(true);
+    expect(check_email_mask("foo@baz.com")).toBe(false);
+  });
+  it("should check email mask", async () => {
+    await getState().setConfig("latest_npm_version", {
+      foopkg: { version: "1.2.3", time: new Date() },
+    });
+    const foov = await get_latest_npm_version("foopkg");
+    expect(foov).toBe("1.2.3");
+    const lpv = await get_latest_npm_version("left-pad");
+    expect(lpv).toBe("1.3.0");
   });
 });
