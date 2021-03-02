@@ -63,7 +63,16 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toInclude("peashoot"));
     });
-    it("lists tenants", async () => {
+    it("show tenant info", async () => {
+      const loginCookie = await getAdminLoginCookie();
+
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/tenant/info/peashoot")
+        .set("Cookie", loginCookie)
+        .expect(toInclude("E-mail"));
+    });
+    it("delete tenant", async () => {
       const loginCookie = await getAdminLoginCookie();
 
       const app = await getApp({ disableCsrf: true });
