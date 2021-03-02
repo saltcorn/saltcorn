@@ -340,9 +340,10 @@ const get_viewable_fields = contract(
           };
         } else if (column.type === "Field") {
           let f = fields.find((fld) => fld.name === column.field_name);
-
+          const isNum = f && f.type && f.type.name === "Integer";
           return (
             f && {
+              align: isNum ? "right" : undefined,
               label: headerLabelForName(column, f, req),
               key:
                 column.fieldview && f.type === "File"
