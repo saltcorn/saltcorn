@@ -15,7 +15,7 @@
     "@saltcorn/data": "^0.4.1-beta.0",
     "@saltcorn/server": "^0.4.1-beta.0",
     "cli-ux": "^5.4.5",
-    "contractis": "^0.0.15-alpha.0",
+    "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
     "inquirer": "^7.1.0",
     "sudo": "^1.0.3",

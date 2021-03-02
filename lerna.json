@@ -1,4 +1,4 @@
 {
   "packages": ["packages/*"],
-  "version": "independent"
+  "version": "0.4.1-beta.0"
 }
