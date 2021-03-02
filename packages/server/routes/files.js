@@ -68,7 +68,7 @@ router.get(
                       r.filename
                     ),
                 },
-                { label: req.__("Size (KiB)"), key: "size_kb" },
+                { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
                 { label: req.__("Media type"), key: (r) => r.mimetype },
                 {
                   label: req.__("Role to access"),
