@@ -14,6 +14,7 @@ const {
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
+const User = require("@saltcorn/data/models/user");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -215,6 +216,52 @@ describe("menu editor", () => {
       .expect(toInclude("BarMenu"));
   });
 });
+
+describe("roleadmin", () => {
+  itShouldRedirectUnauthToLogin("/roleadmin");
+  itShouldRedirectUnauthToLogin("/roleadmin/new");
+  it("show edit form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/roleadmin/new")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("rank of the user"));
+  });
+  it("show create now role", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/roleadmin/edit")
+      .set("Cookie", loginCookie)
+      .send("id=5")
+      .send("role=muppets")
+      .expect(toRedirect("/roleadmin"));
+    const roles=await User.get_roles()
+    expect(roles).toContainEqual({id:5, role:"muppets"})
+  });
+  it("show set layout for role", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/roleadmin/setrolelayout/5")
+      .set("Cookie", loginCookie)
+      .send("layout=tabler")
+      .expect(toRedirect("/roleadmin"));
+    const roles=await User.get_roles()
+    expect(roles).toContainEqual({id:5, role:"muppets"})
+  });
+  it("show delete role", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/roleadmin/delete/5")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/roleadmin"));
+    const roles=await User.get_roles()
+    expect(roles).not.toContainEqual({id:5, role:"muppets"})
+  });
+});
 describe("actions", () => {
   itShouldRedirectUnauthToLogin("/actions");
   it("show actions editor", async () => {
@@ -355,3 +402,4 @@ describe("clear all page", () => {
       .expect(toRedirect("/auth/create_first_user"));
   });
 });
+
