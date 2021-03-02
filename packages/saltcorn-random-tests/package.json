@@ -8,7 +8,7 @@
     "@saltcorn/server": "^0.4.1-beta.0"
   },
   "devDependencies": {
-    "chaos-guinea-pig": "^0.0.17-alpha.0",
+    "chaos-guinea-pig": "^0.1.0",
     "jest": "^25.1.0",
     "supertest": "^4.0.2"
   },
