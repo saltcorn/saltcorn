@@ -135,6 +135,12 @@ describe("Page", () => {
     expect(vs[1].contents).toContain("Tolstoy");
     await getState().setConfig("staff_home", "foo");
     await Page.update(cs.id, { description: "miaw" });
+    await cs.clone();
+    const cs1 = await Page.findOne({ name: "foo copy" });
+    expect(!!cs1).toBe(true);
+  });
+  it("should delelete", async () => {
+    const cs = await Page.findOne({ name: "foo" });
     await cs.delete();
   });
 });

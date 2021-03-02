@@ -75,7 +75,10 @@ describe("Plugin Endpoints", () => {
         "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D"
       )
       .expect(toRedirect("/plugins"));
-
+    await request(app)
+      .get("/plugins/info/" + p.name)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("This plugin supplies a theme."));
     await request(app)
       .post("/plugins/delete/" + p.name)
       .set("Cookie", loginCookie)
@@ -93,6 +96,10 @@ describe("Plugin Endpoints", () => {
       .get("/plugins")
       .set("Cookie", loginCookie)
       .expect(toInclude("/plugins/delete/markdown"));
+    await request(app)
+      .get("/plugins/info/markdown")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("md_to_html()"));
   });
 });
 describe("Plugin dependency resolution and upgrade", () => {

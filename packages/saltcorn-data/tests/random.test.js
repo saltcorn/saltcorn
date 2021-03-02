@@ -20,7 +20,7 @@ const Table = require("../models/table");
 const tmp = require("tmp-promise");
 const path = require("path");
 
-jest.setTimeout(60000);
+jest.setTimeout(80000);
 
 afterAll(db.close);
 

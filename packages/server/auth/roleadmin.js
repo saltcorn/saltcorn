@@ -199,7 +199,7 @@ router.post(
     await getState().setConfig("layout_by_role", layout_by_role);
     req.flash("success", req.__(`Saved layout for role`));
 
-    res.redirect(`/roleadmin/`);
+    res.redirect(`/roleadmin`);
   })
 );
 const unDeletableRoles = [1, 8, 10];

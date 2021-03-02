@@ -5,12 +5,13 @@ const {
   getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
-  toInclude,
+  toInclude,succeedJsonWith,
   toSucceed,
   toNotInclude,
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const Page = require("@saltcorn/data/models/page");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -80,6 +81,52 @@ describe("page create", () => {
   });
 });
 
+describe("page action", () => {
+  it("should create", async () => {
+    await Page.create({
+      name: "pagewithaction",
+      title: "",
+      description: "",
+      min_role: 10,
+      id: 2,
+      layout: {
+        widths: [6, 6],
+        besides: [
+          { type: "blank", contents: "Hello world", isFormula: {} },
+          {
+            type: "action",
+            rndid: "56f3ac",
+            minRole: 10,
+            isFormula: {},
+            action_icon: "far fa-angry",
+            action_name: "run_js_code",
+            action_label: "GO",
+            configuration: { code: "console.log(1)" },
+          },
+        ],
+      },
+      fixed_states: {},
+    });
+  });
+  it("shows page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/page/pagewithaction")
+      .expect(toInclude('<i class="far fa-angry"></i>'));
+  });
+  it("run action", async () => {
+    const oldConsoleLog = console.error;
+    console.log = jest.fn();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/page/pagewithaction/action/56f3ac")
+      .set('X-Requested-With', 'xmlhttprequest')
+      .expect(succeedJsonWith(r=>r==="ok"));
+      expect(console.log).toHaveBeenCalled();
+      console.log = oldConsoleLog;
+  });
+});
+
 describe("pageedit", () => {
   it("show list", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -132,13 +179,11 @@ describe("pageedit", () => {
     await request(app)
       .post("/pageedit/delete/1")
       .set("Cookie", loginCookie)
-
       .expect(toRedirect("/pageedit"));
 
     await request(app)
       .get("/pageedit")
       .set("Cookie", loginCookie)
-
       .expect(toNotInclude("a_page"));
   });
 });

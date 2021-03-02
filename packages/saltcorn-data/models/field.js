@@ -191,7 +191,7 @@ class Field {
   get pretty_type() {
     if (this.reftable_name === "_sc_files") return "File";
     if (this.is_fkey) return `Key to ${this.reftable_name}`;
-    else return this.type.name;
+    else return this.type ? this.type.name : "?";
   }
 
   get sql_bare_type() {

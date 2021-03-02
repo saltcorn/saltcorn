@@ -82,10 +82,19 @@ class Plugin {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     if (!stored || !stored_at || is_stale(stored_at)) {
-      const from_api = await Plugin.store_plugins_available_from_store();
-      await getState().setConfig("available_plugins", from_api);
-      await getState().setConfig("available_plugins_fetched_at", new Date());
-      return from_api.filter((p) => isRoot || !p.has_auth);
+      try {
+        const from_api = await Plugin.store_plugins_available_from_store();
+        await getState().setConfig("available_plugins", from_api);
+        await getState().setConfig("available_plugins_fetched_at", new Date());
+        return from_api.filter((p) => isRoot || !p.has_auth);
+      } catch (e) {
+        console.error(e);
+        if (stored)
+          return stored
+            .map((p) => new Plugin(p))
+            .filter((p) => isRoot || !p.has_auth);
+        else throw e;
+      }
     } else
       return stored
         .map((p) => new Plugin(p))

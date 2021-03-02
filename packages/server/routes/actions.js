@@ -91,7 +91,8 @@ router.get(
                     key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
                   },
                 ],
-                triggers
+                triggers,
+                { hover: true }
               ),
               link("/actions/trigger/new", req.__("Add trigger"))
             ),

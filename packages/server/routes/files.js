@@ -53,9 +53,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Files") },
-          ],
+          crumbs: [{ text: req.__("Files") }],
         },
         {
           type: "card",
@@ -70,7 +68,7 @@ router.get(
                       r.filename
                     ),
                 },
-                { label: req.__("Size (KiB)"), key: "size_kb" },
+                { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
                 { label: req.__("Media type"), key: (r) => r.mimetype },
                 {
                   label: req.__("Role to access"),
@@ -91,7 +89,8 @@ router.get(
                     post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
                 },
               ],
-              rows
+              rows,
+              { hover: true }
             ),
             form(
               {

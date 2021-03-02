@@ -69,6 +69,7 @@ describe("user settings", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(">staff@foo.com<"));
   });
+
   it("should change password", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
@@ -93,6 +94,19 @@ describe("user settings", () => {
       .send("email=staff@foo.com")
       .send("password=foHRrr46obar")
       .expect(toRedirect("/"));
+  });
+  it("should change language", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/auth/setlanguage")
+      .set("Cookie", loginCookie)
+      .send("locale=it")
+      .expect(toRedirect("/auth/settings"));
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Cambia password"));
   });
 });
 

@@ -232,7 +232,8 @@ router.get(
                 key: (r) => user_dropdown(r, req, can_reset),
               },
             ],
-            users
+            users,
+            { hover: true }
           ),
           link(`/useradmin/new`, req.__("Create user")),
         ],

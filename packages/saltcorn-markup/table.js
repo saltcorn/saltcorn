@@ -16,7 +16,10 @@ const {
 } = require("./tags");
 const { pagination } = require("./helpers");
 const headerCell = (hdr) =>
-  hdr.sortlink ? th(a({ href: hdr.sortlink }, hdr.label)) : th(hdr.label);
+  th(
+    !!hdr.align && { style: "text-align:" + hdr.align },
+    !!hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
+  );
 
 const mkTable = contract(
   is.fun(
@@ -33,6 +36,7 @@ const mkTable = contract(
             })
           ),
           noHeader: is.maybe(is.bool),
+          hover: is.maybe(is.bool),
         })
       ),
     ],
@@ -46,7 +50,8 @@ const mkTable = contract(
           class: [
             "table table-sm",
             opts.class,
-            opts.onRowSelect && "table-hover",
+            (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
+              "table-hover",
           ],
           style: opts.style,
         },
@@ -56,7 +61,10 @@ const mkTable = contract(
             tr(
               mkClickHandler(opts, v),
               hdrs.map((hdr) =>
-                td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
+                td(
+                  !!hdr.align && { style: "text-align:" + hdr.align },
+                  typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+                )
               )
             )
           )

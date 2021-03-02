@@ -10,7 +10,10 @@ class User {
     this.email = o.email;
     this.password = o.password;
     this.language = o.language;
-    this._attributes = o._attributes || {};
+    this._attributes =
+      typeof o._attributes === "string"
+        ? JSON.parse(o._attributes)
+        : o._attributes || {};
     this.api_token = o.api_token;
     this.verification_token = o.verification_token;
     this.verified_on = ["string", "number"].includes(typeof o.verified_on)

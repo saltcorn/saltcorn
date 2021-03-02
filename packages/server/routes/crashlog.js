@@ -27,7 +27,7 @@ router.get(
   error_catcher(async (req, res) => {
     const state = req.query,
       rows_per_page = 20,
-      page_opts = {},
+      page_opts = { hover: true },
       current_page = parseInt(state._page) || 1,
       offset = (parseInt(state._page) - 1) * rows_per_page;
 

@@ -13,6 +13,8 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
+const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
+const { getState } = require("@saltcorn/data/db/state");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -110,6 +112,17 @@ describe("Table Endpoints", () => {
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
   });
+  it("should edit external table role", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+    .post(`/table`)
+    .set("Cookie", loginCookie)
+    .send("min_role_read=8&name=exttab&external=on")
+    .expect(toRedirect(`/table/exttab`));
+
+  })
   it("should download csv ", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -204,6 +217,14 @@ Gordon Kane, 217`;
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/constraints/" + id));
   });
+  it("should show relationship diagram", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/relationship-diagram")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Relationship diagram"));
+  })
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -251,6 +272,16 @@ describe("deletion to table with row ownership", () => {
       .post("/delete/owned/" + row)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/list/owned"));
+    expect(await persons.countRows()).toBe(0);
+    await persons.insertRow({ name: "someother", owner: user.id });
+    await persons.insertRow({ name: "somethung" });
+    const loginCookie1 = await getAdminLoginCookie();
+
+    expect(await persons.countRows()).toBe(2);
+    await request(app)
+      .post("/table/delete-all-rows/owned")
+      .set("Cookie", loginCookie1)
+      .expect(toRedirect("/table/" + persons.id));
     expect(await persons.countRows()).toBe(0);
   });
 });
