@@ -119,6 +119,12 @@ const getApp = async (opts = {}) => {
       loginAttempt();
       async function loginAttempt() {
         const { remember, _csrf, ...userobj } = req.body;
+        if (!is.objVals(is.str).check(userobj))
+          return done(
+            null,
+            false,
+            req.flash("danger", req.__("Incorrect user or password"))
+          );
         const mu = await User.authenticate(userobj);
         if (mu) return done(null, mu.session_object);
         else {
