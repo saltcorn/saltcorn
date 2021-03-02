@@ -346,4 +346,21 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(" is: <pre>2</pre>"));
   });
+  it("should show calculated", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+    await Field.create({
+      table,
+      label: "pagesp1",
+      type: "Integer",
+      calculated: true,
+      expression: "pages+1",
+    });
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/pagesp1/show")
+      .set("Cookie", loginCookie)
+      .expect((r) => +r.body > 1);
+  });
 });
