@@ -217,6 +217,14 @@ Gordon Kane, 217`;
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/constraints/" + id));
   });
+  it("should show relationship diagram", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/relationship-diagram")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Relationship diagram"));
+  })
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
