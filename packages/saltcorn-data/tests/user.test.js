@@ -130,10 +130,9 @@ describe("User", () => {
       email: "tom@yahoo.com",
     });
     expect(typeof u.password).toBe("string");
-    const u1 = await User.findOrCreateByAttribute("googleId", 5, {
-      email: "tom@yahoo.com",
-    });
+    const u1 = await User.findOrCreateByAttribute("googleId", 5);
     expect(u.id).toEqual(u1.id);
+    expect(u1.email).toBe("tom@yahoo.com");
   });
 });
 

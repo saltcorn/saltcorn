@@ -88,12 +88,16 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
       )}`
     : typeof (v || {}).inSelect !== "undefined"
     ? subSelectWhere(is_sqlite, i)(k, v)
-    //: typeof (v || {}).sql !== "undefined"
+    : //: typeof (v || {}).sql !== "undefined"
     //? `${sqlsanitizeAllowDots(k)} ${v.sql}`
-    : typeof (v || {}).json !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)}->>'${sqlsanitizeAllowDots(
-        v.json[0]
-      )}'=${placeHolder(is_sqlite, i())}`
+    typeof (v || {}).json !== "undefined"
+    ? is_sqlite
+      ? `json_extract(${sqlsanitizeAllowDots(k)}, '$.${sqlsanitizeAllowDots(
+          v.json[0]
+        )}')=${placeHolder(is_sqlite, i())}`
+      : `${sqlsanitizeAllowDots(k)}->>'${sqlsanitizeAllowDots(
+          v.json[0]
+        )}'=${placeHolder(is_sqlite, i())}`
     : v === null
     ? `${sqlsanitizeAllowDots(k)} is null`
     : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
