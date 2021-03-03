@@ -12,7 +12,7 @@
   "dependencies": {
     "contractis": "^0.1.0",
     "escape-html": "^1.0.3",
-    "xss": "^1.0.6"
+    "xss": "^1.0.8"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
