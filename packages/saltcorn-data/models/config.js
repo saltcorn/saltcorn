@@ -338,14 +338,18 @@ const get_latest_npm_version = async (pkg) => {
   if (stored[pkg] && !is_stale(stored[pkg].time, 6)) {
     return stored[pkg].version;
   }
-
-  const latest = await latestVersion(pkg);
-  const stored1 = getState().getConfig("latest_npm_version", {});
-  await getState().setConfig("latest_npm_version", {
-    ...stored1,
-    [pkg]: { time: new Date(), version: latest },
-  });
-  return latest;
+  try {
+    const latest = await latestVersion(pkg);
+    const stored1 = getState().getConfig("latest_npm_version", {});
+    await getState().setConfig("latest_npm_version", {
+      ...stored1,
+      [pkg]: { time: new Date(), version: latest },
+    });
+    return latest;
+  } catch (e) {
+    if (stored[pkg]) return stored[pkg].version;
+    else return "";
+  }
 };
 const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
 
