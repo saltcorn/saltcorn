@@ -403,6 +403,13 @@ const date = {
         else return text(moment(d).fromNow());
       },
     },
+    yearsAgo: {
+      isEdit: false,
+      run: (d, req) => {
+        if (!d) return "";
+        return text(moment.duration(new Date() - d).years());
+      },
+    },
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
