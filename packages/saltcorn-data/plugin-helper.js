@@ -198,7 +198,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const fldViewOptions = calcfldViewOptions(fields, false);
+    const {field_view_options} = calcfldViewOptions(fields, false);
 
     const link_view_opts = await get_link_view_opts(table, viewname);
 
@@ -283,7 +283,7 @@ const field_picker_fields = contract(
         type: "String",
         required: false,
         attributes: {
-          calcOptions: ["field_name", fldViewOptions],
+          calcOptions: ["field_name", field_view_options],
         },
         showIf: { type: "Field" },
       },
