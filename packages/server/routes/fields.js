@@ -44,6 +44,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Label"),
         name: "label",
+        sublabel: "Name of the field",
         input_type: "text",
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
@@ -54,6 +55,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Type"),
         name: "type",
+        sublabel: "The type determines the kind of data that can be held in the field",
         input_type: "select",
         options: isPrimary
           ? primaryTypes

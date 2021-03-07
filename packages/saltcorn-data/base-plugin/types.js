@@ -58,8 +58,18 @@ const string = {
       required: false,
       sublabel: "Error message when regular expression does not match",
     },
-    { name: "max_length", type: "Integer", required: false },
-    { name: "min_length", type: "Integer", required: false },
+    {
+      name: "max_length",
+      type: "Integer",
+      required: false,
+      sublabel: "The maximum number of characters in the string",
+    },
+    {
+      name: "min_length",
+      type: "Integer",
+      required: false,
+      sublabel: "The minimum number of characters in the string",
+    },
     {
       name: "options",
       type: "String",
