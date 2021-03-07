@@ -53,13 +53,14 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
           div(
             { class: "form-check" },
             inner,
+            
             label(
               {
                 for: `input${text_attr(hdr.form_name)}`,
                 class: "form-check-label",
-              },
+              }, 
               text(hdr.label)
-            ),
+            ),hdr.sublabel && " &mdash; "+i(text(hdr.sublabel)),
             text(error)
           )
         )
@@ -77,10 +78,9 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
             inner,
             text(error),
-            hdr.sublabel &&i(text(hdr.sublabel))
+            hdr.sublabel && i(text(hdr.sublabel))
           ),
-        ],
-
+        ]
   );
 
 const innerField = (v, errors, nameAdd = "") => (hdr) => {

@@ -44,6 +44,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Label"),
         name: "label",
+        sublabel: "Name of the field",
         input_type: "text",
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
@@ -54,6 +55,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Type"),
         name: "type",
+        sublabel: "The type determines the kind of data that can be stored in the field",
         input_type: "select",
         options: isPrimary
           ? primaryTypes
@@ -66,6 +68,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Calculated"),
         name: "calculated",
+        sublabel: "Calculated from other fields with a formula", 
         type: "Bool",
         disabled: !!id,
       }),
@@ -73,12 +76,14 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         label: req.__("Required"),
         name: "required",
         type: "Bool",
+        sublabel: "There must be a value in every row", 
         disabled: !!id && db.isSQLite,
         showIf: { calculated: false },
       }),
       new Field({
         label: req.__("Unique"),
         name: "is_unique",
+        sublabel: "Different rows must have different values for this field", 
         showIf: { calculated: false },
         type: "Bool",
       }),

@@ -79,6 +79,8 @@ const tableForm = async (table, req) => {
         : []),
       {
         label: req.__("Minimum role to read"),
+        sublabel:
+          "User must have this role or higher to read rows from the table",
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
@@ -90,6 +92,8 @@ const tableForm = async (table, req) => {
               label: req.__("Minimum role to write"),
               name: "min_role_write",
               input_type: "select",
+              sublabel:
+                "User must have this role or higher to edit or create new rows in the table",
               options: roleOptions,
             },
             {
