@@ -206,7 +206,25 @@ const getState = contract(is.fun([], is.class("State")), () => {
 
 var tenants = {};
 
+const otherdomaintenants = {};
+
+const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
+
 const getTenant = (ten) => tenants[ten];
+
+const get_domain = (url) => {
+  const noproto = url.replace("https://", "").replace("http://", "");
+  return noproto.split("/")[0].split(":")[0];
+};
+
+const set_tenant_base_url = (tenant_subdomain, value) => {
+  const root_domain = get_domain(singleton.configs.base_url.value);
+  if (value) {
+    const cfg_domain = get_domain(value);
+    if (!cfg_domain.includes("." + root_domain))
+      otherdomaintenants[cfg_domain] = tenant_subdomain;
+  }
+};
 
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
@@ -216,6 +234,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
+      set_tenant_base_url(domain, tenants[domain].configs.base_url.value);
     } catch (err) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
@@ -225,8 +244,8 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   }
 };
 
-const create_tenant = async (t, plugin_loader) => {
-  await createTenant(t);
+const create_tenant = async (t, plugin_loader, newurl) => {
+  await createTenant(t, newurl);
   tenants[t] = new State();
   await db.runWithTenant(t, plugin_loader);
 };
@@ -243,4 +262,6 @@ module.exports = {
   init_multi_tenant,
   create_tenant,
   restart_tenant,
+  get_other_domain_tenant,
+  set_tenant_base_url
 };

@@ -22,6 +22,14 @@ const configTypes = {
     type: "String",
     label: "Base URL",
     default: "",
+    onChange(val) {
+      const tenant = db.getTenantSchema();
+      const isRoot = tenant === db.connectObj.default_schema;
+      if (!isRoot && val) {
+        const { set_tenant_base_url } = require("../db/state");
+        set_tenant_base_url(tenant, val);
+      }
+    },
     blurb:
       "The URL at which your site is available. For instance, https://example.com/",
   },

@@ -132,8 +132,8 @@ router.post(
           renderForm(form, req.csrfToken())
         );
       } else {
-        await create_tenant(subdomain, loadAllPlugins);
         const newurl = getNewURL(req, subdomain);
+        await create_tenant(subdomain, loadAllPlugins, newurl);
         res.sendWrap(
           req.__("Create application"),
           div(
