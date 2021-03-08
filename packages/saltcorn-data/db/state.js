@@ -225,8 +225,8 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   }
 };
 
-const create_tenant = async (t, plugin_loader) => {
-  await createTenant(t);
+const create_tenant = async (t, plugin_loader, newurl) => {
+  await createTenant(t, newurl);
   tenants[t] = new State();
   await db.runWithTenant(t, plugin_loader);
 };

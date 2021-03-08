@@ -2,8 +2,7 @@ const db = require("../db");
 const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
 const { sqlsanitize } = require("../db/internal");
-const User = require("./user");
-
+const { setConfig } = require("./config");
 const getAllTenants = contract(
   is.fun([], is.promise(is.array(is.str))),
   async () => {
@@ -13,8 +12,8 @@ const getAllTenants = contract(
 );
 
 const createTenant = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (subdomain) => {
+  is.fun([is.str, is.maybe(is.str)], is.promise(is.undefined)),
+  async (subdomain, newurl) => {
     const saneDomain = domain_sanitize(subdomain);
     const id = await db.insert(
       "_sc_tenants",
@@ -29,6 +28,7 @@ const createTenant = contract(
     await db.runWithTenant(saneDomain, async () => {
       //reset schema
       await reset(true, saneDomain);
+      if (newurl) await setConfig("base_url", newurl);
     });
   }
 );

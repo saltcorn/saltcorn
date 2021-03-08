@@ -11,6 +11,9 @@ const {
   deleteTenant,
   getAllTenants,
 } = require("../models/tenant");
+const {
+  getConfig,
+} = require("../models/config");
 
 afterAll(db.close);
 
@@ -22,10 +25,14 @@ describe("Tenant", () => {
   if (!db.isSQLite) {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
-      await create_tenant("test10", () => {});
-      db.runWithTenant("test10", () => {
+      getState().setConfig("base_url", "http://example.com/")
+      await create_tenant("test10", () => {}, "http://test10.example.com/");
+      db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
         expect(ten).toBe("test10");
+        const base =  await getConfig("base_url")
+        expect(base).toBe("http://test10.example.com/");
+
       });
       const tens = await getAllTenants();
       expect(tens).toContain("test10");
