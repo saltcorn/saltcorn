@@ -217,20 +217,24 @@ const get_domain = (url) => {
   return noproto.split("/")[0].split(":")[0];
 };
 
+const set_tenant_base_url = (tenant_subdomain, value) => {
+  const root_domain = get_domain(singleton.configs.base_url.value);
+  if (value) {
+    const cfg_domain = get_domain(value);
+    if (!cfg_domain.includes("." + root_domain))
+      otherdomaintenants[cfg_domain] = tenant_subdomain;
+  }
+};
+
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
-  const root_domain = get_domain(singleton.configs.base_url.value);
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State();
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
-      if (tenants[domain].configs.base_url.value) {
-        const cfg_domain = get_domain(tenants[domain].configs.base_url.value);
-        if (!cfg_domain.includes('.'+root_domain))
-          otherdomaintenants[cfg_domain] = domain;
-      }
+      set_tenant_base_url(domain, tenants[domain].configs.base_url.value);
     } catch (err) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
@@ -259,4 +263,5 @@ module.exports = {
   create_tenant,
   restart_tenant,
   get_other_domain_tenant,
+  set_tenant_base_url
 };
