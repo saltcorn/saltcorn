@@ -1,10 +1,6 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
-const {
-  getState,
-  getTenant,
-  get_other_domain_tenant,
-} = require("@saltcorn/data/db/state");
+const { getState, getTenant, get_other_domain_tenant } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
 const { input } = require("@saltcorn/markup/tags");
 
@@ -38,8 +34,8 @@ const setLanguage = (req) => {
 
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
-    const other_domain = get_other_domain_tenant(req.hostname);
-    if (other_domain) {
+    const other_domain = get_other_domain_tenant(req.hostname)
+    if(other_domain) {
       const state = getTenant(other_domain);
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
@@ -48,7 +44,8 @@ const setTenant = (req, res, next) => {
           next();
         });
       }
-    } else if (req.subdomains.length === 0 || req.subdomains[0] === "www")
+    } else 
+    if (req.subdomains.length === 0 || req.subdomains[0] === "www")
       db.runWithTenant(db.connectObj.default_schema, () => {
         setLanguage(req);
         next();
@@ -65,7 +62,6 @@ const setTenant = (req, res, next) => {
       }
     }
   } else {
-    console.log("not multi");
     setLanguage(req);
     next();
   }

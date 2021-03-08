@@ -212,14 +212,25 @@ const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
 
 const getTenant = (ten) => tenants[ten];
 
+const get_domain = (url) => {
+  const noproto = url.replace("https://", "").replace("http://", "");
+  return noproto.split("/")[0].split(":")[0];
+};
+
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
+  const root_domain = get_domain(singleton.configs.base_url.value);
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State();
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain));
       await db.runWithTenant(domain, plugin_loader);
+      if (tenants[domain].configs.base_url.value) {
+        const cfg_domain = get_domain(tenants[domain].configs.base_url.value);
+        if (!cfg_domain.includes('.'+root_domain))
+          otherdomaintenants[cfg_domain] = domain;
+      }
     } catch (err) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
@@ -227,6 +238,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
       );
     }
   }
+  console.log({otherdomaintenants, root_domain});
 };
 
 const create_tenant = async (t, plugin_loader, newurl) => {
