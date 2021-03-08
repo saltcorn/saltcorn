@@ -206,6 +206,10 @@ const getState = contract(is.fun([], is.class("State")), () => {
 
 var tenants = {};
 
+const otherdomaintenants = {};
+
+const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
+
 const getTenant = (ten) => tenants[ten];
 
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
@@ -243,4 +247,5 @@ module.exports = {
   init_multi_tenant,
   create_tenant,
   restart_tenant,
+  get_other_domain_tenant,
 };
