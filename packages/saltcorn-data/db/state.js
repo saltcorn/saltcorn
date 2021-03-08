@@ -238,7 +238,6 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
       );
     }
   }
-  console.log({otherdomaintenants, root_domain});
 };
 
 const create_tenant = async (t, plugin_loader, newurl) => {
