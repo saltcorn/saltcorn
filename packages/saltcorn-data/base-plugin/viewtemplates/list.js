@@ -38,11 +38,12 @@ const create_db_view = async (context) => {
     aggregations,
   });
   const schema = db.getTenantSchemaPrefix();
-
+  // is there already a table with this name ? if yes add _sqlview
+  const extable = await Table.findOne({ name: context.viewname });
   await db.query(
-    `create or replace view ${schema}"${db.sqlsanitize(
-      context.viewname
-    )}" as ${sql};`
+    `create or replace view ${schema}"${db.sqlsanitize(context.viewname)}${
+      extable ? "_sqlview" : ""
+    }" as ${sql};`
   );
 };
 
