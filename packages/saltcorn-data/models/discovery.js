@@ -22,6 +22,17 @@ const discoverable_tables = async (schema0) => {
   return discoverable;
 };
 
+const get_existing_views = async (schema0) => {
+  const schema = schema0 || db.getTenantSchema();
+  const {
+    rows,
+  } = await db.query(
+    "select * from information_schema.views where table_schema=$1",
+    [schema]
+  );
+  return rows;
+};
+
 const findType = (sql_name) => {
   const fixed = { integer: "Integer" }[sql_name];
   if (fixed) return fixed;
@@ -123,4 +134,9 @@ const implement_discovery = async (pack) => {
     }
   }
 };
-module.exports = { discoverable_tables, discover_tables, implement_discovery };
+module.exports = {
+  discoverable_tables,
+  discover_tables,
+  implement_discovery,
+  get_existing_views,
+};

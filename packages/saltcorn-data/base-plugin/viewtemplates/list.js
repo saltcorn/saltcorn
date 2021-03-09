@@ -23,6 +23,7 @@ const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const { get_async_expression_function } = require("../../models/expression");
 const db = require("../../db");
+const { get_existing_views } = require("../../models/discovery");
 
 const create_db_view = async (context) => {
   const table = await Table.findOne({ id: context.table_id });
@@ -38,20 +39,24 @@ const create_db_view = async (context) => {
     aggregations,
   });
   const schema = db.getTenantSchemaPrefix();
-
+  // is there already a table with this name ? if yes add _sqlview
+  const extable = await Table.findOne({ name: context.viewname });
   await db.query(
-    `create or replace view ${schema}"${db.sqlsanitize(
-      context.viewname
-    )}" as ${sql};`
+    `create or replace view ${schema}"${db.sqlsanitize(context.viewname)}${
+      extable ? "_sqlview" : ""
+    }" as ${sql};`
   );
 };
 
 const on_delete = async (table_id, viewname, { default_state }) => {
-  if (default_state && default_state._create_db_view) {
+  if (!db.isSQLite) {
+    const sqlviews = (await get_existing_views()).map((v) => v.table_name);
+    const vnm = db.sqlsanitize(viewname);
     const schema = db.getTenantSchemaPrefix();
-    await db.query(
-      `drop view if exists ${schema}"${db.sqlsanitize(viewname)}";`
-    );
+    if (sqlviews.includes(vnm))
+      await db.query(`drop view if exists ${schema}"${vnm}";`);
+    if (sqlviews.includes(vnm + "_sqlview"))
+      await db.query(`drop view if exists ${schema}"${vnm + "_sqlview"}";`);
   }
 };
 
