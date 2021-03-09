@@ -399,6 +399,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    if(!plugin) {
+      req.flash("warning", "Plugin not found");
+      res.redirect("/plugins");
+      return;
+    }
     const module = getState().plugins[plugin.name];
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
