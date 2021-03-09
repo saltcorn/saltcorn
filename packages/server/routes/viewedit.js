@@ -432,6 +432,11 @@ router.get(
     const { name } = req.params;
 
     const view = await View.findOne({ name });
+    if (!view) {
+      req.flash("error", `View not found: ${text(name)}`);
+      res.redirect("/viewedit");
+      return;
+    }
     const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(
       {
