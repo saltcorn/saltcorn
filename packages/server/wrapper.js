@@ -19,6 +19,7 @@ const get_extra_menu = (role) => {
       .map((item) => ({
         label: item.label,
         icon: item.icon,
+        style: item.style || "",
         link:
           item.type === "Link"
             ? item.url
