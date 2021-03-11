@@ -38,6 +38,7 @@ class State {
     this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
+    this.plugin_locations = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};
@@ -87,9 +88,10 @@ class State {
     delete this.configs[key];
   }
 
-  registerPlugin(name, plugin, cfg) {
+  registerPlugin(name, plugin, cfg, location) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
+    this.plugin_locations[name] = location;
 
     const withCfg = (key, def) =>
       plugin.configuration_workflow

@@ -36,7 +36,8 @@ const loadPlugin = async (plugin, force) => {
   getState().registerPlugin(
     plugin.name,
     res.plugin_module,
-    plugin.configuration
+    plugin.configuration,
+    res.location
   );
   return res;
 };
@@ -90,16 +91,19 @@ const loadAllPlugins = async () => {
 };
 
 const loadAndSaveNewPlugin = async (plugin, force) => {
-  const { version, plugin_module } = await requirePlugin(plugin, force);
-  for (const location of plugin_module.dependencies || []) {
-    const existing = await Plugin.findOne({ location });
-    if (!existing && location !== plugin.location) {
+  const { version, plugin_module, location } = await requirePlugin(
+    plugin,
+    force
+  );
+  for (const loc of plugin_module.dependencies || []) {
+    const existing = await Plugin.findOne({ location: loc });
+    if (!existing && loc !== plugin.location) {
       await loadAndSaveNewPlugin(
-        new Plugin({ name: location, location, source: "npm" })
+        new Plugin({ name: loc, location: loc, source: "npm" })
       );
     }
   }
-  getState().registerPlugin(plugin.name, plugin_module);
+  getState().registerPlugin(plugin.name, plugin_module, undefined, location);
   if (version) plugin.version = version;
   await plugin.upsert();
 };
