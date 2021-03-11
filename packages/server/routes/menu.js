@@ -92,6 +92,28 @@ const menuForm = async (req) => {
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
       },
+      {
+        name: "style",
+        label: req.__("Style"),
+        sublabel: req.__("Not all themes support menu buttons"),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            { name: "", label: "Link" },
+            { name: "btn btn-primary", label: "Primary button" },
+            { name: "btn btn-secondary", label: "Secondary button" },
+            { name: "btn btn-success", label: "Success button" },
+            { name: "btn btn-danger", label: "Danger button" },
+            { name: "btn btn-outline-primary", label: "Primary outline button" },
+            {
+              name: "btn btn-outline-secondary",
+              label: "Secondary outline button",
+            },
+          ],
+        },
+      },
     ],
   });
 };

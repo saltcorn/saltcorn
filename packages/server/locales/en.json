@@ -630,5 +630,7 @@
 	"Omit header": "Omit header",
 	"Do not display the header": "Do not display the header",
 	"The maximum number of characters in the string": "The maximum number of characters in the string",
-	"The minimum number of characters in the string": "The minimum number of characters in the string"
+	"The minimum number of characters in the string": "The minimum number of characters in the string",
+	"Style": "Style",
+	"Not all themes support menu buttons": "Not all themes support menu buttons"
 }

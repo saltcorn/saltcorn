@@ -163,6 +163,17 @@ module.exports = {
       return await joinTable.insertRow(newRow);
     },
   },
+  duplicate_row: {
+    configFields: () => [],
+    requireRow: true,
+    run: async ({ row, table, user }) => {
+      const newRow = { ...row };
+      await table.getFields();
+      delete newRow[table.pk_name];
+      await table.insertRow(newRow);
+      return { reload_page: true };
+    },
+  },
   insert_any_row: {
     configFields: async ({ table }) => {
       const tables = await Table.find();

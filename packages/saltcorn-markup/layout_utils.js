@@ -55,7 +55,7 @@ const navSubitems = ({ label, subitems, icon }) =>
       },
       subitems.map((si) =>
         a(
-          { class: "dropdown-item", href: si.link },
+          { class: ["dropdown-item", si.style || ""], href: si.link },
           si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
           si.label
         )
@@ -75,7 +75,10 @@ const rightNavBar = (currentUrl, sections) =>
           ? li(
               { class: ["nav-item", active(currentUrl, s) && "active"] },
               a(
-                { class: "nav-link js-scroll-trigger", href: text(s.link) },
+                {
+                  class: ["nav-link js-scroll-trigger", s.style || ""],
+                  href: text(s.link),
+                },
                 s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
               )
@@ -243,5 +246,5 @@ module.exports = {
   breadcrumbs,
   headersInHead,
   headersInBody,
-  cardHeaderTabs
+  cardHeaderTabs,
 };

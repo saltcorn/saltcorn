@@ -215,6 +215,13 @@ describe("menu editor", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("BarMenu"));
   });
+  it("get sitemap", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/sitemap.xml")
+      .expect(toInclude("view/dqwdw"))
+      .expect(toInclude("<urlset"));
+  })
 });
 
 describe("roleadmin", () => {

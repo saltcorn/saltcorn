@@ -206,14 +206,33 @@ Sitemap: ${base}sitemap.xml
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/xml");
+      //everything in menu with public access, link to here
+      const cfg = getState().getConfig("menu_items", []);
+      const urls = [base];
+      const loop_menu = (items) => {
+        for (const item of items)
+          if (+item.min_role === 10 || item.subitems) {
+            if (item.type === "Page")
+              urls.push(`${base}page/${encodeURIComponent(item.pagename)}`);
+            if (item.type === "View")
+              urls.push(`${base}view/${encodeURIComponent(item.viewname)}`);
+            if (item.subitems) loop_menu(item.subitems);
+          }
+      };
+      loop_menu(cfg);
+      const now = new Date().toISOString();
       res.send(`<?xml version="1.0" encoding="UTF-8"?>
     <urlset
           xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-      <loc>${base}</loc>
-      <lastmod>${new Date().toISOString()}</lastmod>
-      <priority>1.00</priority>
-    </url>
+    ${urls
+      .map(
+        (url) => `<url>
+      <loc>${url}</loc>
+      <lastmod>${now}</lastmod>      
+    </url>`
+      )
+      .join("")}
+    
     </urlset>`);
     })
   );
