@@ -473,7 +473,24 @@ router.get(
     });
   })
 );
+router.get(
+  "/public/:plugin/:file",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { plugin, file } = req.params;
 
+    const location = getState().plugin_locations[plugin];
+    if (location) {
+      var safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
+      const fullpath = path.join(location, "public", safeFile);
+      if (fs.existsSync(fullpath)) res.sendFile(fullpath);
+      else res.status(404).send(req.__("Not found"));
+    } else {
+      res.status(404).send(req.__("Not found"));
+    }
+  })
+
+)
 router.get(
   "/info/:name",
   setTenant,
