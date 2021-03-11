@@ -288,6 +288,8 @@ function view_post(viewname, route, data, onDone) {
     if (onDone) onDone(res);
     if (res.notify) notifyAlert(res.notify);
     if (res.error) notifyAlert({ type: "danger", text: res.error });
+    if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
+    if (res.goto) window.location.href = res.goto;
   });
 }
 var logged_errors = [];
