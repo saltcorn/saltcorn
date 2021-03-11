@@ -650,6 +650,7 @@ const stateFieldsToQuery = contract(
     const stateKeys = Object.keys(state);
     if (state._sortby) {
       const field = fields.find((f) => f.name === state._sortby);
+      //this is ok because it has to match fieldname
       if (field) q.orderBy = state._sortby;
       if (state._sortdesc) q.orderDesc = true;
     }
