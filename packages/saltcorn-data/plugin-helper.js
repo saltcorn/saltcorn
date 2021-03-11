@@ -650,7 +650,7 @@ const stateFieldsToQuery = contract(
     const stateKeys = Object.keys(state);
     if (state._sortby) {
       const field = fields.find((f) => f.name === state._sortby);
-      if (field) q.orderBy = db.sqlsanitize(state._sortby);
+      if (field) q.orderBy = state._sortby;
       if (state._sortdesc) q.orderDesc = true;
     }
     if (state._pagesize) q.limit = parseInt(state._pagesize);
