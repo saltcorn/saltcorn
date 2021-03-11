@@ -36,7 +36,8 @@ const loadPlugin = async (plugin, force) => {
   getState().registerPlugin(
     plugin.name,
     res.plugin_module,
-    plugin.configuration
+    plugin.configuration,
+    res.location
   );
   return res;
 };
@@ -56,12 +57,20 @@ const requirePlugin = async (plugin, force) => {
       return { plugin_module: manager.require(plugin.location), ...plinfo };
     }
   } else if (plugin.source === "local") {
-    await manager.installFromPath(plugin.location, { force: true });
-    return { plugin_module: manager.require(plugin.name) };
+    const plinfo = await manager.installFromPath(plugin.location, {
+      force: true,
+    });
+    return { plugin_module: manager.require(plugin.name), ...plinfo };
   } else if (plugin.source === "github") {
-    if (force || !installed_plugins.includes(plugin.location))
-      await manager.installFromGithub(plugin.location, { force: true });
-    return { plugin_module: manager.require(plugin.name) };
+    if (force || !installed_plugins.includes(plugin.location)) {
+      const plinfo = await manager.installFromGithub(plugin.location, {
+        force: true,
+      });
+      return { plugin_module: manager.require(plugin.name), ...plinfo };
+    } else {
+      const plinfo = manager.getInfo(plugin.location);
+      return { plugin_module: manager.require(plugin.location), ...plinfo };
+    }
   }
 };
 
@@ -82,16 +91,19 @@ const loadAllPlugins = async () => {
 };
 
 const loadAndSaveNewPlugin = async (plugin, force) => {
-  const { version, plugin_module } = await requirePlugin(plugin, force);
-  for (const location of plugin_module.dependencies || []) {
-    const existing = await Plugin.findOne({ location });
-    if (!existing && location !== plugin.location) {
+  const { version, plugin_module, location } = await requirePlugin(
+    plugin,
+    force
+  );
+  for (const loc of plugin_module.dependencies || []) {
+    const existing = await Plugin.findOne({ location: loc });
+    if (!existing && loc !== plugin.location) {
       await loadAndSaveNewPlugin(
-        new Plugin({ name: location, location, source: "npm" })
+        new Plugin({ name: loc, location: loc, source: "npm" })
       );
     }
   }
-  getState().registerPlugin(plugin.name, plugin_module);
+  getState().registerPlugin(plugin.name, plugin_module, undefined, location);
   if (version) plugin.version = version;
   await plugin.upsert();
 };

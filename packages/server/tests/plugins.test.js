@@ -80,6 +80,10 @@ describe("Plugin Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("This plugin supplies a theme."));
     await request(app)
+      .get("/plugins/public/any-bootstrap-theme/test.txt")
+      .expect(toInclude("testfilecontents"));
+
+    await request(app)
       .post("/plugins/delete/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
