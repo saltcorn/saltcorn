@@ -120,8 +120,7 @@ const getApp = async (opts = {}) => {
     error_catcher(async (req, res) => {
       const { plugin, file } = req.params;
 
-      const state = getState();
-      const location = state.plugin_locations[plugin];
+      const location = getState().plugin_locations[plugin];
       if (location) {
         var safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
         const fullpath = path.join(location, "public", safeFile);
