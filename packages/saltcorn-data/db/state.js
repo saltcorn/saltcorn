@@ -91,7 +91,7 @@ class State {
   registerPlugin(name, plugin, cfg, location) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
-    this.plugin_locations[name] = location;
+    this.plugin_locations[plugin.plugin_name || name] = location;
 
     const withCfg = (key, def) =>
       plugin.configuration_workflow
@@ -265,5 +265,5 @@ module.exports = {
   create_tenant,
   restart_tenant,
   get_other_domain_tenant,
-  set_tenant_base_url
+  set_tenant_base_url,
 };
