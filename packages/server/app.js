@@ -27,6 +27,7 @@ const csrf = require("csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
+const fs = require("fs");
 
 const locales = Object.keys(available_languages);
 
@@ -111,6 +112,25 @@ const getApp = async (opts = {}) => {
         maxAge: development_mode ? 0 : 1000 * 60 * 30,
       }
     )
+  );
+
+  app.get(
+    "/plugin-static/:plugin/:file",
+    setTenant,
+    error_catcher(async (req, res) => {
+      const { plugin, file } = req.params;
+
+      const state = getState();
+      const location = state.plugin_locations[plugin];
+      if (location) {
+        var safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
+        const fullpath = path.join(location, "public", safeFile);
+        if (fs.existsSync(fullpath)) res.sendFile(fullpath);
+        else res.status(404).send(req.__("Not found"));
+      } else {
+        res.status(404).send(req.__("Not found"));
+      }
+    })
   );
 
   passport.use(
