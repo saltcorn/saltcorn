@@ -37,7 +37,23 @@ const i18n = new I18n({
 
 const getApp = async (opts = {}) => {
   const app = express();
-  const sql_log = await getConfig("log_sql");
+  let sql_log;
+  try {
+    sql_log = await getConfig("log_sql");
+  } catch (e) {
+    const msg = e.message;
+    if (msg && msg.includes("_sc_config"))
+      console.error(
+        "Database is reachable but not initialised. Please run 'saltcorn reset-schema'"
+      );
+    else {
+      console.error("Database is not reachable. The error was: ", msg);
+      console.error("Connection parameters tried: ");
+      console.error(db.connectObj);
+    }
+    process.exit(1);
+  }
+
   if (sql_log) db.set_sql_logging(); // dont override cli flag
   if (!opts.disableMigrate) await migrate();
 
