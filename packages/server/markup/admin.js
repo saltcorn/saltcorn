@@ -108,7 +108,7 @@ const send_settings_page = ({
       {
         type: "breadcrumbs",
         crumbs: [
-          { text: req.__("Settings") },
+          { text: req.__("Settings"), href: "/settings" },
           { text: req.__(main_section), href: main_section_href },
           {
             text: req.__(active_sub),

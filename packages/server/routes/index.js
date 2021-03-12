@@ -12,6 +12,7 @@ const actions = require("./actions");
 const infoarch = require("./infoarch");
 const events = require("./events");
 const tenant = require("./tenant");
+const settings = require("./settings");
 const api = require("./api");
 const plugins = require("./plugins");
 const packs = require("./packs");
@@ -38,6 +39,7 @@ module.exports = (app) => {
   app.use("/crashlog", crashlog);
   app.use("/events", events);
   app.use("/page", page);
+  app.use("/settings", settings);
   app.use("/pageedit", pageedit);
   app.use("/actions", actions);
   app.use("/site-structure", infoarch);

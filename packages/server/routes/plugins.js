@@ -357,7 +357,7 @@ const plugin_store_html = (items, req) => {
       {
         type: "breadcrumbs",
         crumbs: [
-          { text: req.__("Settings") },
+          { text: req.__("Settings"), href: "/settings" },
           { text: req.__("Plugin and pack store") },
         ],
       },
@@ -399,7 +399,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
-    if(!plugin) {
+    if (!plugin) {
       req.flash("warning", "Plugin not found");
       res.redirect("/plugins");
       return;
@@ -459,7 +459,7 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: req.__("Settings") },
+            { text: req.__("Settings"),href: "/settings" },
             { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: req.__("New") },
           ],
@@ -489,8 +489,7 @@ router.get(
       res.status(404).send(req.__("Not found"));
     }
   })
-
-)
+);
 router.get(
   "/info/:name",
   setTenant,
@@ -578,7 +577,7 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: req.__("Settings") },
+            { text: req.__("Settings"), href: "/settings" },
             { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: plugin_db.name },
           ],
