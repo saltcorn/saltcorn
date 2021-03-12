@@ -44,7 +44,7 @@ const getApp = async (opts = {}) => {
     const msg = e.message;
     if (msg && msg.includes("_sc_config"))
       console.error(
-        "Database is reachable but not initialised. Please run 'saltcorn reset-schema'"
+        "Database is reachable but not initialised. Please run 'saltcorn reset-schema' or 'saltcorn add-schema'"
       );
     else {
       console.error("Database is not reachable. The error was: ", msg);
