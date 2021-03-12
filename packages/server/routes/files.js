@@ -229,7 +229,6 @@ router.post(
               : `/files/serve/${f.id}`,
           },
         };
-      if (f.filename === "favicon.png") await getState().refresh();
     }
     if (!req.xhr) res.redirect("/files");
     else res.json(jsonResp);
@@ -247,7 +246,6 @@ router.post(
     if (result && result.error) {
       req.flash("error", result.error);
     } else {
-      if (f.filename === "favicon.png") await getState().refresh();
       req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files`);

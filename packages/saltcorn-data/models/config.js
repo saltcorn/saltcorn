@@ -16,7 +16,16 @@ const configTypes = {
     attributes: {
       select_file_where: { min_role_read: 10, mime_super: "image" },
     },
-    blurb: "Select a publicly accessible image file",
+    blurb: "Select a publicly accessible image file for the menu logo",
+  },
+  favicon_id: {
+    type: "File",
+    label: "Favicon",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 10, mime_super: "image" },
+    },
+    blurb: "Select a publicly accessible image file for the browser tab icon",
   },
   base_url: {
     type: "String",

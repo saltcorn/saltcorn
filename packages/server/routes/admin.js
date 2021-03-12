@@ -53,6 +53,7 @@ const site_id_form = (req) =>
     field_names: [
       "site_name",
       "site_logo_id",
+      "favicon_id",
       "base_url",
       "page_custom_css",
       "page_custom_html",

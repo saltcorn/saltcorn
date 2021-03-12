@@ -632,5 +632,8 @@
 	"The maximum number of characters in the string": "The maximum number of characters in the string",
 	"The minimum number of characters in the string": "The minimum number of characters in the string",
 	"Style": "Style",
-	"Not all themes support menu buttons": "Not all themes support menu buttons"
+	"Not all themes support menu buttons": "Not all themes support menu buttons",
+	"Select a publicly accessible image file for the menu logo": "Select a publicly accessible image file for the menu logo",
+	"Favicon": "Favicon",
+	"Select a publicly accessible image file for the browser tab icon": "Select a publicly accessible image file for the browser tab icon"
 }
