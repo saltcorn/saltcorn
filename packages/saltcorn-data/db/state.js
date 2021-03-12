@@ -35,7 +35,6 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
-    this.favicon = null;
     this.plugins = {};
     this.plugin_cfgs = {};
     this.plugin_locations = {};
@@ -59,10 +58,7 @@ class State {
   }
   async refresh() {
     this.views = await View.find();
-    this.configs = await getAllConfigOrDefaults();
-    const favicons = await File.find({ filename: "favicon.png" });
-    if (favicons && favicons.length > 0) this.favicon = favicons[0];
-    else this.favicon = null;
+    this.configs = await getAllConfigOrDefaults();    
   }
 
   getConfig(key, def) {
@@ -168,7 +164,6 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
-    this.favicon = null;
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = {};

@@ -262,32 +262,37 @@ const getRootPageForm = (pages, roles, req) => {
   }
   return form;
 };
-router.get("/", setTenant, isAdmin, async (req, res) => {
-  const pages = await Page.find({}, { orderBy: "name" });
-  const roles = await User.get_roles();
+router.get(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const pages = await Page.find({}, { orderBy: "name" });
+    const roles = await User.get_roles();
 
-  res.sendWrap(req.__("Pages"), {
-    above: [
-      {
-        type: "breadcrumbs",
-        crumbs: [{ text: req.__("Pages") }],
-      },
-      {
-        type: "card",
-        title: req.__("Your pages"),
-        contents: getPageList(pages, roles, req),
-      },
-      {
-        type: "card",
-        title: req.__("Root pages"),
-        contents: renderForm(
-          getRootPageForm(pages, roles, req),
-          req.csrfToken()
-        ),
-      },
-    ],
-  });
-});
+    res.sendWrap(req.__("Pages"), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: req.__("Pages") }],
+        },
+        {
+          type: "card",
+          title: req.__("Your pages"),
+          contents: getPageList(pages, roles, req),
+        },
+        {
+          type: "card",
+          title: req.__("Root pages"),
+          contents: renderForm(
+            getRootPageForm(pages, roles, req),
+            req.csrfToken()
+          ),
+        },
+      ],
+    });
+  })
+);
 
 const respondWorkflow = (page, wf, wfres, req, res) => {
   const wrap = (contents, noCard) => ({

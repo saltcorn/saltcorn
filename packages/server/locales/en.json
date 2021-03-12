@@ -632,5 +632,13 @@
 	"The maximum number of characters in the string": "The maximum number of characters in the string",
 	"The minimum number of characters in the string": "The minimum number of characters in the string",
 	"Style": "Style",
-	"Not all themes support menu buttons": "Not all themes support menu buttons"
+	"Not all themes support menu buttons": "Not all themes support menu buttons",
+	"Select a publicly accessible image file for the menu logo": "Select a publicly accessible image file for the menu logo",
+	"Favicon": "Favicon",
+	"Select a publicly accessible image file for the browser tab icon": "Select a publicly accessible image file for the browser tab icon",
+	"Site identity settings, backup, email settings, system control and information": "Site identity settings, backup, email settings, system control and information",
+	"Plugin and pack installation and control": "Plugin and pack installation and control",
+	"User administration, edit roles, user and security settings, SSL certificates for https encryption": "User administration, edit roles, user and security settings, SSL certificates for https encryption",
+	"Menu, search and tenants": "Menu, search and tenants",
+	"Actions, triggers and crash log": "Actions, triggers and crash log"
 }

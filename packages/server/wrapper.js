@@ -131,12 +131,12 @@ const get_menu = (req) => {
 
 const get_headers = (req, description, extras = []) => {
   const state = getState();
-  const favicon = state.favicon;
+  const favicon = state.getConfig("favicon_id", null);
 
   const iconHeader = favicon
     ? [
         {
-          headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon.id}">`,
+          headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon}">`,
         },
       ]
     : [];
