@@ -378,14 +378,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               {
                 class:
                   segment.widths === false
-                    ? "col" + segment.breakpoint
-                      ? "-" + segment.breakpoint
-                      : ""
+                    ? ""
                     : `col-${
-                  segment.breakpoint ? segment.breakpoint + "-" : ""
-                }${segment.widths ? segment.widths[ixb] : defwidth}${
-                  segment.aligns ? " text-" + segment.aligns[ixb] : ""
-                }`,
+                        segment.breakpoint ? segment.breakpoint + "-" : ""
+                      }${segment.widths ? segment.widths[ixb] : defwidth}${
+                        segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                      }`,
               },
               go(t, false, ixb)
             )

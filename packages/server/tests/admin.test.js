@@ -40,7 +40,16 @@ const adminPageContains = (specs) =>
     }
   });
 describe("admin page", () => {
+  itShouldRedirectUnauthToLogin("/settings");
   itShouldRedirectUnauthToLogin("/admin");
+  it("show settings page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Plugin and pack installation and control"));
+  });
   it("show admin page", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
