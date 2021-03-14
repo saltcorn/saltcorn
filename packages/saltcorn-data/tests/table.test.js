@@ -955,8 +955,7 @@ describe("distance ordering", () => {
     );
     expect(fred_rows.length).toBe(2);
     expect(fred_rows[0].name).toBe("Fred");
-    const george_rows = await table.getRows(
-      {},
+    const george_rows = await table.getJoinedRows(
       {
         orderBy: {
           distance: { lat: 19, long: 19, latField: "lat", longField: "long" },

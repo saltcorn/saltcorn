@@ -703,7 +703,8 @@ class Table {
     const selectopts = {
       limit: opts.limit,
       orderBy:
-        opts.orderBy && (opts.orderBy.sql ? opts.orderBy : "a." + opts.orderBy),
+        opts.orderBy &&
+        (opts.orderBy.distance ? opts.orderBy : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
