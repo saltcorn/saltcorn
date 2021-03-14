@@ -115,7 +115,7 @@ describe("crash log", () => {
       .get("/crashlog")
       .set("Cookie", loginCookie)
       .expect(toInclude("Show"))
-      .expect(toInclude("no _sc_errors where id"));
+      .expect(toInclude('no _sc_errors where "id"'));
   });
   it("show crashlog entry", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -123,7 +123,7 @@ describe("crash log", () => {
     await request(app)
       .get("/crashlog/1")
       .set("Cookie", loginCookie)
-      .expect(toInclude("no _sc_errors where id"))
+      .expect(toInclude('no _sc_errors where "id"'))
       .expect(toInclude("stack"));
   });
 });
@@ -230,7 +230,7 @@ describe("menu editor", () => {
       .get("/sitemap.xml")
       .expect(toInclude("view/dqwdw"))
       .expect(toInclude("<urlset"));
-  })
+  });
 });
 
 describe("roleadmin", () => {
@@ -253,8 +253,8 @@ describe("roleadmin", () => {
       .send("id=5")
       .send("role=muppets")
       .expect(toRedirect("/roleadmin"));
-    const roles=await User.get_roles()
-    expect(roles).toContainEqual({id:5, role:"muppets"})
+    const roles = await User.get_roles();
+    expect(roles).toContainEqual({ id: 5, role: "muppets" });
   });
   it("show set layout for role", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -264,8 +264,8 @@ describe("roleadmin", () => {
       .set("Cookie", loginCookie)
       .send("layout=tabler")
       .expect(toRedirect("/roleadmin"));
-    const roles=await User.get_roles()
-    expect(roles).toContainEqual({id:5, role:"muppets"})
+    const roles = await User.get_roles();
+    expect(roles).toContainEqual({ id: 5, role: "muppets" });
   });
   it("show delete role", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -274,8 +274,8 @@ describe("roleadmin", () => {
       .post("/roleadmin/delete/5")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/roleadmin"));
-    const roles=await User.get_roles()
-    expect(roles).not.toContainEqual({id:5, role:"muppets"})
+    const roles = await User.get_roles();
+    expect(roles).not.toContainEqual({ id: 5, role: "muppets" });
   });
 });
 describe("actions", () => {
@@ -418,4 +418,3 @@ describe("clear all page", () => {
       .expect(toRedirect("/auth/create_first_user"));
   });
 });
-

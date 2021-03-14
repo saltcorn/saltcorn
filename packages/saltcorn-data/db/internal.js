@@ -48,7 +48,7 @@ const subSelectWhere = (is_sqlite, i) => (k, v) => {
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, i)).join(" and ")
       : "";
-  return `${sqlsanitizeAllowDots(k)} in (select ${v.inSelect.field} from ${
+  return `${quote(sqlsanitizeAllowDots(k))} in (select ${v.inSelect.field} from ${
     v.inSelect.table
   } ${where})`;
 };
@@ -61,28 +61,28 @@ const subSelectVals = (v) => {
     .filter((v) => v !== null);
   return xs;
 };
+const quote = (s) => (s.includes(".") || s.includes('"') ? s : `"${s}"`);
 
 const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
     ? whereFTS(v, i(), is_sqlite)
     : typeof (v || {}).in !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} = ${is_sqlite ? "" : "ANY"} (${placeHolder(
-        is_sqlite,
-        i()
-      )})`
+    ? `${quote(sqlsanitizeAllowDots(k))} = ${
+        is_sqlite ? "" : "ANY"
+      } (${placeHolder(is_sqlite, i())})`
     : Array.isArray(v)
     ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)} ${
+    ? `${quote(sqlsanitizeAllowDots(k))} ${
         is_sqlite ? "LIKE" : "ILIKE"
       } '%' || ${placeHolder(is_sqlite, i())} || '%'`
     : typeof (v || {}).gt !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)}>${v.equal ? "=" : ""}${placeHolder(
+    ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${placeHolder(
         is_sqlite,
         i()
       )}`
     : typeof (v || {}).lt !== "undefined"
-    ? `${sqlsanitizeAllowDots(k)}<${v.equal ? "=" : ""}${placeHolder(
+    ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${placeHolder(
         is_sqlite,
         i()
       )}`
@@ -90,15 +90,18 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? subSelectWhere(is_sqlite, i)(k, v)
     : typeof (v || {}).json !== "undefined"
     ? is_sqlite
-      ? `json_extract(${sqlsanitizeAllowDots(k)}, '$.${sqlsanitizeAllowDots(
-          v.json[0]
-        )}')=${placeHolder(is_sqlite, i())}`
-      : `${sqlsanitizeAllowDots(k)}->>'${sqlsanitizeAllowDots(
+      ? `json_extract(${quote(
+          sqlsanitizeAllowDots(k)
+        )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${placeHolder(
+          is_sqlite,
+          i()
+        )}`
+      : `${quote(sqlsanitizeAllowDots(k))}->>'${sqlsanitizeAllowDots(
           v.json[0]
         )}'=${placeHolder(is_sqlite, i())}`
     : v === null
-    ? `${sqlsanitizeAllowDots(k)} is null`
-    : `${sqlsanitizeAllowDots(k)}=${placeHolder(is_sqlite, i())}`;
+    ? `${quote(sqlsanitizeAllowDots(k))} is null`
+    : `${quote(sqlsanitizeAllowDots(k))}=${placeHolder(is_sqlite, i())}`;
 
 const getVal = ([k, v]) =>
   k === "_fts"
