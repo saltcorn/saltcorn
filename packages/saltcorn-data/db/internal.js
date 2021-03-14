@@ -88,9 +88,7 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
       )}`
     : typeof (v || {}).inSelect !== "undefined"
     ? subSelectWhere(is_sqlite, i)(k, v)
-    : //: typeof (v || {}).sql !== "undefined"
-    //? `${sqlsanitizeAllowDots(k)} ${v.sql}`
-    typeof (v || {}).json !== "undefined"
+    : typeof (v || {}).json !== "undefined"
     ? is_sqlite
       ? `json_extract(${sqlsanitizeAllowDots(k)}, '$.${sqlsanitizeAllowDots(
           v.json[0]
@@ -143,12 +141,22 @@ const toInt = (x) =>
     ? parseInt(x)
     : null;
 
+const getDistanceOrder = ({ latField, longField, lat, long }) => {
+  const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
+  return `((${sqlsanitizeAllowDots(
+    latField
+  )} - ${+lat})*(${sqlsanitizeAllowDots(
+    latField
+  )} - ${+lat})) + ((${sqlsanitizeAllowDots(
+    longField
+  )} - ${+long})*(${sqlsanitizeAllowDots(longField)} - ${+long})*${cos_lat_2})`;
+};
 const mkSelectOptions = (selopts) => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
-      : selopts.orderBy && selopts.orderBy.sql
-      ? `order by ${selopts.orderBy.sql}`
+      : selopts.orderBy && selopts.orderBy.distance
+      ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
       : selopts.orderBy && selopts.nocase
       ? `order by lower(${sqlsanitizeAllowDots(selopts.orderBy)})${
           selopts.orderDesc ? " DESC" : ""
