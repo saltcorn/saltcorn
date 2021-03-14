@@ -41,11 +41,11 @@ const create_db_view = async (context) => {
   const schema = db.getTenantSchemaPrefix();
   // is there already a table with this name ? if yes add _sqlview
   const extable = await Table.findOne({ name: context.viewname });
-  await db.query(
-    `create or replace view ${schema}"${db.sqlsanitize(context.viewname)}${
-      extable ? "_sqlview" : ""
-    }" as ${sql};`
-  );
+  const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${
+    extable ? "_sqlview" : ""
+  }"`;
+  await db.query(`drop view if exists ${sql_view_name};`);
+  await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
 
 const on_delete = async (table_id, viewname, { default_state }) => {
