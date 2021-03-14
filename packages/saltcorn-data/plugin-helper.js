@@ -198,7 +198,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const {field_view_options} = calcfldViewOptions(fields, false);
+    const { field_view_options } = calcfldViewOptions(fields, false);
 
     const link_view_opts = await get_link_view_opts(table, viewname);
 
@@ -660,14 +660,13 @@ const stateFieldsToQuery = contract(
     const latNear = stateKeys.find((k) => k.startsWith("_near_lat_"));
     const longNear = stateKeys.find((k) => k.startsWith("_near_long_"));
     if (latNear && longNear) {
-      const latfield = db.sqlsanitize(latNear.replace("_near_lat_", ""));
-      const longfield = db.sqlsanitize(longNear.replace("_near_long_", ""));
+      const latField =
+        prefix + db.sqlsanitize(latNear.replace("_near_lat_", ""));
+      const longField =
+        prefix + db.sqlsanitize(longNear.replace("_near_long_", ""));
       const lat = parseFloat(state[latNear]);
       const long = parseFloat(state[longNear]);
-      const cos_lat_2 = Math.pow(Math.cos((lat * Math.PI) / 180), 2);
-      q.orderBy = {
-        sql: `((${prefix}${latfield} - ${lat})*(${prefix}${latfield} - ${lat})) + ((${prefix}${longfield} - ${long})*(${prefix}${longfield} - ${long})*${cos_lat_2})`,
-      };
+      q.orderBy = { distance: { lat, long, latField, longField } };
     }
     return q;
   }
