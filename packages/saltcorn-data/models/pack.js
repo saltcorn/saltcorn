@@ -45,7 +45,7 @@ const view_pack = contract(pack_fun, async (name) => {
     viewtemplate: view.viewtemplate,
     configuration: view.configuration,
     min_role: view.min_role,
-    table: table.name,
+    table: table ? table.name : null,
     menu_label: view.menu_label,
     default_render_page: view.default_render_page,
   };
@@ -244,7 +244,10 @@ const install_pack = contract(
         ...viewNoTable
       } = viewSpec;
       const vtable = await Table.findOne({ name: table });
-      await View.create({ ...viewNoTable, table_id: vtable.id });
+      await View.create({
+        ...viewNoTable,
+        table_id: vtable ? vtable.id : null,
+      });
       if (menu_label)
         await add_to_menu({
           label: menu_label,
