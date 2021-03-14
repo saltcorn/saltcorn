@@ -59,8 +59,6 @@ class Table {
     contract.class(this);
   }
 
-  
-
   static async findOne(where) {
     if (
       where &&
@@ -234,7 +232,6 @@ class Table {
       );
     } else v = v_in;
     if (this.versioned) {
-      const schema = db.getTenantSchemaPrefix();
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
       await db.insert(this.name + "__history", {
@@ -242,9 +239,7 @@ class Table {
         ...v,
         [pk_name]: id,
         _version: {
-          sql: `coalesce((select max(_version) from ${schema}"${
-            this.name + "__history"
-          }" where id=${+id}), 0)+1`,
+          next_version_by_id: +id,
         },
         _time: new Date(),
         _userid,

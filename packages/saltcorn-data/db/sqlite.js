@@ -81,9 +81,19 @@ const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
-    .map(([k, v], ix) => (v && v.sql ? v.sql : reprAsJson(v) ? "json(?)" : "?"))
+    .map(([k, v], ix) =>
+      v && v.next_version_by_id
+        ? `coalesce((select max(_version) from "${
+            tbl.name + "__history"
+          }" where id=${+v.next_version_by_id}), 0)+1`
+        : reprAsJson(v)
+        ? "json(?)"
+        : "?"
+    )
     .join();
-  const valList = kvs.filter(([k, v]) => !(v && v.sql)).map(mkVal);
+  const valList = kvs
+    .filter(([k, v]) => !(v && v.next_version_by_id))
+    .map(mkVal);
   const sql = `insert into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;
