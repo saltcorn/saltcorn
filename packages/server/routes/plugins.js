@@ -459,7 +459,7 @@ router.get(
         {
           type: "breadcrumbs",
           crumbs: [
-            { text: req.__("Settings"),href: "/settings" },
+            { text: req.__("Settings"), href: "/settings" },
             { text: req.__("Plugin and pack store"), href: "/plugins" },
             { text: req.__("New") },
           ],
@@ -675,6 +675,11 @@ router.post(
     const { name } = req.params;
 
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    if (!plugin) {
+      req.flash("warning", "Plugin not found");
+      res.redirect("/plugins");
+      return;
+    }
     const depviews = await plugin.dependant_views();
     if (depviews.length === 0) {
       await plugin.delete();
