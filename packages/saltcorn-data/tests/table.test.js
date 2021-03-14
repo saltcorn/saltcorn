@@ -870,8 +870,8 @@ describe("Table with UUID pks", () => {
         },
       });
       //trying to debug intermittant CI failure
-      if(rows.length === 0) {
-        const allRows = await table.getRows()
+      if (rows.length === 0) {
+        const allRows = await table.getRows();
         console.log(allRows);
       }
       expect(rows.length).toBe(1);
@@ -914,5 +914,56 @@ describe("external tables", () => {
     const dbtables = await Table.find_with_external({ external: false });
     expect(dbtables.map((t) => t.name)).not.toContain("exttab");
     expect(dbtables.map((t) => t.name)).toContain("books");
+  });
+});
+
+describe("distance ordering", () => {
+  it("should create table", async () => {
+    const tc = await Table.create("geotable1");
+
+    await Field.create({
+      table: tc,
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: tc,
+      label: "Lat",
+      type: "Float",
+      required: true,
+    });
+    await Field.create({
+      table: tc,
+      label: "Long",
+      type: "Float",
+      required: true,
+    });
+    await tc.insertRow({ name: "Fred", lat: 10, long: 10 });
+    await tc.insertRow({ name: "George", lat: 20, long: 20 });
+  });
+  it("should query", async () => {
+    const table = await Table.findOne({ name: "geotable1" });
+
+    const fred_rows = await table.getRows(
+      {},
+      {
+        orderBy: {
+          distance: { lat: 11, long: 11, latField: "lat", longField: "long" },
+        },
+      }
+    );
+    expect(fred_rows.length).toBe(2);
+    expect(fred_rows[0].name).toBe("Fred");
+    const george_rows = await table.getRows(
+      {},
+      {
+        orderBy: {
+          distance: { lat: 19, long: 19, latField: "lat", longField: "long" },
+        },
+      }
+    );
+    expect(george_rows.length).toBe(2);
+    expect(george_rows[0].name).toBe("George");
   });
 });
