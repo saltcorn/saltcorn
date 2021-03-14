@@ -145,6 +145,7 @@ const uninstall_pack = contract(
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
+      if (table && table.name === "users") continue;
       if (table) {
         const fields = await table.getFields();
         for (const field of fields) {
@@ -158,7 +159,7 @@ const uninstall_pack = contract(
     }
     for (const tableSpec of pack.tables) {
       const table = await Table.findOne({ name: tableSpec.name });
-      if (table) await table.delete();
+      if (table && table.name !== "users") await table.delete();
     }
 
     if (name) {
