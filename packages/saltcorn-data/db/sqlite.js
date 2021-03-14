@@ -83,9 +83,9 @@ const insert = async (tbl, obj, opts = {}) => {
   const valPosList = kvs
     .map(([k, v], ix) =>
       v && v.next_version_by_id
-        ? `coalesce((select max(_version) from "${
-            tbl.name + "__history"
-          }" where id=${+v.next_version_by_id}), 0)+1`
+        ? `coalesce((select max(_version) from "${sqlsanitize(
+            tbl
+          )}" where id=${+v.next_version_by_id}), 0)+1`
         : reprAsJson(v)
         ? "json(?)"
         : "?"

@@ -77,12 +77,14 @@ const insert = async (tbl, obj, opts = {}) => {
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   var valPosList = [];
   var valList = [];
-  const schema= getTenantSchema()
+  const schema = getTenantSchema();
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
-      valPosList.push(`coalesce((select max(_version) from ${schema}"${
-        tbl.name + "__history"
-      }" where id=${+v.next_version_by_id}), 0)+1`);
+      valPosList.push(
+        `coalesce((select max(_version) from "${schema}"."${sqlsanitize(
+          tbl
+        )}" where id=${+v.next_version_by_id}), 0)+1`
+      );
     } else {
       valList.push(v);
       valPosList.push(`$${valList.length}`);
