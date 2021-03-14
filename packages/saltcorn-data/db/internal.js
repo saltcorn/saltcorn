@@ -143,7 +143,9 @@ const toInt = (x) =>
 
 const getDistanceOrder = ({ latField, longField, lat, long }) => {
   const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
-  return `((${sqlsanitizeAllowDots(latField)} - ${+lat})*(${sqlsanitizeAllowDots(
+  return `((${sqlsanitizeAllowDots(
+    latField
+  )} - ${+lat})*(${sqlsanitizeAllowDots(
     latField
   )} - ${+lat})) + ((${sqlsanitizeAllowDots(
     longField
@@ -153,8 +155,6 @@ const mkSelectOptions = (selopts) => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
-      : selopts.orderBy && selopts.orderBy.sql
-      ? `order by ${selopts.orderBy.sql}`
       : selopts.orderBy && selopts.orderBy.distance
       ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
       : selopts.orderBy && selopts.nocase
