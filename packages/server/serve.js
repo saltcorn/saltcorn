@@ -7,9 +7,9 @@ const path = require("path");
 
 const getApp = require("./app");
 
-module.exports = async ({ port = 3000, ...appargs } = {}) => {
+module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
   const app = await getApp(appargs);
-  runScheduler();
+  if (!disableScheduler) runScheduler();
 
   const nonGreenlockServer = () => {
     const cert = getState().getConfig("custom_ssl_certificate", "");
