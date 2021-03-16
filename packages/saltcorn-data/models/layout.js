@@ -4,6 +4,10 @@ const traverseSync = (layout, visitors) => {
     if (visitors[segment.type]) {
       visitors[segment.type](segment);
     }
+    if (Array.isArray(segment)) {
+      for (const seg of segment) go(seg);
+      return;
+    }
     if (segment.contents) {
       if (typeof contents !== "string") go(segment.contents);
       return;
@@ -25,6 +29,10 @@ const traverse = async (layout, visitors) => {
     if (!segment) return;
     if (visitors[segment.type]) {
       await visitors[segment.type](segment);
+      return;
+    }
+    if (Array.isArray(segment)) {
+      for (const seg of segment) await go(seg);
       return;
     }
     if (segment.contents) {
