@@ -6,7 +6,7 @@ const {
   domain_sanitize,
   deleteTenant,
 } = require("@saltcorn/data/models/tenant");
-const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
+const { renderForm, link, post_delete_btn, mkTable } = require("@saltcorn/markup");
 const {
   div,
   nbsp,
@@ -25,7 +25,13 @@ const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
-const { send_infoarch_page } = require("../markup/admin.js");
+const {
+  send_infoarch_page,
+  send_admin_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin.js");
+const { getConfig } = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
@@ -47,7 +53,16 @@ const tenant_form = (req) =>
       },
     ],
   });
-//TODO only if multi ten and not already in subdomain
+
+const create_tenant_allowed = (req) => {
+  const required_role = +getState().getConfig("role_to_create_tenant") || 10;
+  const user_role = req.user ? req.user.role_id : 10;
+  return user_role <= required_role;
+};
+const is_ip_address = (hostname) => {
+  if (typeof hostname !== "string") return false;
+  return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
+};
 router.get(
   "/create",
   setTenant,
@@ -62,22 +77,35 @@ router.get(
       );
       return;
     }
-    req.flash(
-      "warning",
-      h4(req.__("Warning")) +
-        p(
-          req.__(
-            "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-          ) +
-            req.__(
-              "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-            ) +
-            req.__(
-              "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-            ) +
-            'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+    if (!create_tenant_allowed(req)) {
+      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
+      return;
+    }
+
+    if (is_ip_address(req.hostname))
+      req.flash(
+        "danger",
+        req.__(
+          "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
         )
-    );
+      );
+    if (getState().getConfig("create_tenant_warning"))
+      req.flash(
+        "warning",
+        h4(req.__("Warning")) +
+          p(
+            req.__(
+              "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+            ) +
+              req.__(
+                "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+              ) +
+              req.__(
+                "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+              ) +
+              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+          )
+      );
     res.sendWrap(
       req.__("Create application"),
       renderForm(tenant_form(req), req.csrfToken())
@@ -110,6 +138,10 @@ router.post(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
       );
+      return;
+    }
+    if (!create_tenant_allowed(req)) {
+      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
     const form = tenant_form(req);
@@ -197,11 +229,10 @@ router.get(
               {
                 label: "Delete",
                 key: (r) =>
-                  post_btn(
+                  post_delete_btn(
                     `/tenant/delete/${r.subdomain}`,
-                    "Delete",
-                    req.csrfToken(),
-                    { small: true }
+                    req,
+                    r.subdomain
                   ),
               },
             ],
@@ -212,6 +243,68 @@ router.get(
         ],
       },
     });
+  })
+);
+const tenant_settings_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: ["role_to_create_tenant", "create_tenant_warning"],
+    action: "/tenant/settings",
+  });
+
+router.get(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    const form = await tenant_settings_form(req);
+
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Tenant settings",
+      contents: {
+        type: "card",
+        title: req.__("Tenant settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await tenant_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_infoarch_page({
+        res,
+        req,
+        active_sub: "Tenant settings",
+        contents: {
+          type: "card",
+          title: req.__("Tenant settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+
+      req.flash("success", req.__("Tenant settings updated"));
+      res.redirect("/tenant/settings");
+    }
   })
 );
 const get_tenant_info = async (subdomain) => {
@@ -228,6 +321,7 @@ const get_tenant_info = async (subdomain) => {
     info.nviews = await db.count("_sc_views");
     info.nfiles = await db.count("_sc_files");
     info.npages = await db.count("_sc_pages");
+    info.base_url = await getConfig("base_url");
     return info;
   });
 };
@@ -253,24 +347,68 @@ router.get(
       req,
       active_sub: "Tenants",
       sub2_page: text(subdomain),
-      contents: {
-        type: "card",
-        title: `${text(subdomain)} tenant`,
-        contents: [
-          table(
-            tr(th(req.__("E-mail")), td(info.first_user_email)),
-            tr(th(req.__("Users")), td(info.nusers)),
-            tr(th(req.__("Tables")), td(info.ntables)),
-            tr(th(req.__("Views")), td(info.nviews)),
-            tr(th(req.__("Pages")), td(info.npages)),
-            tr(th(req.__("Files")), td(info.nfiles))
-          ),
-        ],
-      },
+      contents: [
+        {
+          type: "card",
+          title: `${text(subdomain)} tenant`,
+          contents: [
+            table(
+              tr(th(req.__("E-mail")), td(info.first_user_email)),
+              tr(th(req.__("Users")), td(info.nusers)),
+              tr(th(req.__("Tables")), td(info.ntables)),
+              tr(th(req.__("Views")), td(info.nviews)),
+              tr(th(req.__("Pages")), td(info.npages)),
+              tr(th(req.__("Files")), td(info.nfiles))
+            ),
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Settings"),
+          contents: [
+            renderForm(
+              new Form({
+                action: "/tenant/info/" + text(subdomain),
+                submitButtonClass: "btn-outline-primary",
+                onChange: "remove_outline(this)",
+                fields: [
+                  { name: "base_url", label: "Base URL", type: "String" },
+                ],
+                values: { base_url: info.base_url },
+              }),
+              req.csrfToken()
+            ),
+          ],
+        },
+      ],
     });
   })
 );
+router.post(
+  "/info/:subdomain",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    const { subdomain } = req.params;
+    const { base_url } = req.body;
+    const saneDomain = domain_sanitize(subdomain);
 
+    await db.runWithTenant(saneDomain, async () => {
+      await getState().setConfig("base_url", base_url);
+    });
+    res.redirect(`/tenant/info/${text(subdomain)}`);
+  })
+);
 router.post(
   "/delete/:sub",
   setTenant,

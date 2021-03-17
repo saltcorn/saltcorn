@@ -1,6 +1,7 @@
 const { Command, flags } = require("@oclif/command");
 const { spawnSync } = require("child_process");
 const path = require("path");
+const { maybe_as_tenant } = require("../common");
 
 class RestoreCommand extends Command {
   async pg_restore(fnm) {
@@ -18,27 +19,33 @@ class RestoreCommand extends Command {
     );
     this.exit(res.status);
   }
-  async zip_restore(fnm) {
+  async zip_restore(fnm, tenant) {
     const { restore } = require("@saltcorn/data/models/backup");
     const User = require("@saltcorn/data/models/user");
     const load_plugins = require("@saltcorn/server/load_plugins");
-    await load_plugins.loadAllPlugins();
-    const hasUsers = await User.nonEmpty();
-    const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
-    const err = await restore(fnm, savePlugin, !hasUsers);
-    if (err) {
-      console.error(err);
-      this.exit(1);
-    }
+    await maybe_as_tenant(tenant, async () => {
+      await load_plugins.loadAllPlugins();
+      const hasUsers = await User.nonEmpty();
+      const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
+      const err = await restore(fnm, savePlugin, !hasUsers);
+      if (err) {
+        console.error(err);
+        this.exit(1);
+      }
+    });
   }
   async run() {
-    const { args } = this.parse(RestoreCommand);
+    const { args, flags } = this.parse(RestoreCommand);
     switch (path.extname(args.file)) {
       case ".sqlc":
+        if (flags.tenant) {
+          console.error("sqlc restore not supported in tenants");
+          this.exit(1);
+        }
         this.pg_restore(args.file);
         break;
       case ".zip":
-        this.zip_restore(args.file);
+        this.zip_restore(args.file, flags.tenant);
         break;
       default:
         console.error("unknown filetype: " + path.extname(args.file));
@@ -53,6 +60,11 @@ RestoreCommand.args = [
 
 RestoreCommand.description = `Restore a previously backed up database (zip or sqlc format)`;
 
-RestoreCommand.flags = {};
+RestoreCommand.flags = {
+  tenant: flags.string({
+    char: "t",
+    description: "tenant",
+  }),
+};
 
 module.exports = RestoreCommand;
