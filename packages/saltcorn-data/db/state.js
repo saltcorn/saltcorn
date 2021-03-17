@@ -58,7 +58,7 @@ class State {
   }
   async refresh() {
     this.views = await View.find();
-    this.configs = await getAllConfigOrDefaults();    
+    this.configs = await getAllConfigOrDefaults();
   }
 
   getConfig(key, def) {
@@ -76,8 +76,14 @@ class State {
   }
 
   async setConfig(key, value) {
-    await setConfig(key, value);
-    this.configs[key] = { value };
+    if (
+      !this.configs[key] ||
+      typeof this.configs[key].value === "undefined" ||
+      this.configs[key].value !== value
+    ) {
+      await setConfig(key, value);
+      this.configs[key] = { value };
+    }
   }
   async deleteConfig(key) {
     await deleteConfig(key);

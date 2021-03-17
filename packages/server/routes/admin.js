@@ -38,6 +38,7 @@ const {
   send_admin_page,
   config_fields_form,
   save_config_from_form,
+  flash_restart_if_required,
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
@@ -59,7 +60,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
-      "multitenancy_enabled"
+      "multitenancy_enabled",
     ],
     action: "/admin",
   });
@@ -120,6 +121,7 @@ router.post(
         },
       });
     } else {
+      flash_restart_if_required(form, req);
       await save_config_from_form(form);
 
       req.flash("success", req.__("Site identity settings updated"));
