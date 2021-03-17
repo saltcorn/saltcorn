@@ -8,15 +8,13 @@ class ResetCommand extends Command {
     const db = require("@saltcorn/data/db/");
     const { flags } = this.parse(ResetCommand);
     await maybe_as_tenant(flags.tenant, async () => {
-      const schema = db.getTenantSchema()
+      const schema = db.getTenantSchema();
       if (flags.force) {
         await reset(false, schema);
       } else {
         const ans = await cli.confirm(
           `This will wipe all data from database "${
-            db.isSQLite
-              ? "SQLite"
-              : db.connectObj.database + "." + schema
+            db.isSQLite ? "SQLite" : db.connectObj.database + "." + schema
           }".\nContinue (y/n)?`
         );
         if (ans) await reset(false, schema);
