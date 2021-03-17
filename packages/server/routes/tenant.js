@@ -88,22 +88,23 @@ router.get(
           "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
         )
       );
-    req.flash(
-      "warning",
-      h4(req.__("Warning")) +
-        p(
-          req.__(
-            "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-          ) +
+    if (getState().getConfig("create_tenant_warning"))
+      req.flash(
+        "warning",
+        h4(req.__("Warning")) +
+          p(
             req.__(
-              "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+              "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
             ) +
-            req.__(
-              "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-            ) +
-            'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-        )
-    );
+              req.__(
+                "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+              ) +
+              req.__(
+                "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+              ) +
+              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+          )
+      );
     res.sendWrap(
       req.__("Create application"),
       renderForm(tenant_form(req), req.csrfToken())
@@ -247,7 +248,7 @@ router.get(
 const tenant_settings_form = (req) =>
   config_fields_form({
     req,
-    field_names: ["role_to_create_tenant"],
+    field_names: ["role_to_create_tenant", "create_tenant_warning"],
     action: "/tenant/settings",
   });
 

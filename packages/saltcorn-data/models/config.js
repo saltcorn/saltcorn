@@ -149,6 +149,13 @@ const configTypes = {
     blurb: "Minimum user role required to create a new tenant",
     default: "10",
   },
+  create_tenant_warning: {
+    type: "Bool",
+    label: "Create tenant warning",
+    default: true,
+    blurb:
+      "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+  },
   development_mode: {
     type: "Bool",
     label: "Development mode",
