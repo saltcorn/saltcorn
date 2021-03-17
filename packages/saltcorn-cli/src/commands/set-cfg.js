@@ -6,9 +6,15 @@ class SetCfgCommand extends Command {
   async run() {
     const { args, flags } = this.parse(SetCfgCommand);
     await maybe_as_tenant(flags.tenant, async () => {
-      const { getState } = require("@saltcorn/data/db/state");
-
-      await getState().setConfig(args.key, parseJSONorString(args.value));
+      if (flags.plugin) {
+        const Plugin = require("@saltcorn/data/models/plugin");
+        const plugin = await Plugin.findOne({ name: flags.plugin });
+        plugin.configuration[args.key] = parseJSONorString(args.value);
+        await plugin.upsert();
+      } else {
+        const { getState } = require("@saltcorn/data/db/state");
+        await getState().setConfig(args.key, parseJSONorString(args.value));
+      }
     });
     this.exit(0);
   }
@@ -27,6 +33,10 @@ SetCfgCommand.flags = {
   tenant: flags.string({
     char: "t",
     description: "tenant",
+  }),
+  plugin: flags.string({
+    char: "p",
+    description: "plugin",
   }),
 };
 
