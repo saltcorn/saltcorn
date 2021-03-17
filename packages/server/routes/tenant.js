@@ -6,7 +6,7 @@ const {
   domain_sanitize,
   deleteTenant,
 } = require("@saltcorn/data/models/tenant");
-const { renderForm, link, post_btn, mkTable } = require("@saltcorn/markup");
+const { renderForm, link, post_delete_btn, mkTable } = require("@saltcorn/markup");
 const {
   div,
   nbsp,
@@ -229,11 +229,10 @@ router.get(
               {
                 label: "Delete",
                 key: (r) =>
-                  post_btn(
+                  post_delete_btn(
                     `/tenant/delete/${r.subdomain}`,
-                    "Delete",
-                    req.csrfToken(),
-                    { small: true }
+                    req,
+                    r.subdomain
                   ),
               },
             ],
