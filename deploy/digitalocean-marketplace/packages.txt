@@ -1,1 +1,1 @@
-libpq-dev build-essential python-is-python3 postgresql postgresql-client  libcap2-bin
+libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban libcap2-bin
