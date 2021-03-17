@@ -68,6 +68,8 @@ class Plugin {
     const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
     const vt_names = Array.isArray(myViewTemplates)
       ? myViewTemplates.map((vt) => vt.name)
+      : typeof myViewTemplates === "function"
+      ? myViewTemplates(getState().plugin_cfgs[this.name]).map((vt) => vt.name)
       : Object.keys(myViewTemplates);
     return views
       .filter((v) => vt_names.includes(v.viewtemplate))
