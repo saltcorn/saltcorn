@@ -471,6 +471,10 @@ router.get(
                   label: req.__("Edit"),
                   key: (r) => link(`/field/${r.id}`, req.__("Edit")),
                 },
+              ]),
+          ...(table.external || db.isSQLite
+            ? []
+            : [
                 {
                   label: req.__("Delete"),
                   key: (r) =>

@@ -199,13 +199,37 @@ const viewAttributes = async (key) => {
     }),
   };
 };
+
+const flash_restart_if_required = (cfgForm, req) => {
+  let restart = false;
+  cfgForm.fields.forEach((f) => {
+    if (configTypes[f.name].restart_required) {
+      const current = getState().getConfig(f.name);
+      if (current !== cfgForm.values[f.name]) restart = true;
+    }
+  });
+  if (restart) flash_restart(req);
+};
+
+const flash_restart = (req) => {
+  req.flash(
+    "warning",
+    req.__(`Restart required for changes to take effect.`) +
+      " " +
+      a({ href: "/admin/system" }, req.__("Restart here"))
+  );
+};
+
 const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};
   const state = getState();
   const fields = [];
+  const tenant = db.getTenantSchema();
 
   for (const name of field_names) {
     values[name] = state.getConfig(name);
+    if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
+      continue;
     const isView = configTypes[name].type.startsWith("View ");
     const isRole = configTypes[name].type === "Role";
     const label = configTypes[name].label || name;
@@ -266,4 +290,6 @@ module.exports = {
   send_events_page,
   send_admin_page,
   save_config_from_form,
+  flash_restart_if_required,
+  flash_restart,
 };

@@ -640,5 +640,7 @@
 	"Plugin and pack installation and control": "Plugin and pack installation and control",
 	"User administration, edit roles, user and security settings, SSL certificates for https encryption": "User administration, edit roles, user and security settings, SSL certificates for https encryption",
 	"Menu, search and tenants": "Menu, search and tenants",
-	"Actions, triggers and crash log": "Actions, triggers and crash log"
+	"Actions, triggers and crash log": "Actions, triggers and crash log",
+	"Multitenancy enabled": "Multitenancy enabled",
+	"Restart required for changes to take effect.": "Restart required for changes to take effect."
 }

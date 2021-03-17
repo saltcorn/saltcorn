@@ -42,6 +42,7 @@ const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
 const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+const { flash_restart } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -437,14 +438,7 @@ router.post(
       await load_plugins.loadPlugin(plugin);
       const instore = await Plugin.store_plugins_available();
       const store_plugin = instore.find((p) => p.name === plugin.name);
-      if (store_plugin && store_plugin.has_auth) {
-        req.flash(
-          "warning",
-          req.__(`Restart required for changes to take effect.`) +
-            " " +
-            a({ href: "/admin/system" }, req.__("Restart here"))
-        );
-      }
+      if (store_plugin && store_plugin.has_auth) flash_restart(req);
       res.redirect("/plugins");
     }
   })
