@@ -642,5 +642,9 @@
 	"Menu, search and tenants": "Menu, search and tenants",
 	"Actions, triggers and crash log": "Actions, triggers and crash log",
 	"Multitenancy enabled": "Multitenancy enabled",
-	"Restart required for changes to take effect.": "Restart required for changes to take effect."
+	"Restart required for changes to take effect.": "Restart required for changes to take effect.",
+	"Tenant settings": "Tenant settings",
+	"Role to create tenants": "Role to create tenants",
+	"Minimum user role required to create a new tenant": "Minimum user role required to create a new tenant",
+	"Tenant settings updated": "Tenant settings updated"
 }

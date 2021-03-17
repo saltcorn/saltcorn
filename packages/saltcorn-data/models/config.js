@@ -143,6 +143,12 @@ const configTypes = {
       set_multitenancy_cfg(val);
     },
   },
+  role_to_create_tenant: {
+    type: "Role",
+    label: "Role to create tenants",
+    blurb: "Minimum user role required to create a new tenant",
+    default: "10",
+  },
   development_mode: {
     type: "Bool",
     label: "Development mode",

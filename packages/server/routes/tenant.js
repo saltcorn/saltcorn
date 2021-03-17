@@ -25,7 +25,12 @@ const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
-const { send_infoarch_page } = require("../markup/admin.js");
+const {
+  send_infoarch_page,
+  send_admin_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
@@ -212,6 +217,68 @@ router.get(
         ],
       },
     });
+  })
+);
+const tenant_settings_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: ["role_to_create_tenant"],
+    action: "/tenant/settings",
+  });
+
+router.get(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    const form = await tenant_settings_form(req);
+
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Tenant settings",
+      contents: {
+        type: "card",
+        title: req.__("Tenant settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+router.post(
+  "/settings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await tenant_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_infoarch_page({
+        res,
+        req,
+        active_sub: "Tenant settings",
+        contents: {
+          type: "card",
+          title: req.__("Tenant settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+
+      req.flash("success", req.__("Tenant settings updated"));
+      res.redirect("/tenant/settings");
+    }
   })
 );
 const get_tenant_info = async (subdomain) => {
