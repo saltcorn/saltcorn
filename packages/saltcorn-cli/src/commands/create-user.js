@@ -7,8 +7,9 @@ class CreateUserCommand extends Command {
     const User = require("@saltcorn/data/models/user");
     const { flags } = this.parse(CreateUserCommand);
     await maybe_as_tenant(flags.tenant, async () => {
-      const email = await cli.prompt("Email address");
-      const password = await cli.prompt("Password", { type: "hide" });
+      const email = flags.email || (await cli.prompt("Email address"));
+      const password =
+        flags.password || (await cli.prompt("Password", { type: "hide" }));
       await User.create({ email, password, role_id: flags.admin ? 1 : 8 });
     });
     this.exit(0);
@@ -22,6 +23,14 @@ CreateUserCommand.flags = {
   tenant: flags.string({
     char: "t",
     description: "tenant",
+  }),
+  email: flags.string({
+    char: "e",
+    description: "email",
+  }),
+  password: flags.string({
+    char: "p",
+    description: "password",
   }),
 };
 
