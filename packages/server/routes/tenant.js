@@ -53,12 +53,15 @@ const tenant_form = (req) =>
     ],
   });
 
-const create_tenant_allowed=req=>{
-  const required_role = +getState().getConfig("role_to_create_tenant")||10
-  const user_role=req.user ? req.user.role_id : 10
-  return user_role <= required_role
-}
-
+const create_tenant_allowed = (req) => {
+  const required_role = +getState().getConfig("role_to_create_tenant") || 10;
+  const user_role = req.user ? req.user.role_id : 10;
+  return user_role <= required_role;
+};
+const is_ip_address = (hostname) => {
+  if (typeof hostname !== "string") return false;
+  return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
+};
 router.get(
   "/create",
   setTenant,
@@ -73,14 +76,18 @@ router.get(
       );
       return;
     }
-    if(!create_tenant_allowed(req)) {
-      res.sendWrap(
-        req.__("Create application"),
-        req.__("Not allowed")
-      );
+    if (!create_tenant_allowed(req)) {
+      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
 
+    if (is_ip_address(req.hostname))
+      req.flash(
+        "danger",
+        req.__(
+          "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
+        )
+      );
     req.flash(
       "warning",
       h4(req.__("Warning")) +
@@ -131,11 +138,8 @@ router.post(
       );
       return;
     }
-    if(!create_tenant_allowed(req)) {
-      res.sendWrap(
-        req.__("Create application"),
-        req.__("Not allowed")
-      );
+    if (!create_tenant_allowed(req)) {
+      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
     const form = tenant_form(req);

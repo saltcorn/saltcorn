@@ -647,5 +647,6 @@
 	"Role to create tenants": "Role to create tenants",
 	"Minimum user role required to create a new tenant": "Minimum user role required to create a new tenant",
 	"Tenant settings updated": "Tenant settings updated",
-	"Not allowed": "Not allowed"
+	"Not allowed": "Not allowed",
+	"You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work.": "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
 }
