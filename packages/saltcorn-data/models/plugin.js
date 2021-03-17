@@ -66,7 +66,9 @@ class Plugin {
     const { getState } = require("../db/state");
     if (!getState().plugins[this.name]) return [];
     const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
-    const vt_names = myViewTemplates.map((vt) => vt.name);
+    const vt_names = Array.isArray(myViewTemplates)
+      ? myViewTemplates.map((vt) => vt.name)
+      : Object.keys(myViewTemplates);
     return views
       .filter((v) => vt_names.includes(v.viewtemplate))
       .map((v) => v.name);
