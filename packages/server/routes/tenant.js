@@ -52,7 +52,13 @@ const tenant_form = (req) =>
       },
     ],
   });
-//TODO only if multi ten and not already in subdomain
+
+const create_tenant_allowed=req=>{
+  const required_role = +getState().getConfig("role_to_create_tenant")||10
+  const user_role=req.user ? req.user.role_id : 10
+  return user_role <= required_role
+}
+
 router.get(
   "/create",
   setTenant,
@@ -67,6 +73,14 @@ router.get(
       );
       return;
     }
+    if(!create_tenant_allowed(req)) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Not allowed")
+      );
+      return;
+    }
+
     req.flash(
       "warning",
       h4(req.__("Warning")) +
@@ -114,6 +128,13 @@ router.post(
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    if(!create_tenant_allowed(req)) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Not allowed")
       );
       return;
     }

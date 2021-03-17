@@ -646,5 +646,6 @@
 	"Tenant settings": "Tenant settings",
 	"Role to create tenants": "Role to create tenants",
 	"Minimum user role required to create a new tenant": "Minimum user role required to create a new tenant",
-	"Tenant settings updated": "Tenant settings updated"
+	"Tenant settings updated": "Tenant settings updated",
+	"Not allowed": "Not allowed"
 }
