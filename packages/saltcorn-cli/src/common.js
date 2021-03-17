@@ -4,4 +4,11 @@ const maybe_as_tenant = async (ten, f) => {
   return await db.runWithTenant(ten, f);
 };
 
-module.exports = { maybe_as_tenant };
+const parseJSONorString = (s) => {
+  try {
+    return JSON.parse(s);
+  } catch (e) {
+    return s;
+  }
+};
+module.exports = { maybe_as_tenant, parseJSONorString };
