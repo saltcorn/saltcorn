@@ -1,6 +1,7 @@
 const { Command, flags } = require("@oclif/command");
 const { spawnSync } = require("child_process");
 const path = require("path");
+const { maybe_as_tenant } = require("../common");
 
 class RestoreCommand extends Command {
   async pg_restore(fnm) {
