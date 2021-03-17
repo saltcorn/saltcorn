@@ -59,6 +59,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
+      "multitenancy_enabled"
     ],
     action: "/admin",
   });

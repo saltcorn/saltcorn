@@ -1,6 +1,8 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const latestVersion = require("latest-version");
+const { getConfigFile, configFilePath } = require("../db/connect");
+const fs = require("fs");
 
 const configTypes = {
   site_name: {
@@ -130,6 +132,16 @@ const configTypes = {
       db.set_sql_logging(val);
     },
     blurb: "Print all SQL statements to the standard output",
+  },
+  multitenancy_enabled: {
+    type: "Bool",
+    root_only: true,
+    restart_required: true,
+    label: "Multitenancy enabled",
+    default: db.is_it_multi_tenant(),
+    onChange(val) {
+      set_multitenancy_cfg(val);
+    },
   },
   development_mode: {
     type: "Bool",
@@ -384,6 +396,7 @@ const get_base_url = (req) => {
   }
   return `${req.protocol}://${req.hostname}${ports}/`;
 };
+
 const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
   const { getState } = require("../db/state");
 
@@ -391,6 +404,12 @@ const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
   if (cfg) {
     return email.endsWith(cfg);
   } else return true;
+});
+
+const set_multitenancy_cfg = contract(is.fun(is.bool, is.undefined), (val) => {
+  const cfg = getConfigFile();
+  cfg.multi_tenant = val;
+  fs.writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
 });
 module.exports = {
   getConfig,

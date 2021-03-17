@@ -203,9 +203,12 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};
   const state = getState();
   const fields = [];
+  const tenant = db.getTenantSchema();
 
   for (const name of field_names) {
     values[name] = state.getConfig(name);
+    if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
+      continue;
     const isView = configTypes[name].type.startsWith("View ");
     const isRole = configTypes[name].type === "Role";
     const label = configTypes[name].label || name;
