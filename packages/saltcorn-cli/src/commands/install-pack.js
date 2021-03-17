@@ -49,7 +49,7 @@ class InstallPackCommand extends Command {
   }
 }
 
-InstallPackCommand.description = `Set a configuration value`;
+InstallPackCommand.description = `Install a pack`;
 
 InstallPackCommand.flags = {
   tenant: flags.string({
