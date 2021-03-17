@@ -31,6 +31,7 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin.js");
+const { getConfig } = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
@@ -321,6 +322,7 @@ const get_tenant_info = async (subdomain) => {
     info.nviews = await db.count("_sc_views");
     info.nfiles = await db.count("_sc_files");
     info.npages = await db.count("_sc_pages");
+    info.base_url = await getConfig("base_url");
     return info;
   });
 };
@@ -346,24 +348,68 @@ router.get(
       req,
       active_sub: "Tenants",
       sub2_page: text(subdomain),
-      contents: {
-        type: "card",
-        title: `${text(subdomain)} tenant`,
-        contents: [
-          table(
-            tr(th(req.__("E-mail")), td(info.first_user_email)),
-            tr(th(req.__("Users")), td(info.nusers)),
-            tr(th(req.__("Tables")), td(info.ntables)),
-            tr(th(req.__("Views")), td(info.nviews)),
-            tr(th(req.__("Pages")), td(info.npages)),
-            tr(th(req.__("Files")), td(info.nfiles))
-          ),
-        ],
-      },
+      contents: [
+        {
+          type: "card",
+          title: `${text(subdomain)} tenant`,
+          contents: [
+            table(
+              tr(th(req.__("E-mail")), td(info.first_user_email)),
+              tr(th(req.__("Users")), td(info.nusers)),
+              tr(th(req.__("Tables")), td(info.ntables)),
+              tr(th(req.__("Views")), td(info.nviews)),
+              tr(th(req.__("Pages")), td(info.npages)),
+              tr(th(req.__("Files")), td(info.nfiles))
+            ),
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Settings"),
+          contents: [
+            renderForm(
+              new Form({
+                action: "/tenant/info/" + text(subdomain),
+                submitButtonClass: "btn-outline-primary",
+                onChange: "remove_outline(this)",
+                fields: [
+                  { name: "base_url", label: "Base URL", type: "String" },
+                ],
+                values: { base_url: info.base_url },
+              }),
+              req.csrfToken()
+            ),
+          ],
+        },
+      ],
     });
   })
 );
+router.post(
+  "/info/:subdomain",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
+      res.sendWrap(
+        req.__("Create application"),
+        req.__("Multi-tenancy not enabled")
+      );
+      return;
+    }
+    const { subdomain } = req.params;
+    const { base_url } = req.body;
+    const saneDomain = domain_sanitize(subdomain);
 
+    await db.runWithTenant(saneDomain, async () => {
+      await getState().setConfig("base_url", base_url);
+    });
+    res.redirect(`/tenant/info/${text(subdomain)}`);
+  })
+);
 router.post(
   "/delete/:sub",
   setTenant,
