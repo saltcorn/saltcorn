@@ -196,6 +196,7 @@ module.exports = function (req, res, next) {
           headers: get_headers(req),
           csrfToken: req.csrfToken(),
           role,
+          req
         })
       );
     } else {
@@ -226,6 +227,7 @@ module.exports = function (req, res, next) {
           body,
           headers: get_headers(req),
           role,
+          req
         })
       );
     }
@@ -253,6 +255,7 @@ module.exports = function (req, res, next) {
         body: html.length === 1 ? html[0] : html.join(""),
         headers: get_headers(req, opts.description, pageHeaders),
         role,
+        req
       })
     );
   };
