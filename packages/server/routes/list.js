@@ -203,7 +203,7 @@ router.get(
             type: "breadcrumbs",
             crumbs: [
               { text: req.__("Tables"), href: "/table" },
-              { href: `/table/${table.id}`, text: table.name },
+              { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
           },

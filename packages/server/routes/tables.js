@@ -416,7 +416,7 @@ router.get(
     if (id) table = await Table.findOne({ id });
     else {
       table = await Table.findOne({ name: idorname });
-      id = table.id;
+      
     }
 
     if (!table) {
@@ -424,6 +424,7 @@ router.get(
       res.redirect(`/table`);
       return;
     }
+    id = table.id;
     const nrows = await table.countRows();
     const fields = await table.getFields();
     const { child_relations } = await table.get_child_relations();
