@@ -537,7 +537,7 @@ const get_child_views = contract(
     for (const relation of rels) {
       const related_table = await Table.findOne({ id: relation.table_id });
       const views = await View.find_table_views_where(
-        relation.id,
+        related_table.id,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
