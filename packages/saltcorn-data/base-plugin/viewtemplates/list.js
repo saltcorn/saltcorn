@@ -229,7 +229,7 @@ const configuration_workflow = (req) =>
             });
           const form = new Form({
             fields: formfields,
-            blurb: req.__("Default search form values when first loaded"),
+            blurb: req.__("List options"),
           });
           await form.fill_fkey_options(true);
           return form;
