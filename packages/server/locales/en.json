@@ -654,5 +654,6 @@
 	"A list view shown on the left, to select rows": "A list view shown on the left, to select rows",
 	"The view to show the selected row": "The view to show the selected row",
 	"Location": "Location",
-	"Location of link to create new row": "Location of link to create new row"
+	"Location of link to create new row": "Location of link to create new row",
+	"Options": "Options"
 }
