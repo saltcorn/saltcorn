@@ -190,7 +190,8 @@ const configuration_workflow = (req) =>
           const table_fields = (await table.getFields()).filter(
             (f) => !f.calculated || f.stored
           );
-          const formfields = formfields.push({
+          const formfields = [];
+          formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
