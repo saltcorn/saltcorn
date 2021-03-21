@@ -231,7 +231,8 @@ const configuration_workflow = (req) =>
             name: "_rows_per_page",
             label: req.__("Rows per page"),
             type: "Integer",
-            default: 20
+            default: 20,
+            attributes: { min: 0 },
           });
           const form = new Form({
             fields: formfields,
