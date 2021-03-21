@@ -43,7 +43,9 @@ const configuration_workflow = (req) =>
                 name: "show_view",
                 label: req.__("Single item view"),
                 type: "String",
-                sublabel: req.__("The underlying individual view of each table row"),
+                sublabel: req.__(
+                  "The underlying individual view of each table row"
+                ),
                 required: true,
                 attributes: {
                   options: show_view_opts,
@@ -68,6 +70,31 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+              },
+              {
+                name: "create_view_label",
+                label: req.__("Label for create"),
+                sublabel: req.__(
+                  "Label in link or button to create. Leave blank for a default label"
+                ),
+                type: "String",
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of link to create new row"),
+                required: true,
+                attributes: {
+                  options: [
+                    "Bottom left",
+                    "Bottom right",
+                    "Top left",
+                    "Top right",
+                  ],
+                },
+                type: "String",
+                showIf: { create_view_display: ["Link", "Popup"] },
               },
             ],
           });
@@ -198,6 +225,8 @@ const run = async (
     masonry_columns,
     rows_per_page = 20,
     hide_pagination,
+    create_view_label,
+    create_view_location,
     ...cols
   },
   state,
@@ -238,7 +267,9 @@ const run = async (
       });
     }
   }
-
+  const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
+  const istop = vpos === "Top";
+  const isright = hpos === "right";
   const role =
     extraArgs && extraArgs.req && extraArgs.req.user
       ? extraArgs.req.user.role_id
@@ -259,12 +290,18 @@ const run = async (
       create_link = await create_view.run(state, extraArgs);
     } else {
       create_link = link_view(
-        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(state)}`,
-        `Add ${pluralize(table.name, 1)}`,
+        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
+          state
+        )}`,
+        create_view_label || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
     }
   }
+  const create_link_div = isright
+    ? div({ class: "float-right" }, create_link)
+    : create_link;
+
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
   const showRowInner = (r) =>
@@ -283,14 +320,25 @@ const run = async (
       showRowInner(r)
     );
 
+  const correct_order = ([main, pagin, create]) =>
+    istop ? [create, main, pagin] : [main, pagin, create];
+
   const inner =
     in_card && masonry_columns
       ? div(
-          div({ class: "card-columns" }, sresp.map(showRowInner)),
-          paginate,
-          create_link
+          correct_order([
+            div({ class: "card-columns" }, sresp.map(showRowInner)),
+            paginate,
+            create_link_div,
+          ])
         )
-      : div(div({ class: "row" }, sresp.map(showRow)), paginate, create_link);
+      : div(
+          correct_order([
+            div({ class: "row" }, sresp.map(showRow)),
+            paginate,
+            create_link_div,
+          ])
+        );
 
   return inner;
 };
