@@ -50,7 +50,9 @@ module.exports = router;
 
 const getUserFields = async () => {
   const userTable = await Table.findOne({ name: "users" });
-  const userFields = (await userTable.getFields()).filter((f) => !f.calculated);
+  const userFields = (await userTable.getFields()).filter(
+    (f) => !f.calculated && f.name !== "id"
+  );
   const iterForm = async (cfgField) => {
     const signup_form_name = getState().getConfig(cfgField, "");
     if (signup_form_name) {
