@@ -5,7 +5,7 @@ const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
-const { text, script, button } = require("@saltcorn/markup/tags");
+const { text, script, button, div } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
 const { removeEmptyStrings, removeDefaultColor } = require("../../utils");
 const {
@@ -128,6 +128,22 @@ const configuration_workflow = (req) =>
                       type: "String",
                       showIf: { create_view_display: ["Link", "Popup"] },
                     },
+                    {
+                      name: "create_view_location",
+                      label: req.__("Location"),
+                      sublabel: req.__("Location of link to create new row"),
+                      required: true,
+                      attributes: {
+                        options: [
+                          "Bottom left",
+                          "Bottom right",
+                          "Top left",
+                          "Top right",
+                        ],
+                      },
+                      type: "String",
+                      showIf: { create_view_display: ["Link", "Popup"] },
+                    },
                   ]
                 : []),
             ],
@@ -233,6 +249,7 @@ const run = async (
     create_view_display,
     create_view_label,
     default_state,
+    create_view_location,
   },
   stateWithId,
   extraOpts
@@ -300,6 +317,10 @@ const run = async (
   if (default_state && default_state._omit_header) {
     page_opts.noHeader = true;
   }
+  const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
+  const istop = vpos === "Top";
+  const isright = hpos === "right";
+
   var create_link = "";
   const user_id =
     extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
@@ -325,7 +346,13 @@ const run = async (
     }
   }
 
-  return mkTable(tfields, rows, page_opts) + create_link;
+  const create_link_div = isright
+    ? div({ class: "float-right" }, create_link)
+    : create_link;
+
+  const tableHtml = mkTable(tfields, rows, page_opts);
+
+  return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
 
 const run_action = async (
