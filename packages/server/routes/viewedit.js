@@ -119,7 +119,7 @@ router.get(
               },
               {
                 label: req.__("Table"),
-                key: (r) => r.table,
+                key: (r) => link(`/table/${r.table}`, r.table),
                 sortlink: `javascript:set_state_field('_sortby', 'table')`,
               },
               {

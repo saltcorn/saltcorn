@@ -84,6 +84,7 @@ describe("Table create", () => {
     );
     await browser.clickNav("button[type=submit]");
     await browser.clickNav("button[type=submit]");
+    await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Create view");
     expect(await browser.content()).toContain("PersonList");
     await browser.goto("/view/PersonList");

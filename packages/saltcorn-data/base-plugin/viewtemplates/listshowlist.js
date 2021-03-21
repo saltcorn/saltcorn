@@ -39,6 +39,7 @@ const configuration_workflow = (req) =>
                 name: "list_view",
                 label: req.__("List View"),
                 type: "String",
+                sublabel: req.__("A list view shown on the left, to select rows"),
                 required: false,
                 attributes: {
                   options: list_view_opts,
@@ -48,6 +49,7 @@ const configuration_workflow = (req) =>
                 name: "show_view",
                 label: req.__("Show View"),
                 type: "String",
+                sublabel: req.__("The view to show the selected row"),
                 required: false,
                 attributes: {
                   options: show_view_opts,

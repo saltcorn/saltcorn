@@ -118,6 +118,35 @@ describe("viewedit new List", () => {
       .send("contextEnc=" + ctx)
       .send("stepName=Default state")
       .set("Cookie", loginCookie)
+      .expect(toInclude("Options"));
+  });
+  it("save new views options", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        viewname: "mybooklist",
+        columns: [
+          {
+            type: "Field",
+            field_name: "author",
+          },
+          {
+            type: "Field",
+            field_name: "pages",
+          },
+        ],
+        default_state: {},
+      })
+    );
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/viewedit/config/mybooklist")
+      .send("contextEnc=" + ctx)
+      .send("stepName=Options")
+      .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
@@ -199,6 +228,31 @@ describe("viewedit new List with one field", () => {
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
       .send("stepName=Default state")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Options"));
+  });
+  it("save new views options", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        viewname: "mybooklist1",
+        columns: [
+          {
+            type: "Field",
+            field_name: "author",
+          },
+        ],
+        default_state: {},
+      })
+    );
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/viewedit/config/mybooklist1")
+      .send("contextEnc=" + ctx)
+      .send("stepName=Options")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });

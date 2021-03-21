@@ -51,7 +51,12 @@ class Workflow {
         };
       }
       const toCtx = step.contextField
-        ? { [step.contextField]: valres.success }
+        ? {
+            [step.contextField]: {
+              ...(context[step.contextField] || {}),
+              ...valres.success,
+            },
+          }
         : valres.success;
 
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
@@ -62,7 +67,12 @@ class Workflow {
         //craft_nodes: JSON.parse(decodeURIComponent(body.craft_nodes))
       };
       const toCtx = step.contextField
-        ? { [step.contextField]: toCtx0 }
+        ? {
+            [step.contextField]: {
+              ...(context[step.contextField] || {}),
+              ...toCtx0,
+            },
+          }
         : toCtx0;
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
