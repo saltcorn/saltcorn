@@ -227,6 +227,12 @@ const configuration_workflow = (req) =>
               ),
               type: "Bool",
             });
+          formfields.push({
+            name: "_rows_per_page",
+            label: req.__("Rows per page"),
+            type: "Integer",
+            default: 20
+          });
           const form = new Form({
             fields: formfields,
             blurb: req.__("List options"),
@@ -294,7 +300,7 @@ const run = async (
   const { id, ...state } = stateWithId || {};
   const where = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
-  const rows_per_page = 20;
+  const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   if (!q.limit) q.limit = rows_per_page;
   if (!q.orderBy)
     q.orderBy = (default_state && default_state._order_field) || table.pk_name;
