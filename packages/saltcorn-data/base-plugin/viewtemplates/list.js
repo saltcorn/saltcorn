@@ -132,7 +132,7 @@ const configuration_workflow = (req) =>
                       name: "create_view_location",
                       label: req.__("Location"),
                       sublabel: req.__("Location of link to create new row"),
-                      required: true,
+                      //required: true,
                       attributes: {
                         options: [
                           "Bottom left",
