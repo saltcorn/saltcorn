@@ -172,7 +172,25 @@ const configuration_workflow = (req) =>
               required: false,
             };
           });
-          formfields.push({
+          const form = new Form({
+            fields: formfields,
+            blurb: req.__("Default search form values when first loaded"),
+          });
+          await form.fill_fkey_options(true);
+          return form;
+        },
+      },
+      {
+        name: req.__("Options"),
+        contextField: "default_state", //legacy...
+        form: async (context) => {
+          const table = await Table.findOne(
+            context.table_id || context.exttable_name
+          );
+          const table_fields = (await table.getFields()).filter(
+            (f) => !f.calculated || f.stored
+          );
+          const formfields = formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
