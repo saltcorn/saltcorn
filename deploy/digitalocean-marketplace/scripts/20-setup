@@ -8,3 +8,9 @@ sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO 
 sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
 sudo -iu saltcorn npm install -g @saltcorn/cli@latest --unsafe
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
+
+# Protect the droplet
+ufw limit ssh
+ufw allow https
+ufw allow http
+ufw --force enable
