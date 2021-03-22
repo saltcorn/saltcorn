@@ -151,7 +151,7 @@ class State {
     return Object.keys(this.types);
   }
   addType(t) {
-    this.types[t.name] = t;
+    this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews } };
   }
 
   remove_plugin(name) {
