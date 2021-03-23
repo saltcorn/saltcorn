@@ -3,22 +3,28 @@ const {
   configFilePath,
   getConnectObject,
 } = require("@saltcorn/data/db/connect");
+const {dump} = require('js-yaml');
 
 const print_it = (results, json) => {
-  if (json) console.log(results);
+  if (json) console.log(JSON.stringify(results, null, 2));
   else
-    Object.entries(results).forEach(([k, v]) => {
-      console.log(`${k}: ${v}`);
-    });
+    console.log(dump(results))
 };
 
 class InfoCommand extends Command {
   static aliases = ["paths"];
   async run() {
     const { flags } = this.parse(InfoCommand);
-
+    const db = require("@saltcorn/data/db");
+    const cliPath = __dirname
     const conn = getConnectObject();
-    const res = { configFilePath, fileStore: conn.file_store };
+    const res = {
+      configFilePath,
+      nodeVersion: process.version,
+      databaseVendor: db.isSQLite ? "SQLite" : "PostgreSQL",
+      cliPath,
+      configuration: conn
+    };
     print_it(res, flags.json);
     this.exit(0);
   }
