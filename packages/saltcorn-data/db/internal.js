@@ -1,3 +1,4 @@
+const { footer } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { is_sqlite } = require("./connect");
 
@@ -70,6 +71,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `${quote(sqlsanitizeAllowDots(k))} = ${
         is_sqlite ? "" : "ANY"
       } (${placeHolder(is_sqlite, i())})`
+    : v && v.or && Array.isArray(v.or)
+    ? v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
     : Array.isArray(v)
     ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
@@ -108,6 +111,8 @@ const getVal = ([k, v]) =>
     ? v.searchTerm
     : typeof (v || {}).in !== "undefined"
     ? [v.in]
+    : v && v.or && Array.isArray(v.or)
+    ? v.or.map((vi) => getVal([k, vi])).flat(1)
     : Array.isArray(v)
     ? v.map((vi) => getVal([k, vi])).flat(1)
     : typeof (v || {}).ilike !== "undefined"

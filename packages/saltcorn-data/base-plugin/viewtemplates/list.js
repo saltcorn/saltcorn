@@ -7,7 +7,11 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button, div } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
-const { removeEmptyStrings, removeDefaultColor } = require("../../utils");
+const {
+  removeEmptyStrings,
+  removeDefaultColor,
+  applyAsync,
+} = require("../../utils");
 const {
   field_picker_fields,
   picked_fields_to_query,
@@ -18,6 +22,7 @@ const {
   link_view,
   getActionConfigFields,
   readState,
+  run_action_column,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
@@ -66,6 +71,7 @@ const configuration_workflow = (req) =>
       if (ctx.default_state._create_db_view) {
         await create_db_view(ctx);
       }
+
       return ctx;
     },
     steps: [
@@ -284,6 +290,27 @@ const run = async (
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
   const fields = await table.getFields();
+
+  //move fieldview cfg into configuration subfield in each column
+  for (const col of columns) {
+    if (col.type === "Field") {
+      const field = fields.find((f) => f.name === col.field_name);
+      if (!field) continue;
+      const fieldviews =
+        field.type === "Key"
+          ? getState().keyFieldviews
+          : field.type.fieldviews || {};
+      if (!fieldviews) continue;
+      const fv = fieldviews[col.fieldview];
+      if (fv && fv.configFields) {
+        const cfgForm = await applyAsync(fv.configFields, field);
+        col.configuration = {};
+        for (const formField of cfgForm || []) {
+          col.configuration[formField.name] = col[formField.name];
+        }
+      }
+    }
+  }
   const role =
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
@@ -398,17 +425,19 @@ const run_action = async (
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
-  const configuration = {};
-  const cfgFields = await getActionConfigFields(state_action, table);
-  cfgFields.forEach(({ name }) => {
-    configuration[name] = col[name];
-  });
+  col.configuration = col.configuration || {};
+  if (state_action) {
+    const cfgFields = await getActionConfigFields(state_action, table);
+    cfgFields.forEach(({ name }) => {
+      col.configuration[name] = col[name];
+    });
+  }
   try {
-    const result = await state_action.run({
-      configuration,
+    const result = await run_action_column({
+      col,
+      req,
       table,
       row,
-      user: req.user,
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {

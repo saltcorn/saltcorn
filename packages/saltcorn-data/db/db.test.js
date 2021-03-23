@@ -90,6 +90,10 @@ describe("mkWhere", () => {
       values: [0, 10],
       where: 'where "id">$1 and "id"<$2',
     });
+    expect(mkWhere({ id: { or: [{ gt: 10 }, { lt: 5 }] } })).toStrictEqual({
+      values: [10, 5],
+      where: 'where "id">$1 or "id"<$2',
+    });
   });
   it("should query subselect", () => {
     expect(

@@ -1,6 +1,8 @@
 const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
+const Trigger = require("./models/trigger");
+
 const { getState } = require("./db/state");
 const db = require("./db");
 const { contract, is } = require("contractis");
@@ -181,7 +183,12 @@ const field_picker_fields = contract(
       ...boolfields.map((f) => `Toggle ${f.name}`),
       ...Object.keys(stateActions),
     ];
-
+    const triggers = await Trigger.find({
+      when_trigger: { or: ["API call", "Never"] },
+    });
+    triggers.forEach((tr) => {
+      actions.push(tr.name);
+    });
     const actionConfigFields = [];
     for (const [name, action] of Object.entries(stateActions)) {
       const cfgFields = await getActionConfigFields(action, table);
@@ -199,7 +206,24 @@ const field_picker_fields = contract(
     }
     const fldOptions = fields.map((f) => f.name);
     const { field_view_options } = calcfldViewOptions(fields, false);
-
+    const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+    const fvConfigFields = [];
+    for (const [field_name, fvOptFields] of Object.entries(
+      fieldViewConfigForms
+    )) {
+      for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
+        for (const formField of formFields) {
+          fvConfigFields.push({
+            ...formField,
+            showIf: {
+              type: "Field",
+              field_name,
+              fieldview,
+            },
+          });
+        }
+      }
+    }
     const link_view_opts = await get_link_view_opts(table, viewname);
 
     const { parent_field_list } = await table.get_parent_relations(true);
@@ -287,6 +311,7 @@ const field_picker_fields = contract(
         },
         showIf: { type: "Field" },
       },
+      ...fvConfigFields,
       {
         name: "action_name",
         label: __("Action"),
@@ -955,6 +980,22 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   return tbl;
 };
 
+const run_action_column = async ({ col, req, ...rest }) => {
+  let state_action = getState().actions[col.action_name];
+  let configuration;
+  if (state_action) configuration = col.configuration;
+  else {
+    const trigger = await Trigger.findOne({ name: col.action_name });
+    state_action = getState().actions[trigger.action];
+    configuration = trigger.configuration;
+  }
+  return await state_action.run({
+    configuration,
+    user: req.user,
+    ...rest,
+  });
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -973,5 +1014,6 @@ module.exports = {
   getActionConfigFields,
   calcfldViewConfig,
   strictParseInt,
+  run_action_column,
   json_list_to_external_table,
 };

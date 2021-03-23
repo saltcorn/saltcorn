@@ -134,6 +134,7 @@ function rep_down(e) {
 $(function () {
   $("form").change(apply_showif);
   apply_showif();
+  apply_showif();
   $("[data-inline-edit-dest-url]").each(function () {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();

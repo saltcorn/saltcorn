@@ -6,6 +6,8 @@ const File = require("../../models/file");
 const Table = require("../../models/table");
 const Page = require("../../models/page");
 const Workflow = require("../../models/workflow");
+const Trigger = require("../../models/trigger");
+
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const { eachView } = require("../../models/layout");
@@ -22,6 +24,7 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   getActionConfigFields,
+  run_action_column,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -55,6 +58,12 @@ const configuration_workflow = (req) =>
             ...boolfields.map((f) => `Toggle ${f.name}`),
             ...Object.keys(stateActions),
           ];
+          const triggers = await Trigger.find({
+            when_trigger: { or: ["API call", "Never"] },
+          });
+          triggers.forEach((tr) => {
+            actions.push(tr.name);
+          });
           const actionConfigForms = {};
           for (const [name, action] of Object.entries(stateActions)) {
             if (action.configFields) {
@@ -149,7 +158,7 @@ const get_state_fields = () => [
     name: "id",
     type: "Integer",
     required: true,
-    primary_key: true
+    primary_key: true,
   },
 ];
 
@@ -444,14 +453,8 @@ const run_action = async (
   );
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
-  const state_action = getState().actions[col.action_name];
   try {
-    const result = await state_action.run({
-      configuration: col.configuration,
-      table,
-      row,
-      user: req.user,
-    });
+    const result = await run_action_column({ col, req, table, row });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
     return { json: { error: e.message || e } };

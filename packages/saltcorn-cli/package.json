@@ -18,6 +18,7 @@
     "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
     "inquirer": "^7.1.0",
+    "js-yaml": "^4.0.0",
     "sudo": "^1.0.3",
     "tcp-port-used": "^1.0.1"
   },

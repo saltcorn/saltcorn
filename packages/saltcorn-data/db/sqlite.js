@@ -125,6 +125,13 @@ const count = async (tbl, whereObj) => {
   return parseInt(tq.rows[0]["COUNT(*)"]);
 };
 
+const getVersion = async () => {
+  const sql = `SELECT sqlite_version();`;
+  sql_log(sql);
+  const tq = await query(sql);
+  return tq.rows[0]["sqlite_version()"];
+};
+
 const drop_reset_schema = async () => {
   await sqliteDatabase.close();
   await fs.unlink(current_filepath);
@@ -168,4 +175,5 @@ module.exports = {
   deleteWhere,
   add_unique_constraint,
   drop_unique_constraint,
+  getVersion,
 };
