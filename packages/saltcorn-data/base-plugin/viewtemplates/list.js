@@ -7,7 +7,11 @@ const Workflow = require("../../models/workflow");
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button, div } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
-const { removeEmptyStrings, removeDefaultColor , applyAsync} = require("../../utils");
+const {
+  removeEmptyStrings,
+  removeDefaultColor,
+  applyAsync,
+} = require("../../utils");
 const {
   field_picker_fields,
   picked_fields_to_query,
@@ -299,7 +303,6 @@ const run = async (
       if (!fieldviews) continue;
       const fv = fieldviews[col.fieldview];
       if (fv && fv.configFields) {
-
         const cfgForm = await applyAsync(fv.configFields, field);
         col.configuration = {};
         for (const formField of cfgForm || []) {
