@@ -25,10 +25,12 @@ class InfoCommand extends Command {
     };
     try {
       res.databaseVersion = await db.getVersion();
+      res.configuration = conn;
     } catch (e) {
+      res.configuration = conn;
       res.connectionError = e.message;
     }
-    res.configuration = conn;
+
     print_it(res, flags.json);
     this.exit(0);
   }
