@@ -18,6 +18,7 @@ const {
   link_view,
   getActionConfigFields,
   readState,
+  run_action_column,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
@@ -398,17 +399,19 @@ const run_action = async (
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   const state_action = getState().actions[col.action_name];
-  const configuration = {};
-  const cfgFields = await getActionConfigFields(state_action, table);
-  cfgFields.forEach(({ name }) => {
-    configuration[name] = col[name];
-  });
+  col.configuration = col.configuration || {};
+  if (state_action) {
+    const cfgFields = await getActionConfigFields(state_action, table);
+    cfgFields.forEach(({ name }) => {
+      col.configuration[name] = col[name];
+    });
+  }
   try {
-    const result = await state_action.run({
-      configuration,
+    const result = await run_action_column({
+      col,
+      req,
       table,
       row,
-      user: req.user,
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {

@@ -183,7 +183,12 @@ const field_picker_fields = contract(
       ...boolfields.map((f) => `Toggle ${f.name}`),
       ...Object.keys(stateActions),
     ];
-
+    const triggers = await Trigger.find({
+      when_trigger: { or: ["API call", "Never"] },
+    });
+    triggers.forEach((tr) => {
+      actions.push(tr.name);
+    });
     const actionConfigFields = [];
     for (const [name, action] of Object.entries(stateActions)) {
       const cfgFields = await getActionConfigFields(action, table);
