@@ -60,6 +60,13 @@ const count = async (tbl, whereObj) => {
   return parseInt(tq.rows[0].count);
 };
 
+const getVersion = async () => {
+  const sql = `SELECT version();`;
+  sql_log(sql);
+  const tq = await pool.query(sql);
+  return tq.rows[0].version;
+};
+
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -185,4 +192,5 @@ module.exports = {
   add_unique_constraint,
   drop_unique_constraint,
   reset_sequence,
+  getVersion,
 };

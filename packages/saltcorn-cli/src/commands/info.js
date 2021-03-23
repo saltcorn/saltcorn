@@ -3,12 +3,11 @@ const {
   configFilePath,
   getConnectObject,
 } = require("@saltcorn/data/db/connect");
-const {dump} = require('js-yaml');
+const { dump } = require("js-yaml");
 
 const print_it = (results, json) => {
   if (json) console.log(JSON.stringify(results, null, 2));
-  else
-    console.log(dump(results))
+  else console.log(dump(results, { lineWidth: process.stdout.columns }));
 };
 
 class InfoCommand extends Command {
@@ -16,15 +15,20 @@ class InfoCommand extends Command {
   async run() {
     const { flags } = this.parse(InfoCommand);
     const db = require("@saltcorn/data/db");
-    const cliPath = __dirname
+    const cliPath = __dirname;
     const conn = getConnectObject();
     const res = {
       configFilePath,
       nodeVersion: process.version,
-      databaseVendor: db.isSQLite ? "SQLite" : "PostgreSQL",
       cliPath,
-      configuration: conn
+      databaseVendor: db.isSQLite ? "SQLite" : "PostgreSQL",
     };
+    try {
+      res.databaseVersion = await db.getVersion();
+    } catch (e) {
+      res.connectionError = e.message;
+    }
+    res.configuration = conn;
     print_it(res, flags.json);
     this.exit(0);
   }
