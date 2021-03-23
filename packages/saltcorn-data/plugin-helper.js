@@ -1,6 +1,8 @@
 const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
+const Trigger = require("./models/trigger");
+
 const { getState } = require("./db/state");
 const db = require("./db");
 const { contract, is } = require("contractis");
@@ -955,6 +957,21 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   return tbl;
 };
 
+const run_action_column = async({col, req}) => {
+  let state_action = getState().actions[col.action_name];
+  let configuration;
+  if (state_action) configuration = col.configuration;
+  else {
+    const trigger = await Trigger.findOne({ name: col.action_name });
+    state_action = getState().actions[trigger.action];
+    configuration = trigger.configuration;
+  }
+  return await state_action.run({
+    configuration,
+    user: req.user,
+  });
+}
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -972,6 +989,6 @@ module.exports = {
   link_view,
   getActionConfigFields,
   calcfldViewConfig,
-  strictParseInt,
+  strictParseInt,run_action_column,
   json_list_to_external_table,
 };
