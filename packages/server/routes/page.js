@@ -11,6 +11,7 @@ const {
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
+const Trigger = require("@saltcorn/data/models/trigger");
 
 const router = new Router();
 module.exports = router;
@@ -66,11 +67,18 @@ router.post(
         },
       });
       if (col) {
-        const state_action = getState().actions[col.action_name];
+        let state_action = getState().actions[col.action_name];
+        let configuration;
+        if (state_action) configuration = col.configuration;
+        else {
+          const trigger = await Trigger.findOne({ name: col.action_name });
+          state_action = getState().actions[trigger.action];
+          configuration = trigger.configuration;
+        }
 
         try {
           const result = await state_action.run({
-            configuration: col.configuration,
+            configuration,
             user: req.user,
           });
           res.json({ success: "ok", ...(result || {}) });

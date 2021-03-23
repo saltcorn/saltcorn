@@ -9,6 +9,7 @@ const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
+const Trigger = require("@saltcorn/data/models/trigger");
 const { getViews } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 
@@ -139,11 +140,16 @@ const pageFlow = (req) =>
           const actions = Object.entries(stateActions)
             .filter(([k, v]) => !v.requireRow)
             .map(([k, v]) => k);
-
+          const triggers = await Trigger.find({
+            when_trigger: { or: ["API call", "Never"] },
+          });
+          triggers.forEach((tr) => {
+            actions.push(tr.name);
+          });
           const actionConfigForms = {};
           for (const name of actions) {
             const action = stateActions[name];
-            if (action.configFields) {
+            if (action && action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
