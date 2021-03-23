@@ -957,7 +957,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   return tbl;
 };
 
-const run_action_column = async({col, req}) => {
+const run_action_column = async ({ col, req, ...rest }) => {
   let state_action = getState().actions[col.action_name];
   let configuration;
   if (state_action) configuration = col.configuration;
@@ -969,8 +969,9 @@ const run_action_column = async({col, req}) => {
   return await state_action.run({
     configuration,
     user: req.user,
+    ...rest,
   });
-}
+};
 
 module.exports = {
   field_picker_fields,
@@ -989,6 +990,7 @@ module.exports = {
   link_view,
   getActionConfigFields,
   calcfldViewConfig,
-  strictParseInt,run_action_column,
+  strictParseInt,
+  run_action_column,
   json_list_to_external_table,
 };
