@@ -206,7 +206,24 @@ const field_picker_fields = contract(
     }
     const fldOptions = fields.map((f) => f.name);
     const { field_view_options } = calcfldViewOptions(fields, false);
-
+    const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+    const fvConfigFields = [];
+    for (const [field_name, fvOptFields] of Object.entries(
+      fieldViewConfigForms
+    )) {
+      for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
+        for (const formField of formFields) {
+          fvConfigFields.push({
+            ...formField,
+            showIf: {
+              type: "Field",
+              field_name,
+              fieldview,
+            },
+          });
+        }
+      }
+    }
     const link_view_opts = await get_link_view_opts(table, viewname);
 
     const { parent_field_list } = await table.get_parent_relations(true);
@@ -294,6 +311,7 @@ const field_picker_fields = contract(
         },
         showIf: { type: "Field" },
       },
+      ...fvConfigFields,
       {
         name: "action_name",
         label: __("Action"),
