@@ -4,6 +4,8 @@ const {
   getConnectObject,
 } = require("@saltcorn/data/db/connect");
 const { dump } = require("js-yaml");
+const packagejson = require("../../package.json");
+
 
 const print_it = (results, json) => {
   if (json) console.log(JSON.stringify(results, null, 2));
@@ -18,6 +20,7 @@ class InfoCommand extends Command {
     const cliPath = __dirname;
     const conn = getConnectObject();
     const res = {
+      saltcornVersion: packagejson.version,
       configFilePath,
       nodeVersion: process.version,
       cliPath,
