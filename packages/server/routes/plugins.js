@@ -675,7 +675,10 @@ router.post(
       return;
     }
     const depviews = await plugin.dependant_views();
-    if (depviews.length === 0) {
+    if (
+      depviews.length === 0 ||
+      getState().getConfig("development_mode", false)
+    ) {
       await plugin.delete();
       req.flash("success", req.__(`Plugin %s removed.`, plugin.name));
     } else {
