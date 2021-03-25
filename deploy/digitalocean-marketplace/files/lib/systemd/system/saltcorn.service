@@ -9,6 +9,7 @@ User=saltcorn
 WorkingDirectory=/home/saltcorn
 ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
 Restart=always
+Environment="NODE_ENV=production"
 
 [Install]
 WantedBy=multi-user.target

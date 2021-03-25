@@ -6,7 +6,7 @@ sudo -iu saltcorn createdb saltcorn
 sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
 
 sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
-sudo -iu saltcorn npm install -g @saltcorn/cli@latest --unsafe
+sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsafe
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
 
 # Protect the droplet

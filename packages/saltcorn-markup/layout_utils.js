@@ -116,7 +116,12 @@ const leftNavBar = ({ name, logo }) => [
   ),
 ];
 
-const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
+const navbar = (
+  brand,
+  sections,
+  currentUrl,
+  opts = { fixedTop: true}
+) =>
   nav(
     {
       class: `navbar navbar-expand-lg ${
@@ -125,7 +130,7 @@ const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
       id: "mainNav",
     },
     div(
-      { class: "container" },
+      { class: opts.fluid ? "container-fluid" : "container" },
       leftNavBar(brand),
       rightNavBar(currentUrl, sections)
     )
