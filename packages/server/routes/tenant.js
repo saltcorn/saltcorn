@@ -6,7 +6,12 @@ const {
   domain_sanitize,
   deleteTenant,
 } = require("@saltcorn/data/models/tenant");
-const { renderForm, link, post_delete_btn, mkTable } = require("@saltcorn/markup");
+const {
+  renderForm,
+  link,
+  post_delete_btn,
+  mkTable,
+} = require("@saltcorn/markup");
 const {
   div,
   nbsp,
@@ -25,6 +30,7 @@ const url = require("url");
 const { loadAllPlugins } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
+const File = require("@saltcorn/data/models/file");
 const {
   send_infoarch_page,
   send_admin_page,
@@ -342,6 +348,10 @@ router.get(
     }
     const { subdomain } = req.params;
     const info = await get_tenant_info(subdomain);
+    let files;
+    await db.runWithTenant(subdomain, async () => {
+      files = await File.find({});
+    });
     send_infoarch_page({
       res,
       req,
@@ -379,6 +389,25 @@ router.get(
               req.csrfToken()
             ),
           ],
+        },
+        {
+          type: "card",
+          title: req.__("Files"),
+          contents: mkTable(
+            [
+              {
+                label: req.__("Name"),
+                key: (r) =>
+                  link(
+                    `${getNewURL(req, text(subdomain))}files/serve/${r.id}`,
+                    r.filename
+                  ),
+              },
+              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+              { label: req.__("Media type"), key: (r) => r.mimetype },
+            ],
+            files
+          ),
         },
       ],
     });
