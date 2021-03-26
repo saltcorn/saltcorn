@@ -357,59 +357,61 @@ router.get(
       req,
       active_sub: "Tenants",
       sub2_page: text(subdomain),
-      contents: [
-        {
-          type: "card",
-          title: `${text(subdomain)} tenant`,
-          contents: [
-            table(
-              tr(th(req.__("E-mail")), td(info.first_user_email)),
-              tr(th(req.__("Users")), td(info.nusers)),
-              tr(th(req.__("Tables")), td(info.ntables)),
-              tr(th(req.__("Views")), td(info.nviews)),
-              tr(th(req.__("Pages")), td(info.npages)),
-              tr(th(req.__("Files")), td(info.nfiles))
-            ),
-          ],
-        },
-        {
-          type: "card",
-          title: req.__("Settings"),
-          contents: [
-            renderForm(
-              new Form({
-                action: "/tenant/info/" + text(subdomain),
-                submitButtonClass: "btn-outline-primary",
-                onChange: "remove_outline(this)",
-                fields: [
-                  { name: "base_url", label: "Base URL", type: "String" },
-                ],
-                values: { base_url: info.base_url },
-              }),
-              req.csrfToken()
-            ),
-          ],
-        },
-        {
-          type: "card",
-          title: req.__("Files"),
-          contents: mkTable(
-            [
-              {
-                label: req.__("Name"),
-                key: (r) =>
-                  link(
-                    `${getNewURL(req, text(subdomain))}files/serve/${r.id}`,
-                    r.filename
-                  ),
-              },
-              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-              { label: req.__("Media type"), key: (r) => r.mimetype },
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: `${text(subdomain)} tenant`,
+            contents: [
+              table(
+                tr(th(req.__("E-mail")), td(info.first_user_email)),
+                tr(th(req.__("Users")), td(info.nusers)),
+                tr(th(req.__("Tables")), td(info.ntables)),
+                tr(th(req.__("Views")), td(info.nviews)),
+                tr(th(req.__("Pages")), td(info.npages)),
+                tr(th(req.__("Files")), td(info.nfiles))
+              ),
             ],
-            files
-          ),
-        },
-      ],
+          },
+          {
+            type: "card",
+            title: req.__("Settings"),
+            contents: [
+              renderForm(
+                new Form({
+                  action: "/tenant/info/" + text(subdomain),
+                  submitButtonClass: "btn-outline-primary",
+                  onChange: "remove_outline(this)",
+                  fields: [
+                    { name: "base_url", label: "Base URL", type: "String" },
+                  ],
+                  values: { base_url: info.base_url },
+                }),
+                req.csrfToken()
+              ),
+            ],
+          },
+          {
+            type: "card",
+            title: req.__("Files"),
+            contents: mkTable(
+              [
+                {
+                  label: req.__("Name"),
+                  key: (r) =>
+                    link(
+                      `${getNewURL(req, text(subdomain))}files/serve/${r.id}`,
+                      r.filename
+                    ),
+                },
+                { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+                { label: req.__("Media type"), key: (r) => r.mimetype },
+              ],
+              files
+            ),
+          },
+        ],
+      },
     });
   })
 );
