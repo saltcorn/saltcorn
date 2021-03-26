@@ -417,7 +417,7 @@ router.post(
     const valres = form.validate(req.body);
     if (valres.success) {
       const home_page_by_role =
-        [...getState().getConfig("home_page_by_role", [])] || [];
+        getState().getConfigCopy("home_page_by_role", []) || [];
       for (const role of roles) {
         home_page_by_role[role.id] = valres.success[role.role];
       }

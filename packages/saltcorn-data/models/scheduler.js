@@ -16,7 +16,7 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   const state = getState();
   const cfgField = `next_${name.toLowerCase()}_event`;
   const now = new Date();
-  let due = state.getConfig(cfgField, false);
+  let due = state.getConfigCopy(cfgField, false);
   if (!due) {
     //first run, set rnd due
     const due_in_hrs = Math.random() * hours;

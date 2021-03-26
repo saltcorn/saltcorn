@@ -194,7 +194,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const layout_by_role = getState().getConfig("layout_by_role");
+    const layout_by_role = getState().getConfigCopy("layout_by_role");
     layout_by_role[+id] = req.body.layout;
     await getState().setConfig("layout_by_role", layout_by_role);
     req.flash("success", req.__(`Saved layout for role`));

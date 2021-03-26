@@ -163,7 +163,7 @@ const uninstall_pack = contract(
     }
 
     if (name) {
-      const existPacks = getState().getConfig("installed_packs", []);
+      const existPacks = getState().getConfigCopy("installed_packs", []);
 
       await getState().setConfig(
         "installed_packs",
@@ -179,7 +179,7 @@ const add_to_menu = contract(
     is.promise(is.undefined)
   ),
   async (item) => {
-    const current_menu = getState().getConfig("menu_items", []);
+    const current_menu = getState().getConfigCopy("menu_items", []);
     current_menu.push(item);
     await getState().setConfig("menu_items", current_menu);
   }
@@ -261,7 +261,7 @@ const install_pack = contract(
       const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
       await Page.create(pageSpec);
       for (const role of root_page_for_roles || []) {
-        const current_root = getState().getConfig(role + "_home", "");
+        const current_root = getState().getConfigCopy(role + "_home", "");
         if (!current_root || current_root === "")
           await getState().setConfig(role + "_home", pageSpec.name);
       }
@@ -274,7 +274,7 @@ const install_pack = contract(
         });
     }
     if (name) {
-      const existPacks = getState().getConfig("installed_packs", []);
+      const existPacks = getState().getConfigCopy("installed_packs", []);
       await getState().setConfig("installed_packs", [...existPacks, name]);
     }
   }
@@ -292,8 +292,8 @@ const is_stale = contract(
 const fetch_available_packs = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
   async () => {
-    const stored = getState().getConfig("available_packs", false);
-    const stored_at = getState().getConfig("available_packs_fetched_at", false);
+    const stored = getState().getConfigCopy("available_packs", false);
+    const stored_at = getState().getConfigCopy("available_packs_fetched_at", false);
     //console.log("in fetch", stored_at, stored)
     if (!stored || !stored_at || is_stale(stored_at)) {
       const from_api = await fetch_available_packs_from_store();
