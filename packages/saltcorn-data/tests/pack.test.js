@@ -164,7 +164,7 @@ describe("pack store", () => {
     expect(is_stale(stored_at)).toBe(false);
     await getState().setConfig("available_packs", []);
     const packs1 = await fetch_available_packs();
-    expect(packs1).toStrictEqual([]);
+    expect(packs1).toEqual([]);
   });
   it("reset the pack store cache", async () => {
     getState().deleteConfig("available_packs");
@@ -320,7 +320,7 @@ describe("pack install", () => {
     const tbl = await Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
-    expect(menu).toStrictEqual([
+    expect(menu).toEqual([
       { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
       { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 },
     ]);
