@@ -39,7 +39,9 @@ const configuration_workflow = (req) =>
                 name: "list_view",
                 label: req.__("List View"),
                 type: "String",
-                sublabel: req.__("A list view shown on the left, to select rows"),
+                sublabel: req.__(
+                  "A list view shown on the left, to select rows"
+                ),
                 required: false,
                 attributes: {
                   options: list_view_opts,
@@ -184,6 +186,7 @@ const run = async (
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
             if (!myrow) myrow = await table.getRow({ id });
+            if (!myrow) continue;
             const ptab_name = prelfld;
             const psubview = await View.findOne({ name: pvname });
             if (!psubview)
