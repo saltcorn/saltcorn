@@ -701,7 +701,7 @@ router.post(
       //we can only save min role
       const table = await Table.findOne(v.name);
       if (table) {
-        const exttables_min_role_read = getState().getConfig(
+        const exttables_min_role_read = getState().getConfigCopy(
           "exttables_min_role_read",
           {}
         );

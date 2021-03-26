@@ -358,7 +358,7 @@ const remove_from_menu = contract(
   async (item) => {
     const { getState } = require("../db/state");
 
-    const current_menu = getState().getConfig("menu_items", []);
+    const current_menu = getState().getConfigCopy("menu_items", []);
     const new_menu = current_menu.filter(
       (menuitem) =>
         !(
@@ -382,7 +382,7 @@ const get_latest_npm_version = async (pkg) => {
   }
   try {
     const latest = await latestVersion(pkg);
-    const stored1 = getState().getConfig("latest_npm_version", {});
+    const stored1 = getState().getConfigCopy("latest_npm_version", {});
     await getState().setConfig("latest_npm_version", {
       ...stored1,
       [pkg]: { time: new Date(), version: latest },

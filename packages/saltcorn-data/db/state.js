@@ -22,6 +22,7 @@ const {
   configTypes,
 } = require("../models/config");
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
+const { structuredClone } = require("../utils");
 
 class State {
   constructor() {
@@ -73,6 +74,9 @@ class State {
       return this.configs[key].value;
     if (def) return def;
     else return configTypes[key] && configTypes[key].default;
+  }
+  getConfigCopy(key, def) {
+    return structuredClone(this.getConfig(key, def));
   }
 
   async setConfig(key, value) {
