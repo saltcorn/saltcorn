@@ -199,6 +199,9 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
+          borderRadius={segment.borderRadius}
+          borderColor={segment.borderColor}
+          borderRadiusUnit={segment.borderRadiusUnit}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
           margin={segment.margin || [0, 0, 0, 0]}
@@ -302,6 +305,9 @@ export const craftToSaltcorn = (nodes) => {
           type: "container",
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
+          borderColor: node.props.borderColor,
+          borderRadius: node.props.borderRadius,
+          borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
           minHeight: node.props.minHeight,

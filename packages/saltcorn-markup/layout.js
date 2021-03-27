@@ -276,6 +276,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         minScreenWidth,
         showIfFormulaInputs,
         show_for_owner,
+        borderRadius,
+        borderRadiusUnit,
+        borderColor,
       } = segment;
       if (hide) return "";
       if (
@@ -329,7 +332,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               "width"
             )}${sizeProp("widthPct", "width", "%")}border: ${
               borderWidth || 0
-            }px ${borderStyle} black;${ppBox("padding")}${ppBox("margin")} ${
+            }px ${borderStyle} ${borderColor || "black"};${sizeProp(
+              "borderRadius",
+              "border-radius"
+            )}${ppBox(
+              "padding"
+            )}${ppBox("margin")} ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"

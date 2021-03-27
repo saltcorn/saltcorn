@@ -34,6 +34,9 @@ export const Container = ({
   margin,
   padding,
   minScreenWidth,
+  borderRadius,
+  borderRadiusUnit,
+  borderColor,
 }) => {
   const {
     selected,
@@ -52,7 +55,7 @@ export const Container = ({
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        border: `${borderWidth}px ${borderStyle} black`,
+        border: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
@@ -76,6 +79,11 @@ export const Container = ({
               height: `${height}${heightUnit || "px"}`,
             }
           : {}),
+        ...(typeof borderRadius !== "undefined"
+          ? {
+              borderRadius: `${borderRadius}${borderRadiusUnit || "px"}`,
+            }
+          : {}),
         ...(typeof width !== "undefined"
           ? {
               width: `${width}${widthUnit || "px"}`,
@@ -92,6 +100,9 @@ export const ContainerSettings = () => {
   const node = useNode((node) => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
+    borderRadius: node.data.props.borderRadius,
+    borderRadiusUnit: node.data.props.borderRadiusUnit,
+    borderColor: node.data.props.borderColor,
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
@@ -121,6 +132,9 @@ export const ContainerSettings = () => {
     actions: { setProp },
     borderWidth,
     borderStyle,
+    borderRadius,
+    borderRadiusUnit,
+    borderColor,
     minHeight,
     height,
     width,
@@ -199,6 +213,53 @@ export const ContainerSettings = () => {
                 <option>inset</option>
                 <option>outset</option>
               </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Color</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={borderColor}
+                className="form-control-sm"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderColor = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Radius</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={borderRadius}
+                step="1"
+                min="0"
+                max="999"
+                className="w-50 form-control-sm d-inline"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderRadius = e.target.value;
+                  })
+                }
+              />
+              <SelectUnits
+                value={borderRadiusUnit}
+                className="w-50 form-control-sm d-inline"
+                vert={true}
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderRadiusUnit = e.target.value;
+                  })
+                }
+              />
             </td>
           </tr>
           <tr>
