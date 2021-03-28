@@ -143,6 +143,7 @@ export const ContainerSettings = () => {
     gradStartColor: node.data.props.gradStartColor,
     gradEndColor: node.data.props.gradEndColor,
     gradDirection: node.data.props.gradDirection,
+    overflow: node.data.props.overflow,
   }));
   const {
     actions: { setProp },
@@ -181,6 +182,7 @@ export const ContainerSettings = () => {
     gradEndColor,
     gradDirection,
     fullPageWidth,
+    overflow,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -481,6 +483,27 @@ export const ContainerSettings = () => {
                 <option value="center">Center</option>
                 <option value="justify">Justify</option>
                 <option value="right">Right</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Overflow</label>
+            </td>
+            <td>
+              <select
+                value={overflow}
+                className="form-control-sm"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.overflow = e.target.value;
+                  })
+                }
+              >
+                <option value="visible">visible</option>
+                <option value="hidden">hidden</option>
+                <option value="scroll">scroll</option>
+                <option value="auto">auto</option>
               </select>
             </td>
           </tr>

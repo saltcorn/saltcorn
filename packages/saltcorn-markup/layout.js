@@ -287,6 +287,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         gradEndColor,
         gradDirection,
         fullPageWidth,
+        overflow
       } = segment;
       if (hide) return "";
       if (
@@ -349,7 +350,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             }px ${borderStyle} ${borderColor || "black"};${sizeProp(
               "borderRadius",
               "border-radius"
-            )}${ppBox("padding")}${ppBox("margin")} ${
+            )}${ppBox("padding")}${ppBox("margin")}${overflow && overflow!=="visible"? ` overflow: ${overflow};`:''} ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"

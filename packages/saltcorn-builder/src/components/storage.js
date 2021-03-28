@@ -212,6 +212,7 @@ export const layoutToNodes = (layout, query, actions) => {
           gradDirection={segment.gradDirection}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
+          overflow={segment.overflow}
           margin={segment.margin || [0, 0, 0, 0]}
           padding={segment.padding || [0, 0, 0, 0]}
           minHeight={segment.minHeight}
@@ -225,7 +226,11 @@ export const layoutToNodes = (layout, query, actions) => {
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
-          fullPageWidth={typeof segment.fullPageWidth === "undefined" ? false : segment.fullPageWidth}
+          fullPageWidth={
+            typeof segment.fullPageWidth === "undefined"
+              ? false
+              : segment.fullPageWidth
+          }
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
@@ -333,6 +338,7 @@ export const craftToSaltcorn = (nodes) => {
           hAlign: node.props.hAlign,
           margin: node.props.margin,
           padding: node.props.padding,
+          overflow: node.props.overflow,
           block: node.props.block || false,
           fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
