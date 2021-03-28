@@ -335,9 +335,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             }px ${borderStyle} ${borderColor || "black"};${sizeProp(
               "borderRadius",
               "border-radius"
-            )}${ppBox(
-              "padding"
-            )}${ppBox("margin")} ${
+            )}${ppBox("padding")}${ppBox("margin")} ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"
@@ -388,7 +386,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                   segment.widths === false
                     ? ""
                     : `col-${
-                        segment.breakpoint ? segment.breakpoint + "-" : ""
+                        segment.breakpoint
+                          ? segment.breakpoint + "-"
+                          : segment.breakpoints && segment.breakpoint[ixb]
+                          ? segment.breakpoint[ixb] + "-"
+                          : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""
                       }`,

@@ -48,21 +48,21 @@ export const ColumnsSettings = () => {
     actions: { setProp },
     widths,
     ncols,
-    breakpoint,
+    breakpoints,
   } = useNode((node) => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
-    breakpoint: node.data.props.breakpoint,
+    breakpoints: node.data.props.breakpoints,
   }));
   return (
     <div>
       <table>
         <tbody>
           <tr>
-            <td>
+            <td colSpan="3">
               <label>Number of columns</label>
             </td>
-            <td colSpan="2">
+            <td>
               <input
                 type="number"
                 value={ncols}
@@ -79,11 +79,14 @@ export const ColumnsSettings = () => {
               />
             </td>
           </tr>
+          <tr>
+            <th colSpan="4">Widths &amp; Breakpoint</th>
+          </tr>
           {ntimes(ncols, (ix) => (
             <Fragment key={ix}>
               <tr>
                 {" "}
-                <th colSpan="3">Column {ix + 1}</th>
+                <th colSpan="4">Column {ix + 1}</th>
               </tr>
               <tr>
                 <td>
@@ -107,27 +110,24 @@ export const ColumnsSettings = () => {
                   )}
                 </td>
                 <td>/12</td>
+                <td>
+                  <select
+                    className="form-control"
+                    value={breakpoints[ix]}
+                    onChange={(e) =>
+                      setProp((prop) => (prop.breakpoints[ix] = e.target.value))
+                    }
+                  >
+                    <option disabled>Breakpoint</option>
+                    <option value="">None</option>
+                    <option value="sm">Small</option>
+                    <option value="md">Medium</option>
+                    <option value="lg">Large</option>
+                  </select>
+                </td>
               </tr>
             </Fragment>
           ))}{" "}
-          <tr>
-            <td>
-              <label>Breakpoint</label>
-            </td>
-            <td>
-              <select
-                className="form-control"
-                value={breakpoint}
-                onChange={(e) =>
-                  setProp((prop) => (prop.breakpoint = e.target.value))
-                }
-              >
-                <option value="">None</option>
-                <option value="sm">Small</option>
-                <option value="md">Medium</option>
-              </select>
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>
@@ -138,7 +138,7 @@ Columns.craft = {
   defaultProps: {
     widths: [6],
     ncols: 2,
-    breakpoint: "",
+    breakpoints: ["sm", "sm"],
   },
   related: {
     settings: ColumnsSettings,
