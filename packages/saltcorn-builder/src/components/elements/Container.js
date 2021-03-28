@@ -682,17 +682,21 @@ export const ContainerSettings = () => {
         </OrFormula>
 
         <label>Hover color</label>
-
-        <input
-          type="color"
+        <select
           value={hoverColor}
-          className="form-control-sm"
+          className="form-control"
           onChange={(e) =>
             setProp((prop) => {
               prop.hoverColor = e.target.value;
             })
           }
-        />
+        >
+          <option value="">None</option>
+          <option value="gray">gray</option>
+          <option value="gray-dark">gray-dark</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+        </select>
       </div>
 
       <div accordiontitle="Custom class/CSS">

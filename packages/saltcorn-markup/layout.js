@@ -280,7 +280,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         borderRadiusUnit,
         borderColor,
         url,
-        hoverColor,
+        hoverColor
       } = segment;
       if (hide) return "";
       if (
@@ -326,6 +326,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 "justify-content-center",
               displayClass,
               url && "with-link",
+              hoverColor && `hover-${hoverColor}`
             ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
 
@@ -393,8 +394,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                     : `col-${
                         segment.breakpoint
                           ? segment.breakpoint + "-"
-                          : segment.breakpoints && segment.breakpoint[ixb]
-                          ? segment.breakpoint[ixb] + "-"
+                          : segment.breakpoints && segment.breakpoints[ixb]
+                          ? segment.breakpoints[ixb] + "-"
                           : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""

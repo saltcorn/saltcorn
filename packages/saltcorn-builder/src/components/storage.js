@@ -32,7 +32,7 @@ const getColWidths = (segment) => {
   return widths;
 };
 const default_breakpoints = segment => 
-  ntimes(segment.besides.length, segment.breakpoint||"")
+  ntimes(segment.besides.length, ()=>segment.breakpoint||"")
 
 
 export const layoutToNodes = (layout, query, actions) => {
