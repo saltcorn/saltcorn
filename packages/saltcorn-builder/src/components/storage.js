@@ -126,6 +126,7 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.field_name}
           value={segment.value}
           label={segment.label}
+          size={segment.size}
           block={segment.block || false}
         />
       );
@@ -482,6 +483,7 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         value: node.props.value,
         label: node.props.label,
+        size: node.props.size,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {

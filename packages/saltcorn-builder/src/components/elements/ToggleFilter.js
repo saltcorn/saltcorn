@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({ name, value, block, label }) => {
+export const ToggleFilter = ({ name, value, block, label, size }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -14,7 +14,7 @@ export const ToggleFilter = ({ name, value, block, label }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <button className="btn btn-outline-primary">
+      <button className={`btn btn-outline-primary ${size}`}>
         {label || value || "Set label"}
       </button>
     </span>
@@ -28,11 +28,13 @@ export const ToggleFilterSettings = () => {
     value,
     block,
     label,
+    size
   } = useNode((node) => ({
     name: node.data.props.name,
     value: node.data.props.value,
     block: node.data.props.block,
     label: node.data.props.label,
+    size: node.data.props.size,
   }));
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
@@ -103,6 +105,27 @@ export const ToggleFilterSettings = () => {
               className="w-100"
               onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
             />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Button size</label>
+          </td>
+          <td>
+            {" "}
+            <select
+              className="form-control"
+              value={size}
+              onChange={(e) =>
+                setProp((prop) => (prop.size = e.target.value))
+              }
+            >
+              <option value="">Standard</option>
+              <option value="btn-lg">Large</option>
+              <option value="btn-sm">Small</option>
+              <option value="btn-block">Block</option>
+              <option value="btn-block btn-lg">Large block</option>
+            </select>
           </td>
         </tr>
         <tr>
