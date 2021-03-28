@@ -125,6 +125,7 @@ export const ToggleFilterSettings = () => {
               <option value="btn-sm">Small</option>
               <option value="btn-block">Block</option>
               <option value="btn-block btn-lg">Large block</option>
+              <option value="btn-block btn-sm">Small block</option>
             </select>
           </td>
         </tr>
