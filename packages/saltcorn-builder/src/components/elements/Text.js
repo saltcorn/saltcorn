@@ -4,6 +4,8 @@ import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
 import CKEditor from "ckeditor4-react";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
+import faIcons from "./faicons";
 
 const ckConfig = {
   toolbarGroups: [
@@ -35,7 +37,7 @@ const ckConfig = {
 function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-export const Text = ({ text, block, isFormula, textStyle }) => {
+export const Text = ({ text, block, isFormula, textStyle, icon }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -58,6 +60,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
     >
+      {icon ? <i className={`${icon} mr-1`}></i> : ""}
       {isFormula.text ? (
         <Fragment>
           =
@@ -71,6 +74,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
       ) : editable ? (
         <CKEditor
           data={text}
+          style={{ display: "inline" }}
           onChange={(e) =>
             setProp((props) => (props.text = e.editor.getData()))
           }
@@ -78,10 +82,7 @@ export const Text = ({ text, block, isFormula, textStyle }) => {
           type="inline"
         />
       ) : (
-        <div
-          style={{ display: "inline" }}
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
+        <div className="d-inline" dangerouslySetInnerHTML={{ __html: text }} />
       )}
     </div>
   );
@@ -95,6 +96,7 @@ export const TextSettings = () => {
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
+    icon: node.data.props.icon,
   }));
   const {
     actions: { setProp },
@@ -103,6 +105,7 @@ export const TextSettings = () => {
     textStyle,
     isFormula,
     labelFor,
+    icon,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   return (
@@ -156,6 +159,14 @@ export const TextSettings = () => {
           </select>
         </Fragment>
       )}
+      <br />
+      <label>Icon</label>
+      <FontIconPicker
+        value={icon}
+        icons={faIcons}
+        onChange={(value) => setProp((prop) => (prop.icon = value))}
+        isMulti={false}
+      />
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>

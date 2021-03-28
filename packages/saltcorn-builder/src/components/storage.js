@@ -49,6 +49,7 @@ export const layoutToNodes = (layout, query, actions) => {
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
+          icon={segment.icon}
         />
       );
     } else if (segment.type === "image") {
@@ -366,6 +367,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
+        icon: node.props.icon,
       };
     }
     if (node.displayName === HTMLCode.craft.displayName) {

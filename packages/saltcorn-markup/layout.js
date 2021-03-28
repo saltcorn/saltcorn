@@ -150,15 +150,16 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
 const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
+    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;": ''
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
-        ? label(
+        ? iconTag + label(
             { for: `input${text(segment.labelFor)}` },
             applyTextStyle(segment.textStyle, inner, segment.block)
           )
-        : applyTextStyle(segment.textStyle, inner, segment.block);
+        : iconTag + applyTextStyle(segment.textStyle, inner, segment.block);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
