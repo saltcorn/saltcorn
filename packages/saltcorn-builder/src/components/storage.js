@@ -31,6 +31,8 @@ const getColWidths = (segment) => {
   widths.pop();
   return widths;
 };
+const default_breakpoints = (segment) =>
+  ntimes(segment.besides.length, () => segment.breakpoint || "");
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
@@ -47,6 +49,7 @@ export const layoutToNodes = (layout, query, actions) => {
           block={segment.block || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
+          icon={segment.icon}
         />
       );
     } else if (segment.type === "image") {
@@ -123,6 +126,8 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.field_name}
           value={segment.value}
           label={segment.label}
+          size={segment.size}
+          style={segment.style}
           block={segment.block || false}
         />
       );
@@ -199,19 +204,33 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
+          borderRadius={segment.borderRadius}
+          borderColor={segment.borderColor}
+          borderRadiusUnit={segment.borderRadiusUnit}
+          gradStartColor={segment.gradStartColor}
+          gradEndColor={segment.gradEndColor}
+          gradDirection={segment.gradDirection}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
+          overflow={segment.overflow}
           margin={segment.margin || [0, 0, 0, 0]}
           padding={segment.padding || [0, 0, 0, 0]}
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
+          url={segment.url}
+          hoverColor={segment.hoverColor}
           minHeightUnit={segment.minHeightUnit || "px"}
           heightUnit={segment.heightUnit || "px"}
           widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
+          fullPageWidth={
+            typeof segment.fullPageWidth === "undefined"
+              ? false
+              : segment.fullPageWidth
+          }
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
@@ -242,7 +261,7 @@ export const layoutToNodes = (layout, query, actions) => {
       return (
         <Columns
           key={ix}
-          breakpoint={segment.breakpoint || ""}
+          breakpoints={segment.breakpoints || default_breakpoints(segment)}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
           contents={segment.besides.map(toTag)}
@@ -263,7 +282,7 @@ export const layoutToNodes = (layout, query, actions) => {
         .parseReactElement(
           <Columns
             widths={getColWidths(segment)}
-            breakpoint={segment.breakpoint || ""}
+            breakpoints={segment.breakpoints || default_breakpoints(segment)}
             ncols={segment.besides.length}
             contents={segment.besides.map(toTag)}
           />
@@ -302,11 +321,16 @@ export const craftToSaltcorn = (nodes) => {
           type: "container",
           borderWidth: node.props.borderWidth,
           borderStyle: node.props.borderStyle,
+          borderColor: node.props.borderColor,
+          borderRadius: node.props.borderRadius,
+          borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
+          url: node.props.url,
+          hoverColor: node.props.hoverColor,
           minHeightUnit: node.props.minHeightUnit,
           heightUnit: node.props.heightUnit,
           widthUnit: node.props.widthUnit,
@@ -314,7 +338,9 @@ export const craftToSaltcorn = (nodes) => {
           hAlign: node.props.hAlign,
           margin: node.props.margin,
           padding: node.props.padding,
+          overflow: node.props.overflow,
           block: node.props.block || false,
+          fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
@@ -326,6 +352,9 @@ export const craftToSaltcorn = (nodes) => {
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
           show_for_owner: node.props.show_for_owner,
+          gradStartColor: node.props.gradStartColor,
+          gradEndColor: node.props.gradEndColor,
+          gradDirection: node.props.gradDirection,
         };
       else if (node.displayName === Card.craft.displayName)
         return {
@@ -346,6 +375,7 @@ export const craftToSaltcorn = (nodes) => {
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
+        icon: node.props.icon,
       };
     }
     if (node.displayName === HTMLCode.craft.displayName) {
@@ -373,7 +403,7 @@ export const craftToSaltcorn = (nodes) => {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
-        breakpoint: node.props.breakpoint,
+        breakpoints: node.props.breakpoints,
         widths,
       };
     }
@@ -463,6 +493,8 @@ export const craftToSaltcorn = (nodes) => {
         field_name: node.props.name,
         value: node.props.value,
         label: node.props.label,
+        size: node.props.size,
+        style: node.props.style,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {

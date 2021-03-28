@@ -150,15 +150,17 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
 const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
+    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
-        ? label(
-            { for: `input${text(segment.labelFor)}` },
-            applyTextStyle(segment.textStyle, inner, segment.block)
-          )
-        : applyTextStyle(segment.textStyle, inner, segment.block);
+        ? iconTag +
+            label(
+              { for: `input${text(segment.labelFor)}` },
+              applyTextStyle(segment.textStyle, inner, segment.block)
+            )
+        : iconTag + applyTextStyle(segment.textStyle, inner, segment.block);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
@@ -276,6 +278,16 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         minScreenWidth,
         showIfFormulaInputs,
         show_for_owner,
+        borderRadius,
+        borderRadiusUnit,
+        borderColor,
+        url,
+        hoverColor,
+        gradStartColor,
+        gradEndColor,
+        gradDirection,
+        fullPageWidth,
+        overflow
       } = segment;
       if (hide) return "";
       if (
@@ -302,8 +314,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         : baseDisplayClass === "block"
         ? false // no need
         : `d-${baseDisplayClass}`;
+      const allZero = (xs) => xs.every((x) => +x === 0);
       const ppBox = (what) =>
-        !segment[what] || segment[what] === [0, 0, 0, 0]
+        !segment[what] || allZero(segment[what])
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       return wrap(
@@ -320,7 +333,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 hAlign === "center" &&
                 "justify-content-center",
               displayClass,
+              url && "with-link",
+              hoverColor && `hover-${hoverColor}`,
+              fullPageWidth && "full-page-width",
             ],
+            onclick: segment.url ? `location.href='${segment.url}'` : false,
+
             style: `${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"
@@ -329,7 +347,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               "width"
             )}${sizeProp("widthPct", "width", "%")}border: ${
               borderWidth || 0
-            }px ${borderStyle} black;${ppBox("padding")}${ppBox("margin")} ${
+            }px ${borderStyle} ${borderColor || "black"};${sizeProp(
+              "borderRadius",
+              "border-radius"
+            )}${ppBox("padding")}${ppBox("margin")}${overflow && overflow!=="visible"? ` overflow: ${overflow};`:''} ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"
@@ -338,6 +359,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             } ${
               renderBg && bgType === "Color"
                 ? `background-color: ${bgColor};`
+                : ""
+            } ${
+              renderBg && bgType === "Gradient"
+                ? `background-image: linear-gradient(${
+                    gradDirection || 0
+                  }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
             } ${setTextColor ? `color: ${textColor};` : ""}`,
             ...(showIfFormulaInputs
@@ -380,7 +407,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                   segment.widths === false
                     ? ""
                     : `col-${
-                        segment.breakpoint ? segment.breakpoint + "-" : ""
+                        segment.breakpoint
+                          ? segment.breakpoint + "-"
+                          : segment.breakpoints && segment.breakpoints[ixb]
+                          ? segment.breakpoints[ixb] + "-"
+                          : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""
                       }`,

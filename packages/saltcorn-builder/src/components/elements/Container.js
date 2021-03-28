@@ -34,6 +34,12 @@ export const Container = ({
   margin,
   padding,
   minScreenWidth,
+  borderRadius,
+  borderRadiusUnit,
+  borderColor,
+  gradStartColor,
+  gradEndColor,
+  gradDirection,
 }) => {
   const {
     selected,
@@ -52,7 +58,7 @@ export const Container = ({
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        border: `${borderWidth}px ${borderStyle} black`,
+        border: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
@@ -66,6 +72,13 @@ export const Container = ({
               backgroundColor: bgColor,
             }
           : {}),
+        ...(bgType === "Gradient"
+          ? {
+              backgroundImage: `linear-gradient(${
+                gradDirection || 0
+              }deg, ${gradStartColor}, ${gradEndColor})`,
+            }
+          : {}),
         ...(setTextColor
           ? {
               color: textColor,
@@ -74,6 +87,11 @@ export const Container = ({
         ...(typeof height !== "undefined"
           ? {
               height: `${height}${heightUnit || "px"}`,
+            }
+          : {}),
+        ...(typeof borderRadius !== "undefined"
+          ? {
+              borderRadius: `${borderRadius}${borderRadiusUnit || "px"}`,
             }
           : {}),
         ...(typeof width !== "undefined"
@@ -92,6 +110,9 @@ export const ContainerSettings = () => {
   const node = useNode((node) => ({
     borderWidth: node.data.props.borderWidth,
     borderStyle: node.data.props.borderStyle,
+    borderRadius: node.data.props.borderRadius,
+    borderRadiusUnit: node.data.props.borderRadiusUnit,
+    borderColor: node.data.props.borderColor,
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
@@ -106,6 +127,7 @@ export const ContainerSettings = () => {
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     block: node.data.props.block,
+    fullPageWidth: node.data.props.fullPageWidth,
     showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
     showForRole: node.data.props.showForRole,
@@ -116,11 +138,20 @@ export const ContainerSettings = () => {
     show_for_owner: node.data.props.show_for_owner,
     margin: node.data.props.margin,
     padding: node.data.props.padding,
+    url: node.data.props.url,
+    hoverColor: node.data.props.hoverColor,
+    gradStartColor: node.data.props.gradStartColor,
+    gradEndColor: node.data.props.gradEndColor,
+    gradDirection: node.data.props.gradDirection,
+    overflow: node.data.props.overflow,
   }));
   const {
     actions: { setProp },
     borderWidth,
     borderStyle,
+    borderRadius,
+    borderRadiusUnit,
+    borderColor,
     minHeight,
     height,
     width,
@@ -145,6 +176,13 @@ export const ContainerSettings = () => {
     show_for_owner,
     margin,
     padding,
+    url,
+    hoverColor,
+    gradStartColor,
+    gradEndColor,
+    gradDirection,
+    fullPageWidth,
+    overflow,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -199,6 +237,53 @@ export const ContainerSettings = () => {
                 <option>inset</option>
                 <option>outset</option>
               </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Color</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={borderColor}
+                className="form-control-sm"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderColor = e.target.value;
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Radius</label>
+            </td>
+            <td>
+              <input
+                type="number"
+                value={borderRadius}
+                step="1"
+                min="0"
+                max="999"
+                className="w-50 form-control-sm d-inline"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderRadius = e.target.value;
+                  })
+                }
+              />
+              <SelectUnits
+                value={borderRadiusUnit}
+                className="w-50 form-control-sm d-inline"
+                vert={true}
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderRadiusUnit = e.target.value;
+                  })
+                }
+              />
             </td>
           </tr>
           <tr>
@@ -295,6 +380,24 @@ export const ContainerSettings = () => {
               <BlockSetting block={block} setProp={setProp} />
             </td>
           </tr>
+          <tr>
+            <td colSpan="2">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={fullPageWidth}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.fullPageWidth = e.target.checked))
+                  }
+                />
+                <label className="form-check-label">
+                  Expand to full page width
+                </label>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Spacing">
@@ -384,6 +487,27 @@ export const ContainerSettings = () => {
             </td>
           </tr>
           <tr>
+            <td>
+              <label>Overflow</label>
+            </td>
+            <td>
+              <select
+                value={overflow}
+                className="form-control-sm"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.overflow = e.target.value;
+                  })
+                }
+              >
+                <option value="visible">visible</option>
+                <option value="hidden">hidden</option>
+                <option value="scroll">scroll</option>
+                <option value="auto">auto</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
             <th colSpan="2">Background</th>
           </tr>
           <tr>
@@ -408,9 +532,76 @@ export const ContainerSettings = () => {
                 <option>None</option>
                 <option>Image</option>
                 <option>Color</option>
+                <option>Gradient</option>
               </select>
             </td>
           </tr>
+          {bgType === "Gradient" && (
+            <Fragment>
+              <tr>
+                <td>Start</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradStartColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradStartColor}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradStartColor = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>End</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradEndColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradEndColor}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradEndColor = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>Direction (&deg;)</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradDirection"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="number"
+                      min="0"
+                      max="360"
+                      value={gradDirection}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradDirection = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+            </Fragment>
+          )}
           {bgType === "Image" && (
             <Fragment>
               <tr>
@@ -605,6 +796,35 @@ export const ContainerSettings = () => {
           </tr>
         </tbody>
       </table>
+      <div accordiontitle="Container link">
+        <label>URL</label>
+        <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control"
+            value={url}
+            onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
+          />
+        </OrFormula>
+
+        <label>Hover color</label>
+        <select
+          value={hoverColor}
+          className="form-control"
+          onChange={(e) =>
+            setProp((prop) => {
+              prop.hoverColor = e.target.value;
+            })
+          }
+        >
+          <option value="">None</option>
+          <option value="gray">gray</option>
+          <option value="gray-dark">gray-dark</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+        </select>
+      </div>
+
       <div accordiontitle="Custom class/CSS">
         <div>
           <label>Custom class</label>
@@ -645,9 +865,14 @@ Container.craft = {
     isFormula: {},
     bgType: "None",
     block: true,
+    fullPageWidth: false,
     bgColor: "#ffffff",
+    borderColor: "#000000",
     setTextColor: false,
     textColor: "#ffffff",
+    gradStartColor: "#ff8888",
+    gradEndColor: "#88ff88",
+    gradDirection: "0",
     imageSize: "contain",
     showIfFormula: "",
     showForRole: [],

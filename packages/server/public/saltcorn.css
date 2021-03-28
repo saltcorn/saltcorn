@@ -130,7 +130,7 @@ div.dropdown-menu.search-form {
   overflow-y: auto;
 }
 
-div.card.with-link:hover {
+.with-link:hover {
   cursor: pointer;
 }
 
@@ -202,7 +202,7 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .wizardStep.active {
   border-bottom: 3px solid black;
 }
-.breadcrumb-workflow+.breadcrumb-workflow::before {
+.breadcrumb-workflow + .breadcrumb-workflow::before {
   content: ">";
 }
 .breadcrumb-workflow span {
@@ -214,4 +214,25 @@ div[data-inline-edit-dest-url]:hover .editicon {
 
 #erdvis {
   height: 600px;
+}
+
+.hover-gray:hover {
+  background-color: var(--gray);
+}
+.hover-gray-dark:hover {
+  background-color: var(--gray-dark);
+}
+.hover-light:hover {
+  background-color: var(--light);
+}
+.hover-dark:hover {
+  background-color: var(--dark);
+}
+.full-page-width {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }

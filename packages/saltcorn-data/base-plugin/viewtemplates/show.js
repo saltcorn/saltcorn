@@ -373,6 +373,7 @@ const render = (
     container(segment) {
       evalMaybeExpr(segment, "bgColor");
       evalMaybeExpr(segment, "customClass");
+      evalMaybeExpr(segment, "url");
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
