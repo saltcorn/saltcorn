@@ -228,3 +228,11 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .hover-dark:hover {
   background-color: var(--dark);
 }
+.full-page-width {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}

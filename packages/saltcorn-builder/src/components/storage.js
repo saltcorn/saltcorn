@@ -225,6 +225,7 @@ export const layoutToNodes = (layout, query, actions) => {
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
           block={typeof segment.block === "undefined" ? true : segment.block}
+          fullPageWidth={typeof segment.fullPageWidth === "undefined" ? false : segment.fullPageWidth}
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
@@ -333,6 +334,7 @@ export const craftToSaltcorn = (nodes) => {
           margin: node.props.margin,
           padding: node.props.padding,
           block: node.props.block || false,
+          fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,

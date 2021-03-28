@@ -127,6 +127,7 @@ export const ContainerSettings = () => {
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     block: node.data.props.block,
+    fullPageWidth: node.data.props.fullPageWidth,
     showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
     showForRole: node.data.props.showForRole,
@@ -179,6 +180,7 @@ export const ContainerSettings = () => {
     gradStartColor,
     gradEndColor,
     gradDirection,
+    fullPageWidth,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -374,6 +376,24 @@ export const ContainerSettings = () => {
           <tr>
             <td colSpan="2">
               <BlockSetting block={block} setProp={setProp} />
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={fullPageWidth}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.fullPageWidth = e.target.checked))
+                  }
+                />
+                <label className="form-check-label">
+                  Expand to full page width
+                </label>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -822,7 +842,9 @@ Container.craft = {
     isFormula: {},
     bgType: "None",
     block: true,
+    fullPageWidth: false,
     bgColor: "#ffffff",
+    borderColor: "#000000",
     setTextColor: false,
     textColor: "#ffffff",
     gradStartColor: "#ff8888",

@@ -150,15 +150,16 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
 const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {
-    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;": ''
+    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
-        ? iconTag + label(
-            { for: `input${text(segment.labelFor)}` },
-            applyTextStyle(segment.textStyle, inner, segment.block)
-          )
+        ? iconTag +
+            label(
+              { for: `input${text(segment.labelFor)}` },
+              applyTextStyle(segment.textStyle, inner, segment.block)
+            )
         : iconTag + applyTextStyle(segment.textStyle, inner, segment.block);
   }
   function go(segment, isTop, ix) {
@@ -285,6 +286,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         gradStartColor,
         gradEndColor,
         gradDirection,
+        fullPageWidth,
       } = segment;
       if (hide) return "";
       if (
@@ -311,8 +313,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         : baseDisplayClass === "block"
         ? false // no need
         : `d-${baseDisplayClass}`;
+      const allZero = (xs) => xs.every((x) => +x === 0);
       const ppBox = (what) =>
-        !segment[what] || segment[what] === [0, 0, 0, 0]
+        !segment[what] || allZero(segment[what])
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       return wrap(
@@ -330,7 +333,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 "justify-content-center",
               displayClass,
               url && "with-link",
-              hoverColor && `hover-${hoverColor}`
+              hoverColor && `hover-${hoverColor}`,
+              fullPageWidth && "full-page-width",
             ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
 
@@ -358,8 +362,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             } ${
               renderBg && bgType === "Gradient"
                 ? `background-image: linear-gradient(${
-                  gradDirection || 0
-                }deg, ${gradStartColor}, ${gradEndColor});`
+                    gradDirection || 0
+                  }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
             } ${setTextColor ? `color: ${textColor};` : ""}`,
             ...(showIfFormulaInputs
