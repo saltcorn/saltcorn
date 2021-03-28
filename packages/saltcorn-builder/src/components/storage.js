@@ -205,6 +205,9 @@ export const layoutToNodes = (layout, query, actions) => {
           borderRadius={segment.borderRadius}
           borderColor={segment.borderColor}
           borderRadiusUnit={segment.borderRadiusUnit}
+          gradStartColor={segment.gradStartColor}
+          gradEndColor={segment.gradEndColor}
+          gradDirection={segment.gradDirection}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
           margin={segment.margin || [0, 0, 0, 0]}
@@ -339,6 +342,9 @@ export const craftToSaltcorn = (nodes) => {
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
           show_for_owner: node.props.show_for_owner,
+          gradStartColor: node.data.props.gradStartColor,
+          gradEndColor: node.data.props.gradEndColor,
+          gradDirection: node.data.props.gradDirection,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

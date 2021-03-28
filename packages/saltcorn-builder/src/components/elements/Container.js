@@ -37,6 +37,9 @@ export const Container = ({
   borderRadius,
   borderRadiusUnit,
   borderColor,
+  gradStartColor,
+  gradEndColor,
+  gradDirection,
 }) => {
   const {
     selected,
@@ -67,6 +70,13 @@ export const Container = ({
         ...(bgType === "Color"
           ? {
               backgroundColor: bgColor,
+            }
+          : {}),
+        ...(bgType === "Gradient"
+          ? {
+              backgroundImage: `linear-gradient(${
+                gradDirection || 0
+              }deg, ${gradStartColor}, ${gradEndColor})`,
             }
           : {}),
         ...(setTextColor
@@ -129,6 +139,9 @@ export const ContainerSettings = () => {
     padding: node.data.props.padding,
     url: node.data.props.url,
     hoverColor: node.data.props.hoverColor,
+    gradStartColor: node.data.props.gradStartColor,
+    gradEndColor: node.data.props.gradEndColor,
+    gradDirection: node.data.props.gradDirection,
   }));
   const {
     actions: { setProp },
@@ -163,6 +176,9 @@ export const ContainerSettings = () => {
     padding,
     url,
     hoverColor,
+    gradStartColor,
+    gradEndColor,
+    gradDirection,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -473,9 +489,76 @@ export const ContainerSettings = () => {
                 <option>None</option>
                 <option>Image</option>
                 <option>Color</option>
+                <option>Gradient</option>
               </select>
             </td>
           </tr>
+          {bgType === "Gradient" && (
+            <Fragment>
+              <tr>
+                <td>Start</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradStartColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradStartColor}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradStartColor = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>End</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradEndColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradEndColor}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradEndColor = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>Direction (&deg;)</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradDirection"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="number"
+                      min="0"
+                      max="360"
+                      value={gradDirection}
+                      className="form-control-sm w-50"
+                      onChange={(e) =>
+                        setProp((prop) => {
+                          prop.gradDirection = e.target.value;
+                        })
+                      }
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+            </Fragment>
+          )}
           {bgType === "Image" && (
             <Fragment>
               <tr>
@@ -742,6 +825,9 @@ Container.craft = {
     bgColor: "#ffffff",
     setTextColor: false,
     textColor: "#ffffff",
+    gradStartColor: "#ff8888",
+    gradEndColor: "#88ff88",
+    gradDirection: "0",
     imageSize: "contain",
     showIfFormula: "",
     showForRole: [],
