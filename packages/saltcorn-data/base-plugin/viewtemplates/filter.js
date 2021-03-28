@@ -180,7 +180,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           label
         );
     },
-    toggle_filter({ field_name, value, label, size }) {
+    toggle_filter({ field_name, value, label, size, style }) {
       const field = fields.find((f) => f.name === field_name);
       const isBool = field && field.type.name === "Bool";
 
@@ -195,7 +195,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         {
           class: [
             "btn",
-            active ? "btn-primary" : "btn-outline-primary",
+            active
+              ? `btn-${style || "primary"}`
+              : `btn-outline-${style || "primary"}`,
             size && size,
           ],
           onClick:

@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({ name, value, block, label, size }) => {
+export const ToggleFilter = ({ name, value, block, label, size, style }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -14,7 +14,7 @@ export const ToggleFilter = ({ name, value, block, label, size }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <button className={`btn btn-outline-primary ${size}`}>
+      <button className={`btn btn-outline-${style||"primary"} ${size}`}>
         {label || value || "Set label"}
       </button>
     </span>
@@ -28,13 +28,15 @@ export const ToggleFilterSettings = () => {
     value,
     block,
     label,
-    size
+    size,
+    style
   } = useNode((node) => ({
     name: node.data.props.name,
     value: node.data.props.value,
     block: node.data.props.block,
     label: node.data.props.label,
     size: node.data.props.size,
+    style: node.data.props.style,
   }));
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
@@ -126,6 +128,30 @@ export const ToggleFilterSettings = () => {
               <option value="btn-block">Block</option>
               <option value="btn-block btn-lg">Large block</option>
               <option value="btn-block btn-sm">Small block</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label>Button style</label>
+          </td>
+          <td>
+            {" "}
+            <select
+              className="form-control"
+              value={style}
+              onChange={(e) =>
+                setProp((prop) => (prop.style = e.target.value))
+              }
+            >
+             <option value="primary">Primary</option>
+              <option value="secondary">Secondary</option>
+              <option value="success">Success</option>
+              <option value="danger">Danger</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
             </select>
           </td>
         </tr>

@@ -31,9 +31,8 @@ const getColWidths = (segment) => {
   widths.pop();
   return widths;
 };
-const default_breakpoints = segment => 
-  ntimes(segment.besides.length, ()=>segment.breakpoint||"")
-
+const default_breakpoints = (segment) =>
+  ntimes(segment.besides.length, () => segment.breakpoint || "");
 
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
@@ -127,6 +126,7 @@ export const layoutToNodes = (layout, query, actions) => {
           value={segment.value}
           label={segment.label}
           size={segment.size}
+          style={segment.style}
           block={segment.block || false}
         />
       );
@@ -484,6 +484,7 @@ export const craftToSaltcorn = (nodes) => {
         value: node.props.value,
         label: node.props.label,
         size: node.props.size,
+        style: node.props.style,
       };
     }
     if (node.displayName === JoinField.craft.displayName) {
