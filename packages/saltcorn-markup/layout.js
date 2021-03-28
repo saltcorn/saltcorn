@@ -279,6 +279,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         borderRadius,
         borderRadiusUnit,
         borderColor,
+        url,
+        hoverColor,
       } = segment;
       if (hide) return "";
       if (
@@ -323,7 +325,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 hAlign === "center" &&
                 "justify-content-center",
               displayClass,
+              url && "with-link",
             ],
+            onclick: segment.url ? `location.href='${segment.url}'` : false,
+
             style: `${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"

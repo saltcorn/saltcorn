@@ -130,7 +130,7 @@ div.dropdown-menu.search-form {
   overflow-y: auto;
 }
 
-div.card.with-link:hover {
+.with-link:hover {
   cursor: pointer;
 }
 

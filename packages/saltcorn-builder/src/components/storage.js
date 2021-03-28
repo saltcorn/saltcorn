@@ -212,6 +212,8 @@ export const layoutToNodes = (layout, query, actions) => {
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
+          url={segment.url}
+          hoverColor={segment.hoverColor}
           minHeightUnit={segment.minHeightUnit || "px"}
           heightUnit={segment.heightUnit || "px"}
           widthUnit={segment.widthUnit || "px"}
@@ -316,6 +318,8 @@ export const craftToSaltcorn = (nodes) => {
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
+          url: node.props.url,
+          hoverColor: node.props.hoverColor,
           minHeightUnit: node.props.minHeightUnit,
           heightUnit: node.props.heightUnit,
           widthUnit: node.props.widthUnit,

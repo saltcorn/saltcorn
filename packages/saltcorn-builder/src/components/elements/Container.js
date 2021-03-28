@@ -127,6 +127,8 @@ export const ContainerSettings = () => {
     show_for_owner: node.data.props.show_for_owner,
     margin: node.data.props.margin,
     padding: node.data.props.padding,
+    url: node.data.props.url,
+    hoverColor: node.data.props.hoverColor,
   }));
   const {
     actions: { setProp },
@@ -159,6 +161,8 @@ export const ContainerSettings = () => {
     show_for_owner,
     margin,
     padding,
+    url,
+    hoverColor,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -666,6 +670,31 @@ export const ContainerSettings = () => {
           </tr>
         </tbody>
       </table>
+      <div accordiontitle="Container link">
+        <label>URL</label>
+        <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control"
+            value={url}
+            onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
+          />
+        </OrFormula>
+
+        <label>Hover color</label>
+
+        <input
+          type="color"
+          value={hoverColor}
+          className="form-control-sm"
+          onChange={(e) =>
+            setProp((prop) => {
+              prop.hoverColor = e.target.value;
+            })
+          }
+        />
+      </div>
+
       <div accordiontitle="Custom class/CSS">
         <div>
           <label>Custom class</label>
