@@ -342,9 +342,9 @@ export const craftToSaltcorn = (nodes) => {
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
           show_for_owner: node.props.show_for_owner,
-          gradStartColor: node.data.props.gradStartColor,
-          gradEndColor: node.data.props.gradEndColor,
-          gradDirection: node.data.props.gradDirection,
+          gradStartColor: node.props.gradStartColor,
+          gradEndColor: node.props.gradEndColor,
+          gradDirection: node.props.gradDirection,
         };
       else if (node.displayName === Card.craft.displayName)
         return {

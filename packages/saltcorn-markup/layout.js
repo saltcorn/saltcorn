@@ -280,7 +280,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         borderRadiusUnit,
         borderColor,
         url,
-        hoverColor
+        hoverColor,
+        gradStartColor,
+        gradEndColor,
+        gradDirection,
       } = segment;
       if (hide) return "";
       if (
@@ -350,6 +353,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             } ${
               renderBg && bgType === "Color"
                 ? `background-color: ${bgColor};`
+                : ""
+            } ${
+              renderBg && bgType === "Gradient"
+                ? `background-image: linear-gradient(${
+                  gradDirection || 0
+                }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
             } ${setTextColor ? `color: ${textColor};` : ""}`,
             ...(showIfFormulaInputs
