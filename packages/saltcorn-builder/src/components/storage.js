@@ -242,6 +242,7 @@ export const layoutToNodes = (layout, query, actions) => {
           showIfFormula={segment.showIfFormula || ""}
           showForRole={segment.showForRole || []}
           minScreenWidth={segment.minScreenWidth || ""}
+          maxScreenWidth={segment.maxScreenWidth || ""}
           show_for_owner={!!segment.show_for_owner}
           is={Container}
         >
@@ -352,6 +353,7 @@ export const craftToSaltcorn = (nodes) => {
           showIfFormula: node.props.showIfFormula,
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
+          maxScreenWidth: node.props.maxScreenWidth,
           show_for_owner: node.props.show_for_owner,
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,

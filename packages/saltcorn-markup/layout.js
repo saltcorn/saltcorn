@@ -237,7 +237,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
           {
             class: [
               "card mt-4",
-              segment.shadow ===false ? false: "shadow",
+              segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
             ],
@@ -277,6 +277,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         customClass,
         customCSS,
         minScreenWidth,
+        maxScreenWidth,
         showIfFormulaInputs,
         show_for_owner,
         borderRadius,
@@ -288,7 +289,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         gradEndColor,
         gradDirection,
         fullPageWidth,
-        overflow
+        overflow,
       } = segment;
       if (hide) return "";
       if (
@@ -310,11 +311,13 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             };`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
       const baseDisplayClass = block === false ? "inline-block" : "block";
-      const displayClass = minScreenWidth
+      let displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
         : baseDisplayClass === "block"
         ? false // no need
         : `d-${baseDisplayClass}`;
+      if (maxScreenWidth)
+        displayClass = `${displayClass} d-${maxScreenWidth}-none`;
       const allZero = (xs) => xs.every((x) => +x === 0);
       const ppBox = (what) =>
         !segment[what] || allZero(segment[what])
@@ -351,7 +354,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             }px ${borderStyle} ${borderColor || "black"};${sizeProp(
               "borderRadius",
               "border-radius"
-            )}${ppBox("padding")}${ppBox("margin")}${overflow && overflow!=="visible"? ` overflow: ${overflow};`:''} ${
+            )}${ppBox("padding")}${ppBox("margin")}${
+              overflow && overflow !== "visible"
+                ? ` overflow: ${overflow};`
+                : ""
+            } ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize || "contain"

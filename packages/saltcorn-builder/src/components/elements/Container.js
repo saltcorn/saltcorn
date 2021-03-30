@@ -135,6 +135,7 @@ export const ContainerSettings = () => {
     customClass: node.data.props.customClass,
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
+    maxScreenWidth: node.data.props.maxScreenWidth,
     show_for_owner: node.data.props.show_for_owner,
     margin: node.data.props.margin,
     padding: node.data.props.padding,
@@ -173,6 +174,7 @@ export const ContainerSettings = () => {
     customClass,
     customCSS,
     minScreenWidth,
+    maxScreenWidth,
     show_for_owner,
     margin,
     padding,
@@ -779,7 +781,7 @@ export const ContainerSettings = () => {
             <td>
               <select
                 value={minScreenWidth}
-                className="w-100 ml-2"
+                className="form-control"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.minScreenWidth = e.target.value;
@@ -791,6 +793,27 @@ export const ContainerSettings = () => {
                 <option value="md">medium</option>
                 <option value="lg">large</option>
                 <option value="xl">x-large</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Max screen width</label>
+            </td>
+            <td>
+              <select
+                value={maxScreenWidth}
+                className="form-control"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.maxScreenWidth = e.target.value;
+                  })
+                }
+              >
+                <option value="">all</option>
+                <option value="md">small</option>
+                <option value="lg">medium</option>
+                <option value="xl">large</option>
               </select>
             </td>
           </tr>
