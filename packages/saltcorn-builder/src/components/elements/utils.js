@@ -125,6 +125,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="font-italic">Italics</option>
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
+      <option value="text-underline">Underline</option>
     </select>
   );
 };
