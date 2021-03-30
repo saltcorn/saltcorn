@@ -10,6 +10,7 @@ const {
   readState,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
+const { InvalidConfiguration } = require("../../utils");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -139,7 +140,9 @@ const run = async (
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
     if (!lview)
-      return `View ${viewname} incorrectly configured: cannot find view ${list_view}`;
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find view ${list_view}`
+      );
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
@@ -151,7 +154,9 @@ const run = async (
   if (show_view) {
     const sview = await View.findOne({ name: show_view });
     if (!sview)
-      return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find view ${show_view}`
+      );
     sresp = await sview.run(state, extraArgs);
   }
   var reltbls = {};
@@ -175,9 +180,9 @@ const run = async (
             const tab_name = reltblnm;
             const subview = await View.findOne({ name: vname });
             if (!subview)
-              reltbls[
-                tab_name
-              ] = `View ${viewname} incorrectly configured: cannot find view ${vname}`;
+              throw new InvalidConfiguration(
+                `View ${viewname} incorrectly configured: cannot find view ${vname}`
+              );
             else {
               const subresp = await subview.run({ [relfld]: id }, extraArgs);
               reltbls[tab_name] = subresp;
@@ -190,9 +195,9 @@ const run = async (
             const ptab_name = prelfld;
             const psubview = await View.findOne({ name: pvname });
             if (!psubview)
-              reltbls[
-                ptab_name
-              ] = `View ${viewname} incorrectly configured: cannot find view ${pvname}`;
+              throw new InvalidConfiguration(
+                `View ${viewname} incorrectly configured: cannot find view ${pvname}`
+              );
             else {
               const psubresp = await psubview.run(
                 { id: myrow[prelfld] },

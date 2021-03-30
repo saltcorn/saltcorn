@@ -33,7 +33,11 @@ const {
   action_link,
 } = require("./viewable_fields");
 const db = require("../../db");
-const { asyncMap, structuredClone } = require("../../utils");
+const {
+  asyncMap,
+  structuredClone,
+  InvalidConfiguration,
+} = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
@@ -255,7 +259,9 @@ const renderRows = async (
     await eachView(layout, async (segment) => {
       const view = await getView(segment.view);
       if (!view)
-        segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+        );
       else if (
         view.viewtemplateObj.renderRows &&
         view.view_select.type === "Own"
