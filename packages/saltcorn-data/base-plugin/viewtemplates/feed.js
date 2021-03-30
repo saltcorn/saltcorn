@@ -16,6 +16,8 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
+const { InvalidConfiguration } = require("../../utils");
+
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -238,7 +240,9 @@ const run = async (
 
   const sview = await View.findOne({ name: show_view });
   if (!sview)
-    return `View ${viewname} incorrectly configured: cannot find view ${show_view}`;
+    throw new InvalidConfiguration(
+      `View ${viewname} incorrectly configured: cannot find view ${show_view}`
+    );
   const q = await stateFieldsToQuery({ state, fields });
   let qextra = {};
   if (!q.orderBy) {

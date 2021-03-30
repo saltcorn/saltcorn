@@ -45,6 +45,24 @@ const applyAsync = async (f, x) => {
 const structuredClone = (obj) => {
   return v8.deserialize(v8.serialize(obj));
 };
+
+class InvalidAdminAction extends Error {
+  constructor(message) {
+    super(message);
+    this.headline = "Invalid administrative action";
+    this.httpCode = 406;
+    this.severity = 5; //syslog equivalent severity level
+  }
+}
+
+class InvalidConfiguration extends Error {
+  constructor(message) {
+    super(message);
+    this.httpCode = 500;
+    this.headline = "A configuration error occurred";
+    this.severity = 3;
+  }
+}
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -55,4 +73,6 @@ module.exports = {
   applyAsync,
   apply,
   structuredClone,
+  InvalidAdminAction,
+  InvalidConfiguration,
 };

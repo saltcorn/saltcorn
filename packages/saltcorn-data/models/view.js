@@ -2,7 +2,12 @@ const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
 const { fieldlike, is_viewtemplate, is_tablely } = require("../contracts");
-const { removeEmptyStrings, numberToBool, stringToJSON } = require("../utils");
+const {
+  removeEmptyStrings,
+  numberToBool,
+  stringToJSON,
+  InvalidConfiguration,
+} = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
@@ -119,7 +124,7 @@ class View {
 
   static async find_possible_links_to_table(table) {
     return View.find_table_views_where(table, ({ state_fields }) =>
-      state_fields.some((sf) => sf.name === "id" || sf.primary_key )
+      state_fields.some((sf) => sf.name === "id" || sf.primary_key)
     );
   }
 
@@ -236,7 +241,7 @@ class View {
       return rendered.map((html, ix) => ({ html, row: rows[ix] }));
     }
 
-    throw new Error(
+    throw new InvalidConfiguration(
       `runMany on view ${this.name}: viewtemplate ${this.viewtemplate} does not have renderRows or runMany methods`
     );
   }

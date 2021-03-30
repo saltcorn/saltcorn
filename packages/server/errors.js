@@ -17,26 +17,32 @@ module.exports = async function (err, req, res, next) {
     else res.redirect("/");
     return;
   }
+  const code = err.code || 500;
+  const headline = err.headline || "An error occurred";
+  const severity = err.severity || 2;
+  const createCrash = severity <= 3;
   console.error(err.stack);
-  if (!(devmode && log_sql)) await Crash.create(err, req);
+  if (!(devmode && log_sql) && createCrash) await Crash.create(err, req);
 
   if (req.xhr) {
     res
-      .status(500)
+      .status(code)
       .send(
         devmode || role === 1 ? text(err.message) : req.__("An error occurred")
       );
   } else
     res
-      .status(500)
+      .status(code)
       .sendWrap(
-        req.__("Internal Error"),
-        devmode ? pre(text(err.stack)) : h3(req.__("An error occurred")),
+        req.__(headline),
+        devmode ? pre(text(err.stack)) : h3(req.__(headline)),
         role === 1 && !devmode ? pre(text(err.message)) : "",
-        p(
-          req.__(
-            `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
-          )
-        )
+        createCrash
+          ? p(
+              req.__(
+                `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
+              )
+            )
+          : ""
       );
 };

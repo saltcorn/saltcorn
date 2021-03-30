@@ -18,6 +18,7 @@ const renderLayout = require("@saltcorn/markup/layout");
 const { readState } = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const { eachView } = require("../../models/layout");
+const { InvalidConfiguration } = require("../../utils");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -121,7 +122,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   await eachView(layout, async (segment) => {
     const view = await View.findOne({ name: segment.view });
     if (!view)
-      segment.contents = `View ${viewname} incorrectly configured: cannot find view ${segment.view}`;
+    throw new InvalidConfiguration(`View ${viewname} incorrectly configured: cannot find view ${segment.view}`);
     else segment.contents = await view.run(state, extra);
   });
 

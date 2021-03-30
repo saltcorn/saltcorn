@@ -2,6 +2,7 @@ const db = require("../db");
 const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
+const { InvalidAdminAction } = require("../utils");
 
 const readKey = (v, field) => {
   if (v === "") return null;
@@ -364,9 +365,16 @@ class Field {
     return null;
   }
   async delete() {
-    await db.deleteWhere("_sc_fields", { id: this.id });
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
+
+    if (table.ownership_field_id === this.id) {
+      throw new InvalidAdminAction(
+        `Cannot delete field ${this.name} as it sets ownership for table ${table.name}`
+      );
+    }
+    await db.deleteWhere("_sc_fields", { id: this.id });
+
     const schema = db.getTenantSchemaPrefix();
 
     if (!db.isSQLite && (!this.calculated || this.stored)) {

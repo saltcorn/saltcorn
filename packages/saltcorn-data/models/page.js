@@ -5,6 +5,7 @@ const { eachView, traverseSync } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
 const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
+const { InvalidConfiguration } = require("../utils");
 
 class Page {
   constructor(o) {
@@ -87,12 +88,11 @@ class Page {
     await eachView(this.layout, async (segment) => {
       const view = await View.findOne({ name: segment.view });
       if (!view) {
-        segment.contents = div(
-          { class: "alert alert-danger", role: "alert" },
-          "Page configuration error in embedded view: ",
-          segment.view
-            ? `view "${segment.view}" not found`
-            : "no view specified"
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded view: ` +
+            (segment.view
+              ? `view "${segment.view}" not found`
+              : "no view specified")
         );
       } else if (segment.state === "shared") {
         const mystate = view.combine_state_and_default_state(querystate);

@@ -657,5 +657,6 @@
 	"Location of link to create new row": "Location of link to create new row",
 	"Options": "Options",
 	"List options": "List options",
-	"Rows per page": "Rows per page"
+	"Rows per page": "Rows per page",
+	"Invalid administrative action": "Invalid administrative action"
 }
