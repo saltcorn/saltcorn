@@ -147,7 +147,7 @@ class Table {
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
-      await client.query(`drop table ${schema}"${sqlsanitize(this.name)}"`);
+      await client.query(`drop table if exists ${schema}"${sqlsanitize(this.name)}"`);
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
         [this.id]
@@ -158,7 +158,7 @@ class Table {
       ]);
       if (this.versioned)
         await client.query(
-          `drop table ${schema}"${sqlsanitize(this.name)}__history"`
+          `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
         );
 
       await client.query(`COMMIT`);
