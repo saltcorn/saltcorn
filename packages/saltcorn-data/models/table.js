@@ -12,6 +12,7 @@ const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
 const fs = require("fs").promises;
+const { InvalidConfiguration } = require("../utils");
 
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -623,7 +624,7 @@ class Table {
       joinFields
     )) {
       const reffield = fields.find((f) => f.name === ref);
-      if (!reffield) throw new Error(`Key field not found: ${ref}`);
+      if (!reffield) throw new InvalidConfiguration(`Key field not found: ${ref}`);
       const reftable = reffield.reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
