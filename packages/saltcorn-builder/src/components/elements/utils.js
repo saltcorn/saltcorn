@@ -126,6 +126,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
       <option value="text-underline">Underline</option>
+      <option value="text-monospace">Monospace</option>
     </select>
   );
 };
