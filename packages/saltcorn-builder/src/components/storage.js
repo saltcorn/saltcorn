@@ -191,6 +191,7 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           title={segment.title}
           url={segment.url}
+          shadow={segment.shadow}
           isFormula={segment.isFormula || {}}
           is={Card}
         >
@@ -363,6 +364,7 @@ export const craftToSaltcorn = (nodes) => {
           title: node.props.title,
           isFormula: node.props.isFormula,
           url: node.props.url,
+          shadow: node.props.shadow,
         };
       else return get_nodes(node);
     }

@@ -236,7 +236,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         div(
           {
             class: [
-              "card shadow mt-4",
+              "card mt-4",
+              segment.shadow ===false ? false: "shadow",
               segment.class,
               segment.url && "with-link",
             ],
