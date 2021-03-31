@@ -543,7 +543,7 @@ router.post(
       res.send(
         fv.run(
           field.name,
-          value,
+          undefined,
           { disabled: true, ...configuration },
           "",
           false,
