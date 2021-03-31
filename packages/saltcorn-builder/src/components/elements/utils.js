@@ -193,7 +193,13 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
       return response.text();
     })
     .then(function (html) {
-      setPreviews((prevState) => ({ ...prevState, [node_id]: html }));
+      const jq = $(html)
+        .find("[onclick], button, a, input, select")
+        .attr("onclick", "")
+        .attr("href", "#")
+        .attr("disabled", true);
+      const newHtml = jq[0].outerHTML;
+      setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
 };
 export const fetchFieldPreview = (args = {}) => (changes = {}) => {
@@ -219,13 +225,13 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     ...args,
     ...changes,
   };
- 
+
   fetchPreview({
     options,
     node_id,
     setPreviews,
     url: `/view/${view}/preview`,
-    body: { },
+    body: {},
   });
 };
 
