@@ -539,6 +539,17 @@ router.post(
     const configuration = req.body.configuration;
 
     const fv = field.type.fieldviews[fieldview];
-    res.send(fv.run(value, req, configuration));
+    if (fv.isEdit)
+      res.send(
+        fv.run(
+          field.name,
+          value,
+          { disabled: true, ...configuration },
+          "",
+          false,
+          field
+        )
+      );
+    else res.send(fv.run(value, req, configuration));
   })
 );
