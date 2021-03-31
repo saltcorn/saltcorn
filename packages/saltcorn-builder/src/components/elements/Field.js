@@ -32,9 +32,10 @@ export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
     })();
   }, []);
   return (
-    <span
-      className={`${textStyle} ${selected ? "selected-node" : ""}`}
-      {...blockProps(block)}
+    <div
+      className={`${textStyle} ${selected ? "selected-node" : ""} ${
+        block ? "" : "d-inline-block"
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
       {myPreview ? (
@@ -45,7 +46,7 @@ export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
       ) : (
         `[${fieldview} ${name}]`
       )}
-    </span>
+    </div>
   );
 };
 
@@ -98,9 +99,13 @@ export const FieldSettings = () => {
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   const newfvs = options.field_view_options[e.target.value];
-                  if (newfvs && newfvs.length > 0)
+                  if (newfvs && newfvs.length > 0) {
                     setProp((prop) => (prop.fieldview = newfvs[0]));
-                  refetchPreview({ name: e.target.value });
+                    refetchPreview({
+                      name: e.target.value,
+                      fieldview: newfvs[0],
+                    });
+                  } else refetchPreview({ name: e.target.value });
                 }}
               >
                 {options.fields.map((f, ix) => (

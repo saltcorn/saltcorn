@@ -199,7 +199,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
         .attr("onclick", "")
         .attr("href", "#");
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("input, select").attr("disabled", true);
+      $(".preview-scratchpad").find("input, select, textarea").attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
