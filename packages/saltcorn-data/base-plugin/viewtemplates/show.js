@@ -114,6 +114,7 @@ const configuration_workflow = (req) =>
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           return {
+            tableName: table.name,
             fields,
             images,
             actions,

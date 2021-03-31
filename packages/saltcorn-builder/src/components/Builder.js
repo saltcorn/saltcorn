@@ -16,6 +16,7 @@ import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import optionsCtx from "./context";
+import PreviewCtx from "./preview_context";
 import {
   ToolboxShow,
   ToolboxEdit,
@@ -164,79 +165,83 @@ const NextButton = ({ layout }) => {
 
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
+  const [previews, setPreviews] = useState({});
 
   return (
     <Editor>
       <Provider value={options}>
-        <div className="row">
-          <div className="col-sm-auto">
-            <div className="card">
-              {{
-                show: <ToolboxShow />,
-                edit: <ToolboxEdit />,
-                page: <ToolboxPage />,
-                filter: <ToolboxFilter />,
-              }[mode] || <div>Missing mode</div>}
-            </div>
-          </div>
-          <div id="builder-main-canvas" className="col">
-            <div>
-              <Frame
-                resolver={{
-                  Text,
-                  Empty,
-                  Columns,
-                  JoinField,
-                  Field,
-                  ViewLink,
-                  Action,
-                  HTMLCode,
-                  LineBreak,
-                  Aggregation,
-                  Card,
-                  Image,
-                  Link,
-                  View,
-                  SearchBar,
-                  Container,
-                  Column,
-                  DropDownFilter,
-                  Tabs,
-                  ToggleFilter,
-                }}
-              >
-                <Element canvas is={Column}></Element>
-              </Frame>
-            </div>
-          </div>
-          <div className="col-sm-auto builder-sidebar">
-            <div style={{ width: "16rem" }}>
+        <PreviewCtx.Provider value={{ previews, setPreviews }}>
+          <div className="row">
+            <div className="col-sm-auto">
               <div className="card">
-                <div className="card-header">
-                  Layers
-                  <div className="float-right">
-                    <input
-                      type="checkbox"
-                      checked={showLayers}
-                      onChange={(e) => setShowLayers(e.target.checked)}
-                    />
-                  </div>
-                </div>
-                {showLayers && (
-                  <div className="card-body p-0 builder-layers">
-                    <Layers expandRootOnLoad={true} />
-                  </div>
-                )}
+                {{
+                  show: <ToolboxShow />,
+                  edit: <ToolboxEdit />,
+                  page: <ToolboxPage />,
+                  filter: <ToolboxFilter />,
+                }[mode] || <div>Missing mode</div>}
               </div>
-              <SettingsPanel />
-              <br />
-              <SaveButton />
-              <NextButton layout={layout} />
-              <ViewPageLink />
+            </div>
+            <div id="builder-main-canvas" className="col">
+              <div>
+                <Frame
+                  resolver={{
+                    Text,
+                    Empty,
+                    Columns,
+                    JoinField,
+                    Field,
+                    ViewLink,
+                    Action,
+                    HTMLCode,
+                    LineBreak,
+                    Aggregation,
+                    Card,
+                    Image,
+                    Link,
+                    View,
+                    SearchBar,
+                    Container,
+                    Column,
+                    DropDownFilter,
+                    Tabs,
+                    ToggleFilter,
+                  }}
+                >
+                  <Element canvas is={Column}></Element>
+                </Frame>
+              </div>
+            </div>
+            <div className="col-sm-auto builder-sidebar">
+              <div style={{ width: "16rem" }}>
+                <div className="card">
+                  <div className="card-header">
+                    Layers
+                    <div className="float-right">
+                      <input
+                        type="checkbox"
+                        checked={showLayers}
+                        onChange={(e) => setShowLayers(e.target.checked)}
+                      />
+                    </div>
+                  </div>
+                  {showLayers && (
+                    <div className="card-body p-0 builder-layers">
+                      <Layers expandRootOnLoad={true} />
+                    </div>
+                  )}
+                </div>
+                <SettingsPanel />
+                <br />
+                <SaveButton />
+                <NextButton layout={layout} />
+                <ViewPageLink />
+              </div>
             </div>
           </div>
-        </div>
+        </PreviewCtx.Provider>
       </Provider>
+      <div className="d-none preview-scratchpad"></div>
     </Editor>
   );
 };

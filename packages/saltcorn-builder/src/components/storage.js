@@ -191,6 +191,7 @@ export const layoutToNodes = (layout, query, actions) => {
           canvas
           title={segment.title}
           url={segment.url}
+          shadow={segment.shadow}
           isFormula={segment.isFormula || {}}
           is={Card}
         >
@@ -241,6 +242,7 @@ export const layoutToNodes = (layout, query, actions) => {
           showIfFormula={segment.showIfFormula || ""}
           showForRole={segment.showForRole || []}
           minScreenWidth={segment.minScreenWidth || ""}
+          maxScreenWidth={segment.maxScreenWidth || ""}
           show_for_owner={!!segment.show_for_owner}
           is={Container}
         >
@@ -351,6 +353,7 @@ export const craftToSaltcorn = (nodes) => {
           showIfFormula: node.props.showIfFormula,
           showForRole: node.props.showForRole,
           minScreenWidth: node.props.minScreenWidth,
+          maxScreenWidth: node.props.maxScreenWidth,
           show_for_owner: node.props.show_for_owner,
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
@@ -363,6 +366,7 @@ export const craftToSaltcorn = (nodes) => {
           title: node.props.title,
           isFormula: node.props.isFormula,
           url: node.props.url,
+          shadow: node.props.shadow,
         };
       else return get_nodes(node);
     }

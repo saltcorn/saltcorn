@@ -1,27 +1,52 @@
-import React, { useContext, Fragment } from "react";
+import React, { useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
+import previewCtx from "../preview_context";
 import {
   blockProps,
   BlockSetting,
   TextStyleRow,
   ConfigForm,
   setInitialConfig,
+  fetchFieldPreview,
 } from "./utils";
 
-export const Field = ({ name, fieldview, block, textStyle }) => {
+export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
   const {
     selected,
+    node_id,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+  } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
+  const { previews, setPreviews } = useContext(previewCtx);
+  const myPreview = previews[node_id];
+  const options = useContext(optionsCtx);
+
+  useEffect(() => {
+    fetchFieldPreview({
+      options,
+      name,
+      fieldview,
+      configuration,
+      setPreviews,
+      node_id,
+    })();
+  }, []);
   return (
-    <span
-      className={`${textStyle} ${selected ? "selected-node" : ""}`}
-      {...blockProps(block)}
+    <div
+      className={`${textStyle} ${selected ? "selected-node" : ""} ${
+        block ? "" : "d-inline-block"
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
-      [{fieldview} {name}]
-    </span>
+      {myPreview ? (
+        <div
+          className="d-inline"
+          dangerouslySetInnerHTML={{ __html: myPreview }}
+        ></div>
+      ) : (
+        `[${fieldview} ${name}]`
+      )}
+    </div>
   );
 };
 
@@ -32,6 +57,7 @@ export const FieldSettings = () => {
     fieldview,
     block,
     configuration,
+    node_id,
     textStyle,
   } = useNode((node) => ({
     name: node.data.props.name,
@@ -39,13 +65,25 @@ export const FieldSettings = () => {
     block: node.data.props.block,
     textStyle: node.data.props.textStyle,
     configuration: node.data.props.configuration,
+    node_id: node.id,
   }));
   const options = useContext(optionsCtx);
+  const { setPreviews } = useContext(previewCtx);
+
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
+  const refetchPreview = fetchFieldPreview({
+    options,
+    name,
+    fieldview,
+    configuration,
+    setPreviews,
+    node_id,
+  });
+
   return (
     <Fragment>
       <table className="w-100">
@@ -61,8 +99,13 @@ export const FieldSettings = () => {
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   const newfvs = options.field_view_options[e.target.value];
-                  if (newfvs && newfvs.length > 0)
+                  if (newfvs && newfvs.length > 0) {
                     setProp((prop) => (prop.fieldview = newfvs[0]));
+                    refetchPreview({
+                      name: e.target.value,
+                      fieldview: newfvs[0],
+                    });
+                  } else refetchPreview({ name: e.target.value });
                 }}
               >
                 {options.fields.map((f, ix) => (
@@ -90,6 +133,7 @@ export const FieldSettings = () => {
                       e.target.value,
                       getCfgFields(e.target.value)
                     );
+                    refetchPreview({ fieldview: e.target.value });
                   }}
                 >
                   {(fvs || []).map((fvnm, ix) => (
@@ -117,6 +161,7 @@ export const FieldSettings = () => {
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}
+          onChange={(k, v) => refetchPreview({ configuration: { [k]: v } })}
         />
       ) : null}
     </Fragment>

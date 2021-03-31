@@ -94,7 +94,6 @@ export const MinRoleSettingRow = ({ minRole, setProp }) => {
         <select
           value={minRole}
           className="form-control"
-
           onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
         >
           {options.roles.map((r) => (
@@ -125,6 +124,8 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="font-italic">Italics</option>
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
+      <option value="text-underline">Underline</option>
+      <option value="text-monospace">Monospace</option>
     </select>
   );
 };
@@ -179,6 +180,72 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
+const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "CSRF-Token": options.csrfToken,
+    },
+    body: JSON.stringify(body),
+  })
+    .then(function (response) {
+      return response.text();
+    })
+    .then(function (html) {
+      $(".preview-scratchpad").html(html);
+      $(".preview-scratchpad")
+        .find("[onclick], button, a, input, select")
+        .attr("onclick", "")
+        .attr("href", "#");
+      //.attr("disabled", true);
+      $(".preview-scratchpad").find("input, select, textarea").attr("disabled", true);
+      $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
+      const newHtml = $(".preview-scratchpad").html();
+      setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
+    });
+};
+export const fetchFieldPreview = (args = {}) => (changes = {}) => {
+  const { node_id, options, name, fieldview, setPreviews } = {
+    ...args,
+    ...changes,
+  };
+  const configuration = {
+    ...(args.configuration || {}),
+    ...(changes.configuration || {}),
+  };
+  fetchPreview({
+    options,
+    node_id,
+    setPreviews,
+    url: `/field/preview/${options.tableName}/${name}/${fieldview}`,
+    body: { configuration },
+  });
+};
+
+export const fetchViewPreview = (args = {}) => (changes = {}) => {
+  const { node_id, options, view, setPreviews } = {
+    ...args,
+    ...changes,
+  };
+  let viewname,
+    body = {};
+  if (view.includes(":")) {
+    const [reltype, rest] = view.split(":");
+    const [vnm] = rest.split(".");
+    viewname = vnm;
+    body.reltype = reltype;
+    body.path = rest;
+  } else viewname = view;
+
+  fetchPreview({
+    options,
+    node_id,
+    setPreviews,
+    url: `/view/${viewname}/preview`,
+    body,
+  });
+};
 
 export const SelectUnits = ({ vert, ...props }) => (
   <select {...props}>
@@ -221,7 +288,13 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
       });
   });
 };
-export const ConfigForm = ({ fields, configuration, setProp, node }) => (
+export const ConfigForm = ({
+  fields,
+  configuration,
+  setProp,
+  node,
+  onChange,
+}) => (
   <Fragment>
     {fields.map((f, ix) => {
       if (f.showIf && node && node.configuration) {
@@ -240,6 +313,7 @@ export const ConfigForm = ({ fields, configuration, setProp, node }) => (
             field={f}
             configuration={configuration}
             setProp={setProp}
+            onChange={onChange}
           />
           {f.sublabel ? <i>{f.sublabel}</i> : null}
         </Fragment>
@@ -248,16 +322,17 @@ export const ConfigForm = ({ fields, configuration, setProp, node }) => (
     <br />
   </Fragment>
 );
-export const ConfigField = ({ field, configuration, setProp }) =>
+export const ConfigField = ({ field, configuration, setProp, onChange }) =>
   ({
     String: () => (
       <input
         type="text"
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => {
+          setProp((prop) => (prop.configuration[field.name] = e.target.value));
+          onChange(field.name, e.target.value);
+        }}
       />
     ),
     Integer: () => (

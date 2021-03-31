@@ -55,7 +55,8 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Type"),
         name: "type",
-        sublabel: "The type determines the kind of data that can be stored in the field",
+        sublabel:
+          "The type determines the kind of data that can be stored in the field",
         input_type: "select",
         options: isPrimary
           ? primaryTypes
@@ -68,7 +69,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Calculated"),
         name: "calculated",
-        sublabel: "Calculated from other fields with a formula", 
+        sublabel: "Calculated from other fields with a formula",
         type: "Bool",
         disabled: !!id,
       }),
@@ -76,14 +77,14 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         label: req.__("Required"),
         name: "required",
         type: "Bool",
-        sublabel: "There must be a value in every row", 
+        sublabel: "There must be a value in every row",
         disabled: !!id && db.isSQLite,
         showIf: { calculated: false },
       }),
       new Field({
         label: req.__("Unique"),
         name: "is_unique",
-        sublabel: "Different rows must have different values for this field", 
+        sublabel: "Different rows must have different values for this field",
         showIf: { calculated: false },
         type: "Bool",
       }),
@@ -521,5 +522,47 @@ router.post(
     } catch (e) {
       return res.status(400).send(`Error: ${e.message}`);
     }
+  })
+);
+
+router.post(
+  "/preview/:tableName/:fieldName/:fieldview",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { tableName, fieldName, fieldview } = req.params;
+    const table = await Table.findOne({ name: tableName });
+    const fields = await table.getFields();
+    const field = fields.find((f) => f.name === fieldName);
+    const row = await table.getRow({});
+    const value = row && row[fieldName];
+    const configuration = req.body.configuration;
+
+    const fieldviews =
+      field.type === "Key"
+        ? getState().keyFieldviews
+        : field.type === "File"
+        ? getState().fileviews
+        : field.type.fieldviews;
+    if (!field.type || !fieldviews) {
+      res.send("");
+      return;
+    }
+    const fv = fieldviews[fieldview];
+    if (!fv) res.send("");
+    else if (fv.isEdit)
+      res.send(
+        fv.run(
+          field.name,
+          undefined,
+          { disabled: true, ...configuration },
+          "",
+          false,
+          field
+        )
+      );
+    else if (field.type === "File") {
+      res.send(fv.run(value, "filename.ext"));
+    } else res.send(fv.run(value, req, configuration));
   })
 );

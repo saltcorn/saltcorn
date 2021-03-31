@@ -79,6 +79,7 @@ const configuration_workflow = (req) =>
             field_view_options.remember = ["edit"];
           }
           return {
+            tableName: table.name,
             fields,
             field_view_options,
             handlesTextStyle,

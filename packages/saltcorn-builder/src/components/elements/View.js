@@ -1,26 +1,52 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, MinRoleSetting } from "./utils";
+import previewCtx from "../preview_context";
+
+import {
+  blockProps,
+  BlockSetting,
+  MinRoleSetting,
+  fetchViewPreview,
+} from "./utils";
 
 export const View = ({ name, view, state }) => {
   const {
     selected,
+    node_id,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+  } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
   const options = useContext(optionsCtx);
 
   const views = options.views;
-  const theview = views.find(v=>v.name===view)
-  const label = theview ? theview.label : view
+  const theview = views.find((v) => v.name === view);
+  const label = theview ? theview.label : view;
+  const { previews, setPreviews } = useContext(previewCtx);
+  const myPreview = previews[node_id];
+  console.log({ name, view });
+  useEffect(() => {
+    fetchViewPreview({
+      options,
+      view,
+      setPreviews,
+      node_id,
+    })();
+  }, []);
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={`builder-embed-view text-center ${
+      className={`${myPreview ? "" : "builder-embed-view"} text-center ${
         selected ? "selected-node" : ""
       }`}
     >
-      View: {label}
+      {myPreview ? (
+        <div
+          className="d-inline"
+          dangerouslySetInnerHTML={{ __html: myPreview }}
+        ></div>
+      ) : (
+        `View: ${label}`
+      )}
     </div>
   );
 };
@@ -31,13 +57,22 @@ export const ViewSettings = () => {
     name,
     view,
     state,
+    node_id,
   } = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
+    node_id: node.id,
   }));
   const options = useContext(optionsCtx);
   const views = options.views;
+  const { setPreviews } = useContext(previewCtx);
+  const refetchPreview = fetchViewPreview({
+    options,
+    view,
+    setPreviews,
+    node_id,
+  });
   //console.log(options)
   return (
     <div>
@@ -46,7 +81,10 @@ export const ViewSettings = () => {
         <select
           value={view}
           className="form-control"
-          onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
+          onChange={(e) => {
+            setProp((prop) => (prop.view = e.target.value));
+            refetchPreview({ view: e.target.value });
+          }}
         >
           {views.map((f, ix) => (
             <option key={ix} value={f.name}>

@@ -4,7 +4,7 @@ import { OrFormula } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const Card = ({ children, isFormula, title }) => {
+export const Card = ({ children, isFormula, title, shadow }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -12,7 +12,9 @@ export const Card = ({ children, isFormula, title }) => {
 
   return (
     <div
-      className={`card builder ${selected ? "selected-node" : ""}`}
+      className={`card ${shadow ? "shadow" : ""} builder ${
+        selected ? "selected-node" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
       {title && title.length > 0 && (
@@ -34,12 +36,14 @@ export const CardSettings = () => {
     title: node.data.props.title,
     isFormula: node.data.props.isFormula,
     url: node.data.props.url,
+    shadow: node.data.props.shadow,
   }));
   const {
     actions: { setProp },
     title,
     url,
     isFormula,
+    shadow,
   } = node;
   return (
     <div>
@@ -61,6 +65,16 @@ export const CardSettings = () => {
           onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
         />
       </OrFormula>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={shadow}
+          onChange={(e) => setProp((prop) => (prop.shadow = e.target.checked))}
+        />
+        <label className="form-check-label">Shadow</label>
+      </div>
     </div>
   );
 };
@@ -68,6 +82,7 @@ Card.craft = {
   props: {
     title: "",
     url: "",
+    shadow: true,
     isFormula: {},
   },
   displayName: "Card",

@@ -236,3 +236,7 @@ div[data-inline-edit-dest-url]:hover .editicon {
   margin-left: -50vw;
   margin-right: -50vw;
 }
+
+.text-underline {
+  text-decoration: underline;
+}

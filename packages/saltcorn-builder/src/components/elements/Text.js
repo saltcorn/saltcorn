@@ -31,6 +31,7 @@ const ckConfig = {
     { name: "about", groups: ["about"] },
   ],
   autoParagraph: false,
+  fillEmptyBlocks: false,
   removeButtons:
     "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
 };
