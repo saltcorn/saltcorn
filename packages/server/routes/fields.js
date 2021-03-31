@@ -538,8 +538,15 @@ router.post(
     const value = row && row[fieldName];
     const configuration = req.body.configuration;
 
-    const fv = field.type.fieldviews[fieldview];
-    if (fv.isEdit)
+    const fieldviews =
+      field.type === "Key" ? getState().keyFieldviews : field.type.fieldviews;
+    if (!field.type || !fieldviews) {
+      res.send("");
+      return;
+    }
+    const fv = fieldviews[fieldview];
+    if (!fv) res.send("");
+    else if (fv.isEdit)
       res.send(
         fv.run(
           field.name,
