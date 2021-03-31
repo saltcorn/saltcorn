@@ -8,6 +8,7 @@ import {
   TextStyleRow,
   ConfigForm,
   setInitialConfig,
+  fetchFieldPreview,
 } from "./utils";
 
 export const Field = ({ name, fieldview, block, textStyle }) => {
@@ -16,7 +17,7 @@ export const Field = ({ name, fieldview, block, textStyle }) => {
     node_id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
-  const { previews, setPreviews } = useContext(previewCtx);
+  const { previews } = useContext(previewCtx);
   const myPreview = previews[node_id];
   return (
     <span
@@ -54,28 +55,21 @@ export const FieldSettings = () => {
     node_id: node.id,
   }));
   const options = useContext(optionsCtx);
-  const { previews, setPreviews } = useContext(previewCtx);
+  const { setPreviews } = useContext(previewCtx);
 
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
-  const refetchPreview = () => {
-    fetch(`/field/preview/${options.tableName}/${name}/${fieldview}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "CSRF-Token": options.csrfToken,
-      },
-    })
-      .then(function (response) {
-        return response.text();
-      })
-      .then(function (html) {
-        setPreviews((prevState) => ({ ...prevState, [node_id]: html }));
-      });
-  };
+  const refetchPreview = fetchFieldPreview({
+    options,
+    name,
+    fieldview,
+    configuration,
+    setPreviews,
+    node_id,
+  });
 
   return (
     <Fragment>
@@ -94,7 +88,7 @@ export const FieldSettings = () => {
                   const newfvs = options.field_view_options[e.target.value];
                   if (newfvs && newfvs.length > 0)
                     setProp((prop) => (prop.fieldview = newfvs[0]));
-                  refetchPreview();
+                  refetchPreview({ name: e.target.value });
                 }}
               >
                 {options.fields.map((f, ix) => (
@@ -122,7 +116,7 @@ export const FieldSettings = () => {
                       e.target.value,
                       getCfgFields(e.target.value)
                     );
-                    refetchPreview();
+                    refetchPreview({ fieldview: e.target.value });
                   }}
                 >
                   {(fvs || []).map((fvnm, ix) => (
@@ -150,6 +144,7 @@ export const FieldSettings = () => {
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}
+          onChange={(k, v) => refetchPreview({ configuration: { [k]: v } })}
         />
       ) : null}
     </Fragment>

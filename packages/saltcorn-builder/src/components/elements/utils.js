@@ -94,7 +94,6 @@ export const MinRoleSettingRow = ({ minRole, setProp }) => {
         <select
           value={minRole}
           className="form-control"
-
           onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
         >
           {options.roles.map((r) => (
@@ -182,6 +181,31 @@ export const Accordion = ({ titles, children }) => {
   );
 };
 
+export const fetchFieldPreview = (args) => (changes) => {
+  const { node_id, options, name, fieldview, setPreviews } = {
+    ...args,
+    ...changes,
+  };
+  const configuration = {
+    ...(args.configuration || {}),
+    ...(changes.configuration || {}),
+  };
+  fetch(`/field/preview/${options.tableName}/${name}/${fieldview}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "CSRF-Token": options.csrfToken,
+    },
+    body: JSON.stringify({ configuration }),
+  })
+    .then(function (response) {
+      return response.text();
+    })
+    .then(function (html) {
+      setPreviews((prevState) => ({ ...prevState, [node_id]: html }));
+    });
+};
+
 export const SelectUnits = ({ vert, ...props }) => (
   <select {...props}>
     <option>px</option>
@@ -223,7 +247,13 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
       });
   });
 };
-export const ConfigForm = ({ fields, configuration, setProp, node }) => (
+export const ConfigForm = ({
+  fields,
+  configuration,
+  setProp,
+  node,
+  onChange,
+}) => (
   <Fragment>
     {fields.map((f, ix) => {
       if (f.showIf && node && node.configuration) {
@@ -242,6 +272,7 @@ export const ConfigForm = ({ fields, configuration, setProp, node }) => (
             field={f}
             configuration={configuration}
             setProp={setProp}
+            onChange={onChange}
           />
           {f.sublabel ? <i>{f.sublabel}</i> : null}
         </Fragment>
@@ -250,16 +281,17 @@ export const ConfigForm = ({ fields, configuration, setProp, node }) => (
     <br />
   </Fragment>
 );
-export const ConfigField = ({ field, configuration, setProp }) =>
+export const ConfigField = ({ field, configuration, setProp, onChange }) =>
   ({
     String: () => (
       <input
         type="text"
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => {
+          setProp((prop) => (prop.configuration[field.name] = e.target.value));
+          onChange(field.name, e.target.value);
+        }}
       />
     ),
     Integer: () => (
