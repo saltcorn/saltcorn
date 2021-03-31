@@ -539,7 +539,11 @@ router.post(
     const configuration = req.body.configuration;
 
     const fieldviews =
-      field.type === "Key" ? getState().keyFieldviews : field.type.fieldviews;
+      field.type === "Key"
+        ? getState().keyFieldviews
+        : field.type === "File"
+        ? getState().fileviews
+        : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");
       return;
@@ -557,6 +561,8 @@ router.post(
           field
         )
       );
-    else res.send(fv.run(value, req, configuration));
+    else if (field.type === "File") {
+      res.send(fv.run(value, "filename.ext"));
+    } else res.send(fv.run(value, req, configuration));
   })
 );
