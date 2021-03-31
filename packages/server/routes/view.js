@@ -7,6 +7,7 @@ const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const {
   setTenant,
+  isAdmin,
   error_catcher,
   scan_for_page_title,
 } = require("../routes/utils.js");
@@ -52,6 +53,22 @@ router.get(
     );
   })
 );
+
+router.post(
+  "/:viewname/preview",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { viewname } = req.params;
+
+    const view = await View.findOne({ name: viewname });
+    let query = {};
+    const contents = await view.run(query, { req, res });
+
+    res.send(contents);
+  })
+);
+
 router.post(
   "/:viewname/:route",
   setTenant,

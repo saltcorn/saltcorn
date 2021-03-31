@@ -180,7 +180,22 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
-
+const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "CSRF-Token": options.csrfToken,
+    },
+    body: JSON.stringify(body),
+  })
+    .then(function (response) {
+      return response.text();
+    })
+    .then(function (html) {
+      setPreviews((prevState) => ({ ...prevState, [node_id]: html }));
+    });
+};
 export const fetchFieldPreview = (args = {}) => (changes = {}) => {
   const { node_id, options, name, fieldview, setPreviews } = {
     ...args,
@@ -190,20 +205,28 @@ export const fetchFieldPreview = (args = {}) => (changes = {}) => {
     ...(args.configuration || {}),
     ...(changes.configuration || {}),
   };
-  fetch(`/field/preview/${options.tableName}/${name}/${fieldview}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "CSRF-Token": options.csrfToken,
-    },
-    body: JSON.stringify({ configuration }),
-  })
-    .then(function (response) {
-      return response.text();
-    })
-    .then(function (html) {
-      setPreviews((prevState) => ({ ...prevState, [node_id]: html }));
-    });
+  fetchPreview({
+    options,
+    node_id,
+    setPreviews,
+    url: `/field/preview/${options.tableName}/${name}/${fieldview}`,
+    body: { configuration },
+  });
+};
+
+export const fetchViewPreview = (args = {}) => (changes = {}) => {
+  const { node_id, options, view, setPreviews } = {
+    ...args,
+    ...changes,
+  };
+ 
+  fetchPreview({
+    options,
+    node_id,
+    setPreviews,
+    url: `/view/${view}/preview`,
+    body: { },
+  });
 };
 
 export const SelectUnits = ({ vert, ...props }) => (
