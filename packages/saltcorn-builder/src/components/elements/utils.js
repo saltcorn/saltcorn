@@ -193,14 +193,15 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
       return response.text();
     })
     .then(function (html) {
-      $('.preview-scratchpad').html(html)
-      $('.preview-scratchpad')
+      $(".preview-scratchpad").html(html);
+      $(".preview-scratchpad")
         .find("[onclick], button, a, input, select")
         .attr("onclick", "")
-        .attr("href", "#")
-        //.attr("disabled", true);
-
-      const newHtml = $('.preview-scratchpad').html();
+        .attr("href", "#");
+      //.attr("disabled", true);
+      $(".preview-scratchpad").find("input, select").attr("disabled", true);
+      $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
+      const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
 };
@@ -227,13 +228,22 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     ...args,
     ...changes,
   };
+  let viewname,
+    body = {};
+  if (view.includes(":")) {
+    const [reltype, rest] = view.split(":");
+    const [vnm] = rest.split(".");
+    viewname = vnm;
+    body.reltype = reltype;
+    body.path = rest;
+  } else viewname = view;
 
   fetchPreview({
     options,
     node_id,
     setPreviews,
-    url: `/view/${view}/preview`,
-    body: {},
+    url: `/view/${viewname}/preview`,
+    body,
   });
 };
 

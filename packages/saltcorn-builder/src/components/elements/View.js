@@ -57,13 +57,22 @@ export const ViewSettings = () => {
     name,
     view,
     state,
+    node_id,
   } = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
+    node_id: node.id,
   }));
   const options = useContext(optionsCtx);
   const views = options.views;
+  const { setPreviews } = useContext(previewCtx);
+  const refetchPreview = fetchViewPreview({
+    options,
+    view,
+    setPreviews,
+    node_id,
+  });
   //console.log(options)
   return (
     <div>
@@ -72,7 +81,10 @@ export const ViewSettings = () => {
         <select
           value={view}
           className="form-control"
-          onChange={(e) => setProp((prop) => (prop.view = e.target.value))}
+          onChange={(e) => {
+            setProp((prop) => (prop.view = e.target.value));
+            refetchPreview({ view: e.target.value });
+          }}
         >
           {views.map((f, ix) => (
             <option key={ix} value={f.name}>
