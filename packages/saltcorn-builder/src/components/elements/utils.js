@@ -181,7 +181,7 @@ export const Accordion = ({ titles, children }) => {
   );
 };
 
-export const fetchFieldPreview = (args) => (changes) => {
+export const fetchFieldPreview = (args = {}) => (changes = {}) => {
   const { node_id, options, name, fieldview, setPreviews } = {
     ...args,
     ...changes,

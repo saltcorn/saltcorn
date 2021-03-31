@@ -1,4 +1,4 @@
-import React, { useContext, Fragment } from "react";
+import React, { useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -11,14 +11,26 @@ import {
   fetchFieldPreview,
 } from "./utils";
 
-export const Field = ({ name, fieldview, block, textStyle }) => {
+export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
   const {
     selected,
     node_id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
-  const { previews } = useContext(previewCtx);
+  const { previews, setPreviews } = useContext(previewCtx);
   const myPreview = previews[node_id];
+  const options = useContext(optionsCtx);
+
+  useEffect(() => {
+    fetchFieldPreview({
+      options,
+      name,
+      fieldview,
+      configuration,
+      setPreviews,
+      node_id,
+    })();
+  }, []);
   return (
     <span
       className={`${textStyle} ${selected ? "selected-node" : ""}`}
