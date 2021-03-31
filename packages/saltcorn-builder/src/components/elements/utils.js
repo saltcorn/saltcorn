@@ -193,12 +193,14 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
       return response.text();
     })
     .then(function (html) {
-      const jq = $(html)
+      $('.preview-scratchpad').html(html)
+      $('.preview-scratchpad')
         .find("[onclick], button, a, input, select")
         .attr("onclick", "")
         .attr("href", "#")
-        .attr("disabled", true);
-      const newHtml = jq[0].outerHTML;
+        //.attr("disabled", true);
+
+      const newHtml = $('.preview-scratchpad').html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
 };

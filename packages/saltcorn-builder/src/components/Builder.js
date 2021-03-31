@@ -241,6 +241,7 @@ const Builder = ({ options, layout, mode }) => {
           </div>
         </PreviewCtx.Provider>
       </Provider>
+      <div className="d-none preview-scratchpad"></div>
     </Editor>
   );
 };
