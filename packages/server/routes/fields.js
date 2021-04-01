@@ -549,7 +549,9 @@ router.post(
       return;
     }
     const fv = fieldviews[fieldview];
-    if (!fv) res.send("");
+    if (!fv && field.type === "Key" && fieldview === "select")
+      res.send("<select disabled></select>");
+    else if (!fv) res.send("");
     else if (fv.isEdit)
       res.send(
         fv.run(
