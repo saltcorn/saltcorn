@@ -1,6 +1,7 @@
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
+const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
 
 const { div, text, i, a } = require("@saltcorn/markup/tags");
@@ -63,6 +64,19 @@ router.post(
 
     const view = await View.findOne({ name: viewname });
     let query = {};
+    let row;
+    let table;
+    const sfs = await view.get_state_fields();
+    for (const sf of sfs) {
+      if (sf.required) {
+        if (!row) {
+          if (!table)
+            table = await Table.findOne(view.table_id || view.exttable_name);
+          row = await table.getRow({});
+        }
+        query[sf.name]=row[sf.name]
+      }
+    }
     const contents = await view.run(query, { req, res });
 
     res.send(contents);

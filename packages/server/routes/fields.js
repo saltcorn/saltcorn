@@ -549,7 +549,9 @@ router.post(
       return;
     }
     const fv = fieldviews[fieldview];
-    if (!fv) res.send("");
+    if (!fv && field.type === "Key" && fieldview === "select")
+      res.send("<select disabled></select>");
+    else if (!fv) res.send("");
     else if (fv.isEdit)
       res.send(
         fv.run(
@@ -564,5 +566,14 @@ router.post(
     else if (field.type === "File") {
       res.send(fv.run(value, "filename.ext"));
     } else res.send(fv.run(value, req, configuration));
+  })
+);
+
+router.post(
+  "/preview/:tableName/:fieldName/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.send("");
   })
 );

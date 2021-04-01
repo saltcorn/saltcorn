@@ -80,7 +80,9 @@ const calcfldViewOptions = contract(
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
-        fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
+        fvs[f.name] = isEdit
+          ? ["select", ...Object.keys(getState().keyFieldviews)]
+          : ["show"];
         Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
