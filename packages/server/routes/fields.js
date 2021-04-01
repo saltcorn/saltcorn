@@ -568,3 +568,12 @@ router.post(
     } else res.send(fv.run(value, req, configuration));
   })
 );
+
+router.post(
+  "/preview/:tableName/:fieldName/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.send("");
+  })
+);
