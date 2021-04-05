@@ -2,6 +2,6 @@ FROM node:14
 
 ENV NODE_ENV "production"
 
-RUN npm install -g @saltcorn/cli@0.4.3-beta.1 --unsafe
+RUN npm install -g @saltcorn/cli@0.4.3 --unsafe
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
