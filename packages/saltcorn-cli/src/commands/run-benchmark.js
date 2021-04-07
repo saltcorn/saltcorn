@@ -6,6 +6,8 @@ const wrkCB = require("wrk");
 const { sleep } = require("../common");
 const packagejson = require("../../package.json");
 
+const parseMillisecs = s=> s.endsWith('ms') ? parseFloat(s) : parseFloat(s)*1000
+
 const wrk = (args) =>
   new Promise(function (resolve, reject) {
     wrkCB(args, function (err, out) {
@@ -13,8 +15,8 @@ const wrk = (args) =>
         console.error(err);
         process.exit(1);
       }
-      out.latencyAvgMs = parseFloat(out.latencyAvg);
-      out.latencyMaxMs = parseFloat(out.latencyMax);
+      out.latencyAvgMs = parseMillisecs(out.latencyAvg);
+      out.latencyMaxMs = parseMillisecs(out.latencyMax);
       resolve(out);
     });
   });
