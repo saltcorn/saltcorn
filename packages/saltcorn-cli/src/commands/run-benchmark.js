@@ -36,7 +36,7 @@ class RunBenchmarkCommand extends Command {
       process.exit(1);
     }
     const getURL = (pth) =>
-      `${ensure_no_final_slash(baseurl || "http://localhost:3000")}${pth}`;
+      `${ensure_no_final_slash(baseurl || "http://127.0.0.1")}${pth}`;
     const bench = (url) =>
       wrk({
         threads: 2,
