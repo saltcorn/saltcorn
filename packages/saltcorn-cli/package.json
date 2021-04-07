@@ -20,7 +20,9 @@
     "inquirer": "^7.1.0",
     "js-yaml": "^4.0.0",
     "sudo": "^1.0.3",
-    "tcp-port-used": "^1.0.1"
+    "systeminformation": "^5.6.10",
+    "tcp-port-used": "^1.0.1",
+    "wrk": "^1.2.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",
