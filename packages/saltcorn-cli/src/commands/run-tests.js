@@ -1,10 +1,7 @@
 const { Command, flags } = require("@oclif/command");
 
 const { spawnSync, spawn } = require("child_process");
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const { sleep } = require("../common");
 
 class RunTestsCommand extends Command {
   async do_test(cmd, args, env, forever, cwd, keepalive) {
