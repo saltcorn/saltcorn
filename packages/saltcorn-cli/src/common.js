@@ -11,4 +11,8 @@ const parseJSONorString = (s) => {
     return s;
   }
 };
-module.exports = { maybe_as_tenant, parseJSONorString };
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+module.exports = { maybe_as_tenant, parseJSONorString, sleep };

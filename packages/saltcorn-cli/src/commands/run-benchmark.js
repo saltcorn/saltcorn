@@ -1,5 +1,10 @@
 const { Command, flags } = require("@oclif/command");
+const si = require("systeminformation");
+const fetch = require("node-fetch");
+
 const wrkCB = require("wrk");
+const { sleep } = require("../common");
+const packagejson = require("../../package.json");
 
 const wrk = (args) =>
   new Promise(function (resolve, reject) {
@@ -34,13 +39,53 @@ class RunBenchmarkCommand extends Command {
         duration: "10s",
         url: getURL(url),
       });
+    const cpu = await si.cpu();
+    const os = await si.osInfo();
+    const mem = await si.mem();
+    const memory = mem.total / (1024 * 1024);
+
+    const sleep_dur = 30000;
+
     const stored_file = await bench(`/files/serve/${file.id}`);
+    await sleep(sleep_dur);
     const static_file = await bench("/saltcorn.css");
+    await sleep(sleep_dur);
     const form_view = await bench("/view/NewThread");
+    await sleep(sleep_dur);
     const simple_page = await bench("/page/simplepage");
+    await sleep(sleep_dur);
     const complex_page = await bench("/page/homepage");
 
-    console.log({stored_file, static_file, form_view, simple_page, complex_page});
+    const out = {
+      stored_file,
+      static_file,
+      form_view,
+      simple_page,
+      complex_page,
+    };
+    console.log(out);
+    if (token) {
+      for (const [what, result] of Object.entries(out)) {
+        await fetch("https://benchmark.saltcorn.com/api/benchrun", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            access_token: token,
+            what,
+            reqs_per_sec: result.requestsPerSec,
+            avg_latency: result.latencyAvgMs,
+            max_latency: result.latencyMaxMs,
+            date: new Date(),
+            version: packagejson.version,
+            cores: cpu.cores,
+            distro: os.distro,
+            memory,
+          }),
+        });
+      }
+    }
     process.exit(0);
   }
 }
