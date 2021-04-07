@@ -62,7 +62,8 @@ class RunBenchmarkCommand extends Command {
       process.stdout.write(`${what}:\t`);
       const result = await bench(url);
       const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, " ");
-      console.log(`${reqs} req/s`);
+      const lat = `${Math.round(result.latencyAvgMs)}`.padStart(4, " ");
+      console.log(`${reqs} req/s\t${lat}ms`);
       if (token) {
         await fetch("https://benchmark.saltcorn.com/api/benchrun", {
           method: "POST",
