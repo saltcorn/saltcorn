@@ -25,7 +25,7 @@ class RunBenchmarkCommand extends Command {
   async run() {
     const {
       args: { baseurl },
-      flags: { token },
+      flags: { token, delay },
     } = this.parse(RunBenchmarkCommand);
     const File = require("@saltcorn/data/models/file");
     const file = await File.findOne({ filename: "rick.png" });
@@ -44,28 +44,21 @@ class RunBenchmarkCommand extends Command {
     const mem = await si.mem();
     const memory = mem.total / (1024 * 1024);
 
-    const sleep_dur = 30000;
+    const sleep_dur = (delay || 30) * 1000;
 
-    const stored_file = await bench(`/files/serve/${file.id}`);
-    await sleep(sleep_dur);
-    const static_file = await bench("/saltcorn.css");
-    await sleep(sleep_dur);
-    const form_view = await bench("/view/NewThread");
-    await sleep(sleep_dur);
-    const simple_page = await bench("/page/simplepage");
-    await sleep(sleep_dur);
-    const complex_page = await bench("/page/homepage");
-
-    const out = {
-      stored_file,
-      static_file,
-      form_view,
-      simple_page,
-      complex_page,
+    const benches = {
+      static_file: "/saltcorn.css",
+      stored_file: `/files/serve/${file.id}`,
+      form_view: "/view/NewThread",
+      simple_page: "/page/simplepage",
+      complex_page: "/page/homepage",
     };
-    console.log(out);
-    if (token) {
-      for (const [what, result] of Object.entries(out)) {
+    for (const [what, url] of Object.entries(benches)) {
+      process.stdout.write(`${what}:\t`);
+      const result = await bench(url);
+      const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, ' ')
+      console.log(`${reqs} req/s`);
+      if (token) {
         await fetch("https://benchmark.saltcorn.com/api/benchrun", {
           method: "POST",
           headers: {
@@ -85,6 +78,7 @@ class RunBenchmarkCommand extends Command {
           }),
         });
       }
+      if (what !== "complex_page") await sleep(sleep_dur);
     }
     process.exit(0);
   }
@@ -100,6 +94,11 @@ RunBenchmarkCommand.flags = {
   token: flags.string({
     char: "t",
     description: "API Token for reporting results",
+  }),
+  delay: flags.integer({
+    char: "d",
+    description: "delay between runs (s)",
+    default: 30,
   }),
 };
 module.exports = RunBenchmarkCommand;
