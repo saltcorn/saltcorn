@@ -20,6 +20,8 @@ class RunBenchmarkCommand extends Command {
           console.error(err);
           process.exit(1);
         }
+        out.latencyAvgMs = parseFloat(out.latencyAvg)
+        out.latencyMaxMs = parseFloat(out.latencyMax)
         console.log(out);
         process.exit(0);
       }
