@@ -27,10 +27,10 @@ class SetupBenchmarkCommand extends Command {
       const nusers = await User.count();
       if (nusers === 0) {
         await User.create({
-          email: "tomn@hey.com",
+          email: "foo@bar.com",
           password: User.generate_password(),
           role_id: 1,
-          username: "tomn",
+          username: "theuser",
         });
       }
       const user = await User.findOne({});
@@ -46,7 +46,7 @@ class SetupBenchmarkCommand extends Command {
         category: "General",
       });
       await replies.insertRow({
-        body: "How fast is it really?",
+        body: "That is what we are trying to find out",
         posted: new Date(),
         poster: user.id,
         thread: thread_id,

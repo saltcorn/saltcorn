@@ -1,31 +1,47 @@
 const { Command, flags } = require("@oclif/command");
-const wrk = require("wrk");
+const wrkCB = require("wrk");
+
+const wrk = (args) =>
+  new Promise(function (resolve, reject) {
+    wrkCB(args, function (err, out) {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      out.latencyAvgMs = parseFloat(out.latencyAvg);
+      out.latencyMaxMs = parseFloat(out.latencyMax);
+      resolve(out);
+    });
+  });
+
+const ensure_no_final_slash = (s) => (s.endsWith("/") ? s.slice(0, -1) : s);
 
 class RunBenchmarkCommand extends Command {
   async run() {
-    const that = this;
     const {
       args: { baseurl },
       flags: { token },
     } = this.parse(RunBenchmarkCommand);
-    wrk(
-      {
-        threads: 1,
+    const File = require("@saltcorn/data/models/file");
+    const file = await File.findOne({ filename: "rick.png" });
+
+    const getURL = (pth) =>
+      `${ensure_no_final_slash(baseurl || "http://localhost:3000")}${pth}`;
+    const bench = (url) =>
+      wrk({
+        threads: 2,
         connections: 50,
         duration: "10s",
-        url: baseurl || "http://localhost:3000/",
-      },
-      function (err, out) {
-        if (err) {
-          console.error(err);
-          process.exit(1);
-        }
-        out.latencyAvgMs = parseFloat(out.latencyAvg)
-        out.latencyMaxMs = parseFloat(out.latencyMax)
-        console.log(out);
-        process.exit(0);
-      }
-    );
+        url: getURL(url),
+      });
+    const stored_file = await bench(`/files/serve/${file.id}`);
+    const static_file = await bench("/saltcorn.css");
+    const form_view = await bench("/view/NewThread");
+    const simple_page = await bench("/page/simplepage");
+    const complex_page = await bench("/page/homepage");
+
+    console.log({stored_file, static_file, form_view, simple_page, complex_page});
+    process.exit(0);
   }
 }
 
