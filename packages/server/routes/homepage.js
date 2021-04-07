@@ -201,7 +201,8 @@ const no_views_logged_in = async (req, res) => {
   else {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
-    const can_update = packagejson.version !== latest;
+    const can_update =
+      packagejson.version !== latest && !process.env.SALTCORN_DISABLE_UPGRADE;
     if (latest && can_update)
       req.flash(
         "warning",

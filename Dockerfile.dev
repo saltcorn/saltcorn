@@ -9,5 +9,6 @@ COPY . /opt/saltcorn
 RUN lerna bootstrap
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
+ENV SALTCORN_DISABLE_UPGRADE "true"
 
 ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

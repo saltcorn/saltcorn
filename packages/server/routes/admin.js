@@ -255,7 +255,8 @@ router.get(
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
-    const can_update = packagejson.version !== latest;
+    const is_latest = packagejson.version === latest;
+    const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE;
     send_admin_page({
       res,
       req,
@@ -311,7 +312,7 @@ router.get(
                                 formClass: "d-inline",
                               }
                             )
-                          : isRoot && !can_update
+                          : isRoot && is_latest
                           ? span(
                               { class: "badge badge-primary ml-2" },
                               req.__("Latest")
