@@ -29,7 +29,10 @@ class RunBenchmarkCommand extends Command {
     } = this.parse(RunBenchmarkCommand);
     const File = require("@saltcorn/data/models/file");
     const file = await File.findOne({ filename: "rick.png" });
-
+    if (!file) {
+      console.error("File not found. Run 'saltcorn reset-schema' then 'saltcorn setup-benchmark'");
+      process.exit(1);
+    }
     const getURL = (pth) =>
       `${ensure_no_final_slash(baseurl || "http://localhost:3000")}${pth}`;
     const bench = (url) =>
@@ -56,7 +59,7 @@ class RunBenchmarkCommand extends Command {
     for (const [what, url] of Object.entries(benches)) {
       process.stdout.write(`${what}:\t`);
       const result = await bench(url);
-      const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, ' ')
+      const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, " ");
       console.log(`${reqs} req/s`);
       if (token) {
         await fetch("https://benchmark.saltcorn.com/api/benchrun", {
