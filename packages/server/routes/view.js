@@ -63,6 +63,10 @@ router.post(
     const { viewname } = req.params;
 
     const view = await View.findOne({ name: viewname });
+    if (!view) {
+      res.send("");
+      return;
+    }
     let query = {};
     let row;
     let table;
@@ -74,7 +78,7 @@ router.post(
             table = await Table.findOne(view.table_id || view.exttable_name);
           row = await table.getRow({});
         }
-        query[sf.name]=row[sf.name]
+        query[sf.name] = row[sf.name];
       }
     }
     const contents = await view.run(query, { req, res });

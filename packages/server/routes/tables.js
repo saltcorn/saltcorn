@@ -416,7 +416,6 @@ router.get(
     if (id) table = await Table.findOne({ id });
     else {
       table = await Table.findOne({ name: idorname });
-      
     }
 
     if (!table) {
@@ -454,7 +453,7 @@ router.get(
               r.type === "Key"
                 ? `Key to ` +
                   a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
-                : r.type.name || r.type,
+                : (r.type && r.type.name) || r.type,
           },
           {
             label: "",

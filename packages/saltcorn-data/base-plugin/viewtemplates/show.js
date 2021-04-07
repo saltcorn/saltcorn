@@ -404,6 +404,7 @@ const render = (
           : "";
       } else if (
         fieldview &&
+        field.type &&
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
