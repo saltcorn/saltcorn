@@ -6,6 +6,8 @@ const wrkCB = require("wrk");
 const { sleep } = require("../common");
 const packagejson = require("../../package.json");
 
+const parseMillisecs = s=> s.endsWith('ms') ? parseFloat(s) : parseFloat(s)*1000
+
 const wrk = (args) =>
   new Promise(function (resolve, reject) {
     wrkCB(args, function (err, out) {
@@ -13,8 +15,8 @@ const wrk = (args) =>
         console.error(err);
         process.exit(1);
       }
-      out.latencyAvgMs = parseFloat(out.latencyAvg);
-      out.latencyMaxMs = parseFloat(out.latencyMax);
+      out.latencyAvgMs = parseMillisecs(out.latencyAvg);
+      out.latencyMaxMs = parseMillisecs(out.latencyMax);
       resolve(out);
     });
   });
@@ -29,9 +31,12 @@ class RunBenchmarkCommand extends Command {
     } = this.parse(RunBenchmarkCommand);
     const File = require("@saltcorn/data/models/file");
     const file = await File.findOne({ filename: "rick.png" });
-
+    if (!file) {
+      console.error("File not found. Run 'saltcorn reset-schema' then 'saltcorn setup-benchmark'");
+      process.exit(1);
+    }
     const getURL = (pth) =>
-      `${ensure_no_final_slash(baseurl || "http://localhost:3000")}${pth}`;
+      `${ensure_no_final_slash(baseurl || "http://127.0.0.1")}${pth}`;
     const bench = (url) =>
       wrk({
         threads: 2,
@@ -56,8 +61,9 @@ class RunBenchmarkCommand extends Command {
     for (const [what, url] of Object.entries(benches)) {
       process.stdout.write(`${what}:\t`);
       const result = await bench(url);
-      const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, ' ')
-      console.log(`${reqs} req/s`);
+      const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, " ");
+      const lat = `${Math.round(result.latencyAvgMs)}`.padStart(4, " ");
+      console.log(`${reqs} req/s\t${lat}ms`);
       if (token) {
         await fetch("https://benchmark.saltcorn.com/api/benchrun", {
           method: "POST",
