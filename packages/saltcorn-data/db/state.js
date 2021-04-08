@@ -7,6 +7,7 @@ const {
   is_plugin_type,
   is_plugin_layout,
 } = require("../contracts");
+const moment = require("moment");
 
 const db = require(".");
 const { migrate } = require("../migrate");
@@ -41,8 +42,8 @@ class State {
     this.plugin_locations = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = {};
-    this.functions = {};
+    this.function_context = { moment };
+    this.functions = { moment };
     this.keyFieldviews = {};
     this.external_tables = {};
     contract.class(this);
@@ -176,8 +177,8 @@ class State {
     this.auth_methods = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = {};
-    this.functions = {};
+    this.function_context = { moment };
+    this.functions = { moment };
     this.keyFieldviews = {};
     this.external_tables = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
