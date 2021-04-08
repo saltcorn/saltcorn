@@ -264,7 +264,7 @@ router.get(
     const currentTable = tables.find(
       (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
     );
-    viewrow.table_name = currentTable.name;
+    viewrow.table_name = currentTable && currentTable.name;
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
