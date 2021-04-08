@@ -16,19 +16,21 @@ const {
 const { contract, is } = require("contractis");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
-
+const eqStr = (x, y) => `${x}` === `${y}`;
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
         .split(",")
         .map((o) => text_attr(o.trim()))
-        .map((o) => option({ value: o, ...(v === o && { selected: true }) }, o))
+        .map((o) =>
+          option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
+        )
     : optsStr.map((o, ix) =>
         o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
           ? option(
               {
                 value: o.name,
-                ...((v === o.name ||
+                ...((eqStr(v, o.name) ||
                   (ix === 0 && typeof v === "undefined" && o.disabled)) && {
                   selected: true,
                 }),
@@ -36,7 +38,7 @@ const getStrOptions = (v, optsStr) =>
               },
               o.label
             )
-          : option({ value: o, ...(v === o && { selected: true }) }, o)
+          : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
 
 const string = {
