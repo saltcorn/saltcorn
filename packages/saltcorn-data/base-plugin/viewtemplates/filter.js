@@ -101,6 +101,12 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             distinct_values[col.field_name] = await jfield.distinct_values();
         }
       }
+      const dvs = distinct_values[col.field_name];
+      if (dvs && dvs[0]) {
+        if (dvs[0].value !== "") {
+          dvs.unshift({ label: "", value: "" });
+        }
+      }
     }
   }
 
@@ -122,7 +128,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   await eachView(layout, async (segment) => {
     const view = await View.findOne({ name: segment.view });
     if (!view)
-    throw new InvalidConfiguration(`View ${viewname} incorrectly configured: cannot find view ${segment.view}`);
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+      );
     else segment.contents = await view.run(state, extra);
   });
 
