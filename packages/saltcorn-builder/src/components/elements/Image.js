@@ -14,7 +14,7 @@ export const Image = ({ fileid, block, alt }) => {
         "No images Available"
       ) : (
         <img
-          className={`w-100 ${selected ? "selected-node" : ""}`}
+          className={`w-100 image-widget ${selected ? "selected-node" : ""}`}
           src={`/files/serve/${fileid}`}
           alt={alt}
         ></img>
