@@ -86,6 +86,7 @@ export const FieldSettings = () => {
 
   return (
     <Fragment>
+      <i><small>Previews shown in canvas are indicative based on random rows</small></i>
       <table className="w-100">
         <tbody>
           <tr>
