@@ -21,7 +21,7 @@
     "js-yaml": "^4.0.0",
     "node-fetch": "^2.6.1",
     "sudo": "^1.0.3",
-    "systeminformation": "^5.6.10",
+    "systeminformation": "^5.6.11",
     "tcp-port-used": "^1.0.1",
     "wrk": "^1.2.1"
   },
