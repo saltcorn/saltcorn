@@ -46,6 +46,8 @@ const input = (kvs) => {
 const domReady = (js) =>
   `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',f,false)})(function(){${js}});`;
 
+xss.whiteList.kbd=[]
+
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
 

@@ -40,5 +40,8 @@ describe("tags", () => {
     );
     expect(text(1)).toBe("1");
     expect(text(0)).toBe("0");
+    expect(text("<script>alert(1);<script>")).toBe("&lt;script&gt;alert(1);&lt;script&gt;");
+    expect(text("<p>alert<p>")).toBe("<p>alert<p>");
+    expect(text("<kbd>ctrl<kbd>")).toBe("<kbd>ctrl<kbd>");
   });
 });
