@@ -68,6 +68,12 @@ const configuration_workflow = (req) =>
           triggers.forEach((tr) => {
             actions.push(tr.name);
           });
+          for (const field of fields) {
+            if (field.type === "Key") {
+              f.reftable = await Table.findOne({ name: field.reftable_name });
+              if (f.reftable) await f.reftable.getFields();
+            }
+          }
           const actionConfigForms = {};
           for (const [name, action] of Object.entries(stateActions)) {
             if (action.configFields) {

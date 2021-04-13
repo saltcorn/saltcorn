@@ -80,9 +80,20 @@ const calcfldViewOptions = contract(
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
-        fvs[f.name] = isEdit
-          ? ["select", ...Object.keys(getState().keyFieldviews)]
-          : ["show"];
+        if (isEdit)
+          fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
+        else {
+          if (f.reftable && f.reftable.fields) {
+            const { field_view_options } = calcfldViewOptions(
+              f.reftable.fields,
+              isEdit
+            );
+            for (const jf of f.reftable.fields) {
+              fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+            }
+          }
+          fvs[f.name] = ["show"];
+        }
         Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
@@ -175,7 +186,12 @@ const field_picker_fields = contract(
   async ({ table, viewname, req }) => {
     const __ = (...s) => (req ? req.__(...s) : s.join(""));
     const fields = await table.getFields();
-
+    for (const field of fields) {
+      if (field.type === "Key") {
+        f.reftable = await Table.findOne({ name: field.reftable_name });
+        if (f.reftable) await f.reftable.getFields();
+      }
+    }
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
 
     const stateActions = getState().actions;
