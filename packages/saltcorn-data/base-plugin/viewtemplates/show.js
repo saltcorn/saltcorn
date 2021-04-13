@@ -70,8 +70,8 @@ const configuration_workflow = (req) =>
           });
           for (const field of fields) {
             if (field.type === "Key") {
-              f.reftable = await Table.findOne({ name: field.reftable_name });
-              if (f.reftable) await f.reftable.getFields();
+              field.reftable = await Table.findOne({ name: field.reftable_name });
+              if (field.reftable) await field.reftable.getFields();
             }
           }
           const actionConfigForms = {};
