@@ -137,6 +137,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.join_field}
           block={segment.block || false}
+          fieldview={segment.fieldview}
           textStyle={segment.textStyle || ""}
         />
       );
@@ -505,11 +506,13 @@ export const craftToSaltcorn = (nodes) => {
       columns.push({
         type: "JoinField",
         join_field: node.props.name,
+        fieldview: node.props.fieldview,
       });
       return {
         type: "join_field",
         block: node.props.block,
         join_field: node.props.name,
+        fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
       };
     }
