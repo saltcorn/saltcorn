@@ -283,6 +283,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         maxScreenWidth,
         showIfFormulaInputs,
         show_for_owner,
+        borderDirection,
         borderRadius,
         borderRadiusUnit,
         borderColor,
@@ -352,7 +353,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border: ${
+            )}${sizeProp("widthPct", "width", "%")}border${borderDirection? `-${borderDirection}`:''}: ${
               borderWidth || 0
             }px ${borderStyle} ${borderColor || "black"};${sizeProp(
               "borderRadius",

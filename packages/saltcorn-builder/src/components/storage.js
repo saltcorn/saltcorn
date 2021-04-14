@@ -208,6 +208,7 @@ export const layoutToNodes = (layout, query, actions) => {
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           borderRadius={segment.borderRadius}
+          borderDirection={segment.borderDirection}
           borderColor={segment.borderColor}
           borderRadiusUnit={segment.borderRadiusUnit}
           gradStartColor={segment.gradStartColor}
@@ -327,6 +328,7 @@ export const craftToSaltcorn = (nodes) => {
           borderStyle: node.props.borderStyle,
           borderColor: node.props.borderColor,
           borderRadius: node.props.borderRadius,
+          borderDirection: node.props.borderDirection,
           borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
