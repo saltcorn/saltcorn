@@ -248,15 +248,19 @@ const set_join_fieldviews = async ({ layout, fields }) => {
       if (keypath.length === 2) {
         const [refNm, targetNm] = keypath;
         const ref = fields.find((f) => f.name === refNm);
+        if (!ref) return;
         const table = await Table.findOne({ name: ref.reftable_name });
+        if (!table) return;
         const reffields = await table.getFields();
         const field = reffields.find((f) => f.name === targetNm);
         if (
+          field &&
           field.type &&
+          field.type.name &&
           field.type.fieldviews &&
           field.type.fieldviews[fieldview]
         )
-          segment.fieldview_function = field.type.fieldviews[fieldview];
+          segment.field_type = field.type.name;
       } else {
         //const [refNm, through, targetNm] = keypath;
       }
@@ -448,7 +452,7 @@ const render = (
         return field.type.fieldviews[fieldview].run(val, req, configuration);
       else return text(val);
     },
-    join_field({ join_field, fieldview_function }) {
+    join_field({ join_field, field_type, fieldview }) {
       const keypath = join_field.split(".");
       let value;
       if (keypath.length === 2) {
@@ -458,8 +462,12 @@ const render = (
         const [refNm, through, targetNm] = keypath;
         value = row[`${refNm}_${through}_${targetNm}`];
       }
-      if (fieldview_function) fieldview_function.run(value, req);
-      else return text(value);
+      if (field_type && fieldview) {
+        const type = getState().types[field_type];
+        if (type && getState().types[field_type])
+          return type.fieldviews[fieldview].run(value, req);
+        else return text(value);
+      } else return text(value);
     },
     aggregation({ agg_relation, stat }) {
       const [table, fld] = agg_relation.split(".");
