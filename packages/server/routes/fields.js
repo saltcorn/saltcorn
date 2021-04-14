@@ -533,11 +533,26 @@ router.post(
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
     const fields = await table.getFields();
-    const field = fields.find((f) => f.name === fieldName);
-    const row = await table.getRow({});
-    const value = row && row[fieldName];
-    const configuration = req.body.configuration;
+    let field, row, value;
+    if (fieldName.includes(".")) {
+      const [refNm, targetNm] = fieldName.split(".");
+      const ref = fields.find((f) => f.name === refNm);
+      const reftable = await Table.findOne({ name: ref.reftable_name });
+      const reffields = await reftable.getFields();
+      field = reffields.find((f) => f.name === targetNm);
+      row = await reftable.getRow({});
+      value = row && row[targetNm];
+    } else {
+      field = fields.find((f) => f.name === fieldName);
+      row = await table.getRow({});
+      value = row && row[fieldName];
+    }
 
+    const configuration = req.body.configuration;
+    if (!field) {
+      res.send("");
+      return;
+    }
     const fieldviews =
       field.type === "Key"
         ? getState().keyFieldviews

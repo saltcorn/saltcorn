@@ -190,7 +190,8 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
     body: JSON.stringify(body),
   })
     .then(function (response) {
-      return response.text();
+      if (response.status < 399) return response.text();
+      else return "";
     })
     .then(function (html) {
       $(".preview-scratchpad").html(html);
