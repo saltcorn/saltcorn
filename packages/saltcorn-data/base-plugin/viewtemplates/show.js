@@ -10,7 +10,7 @@ const Trigger = require("../../models/trigger");
 
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
-const { eachView } = require("../../models/layout");
+const { eachView, traverse } = require("../../models/layout");
 
 const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -68,6 +68,14 @@ const configuration_workflow = (req) =>
           triggers.forEach((tr) => {
             actions.push(tr.name);
           });
+          for (const field of fields) {
+            if (field.type === "Key") {
+              field.reftable = await Table.findOne({
+                name: field.reftable_name,
+              });
+              if (field.reftable) await field.reftable.getFields();
+            }
+          }
           const actionConfigForms = {};
           for (const [name, action] of Object.entries(stateActions)) {
             if (action.configFields) {
@@ -214,6 +222,8 @@ const run = async (
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
+  await set_join_fieldviews({ layout, fields });
+
   const rendered = (
     await renderRows(tbl, viewname, { columns, layout }, extra, rows)
   )[0];
@@ -227,6 +237,36 @@ const run = async (
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
   return page_title_preamble + rendered;
+};
+
+const set_join_fieldviews = async ({ layout, fields }) => {
+  await traverse(layout, {
+    join_field: async (segment) => {
+      const { join_field, fieldview } = segment;
+      if (!fieldview) return;
+      const keypath = join_field.split(".");
+      if (keypath.length === 2) {
+        const [refNm, targetNm] = keypath;
+        const ref = fields.find((f) => f.name === refNm);
+        if (!ref) return;
+        const table = await Table.findOne({ name: ref.reftable_name });
+        if (!table) return;
+        const reffields = await table.getFields();
+        const field = reffields.find((f) => f.name === targetNm);
+        if (field && field.type === "File") segment.field_type = "File";
+        else if (
+          field &&
+          field.type &&
+          field.type.name &&
+          field.type.fieldviews &&
+          field.type.fieldviews[fieldview]
+        )
+          segment.field_type = field.type.name;
+      } else {
+        //const [refNm, through, targetNm] = keypath;
+      }
+    },
+  });
 };
 
 const renderRows = async (
@@ -255,6 +295,8 @@ const renderRows = async (
     views[nm] = view;
     return view;
   };
+  await set_join_fieldviews({ layout, fields });
+
   const owner_field = await table.owner_fieldname();
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
@@ -411,15 +453,30 @@ const render = (
         return field.type.fieldviews[fieldview].run(val, req, configuration);
       else return text(val);
     },
-    join_field({ join_field }) {
+    join_field({ join_field, field_type, fieldview }) {
       const keypath = join_field.split(".");
+      let value;
       if (keypath.length === 2) {
         const [refNm, targetNm] = keypath;
-        return text(row[`${refNm}_${targetNm}`]);
+        value = row[`${refNm}_${targetNm}`];
       } else {
         const [refNm, through, targetNm] = keypath;
-        return text(row[`${refNm}_${through}_${targetNm}`]);
+        value = row[`${refNm}_${through}_${targetNm}`];
       }
+      if (field_type === "File") {
+        return value
+          ? getState().fileviews[fieldview].run(
+              value,
+              "",
+            )
+          : "";
+      }
+      if (field_type && fieldview) {
+        const type = getState().types[field_type];
+        if (type && getState().types[field_type])
+          return type.fieldviews[fieldview].run(value, req);
+        else return text(value);
+      } else return text(value);
     },
     aggregation({ agg_relation, stat }) {
       const [table, fld] = agg_relation.split(".");

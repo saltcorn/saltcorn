@@ -190,7 +190,8 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
     body: JSON.stringify(body),
   })
     .then(function (response) {
-      return response.text();
+      if (response.status < 399) return response.text();
+      else return "";
     })
     .then(function (html) {
       $(".preview-scratchpad").html(html);
@@ -199,7 +200,9 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
         .attr("onclick", "")
         .attr("href", "#");
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("input, select, textarea").attr("disabled", true);
+      $(".preview-scratchpad")
+        .find("input, select, textarea")
+        .attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
@@ -322,6 +325,9 @@ export const ConfigForm = ({
     <br />
   </Fragment>
 );
+
+const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
+
 export const ConfigField = ({ field, configuration, setProp, onChange }) =>
   ({
     String: () => (
@@ -340,7 +346,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
         type="number"
         className="form-control"
         step={1}
-        value={configuration[field.name]}
+        value={or_if_undef(configuration[field.name], field.default)}
         onChange={(e) =>
           setProp((prop) => (prop.configuration[field.name] = e.target.value))
         }

@@ -114,8 +114,19 @@ input[type="color"].form-control {
   height: calc(100vh - 70px);
   overflow-y: scroll;
 }
+
+#builder-main-canvas .is-text a {
+  pointer-events: none;  
+  text-decoration: underline;
+}
+
 #builder-main-canvas .selected-node {
   border: 1px dashed blue !important;
+}
+
+#builder-main-canvas .image-widget {
+  min-width: 15px;
+  min-height: 15px;
 }
 .builder-sidebar .builder-layers {
   max-height: 50vh;
@@ -240,3 +251,4 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .text-underline {
   text-decoration: underline;
 }
+

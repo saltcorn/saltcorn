@@ -253,7 +253,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                   )
                 : segment.title
             ),
-          div({ class: "card-body" }, go(segment.contents)),
+          div(
+            { class: ["card-body", segment.noPadding && "p-0"] },
+            go(segment.contents)
+          ),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
@@ -280,6 +283,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         maxScreenWidth,
         showIfFormulaInputs,
         show_for_owner,
+        borderDirection,
         borderRadius,
         borderRadiusUnit,
         borderColor,
@@ -349,7 +353,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border: ${
+            )}${sizeProp("widthPct", "width", "%")}border${borderDirection? `-${borderDirection}`:''}: ${
               borderWidth || 0
             }px ${borderStyle} ${borderColor || "black"};${sizeProp(
               "borderRadius",

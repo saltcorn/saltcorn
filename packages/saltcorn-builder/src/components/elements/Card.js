@@ -4,7 +4,7 @@ import { OrFormula } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const Card = ({ children, isFormula, title, shadow }) => {
+export const Card = ({ children, isFormula, title, shadow, noPadding }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -26,7 +26,9 @@ export const Card = ({ children, isFormula, title, shadow }) => {
           )}
         </div>
       )}
-      <div className="card-body canvas">{children}</div>
+      <div className={`card-body canvas ${noPadding ? "p-0" : ""}`}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -37,6 +39,7 @@ export const CardSettings = () => {
     isFormula: node.data.props.isFormula,
     url: node.data.props.url,
     shadow: node.data.props.shadow,
+    noPadding: node.data.props.noPadding,
   }));
   const {
     actions: { setProp },
@@ -44,6 +47,7 @@ export const CardSettings = () => {
     url,
     isFormula,
     shadow,
+    noPadding,
   } = node;
   return (
     <div>
@@ -74,6 +78,18 @@ export const CardSettings = () => {
           onChange={(e) => setProp((prop) => (prop.shadow = e.target.checked))}
         />
         <label className="form-check-label">Shadow</label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={noPadding}
+          onChange={(e) =>
+            setProp((prop) => (prop.noPadding = e.target.checked))
+          }
+        />
+        <label className="form-check-label">No padding</label>
       </div>
     </div>
   );

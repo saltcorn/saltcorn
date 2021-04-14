@@ -36,6 +36,7 @@ export const Container = ({
   minScreenWidth,
   borderRadius,
   borderRadiusUnit,
+  borderDirection,
   borderColor,
   gradStartColor,
   gradEndColor,
@@ -58,7 +59,7 @@ export const Container = ({
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        border: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
+        [`border${borderDirection? `-${borderDirection}`:''}`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
@@ -112,6 +113,7 @@ export const ContainerSettings = () => {
     borderStyle: node.data.props.borderStyle,
     borderRadius: node.data.props.borderRadius,
     borderRadiusUnit: node.data.props.borderRadiusUnit,
+    borderDirection: node.data.props.borderDirection,
     borderColor: node.data.props.borderColor,
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
@@ -150,6 +152,7 @@ export const ContainerSettings = () => {
     actions: { setProp },
     borderWidth,
     borderStyle,
+    borderDirection,
     borderRadius,
     borderRadiusUnit,
     borderColor,
@@ -238,6 +241,28 @@ export const ContainerSettings = () => {
                 <option>ridge</option>
                 <option>inset</option>
                 <option>outset</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Direction</label>
+            </td>
+            <td>
+              <select
+                value={borderDirection}
+                className="form-control-sm w-50"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.borderDirection = e.target.value;
+                  })
+                }
+              >
+                <option value="">All</option>
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
               </select>
             </td>
           </tr>

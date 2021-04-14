@@ -137,6 +137,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.join_field}
           block={segment.block || false}
+          fieldview={segment.fieldview}
           textStyle={segment.textStyle || ""}
         />
       );
@@ -192,6 +193,7 @@ export const layoutToNodes = (layout, query, actions) => {
           title={segment.title}
           url={segment.url}
           shadow={segment.shadow}
+          noPadding={segment.noPadding}
           isFormula={segment.isFormula || {}}
           is={Card}
         >
@@ -206,6 +208,7 @@ export const layoutToNodes = (layout, query, actions) => {
           borderWidth={segment.borderWidth}
           borderStyle={segment.borderStyle}
           borderRadius={segment.borderRadius}
+          borderDirection={segment.borderDirection}
           borderColor={segment.borderColor}
           borderRadiusUnit={segment.borderRadiusUnit}
           gradStartColor={segment.gradStartColor}
@@ -325,6 +328,7 @@ export const craftToSaltcorn = (nodes) => {
           borderStyle: node.props.borderStyle,
           borderColor: node.props.borderColor,
           borderRadius: node.props.borderRadius,
+          borderDirection: node.props.borderDirection,
           borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
@@ -367,6 +371,7 @@ export const craftToSaltcorn = (nodes) => {
           isFormula: node.props.isFormula,
           url: node.props.url,
           shadow: node.props.shadow,
+          noPadding: node.props.noPadding,
         };
       else return get_nodes(node);
     }
@@ -505,11 +510,13 @@ export const craftToSaltcorn = (nodes) => {
       columns.push({
         type: "JoinField",
         join_field: node.props.name,
+        fieldview: node.props.fieldview,
       });
       return {
         type: "join_field",
         block: node.props.block,
         join_field: node.props.name,
+        fieldview: node.props.fieldview,
         textStyle: node.props.textStyle,
       };
     }
