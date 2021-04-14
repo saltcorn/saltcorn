@@ -253,7 +253,8 @@ const set_join_fieldviews = async ({ layout, fields }) => {
         if (!table) return;
         const reffields = await table.getFields();
         const field = reffields.find((f) => f.name === targetNm);
-        if (
+        if (field && field.type === "File") segment.field_type = "File";
+        else if (
           field &&
           field.type &&
           field.type.name &&
@@ -461,6 +462,14 @@ const render = (
       } else {
         const [refNm, through, targetNm] = keypath;
         value = row[`${refNm}_${through}_${targetNm}`];
+      }
+      if (field_type === "File") {
+        return value
+          ? getState().fileviews[fieldview].run(
+              value,
+              "",
+            )
+          : "";
       }
       if (field_type && fieldview) {
         const type = getState().types[field_type];
