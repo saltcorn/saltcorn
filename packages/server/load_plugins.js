@@ -39,6 +39,9 @@ const loadPlugin = async (plugin, force) => {
     plugin.configuration,
     res.location
   );
+  if (res.plugin_module.onLoad) {
+    await res.plugin_module.onLoad();
+  }
   return res;
 };
 
@@ -79,10 +82,7 @@ const loadAllPlugins = async () => {
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
-      const res = await loadPlugin(plugin);
-      if (res.plugin_module.onLoad) {
-        await res.plugin_module.onLoad();
-      }
+      const res = await loadPlugin(plugin);      
     } catch (e) {
       console.error(e);
     }
@@ -104,6 +104,9 @@ const loadAndSaveNewPlugin = async (plugin, force) => {
     }
   }
   getState().registerPlugin(plugin.name, plugin_module, undefined, location);
+  if (plugin_module.onLoad) {
+    await plugin_module.onLoad();
+  }
   if (version) plugin.version = version;
   await plugin.upsert();
 };
