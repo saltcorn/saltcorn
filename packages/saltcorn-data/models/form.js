@@ -60,7 +60,13 @@ class Form {
     }
     return r;
   }
-
+  get errorSummary() {
+    let strs=[];
+    Object.entries(this.errors).forEach(([k,v])=>{
+      strs.push(`${k}: ${v}`)
+    })
+    return strs.join("; ")
+  }
   validate(v) {
     this.hasErrors = false;
     this.errors = {};

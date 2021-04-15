@@ -273,6 +273,7 @@ const user_settings_form = (req) =>
       "new_user_form",
       "login_form",
       "signup_form",
+      "user_settings_form",
       "verification_view",
       "elevate_verified",
       "email_mask",

@@ -349,7 +349,7 @@ const runPost = async (
   { columns, layout, fixed, view_when_done },
   state,
   body,
-  { res, req }
+  { res, req, redirect }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -413,8 +413,8 @@ const runPost = async (
         return;
       }
     }
-
-    if (!view_when_done) {
+    if(redirect) res.redirect(redirect)
+    else if (!view_when_done) {
       res.redirect(`/`);
     } else {
       const [viewname_when_done, relation] = view_when_done.split(".");
