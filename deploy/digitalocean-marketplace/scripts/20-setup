@@ -1,10 +1,11 @@
 
 sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
+
 adduser --disabled-password --gecos "" saltcorn
 sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
 sudo -iu saltcorn createdb saltcorn 
 sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
-
+sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
 sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
 sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsafe
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
