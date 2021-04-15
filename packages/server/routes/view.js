@@ -78,7 +78,7 @@ router.post(
             table = await Table.findOne(view.table_id || view.exttable_name);
           row = await table.getRow({});
         }
-        query[sf.name] = row[sf.name];
+        if(row) query[sf.name] = row[sf.name];
       }
     }
     const contents = await view.run(query, { req, res });
