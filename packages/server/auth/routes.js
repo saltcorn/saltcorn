@@ -42,6 +42,7 @@ const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const router = new Router();
 module.exports = router;
 
@@ -357,6 +358,7 @@ router.post(
 
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
+  if(!view) throw new InvalidConfiguration("New user form view does not exist");
   const table = await Table.findOne({ name: "users" });
   const fields = await table.getFields();
   const { columns, layout } = view.configuration;
