@@ -658,5 +658,9 @@
 	"Options": "Options",
 	"List options": "List options",
 	"Rows per page": "Rows per page",
-	"Invalid administrative action": "Invalid administrative action"
+	"Invalid administrative action": "Invalid administrative action",
+	"User settings form": "User settings form",
+	"A view for users to change their custom user fields": "A view for users to change their custom user fields",
+	"Error: ": "Error: ",
+	"User settings changed": "User settings changed"
 }

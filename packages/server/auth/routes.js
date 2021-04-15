@@ -42,6 +42,7 @@ const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const router = new Router();
 module.exports = router;
 
@@ -273,8 +274,18 @@ router.get(
       res.redirect("/auth/login");
       return;
     }
-    const defaultSignup = () => {
+    const defaultSignup = async () => {
       const form = loginForm(req, true);
+      const new_user_form = getState().getConfig("new_user_form", "");
+      if (!new_user_form) {
+        const userTable = await Table.findOne({ name: "users" });
+        const userFields = await userTable.getFields();
+
+        for (const f of userFields) {
+          if (f.required && !f.calculated && !["id", "email"].includes(f.name))
+            form.fields.push(f);
+        }
+      }
       form.action = "/auth/signup";
       form.submitLabel = req.__("Sign up");
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
@@ -282,14 +293,14 @@ router.get(
     const signup_form_name = getState().getConfig("signup_form", "");
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
-      if (!signup_form) defaultSignup();
+      if (!signup_form) await defaultSignup();
       else {
         const resp = await signup_form.run_possibly_on_page({}, req, res);
         if (signup_form.default_render_page)
           res.sendWrap(req.__(`Sign up`), resp);
         else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
       }
-    } else defaultSignup();
+    } else await defaultSignup();
   })
 );
 
@@ -357,6 +368,8 @@ router.post(
 
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
+  if (!view)
+    throw new InvalidConfiguration("New user form view does not exist");
   const table = await Table.findOne({ name: "users" });
   const fields = await table.getFields();
   const { columns, layout } = view.configuration;
@@ -835,29 +848,49 @@ const setLanguageForm = (req, user) =>
     )
   );
 
-const userSettings = (req, form, user) => ({
-  above: [
-    {
-      type: "breadcrumbs",
-      crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
-    },
-    {
-      type: "card",
-      title: req.__("User"),
-      contents: table(
-        tbody(
-          tr(th(req.__("Email: ")), td(req.user.email)),
-          tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
-        )
-      ),
-    },
-    {
-      type: "card",
-      title: req.__("Change password"),
-      contents: renderForm(form, req.csrfToken()),
-    },
-  ],
-});
+const userSettings = async ({ req, res, pwform, user }) => {
+  let usersets;
+  const user_settings_form = getState().getConfig("user_settings_form", "");
+  if (user_settings_form) {
+    const view = await View.findOne({ name: user_settings_form });
+    if (view) {
+      usersets = await view.run({ id: user.id }, { req, res });
+    }
+  }
+
+  return {
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
+      },
+      {
+        type: "card",
+        title: req.__("User"),
+        contents: table(
+          tbody(
+            tr(th(req.__("Email: ")), td(req.user.email)),
+            tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
+          )
+        ),
+      },
+      ...(usersets
+        ? [
+            {
+              type: "card",
+              title: req.__("User Settings"),
+              contents: usersets,
+            },
+          ]
+        : []),
+      {
+        type: "card",
+        title: req.__("Change password"),
+        contents: renderForm(pwform, req.csrfToken()),
+      },
+    ],
+  };
+};
 
 router.post(
   "/setlanguage",
@@ -900,7 +933,7 @@ router.get(
     const user = await User.findOne({ id: req.user.id });
     res.sendWrap(
       req.__("User settings"),
-      userSettings(req, changPwForm(req), user)
+      await userSettings({ req, res, pwform: changPwForm(req), user })
     );
   })
 );
@@ -973,22 +1006,40 @@ router.post(
   setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    const form = changPwForm(req);
     const user = await User.findOne({ id: req.user.id });
-    form.fields[0].validator = (oldpw) => {
-      const cmp = user.checkPassword(oldpw);
-      if (cmp) return true;
-      else return req.__("Password does not match");
-    };
+    if (req.body.new_password) {
+      const pwform = changPwForm(req);
 
-    form.validate(req.body);
+      pwform.fields[0].validator = (oldpw) => {
+        const cmp = user.checkPassword(oldpw);
+        if (cmp) return true;
+        else return req.__("Password does not match");
+      };
 
-    if (form.hasErrors) {
-      res.sendWrap(req.__("User settings"), userSettings(req, form, user));
+      pwform.validate(req.body);
+
+      if (pwform.hasErrors) {
+        res.sendWrap(
+          req.__("User settings"),
+          await userSettings({ req, res, pwform, user })
+        );
+      } else {
+        await user.changePasswordTo(pwform.values.new_password);
+        req.flash("success", req.__("Password changed"));
+        res.redirect("/auth/settings");
+      }
     } else {
-      await user.changePasswordTo(form.values.new_password);
-      req.flash("success", req.__("Password changed"));
-      res.redirect("/auth/settings");
+      const user_settings_form = getState().getConfig("user_settings_form", "");
+      if (user_settings_form) {
+        const view = await View.findOne({ name: user_settings_form });
+        if (view) {
+          await view.runPost({ id: user.id }, req.body, { req, res, redirect: "/auth/settings" });
+          req.flash("success", req.__("User settings changed"));
+        }
+      } else {
+        res.redirect("/auth/settings");
+      }
+
     }
   })
 );

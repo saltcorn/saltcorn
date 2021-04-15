@@ -1050,6 +1050,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = await Table.findOne({ name });
+    if (!table) {
+      req.flash("error", `Table not found: ${text(name)}`);
+      res.redirect(`/table`);
+      return;
+    }
 
     recalculate_for_stored(table);
 

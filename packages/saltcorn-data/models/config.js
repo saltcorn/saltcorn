@@ -92,6 +92,12 @@ const configTypes = {
     default: "",
     blurb: "A view to show to new users",
   },
+  user_settings_form: {
+    type: "View users",
+    label: "User settings form",
+    default: "",
+    blurb: "A view for users to change their custom user fields",
+  },
   login_form: {
     type: "View users",
     label: "Login view",
