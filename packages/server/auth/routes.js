@@ -274,8 +274,18 @@ router.get(
       res.redirect("/auth/login");
       return;
     }
-    const defaultSignup = () => {
+    const defaultSignup = async () => {
       const form = loginForm(req, true);
+      const new_user_form = getState().getConfig("new_user_form", "");
+      if (!new_user_form) {
+        const userTable = await Table.findOne({ name: "users" });
+        const userFields = await userTable.getFields();
+
+        for (const f of userFields) {
+          if (f.required && !f.calculated && !["id", "email"].includes(f.name))
+            form.fields.push(f);
+        }
+      }
       form.action = "/auth/signup";
       form.submitLabel = req.__("Sign up");
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
@@ -283,14 +293,14 @@ router.get(
     const signup_form_name = getState().getConfig("signup_form", "");
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
-      if (!signup_form) defaultSignup();
+      if (!signup_form) await defaultSignup();
       else {
         const resp = await signup_form.run_possibly_on_page({}, req, res);
         if (signup_form.default_render_page)
           res.sendWrap(req.__(`Sign up`), resp);
         else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
       }
-    } else defaultSignup();
+    } else await defaultSignup();
   })
 );
 
@@ -358,7 +368,8 @@ router.post(
 
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
-  if(!view) throw new InvalidConfiguration("New user form view does not exist");
+  if (!view)
+    throw new InvalidConfiguration("New user form view does not exist");
   const table = await Table.findOne({ name: "users" });
   const fields = await table.getFields();
   const { columns, layout } = view.configuration;
