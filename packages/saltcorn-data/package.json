@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.4.4-beta.1",
+  "version": "0.4.4-beta.2",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "@saltcorn/markup": "^0.4.3",
+    "@saltcorn/markup": "^0.4.4-beta.2",
     "acorn": "^8.0.3",
     "adm-zip": "^0.5.2",
     "astring": "^1.4.3",

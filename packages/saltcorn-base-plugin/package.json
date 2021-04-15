@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/base-plugin",
-  "version": "0.4.4-beta.1",
+  "version": "0.4.4-beta.2",
   "description": "Base plugin for saltcorn",
   "main": "index.js",
   "repository": "github:saltcorn/saltcorn",
@@ -8,7 +8,7 @@
     "test": "echo No tests"
   },
   "dependencies": {
-    "@saltcorn/data": "^0.4.4-beta.1"
+    "@saltcorn/data": "^0.4.4-beta.2"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
