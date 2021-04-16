@@ -285,7 +285,77 @@ const save_config_from_form = async (form) => {
     }
   }
 };
+
+const getBaseDomain = () => {
+  const base_url = getState().getConfig("base_url");
+  if (!base_url) return null;
+  const domain = base_url
+    .toLowerCase()
+    .replace("https://", "")
+    .replace("http://", "")
+    .replace(/^(www\.)/, "")
+    .replace(/\//g, "");
+  return domain;
+};
+
+const hostname_matches_baseurl = (req, domain) =>
+  [domain, `www.${domain}`].includes(req.hostname);
+
+const is_hsts_tld = (domain) => {
+  if (!domain) return false;
+  const ds = domain.split(".");
+  const tld = ds[ds.length - 1];
+  return [
+    "gle",
+    "prod",
+    "docs",
+    "cal",
+    "soy",
+    "how",
+    "chrome",
+    "ads",
+    "mov",
+    "youtube",
+    "channel",
+    "nexus",
+    "goog",
+    "boo",
+    "dad",
+    "drive",
+    "hangout",
+    "new",
+    "eat",
+    "app",
+    "moto",
+    "ing",
+    "meme",
+    "here",
+    "zip",
+    "guge",
+    "car",
+    "foo",
+    "day",
+    "dev",
+    "play",
+    "gmail",
+    "fly",
+    "gbiz",
+    "rsvp",
+    "android",
+    "map",
+    "page",
+    "google",
+    "dclk",
+    "search",
+    "prof",
+    "phd",
+    "esq",
+  ].includes(tld);
+};
 module.exports = {
+  is_hsts_tld,
+  getBaseDomain,
+  hostname_matches_baseurl,
   restore_backup,
   add_edit_bar,
   send_settings_page,

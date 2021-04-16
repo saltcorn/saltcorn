@@ -44,7 +44,11 @@ const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { getMailTransport } = require("@saltcorn/data/models/email");
-
+const {
+  getBaseDomain,
+  hostname_matches_baseurl,
+  is_hsts_tld,
+} = require("../markup/admin");
 const router = new Router();
 module.exports = router;
 
@@ -481,19 +485,13 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      const base_url = getState().getConfig("base_url");
-      if (!base_url) {
+      const domain = getBaseDomain();
+      if (!domain) {
         req.flash("error", req.__("Set Base URL configuration first"));
         res.redirect("/useradmin/ssl");
         return;
       }
-      const domain = base_url
-        .toLowerCase()
-        .replace("https://", "")
-        .replace("http://", "")
-        .replace(/^(www\.)/, "")
-        .replace(/\//g, "");
-      if (![domain, `www.${domain}`].includes(req.hostname)) {
+      if (!hostname_matches_baseurl(req, domain) && !is_hsts_tld(domain)) {
         req.flash(
           "error",
           req.__(
@@ -505,6 +503,8 @@ router.post(
         res.redirect("/useradmin/ssl");
         return;
       }
+      const domain_in_redirect =
+        !hostname_matches_baseurl(req, domain) && is_hsts_tld(domain);
       const allTens = await getAllTenants();
       if (allTens.length > 0) {
         req.flash(
@@ -541,7 +541,8 @@ router.post(
             " " +
             a({ href: "/admin/system" }, req.__("Restart here"))
         );
-        res.redirect("/useradmin/ssl");
+        if (domain_in_redirect) res.redirect("https://" + domain);
+        else res.redirect("/useradmin/ssl");
       } catch (e) {
         req.flash("error", e.message);
         res.redirect("/useradmin/ssl");
