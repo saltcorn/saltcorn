@@ -296,6 +296,22 @@ describe("Table get data", () => {
     await table.getFields();
     await table.update({ versioned: false });
   });
+  it("should rename", async () => {
+    const table = await Table.create("notsurename");
+    await Field.create({
+      table,
+      label: "tall",
+      type: "Bool",
+      required: true,
+    });
+    if (!db.isSQLite) {
+      await table.rename("isthisbetter");
+      const table1 = await Table.findOne({ name: "isthisbetter" });
+      table1.versioned = true;
+      await table1.update(table1);
+      await table1.rename("thisisthebestname");
+    }
+  });
 });
 
 describe("relations", () => {
@@ -955,13 +971,11 @@ describe("distance ordering", () => {
     );
     expect(fred_rows.length).toBe(2);
     expect(fred_rows[0].name).toBe("Fred");
-    const george_rows = await table.getJoinedRows(
-      {
-        orderBy: {
-          distance: { lat: 19, long: 19, latField: "lat", longField: "long" },
-        },
-      }
-    );
+    const george_rows = await table.getJoinedRows({
+      orderBy: {
+        distance: { lat: 19, long: 19, latField: "lat", longField: "long" },
+      },
+    });
     expect(george_rows.length).toBe(2);
     expect(george_rows[0].name).toBe("George");
   });

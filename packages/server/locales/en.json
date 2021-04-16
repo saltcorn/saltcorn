@@ -662,5 +662,7 @@
 	"User settings form": "User settings form",
 	"A view for users to change their custom user fields": "A view for users to change their custom user fields",
 	"Error: ": "Error: ",
-	"User settings changed": "User settings changed"
+	"User settings changed": "User settings changed",
+	"Rename table": "Rename table",
+	"Rename table %s": "Rename table %s"
 }
