@@ -664,5 +664,6 @@
 	"Error: ": "Error: ",
 	"User settings changed": "User settings changed",
 	"Rename table": "Rename table",
-	"Rename table %s": "Rename table %s"
+	"Rename table %s": "Rename table %s",
+	"Base URL domain %s does not match hostname %s": "Base URL domain %s does not match hostname %s"
 }

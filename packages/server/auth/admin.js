@@ -353,80 +353,84 @@ router.get(
       res,
       req,
       active_sub: "SSL",
-      contents: [
-        ...(letsencrypt && has_custom
-          ? [
-              {
-                type: "card",
-                contents: p(
-                  req.__(
-                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
-                  )
-                ),
-              },
-            ]
-          : []),
-        {
-          type: "card",
-          title: req.__("HTTPS encryption with Let's Encrypt SSL certificate"),
-          contents: [
-            p(
-              req.__(
-                `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
-              )
+      contents: {
+        above: [
+          ...(letsencrypt && has_custom
+            ? [
+                {
+                  type: "card",
+                  contents: p(
+                    req.__(
+                      "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                    )
+                  ),
+                },
+              ]
+            : []),
+          {
+            type: "card",
+            title: req.__(
+              "HTTPS encryption with Let's Encrypt SSL certificate"
             ),
-            h5(
-              req.__("Currently: "),
-              letsencrypt
-                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
-                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
-            ),
-            letsencrypt
-              ? post_btn(
-                  "/config/delete/letsencrypt",
-                  req.__("Disable LetsEncrypt HTTPS"),
-                  req.csrfToken(),
-                  { btnClass: "btn-danger", req }
-                )
-              : post_btn(
-                  "/admin/enable-letsencrypt",
-                  req.__("Enable LetsEncrypt HTTPS"),
-                  req.csrfToken(),
-                  { confirm: true, req }
-                ),
-            !letsencrypt &&
-              show_warning &&
-              !has_custom &&
-              div(
-                { class: "mt-3 alert alert-danger" },
-                p(
-                  "The address you are using to reach Saltcorn does not match the Base URL."
-                ),
-                p(
-                  "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+            contents: [
+              p(
+                req.__(
+                  `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
                 )
               ),
-          ],
-        },
-        {
-          type: "card",
-          title: req.__("HTTPS encryption with custom SSL certificate"),
-          contents: [
-            p(
-              req.__(
-                `Or use custom SSL certificates, including wildcard certificates for multitenant applications`
-              )
-            ),
-            h5(
-              req.__("Currently: "),
-              has_custom
-                ? span({ class: "badge badge-primary" }, req.__("Enabled"))
-                : span({ class: "badge badge-secondary" }, req.__("Disabled"))
-            ),
-            link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
-          ],
-        },
-      ],
+              h5(
+                req.__("Currently: "),
+                letsencrypt
+                  ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                  : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+              ),
+              letsencrypt
+                ? post_btn(
+                    "/config/delete/letsencrypt",
+                    req.__("Disable LetsEncrypt HTTPS"),
+                    req.csrfToken(),
+                    { btnClass: "btn-danger", req }
+                  )
+                : post_btn(
+                    "/admin/enable-letsencrypt",
+                    req.__("Enable LetsEncrypt HTTPS"),
+                    req.csrfToken(),
+                    { confirm: true, req }
+                  ),
+              !letsencrypt &&
+                show_warning &&
+                !has_custom &&
+                div(
+                  { class: "mt-3 alert alert-danger" },
+                  p(
+                    "The address you are using to reach Saltcorn does not match the Base URL."
+                  ),
+                  p(
+                    "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                  )
+                ),
+            ],
+          },
+          {
+            type: "card",
+            title: req.__("HTTPS encryption with custom SSL certificate"),
+            contents: [
+              p(
+                req.__(
+                  `Or use custom SSL certificates, including wildcard certificates for multitenant applications`
+                )
+              ),
+              h5(
+                req.__("Currently: "),
+                has_custom
+                  ? span({ class: "badge badge-primary" }, req.__("Enabled"))
+                  : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+              ),
+              link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
+            ],
+          },
+        ],
+      },
     });
   })
 );
