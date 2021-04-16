@@ -21,6 +21,13 @@ describe("User", () => {
     const hasu = await User.nonEmpty();
     expect(hasu).toBe(true);
   });
+  it("should not create with common pw", async () => {
+    const res = await User.create({
+      email: "foo2@bar.com",
+      password: "passw0rd",
+    });
+    expect(!!res.error).toBe(true);
+  });
   it("should authenticate", async () => {
     const u = await User.authenticate({
       email: "foo@bar.com",
@@ -44,8 +51,15 @@ describe("User", () => {
   });
   it("should reset password", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
+    expect(u.session_object.email).toBe("foo@bar.com");
     const token = await u.getNewResetToken();
     expect(token.length > 10).toBe(true);
+    const res0 = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: token,
+      password: "passw0rd",
+    });
+    expect(!!res0.success).toBe(false);
     const res = await User.resetPasswordWithToken({
       email: u.email,
       reset_password_token: token,
@@ -119,6 +133,11 @@ describe("User", () => {
     expect(!!u2.verified_on).toBe(true);
     expect(u2.role_id).toBe(4);
   });
+  it("should count", async () => {
+    const n = await User.count();
+    expect(n).toBeGreaterThan(2);
+    expect(n).toBeLessThan(20);
+  });
   it("should delete", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     await u.delete();
@@ -126,6 +145,8 @@ describe("User", () => {
     expect(us.length).toBe(0);
   });
   it("should find or create by attribute ", async () => {
+    await getState().setConfig("email_mask", "yahoo.com");
+
     const u = await User.findOrCreateByAttribute("googleId", 5, {
       email: "tom@yahoo.com",
     });
@@ -133,6 +154,17 @@ describe("User", () => {
     const u1 = await User.findOrCreateByAttribute("googleId", 5);
     expect(u.id).toEqual(u1.id);
     expect(u1.email).toBe("tom@yahoo.com");
+    const res = await User.findOrCreateByAttribute("googleId", 7, {
+      email: "tomn@hey.com",
+    });
+    expect(res).toBe(false);
+    await getState().setConfig("new_user_form", "some_user_view");
+    const u2 = await User.findOrCreateByAttribute("googleId", 9, {
+      email: "foobar@yahoo.com",
+    });    
+    expect(!!u2.id).toBe(false)
+    await getState().setConfig("new_user_form", "");
+
   });
 });
 

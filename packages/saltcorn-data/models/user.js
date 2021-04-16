@@ -244,15 +244,8 @@ class User {
     }
   }
   relogin(req) {
-    const u = this;
     req.login(
-      {
-        email: u.email,
-        id: u.id,
-        role_id: u.role_id,
-        language: u.language,
-        tenant: db.getTenantSchema(),
-      },
+      this.session_object,
       function (err) {
         if (err) req.flash("danger", err);
       }
