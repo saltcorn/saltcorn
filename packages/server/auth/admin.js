@@ -45,6 +45,7 @@ const {
   save_config_from_form,
   getBaseDomain,
   hostname_matches_baseurl,
+  is_hsts_tld,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const router = new Router();
