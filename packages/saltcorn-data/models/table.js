@@ -12,7 +12,7 @@ const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
 const fs = require("fs").promises;
-const { InvalidConfiguration } = require("../utils");
+const { InvalidConfiguration, InvalidAdminAction } = require("../utils");
 
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -148,7 +148,9 @@ class Table {
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
-      await client.query(`drop table if exists ${schema}"${sqlsanitize(this.name)}"`);
+      await client.query(
+        `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
+      );
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
         [this.id]
@@ -170,6 +172,7 @@ class Table {
     }
     if (!is_sqlite) client.release(true);
   }
+
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
@@ -346,6 +349,39 @@ class Table {
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
   }
 
+  async rename(new_name) {
+    //in transaction
+    if (db.isSQLite)
+      throw new InvalidAdminAction("Cannot rename table on SQLite");
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    const client = await db.getClient();
+    await client.query(`BEGIN`);
+    try {
+      //1. change record
+      await this.update({ name: new_name });
+      //2. rename table
+      await db.query(
+        `alter table ${schemaPrefix}"${sqlsanitize(
+          this.name
+        )}" rename to "${sqlsanitize(new_name)}";`
+      );
+      //3. rename history
+      if (this.versioned)
+        await db.query(
+          `alter table ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}__history" rename to "${sqlsanitize(new_name)}__history";`
+        );
+
+      await client.query(`COMMIT`);
+    } catch (e) {
+      await client.query(`ROLLBACK`);
+      client.release(true);
+      throw e;
+    }
+    client.release(true);
+  }
   async update(new_table_rec) {
     //TODO RENAME TABLE
     if (new_table_rec.ownership_field_id === "")
@@ -624,7 +660,8 @@ class Table {
       joinFields
     )) {
       const reffield = fields.find((f) => f.name === ref);
-      if (!reffield) throw new InvalidConfiguration(`Key field not found: ${ref}`);
+      if (!reffield)
+        throw new InvalidConfiguration(`Key field not found: ${ref}`);
       const reftable = reffield.reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {

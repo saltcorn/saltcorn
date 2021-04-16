@@ -296,6 +296,22 @@ describe("Table get data", () => {
     await table.getFields();
     await table.update({ versioned: false });
   });
+  it("should rename", async () => {
+    db.set_sql_logging()
+    const table = await Table.create("notsurename");
+    await Field.create({
+      table,
+      label: "tall",
+      type: "Bool",
+      required: true,
+    });
+    await table.rename("isthisbetter")
+    const table1 = await Table.findOne({ name: "isthisbetter" });
+    table1.versioned = true;
+    await table1.update(table1);
+    await table1.rename("thisisthebestname")
+
+  });
 });
 
 describe("relations", () => {
