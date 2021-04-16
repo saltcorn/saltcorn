@@ -616,6 +616,13 @@ router.get(
               },
               '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
             ),
+            a(
+              {
+                class: "dropdown-item",
+                href: `/table/rename/${table.id}`,
+              },
+              '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
+            ),
             post_dropdown_item(
               `/table/recalc-stored/${table.name}`,
               '<i class="fas fa-sync"></i>&nbsp;' +
@@ -989,6 +996,65 @@ router.post(
   })
 );
 
+const renameForm = (table_id) =>
+  new Form({
+    action: `/table/rename/${table_id}`,
+    labelCols: 3,
+    fields: [{
+      name: "name",
+      label: "New table name",
+      type: "String",
+    }]
+  });
+
+router.get(
+  "/rename/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    
+    const form = renameForm(table.id);
+    res.sendWrap(req.__(`Rename table %s`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            {
+              text: req.__("Rename table"),
+             
+            },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`Rename table %s`, table.name),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      ],
+    });
+  })
+);
+router.post(
+  "/rename/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const table = await Table.findOne({ id });
+    const form = renameForm(table.id);
+
+    form.validate(req.body);
+    if (form.hasErrors) req.flash("error", req.__("An error occurred"));
+    else {
+      await table.rename(form.values.name)
+    }
+    res.redirect(`/table/${table.id}`);
+  })
+);
 router.post(
   "/delete-constraint/:id",
   setTenant,
