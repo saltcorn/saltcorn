@@ -149,6 +149,12 @@ module.exports = async () => {
     label: "Normalised",
     type: "Bool",
   });
+  await Field.create({
+    table: readings,
+    name: "date",
+    label: "Date",
+    type: "Date",
+  });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
@@ -164,6 +170,7 @@ module.exports = async () => {
     temperature: 37,
     patient_id: kirk_id,
     normalised: true,
+    date: new Date()
   });
   await db.insert("readings", {
     temperature: 39,

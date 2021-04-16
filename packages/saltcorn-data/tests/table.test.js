@@ -200,6 +200,22 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get joined rows with latest aggregations", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        last_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "Latest date",
+        },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].last_temp)).toBe(37);
+  });
   it("should get double joined rows", async () => {
     const readings = await Table.findOne({ name: "readings" });
     const reads = await readings.getJoinedRows({
