@@ -297,7 +297,6 @@ describe("Table get data", () => {
     await table.update({ versioned: false });
   });
   it("should rename", async () => {
-    db.set_sql_logging()
     const table = await Table.create("notsurename");
     await Field.create({
       table,
@@ -305,12 +304,13 @@ describe("Table get data", () => {
       type: "Bool",
       required: true,
     });
-    await table.rename("isthisbetter")
-    const table1 = await Table.findOne({ name: "isthisbetter" });
-    table1.versioned = true;
-    await table1.update(table1);
-    await table1.rename("thisisthebestname")
-
+    if (!db.isSQLite) {
+      await table.rename("isthisbetter");
+      const table1 = await Table.findOne({ name: "isthisbetter" });
+      table1.versioned = true;
+      await table1.update(table1);
+      await table1.rename("thisisthebestname");
+    }
   });
 });
 
@@ -971,13 +971,11 @@ describe("distance ordering", () => {
     );
     expect(fred_rows.length).toBe(2);
     expect(fred_rows[0].name).toBe("Fred");
-    const george_rows = await table.getJoinedRows(
-      {
-        orderBy: {
-          distance: { lat: 19, long: 19, latField: "lat", longField: "long" },
-        },
-      }
-    );
+    const george_rows = await table.getJoinedRows({
+      orderBy: {
+        distance: { lat: 19, long: 19, latField: "lat", longField: "long" },
+      },
+    });
     expect(george_rows.length).toBe(2);
     expect(george_rows[0].name).toBe("George");
   });
