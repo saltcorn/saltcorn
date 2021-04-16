@@ -43,6 +43,8 @@ const {
   send_users_page,
   config_fields_form,
   save_config_from_form,
+  getBaseDomain,
+  hostname_matches_baseurl,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const router = new Router();
@@ -343,6 +345,9 @@ router.get(
     const has_custom =
       getState().getConfig("custom_ssl_certificate", false) &&
       getState().getConfig("custom_ssl_private_key", false);
+    const show_warning =
+      !hostname_matches_baseurl(req, getBaseDomain()) &&
+      is_hsts_tld(getBaseDomain());
     send_users_page({
       res,
       req,
@@ -388,6 +393,18 @@ router.get(
                   req.csrfToken(),
                   { confirm: true, req }
                 ),
+            !letsencrypt &&
+              show_warning &&
+              !has_custom &&
+              div(
+                { class: "mt-3 alert alert-danger" },
+                p(
+                  "The address you are using to reach Saltcorn does not match the Base URL."
+                ),
+                p(
+                  "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                )
+              ),
           ],
         },
         {
