@@ -302,11 +302,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         !(show_for_owner && is_owner)
       )
         return "";
-      const renderBg = !(
-        isTop &&
-        blockDispatch.noBackgroundAtTop &&
-        blockDispatch.noBackgroundAtTop()
-      );
+      const renderBg = true;
       const sizeProp = (segKey, cssNm, unit) =>
         typeof segment[segKey] === "undefined"
           ? ""
