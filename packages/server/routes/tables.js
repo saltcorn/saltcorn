@@ -616,17 +616,14 @@ router.get(
               },
               '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
             ),
-            ...(!db.isSQLite
-              ? [
-                  a(
-                    {
-                      class: "dropdown-item",
-                      href: `/table/rename/${table.id}`,
-                    },
-                    '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
-                  ),
-                ]
-              : []),
+            !db.isSQLite &&
+              a(
+                {
+                  class: "dropdown-item",
+                  href: `/table/rename/${table.id}`,
+                },
+                '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
+              ), 
             post_dropdown_item(
               `/table/recalc-stored/${table.name}`,
               '<i class="fas fa-sync"></i>&nbsp;' +
