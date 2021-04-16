@@ -503,8 +503,6 @@ router.post(
         res.redirect("/useradmin/ssl");
         return;
       }
-      const domain_in_redirect =
-        !hostname_matches_baseurl(req, domain) && is_hsts_tld(domain);
       const allTens = await getAllTenants();
       if (allTens.length > 0) {
         req.flash(
@@ -541,8 +539,7 @@ router.post(
             " " +
             a({ href: "/admin/system" }, req.__("Restart here"))
         );
-        if (domain_in_redirect) res.redirect("https://" + domain);
-        else res.redirect("/useradmin/ssl");
+        res.redirect("/useradmin/ssl");
       } catch (e) {
         req.flash("error", e.message);
         res.redirect("/useradmin/ssl");
