@@ -19,6 +19,11 @@ describe("View", () => {
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
+  it("should run on page", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    const res = await v.run_possibly_on_page({}, mockReqRes.req,  mockReqRes.res);
+    expect(res.length > 0).toBe(true);
+  });
   it("should run with string query", async () => {
     const v = await View.findOne({ name: "authorlist" });
     const res = await v.run({ author: "Mel" }, mockReqRes);
@@ -88,6 +93,15 @@ describe("View", () => {
     const st = v.combine_state_and_default_state({ baz: 3 });
     expect(st).toStrictEqual({ baz: 3, foo: "bar" });
     await v.delete();
+    const v1 = await View.create({
+      table_id: table.id,
+      name: "anewview",
+      viewtemplate: "List",
+      configuration: { columns: [], default_state: { foo: "bar" } },
+      min_role: 10,
+    });
+    await View.update({name: "anewestview"}, v1.id)
+    await View.delete({name: "anewestview"})
   });
   it("should clone", async () => {
     const v = await View.findOne({ name: "authorlist" });

@@ -200,6 +200,22 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get joined rows with latest aggregations", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        last_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "Latest date",
+        },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].last_temp)).toBe(37);
+  });
   it("should get double joined rows", async () => {
     const readings = await Table.findOne({ name: "readings" });
     const reads = await readings.getJoinedRows({
@@ -802,9 +818,17 @@ describe("Table with row ownership", () => {
       await age.update({ type: "Integer" });
       await name.update({ name: "lastname" });
       await persons.insertRow({ lastname: "Joe", age: 12 });
-      const row = await persons.getRow({});
+      await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+      const row = await persons.getRow({ age: 12 });
       expect(row.lastname).toBe("Joe");
       expect(row.age).toBe(12);
+      const owner_fnm=await persons.owner_fieldname()
+      expect(owner_fnm).toBe("owner")
+      const is_owner = await persons.is_owner({ id: 6 }, row);
+      expect(is_owner).toBe(false);
+      const row1 = await persons.getRow({ age: 13 });
+      const is_owner1 = await persons.is_owner({ id: 1 }, row1);
+      expect(is_owner1).toBe(true);
     }
     await persons.delete();
   });

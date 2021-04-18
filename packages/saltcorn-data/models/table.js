@@ -358,8 +358,7 @@ class Table {
     const client = await db.getClient();
     await client.query(`BEGIN`);
     try {
-      //1. change record
-      await this.update({ name: new_name });
+    
       //2. rename table
       await db.query(
         `alter table ${schemaPrefix}"${sqlsanitize(
@@ -373,7 +372,8 @@ class Table {
             this.name
           )}__history" rename to "${sqlsanitize(new_name)}__history";`
         );
-
+      //1. change record
+      await this.update({ name: new_name });
       await client.query(`COMMIT`);
     } catch (e) {
       await client.query(`ROLLBACK`);
@@ -396,6 +396,7 @@ class Table {
     } else if (!new_table.versioned && existing.versioned) {
       await new_table.drop_history_table();
     }
+    Object.assign(this, new_table_rec )
   }
 
   async get_history(id) {
