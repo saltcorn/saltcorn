@@ -3,7 +3,10 @@ const escape = require("escape-html");
 
 const ppClasses = (cs) =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
-
+const ppClass = (c) => {
+  const clss = ppClasses(c);
+  return clss ? `class="${clss}"` : "";
+};
 const ppAttrib = ([k, v]) =>
   typeof v === "boolean"
     ? v
@@ -12,7 +15,7 @@ const ppAttrib = ([k, v]) =>
     : typeof v === "undefined"
     ? ""
     : k === "class"
-    ? `class="${ppClasses(v)}"`
+    ? ppClass(v)
     : `${k}="${v}"`;
 const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   var body = "";
@@ -46,7 +49,7 @@ const input = (kvs) => {
 const domReady = (js) =>
   `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',f,false)})(function(){${js}});`;
 
-xss.whiteList.kbd=[]
+xss.whiteList.kbd = [];
 
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));

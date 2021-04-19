@@ -141,6 +141,7 @@ const view_linker = contract(
       link_style = "",
       link_size = "",
       link_icon = "",
+      textStyle = "",
     },
     fields
   ) => {
@@ -164,7 +165,8 @@ const view_linker = contract(
               in_modal,
               link_style,
               link_size,
-              link_icon
+              link_icon,
+              textStyle
             ),
         };
       case "ChildList":
@@ -178,7 +180,8 @@ const view_linker = contract(
               in_modal,
               link_style,
               link_size,
-              link_icon
+              link_icon,
+              textStyle
             ),
         };
       case "ParentShow":
@@ -203,7 +206,8 @@ const view_linker = contract(
                   in_modal,
                   link_style,
                   link_size,
-                  link_icon
+                  link_icon,
+                  textStyle
                 )
               : "";
           },
