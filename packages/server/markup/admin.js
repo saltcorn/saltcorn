@@ -293,13 +293,11 @@ const getBaseDomain = () => {
     .toLowerCase()
     .replace("https://", "")
     .replace("http://", "")
-    .replace(/^(www\.)/, "")
     .replace(/\//g, "");
   return domain;
 };
 
-const hostname_matches_baseurl = (req, domain) =>
-  [domain, `www.${domain}`].includes(req.hostname);
+const hostname_matches_baseurl = (req, domain) => domain === req.hostname;
 
 const is_hsts_tld = (domain) => {
   if (!domain) return false;

@@ -665,5 +665,9 @@
 	"User settings changed": "User settings changed",
 	"Rename table": "Rename table",
 	"Rename table %s": "Rename table %s",
-	"Base URL domain %s does not match hostname %s": "Base URL domain %s does not match hostname %s"
+	"Base URL domain %s does not match hostname %s": "Base URL domain %s does not match hostname %s",
+	"Custom HTTP headers": "Custom HTTP headers",
+	"Format for each line: Header-Name: value": "Format for each line: Header-Name: value",
+	"Role to upload files": "Role to upload files",
+	"User should have this role or higher to upload files with API (uploads through forms are not affected)": "User should have this role or higher to upload files with API (uploads through forms are not affected)"
 }

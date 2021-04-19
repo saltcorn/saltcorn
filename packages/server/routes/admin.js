@@ -528,7 +528,7 @@ router.post(
         });
         await greenlock.sites.add({
           subject: domain,
-          altnames: [domain, `www.${domain}`],
+          altnames: [domain],
         });
         await getState().setConfig("letsencrypt", true);
         req.flash(

@@ -123,6 +123,14 @@ const configTypes = {
     blurb:
       "Elevate users to a higher role when their email addresses have been verified",
   },
+  min_role_upload: {
+    type: "Role",
+    label: "Role to upload files",
+    default: "1",
+    required: true,
+    blurb:
+      "User should have this role or higher to upload files with API (uploads through forms are not affected)",
+  },
   email_mask: {
     type: "String",
     label: "Email mask",
@@ -235,6 +243,14 @@ const configTypes = {
     type: "String",
     fieldview: "textarea",
     label: "Custom HTML",
+    default: "",
+    hide_value: true,
+  },
+  custom_http_headers: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom HTTP headers",
+    blurb: "Format for each line: Header-Name: value",
     default: "",
     hide_value: true,
   },
