@@ -45,7 +45,7 @@ const setTenant = (req, res, next) => {
         });
       }
     } else 
-    if (req.subdomains.length === 0 || req.subdomains[0] === "www")
+    if (req.subdomains.length === 0)
       db.runWithTenant(db.connectObj.default_schema, () => {
         setLanguage(req);
         next();
