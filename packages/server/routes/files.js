@@ -196,10 +196,14 @@ router.post(
 router.post(
   "/upload",
   setTenant,
-  isAdmin,
   error_catcher(async (req, res) => {
     let jsonResp = {};
-    if (!req.files && !req.files.file) {
+    const min_role_upload = getState().getConfig("min_role_upload", 1);
+    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    if (role > +min_role_upload) {
+      if (!req.xhr) req.flash("warning", req.__("Not authorized"));
+      else jsonResp = { error: "Not authorized" };
+    } else if (!req.files && !req.files.file) {
       if (!req.xhr) req.flash("warning", req.__("No file found"));
       else jsonResp = { error: "No file found" };
     } else {

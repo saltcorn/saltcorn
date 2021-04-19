@@ -279,6 +279,7 @@ const user_settings_form = (req) =>
       "user_settings_form",
       "verification_view",
       "elevate_verified",
+      "min_role_upload",
       "email_mask",
       "allow_forgot",
       "custom_http_headers"
