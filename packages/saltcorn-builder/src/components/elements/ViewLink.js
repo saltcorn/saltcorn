@@ -6,6 +6,7 @@ import {
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
+  TextStyleSetting
 } from "./utils";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
