@@ -669,5 +669,7 @@
 	"Custom HTTP headers": "Custom HTTP headers",
 	"Format for each line: Header-Name: value": "Format for each line: Header-Name: value",
 	"Role to upload files": "Role to upload files",
-	"User should have this role or higher to upload files with API (uploads through forms are not affected)": "User should have this role or higher to upload files with API (uploads through forms are not affected)"
+	"User should have this role or higher to upload files with API (uploads through forms are not affected)": "User should have this role or higher to upload files with API (uploads through forms are not affected)",
+	"Always show create view": "Always show create view",
+	"If off, only show create view if the query state is about the current user": "If off, only show create view if the query state is about the current user"
 }

@@ -24,6 +24,7 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Views"),
         form: async (context) => {
+          const table = await Table.findOne(context.table_id);
           const show_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewtemplate, viewrow }) =>
@@ -98,6 +99,18 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
+              ...(table.ownership_field_id
+                ? [
+                    {
+                      name: "always_create_view",
+                      label: req.__("Always show create view"),
+                      sublabel: req.__(
+                        "If off, only show create view if the query state is about the current user"
+                      ),
+                      type: "Bool",
+                    },
+                  ]
+                : []),
             ],
           });
         },
@@ -229,6 +242,7 @@ const run = async (
     hide_pagination,
     create_view_label,
     create_view_location,
+    always_create_view,
     ...cols
   },
   state,
@@ -287,7 +301,8 @@ const run = async (
   );
   if (
     view_to_create &&
-    (role <= table.min_role_write || (table.ownership_field_id && about_user))
+    (role <= table.min_role_write ||
+      (table.ownership_field_id && (about_user || always_create_view)))
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
