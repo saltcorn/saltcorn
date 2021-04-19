@@ -3,7 +3,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({ name, value, block, label, size, style }) => {
+export const ToggleFilter = ({ name, value, preset_value, block, label, size, style }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -14,8 +14,8 @@ export const ToggleFilter = ({ name, value, block, label, size, style }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <button className={`btn btn-outline-${style||"primary"} ${size}`}>
-        {label || value || "Set label"}
+      <button className={`btn btn-outline-${style || "primary"} ${size}`}>
+        {label || value || preset_value || "Set label"}
       </button>
     </span>
   );
@@ -27,12 +27,14 @@ export const ToggleFilterSettings = () => {
     name,
     value,
     block,
+    preset_value,
     label,
     size,
-    style
+    style,
   } = useNode((node) => ({
     name: node.data.props.name,
     value: node.data.props.value,
+    preset_value: node.data.props.preset_value,
     block: node.data.props.block,
     label: node.data.props.label,
     size: node.data.props.size,
@@ -40,6 +42,7 @@ export const ToggleFilterSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
+  const preset_options = field.preset_options;
   const isBool = field && field.type.name === "Bool";
   return (
     <table className="w-100">
@@ -59,6 +62,7 @@ export const ToggleFilterSettings = () => {
                 );
                 const isBool = field && field.type.name === "Bool";
                 if (isBool) setProp((prop) => (prop.value = "on"));
+                setProp((prop) => (prop.preset_value = ""));
               }}
             >
               {options.fields.map((f, ix) => (
@@ -97,6 +101,29 @@ export const ToggleFilterSettings = () => {
             )}
           </td>
         </tr>
+        {preset_options && preset_options.length > 0 ? (
+          <tr>
+            <td>
+              <label>Preset</label>
+            </td>
+            <td>
+              <select
+                value={preset_value}
+                className="form-control"
+                onChange={(e) => {
+                  setProp((prop) => (prop.preset_value = e.target.value));
+                }}
+              >
+                <option value=""></option>
+                {preset_options.map((po, ix) => (
+                  <option key={ix} value={po}>
+                    {po}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+        ) : null}
         <tr>
           <td>
             <label>Label</label>
@@ -118,9 +145,7 @@ export const ToggleFilterSettings = () => {
             <select
               className="form-control"
               value={size}
-              onChange={(e) =>
-                setProp((prop) => (prop.size = e.target.value))
-              }
+              onChange={(e) => setProp((prop) => (prop.size = e.target.value))}
             >
               <option value="">Standard</option>
               <option value="btn-lg">Large</option>
@@ -140,11 +165,9 @@ export const ToggleFilterSettings = () => {
             <select
               className="form-control"
               value={style}
-              onChange={(e) =>
-                setProp((prop) => (prop.style = e.target.value))
-              }
+              onChange={(e) => setProp((prop) => (prop.style = e.target.value))}
             >
-             <option value="primary">Primary</option>
+              <option value="primary">Primary</option>
               <option value="secondary">Secondary</option>
               <option value="success">Success</option>
               <option value="danger">Danger</option>

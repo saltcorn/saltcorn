@@ -34,6 +34,10 @@ describe("tags", () => {
     expect(
       div({ class: ["foo bar", "", undefined, null, false, "baz"] }, 5)
     ).toBe('<div class="foo bar baz">5</div>');
+
+    expect(
+      div({ class: [undefined, null, false] }, 5)
+    ).toBe('<div>5</div>');
     expect(text("foo")).toBe("foo");
     expect(text_attr('" onMouseOver="alert(1);')).toBe(
       "&quot; onMouseOver=&quot;alert(1);"

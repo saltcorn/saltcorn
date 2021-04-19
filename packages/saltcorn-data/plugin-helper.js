@@ -23,7 +23,8 @@ const link_view = (
   popup,
   link_style = "",
   link_size = "",
-  link_icon = ""
+  link_icon = "",
+  textStyle = ""
 ) => {
   if (popup) {
     return button(
@@ -38,9 +39,7 @@ const link_view = (
     return a(
       {
         href: url,
-        ...(link_style || link_size
-          ? { class: `${link_style} ${link_size}` }
-          : {}),
+        class: [textStyle, link_style, link_size],
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       text(label)

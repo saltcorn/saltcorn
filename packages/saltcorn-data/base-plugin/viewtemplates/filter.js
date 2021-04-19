@@ -55,6 +55,10 @@ const configuration_workflow = () =>
             label: v.name,
             name: v.name,
           }));
+          for (const field of fields) {
+            const presets = field.presets;
+            field.preset_options = presets ? Object.keys(presets) : [];
+          }
           return {
             fields,
             roles,
@@ -189,17 +193,25 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           label
         );
     },
-    toggle_filter({ field_name, value, label, size, style }) {
+    toggle_filter({ field_name, value, preset_value, label, size, style }) {
       const field = fields.find((f) => f.name === field_name);
       const isBool = field && field.type.name === "Bool";
+
+      const use_value =
+        preset_value && field.presets
+          ? field.presets[preset_value]({
+              user: extra.req.user,
+              req: extra.req,
+            })
+          : value;
 
       const active = isBool
         ? {
             on: state[field_name],
             off: state[field_name] === false,
             "?": state[field_name] === null,
-          }[value]
-        : eq_string(state[field_name], value);
+          }[use_value]
+        : eq_string(state[field_name], use_value);
       return button(
         {
           class: [
@@ -210,13 +222,13 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             size && size,
           ],
           onClick:
-            active || value === undefined
+            active || use_value === undefined
               ? `unset_state_field('${field_name}')`
               : `set_state_field('${field_name}', encodeURIComponent('${
-                  value || ""
+                  use_value || ""
                 }'))`,
         },
-        label || value
+        label || value || preset_value
       );
     },
   };

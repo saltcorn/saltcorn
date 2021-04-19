@@ -125,6 +125,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.field_name}
           value={segment.value}
+          preset_value={segment.preset_value}
           label={segment.label}
           size={segment.size}
           style={segment.style}
@@ -166,6 +167,7 @@ export const layoutToNodes = (layout, query, actions) => {
           link_style={segment.link_style || ""}
           link_icon={segment.link_icon || ""}
           link_size={segment.link_size || ""}
+          textStyle={segment.textStyle || ""}
         />
       );
     } else if (segment.type === "action") {
@@ -495,12 +497,14 @@ export const craftToSaltcorn = (nodes) => {
         type: "ToggleFilter",
         field_name: node.props.name,
         value: node.props.value,
+        preset_value: node.props.preset_value,
       });
       return {
         type: "toggle_filter",
         block: node.props.block,
         field_name: node.props.name,
         value: node.props.value,
+        preset_value: node.props.preset_value,
         label: node.props.label,
         size: node.props.size,
         style: node.props.style,
@@ -556,6 +560,7 @@ export const craftToSaltcorn = (nodes) => {
         link_style: node.props.link_style,
         link_icon: node.props.link_icon,
         link_size: node.props.link_size,
+        textStyle: node.props.textStyle,
       };
     }
     if (node.displayName === Action.craft.displayName) {
