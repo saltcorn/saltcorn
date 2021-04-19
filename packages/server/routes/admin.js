@@ -28,7 +28,12 @@ const {
   p,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-const { getState, restart_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  restart_tenant,
+  getTenant,
+  get_other_domain_tenant,
+} = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore } = require("@saltcorn/data/models/backup");
 const fs = require("fs");
@@ -503,14 +508,15 @@ router.post(
         res.redirect("/useradmin/ssl");
         return;
       }
+      let altnames = [domain];
       const allTens = await getAllTenants();
-      if (allTens.length > 0) {
-        req.flash(
-          "error",
-          req.__("Cannot enable LetsEncrypt as there are subdomain tenants")
-        );
-        res.redirect("/useradmin/ssl");
-        return;
+      for (const ten of allTens) {
+        const ten0 = getTenant(ten);
+        const ten_domain = (ten0.configs.base_url.value || "")
+          .replace("https://", "")
+          .replace("http://", "")
+          .replace("/", "");
+        if (ten_domain) altnames.push(ten_domain);
       }
       try {
         const file_store = db.connectObj.file_store;
@@ -528,7 +534,7 @@ router.post(
         });
         await greenlock.sites.add({
           subject: domain,
-          altnames: [domain],
+          altnames,
         });
         await getState().setConfig("letsencrypt", true);
         req.flash(
