@@ -281,6 +281,7 @@ const user_settings_form = (req) =>
       "elevate_verified",
       "email_mask",
       "allow_forgot",
+      "custom_http_headers"
     ],
     action: "/useradmin/settings",
   });

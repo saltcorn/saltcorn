@@ -238,6 +238,14 @@ const configTypes = {
     default: "",
     hide_value: true,
   },
+  custom_http_headers: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom HTTP headers",
+    blurb: "Format for each line: Header-Name: value",
+    default: "",
+    hide_value: true,
+  },
   next_hourly_event: {
     type: "Date",
     label: "Next hourly event",

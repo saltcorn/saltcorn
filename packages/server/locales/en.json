@@ -665,5 +665,7 @@
 	"User settings changed": "User settings changed",
 	"Rename table": "Rename table",
 	"Rename table %s": "Rename table %s",
-	"Base URL domain %s does not match hostname %s": "Base URL domain %s does not match hostname %s"
+	"Base URL domain %s does not match hostname %s": "Base URL domain %s does not match hostname %s",
+	"Custom HTTP headers": "Custom HTTP headers",
+	"Format for each line: Header-Name: value": "Format for each line: Header-Name: value"
 }

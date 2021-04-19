@@ -1,6 +1,10 @@
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
-const { getState, getTenant, get_other_domain_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  getTenant,
+  get_other_domain_tenant,
+} = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
 const { input } = require("@saltcorn/markup/tags");
 
@@ -26,28 +30,35 @@ function isAdmin(req, res, next) {
   }
 }
 
-const setLanguage = (req) => {
+const setLanguage = (req, res) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
   }
+  set_custom_http_headers(res);
 };
-
+const set_custom_http_headers = (res) => {
+  const hdrs = getState().getConfig("custom_http_headers");
+  if (!hdrs) return;
+  for (const ln of hdrs.split("\n")) {
+    const [k, v] = ln.split(":");
+    if (v && k && v.trim) res.header(k, v.trim());
+  }
+};
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
-    const other_domain = get_other_domain_tenant(req.hostname)
-    if(other_domain) {
+    const other_domain = get_other_domain_tenant(req.hostname);
+    if (other_domain) {
       const state = getTenant(other_domain);
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(other_domain, () => {
-          setLanguage(req);
+          setLanguage(req, res);
           next();
         });
       }
-    } else 
-    if (req.subdomains.length === 0)
+    } else if (req.subdomains.length === 0)
       db.runWithTenant(db.connectObj.default_schema, () => {
-        setLanguage(req);
+        setLanguage(req, res);
         next();
       });
     else {
@@ -56,13 +67,13 @@ const setTenant = (req, res, next) => {
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(ten, () => {
-          setLanguage(req);
+          setLanguage(req, res);
           next();
         });
       }
     }
   } else {
-    setLanguage(req);
+    setLanguage(req, res);
     next();
   }
 };
