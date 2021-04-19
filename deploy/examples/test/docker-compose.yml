@@ -1,20 +1,41 @@
-version: "2"
+version: "3.7"
 
 services:
-  app:
+  saltcorn-app:
     image: saltcorn/saltcorn
+    container_name: saltcorn
+    depends-on:
+      - saltcorn-db
     command: "serve"
     restart: always
-    ports:
+    networks:
+      - saltcorn
+    ports: #not needed if using traefik
       - "3000:3000"
-    env_file:
-      - .env
-  database:
-    image: postgres:13-alpine
-    volumes:
-      - ./docker-entrypoint-initdb.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - "POSTGRES_USER=${PGUSER}"
-      - "POSTGRES_PASSWORD=${PGPASSWORD}"
-      - "POSTGRES_DB=${PGDATABASE}"
+      - SALTCORN_SESSION_SECRET=${SALTCORN_SECRET}
+      - PGHOST=saltcorn-db
+      - PGUSER=${PGUSER}
+      - PGDATABASE=${PGDATABASE}
+      - PGPASSWORD=${PGPASSWORD}
+    labels: # If using traefik to reverse proxy into saltcorn
+      - traefik.http.routers.saltcorn-app.rule=Host(`saltcorn.${DOMAIN}`)
+      - traefik.http.routers.saltcorn-app.entrypoints=secure
+      - traefik.http.routers.saltcorn-app.tls.certresolver=leresolver
+      - traefik.http.services.saltcorn-app.loadbalancer.server.port=3000
+      - traefik.enable=true
+    
+  saltcorn-db:
+    image: postgres:13-alpine
+    container_name: saltcorn-db
+    restart: always
+    networks:
+      - saltcorn
+    volumes:
+      - ./data:/var/lib/postgresql/data #save the db to a mount point if you wish, otherwise will use docker container management
+      - ./docker-entrypoint-initdb.sql:/docker-entrypoint-initdb.d/init.sql # This is the init script for the database
+    environment:
+      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+      - POSTGRES_DB=${PGDATABASE}
 
