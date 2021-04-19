@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.4.4-beta.4",
+  "version": "0.4.4-beta.5",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
