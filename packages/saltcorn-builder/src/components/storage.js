@@ -125,6 +125,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           name={segment.field_name}
           value={segment.value}
+          preset_value={segment.preset_value}
           label={segment.label}
           size={segment.size}
           style={segment.style}
@@ -496,12 +497,14 @@ export const craftToSaltcorn = (nodes) => {
         type: "ToggleFilter",
         field_name: node.props.name,
         value: node.props.value,
+        preset_value: node.props.preset_value,
       });
       return {
         type: "toggle_filter",
         block: node.props.block,
         field_name: node.props.name,
         value: node.props.value,
+        preset_value: node.props.preset_value,
         label: node.props.label,
         size: node.props.size,
         style: node.props.style,
