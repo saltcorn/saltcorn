@@ -17,8 +17,9 @@ describe("blog pack", () => {
     expect(await browser.content()).toContain("Add Post");
     await browser.goto("/view/EditPost");
     await browser.page.type("#inputtitle", "My First Post");
-    await browser.page.type("#cke_inputexcerpt", "A wonderful post");
-    await browser.page.type("#cke_inputexcerpt", "Lorem ipsum");
+    await browser.page.waitFor(250);
+    await browser.slowly_type("#cke_inputexcerpt", "A wonderful post");
+    await browser.slowly_type("#cke_inputbody", "Lorem ipsum");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     expect(await browser.content()).toContain("Add Post");
@@ -35,7 +36,8 @@ describe("blog pack", () => {
     expect(await browser.content()).toContain("Add Comment");
     await browser.goto("/view/EditComment?post=1");
     await browser.page.type("#inputname", "Donald Trump");
-    await browser.page.type("##cke_inputcomment", "I'm a fraud");
+    await browser.page.waitFor(250);
+    await browser.slowly_type("#cke_inputcomment", "I'm a fraud");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
     expect(await browser.content()).toContain(
