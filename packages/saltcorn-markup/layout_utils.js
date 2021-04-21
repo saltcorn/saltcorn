@@ -124,7 +124,7 @@ const navbar = (
 ) =>
   nav(
     {
-      class: `navbar navbar-expand-lg ${
+      class: `navbar navbar-expand-lg ${opts.class || ""} ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav",
