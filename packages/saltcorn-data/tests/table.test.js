@@ -152,19 +152,7 @@ describe("Table get data", () => {
     });
     expect(nrows).toStrictEqual(1);
   });
-  it("should get joined rows with arbitrary fieldnames", async () => {
-    const patients = await Table.findOne({ name: "patients" });
-    const michaels = await patients.getJoinedRows({
-      where: { name: "Michael Douglas" },
-      joinFields: {
-        pages: { ref: "favbook", target: "pages" },
-        author: { ref: "favbook", target: "author" },
-      },
-    });
-    expect(michaels.length).toStrictEqual(1);
-    expect(michaels[0].pages).toBe(728);
-    expect(michaels[0].author).toBe("Leo Tolstoy");
-  });
+ 
   it("should get joined rows with limit and order", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const all = await patients.getJoinedRows({
@@ -320,13 +308,50 @@ describe("Table get data", () => {
       type: "Bool",
       required: true,
     });
+    const table1 = await Table.create("refsunsure");
+    await Field.create({
+      table:table1,
+      label: "also_tall",
+      type: "Bool",
+      required: true,
+    });
+    await Field.create({
+      table:table1,
+      label: "theref",
+      type: "Key to notsurename",
+      required: true,
+    });
+    const id = await table.insertRow({tall:false})
+    await table1.insertRow({also_tall:true, theref:id})
+    const joinFields= {reftall: { ref: 'theref', target: 'tall' }}
+    const rows = await table1.getJoinedRows({joinFields})
+    expect(rows[0].theref).toBe(id)
+    expect(rows[0].reftall).toBe(false)
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
-      const table1 = await Table.findOne({ name: "isthisbetter" });
-      table1.versioned = true;
-      await table1.update(table1);
-      await table1.rename("thisisthebestname");
+      const table3 = await Table.findOne({ name: "refsunsure" });
+      const rows1 = await table3.getJoinedRows({joinFields})
+      expect(rows1[0].theref).toBe(id)
+      expect(rows1[0].reftall).toBe(false)
+      const table2 = await Table.findOne({ name: "isthisbetter" });
+      expect(!!table2).toBe(true)
+      table2.versioned = true;
+      await table2.update(table2);
+      await table2.rename("thisisthebestname");
     }
+  });
+  it("should get joined rows with arbitrary fieldnames", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const michaels = await patients.getJoinedRows({
+      where: { name: "Michael Douglas" },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(michaels.length).toStrictEqual(1);
+    expect(michaels[0].pages).toBe(728);
+    expect(michaels[0].author).toBe("Leo Tolstoy");
   });
 });
 
