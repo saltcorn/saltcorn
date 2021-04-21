@@ -326,13 +326,13 @@ describe("Table get data", () => {
     const joinFields= {reftall: { ref: 'theref', target: 'tall' }}
     const rows = await table1.getJoinedRows({joinFields})
     expect(rows[0].theref).toBe(id)
-    expect(!!rows[0].reftall).toBe(false)
+    expect(!!rows[0].reftall).toBe(false) //for sqlite
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
       const table3 = await Table.findOne({ name: "refsunsure" });
       const rows1 = await table3.getJoinedRows({joinFields})
       expect(rows1[0].theref).toBe(id)
-      expect(!!rows1[0].reftall).toBe(false)
+      expect(rows1[0].reftall).toBe(false)
       const table2 = await Table.findOne({ name: "isthisbetter" });
       expect(!!table2).toBe(true)
       table2.versioned = true;
