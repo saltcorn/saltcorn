@@ -11,6 +11,7 @@ const {
   button,
   textarea,
   span,
+  img,
   text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
@@ -91,6 +92,10 @@ const string = {
     as_link: {
       isEdit: false,
       run: (s) => a({ href: text(s || "") }, text_attr(s || "")),
+    },
+    img_from_url: {
+      isEdit: false,
+      run: (s, req, attrs) => img({ src: text(s || ""), style: "width:100%" }),
     },
     as_header: { isEdit: false, run: (s) => h3(text_attr(s || "")) },
     edit: {

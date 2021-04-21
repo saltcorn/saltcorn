@@ -282,7 +282,7 @@ const user_settings_form = (req) =>
       "min_role_upload",
       "email_mask",
       "allow_forgot",
-      "custom_http_headers"
+      "custom_http_headers",
     ],
     action: "/useradmin/settings",
   });
@@ -507,33 +507,35 @@ router.get(
       req,
       active_sub: "Users",
       sub2_page: user.email,
-      contents: [
-        {
-          type: "card",
-          title: req.__("Edit user %s", user.email),
-          contents: renderForm(form, req.csrfToken()),
-        },
-        {
-          type: "card",
-          title: req.__("API token"),
-          contents: [
-            div(
-              user.api_token
-                ? span({ class: "mr-1" }, "API token for this user: ") +
-                    code(user.api_token)
-                : req.__("No API token issued")
-            ),
-            div(
-              { class: "mt-4" },
-              post_btn(
-                `/useradmin/gen-api-token/${user.id}`,
-                user.api_token ? "Reset" : "Generate",
-                req.csrfToken()
-              )
-            ),
-          ],
-        },
-      ],
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Edit user %s", user.email),
+            contents: renderForm(form, req.csrfToken()),
+          },
+          {
+            type: "card",
+            title: req.__("API token"),
+            contents: [
+              div(
+                user.api_token
+                  ? span({ class: "mr-1" }, "API token for this user: ") +
+                      code(user.api_token)
+                  : req.__("No API token issued")
+              ),
+              div(
+                { class: "mt-4" },
+                post_btn(
+                  `/useradmin/gen-api-token/${user.id}`,
+                  user.api_token ? "Reset" : "Generate",
+                  req.csrfToken()
+                )
+              ),
+            ],
+          },
+        ],
+      },
     });
   })
 );

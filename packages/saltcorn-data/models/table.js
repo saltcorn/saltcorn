@@ -358,14 +358,18 @@ class Table {
     const client = await db.getClient();
     await client.query(`BEGIN`);
     try {
-    
-      //2. rename table
+      //rename table
       await db.query(
         `alter table ${schemaPrefix}"${sqlsanitize(
           this.name
         )}" rename to "${sqlsanitize(new_name)}";`
       );
-      //3. rename history
+      //change refs
+      await db.query(
+        `update ${schemaPrefix}_sc_fields set reftable_name=$1 where reftable_name=$2`,
+        [sqlsanitize(new_name), sqlsanitize(this.name)]
+      );
+      //rename history
       if (this.versioned)
         await db.query(
           `alter table ${schemaPrefix}"${sqlsanitize(
@@ -396,7 +400,7 @@ class Table {
     } else if (!new_table.versioned && existing.versioned) {
       await new_table.drop_history_table();
     }
-    Object.assign(this, new_table_rec )
+    Object.assign(this, new_table_rec);
   }
 
   async get_history(id) {

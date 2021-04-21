@@ -223,7 +223,7 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         name: "default_render_page",
         label: req.__("Show on page"),
         sublabel: req.__(
-          "Requests to render this view directly will instead show the chosen page, if any. The chosewn page should embed this view. Use this to decorate the view with additional elements."
+          "Requests to render this view directly will instead show the chosen page, if any. The chosen page should embed this view. Use this to decorate the view with additional elements."
         ),
         input_type: "select",
         options: [
