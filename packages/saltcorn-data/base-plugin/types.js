@@ -100,7 +100,23 @@ const string = {
     as_header: { isEdit: false, run: (s) => h3(text_attr(s || "")) },
     edit: {
       isEdit: true,
-      configFields: [
+      configFields: (field) => [
+        ...(field.attributes.options && field.attributes.options.length > 0 && !field.required
+          ? [
+              {
+                name: "neutral_label",
+                label: "Neutral label",
+                type: "String",
+              },
+              {
+                name: "force_required",
+                label: "Required",
+                sublabel:
+                  "User must select a value, even if the table field is not required",
+                type: "Bool",
+              },
+            ]
+          : []),
         {
           name: "placeholder",
           label: "Placeholder",
@@ -117,10 +133,10 @@ const string = {
                 id: `input${text_attr(nm)}`,
                 disabled: attrs.disabled,
               },
-              required
+              required || attrs.force_required
                 ? getStrOptions(v, attrs.options)
                 : [
-                    option({ value: "" }, ""),
+                    option({ value: "" }, attrs.neutral_label || ""),
                     ...getStrOptions(v, attrs.options),
                   ]
             )
