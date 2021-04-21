@@ -1,7 +1,6 @@
 const View = require("../models/view");
 const Table = require("../models/table");
 const {
-  select,
   option,
   a,
   h5,
@@ -9,7 +8,38 @@ const {
   text_attr,
   script,
 } = require("@saltcorn/markup/tags");
+const tags = require("@saltcorn/markup/tags");
 const { select_options } = require("@saltcorn/markup/helpers");
+
+const select = {
+  type: "Key",
+  isEdit: true,
+  configFields: () => [    {
+      name: "neutral_label",
+      label: "Neutral label",
+      type: "String",
+    },
+    {
+      name: "force_required",
+      label: "Force required",
+      sublabel: "User must select a value, even if the table field is not required",
+      type: "Bool",
+    },
+
+  ],
+  run: (nm, v, attrs, cls, reqd, field) => {
+    return (
+      tags.select(
+        {
+          class: `form-control ${cls} ${field.class || ""}`,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+        },
+        select_options(v, field)
+      )
+    );
+  },
+};
 
 const search_or_create = {
   type: "Key",
@@ -34,7 +64,7 @@ const search_or_create = {
   },
   run: (nm, v, attrs, cls, reqd, field) => {
     return (
-      select(
+      tags.select(
         {
           class: `form-control ${cls} ${field.class || ""}`,
           name: text_attr(nm),
@@ -67,4 +97,4 @@ const search_or_create = {
     );
   },
 };
-module.exports = { search_or_create };
+module.exports = { select, search_or_create };
