@@ -22,9 +22,12 @@ const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
         .split(",")
-        .map((o) => text_attr(o.trim()))
+        .map((o) => o.trim())
         .map((o) =>
-          option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
+          option(
+            { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
+            text_attr(o)
+          )
         )
     : optsStr.map((o, ix) =>
         o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
@@ -101,7 +104,9 @@ const string = {
     edit: {
       isEdit: true,
       configFields: (field) => [
-        ...(field.attributes.options && field.attributes.options.length > 0 && !field.required
+        ...(field.attributes.options &&
+        field.attributes.options.length > 0 &&
+        !field.required
           ? [
               {
                 name: "neutral_label",
