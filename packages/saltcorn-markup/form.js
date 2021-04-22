@@ -86,7 +86,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
 const innerField = (v, errors, nameAdd = "") => (hdr) => {
   const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
-  const maybe_disabled = hdr.disabled ? "disabled" : "";
+  const maybe_disabled = hdr.disabled ? " disabled" : "";
   switch (hdr.input_type) {
     case "fromtype":
       return displayEdit(
@@ -105,7 +105,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       const opts = select_options(v, hdr);
       return `<select class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} data-fieldname="${text_attr(
+      }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
       )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
         hdr.attributes && hdr.attributes.explainers
@@ -117,7 +117,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
     case "textarea":
       return `<textarea class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} data-fieldname="${text_attr(
+      }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
       )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
         v[hdr.form_name]
@@ -131,7 +131,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
           v[hdr.form_name] ? text(v[hdr.form_name]) : ""
         }<input type="file" class="form-control-file ${validClass} ${
           hdr.class || ""
-        }" ${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+        }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
           name
         )}">`;
     case "search":
@@ -145,7 +145,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.input_type
       }" class="form-control ${validClass} ${
         hdr.class || ""
-      }" ${maybe_disabled} data-fieldname="${text_attr(
+      }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
       )}" name="${name}" id="input${text_attr(name)}" ${
         v && isdef(v[hdr.form_name])

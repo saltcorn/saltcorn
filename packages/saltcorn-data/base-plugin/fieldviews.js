@@ -32,6 +32,7 @@ const select = {
     return tags.select(
       {
         class: `form-control ${cls} ${field.class || ""}`,
+        "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
       },
