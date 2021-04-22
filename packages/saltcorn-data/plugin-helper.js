@@ -80,7 +80,7 @@ const calcfldViewOptions = contract(
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         if (isEdit)
-          fvs[f.name] = ["select", ...Object.keys(getState().keyFieldviews)];
+          fvs[f.name] = Object.keys(getState().keyFieldviews);
         else {
           if (f.reftable && f.reftable.fields) {
             const { field_view_options } = calcfldViewOptions(

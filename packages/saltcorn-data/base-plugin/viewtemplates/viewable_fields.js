@@ -434,7 +434,9 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
             if (getState().keyFieldviews[column.fieldview])
               f.fieldviewObj = getState().keyFieldviews[column.fieldview];
             f.input_type =
-              !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
+              !f.fieldview ||
+              !f.fieldviewObj ||
+              (f.fieldview === "select" && !f.fieldviewObj)
                 ? "select"
                 : "fromtype";
           }

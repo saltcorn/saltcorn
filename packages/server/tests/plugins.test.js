@@ -72,9 +72,15 @@ describe("Plugin Endpoints", () => {
       .post("/plugins/configure/" + p.name)
       .set("Cookie", loginCookie)
       .send(
-        "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&stepName=stylesheet&contextEnc=%257B%257D"
+        "theme=flatly&css_url=&css_integrity=&colorscheme=navbar-light&toppad=2&menu_style=Top+Navbar&stepName=stylesheet&contextEnc=%257B%257D"
       )
       .expect(toRedirect("/plugins"));
+  });
+  it("should show info and delete", async () => {
+    const p = await Plugin.findOne({ name: "any-bootstrap-theme" });
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/plugins/info/" + p.name)
       .set("Cookie", loginCookie)
