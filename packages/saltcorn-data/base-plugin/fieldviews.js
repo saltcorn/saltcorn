@@ -14,7 +14,8 @@ const { select_options } = require("@saltcorn/markup/helpers");
 const select = {
   type: "Key",
   isEdit: true,
-  configFields: () => [    {
+  configFields: () => [
+    {
       name: "neutral_label",
       label: "Neutral label",
       type: "String",
@@ -22,20 +23,23 @@ const select = {
     {
       name: "force_required",
       label: "Force required",
-      sublabel: "User must select a value, even if the table field is not required",
+      sublabel:
+        "User must select a value, even if the table field is not required",
       type: "Bool",
     },
-
   ],
   run: (nm, v, attrs, cls, reqd, field) => {
-    return (
-      tags.select(
-        {
-          class: `form-control ${cls} ${field.class || ""}`,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-        },
-        select_options(v, field)
+    return tags.select(
+      {
+        class: `form-control ${cls} ${field.class || ""}`,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+      },
+      select_options(
+        v,
+        field,
+        (attrs || {}).force_required,
+        (attrs || {}).neutral_label
       )
     );
   },

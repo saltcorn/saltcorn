@@ -2,7 +2,14 @@ const { a, text, div, input, text_attr, ul, li, span } = require("./tags");
 
 const isdef = (x) => typeof x !== "undefined";
 
-const select_options = (v, hdr) => {
+const select_options = (v, hdr, force_required, neutral_label = "") => {
+  const options0 = hdr.options || [];
+  const options1 = force_required
+    ? options0.filter((o) => (typeof o === "string" ? o : o.value))
+    : options0;
+  const options = options1.map((o) =>
+    o.value === "" ? { ...o, label: neutral_label } : o
+  );
   const selected = v ? v[hdr.name] : undefined;
   const isSelected = (value) =>
     !selected
@@ -10,15 +17,13 @@ const select_options = (v, hdr) => {
       : selected.length
       ? selected.includes(value)
       : value === selected;
-  return (opts = (hdr.options || [])
-    .map((o) => {
-      const label = typeof o === "string" ? o : o.label;
-      const value = typeof o === "string" ? o : o.value;
-      return `<option value="${text_attr(value)}" ${
-        isSelected(value) ? "selected" : ""
-      }>${text(label)}</option>`;
-    })
-    .join(""));
+  return options.map((o) => {
+    const label = typeof o === "string" ? o : o.label;
+    const value = typeof o === "string" ? o : o.value;
+    return `<option value="${text_attr(value)}" ${
+      isSelected(value) ? "selected" : ""
+    }>${text(label)}</option>`;
+  }).join("");
 };
 
 const pagination = ({
@@ -70,7 +75,7 @@ const search_bar = (
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const clickHandler = stateField
     ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('input.search-bar').val())`
-    : (onClick || "");
+    : onClick || "";
   return `<div class="input-group search-bar">
   <div class="input-group-prepend">
   <button class="btn btn-outline-secondary search-bar" ${
@@ -86,7 +91,7 @@ const search_bar = (
   }" 
        id="input${text_attr(name)}" name="${name}" 
        ${
-        clickHandler
+         clickHandler
            ? `onsearch="${clickHandler}" onChange="${clickHandler}"`
            : ""
        }
