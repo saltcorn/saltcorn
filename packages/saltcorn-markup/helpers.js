@@ -10,20 +10,22 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
   const options = options1.map((o) =>
     o.value === "" ? { ...o, label: neutral_label } : o
   );
-  const selected = v ? v[hdr.name] : undefined;
+  const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
   const isSelected = (value) =>
     !selected
       ? false
       : selected.length
       ? selected.includes(value)
       : value === selected;
-  return options.map((o) => {
-    const label = typeof o === "string" ? o : o.label;
-    const value = typeof o === "string" ? o : o.value;
-    return `<option value="${text_attr(value)}" ${
-      isSelected(value) ? "selected" : ""
-    }>${text(label)}</option>`;
-  }).join("");
+  return options
+    .map((o) => {
+      const label = typeof o === "string" ? o : o.label;
+      const value = typeof o === "string" ? o : o.value;
+      return `<option value="${text_attr(value)}" ${
+        isSelected(value) ? "selected" : ""
+      }>${text(label)}</option>`;
+    })
+    .join("");
 };
 
 const pagination = ({
