@@ -73,7 +73,7 @@ const configuration_workflow = (req) =>
               label: "Remember me",
               type: "Bool",
             });
-           
+
             field_view_options.password = ["password"];
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
@@ -193,7 +193,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   {
     name: "id",
     type: "Integer",
-    primary_key: true
+    primary_key: true,
   },
 ];
 
@@ -338,6 +338,9 @@ const fill_presets = async (table, req, fixed) => {
         fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
       }
       delete fixed[k];
+    } else {
+      const fld = fields.find((f) => f.name === k);
+      if (!fld) delete fixed[k];
     }
   });
   return fixed;
@@ -413,7 +416,7 @@ const runPost = async (
         return;
       }
     }
-    if(redirect) res.redirect(redirect)
+    if (redirect) res.redirect(redirect);
     else if (!view_when_done) {
       res.redirect(`/`);
     } else {
