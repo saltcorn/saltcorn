@@ -4,9 +4,7 @@ from urllib.parse import urljoin
 class Session:
   def __init__(self, base_url):
     self.base_url = base_url
-    self.status = None
-    self.content = None
-    self.session = requests.Session()
+    self.reset()
 
   def __read_response(self, resp):
     self.status = resp.status_code
@@ -17,5 +15,8 @@ class Session:
     resp = self.session.get(urljoin(self.base_url, url))
     self.__read_response(resp)
    
-
+  def reset(self):
+    self.status = None
+    self.content = None
+    self.session = requests.Session()
   
