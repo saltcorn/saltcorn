@@ -1,7 +1,7 @@
-from sectest import Session
+from scsession import SaltcornSession
 
 def test_login():
-    sess = Session('https://saltcorn.com')
+    sess = SaltcornSession(3000)
     sess.get('/auth/login')
     assert "Login" in sess.content
     assert sess.status == 200
