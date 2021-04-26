@@ -17,7 +17,7 @@ module.exports = async function (err, req, res, next) {
     else res.redirect("/");
     return;
   }
-  const code = err.code || 500;
+  const code = err.httpCode || 500;
   const headline = err.headline || "An error occurred";
   const severity = err.severity || 2;
   const createCrash = severity <= 3;
