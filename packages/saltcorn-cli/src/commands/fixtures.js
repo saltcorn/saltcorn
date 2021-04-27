@@ -9,6 +9,8 @@ class FixturesCommand extends Command {
       await reset();
     }
     await fixtures();
+    this.exit(0);
+
   }
 }
 
