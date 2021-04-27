@@ -108,7 +108,7 @@ class User {
     if (urows.length !== 1) return false;
     const [urow] = urows;
     if (urow.disabled) return false;
-    const cmp = urow.checkPassword(password);
+    const cmp = urow.checkPassword(password || "");
     if (cmp) return new User(urow);
     else return false;
   }
@@ -244,12 +244,9 @@ class User {
     }
   }
   relogin(req) {
-    req.login(
-      this.session_object,
-      function (err) {
-        if (err) req.flash("danger", err);
-      }
-    );
+    req.login(this.session_object, function (err) {
+      if (err) req.flash("danger", err);
+    });
   }
 }
 

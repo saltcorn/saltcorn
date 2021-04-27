@@ -5,11 +5,17 @@ sess = SaltcornSession(3000)
 email = 'tomn@hey.com'
 password = 'secret1234'
 
-# helper
+# helpers
 def cannot_access_admin():
     sess.get('/table')
     assert sess.status == 302
     assert "Your tables" not in sess.content
+
+def is_incorrect_user_or_password():
+    assert sess.redirect_url == '/auth/login'
+    sess.follow_redirect()
+    assert "Incorrect user or password" in sess.content
+
 
 def test_public_cannot_access_admin():
     sess.reset()
@@ -48,23 +54,19 @@ def test_login_with_wrong_password():
          'password': 'fidelio', 
          '_csrf': sess.csrf()     
         })
-    assert sess.redirect_url == '/auth/login'
+    is_incorrect_user_or_password()
     cannot_access_admin()
 
 def test_login_with_no_password():
     sess.reset()
     sess.get('/auth/login')
     sess.postForm('/auth/login', {'email': email , '_csrf': sess.csrf()})
-    assert sess.redirect_url == '/auth/login'
-    sess.follow_redirect()
-    print(sess.content)
-    assert 1==4
+    is_incorrect_user_or_password()
     cannot_access_admin()
 
 def test_login_with_blank_password():
     sess.reset()
     sess.get('/auth/login')
-
     sess.postForm('/auth/login', {'email': email,'password': '', '_csrf': sess.csrf()})
-    assert sess.redirect_url == '/auth/login'
+    is_incorrect_user_or_password()
     cannot_access_admin()
