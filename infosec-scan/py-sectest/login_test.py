@@ -45,6 +45,28 @@ def test_login_without_csrf():
     assert sess.redirect_url == '/auth/login'
     cannot_access_admin()
 
+def test_login_with_wrong_csrf():
+    sess.reset()
+    sess.get('/auth/login')
+    sess.postForm('/auth/login', 
+        {'email': email, 
+         'password': password,   
+          '_csrf': 'ytjutydetjk'       
+        })
+    assert sess.redirect_url == '/auth/login'
+    cannot_access_admin()
+
+def test_login_with_blank_csrf():
+    sess.reset()
+    sess.get('/auth/login')
+    sess.postForm('/auth/login', 
+        {'email': email, 
+         'password': password,   
+          '_csrf': ''       
+        })
+    assert sess.redirect_url == '/auth/login'
+    cannot_access_admin()
+
 def test_login_with_wrong_password():
     sess.reset()
     sess.get('/auth/login')
@@ -60,6 +82,27 @@ def test_login_with_no_password():
     sess.reset()
     sess.get('/auth/login')
     sess.postForm('/auth/login', {'email': email , '_csrf': sess.csrf()})
+    is_incorrect_user_or_password()
+    cannot_access_admin()
+
+def test_login_with_no_email():
+    sess.reset()
+    sess.get('/auth/login')
+    sess.postForm('/auth/login', {'password': password, '_csrf': sess.csrf()})
+    is_incorrect_user_or_password()
+    cannot_access_admin()
+
+def test_login_with_blank_email():
+    sess.reset()
+    sess.get('/auth/login')
+    sess.postForm('/auth/login', {'email':'', 'password': password, '_csrf': sess.csrf()})
+    is_incorrect_user_or_password()
+    cannot_access_admin()
+
+def test_login_with_nothing():
+    sess.reset()
+    sess.get('/auth/login')
+    sess.postForm('/auth/login', {'_csrf': sess.csrf()})
     is_incorrect_user_or_password()
     cannot_access_admin()
 
