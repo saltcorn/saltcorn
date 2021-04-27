@@ -15,5 +15,6 @@ class SaltcornSession(Session):
     m = re.findall('_sc_globalCsrf = "([^"]*)"', self.content)
     return m[0]
 
-  def reset_to_fixtures(self):
+  @staticmethod
+  def reset_to_fixtures():
     subprocess.run(["packages/saltcorn-cli/bin/saltcorn", "fixtures", "-r"], check=True)
