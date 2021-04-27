@@ -1,10 +1,20 @@
 import requests
 from urllib.parse import urljoin
+from urllib.request import urlopen
 
 class Session:
   def __init__(self, base_url):
     self.base_url = base_url
     self.reset()
+
+  def wait_for_port_open(self):
+    while True:
+      try:
+        response = urlopen(self.base_url,timeout=1)
+        return
+      except:
+
+        pass
 
   def __read_response(self, resp):
     self.status = resp.status_code
