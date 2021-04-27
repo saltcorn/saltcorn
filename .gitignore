@@ -112,3 +112,5 @@ sessions.sqlite
 .greenlockrc
 
 infosec_scan_tmp/
+
+*.pyc
