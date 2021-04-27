@@ -1,9 +1,8 @@
 from scsession import SaltcornSession
 
 sess = SaltcornSession(3000)
-
-email = 'tomn@hey.com'
-password = 'secret1234'
+email = "admin@foo.com"
+password="AhGGr6rhu45"
 
 # helpers
 def cannot_access_admin():

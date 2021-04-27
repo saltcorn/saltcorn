@@ -1,7 +1,6 @@
 from sectest import Session
 import re
 import subprocess
-import time
 
 class SaltcornSession(Session):
   def __init__(self, port=3000):

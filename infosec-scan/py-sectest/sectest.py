@@ -1,6 +1,7 @@
 import requests
 from urllib.parse import urljoin
 from urllib.request import urlopen
+import time
 
 class Session:
   def __init__(self, base_url):
@@ -8,13 +9,17 @@ class Session:
     self.reset()
 
   def wait_for_port_open(self):
-    while True:
+    i=0
+    while i<30:
       try:
         response = urlopen(self.base_url,timeout=1)
         return
       except:
-
+        print("Closed, retry")
+        time.sleep(0.25)
+        i=i+1
         pass
+    raise ValueError("wait_for_port_open: Iterations exceeded")
 
   def __read_response(self, resp):
     self.status = resp.status_code
