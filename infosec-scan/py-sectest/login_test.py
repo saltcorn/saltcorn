@@ -1,5 +1,6 @@
 from scsession import SaltcornSession
 
+SaltcornSession.reset_to_fixtures()
 sess = SaltcornSession(3000)
 email = "admin@foo.com"
 password="AhGGr6rhu45"
