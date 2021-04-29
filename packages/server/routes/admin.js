@@ -266,6 +266,8 @@ router.get(
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const is_latest = packagejson.version === latest;
     const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE;
+    const dbversion = await db.getVersion();
+
     send_admin_page({
       res,
       req,
@@ -332,7 +334,7 @@ router.get(
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database")),
-                    td(db.isSQLite ? "SQLite" : "PostgreSQL")
+                    td(span(db.isSQLite ? "SQLite " : "", dbversion))
                   )
                 )
               ),
