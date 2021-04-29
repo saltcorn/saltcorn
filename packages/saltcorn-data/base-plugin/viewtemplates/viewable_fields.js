@@ -368,7 +368,10 @@ const get_viewable_fields = contract(
                     ? (row) => f.type.showAs(row[f.name])
                     : (row) => text(row[f.name])
                   : f.listKey,
-              sortlink: sortlinkForName(f.name, req),
+              sortlink:
+                !f.calculated || f.stored
+                  ? sortlinkForName(f.name, req)
+                  : undefined,
             }
           );
         }
