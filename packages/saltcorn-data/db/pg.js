@@ -60,11 +60,16 @@ const count = async (tbl, whereObj) => {
   return parseInt(tq.rows[0].count);
 };
 
-const getVersion = async () => {
+const getVersion = async (short) => {
   const sql = `SELECT version();`;
   sql_log(sql);
   const tq = await pool.query(sql);
-  return tq.rows[0].version;
+  const v = tq.rows[0].version;
+  if (short) {
+    const ws = v.split(" ");
+    return ws[1];
+  }
+  return v;
 };
 
 const deleteWhere = async (tbl, whereObj) => {
