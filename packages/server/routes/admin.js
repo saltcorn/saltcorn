@@ -33,6 +33,7 @@ const {
   restart_tenant,
   getTenant,
   get_other_domain_tenant,
+  get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
 const { create_backup, restore } = require("@saltcorn/data/models/backup");
@@ -54,6 +55,8 @@ const {
   hostname_matches_baseurl,
   is_hsts_tld,
 } = require("../markup/admin");
+const moment = require("moment");
+
 const router = new Router();
 module.exports = router;
 
@@ -334,11 +337,16 @@ router.get(
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database")),
-                    td(span(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion))
+                    td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
+                  ),
+                  tr(
+                    th(req.__("Process uptime")),
+                    td(moment(get_process_init_time()).fromNow(true))
                   )
                 )
               ),
               p(
+                { class: "mt-3" },
                 req.__(
                   `Saltcorn is <a href="https://www.gnu.org/philosophy/free-sw.en.html">Free</a> and <a href="https://opensource.org/">Open Source</a> Software, <a href="https://github.com/saltcorn/saltcorn/">released</a> under the <a href="https://github.com/saltcorn/saltcorn/blob/master/LICENSE">MIT license</a>.`
                 )
