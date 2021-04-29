@@ -264,6 +264,10 @@ const restart_tenant = async (plugin_loader) => {
   await plugin_loader();
 };
 
+const process_init_time = new Date()
+
+const get_process_init_time = () => process_init_time
+
 module.exports = {
   getState,
   getTenant,
@@ -272,4 +276,5 @@ module.exports = {
   restart_tenant,
   get_other_domain_tenant,
   set_tenant_base_url,
+  get_process_init_time
 };

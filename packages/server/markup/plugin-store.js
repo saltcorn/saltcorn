@@ -60,8 +60,13 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
     .map(({ name, description }) => div(h4(name), p(description)))
     .join("<hr>"),
 });
+
 const showRepository = (repo) =>
-  repo && repo.startsWith("github:")
+  !repo
+    ? repo
+    : repo.url
+    ? link(repo.url, repo.url)
+    : repo.startsWith && repo.startsWith("github:")
     ? link(repo.replace("github:", "https://github.com/"), repo)
     : repo;
 
