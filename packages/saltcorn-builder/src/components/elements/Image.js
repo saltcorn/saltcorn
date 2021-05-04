@@ -1,13 +1,14 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleSetting,OrFormula } from "./utils";
+import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 
-export const Image = ({ fileid, block, alt }) => {
+export const Image = ({ fileid, block, srctype, url, alt }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const theurl = srctype === "File" ? `/files/serve/${fileid}` : url;
   return (
     <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
       {fileid === 0 ? (
@@ -15,7 +16,7 @@ export const Image = ({ fileid, block, alt }) => {
       ) : (
         <img
           className={`w-100 image-widget ${selected ? "selected-node" : ""}`}
-          src={`/files/serve/${fileid}`}
+          src={theurl}
           alt={alt}
         ></img>
       )}
@@ -47,6 +48,13 @@ export const ImageSettings = () => {
   return (
     <table>
       <tbody>
+        <tr>
+          <td colSpan="2">
+            <i>
+              <small>Preview shown in canvas is indicative</small>
+            </i>
+          </td>
+        </tr>
         <tr>
           <td>
             <label>Source</label>
@@ -165,7 +173,7 @@ Image.craft = {
     alt: "",
     block: false,
     isFormula: {},
-    srctype: "File"
+    srctype: "File",
   },
   related: {
     settings: ImageSettings,
