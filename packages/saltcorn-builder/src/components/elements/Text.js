@@ -1,6 +1,12 @@
 import React, { useState, useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  TextStyleSetting,
+  OrFormula,
+  ErrorBoundary,
+} from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
 import CKEditor from "ckeditor4-react";
@@ -73,15 +79,17 @@ export const Text = ({ text, block, isFormula, textStyle, icon }) => {
           />
         </Fragment>
       ) : editable ? (
-        <CKEditor
-          data={text}
-          style={{ display: "inline" }}
-          onChange={(e) =>
-            setProp((props) => (props.text = e.editor.getData()))
-          }
-          config={ckConfig}
-          type="inline"
-        />
+        <ErrorBoundary>
+          <CKEditor
+            data={text}
+            style={{ display: "inline" }}
+            onChange={(e) =>
+              setProp((props) => (props.text = e.editor.getData()))
+            }
+            config={ckConfig}
+            type="inline"
+          />
+        </ErrorBoundary>
       ) : (
         <div className="d-inline" dangerouslySetInnerHTML={{ __html: text }} />
       )}
@@ -133,14 +141,16 @@ export const TextSettings = () => {
           onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
         />
       ) : (
-        <CKEditor
-          data={text}
-          onChange={(e) =>
-            setProp((props) => (props.text = e.editor.getData()))
-          }
-          config={ckConfig}
-          type="inline"
-        />
+        <ErrorBoundary>
+          <CKEditor
+            data={text}
+            onChange={(e) =>
+              setProp((props) => (props.text = e.editor.getData()))
+            }
+            config={ckConfig}
+            type="inline"
+          />
+        </ErrorBoundary>
       )}
       {mode === "edit" && (
         <Fragment>

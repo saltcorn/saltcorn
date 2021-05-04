@@ -1,5 +1,5 @@
 const traverseSync = (layout, visitors) => {
-  const go = async (segment) => {
+  const go = (segment) => {
     if (!segment) return;
     if (visitors[segment.type]) {
       visitors[segment.type](segment);

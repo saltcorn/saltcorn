@@ -352,7 +352,7 @@ export const ToolboxFilter = () => {
 export const ToolboxEdit = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, field_view_options, images } = options;
+  const { fields, field_view_options, images, views } = options;
   return (
     <Fragment>
       <TextElem connectors={connectors} />
@@ -370,6 +370,7 @@ export const ToolboxEdit = () => {
       <LinkElem connectors={connectors} />
       <ImageElem connectors={connectors} images={images} />
       <HTMLElem connectors={connectors} />
+      <ViewElem connectors={connectors} views={views} />
     </Fragment>
   );
 };

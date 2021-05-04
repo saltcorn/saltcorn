@@ -13,13 +13,18 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   get_parent_views,
+  get_link_view_opts,
   picked_fields_to_query,
   stateFieldsToWhere,
   stateFieldsToQuery,
   strictParseInt,
 } = require("../../plugin-helper");
-const { splitUniques, getForm } = require("./viewable_fields");
-const { traverseSync } = require("../../models/layout");
+const {
+  splitUniques,
+  getForm,
+  parse_view_select,
+} = require("./viewable_fields");
+const { traverse } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
 const configuration_workflow = (req) =>
@@ -52,6 +57,7 @@ const configuration_workflow = (req) =>
               },
             ],
           };
+          const views = await get_link_view_opts(table, context.viewname);
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -88,6 +94,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            views,
             mode: "edit",
           };
         },
@@ -229,6 +236,7 @@ const run = async (
     layout,
     row,
     req,
+    res,
     state,
   });
 };
@@ -264,14 +272,15 @@ const runMany = async (
       layout,
       row,
       req: extra.req,
+      res: extra.res,
       state,
     });
     return { html, row };
   });
 };
 
-const transformForm = ({ form, table, req }) => {
-  traverseSync(form.layout, {
+const transformForm = async ({ form, table, req, row, res }) => {
+  await traverse(form.layout, {
     action(segment) {
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
@@ -281,6 +290,27 @@ const transformForm = ({ form, table, req }) => {
           segment.contents = "";
         }
       }
+    },
+    async view(segment) {
+      if (!row) {
+        segment.type = "blank";
+        segment.contents = "";
+      }
+      const view_select = parse_view_select(segment.view);
+      const view = await View.findOne({ name: view_select.viewname });
+      let state;
+      switch (view_select.type) {
+        case "Own":
+          state = { id: row.id };
+          break;
+        case "ChildList":
+          state = { [view_select.field_name]: row.id };
+          break;
+        case "ParentShow":
+          state = { id: row[view_select.field_name] };
+          break;
+      }
+      segment.contents = await view.run(state, { req, res });
     },
   });
   if (req.xhr) form.xhrSubmit = true;
@@ -296,6 +326,7 @@ const render = async ({
   row,
   req,
   state,
+  res,
 }) => {
   const form = await getForm(table, viewname, columns, layout, state.id, req);
 
@@ -324,7 +355,7 @@ const render = async ({
       }
     }
   });
-  transformForm({ form, table, req });
+  await transformForm({ form, table, req, row, res });
   return renderForm(form, req.csrfToken());
 };
 
@@ -368,7 +399,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
-    transformForm({ form, table, req });
+    await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     var row;

@@ -200,9 +200,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
         .attr("onclick", "")
         .attr("href", "#");
       //.attr("disabled", true);
-      $(".preview-scratchpad")
-        .find("input, select, textarea")
-        .attr("disabled", true);
+      $(".preview-scratchpad").find("input, textarea").attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
@@ -298,7 +296,7 @@ export const ConfigForm = ({
   node,
   onChange,
 }) => (
-  <Fragment>
+  <div>
     {fields.map((f, ix) => {
       if (f.showIf && node && node.configuration) {
         let noshow = false;
@@ -310,7 +308,7 @@ export const ConfigForm = ({
         if (noshow) return null;
       }
       return (
-        <Fragment key={ix}>
+        <div key={ix}>
           {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
           <ConfigField
             field={f}
@@ -319,11 +317,11 @@ export const ConfigForm = ({
             onChange={onChange}
           />
           {f.sublabel ? <i>{f.sublabel}</i> : null}
-        </Fragment>
+        </div>
       );
     })}
     <br />
-  </Fragment>
+  </div>
 );
 
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
@@ -413,3 +411,27 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
       </select>
     ),
   }[field.input_type || field.type.name || field.type]());
+
+export class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    // Update state so the next render will show the fallback UI.
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    // You can also log the error to an error reporting service
+    //logErrorToMyService(error, errorInfo);
+    console.log(
+      "ErrorBoundary reporting: ",
+      JSON.stringify(error),
+      JSON.stringify(errorInfo)
+    );
+  }
+
+  render() {
+    return this.props.children;
+  }
+}

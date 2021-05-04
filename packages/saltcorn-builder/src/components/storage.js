@@ -57,7 +57,11 @@ export const layoutToNodes = (layout, query, actions) => {
         <Image
           key={ix}
           alt={segment.alt}
+          field={segment.field}
+          srctype={segment.srctype||"File"}
+          url={segment.url}
           block={segment.block || false}
+          isFormula={segment.isFormula || {}}
           fileid={segment.fileid || 0}
         />
       );
@@ -436,6 +440,10 @@ export const craftToSaltcorn = (nodes) => {
         alt: node.props.alt,
         fileid: node.props.fileid,
         block: node.props.block,
+        srctype: node.props.srctype,
+        url: node.props.url,
+        field: node.props.field,
+        isFormula: node.props.isFormula,
       };
     }
     if (node.displayName === Link.craft.displayName) {
