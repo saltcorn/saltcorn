@@ -295,6 +295,7 @@ function view_post(viewname, route, data, onDone) {
 }
 var logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {
+  if (error && error.preventDefault) error.preventDefault();
   if (logged_errors.includes(message)) return;
   logged_errors.push(message);
   var data = { message, stack: (error && error.stack) || "" };
