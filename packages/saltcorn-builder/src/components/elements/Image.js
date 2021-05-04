@@ -41,6 +41,7 @@ export const ImageSettings = () => {
         <label>Image</label>
         <select
           value={fileid}
+          className="form-control"
           onChange={(e) => setProp((prop) => (prop.fileid = e.target.value))}
         >
           {options.images.map((f, ix) => (
@@ -53,7 +54,7 @@ export const ImageSettings = () => {
       <label>Alt text</label>
       <input
         type="text"
-        className="w-100"
+        className="form-control"
         value={alt}
         onChange={(e) => setProp((prop) => (prop.alt = e.target.value))}
       />
