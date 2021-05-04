@@ -201,7 +201,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
         .attr("href", "#");
       //.attr("disabled", true);
       $(".preview-scratchpad")
-        .find("input, select, textarea")
+        .find("input, textarea")
         .attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       const newHtml = $(".preview-scratchpad").html();
