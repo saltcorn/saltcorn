@@ -200,6 +200,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       );
     }
     if (segment.type === "image") {
+      const srctype = segment.srctype || "File";
       return wrap(
         segment,
         isTop,
@@ -207,7 +208,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         img({
           class: "w-100",
           alt: segment.alt,
-          src: `/files/serve/${segment.fileid}`,
+          src:
+            srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
       );
     }
@@ -349,12 +351,13 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border${borderDirection? `-${borderDirection}`:''}: ${
-              borderWidth || 0
-            }px ${borderStyle} ${borderColor || "black"};${sizeProp(
-              "borderRadius",
-              "border-radius"
-            )}${ppBox("padding")}${ppBox("margin")}${
+            )}${sizeProp("widthPct", "width", "%")}border${
+              borderDirection ? `-${borderDirection}` : ""
+            }: ${borderWidth || 0}px ${borderStyle} ${
+              borderColor || "black"
+            };${sizeProp("borderRadius", "border-radius")}${ppBox(
+              "padding"
+            )}${ppBox("margin")}${
               overflow && overflow !== "visible"
                 ? ` overflow: ${overflow};`
                 : ""

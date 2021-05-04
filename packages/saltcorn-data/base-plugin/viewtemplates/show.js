@@ -419,6 +419,17 @@ const render = (
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
     },
+    image(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "alt");
+      if (segment.srctype === "Field") {
+        const field = fields.find((f) => f.name === segment.field);
+        if (!field) return;
+        if (field.type.name === "String") segment.url = row[segment.field];
+        if (field.reftable_name === "_sc_files")
+          segment.url = `/files/serve/${row[segment.field]}`;
+      }
+    },
     container(segment) {
       evalMaybeExpr(segment, "bgColor");
       evalMaybeExpr(segment, "customClass");
@@ -464,12 +475,7 @@ const render = (
         value = row[`${refNm}_${through}_${targetNm}`];
       }
       if (field_type === "File") {
-        return value
-          ? getState().fileviews[fieldview].run(
-              value,
-              "",
-            )
-          : "";
+        return value ? getState().fileviews[fieldview].run(value, "") : "";
       }
       if (field_type && fieldview) {
         const type = getState().types[field_type];
