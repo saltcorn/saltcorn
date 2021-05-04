@@ -298,7 +298,7 @@ export const ConfigForm = ({
   node,
   onChange,
 }) => (
-  <Fragment>
+  <div>
     {fields.map((f, ix) => {
       if (f.showIf && node && node.configuration) {
         let noshow = false;
@@ -310,7 +310,7 @@ export const ConfigForm = ({
         if (noshow) return null;
       }
       return (
-        <Fragment key={ix}>
+        <div key={ix}>
           {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
           <ConfigField
             field={f}
@@ -319,11 +319,11 @@ export const ConfigForm = ({
             onChange={onChange}
           />
           {f.sublabel ? <i>{f.sublabel}</i> : null}
-        </Fragment>
+        </div>
       );
     })}
     <br />
-  </Fragment>
+  </div>
 );
 
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
