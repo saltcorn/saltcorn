@@ -1,4 +1,14 @@
-const { a, text, div, input, text_attr, ul, li, span } = require("./tags");
+const {
+  a,
+  text,
+  div,
+  input,
+  text_attr,
+  ul,
+  li,
+  span,
+  label,
+} = require("./tags");
 
 const isdef = (x) => typeof x !== "undefined";
 
@@ -27,6 +37,31 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
     })
     .join("");
 };
+
+const radio_group = ({ name, options, value, form_name, ...rest }) =>
+  (options || [])
+    .filter((o) => (typeof o === "string" ? o : o.value))
+    .map((o, ix) => {
+      const myvalue = typeof o === "string" ? o : o.value;
+      const id = `input${text_attr(name)}${ix}`;
+      return div(
+        { class: "form-check" },
+        input({
+          class: ["form-check-input", rest.class],
+          type: "radio",
+          name,
+          "data-fieldname": form_name,
+          id,
+          value: myvalue,
+          checked: myvalue === value,
+        }),
+        label(
+          { class: "form-check-label", for: id },
+          typeof o === "string" ? o : o.label
+        )
+      );
+    })
+    .join("");
 
 const pagination = ({
   current_page,
@@ -142,4 +177,5 @@ module.exports = {
   search_bar,
   search_bar_form,
   pagination,
+  radio_group,
 };
