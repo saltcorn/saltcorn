@@ -326,17 +326,18 @@ export const ConfigForm = ({
 
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
-export const ConfigField = ({ field, configuration, setProp, onChange }) =>
-  ({
+export const ConfigField = ({ field, configuration, setProp, onChange }) => {
+  const myOnChange = (v) => {
+    setProp((prop) => (prop.configuration[field.name] = v));
+    onChange && onChange(field.name, v);
+  };
+  return {
     String: () => (
       <input
         type="text"
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) => {
-          setProp((prop) => (prop.configuration[field.name] = e.target.value));
-          onChange(field.name, e.target.value);
-        }}
+        onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     Integer: () => (
@@ -345,9 +346,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
         className="form-control"
         step={1}
         value={or_if_undef(configuration[field.name], field.default)}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     Float: () => (
@@ -356,9 +355,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
         className="form-control"
         step={0.01}
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     Color: () => (
@@ -366,9 +363,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
         type="color"
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     Bool: () => (
@@ -377,11 +372,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
           type="checkbox"
           className="form-check-input"
           checked={configuration[field.name]}
-          onChange={(e) =>
-            setProp(
-              (prop) => (prop.configuration[field.name] = e.target.checked)
-            )
-          }
+          onChange={(e) => myOnChange(e.target.checked)}
         />
         <label className="form-check-label">{field.label}</label>
       </div>
@@ -392,25 +383,22 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) =>
         type="text"
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     select: () => (
       <select
         className="form-control"
         value={configuration[field.name]}
-        onChange={(e) =>
-          setProp((prop) => (prop.configuration[field.name] = e.target.value))
-        }
+        onChange={(e) => myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (
           <option key={ix}>{o}</option>
         ))}
       </select>
     ),
-  }[field.input_type || field.type.name || field.type]());
+  }[field.input_type || field.type.name || field.type]();
+};
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
