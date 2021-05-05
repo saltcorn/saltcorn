@@ -13,6 +13,7 @@ const {
   header,
   img,
   footer,
+  button,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
@@ -116,7 +117,12 @@ const sidebar = (brand, sections, currentUrl) =>
         ),
       div({ class: "sidebar-brand-text mx-3" }, brand.name)
     ),
-    sections.map(sideBarSection(currentUrl))
+    sections.map(sideBarSection(currentUrl)),
+    hr({ class: "sidebar-divider d-none d-md-block" }),
+    div(
+      { class: "text-center d-none d-md-inline" },
+      button({ class: "rounded-circle border-0", id: "sidebarToggle" })
+    )
   );
 
 const blockDispatch = {
