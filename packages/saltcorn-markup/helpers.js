@@ -52,7 +52,7 @@ const radio_group = ({ name, options, value, form_name, ...rest }) =>
           name,
           "data-fieldname": form_name,
           id,
-          value: myvalue,
+          value: text_attr(myvalue),
           checked: myvalue === value,
         }),
         label(

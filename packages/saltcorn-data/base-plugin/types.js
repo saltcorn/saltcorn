@@ -15,6 +15,7 @@ const {
   text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
+const { radio_group } = require("@saltcorn/markup/helpers");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 const eqStr = (x, y) => `${x}` === `${y}`;
@@ -187,6 +188,19 @@ const string = {
           },
           text(v) || ""
         ),
+    },
+    radio_group: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, required, field) =>
+        attrs.options
+          ? radio_group({
+              class: cls,
+              name: text_attr(nm),
+              disabled: attrs.disabled,
+              options: attrs.options.split(",").map((o) => o.trim()),
+              value: v,
+            })
+          : i("None available"),
     },
     password: {
       isEdit: true,

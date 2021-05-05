@@ -54,6 +54,7 @@ const radio_select = {
       class: `${cls} ${field.class || ""}`,
       name: text_attr(nm),
       options: field.options,
+      value: v,
     }),
 };
 
