@@ -623,7 +623,7 @@ router.get(
                   href: `/table/rename/${table.id}`,
                 },
                 '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
-              ), 
+              ),
             post_dropdown_item(
               `/table/recalc-stored/${table.name}`,
               '<i class="fas fa-sync"></i>&nbsp;' +
@@ -1076,6 +1076,12 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = await Table.findOne({ name });
+    if (!req.files || !req.files.file) {
+      req.flash("error", "Missing file");
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
+
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)

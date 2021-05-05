@@ -295,6 +295,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
       if (!row) {
         segment.type = "blank";
         segment.contents = "";
+        return;
       }
       const view_select = parse_view_select(segment.view);
       const view = await View.findOne({ name: view_select.viewname });

@@ -9,7 +9,7 @@ const {
   script,
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
-const { select_options } = require("@saltcorn/markup/helpers");
+const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 
 const select = {
   type: "Key",
@@ -46,6 +46,18 @@ const select = {
   },
 };
 
+const radio_select = {
+  type: "Key",
+  isEdit: true,
+  run: (nm, v, attrs, cls, reqd, field) =>
+    radio_group({
+      class: `${cls} ${field.class || ""}`,
+      name: text_attr(nm),
+      options: field.options,
+      value: v,
+    }),
+};
+
 const search_or_create = {
   type: "Key",
   isEdit: true,
@@ -57,7 +69,7 @@ const search_or_create = {
         name: "viewname",
         label: "View to create",
         input_type: "select",
-
+        form_name: field.form_name,
         options: views.map((v) => v.name),
       },
       {
@@ -102,4 +114,4 @@ const search_or_create = {
     );
   },
 };
-module.exports = { select, search_or_create };
+module.exports = { select, search_or_create, radio_select };
