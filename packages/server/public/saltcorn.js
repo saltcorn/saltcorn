@@ -200,19 +200,11 @@ function removeQueryStringParameter(uri, key) {
 }
 
 function select_id(id) {
-  window.location.href = updateQueryStringParameter(
-    window.location.href,
-    "id",
-    id
-  );
+  pjax_to(updateQueryStringParameter(window.location.href, "id", id));
 }
 
 function set_state_field(key, value) {
-  window.location.href = updateQueryStringParameter(
-    window.location.href,
-    key,
-    value
-  );
+  pjax_to(updateQueryStringParameter(window.location.href, key, value));
 }
 function set_state_fields(kvs) {
   var newhref = window.location.href;
@@ -221,16 +213,27 @@ function set_state_fields(kvs) {
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
-  window.location.href = newhref;
+  pjax_to(newhref);
 }
 function unset_state_field(key) {
-  window.location.href = removeQueryStringParameter(window.location.href, key);
+  pjax_to(removeQueryStringParameter(window.location.href, key));
+}
+
+function pjax_to(href) {
+  if (!$("#page-inner-content").length) window.location.href = href;
+  else
+    $.ajax(href, {
+      success: function (res, textStatus, request) {
+        window.history.pushState(null, "", href);
+        $("#page-inner-content").html(res);
+      },
+    });
 }
 function href_to(href) {
   window.location.href = href;
 }
 function clear_state() {
-  window.location.href = window.location.href.split("?")[0];
+  pjax_to(window.location.href.split("?")[0]);
 }
 function tristateClick(nm) {
   var current = $(`button#trib${nm}`).html();
