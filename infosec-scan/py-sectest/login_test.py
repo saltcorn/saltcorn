@@ -40,6 +40,25 @@ class Test:
         assert self.sess.status == 200
         assert "Your tables" in self.sess.content
 
+    def test_logout(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        assert "Login" in self.sess.content
+        assert self.sess.status == 200
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': password, 
+            '_csrf': self.sess.csrf()
+            })
+        assert self.sess.redirect_url == '/'
+        self.sess.get('/table')
+        assert self.sess.status == 200
+        assert "Your tables" in self.sess.content
+        self.sess.get('/auth/logout')
+        assert self.sess.redirect_url == '/auth/login'
+        self.cannot_access_admin()
+
+
     def test_login_without_csrf(self):
         self.sess.reset()
         self.sess.get('/auth/login')
