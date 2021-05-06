@@ -297,7 +297,9 @@ const wrap = ({
             <div id="alerts-area">
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
             </div>
-            ${renderBody(title, body, role)}
+            <div id="page-inner-content">
+              ${renderBody(title, body, role)}
+            <div>
           </div>
         </div>
       </div>
