@@ -78,7 +78,7 @@ Skip this section if you ran `saltcorn setup`
      - `database`: PostgreSQL database
      - `user`: PostgreSQL user name
      - `password`: PostgreSQL user password
-     - `session_secret`: Saltcorb session secret
+     - `session_secret`: Saltcorn session secret
      - `multi_tenant`: run as multi-tenant (true/false)
 
      For example:
