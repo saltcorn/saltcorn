@@ -40,6 +40,5 @@ class Test:
             })
         assert self.sess.redirect_url == '/'
         self.sess.follow_redirect()
-        print(self.sess.content)
         assert '>Welcome' in self.sess.content
         

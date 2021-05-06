@@ -3,7 +3,7 @@ from scsession import SaltcornSession
 class Test:
     def setup_class(self):
         SaltcornSession.reset_to_fixtures()
-        self.sess = SaltcornSession(3001)
+        self.sess = SaltcornSession(3002)
 
     def teardown_class(self):
         self.sess.close()
