@@ -1,0 +1,770 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "min_role_read": 1,
+      "min_role_write": 1,
+      "versioned": false,
+      "fields": [
+        {
+          "name": "email",
+          "label": "Email",
+          "is_unique": true,
+          "calculated": false,
+          "stored": false,
+          "expression": null,
+          "type": "String",
+          "attributes": {},
+          "required": true,
+          "primary_key": false
+        },
+        {
+          "name": "id",
+          "label": "ID",
+          "is_unique": true,
+          "calculated": false,
+          "stored": false,
+          "expression": null,
+          "type": "Integer",
+          "attributes": {},
+          "required": true,
+          "primary_key": true
+        },
+        {
+          "name": "username",
+          "label": "username",
+          "is_unique": false,
+          "calculated": false,
+          "stored": false,
+          "expression": null,
+          "type": "String",
+          "attributes": {
+            "regexp": "",
+            "default": "tomn",
+            "options": "",
+            "max_length": null,
+            "min_length": null,
+            "re_invalid_error": ""
+          },
+          "required": true,
+          "primary_key": false
+        },
+        {
+          "name": "age",
+          "label": "age",
+          "is_unique": false,
+          "calculated": false,
+          "stored": false,
+          "expression": null,
+          "type": "Integer",
+          "attributes": { "max": null, "min": null },
+          "required": false,
+          "primary_key": false
+        }
+      ],
+      "triggers": [],
+      "constraints": [],
+      "ownership_field_name": null
+    }
+  ],
+  "views": [
+    {
+      "name": "login",
+      "viewtemplate": "Edit",
+      "configuration": {
+        "fixed": { "age": null, "email": "", "preset_email": "" },
+        "layout": {
+          "above": [
+            {
+              "widths": [2, 10],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "blank",
+                      "block": false,
+                      "contents": "username",
+                      "labelFor": "username",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "edit",
+                      "textStyle": "",
+                      "field_name": "username",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [2, 10],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "icon": "",
+                      "type": "blank",
+                      "block": false,
+                      "contents": "password",
+                      "labelFor": "age",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "password",
+                      "textStyle": "",
+                      "field_name": "password",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "type": "action",
+              "block": false,
+              "rndid": "d2d797",
+              "minRole": 10,
+              "isFormula": {},
+              "action_icon": "",
+              "action_name": "Login",
+              "action_size": "",
+              "action_label": "",
+              "action_style": "btn-primary",
+              "configuration": {}
+            }
+          ]
+        },
+        "columns": [
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "username",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "password",
+            "field_name": "password",
+            "configuration": {}
+          },
+          {
+            "type": "Action",
+            "rndid": "d2d797",
+            "minRole": 10,
+            "isFormula": {},
+            "action_icon": "",
+            "action_name": "Login",
+            "action_size": "",
+            "action_label": "",
+            "action_style": "btn-primary",
+            "configuration": {}
+          }
+        ],
+        "viewname": "login",
+        "exttable_name": null
+      },
+      "min_role": 10,
+      "table": "users",
+      "default_render_page": ""
+    },
+    {
+      "name": "signup",
+      "viewtemplate": "Edit",
+      "configuration": {
+        "fixed": { "age": null, "email": "", "preset_email": "" },
+        "layout": {
+          "above": [
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "icon": "",
+                  "type": "blank",
+                  "block": false,
+                  "contents": "email",
+                  "labelFor": "",
+                  "isFormula": {},
+                  "textStyle": ""
+                },
+                {
+                  "type": "field",
+                  "block": false,
+                  "fieldview": "edit",
+                  "textStyle": "",
+                  "field_name": "email",
+                  "configuration": {}
+                }
+              ],
+              "breakpoints": ["sm", "sm"]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "blank",
+                      "block": false,
+                      "contents": "username",
+                      "labelFor": "username",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "edit",
+                      "textStyle": "",
+                      "field_name": "username",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "icon": "",
+                      "type": "blank",
+                      "block": false,
+                      "contents": "password",
+                      "labelFor": "age",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "password",
+                      "textStyle": "",
+                      "field_name": "password",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "icon": "",
+                  "type": "blank",
+                  "block": false,
+                  "contents": "password again",
+                  "labelFor": "",
+                  "isFormula": {},
+                  "textStyle": ""
+                },
+                {
+                  "type": "field",
+                  "block": false,
+                  "fieldview": "password",
+                  "textStyle": "",
+                  "field_name": "passwordRepeat",
+                  "configuration": {}
+                }
+              ],
+              "breakpoints": ["sm", "sm"]
+            },
+            { "type": "line_break" },
+            {
+              "type": "action",
+              "block": false,
+              "rndid": "d2d797",
+              "minRole": 10,
+              "isFormula": {},
+              "action_icon": "",
+              "action_name": "Sign up",
+              "action_size": "",
+              "action_label": "",
+              "action_style": "btn-primary",
+              "configuration": {}
+            }
+          ]
+        },
+        "columns": [
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "email",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "username",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "password",
+            "field_name": "password",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "password",
+            "field_name": "passwordRepeat",
+            "configuration": {}
+          },
+          {
+            "type": "Action",
+            "rndid": "d2d797",
+            "minRole": 10,
+            "isFormula": {},
+            "action_icon": "",
+            "action_name": "Sign up",
+            "action_size": "",
+            "action_label": "",
+            "action_style": "btn-primary",
+            "configuration": {}
+          }
+        ],
+        "viewname": "login",
+        "exttable_name": null,
+        "view_when_done": "signup"
+      },
+      "min_role": 10,
+      "table": "users",
+      "default_render_page": ""
+    },
+    {
+      "name": "signup_no_username",
+      "viewtemplate": "Edit",
+      "configuration": {
+        "fixed": {
+          "age": null,
+          "email": "",
+          "username": "",
+          "preset_email": "",
+          "preset_username": ""
+        },
+        "layout": {
+          "above": [
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "icon": "",
+                  "type": "blank",
+                  "block": false,
+                  "contents": "email",
+                  "labelFor": "",
+                  "isFormula": {},
+                  "textStyle": ""
+                },
+                {
+                  "type": "field",
+                  "block": false,
+                  "fieldview": "edit",
+                  "textStyle": "",
+                  "field_name": "email",
+                  "configuration": {}
+                }
+              ],
+              "breakpoints": ["sm", "sm"]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "icon": "",
+                      "type": "blank",
+                      "block": false,
+                      "contents": "password",
+                      "labelFor": "age",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "password",
+                      "textStyle": "",
+                      "field_name": "password",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "icon": "",
+                  "type": "blank",
+                  "block": false,
+                  "contents": "password again",
+                  "labelFor": "",
+                  "isFormula": {},
+                  "textStyle": ""
+                },
+                {
+                  "type": "field",
+                  "block": false,
+                  "fieldview": "password",
+                  "textStyle": "",
+                  "field_name": "passwordRepeat",
+                  "configuration": {}
+                }
+              ],
+              "breakpoints": ["sm", "sm"]
+            },
+            { "type": "line_break" },
+            {
+              "type": "action",
+              "block": false,
+              "rndid": "d2d797",
+              "minRole": 10,
+              "isFormula": {},
+              "action_icon": "",
+              "action_name": "Sign up",
+              "action_size": "",
+              "action_label": "",
+              "action_style": "btn-primary",
+              "configuration": {}
+            }
+          ]
+        },
+        "columns": [
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "email",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "password",
+            "field_name": "password",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "password",
+            "field_name": "passwordRepeat",
+            "configuration": {}
+          },
+          {
+            "type": "Action",
+            "rndid": "d2d797",
+            "minRole": 10,
+            "isFormula": {},
+            "action_icon": "",
+            "action_name": "Sign up",
+            "action_size": "",
+            "action_label": "",
+            "action_style": "btn-primary",
+            "configuration": {}
+          }
+        ],
+        "viewname": "login",
+        "exttable_name": null,
+        "view_when_done": "signup"
+      },
+      "min_role": 10,
+      "table": "users",
+      "default_render_page": ""
+    },
+    {
+      "name": "userinfo",
+      "viewtemplate": "Edit",
+      "configuration": {
+        "fixed": {
+          "email": "",
+          "username": "",
+          "preset_email": "",
+          "preset_username": ""
+        },
+        "layout": {
+          "above": [
+            {
+              "widths": [2, 10],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "blank",
+                      "block": false,
+                      "contents": "age",
+                      "labelFor": "age",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "edit",
+                      "textStyle": "",
+                      "field_name": "age",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "type": "action",
+              "block": false,
+              "rndid": "103a76",
+              "minRole": 10,
+              "isFormula": {},
+              "action_icon": "",
+              "action_name": "Save",
+              "action_size": "",
+              "action_label": "",
+              "action_style": "btn-primary",
+              "configuration": {}
+            }
+          ]
+        },
+        "columns": [
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "age",
+            "configuration": {}
+          },
+          {
+            "type": "Action",
+            "rndid": "103a76",
+            "minRole": 10,
+            "isFormula": {},
+            "action_icon": "",
+            "action_name": "Save",
+            "action_size": "",
+            "action_label": "",
+            "action_style": "btn-primary",
+            "configuration": {}
+          }
+        ],
+        "viewname": "userinfo",
+        "exttable_name": null,
+        "view_when_done": "login"
+      },
+      "min_role": 10,
+      "table": "users",
+      "default_render_page": ""
+    },
+    {
+      "name": "userinfo_with_username",
+      "viewtemplate": "Edit",
+      "configuration": {
+        "fixed": {
+          "email": "",
+          "username": "",
+          "preset_email": "",
+          "preset_username": ""
+        },
+        "layout": {
+          "above": [
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "icon": "",
+                  "type": "blank",
+                  "block": false,
+                  "contents": "username",
+                  "labelFor": "",
+                  "isFormula": {},
+                  "textStyle": ""
+                },
+                {
+                  "type": "field",
+                  "block": false,
+                  "fieldview": "edit",
+                  "textStyle": "",
+                  "field_name": "username",
+                  "configuration": {}
+                }
+              ],
+              "breakpoints": ["sm", "sm"]
+            },
+            { "type": "line_break" },
+            {
+              "widths": [3, 9],
+              "besides": [
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "blank",
+                      "block": false,
+                      "contents": "age",
+                      "labelFor": "age",
+                      "isFormula": {},
+                      "textStyle": ""
+                    }
+                  ]
+                },
+                {
+                  "above": [
+                    null,
+                    {
+                      "type": "field",
+                      "block": false,
+                      "fieldview": "edit",
+                      "textStyle": "",
+                      "field_name": "age",
+                      "configuration": {}
+                    }
+                  ]
+                }
+              ],
+              "breakpoints": ["", ""]
+            },
+            { "type": "line_break" },
+            {
+              "type": "action",
+              "block": false,
+              "rndid": "103a76",
+              "minRole": 10,
+              "isFormula": {},
+              "action_icon": "",
+              "action_name": "Save",
+              "action_size": "",
+              "action_label": "",
+              "action_style": "btn-primary",
+              "configuration": {}
+            }
+          ]
+        },
+        "columns": [
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "username",
+            "configuration": {}
+          },
+          {
+            "type": "Field",
+            "fieldview": "edit",
+            "field_name": "age",
+            "configuration": {}
+          },
+          {
+            "type": "Action",
+            "rndid": "103a76",
+            "minRole": 10,
+            "isFormula": {},
+            "action_icon": "",
+            "action_name": "Save",
+            "action_size": "",
+            "action_label": "",
+            "action_style": "btn-primary",
+            "configuration": {}
+          }
+        ],
+        "viewname": "userinfo",
+        "exttable_name": null,
+        "view_when_done": "login"
+      },
+      "min_role": 10,
+      "table": "users",
+      "default_render_page": ""
+    }
+  ],
+  "plugins": [],
+  "pages": [
+    {
+      "name": "publicpage",
+      "title": "",
+      "description": "",
+      "min_role": 10,
+      "layout": {
+        "icon": "",
+        "type": "blank",
+        "block": false,
+        "contents": "Hello everyone",
+        "labelFor": "",
+        "isFormula": {},
+        "textStyle": ""
+      },
+      "fixed_states": {},
+      "root_page_for_roles": []
+    },
+    {
+      "name": "userpage",
+      "title": "",
+      "description": "",
+      "min_role": 8,
+      "layout": {
+        "icon": "",
+        "type": "blank",
+        "block": false,
+        "contents": "Hello users",
+        "labelFor": "",
+        "isFormula": {},
+        "textStyle": ""
+      },
+      "fixed_states": {},
+      "root_page_for_roles": []
+    }
+  ]
+}

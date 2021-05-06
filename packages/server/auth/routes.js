@@ -634,8 +634,11 @@ router.post(
       if (signup_form) {
         const userObject = {};
         signup_form.configuration.columns.forEach((col) => {
-          if (col.type === "Field")
-            userObject[col.field_name] = req.body[col.field_name];
+          if (col.type === "Field") {
+            if (col.field_name === "passwordRepeat")
+              userObject[col.field_name] = req.body[col.field_name] || "";
+            else userObject[col.field_name] = req.body[col.field_name];
+          }
         });
         const { email, password, passwordRepeat } = userObject;
         if (await unsuitableEmailPassword(email, password, passwordRepeat))
@@ -1033,13 +1036,16 @@ router.post(
       if (user_settings_form) {
         const view = await View.findOne({ name: user_settings_form });
         if (view) {
-          await view.runPost({ id: user.id }, req.body, { req, res, redirect: "/auth/settings" });
+          await view.runPost({ id: user.id }, req.body, {
+            req,
+            res,
+            redirect: "/auth/settings",
+          });
           req.flash("success", req.__("User settings changed"));
         }
       } else {
         res.redirect("/auth/settings");
       }
-
     }
   })
 );
