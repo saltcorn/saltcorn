@@ -107,3 +107,38 @@ class Test:
         self.sess.follow_redirect()
         assert '>Welcome' in self.sess.content
         self.cannot_access_admin()
+
+    def test_password_repeat(self):
+        self.sess.reset()
+        self.sess.get('/auth/signup')
+        assert "Sign up" in self.sess.content
+        assert ">username<" in self.sess.content
+        assert self.sess.status == 200
+        self.sess.postForm('/auth/signup', 
+            {'email': 'thebestuser9@mail.com', 
+            'password': 'ty435y5OPtyj', 
+            'passwordRepeat': 'ty435w5OPtyj', 
+            'username': 'berry', 
+            '_csrf': self.sess.csrf()
+            })
+        assert self.sess.redirect_url == '/auth/signup'
+        self.sess.follow_redirect()
+        assert 'Passwords do not match' in self.sess.content
+
+    def test_password_repeat_missing(self):
+        self.sess.reset()
+        self.sess.get('/auth/signup')
+        assert "Sign up" in self.sess.content
+        assert ">username<" in self.sess.content
+        assert self.sess.status == 200
+        self.sess.postForm('/auth/signup', 
+            {'email': 'thebestuser10@mail.com', 
+            'password': 'ty435y5OPtyj', 
+            'username': 'berr1y', 
+            '_csrf': self.sess.csrf()
+            })
+        print(self.sess.content)
+        assert self.sess.redirect_url == '/auth/signup'
+        self.sess.follow_redirect()
+        assert 'Passwords do not match' in self.sess.content
+        
