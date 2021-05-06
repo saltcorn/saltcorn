@@ -16,10 +16,30 @@ class Test:
         self.sess.close()
 
     def test_can_signup_custom(self):
-
         self.sess.reset()
         self.sess.get('/auth/signup')
-        print(self.sess.content)
         assert "Sign up" in self.sess.content
-        assert "username" in self.sess.content
+        assert ">username<" in self.sess.content
         assert self.sess.status == 200
+        self.sess.postForm('/auth/signup', 
+            {'email': 'thebestuser@mail.com', 
+            'password': 'ty435y5OPtyj', 
+            'passwordRepeat': 'ty435y5OPtyj', 
+            'username': 'foobar', 
+            '_csrf': self.sess.csrf()
+            })
+        assert '>age<' in self.sess.content
+        assert 'action="/auth/signup_final"' in self.sess.content #
+        self.sess.postForm('/auth/signup_final', 
+            {'age': '34', 
+            'email': 'thebestuser@mail.com', 
+            'password': 'ty435y5OPtyj', 
+            'passwordRepeat': 'ty435y5OPtyj', 
+            'username': 'foobar', 
+            '_csrf': self.sess.csrf()
+            })
+        assert self.sess.redirect_url == '/'
+        self.sess.follow_redirect()
+        print(self.sess.content)
+        assert '>Welcome' in self.sess.content
+        
