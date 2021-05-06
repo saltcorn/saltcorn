@@ -1,115 +1,119 @@
 from scsession import SaltcornSession
-
-SaltcornSession.reset_to_fixtures()
-sess = SaltcornSession(3001)
 email = "admin@foo.com"
 password="AhGGr6rhu45"
 
-# helpers
-def cannot_access_admin():
-    sess.get('/table')
-    assert sess.status == 302
-    assert "Your tables" not in sess.content
+class Test:
+    def setup_class(self):
+        SaltcornSession.reset_to_fixtures()
+        self.sess = SaltcornSession(3001)
 
-def is_incorrect_user_or_password():
-    assert sess.redirect_url == '/auth/login'
-    sess.follow_redirect()
-    assert "Incorrect user or password" in sess.content
+    def teardown_class(self):
+        self.sess.close()
+    # helpers
+    def cannot_access_admin(self):
+        self.sess.get('/table')
+        assert self.sess.status == 302
+        assert "Your tables" not in self.sess.content
+
+    def is_incorrect_user_or_password(self):
+        assert self.sess.redirect_url == '/auth/login'
+        self.sess.follow_redirect()
+        assert "Incorrect user or password" in self.sess.content
 
 
-def test_public_cannot_access_admin():
-    sess.reset()
-    cannot_access_admin()
+    def test_public_cannot_access_admin(self):
+        self.sess.reset()
+        self.cannot_access_admin()
 
-def test_can_login_as_admin():
-    sess.reset()
-    sess.get('/auth/login')
-    assert "Login" in sess.content
-    assert sess.status == 200
-    sess.postForm('/auth/login', 
-        {'email': email, 
-         'password': password, 
-         '_csrf': sess.csrf()
-        })
-    assert sess.redirect_url == '/'
-    sess.get('/table')
-    assert sess.status == 200
-    assert "Your tables" in sess.content
+    def test_can_login_as_admin(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        assert "Login" in self.sess.content
+        assert self.sess.status == 200
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': password, 
+            '_csrf': self.sess.csrf()
+            })
+        assert self.sess.redirect_url == '/'
+        self.sess.get('/table')
+        assert self.sess.status == 200
+        assert "Your tables" in self.sess.content
 
-def test_login_without_csrf():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', 
-        {'email': email, 
-         'password': password,          
-        })
-    assert sess.redirect_url == '/auth/login'
-    cannot_access_admin()
+    def test_login_without_csrf(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': password,          
+            })
+        assert self.sess.redirect_url == '/auth/login'
+        self.cannot_access_admin()
 
-def test_login_with_wrong_csrf():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', 
-        {'email': email, 
-         'password': password,   
-          '_csrf': 'ytjutydetjk'       
-        })
-    assert sess.redirect_url == '/auth/login'
-    cannot_access_admin()
+    def test_login_with_wrong_csrf(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': password,   
+            '_csrf': 'ytjutydetjk'       
+            })
+        assert self.sess.redirect_url == '/auth/login'
+        self.cannot_access_admin()
 
-def test_login_with_blank_csrf():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', 
-        {'email': email, 
-         'password': password,   
-          '_csrf': ''       
-        })
-    assert sess.redirect_url == '/auth/login'
-    cannot_access_admin()
+    def test_login_with_blank_csrf(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': password,   
+            '_csrf': ''       
+            })
+        assert self.sess.redirect_url == '/auth/login'
+        self.cannot_access_admin()
 
-def test_login_with_wrong_password():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', 
-        {'email': email, 
-         'password': 'fidelio', 
-         '_csrf': sess.csrf()     
-        })
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_wrong_password(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', 
+            {'email': email, 
+            'password': 'fidelio', 
+            '_csrf': self.sess.csrf()     
+            })
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()
 
-def test_login_with_no_password():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', {'email': email , '_csrf': sess.csrf()})
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_no_password(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', {'email': email , '_csrf': self.sess.csrf()})
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()
 
-def test_login_with_no_email():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', {'password': password, '_csrf': sess.csrf()})
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_no_email(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', {'password': password, '_csrf': self.sess.csrf()})
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()
 
-def test_login_with_blank_email():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', {'email':'', 'password': password, '_csrf': sess.csrf()})
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_blank_email(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', {'email':'', 'password': password, '_csrf': self.sess.csrf()})
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()
 
-def test_login_with_nothing():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', {'_csrf': sess.csrf()})
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_nothing(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', {'_csrf': self.sess.csrf()})
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()
 
-def test_login_with_blank_password():
-    sess.reset()
-    sess.get('/auth/login')
-    sess.postForm('/auth/login', {'email': email,'password': '', '_csrf': sess.csrf()})
-    is_incorrect_user_or_password()
-    cannot_access_admin()
+    def test_login_with_blank_password(self):
+        self.sess.reset()
+        self.sess.get('/auth/login')
+        self.sess.postForm('/auth/login', {'email': email,'password': '', '_csrf': self.sess.csrf()})
+        self.is_incorrect_user_or_password()
+        self.cannot_access_admin()

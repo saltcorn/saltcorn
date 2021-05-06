@@ -10,15 +10,19 @@ class SaltcornSession(Session):
     self.wait_for_port_open()
 
   def __del__(self):
-    self.salcorn_process.kill()
+    self.close()
 
   def csrf(self):
     m = re.findall('_sc_globalCsrf = "([^"]*)"', self.content)
     return m[0]
 
+  def close(self):
+    self.salcorn_process.kill()
+
   @staticmethod
   def reset_to_fixtures():
-    SaltcornSession.cli("fixtures", "-r")
+    SaltcornSession.cli("reset-schema", "-f")
+    SaltcornSession.cli("fixtures")
 
   @staticmethod
   def cli(*args):
