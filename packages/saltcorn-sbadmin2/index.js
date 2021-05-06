@@ -293,11 +293,11 @@ const wrap = ({
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-          <div class="container-fluid">
+          <div id="page-inner-content" class="container-fluid">
             <div id="alerts-area">
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
             </div>
-            <div id="page-inner-content">
+            <div >
               ${renderBody(title, body, role)}
             <div>
           </div>
@@ -305,5 +305,19 @@ const wrap = ({
       </div>
     </div>`
   );
+const exportRenderBody = ({ title, body, alerts, role }) =>
+  `<div id="alerts-area">
+    ${alerts.map((a) => alert(a.type, a.msg)).join("")}
+  </div>
+  <div >
+    ${renderBody(title, body, role)}
+  <div>`;
 
-module.exports = { sc_plugin_api_version: 1, layout: { wrap, authWrap } };
+module.exports = {
+  sc_plugin_api_version: 1,
+  layout: {
+    wrap,
+    authWrap,
+    renderBody: exportRenderBody,
+  },
+};
