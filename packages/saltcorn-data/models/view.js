@@ -7,12 +7,11 @@ const {
   numberToBool,
   stringToJSON,
   InvalidConfiguration,
-  satisfies
+  satisfies,
 } = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
-
 
 class View {
   constructor(o) {
@@ -41,7 +40,7 @@ class View {
     const { getState } = require("../db/state");
     return getState().views.find(
       where.id
-        ? (v) => v.id === where.id
+        ? (v) => v.id === +where.id
         : where.name
         ? (v) => v.name === where.name
         : satisfies(where)
