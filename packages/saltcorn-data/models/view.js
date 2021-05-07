@@ -12,6 +12,9 @@ const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 
+const satisfies = (where) => (obj) =>
+  Object.entries(where).every(([k, v]) => obj[k] === v);
+
 class View {
   constructor(o) {
     this.name = o.name;
@@ -35,10 +38,17 @@ class View {
     this.default_render_page = o.default_render_page;
     contract.class(this);
   }
-  static async findOne(where) {
-    const v = await db.selectMaybeOne("_sc_views", where);
-    return v ? new View(v) : v;
+  static findOne(where) {
+    const { getState } = require("../db/state");
+    return getState().views.find(
+      where.id
+        ? (v) => v.id === where.id
+        : where.name
+        ? (v) => v.name === where.name
+        : satisfies(where)
+    );
   }
+
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const views = await db.select("_sc_views", where, selectopts);
 
@@ -134,7 +144,7 @@ class View {
       delete v.is_public;
     }
     const id = await db.insert("_sc_views", v);
-    await require("../db/state").getState().refresh();
+    await require("../db/state").getState().refresh_views();
     return new View({ id, ...v });
   }
 
@@ -164,7 +174,7 @@ class View {
       );
     await db.deleteWhere("_sc_views", { id: this.id });
     await remove_from_menu({ name: this.name, type: "View" });
-    await require("../db/state").getState().refresh();
+    await require("../db/state").getState().refresh_views();
   }
   static async delete(where) {
     const vs = await View.find(where);
@@ -172,7 +182,7 @@ class View {
   }
   static async update(v, id) {
     await db.update("_sc_views", v, id);
-    await require("../db/state").getState().refresh();
+    await require("../db/state").getState().refresh_views();
   }
 
   async authorise_post(arg) {
@@ -381,7 +391,7 @@ View.contract = {
       [is.maybe(is.obj()), is.maybe(is.obj())],
       is.promise(is.array(is.class("View")))
     ),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("View")))),
+    findOne: is.fun(is.obj(), is.maybe(is.class("View"))),
     create: is.fun(
       is.obj({
         name: is.str,

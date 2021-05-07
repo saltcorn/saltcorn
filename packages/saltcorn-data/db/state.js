@@ -62,6 +62,9 @@ class State {
     this.views = await View.find();
     this.configs = await getAllConfigOrDefaults();
   }
+  async refresh_views() {
+    this.views = await View.find();
+  }
 
   getConfig(key, def) {
     const fixed = db.connectObj.fixed_configuration[key];
@@ -264,9 +267,9 @@ const restart_tenant = async (plugin_loader) => {
   await plugin_loader();
 };
 
-const process_init_time = new Date()
+const process_init_time = new Date();
 
-const get_process_init_time = () => process_init_time
+const get_process_init_time = () => process_init_time;
 
 module.exports = {
   getState,
@@ -276,5 +279,5 @@ module.exports = {
   restart_tenant,
   get_other_domain_tenant,
   set_tenant_base_url,
-  get_process_init_time
+  get_process_init_time,
 };
