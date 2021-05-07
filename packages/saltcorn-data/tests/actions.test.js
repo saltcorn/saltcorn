@@ -28,7 +28,7 @@ describe("Action", () => {
 
     const table = await Table.findOne({ name: "patients" });
 
-    await Trigger.create({
+    const trigger = await Trigger.create({
       action: "incrementCounter",
       table_id: table.id,
       when_trigger: "Insert",
@@ -36,6 +36,10 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(0);
     await table.insertRow({ name: "Don Fabrizio" });
     expect(getActionCounter()).toBe(1);
+    const trigger1 = await Trigger.findOne({ id: trigger.id });
+    expect(!!trigger1).toBe(true)
+    expect(trigger1.id).toBe(trigger.id)
+
   });
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);

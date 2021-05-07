@@ -52,7 +52,7 @@ class Trigger {
   static findOne(where) {
     const { getState } = require("../db/state");
     return getState().triggers.find(
-      where.id ? (v) => v.id === where.id : satisfies(where)
+      where.id ? (v) => v.id === +where.id : satisfies(where)
     );
   }
 
