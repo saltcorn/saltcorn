@@ -63,6 +63,17 @@ class InvalidConfiguration extends Error {
     this.severity = 3;
   }
 }
+
+const sat1 = (obj, [k, v]) =>
+  v.or
+    ? v.or.some((v1) => sat1(obj, [k, v1]))
+    : v.in
+    ? v.in.includes(obj[k])
+    : obj[k] === v;
+
+const satisfies = (where) => (obj) =>
+  Object.entries(where || {}).every((kv) => sat1(obj, kv));
+
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -75,4 +86,5 @@ module.exports = {
   structuredClone,
   InvalidAdminAction,
   InvalidConfiguration,
+  satisfies,
 };

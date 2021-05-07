@@ -7,13 +7,12 @@ const {
   numberToBool,
   stringToJSON,
   InvalidConfiguration,
+  satisfies
 } = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 
-const satisfies = (where) => (obj) =>
-  Object.entries(where).every(([k, v]) => obj[k] === v);
 
 class View {
   constructor(o) {
