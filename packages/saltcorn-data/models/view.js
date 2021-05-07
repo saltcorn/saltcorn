@@ -195,7 +195,7 @@ class View {
 
   async run_possibly_on_page(query, req, res) {
     const view = this;
-    if (view.default_render_page && !req.xhr) {
+    if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {

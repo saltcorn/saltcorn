@@ -223,6 +223,9 @@ function pjax_to(href) {
   if (!$("#page-inner-content").length) window.location.href = href;
   else
     $.ajax(href, {
+      headers: {
+        "pjaxpageload": "true",
+      },
       success: function (res, textStatus, request) {
         window.history.pushState(null, "", href);
         $("#page-inner-content").html(res);
