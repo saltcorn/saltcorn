@@ -44,5 +44,9 @@ describe("satisfies", () => {
     expect(satisfies({ x: { in: [5, 6] } })({ x: 5 })).toBe(true);
     expect(satisfies({ x: { in: [5, 6] } })({ x: 8 })).toBe(false);
     expect(satisfies({ x: { in: [5, 6] } })({ y: 8 })).toBe(false);
+
+    expect(satisfies({ x: 5, y: 7 })({ x: 5, y: 7 })).toBe(true);
+    expect(satisfies({ x: 5, y: 8 })({ x: 5, y: 7 })).toBe(false);
+    expect(satisfies({ x: 4, y: 8 })({ x: 5, y: 7 })).toBe(false);
   });
 });
