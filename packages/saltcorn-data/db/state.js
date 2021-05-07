@@ -13,7 +13,7 @@ const db = require(".");
 const { migrate } = require("../migrate");
 const Table = require("../models/table");
 const File = require("../models/file");
-const Field = require("../models/field");
+const Trigger = require("../models/trigger");
 const View = require("../models/view");
 const { getAllTenants, createTenant } = require("../models/tenant");
 const {
@@ -28,6 +28,7 @@ const { structuredClone } = require("../utils");
 class State {
   constructor() {
     this.views = [];
+    this.triggers = [];
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
@@ -59,11 +60,15 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
   async refresh() {
-    this.views = await View.find();
+    this.refresh_views()
+    this.refresh_triggers()
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
     this.views = await View.find();
+  }
+  async refresh_triggers() {
+    this.triggers = await Trigger.findDB();
   }
 
   getConfig(key, def) {

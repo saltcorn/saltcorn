@@ -1,5 +1,6 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
+const { satisfies } = require("../utils");
 
 class Trigger {
   constructor(o) {
@@ -29,7 +30,12 @@ class Trigger {
       configuration: this.configuration,
     };
   }
-  static async find(where, selectopts) {
+  static find(where) {
+    const { getState } = require("../db/state");
+    return getState().triggers.filter(satisfies(where));
+  }
+
+  static async findDB(where, selectopts) {
     const db_flds = await db.select("_sc_triggers", where, selectopts);
     return db_flds.map((dbf) => new Trigger(dbf));
   }
@@ -43,13 +49,16 @@ class Trigger {
     return rows.map((dbf) => new Trigger(dbf));
   }
 
-  static async findOne(where) {
-    const p = await db.selectMaybeOne("_sc_triggers", where);
-    return p ? new Trigger(p) : null;
+  static findOne(where) {
+    const { getState } = require("../db/state");
+    return getState().triggers.find(
+      where.id ? (v) => v.id === where.id : satisfies(where)
+    );
   }
 
   static async update(id, row) {
     await db.update("_sc_triggers", row, id);
+    await require("../db/state").getState().refresh_triggers();
   }
 
   static async create(f) {
@@ -57,10 +66,12 @@ class Trigger {
     const { id, table_name, ...rest } = trigger;
     const fid = await db.insert("_sc_triggers", rest);
     trigger.id = fid;
+    await require("../db/state").getState().refresh_triggers();
     return trigger;
   }
   async delete() {
     await db.deleteWhere("_sc_triggers", { id: this.id });
+    await require("../db/state").getState().refresh_triggers();
   }
 
   static async runTableTriggers(when_trigger, table, row) {
@@ -131,17 +142,13 @@ Trigger.contract = {
   static_methods: {
     find: is.fun(
       [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("Trigger")))
+      is.array(is.class("Trigger"))
     ),
     create: is.fun(is.obj(), is.promise(is.class("Trigger"))),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Trigger")))),
+    findOne: is.fun(is.obj(), is.maybe(is.class("Trigger"))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     runTableTriggers: is.fun(
-      [
-        is.one_of(Trigger.when_options),
-        is.class("Table"),
-        is.obj({}),
-      ],
+      [is.one_of(Trigger.when_options), is.class("Table"), is.obj({})],
       is.promise(is.undefined)
     ),
     getTableTriggers: is.fun(
