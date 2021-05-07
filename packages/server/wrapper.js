@@ -2,6 +2,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
+const renderLayout = require("@saltcorn/markup/layout");
 
 const getFlashes = (req) =>
   ["error", "success", "danger", "warning"]
@@ -196,7 +197,7 @@ module.exports = function (req, res, next) {
           headers: get_headers(req),
           csrfToken: req.csrfToken(),
           role,
-          req
+          req,
         })
       );
     } else {
@@ -227,21 +228,29 @@ module.exports = function (req, res, next) {
           body,
           headers: get_headers(req),
           role,
-          req
+          req,
         })
       );
     }
   };
   res.sendWrap = function (opts, ...html) {
     const title = typeof opts === "string" ? opts : opts.title;
-    if (req.xhr) {
-      res.set("Page-Title", title);
-      res.send(html.length === 1 ? html[0] : html.join(""));
-      return;
-    }
-
+    const alerts = getFlashes(req);
     const state = getState();
     const layout = state.getLayout(req.user);
+
+    if (req.xhr) {
+      const renderToHtml = layout.renderBody
+        ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
+        : defaultRenderToHtml;
+      res.set("Page-Title", title);
+      res.send(
+        html.length === 1
+          ? renderToHtml(html[0], role)
+          : html.map((h) => renderToHtml(h, role)).join("")
+      );
+      return;
+    }
     const currentUrl = req.originalUrl.split("?")[0];
 
     const pageHeaders = typeof opts === "string" ? [] : opts.headers;
@@ -251,13 +260,22 @@ module.exports = function (req, res, next) {
         brand: get_brand(state),
         menu: get_menu(req),
         currentUrl,
-        alerts: getFlashes(req),
+        alerts,
         body: html.length === 1 ? html[0] : html.join(""),
         headers: get_headers(req, opts.description, pageHeaders),
         role,
-        req
+        req,
       })
     );
   };
   next();
 };
+
+const defaultRenderToHtml = (s, role) =>
+  typeof s === "string"
+    ? s
+    : renderLayout({
+        blockDispatch: {},
+        role,
+        layout: s,
+      });

@@ -40,12 +40,11 @@ router.get(
       return;
     }
     const contents = await view.run_possibly_on_page(req.query, req, res);
-
     const title = scan_for_page_title(contents, view.name);
     res.sendWrap(
       title,
       add_edit_bar({
-        role: req.xhr ? 10 : role,
+        role,
         title: view.name,
         what: req.__("View"),
         url: `/viewedit/edit/${encodeURIComponent(view.name)}`,

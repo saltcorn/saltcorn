@@ -252,3 +252,6 @@ div[data-inline-edit-dest-url]:hover .editicon {
   text-decoration: underline;
 }
 
+#scmodal .admin-edit-bar {
+  display: none;
+}
