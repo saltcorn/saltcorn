@@ -48,7 +48,7 @@ const restore_backup = (csrf, inner) =>
 const add_edit_bar = ({ role, title, contents, what, url }) => {
   if (role > 1) return contents;
   const bar = div(
-    { class: "alert alert-light d-print-none" },
+    { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
     what && span({ class: "ml-1 badge badge-primary" }, what),
     a({ class: "ml-4", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" }))
