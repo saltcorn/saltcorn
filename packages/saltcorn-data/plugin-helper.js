@@ -79,8 +79,7 @@ const calcfldViewOptions = contract(
         if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
-        if (isEdit)
-          fvs[f.name] = Object.keys(getState().keyFieldviews);
+        if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
         else {
           if (f.reftable && f.reftable.fields) {
             const { field_view_options } = calcfldViewOptions(
@@ -631,17 +630,22 @@ const picked_fields_to_query = contract(
     var aggregations = {};
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
-        const kpath = column.join_field.split(".");
-        if (kpath.length === 2) {
-          const [refNm, targetNm] = kpath;
-          joinFields[`${refNm}_${targetNm}`] = { ref: refNm, target: targetNm };
-        } else {
-          const [refNm, through, targetNm] = kpath;
-          joinFields[`${refNm}_${through}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            through,
-          };
+        if (column.join_field && column.join_field.split) {
+          const kpath = column.join_field.split(".");
+          if (kpath.length === 2) {
+            const [refNm, targetNm] = kpath;
+            joinFields[`${refNm}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+            };
+          } else {
+            const [refNm, through, targetNm] = kpath;
+            joinFields[`${refNm}_${through}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through,
+            };
+          }
         }
       }
       if (column.type === "ViewLink") {
