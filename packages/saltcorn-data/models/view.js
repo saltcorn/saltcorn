@@ -8,6 +8,7 @@ const {
   stringToJSON,
   InvalidConfiguration,
   satisfies,
+  structuredClone,
 } = require("../utils");
 const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
@@ -38,13 +39,16 @@ class View {
   }
   static findOne(where) {
     const { getState } = require("../db/state");
-    return getState().views.find(
+    const v = getState().views.find(
       where.id
         ? (v) => v.id === +where.id
         : where.name
         ? (v) => v.name === where.name
         : satisfies(where)
     );
+    return v
+      ? new View({ ...v, configuration: structuredClone(v.configuration) })
+      : v;
   }
 
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {

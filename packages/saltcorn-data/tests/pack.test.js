@@ -39,7 +39,7 @@ describe("pack create", () => {
   });
   it("creates view pack", async () => {
     const vpack = await view_pack("authorlist");
-    expect(vpack).toStrictEqual({
+    expect(vpack).toEqual({
       configuration: {
         columns: [
           { field_name: "author", state_field: "on", type: "Field" },
