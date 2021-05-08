@@ -139,6 +139,8 @@ class Table {
     );
     const table = new Table({ ...tblrow, id });
     if (table.versioned) await table.create_history_table();
+    await require("../db/state").getState().refresh_tables();
+
     return table;
   }
   async delete() {
@@ -171,6 +173,8 @@ class Table {
       throw e;
     }
     if (!is_sqlite) client.release(true);
+    await require("../db/state").getState().refresh_tables();
+
   }
 
   get sql_name() {
@@ -385,6 +389,8 @@ class Table {
       throw e;
     }
     client.release(true);
+    await require("../db/state").getState().refresh_tables();
+
   }
   async update(new_table_rec) {
     //TODO RENAME TABLE
@@ -401,6 +407,8 @@ class Table {
       await new_table.drop_history_table();
     }
     Object.assign(this, new_table_rec);
+    await require("../db/state").getState().refresh_tables();
+
   }
 
   async get_history(id) {
@@ -484,6 +492,8 @@ class Table {
     }
 
     parse_res.table = table;
+    await require("../db/state").getState().refresh_tables();
+
     return parse_res;
   }
 

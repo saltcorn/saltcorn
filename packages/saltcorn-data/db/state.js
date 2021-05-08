@@ -60,8 +60,9 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
   async refresh() {
-    this.refresh_views()
-    this.refresh_triggers()
+    await this.refresh_views();
+    await this.refresh_triggers();
+    await this.refresh_tables();
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
@@ -69,6 +70,17 @@ class State {
   }
   async refresh_triggers() {
     this.triggers = await Trigger.findDB();
+  }
+  async refresh_tables() {
+    this.tables = await Table.find();
+    const allFields = await db.select(
+      "_sc_fields",
+      {},
+      { orderBy: "name", nocase: true }
+    );
+    for (const table of this.tables) {
+      table.fields = allFields.filter((f) => f.table_id === table.id);
+    }
   }
 
   getConfig(key, def) {
