@@ -60,8 +60,9 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
   async refresh() {
-    this.refresh_views()
-    this.refresh_triggers()
+    await this.refresh_views();
+    await this.refresh_triggers();
+    await this.refresh_tables();
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
@@ -69,6 +70,22 @@ class State {
   }
   async refresh_triggers() {
     this.triggers = await Trigger.findDB();
+  }
+  async refresh_tables() {
+    const allTables = await db.select(
+      "_sc_tables",
+      {},
+      { orderBy: "name", nocase: true }
+    );
+    const allFields = await db.select(
+      "_sc_fields",
+      {},
+      { orderBy: "name", nocase: true }
+    );
+    for (const table of allTables) {
+      table.fields = allFields.filter((f) => f.table_id === table.id);
+    }
+    this.tables = allTables;
   }
 
   getConfig(key, def) {
@@ -212,13 +229,16 @@ State.contract = {
 
 const singleton = new State();
 
-const getState = contract(is.fun([], is.class("State")), () => {
-  if (!db.is_it_multi_tenant()) return singleton;
+const getState = contract(
+  is.fun([], is.or(is.class("State"), is.eq(undefined))),
+  () => {
+    if (!db.is_it_multi_tenant()) return singleton;
 
-  const ten = db.getTenantSchema();
-  if (ten === db.connectObj.default_schema) return singleton;
-  else return tenants[ten];
-});
+    const ten = db.getTenantSchema();
+    if (ten === db.connectObj.default_schema) return singleton;
+    else return tenants[ten];
+  }
+);
 
 var tenants = {};
 

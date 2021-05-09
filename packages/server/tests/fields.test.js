@@ -257,7 +257,9 @@ describe("Field Endpoints", () => {
       .send("contextEnc=" + ctx1)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
-    const row = await table.getRow({ id: 1 });
+    const table1 = await Table.findOne({ name: "books" });
+
+    const row = await table1.getRow({ id: 1 });
     expect(row.pagesplus10).toBe(977);
   });
   it("should post new calculated string field", async () => {
