@@ -12,7 +12,12 @@ const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
 const fs = require("fs").promises;
-const { InvalidConfiguration, InvalidAdminAction } = require("../utils");
+const {
+  InvalidConfiguration,
+  InvalidAdminAction,
+  satisfies,
+  structuredClone,
+} = require("../utils");
 
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -57,6 +62,7 @@ class Table {
     this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
     this.external = false;
+    if (o.fields) this.fields = o.fields.map((f) => new Field(f));
     contract.class(this);
   }
 
@@ -74,9 +80,17 @@ class Table {
       const extTable = getState().external_tables[where.name];
       if (extTable) return extTable;
     }
-    const tbl = await db.selectMaybeOne("_sc_tables", where);
-    return tbl ? new Table(tbl) : tbl;
+    const { getState } = require("../db/state");
+    const tbl = getState().tables.find(
+      where.id
+        ? (v) => v.id === +where.id
+        : where.name
+        ? (v) => v.name === where.name
+        : satisfies(where)
+    );
+    return tbl ? new Table(structuredClone(tbl)) : tbl;
   }
+
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const tbls = await db.select("_sc_tables", where, selectopts);
 
@@ -174,7 +188,6 @@ class Table {
     }
     if (!is_sqlite) client.release(true);
     await require("../db/state").getState().refresh_tables();
-
   }
 
   get sql_name() {
@@ -390,7 +403,6 @@ class Table {
     }
     client.release(true);
     await require("../db/state").getState().refresh_tables();
-
   }
   async update(new_table_rec) {
     //TODO RENAME TABLE
@@ -408,7 +420,6 @@ class Table {
     }
     Object.assign(this, new_table_rec);
     await require("../db/state").getState().refresh_tables();
-
   }
 
   async get_history(id) {
