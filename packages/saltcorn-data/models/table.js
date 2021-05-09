@@ -88,7 +88,7 @@ class Table {
         ? (v) => v.name === where.name
         : satisfies(where)
     );
-    return tbl ? new Table(structuredClone(tbl)) : tbl;
+    return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
