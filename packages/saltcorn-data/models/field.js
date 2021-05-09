@@ -272,6 +272,7 @@ class Field {
         not_null ? "set" : "drop"
       } not null;`
     );
+    await require("../db/state").getState().refresh_tables();
   }
 
   async alter_sql_type(new_field) {
@@ -308,6 +309,7 @@ class Field {
           this.name
         )}" TYPE ${new_sql_type} ${using} ${def};`
       );
+    await require("../db/state").getState().refresh_tables();
   }
 
   async fill_table() {
@@ -348,6 +350,7 @@ class Field {
     Object.entries(v).forEach(([k, v]) => {
       this[k] = v;
     });
+    await require("../db/state").getState().refresh_tables();
   }
   get listKey() {
     return this.type.listAs
@@ -391,6 +394,7 @@ class Field {
         );
       }
     }
+    await require("../db/state").getState().refresh_tables();
   }
 
   async enable_fkey_constraint(table) {
@@ -498,6 +502,7 @@ class Field {
         recalculate_for_stored(table); //not waiting as there could be a lot of data
       }
     }
+    await require("../db/state").getState().refresh_tables();
     return f;
   }
 }
