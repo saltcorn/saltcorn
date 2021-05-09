@@ -72,7 +72,7 @@ class State {
     this.triggers = await Trigger.findDB();
   }
   async refresh_tables() {
-    this.tables = await db.select(
+    const allTables = await db.select(
       "_sc_tables",
       {},
       { orderBy: "name", nocase: true }
@@ -82,9 +82,10 @@ class State {
       {},
       { orderBy: "name", nocase: true }
     );
-    for (const table of this.tables) {
+    for (const table of allTables) {
       table.fields = allFields.filter((f) => f.table_id === table.id);
     }
+    this.tables = allTables;
   }
 
   getConfig(key, def) {
