@@ -128,7 +128,8 @@ const reset = async (dontDrop = false, schema0) => {
   `);
 
   await migrate(schema);
-  await require("./state").getState().refresh();
+  const st = require("./state").getState();
+  if (st) await st.refresh();
 };
 
 module.exports = reset;
