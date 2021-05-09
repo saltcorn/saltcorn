@@ -409,7 +409,7 @@ class Table {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
-    const { external, ...upd_rec } = new_table_rec;
+    const { external, fields, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     const new_table = await Table.findOne({ id: this.id });
 
