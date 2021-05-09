@@ -485,6 +485,8 @@ class Field {
       expression: f.expression,
       stored: f.stored,
     });
+    await require("../db/state").getState().refresh_tables();
+
 
     if (table.versioned && !f.calculated) {
       await db.query(
@@ -499,10 +501,11 @@ class Field {
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
-        recalculate_for_stored(table); //not waiting as there could be a lot of data
+        const table1 = await Table.findOne({ id: f.table_id });
+
+        recalculate_for_stored(table1); //not waiting as there could be a lot of data
       }
     }
-    await require("../db/state").getState().refresh_tables();
     return f;
   }
 }
