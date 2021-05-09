@@ -411,6 +411,8 @@ class Table {
     const existing = await Table.findOne({ id: this.id });
     const { external, fields, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
+    await require("../db/state").getState().refresh_tables();
+
     const new_table = await Table.findOne({ id: this.id });
 
     if (new_table.versioned && !existing.versioned) {
@@ -419,7 +421,6 @@ class Table {
       await new_table.drop_history_table();
     }
     Object.assign(this, new_table_rec);
-    await require("../db/state").getState().refresh_tables();
   }
 
   async get_history(id) {
