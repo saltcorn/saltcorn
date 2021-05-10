@@ -14,7 +14,7 @@ const {
 } = require("./contracts");
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
-const { applyAsync } = require("./utils");
+const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToSQL } = require("./models/expression");
 
 const link_view = (
@@ -646,9 +646,12 @@ const picked_fields_to_query = contract(
               through,
             };
           }
+        } else {
+          throw new InvalidConfiguration(
+            `Join field is specified as column but no join field is chosen`
+          );
         }
-      }
-      if (column.type === "ViewLink") {
+      } else if (column.type === "ViewLink") {
         if (column.view && column.view.split) {
           const [vtype, vrest] = column.view.split(":");
           if (vtype === "ParentShow") {
