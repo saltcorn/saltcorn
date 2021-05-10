@@ -65,9 +65,9 @@ class InvalidConfiguration extends Error {
 }
 
 const sat1 = (obj, [k, v]) =>
-  v.or
+  v && v.or
     ? v.or.some((v1) => sat1(obj, [k, v1]))
-    : v.in
+    : v && v.in
     ? v.in.includes(obj[k])
     : obj[k] === v;
 
