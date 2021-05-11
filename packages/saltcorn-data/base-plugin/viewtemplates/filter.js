@@ -224,9 +224,9 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           onClick:
             active || use_value === undefined
               ? `unset_state_field('${field_name}')`
-              : `set_state_field('${field_name}', encodeURIComponent('${
+              : `set_state_field('${field_name}', '${
                   use_value || ""
-                }'))`,
+                }')`,
         },
         label || value || preset_value
       );
