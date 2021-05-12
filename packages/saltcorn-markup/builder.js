@@ -24,18 +24,23 @@ const addCsrf = (rec, csrf) => {
 const encode = (x) => encodeURIComponent(JSON.stringify(x));
 
 module.exports = (
-  { options, context, action, stepName, layout, mode = "show" },
+  { options, context, action, stepName, layout, mode = "show", version_tag },
   csrfToken
 ) =>
   div(
-    script({ src: "/builder_bundle.js" }),
+    script({
+      src: version_tag
+        ? `/static_assets/${version_tag}/builder_bundle.js`
+        : "/builder_bundle.js",
+    }),
     link({
       rel: "stylesheet",
       type: "text/css",
       media: "screen",
-      href:
-        "/fonticonpicker.react.css",
-    }),    
+      href: version_tag
+        ? `/static_assets/${version_tag}/fonticonpicker.react.css`
+        : "/fonticonpicker.react.css",
+    }),
     div({ id: "saltcorn-builder" }),
     form(
       { action, method: "post", id: "scbuildform" },
