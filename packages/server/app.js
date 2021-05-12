@@ -18,7 +18,12 @@ const {
   getConfig,
   available_languages,
 } = require("@saltcorn/data/models/config");
-const { setTenant, get_base_url, error_catcher } = require("./routes/utils.js");
+const {
+  setTenant,
+  get_base_url,
+  error_catcher,
+  getGitRevision,
+} = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
@@ -115,6 +120,10 @@ const getApp = async (opts = {}) => {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());
+
+  //static serving
+
+  //legacy
   app.use(
     express.static(__dirname + "/public", {
       maxAge: development_mode ? 0 : 1000 * 60 * 15,
@@ -125,6 +134,27 @@ const getApp = async (opts = {}) => {
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
         maxAge: development_mode ? 0 : 1000 * 60 * 30,
+      }
+    )
+  );
+
+  let version_tag = getGitRevision();
+  if (!version_tag) {
+    version_tag = require("./package.json").version;
+  }
+
+  app.use(
+    `/static_assets/${version_tag}`,
+    express.static(__dirname + "/public", {
+      maxAge: development_mode ? 0 : "1y",
+    })
+  );
+  app.use(
+    `/static_assets/${version_tag}`,
+    express.static(
+      path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
+      {
+        maxAge: development_mode ? 0 : "1y",
       }
     )
   );
@@ -187,7 +217,7 @@ const getApp = async (opts = {}) => {
     done(null, user);
   });
 
-  app.use(wrapper);
+  app.use(wrapper(version_tag));
   const csurf = csrf();
   if (!opts.disableCsrf)
     app.use(function (req, res, next) {
