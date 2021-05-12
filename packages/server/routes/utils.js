@@ -98,17 +98,7 @@ const scan_for_page_title = (contents, viewname) => {
   return viewname;
 };
 
-const getGitRevision = () => {
-  let revision = null;
-  let options = { stdio: "pipe", cwd: __dirname };
-  try {
-    revision = require("child_process")
-      .execSync("git rev-parse HEAD", options)
-      .toString()
-      .trim();
-  } catch (error) {}
-  return revision;
-};
+const getGitRevision = () => db.connectObj.git_commit;
 
 module.exports = {
   sqlsanitize,

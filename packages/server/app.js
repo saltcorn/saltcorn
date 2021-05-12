@@ -22,7 +22,6 @@ const {
   setTenant,
   get_base_url,
   error_catcher,
-  getGitRevision,
 } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -138,10 +137,7 @@ const getApp = async (opts = {}) => {
     )
   );
 
-  let version_tag = getGitRevision();
-  if (!version_tag) {
-    version_tag = require("./package.json").version;
-  }
+  let version_tag = db.connectObj.version_tag;
 
   app.use(
     `/static_assets/${version_tag}`,
