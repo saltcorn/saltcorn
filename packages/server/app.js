@@ -142,7 +142,7 @@ const getApp = async (opts = {}) => {
   app.use(
     `/static_assets/${version_tag}`,
     express.static(__dirname + "/public", {
-      maxAge: development_mode ? 0 : "1y",
+      maxAge: development_mode ? 0 : "30d",
     })
   );
   app.use(
@@ -150,7 +150,7 @@ const getApp = async (opts = {}) => {
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: development_mode ? 0 : "1y",
+        maxAge: development_mode ? 0 : "30d",
       }
     )
   );
