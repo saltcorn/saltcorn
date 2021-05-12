@@ -97,6 +97,19 @@ const scan_for_page_title = (contents, viewname) => {
 
   return viewname;
 };
+
+const getGitRevision = () => {
+  let revision = null;
+  let options = { stdio: "pipe", cwd: __dirname };
+  try {
+    revision = require("child_process")
+      .execSync("git rev-parse HEAD", options)
+      .toString()
+      .trim();
+  } catch (error) {}
+  return revision;
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -106,4 +119,5 @@ module.exports = {
   get_base_url,
   error_catcher,
   scan_for_page_title,
+  getGitRevision,
 };
