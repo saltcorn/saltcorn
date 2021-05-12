@@ -175,7 +175,7 @@ router.get(
               "sha512-Nc36QpQAS2BOjt0g/CqfIi54O6+UWTI3fmqJsnXoU6rNYRq8vIQQkZmkrRnnk4xKgMC3ESWp69ilLpDm6Zu8wQ==",
           },
           {
-            script: "/gridedit.js",
+            script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
           },
           {
             css:
