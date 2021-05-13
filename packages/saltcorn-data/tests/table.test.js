@@ -152,7 +152,7 @@ describe("Table get data", () => {
     });
     expect(nrows).toStrictEqual(1);
   });
- 
+
   it("should get joined rows with limit and order", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const all = await patients.getJoinedRows({
@@ -310,31 +310,31 @@ describe("Table get data", () => {
     });
     const table1 = await Table.create("refsunsure");
     await Field.create({
-      table:table1,
+      table: table1,
       label: "also_tall",
       type: "Bool",
       required: true,
     });
     await Field.create({
-      table:table1,
+      table: table1,
       label: "theref",
       type: "Key to notsurename",
       required: true,
     });
-    const id = await table.insertRow({tall:false})
-    await table1.insertRow({also_tall:true, theref:id})
-    const joinFields= {reftall: { ref: 'theref', target: 'tall' }}
-    const rows = await table1.getJoinedRows({joinFields})
-    expect(rows[0].theref).toBe(id)
-    expect(!!rows[0].reftall).toBe(false) //for sqlite
+    const id = await table.insertRow({ tall: false });
+    await table1.insertRow({ also_tall: true, theref: id });
+    const joinFields = { reftall: { ref: "theref", target: "tall" } };
+    const rows = await table1.getJoinedRows({ joinFields });
+    expect(rows[0].theref).toBe(id);
+    expect(!!rows[0].reftall).toBe(false); //for sqlite
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
       const table3 = await Table.findOne({ name: "refsunsure" });
-      const rows1 = await table3.getJoinedRows({joinFields})
-      expect(rows1[0].theref).toBe(id)
-      expect(rows1[0].reftall).toBe(false)
+      const rows1 = await table3.getJoinedRows({ joinFields });
+      expect(rows1[0].theref).toBe(id);
+      expect(rows1[0].reftall).toBe(false);
       const table2 = await Table.findOne({ name: "isthisbetter" });
-      expect(!!table2).toBe(true)
+      expect(!!table2).toBe(true);
       table2.versioned = true;
       await table2.update(table2);
       await table2.rename("thisisthebestname");
@@ -367,6 +367,24 @@ describe("relations", () => {
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual(["patients.favbook"]);
     expect(rels.child_relations.length).toBe(1);
+  });
+  it("get grandparent relations", async () => {
+    const table = await Table.findOne({ name: "readings" });
+    const rels = await table.get_parent_relations(true);
+    expect(rels.parent_field_list).toEqual([
+      "patient_id.favbook",
+      "patient_id.favbook.author",
+      "patient_id.favbook.id",
+      "patient_id.favbook.pages",
+      "patient_id.id",
+      "patient_id.name",
+      "patient_id.parent",
+      "patient_id.parent.favbook",
+      "patient_id.parent.id",
+      "patient_id.parent.name",
+      "patient_id.parent.parent",
+    ]);
+    expect(rels.parent_relations.length).toBe(3);
   });
 });
 
@@ -847,8 +865,8 @@ describe("Table with row ownership", () => {
       const row = await persons.getRow({ age: 12 });
       expect(row.lastname).toBe("Joe");
       expect(row.age).toBe(12);
-      const owner_fnm=await persons.owner_fieldname()
-      expect(owner_fnm).toBe("owner")
+      const owner_fnm = await persons.owner_fieldname();
+      expect(owner_fnm).toBe("owner");
       const is_owner = await persons.is_owner({ id: 6 }, row);
       expect(is_owner).toBe(false);
       const row1 = await persons.getRow({ age: 13 });
