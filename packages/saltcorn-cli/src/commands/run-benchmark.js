@@ -6,7 +6,8 @@ const wrkCB = require("wrk");
 const { sleep } = require("../common");
 const packagejson = require("../../package.json");
 
-const parseMillisecs = s=> s.endsWith('ms') ? parseFloat(s) : parseFloat(s)*1000
+const parseMillisecs = (s) =>
+  s.endsWith("ms") ? parseFloat(s) : parseFloat(s) * 1000;
 
 const wrk = (args) =>
   new Promise(function (resolve, reject) {
@@ -27,12 +28,14 @@ class RunBenchmarkCommand extends Command {
   async run() {
     const {
       args: { baseurl },
-      flags: { token, delay },
+      flags: { token, delay, benchmark },
     } = this.parse(RunBenchmarkCommand);
     const File = require("@saltcorn/data/models/file");
     const file = await File.findOne({ filename: "rick.png" });
     if (!file) {
-      console.error("File not found. Run 'saltcorn reset-schema' then 'saltcorn setup-benchmark'");
+      console.error(
+        "File not found. Run 'saltcorn reset-schema' then 'saltcorn setup-benchmark'"
+      );
       process.exit(1);
     }
     const getURL = (pth) =>
@@ -58,7 +61,8 @@ class RunBenchmarkCommand extends Command {
       simple_page: "/page/simplepage",
       complex_page: "/page/homepage",
     };
-    for (const [what, url] of Object.entries(benches)) {
+
+    const run_bench = async (what, url) => {
       process.stdout.write(`${what}:\t`);
       const result = await bench(url);
       const reqs = `${Math.round(result.requestsPerSec)}`.padStart(7, " ");
@@ -84,8 +88,22 @@ class RunBenchmarkCommand extends Command {
           }),
         });
       }
-      if (what !== "complex_page") await sleep(sleep_dur);
-    }
+    };
+    if (benchmark) {
+      if (benches[benchmark]) await run_bench(benchmark, benches[benchmark]);
+      else {
+        console.error(
+          `Benchmark "${benchmark}" not found. Valid benchmarks: ${Object.keys(
+            benches
+          ).join(", ")}`
+        );
+        process.exit(1);
+      }
+    } else
+      for (const [what, url] of Object.entries(benches)) {
+        await run_bench(what, url);
+        if (what !== "complex_page") await sleep(sleep_dur);
+      }
     process.exit(0);
   }
 }
@@ -100,6 +118,10 @@ RunBenchmarkCommand.flags = {
   token: flags.string({
     char: "t",
     description: "API Token for reporting results",
+  }),
+  benchmark: flags.string({
+    char: "b",
+    description: "Which benchmark to run",
   }),
   delay: flags.integer({
     char: "d",
