@@ -9,6 +9,7 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
+const db = require("@saltcorn/data/db");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
@@ -88,7 +89,7 @@ const menuForm = async (req) => {
         label: req.__("Views"),
         type: "String",
         class: "item-menu",
-        required: true, 
+        required: true,
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
       },
@@ -106,7 +107,10 @@ const menuForm = async (req) => {
             { name: "btn btn-secondary", label: "Secondary button" },
             { name: "btn btn-success", label: "Success button" },
             { name: "btn btn-danger", label: "Danger button" },
-            { name: "btn btn-outline-primary", label: "Primary outline button" },
+            {
+              name: "btn btn-outline-primary",
+              label: "Primary outline button",
+            },
             {
               name: "btn btn-outline-secondary",
               label: "Secondary outline button",
@@ -182,23 +186,23 @@ router.get(
     const form = await menuForm(req);
     const state = getState();
     const menu_items = menuTojQME(state.getConfig("menu_items"));
-
+    const static_pre = `/static_assets/${db.connectObj.version_tag}`;
     send_infoarch_page({
       res,
       req,
       active_sub: "Menu",
       headers: [
         {
-          script: "/jquery-menu-editor.min.js",
+          script: static_pre + "/jquery-menu-editor.min.js",
         },
         {
-          script: "/iconset-fontawesome5-3-1.min.js",
+          script: static_pre + "/iconset-fontawesome5-3-1.min.js",
         },
         {
-          script: "/bootstrap-iconpicker.min.js",
+          script: static_pre + "/bootstrap-iconpicker.min.js",
         },
         {
-          css: "/bootstrap-iconpicker.min.css",
+          css: static_pre + "/bootstrap-iconpicker.min.css",
         },
       ],
       contents: {

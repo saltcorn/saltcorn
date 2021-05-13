@@ -1,6 +1,11 @@
 const Router = require("express-promise-router");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const {
+  setTenant,
+  isAdmin,
+  error_catcher,
+  getGitRevision,
+} = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
@@ -268,8 +273,10 @@ router.get(
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const is_latest = packagejson.version === latest;
-    const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE;
+    const git_commit = getGitRevision();
+    const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
+
 
     send_admin_page({
       res,
@@ -334,6 +341,20 @@ router.get(
                           : "")
                     )
                   ),
+                  git_commit &&
+                    tr(
+                      th("git commit"),
+                      td(
+                        a(
+                          {
+                            href:
+                              "https://github.com/saltcorn/saltcorn/commit/" +
+                              git_commit,
+                          },
+                          git_commit.substring(0, 6)
+                        )
+                      )
+                    ),
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database")),

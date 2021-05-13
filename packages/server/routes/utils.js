@@ -97,6 +97,9 @@ const scan_for_page_title = (contents, viewname) => {
 
   return viewname;
 };
+
+const getGitRevision = () => db.connectObj.git_commit;
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -106,4 +109,5 @@ module.exports = {
   get_base_url,
   error_catcher,
   scan_for_page_title,
+  getGitRevision,
 };

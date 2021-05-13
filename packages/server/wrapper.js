@@ -130,7 +130,7 @@ const get_menu = (req) => {
   return menu;
 };
 
-const get_headers = (req, description, extras = []) => {
+const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
 
@@ -152,8 +152,8 @@ const get_headers = (req, description, extras = []) => {
     {
       headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"</script>`,
     },
-    { css: "/saltcorn.css" },
-    { script: "/saltcorn.js" },
+    { css: `/static_assets/${version_tag}/saltcorn.css` },
+    { script: `/static_assets/${version_tag}/saltcorn.js` },
   ];
   let from_cfg = [];
   if (state.getConfig("page_custom_css", ""))
@@ -177,99 +177,100 @@ const get_brand = (state) => {
     logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined,
   };
 };
-module.exports = function (req, res, next) {
-  const role = (req.user || {}).role_id || 10;
+module.exports = (version_tag) =>
+  function (req, res, next) {
+    const role = (req.user || {}).role_id || 10;
 
-  res.sendAuthWrap = function (title, form, authLinks, ...html) {
-    const state = getState();
+    res.sendAuthWrap = function (title, form, authLinks, ...html) {
+      const state = getState();
 
-    const layout = state.getLayout(req.user);
-    if (layout.authWrap) {
-      res.send(
-        layout.authWrap({
-          title,
-          form,
-          authLinks,
-          afterForm: html.length === 1 ? html[0] : html.join(""),
-          brand: get_brand(state),
-          menu: get_menu(req),
-          alerts: getFlashes(req),
-          headers: get_headers(req),
-          csrfToken: req.csrfToken(),
-          role,
-          req,
-        })
-      );
-    } else {
-      var links = [];
-      if (authLinks.login)
-        links.push(
-          link(authLinks.login, req.__("Already have an account? Login"))
+      const layout = state.getLayout(req.user);
+      if (layout.authWrap) {
+        res.send(
+          layout.authWrap({
+            title,
+            form,
+            authLinks,
+            afterForm: html.length === 1 ? html[0] : html.join(""),
+            brand: get_brand(state),
+            menu: get_menu(req),
+            alerts: getFlashes(req),
+            headers: get_headers(req, version_tag),
+            csrfToken: req.csrfToken(),
+            role,
+            req,
+          })
         );
-      if (authLinks.forgot)
-        links.push(link(authLinks.forgot, req.__("Forgot password?")));
-      if (authLinks.signup)
-        links.push(link(authLinks.signup, req.__("Create an account")));
-      const body = div(
-        h3(title),
-        renderForm(form, req.csrfToken()),
-        links.join(" | "),
-        ...html
-      );
+      } else {
+        var links = [];
+        if (authLinks.login)
+          links.push(
+            link(authLinks.login, req.__("Already have an account? Login"))
+          );
+        if (authLinks.forgot)
+          links.push(link(authLinks.forgot, req.__("Forgot password?")));
+        if (authLinks.signup)
+          links.push(link(authLinks.signup, req.__("Create an account")));
+        const body = div(
+          h3(title),
+          renderForm(form, req.csrfToken()),
+          links.join(" | "),
+          ...html
+        );
+        const currentUrl = req.originalUrl.split("?")[0];
+
+        res.send(
+          layout.wrap({
+            title,
+            brand: get_brand(state),
+            menu: get_menu(req),
+            currentUrl,
+            alerts: getFlashes(req),
+            body,
+            headers: get_headers(req, version_tag),
+            role,
+            req,
+          })
+        );
+      }
+    };
+    res.sendWrap = function (opts, ...html) {
+      const title = typeof opts === "string" ? opts : opts.title;
+      const alerts = getFlashes(req);
+      const state = getState();
+      const layout = state.getLayout(req.user);
+
+      if (req.xhr) {
+        const renderToHtml = layout.renderBody
+          ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
+          : defaultRenderToHtml;
+        res.set("Page-Title", title);
+        res.send(
+          html.length === 1
+            ? renderToHtml(html[0], role)
+            : html.map((h) => renderToHtml(h, role)).join("")
+        );
+        return;
+      }
       const currentUrl = req.originalUrl.split("?")[0];
 
+      const pageHeaders = typeof opts === "string" ? [] : opts.headers;
       res.send(
         layout.wrap({
           title,
           brand: get_brand(state),
           menu: get_menu(req),
           currentUrl,
-          alerts: getFlashes(req),
-          body,
-          headers: get_headers(req),
+          alerts,
+          body: html.length === 1 ? html[0] : html.join(""),
+          headers: get_headers(req, version_tag, opts.description, pageHeaders),
           role,
           req,
         })
       );
-    }
+    };
+    next();
   };
-  res.sendWrap = function (opts, ...html) {
-    const title = typeof opts === "string" ? opts : opts.title;
-    const alerts = getFlashes(req);
-    const state = getState();
-    const layout = state.getLayout(req.user);
-
-    if (req.xhr) {
-      const renderToHtml = layout.renderBody
-        ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
-        : defaultRenderToHtml;
-      res.set("Page-Title", title);
-      res.send(
-        html.length === 1
-          ? renderToHtml(html[0], role)
-          : html.map((h) => renderToHtml(h, role)).join("")
-      );
-      return;
-    }
-    const currentUrl = req.originalUrl.split("?")[0];
-
-    const pageHeaders = typeof opts === "string" ? [] : opts.headers;
-    res.send(
-      layout.wrap({
-        title,
-        brand: get_brand(state),
-        menu: get_menu(req),
-        currentUrl,
-        alerts,
-        body: html.length === 1 ? html[0] : html.join(""),
-        headers: get_headers(req, opts.description, pageHeaders),
-        role,
-        req,
-      })
-    );
-  };
-  next();
-};
 
 const defaultRenderToHtml = (s, role) =>
   typeof s === "string"

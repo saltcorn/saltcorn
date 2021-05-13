@@ -7,8 +7,24 @@ const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
 const defaultDataPath = pathsWithApp.data;
 const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
+
+const getGitRevision = () => {
+  let revision = null;
+  let options = { stdio: "pipe", cwd: __dirname };
+  try {
+    revision = require("child_process")
+      .execSync("git rev-parse HEAD", options)
+      .toString()
+      .trim();
+  } catch (error) {}
+  return revision;
+};
+
 const getConnectObject = (connSpec = {}) => {
-  var connObj = {};
+  const git_commit = getGitRevision();
+  const sc_version = require("../package.json").version;
+  const version_tag = git_commit || sc_version;
+  var connObj = { version_tag, git_commit, sc_version };
   const fileCfg = getConfigFile() || {};
 
   function setKey(k, envnm, opts = {}) {

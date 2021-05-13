@@ -131,6 +131,7 @@ class Workflow {
           action: this.action,
           stepName: step.name,
           mode: options.mode,
+          version_tag: db.connectObj.version_tag
         },
         context,
         stepName: step.name,
