@@ -51,16 +51,10 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
           maintainerEmail: admin_users[0].email,
           cluster: false,
         })
-        .ready((s) => {
+        .serve(app, (s)=>{
           console.log("greenlock all", s);
-          s.withServers((o) =>
-            setTimeout(() => {
-              console.log("serv", o);
-              o._httpsServer && o._httpsServer.setTimeout(240 * 1000);
-            }, 1000)
-          );
-        })
-        .serve(app);
+          secureServer.setTimeout(240 * 1000);
+        });
     else nonGreenlockServer();
   } else nonGreenlockServer();
 };
