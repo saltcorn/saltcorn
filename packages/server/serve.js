@@ -51,6 +51,7 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
           maintainerEmail: admin_users[0].email,
           cluster: false,
         })
+        .ready(s=>console.log("greenlock ready", s))
         .serve(app);
     else nonGreenlockServer();
   } else nonGreenlockServer();
