@@ -235,21 +235,28 @@ router.get(
         {
           type: "card",
           title: req.__(`Create table from CSV file`),
-          contents: renderForm(
-            new Form({
-              action: "/table/create-from-csv",
-              submitLabel: req.__("Create"),
-              fields: [
-                {
-                  label: req.__("Table name"),
-                  name: "name",
-                  input_type: "text",
-                },
-                { label: req.__("File"), name: "file", input_type: "file" },
-              ],
-            }),
-            req.csrfToken()
-          ),
+          contents:
+            renderForm(
+              new Form({
+                action: "/table/create-from-csv",
+                class: "create-from-csv",
+                submitLabel: req.__("Create"),
+                fields: [
+                  {
+                    label: req.__("Table name"),
+                    name: "name",
+                    input_type: "text",
+                  },
+                  { label: req.__("File"), name: "file", input_type: "file" },
+                ],
+              }),
+              req.csrfToken()
+            ) +
+            script(
+              domReady(
+                `$('form.create-from-csv button[type=submit]').click(function(){press_store_button(this)})`
+              )
+            ),
         },
       ],
     });
