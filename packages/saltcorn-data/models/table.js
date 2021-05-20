@@ -515,10 +515,11 @@ class Table {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
+      const s = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
         noheader: true,
-      }).fromFile(filePath);
+      }).fromString(s);
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
