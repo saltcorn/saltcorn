@@ -510,7 +510,7 @@ class Table {
 
     return parse_res;
   }
- 
+
   async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
@@ -543,46 +543,51 @@ class Table {
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
+
     try {
       const readStream = fs.createReadStream(filePath);
-      const promise = new Promise((resolve, reject) => {
-        csvtojson({
-          includeColumns: colRe,
-        })
-          .fromStream(readStream)
-          .subscribe(
-            async (rec) => {
-              i += 1;
-              if (skip_first_data_row && i === 2) return;
-              try {
-                renames.forEach(({ from, to }) => {
-                  rec[to] = rec[from];
-                  delete rec[from];
-                });
-                const rowOk = readStateStrict(rec, fields);
-                if (rowOk)
-                  await db.insert(this.name, rec, {
-                    noid: true,
-                    client,
-                    pk_name,
+      if (db.copyFrom) {
+        await db.copyFrom(readStream, this.name, client);
+      } else {
+        const promise = new Promise((resolve, reject) => {
+          csvtojson({
+            includeColumns: colRe,
+          })
+            .fromStream(readStream)
+            .subscribe(
+              async (rec) => {
+                i += 1;
+                if (skip_first_data_row && i === 2) return;
+                try {
+                  renames.forEach(({ from, to }) => {
+                    rec[to] = rec[from];
+                    delete rec[from];
                   });
-                else rejects += 1;
-              } catch (e) {
-                await client.query("ROLLBACK");
+                  const rowOk = readStateStrict(rec, fields);
+                  if (rowOk)
+                    await db.insert(this.name, rec, {
+                      noid: true,
+                      client,
+                      pk_name,
+                    });
+                  else rejects += 1;
+                } catch (e) {
+                  await client.query("ROLLBACK");
 
-                if (!db.isSQLite) await client.release(true);
-                reject({ error: `${e.message} in row ${i}` });
+                  if (!db.isSQLite) await client.release(true);
+                  reject({ error: `${e.message} in row ${i}` });
+                }
+              },
+              (err) => {
+                reject({ error: err.message || err });
+              },
+              () => {
+                resolve();
               }
-            },
-            (err) => {
-              reject({ error: err.message || err });
-            },
-            () => {
-              resolve();
-            }
-          );
-      });
-      await promise;
+            );
+        });
+        await promise;
+      }
     } catch (e) {
       return {
         error: `Error processing CSV file: ${e.error || e.message || e}`,
@@ -601,7 +606,7 @@ class Table {
     }
     return {
       success:
-        `Imported ${i - 1 - rejects} rows into table ${this.name}` +
+        `Imported ${db.copyFrom ? '' : i - 1 - rejects} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }

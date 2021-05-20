@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const copyStreams = require("pg-copy-streams");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const { getTenantSchema } = require("./tenants");
@@ -174,6 +175,18 @@ const drop_unique_constraint = async (table_name, field_names) => {
   await pool.query(sql);
 };
 
+const copyFrom = (fileStream, tableName, client) => {
+  var stream = client.query(
+    copyStreams.from(`COPY ${sqlsanitize(tableName)} FROM STDIN CSV HEADER`)
+  );
+  return new Promise((resolve, reject) => {
+    fileStream.on("error", reject);
+    stream.on("error", reject);
+    stream.on("finish", resolve);
+    fileStream.pipe(stream);
+  });
+};
+
 module.exports = {
   pool,
   query: (text, params) => {
@@ -198,4 +211,5 @@ module.exports = {
   drop_unique_constraint,
   reset_sequence,
   getVersion,
+  copyFrom,
 };
