@@ -51,9 +51,8 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
           maintainerEmail: admin_users[0].email,
           cluster: false,
         })
-        .serve(app, (s)=>{
-          console.log("greenlock all", s);
-          s.secureServer.setTimeout(240 * 1000);
+        .serve(app, ({secureServer})=>{
+          //secureServer.setTimeout(240 * 1000);
         });
     else nonGreenlockServer();
   } else nonGreenlockServer();
