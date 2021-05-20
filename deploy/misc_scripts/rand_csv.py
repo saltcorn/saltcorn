@@ -23,8 +23,8 @@ for i in range(0, records):
     ('id', i),
     ('name', random.choice(names)),
     ('age', str(random.randint(16,85))),
-    ('social_security', str(random.randint(999999999,9999999999))),
-    ('telephone', str(random.randint(99999999,999999999))),
+    ('social_security', str(random.randint(9999999,99999999))),
+    ('telephone', str(random.randint(999999,9999999))),
     ('city', random.choice(cities)),
     ('gender', random.choice(gender))
     ]))
