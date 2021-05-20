@@ -17,6 +17,7 @@ const {
   InvalidAdminAction,
   satisfies,
   structuredClone,
+  getLines,
 } = require("../utils");
 
 const transposeObjects = (objs) => {
@@ -439,7 +440,8 @@ class Table {
   static async create_from_csv(name, filePath) {
     var rows;
     try {
-      rows = await csvtojson().fromFile(filePath);
+      const s = await getLines(filePath, 500)
+      rows = await csvtojson().fromString(s);
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
