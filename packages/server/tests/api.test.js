@@ -32,6 +32,19 @@ describe("API read", () => {
         )
       );
   });
+  it("should get books for public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/?_fts=Herman")
+      .expect(
+        succeedJsonWith(
+          (rows) =>
+            rows.length == 1 &&
+            rows[0].author === "Herman Melville" &&
+            rows[0].pages === 967
+        )
+      );
+  });
   it("should get books for public with only some fields", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
