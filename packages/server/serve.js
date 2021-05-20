@@ -53,7 +53,7 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
         })
         .serve(app, (s)=>{
           console.log("greenlock all", s);
-          secureServer.setTimeout(240 * 1000);
+          s.secureServer.setTimeout(240 * 1000);
         });
     else nonGreenlockServer();
   } else nonGreenlockServer();
