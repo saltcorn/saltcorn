@@ -53,10 +53,12 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
         })
         .ready((s) => {
           console.log("greenlock all", s);
-          s.withServers((o)=>{
-            console.log("serv", o);
-            o._httpsServer && o._httpsServer.setTimeout(240*1000)
-          })
+          s.withServers((o) =>
+            setTimeout(() => {
+              console.log("serv", o);
+              o._httpsServer && o._httpsServer.setTimeout(240 * 1000);
+            }, 0)
+          );
         })
         .serve(app);
     else nonGreenlockServer();
