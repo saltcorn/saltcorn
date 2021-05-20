@@ -226,6 +226,12 @@ const configTypes = {
     type: "hidden",
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
   },
+  timeout: {
+    type: "Integer",
+    label: "HTTP timeout (s)",
+    default: 120,
+    sublabel: "Increase if you expect large uploads",
+  },
   latest_npm_version: {
     type: "hidden",
     label: "Layout by role",
