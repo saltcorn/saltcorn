@@ -11,7 +11,7 @@ const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
 const csvtojson = require("csvtojson");
 const moment = require("moment");
-const fs = require("fs").promises;
+const fs = require("fs");
 const {
   InvalidConfiguration,
   InvalidAdminAction,
@@ -440,7 +440,7 @@ class Table {
   static async create_from_csv(name, filePath) {
     var rows;
     try {
-      const s = await getLines(filePath, 500)
+      const s = await getLines(filePath, 500);
       rows = await csvtojson().fromString(s);
     } catch (e) {
       return { error: `Error processing CSV file` };
@@ -510,7 +510,7 @@ class Table {
 
     return parse_res;
   }
-
+ 
   async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
     var headers;
     const { readStateStrict } = require("../plugin-helper");
@@ -538,36 +538,55 @@ class Table {
     // also id
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
     const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
-    var file_rows;
-    try {
-      file_rows = await csvtojson({
-        includeColumns: colRe,
-      }).fromFile(filePath);
-    } catch (e) {
-      return { error: `Error processing CSV file` };
-    }
+
     var i = 1;
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
-    for (const rec of file_rows) {
-      i += 1;
-      if (skip_first_data_row && i === 2) continue;
-      try {
-        renames.forEach(({ from, to }) => {
-          rec[to] = rec[from];
-          delete rec[from];
-        });
-        const rowOk = readStateStrict(rec, fields);
-        if (rowOk)
-          await db.insert(this.name, rec, { noid: true, client, pk_name });
-        else rejects += 1;
-      } catch (e) {
-        await client.query("ROLLBACK");
+    try {
+      const readStream = fs.createReadStream(filePath);
+      const promise = new Promise((resolve, reject) => {
+        csvtojson({
+          includeColumns: colRe,
+        })
+          .fromStream(readStream)
+          .subscribe(
+            async (rec) => {
+              i += 1;
+              if (skip_first_data_row && i === 2) return;
+              try {
+                renames.forEach(({ from, to }) => {
+                  rec[to] = rec[from];
+                  delete rec[from];
+                });
+                const rowOk = readStateStrict(rec, fields);
+                if (rowOk)
+                  await db.insert(this.name, rec, {
+                    noid: true,
+                    client,
+                    pk_name,
+                  });
+                else rejects += 1;
+              } catch (e) {
+                await client.query("ROLLBACK");
 
-        if (!db.isSQLite) await client.release(true);
-        return { error: `${e.message} in row ${i}` };
-      }
+                if (!db.isSQLite) await client.release(true);
+                reject({ error: `${e.message} in row ${i}` });
+              }
+            },
+            (err) => {
+              reject({ error: err.message || err });
+            },
+            () => {
+              resolve();
+            }
+          );
+      });
+      await promise;
+    } catch (e) {
+      return {
+        error: `Error processing CSV file: ${e.error || e.message || e}`,
+      };
     }
 
     await client.query("COMMIT");
@@ -582,12 +601,12 @@ class Table {
     }
     return {
       success:
-        `Imported ${file_rows.length - rejects} rows into table ${this.name}` +
+        `Imported ${i - 1 - rejects} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
   async import_json_file(filePath, skip_first_data_row) {
-    const file_rows = JSON.parse(await fs.readFile(filePath));
+    const file_rows = JSON.parse(await fs.promises.readFile(filePath));
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
