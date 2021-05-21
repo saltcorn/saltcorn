@@ -393,7 +393,7 @@ describe("CSV import", () => {
     const csv = `author,Pages
 Joe Celko, 856
 Gordon Kane, 217`;
-    const fnm = "/tmp/test1.csv";
+    const fnm = "/tmp/test1ok.csv";
     await fs.writeFile(fnm, csv);
     const table = await Table.findOne({ name: "books" });
     expect(!!table).toBe(true);
@@ -450,7 +450,7 @@ David MacKay, ITILA`;
     const csv = `item,cost,count, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
-    const fnm = "/tmp/test2.csv";
+    const fnm = "/tmp/test2impok.csv";
     await fs.writeFile(fnm, csv);
     const { table } = await Table.create_from_csv("Invoice", fnm);
     const fields = await table.getFields();

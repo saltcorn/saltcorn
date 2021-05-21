@@ -579,7 +579,7 @@ class Table {
                 }
               },
               (err) => {
-                reject({ error: err.message || err });
+                reject({ error: !e? e : err.message || err });
               },
               () => {
                 resolve();
@@ -590,7 +590,7 @@ class Table {
       }
     } catch (e) {
       return {
-        error: `Error processing CSV file: ${e.error || e.message || e}`,
+        error: `Error processing CSV file: ${!e ? e :e.error || e.message || e}`,
       };
     }
 

@@ -182,8 +182,10 @@ const copyFrom = (fileStream, tableName, client) => {
   return new Promise((resolve, reject) => {
     fileStream.on("error", reject);
     stream.on("error", reject);
-    stream.on("finish", resolve);
-    fileStream.pipe(stream);
+    stream.on("finish", () => {
+      resolve();
+    });
+    fileStream.pipe(stream).on("error", reject());
   });
 };
 
