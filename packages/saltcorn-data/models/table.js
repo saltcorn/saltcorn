@@ -535,6 +535,9 @@ class Table {
       } else if (f.required && !f.primary_key)
         return { error: `Required field missing: ${f.label}` };
     }
+    const fieldNames = headers.map((hnm) => {
+      if (okHeaders[hnm]) return okHeaders[hnm].name;
+    });
     // also id
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
     const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
@@ -543,11 +546,10 @@ class Table {
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
-
     try {
       const readStream = fs.createReadStream(filePath);
       if (db.copyFrom) {
-        await db.copyFrom(readStream, this.name, client);
+        await db.copyFrom(readStream, this.name, fieldNames, client);
       } else {
         const promise = new Promise((resolve, reject) => {
           csvtojson({
@@ -579,7 +581,7 @@ class Table {
                 }
               },
               (err) => {
-                reject({ error: !e? e : err.message || err });
+                reject({ error: !e ? e : err.message || err });
               },
               () => {
                 resolve();
@@ -587,10 +589,13 @@ class Table {
             );
         });
         await promise;
+        readStream.destroy();
       }
     } catch (e) {
       return {
-        error: `Error processing CSV file: ${!e ? e :e.error || e.message || e}`,
+        error: `Error processing CSV file: ${
+          !e ? e : e.error || e.message || e
+        }`,
       };
     }
 
@@ -606,7 +611,7 @@ class Table {
     }
     return {
       success:
-        `Imported ${db.copyFrom ? '' : i - 1 - rejects} rows into table ${this.name}` +
+        `Imported ${!i ? "" : i - 1 - rejects} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }

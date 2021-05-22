@@ -175,17 +175,21 @@ const drop_unique_constraint = async (table_name, field_names) => {
   await pool.query(sql);
 };
 
-const copyFrom = (fileStream, tableName, client) => {
-  var stream = client.query(
-    copyStreams.from(`COPY "${sqlsanitize(tableName)}" FROM STDIN CSV HEADER`)
-  );
+const copyFrom = (fileStream, tableName, fieldNames, client) => {
+  const quote = (s) => `"${s}"`;
+  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
+    .map(quote)
+    .join(",")}) FROM STDIN CSV HEADER`;
+  sql_log(sql);
+
+  var stream = client.query(copyStreams.from(sql));
+
   return new Promise((resolve, reject) => {
+
     fileStream.on("error", reject);
     stream.on("error", reject);
-    stream.on("finish", () => {
-      resolve();
-    });
-    fileStream.pipe(stream).on("error", reject());
+    stream.on("finish", resolve);
+    fileStream.pipe(stream).on("error", reject);
   });
 };
 

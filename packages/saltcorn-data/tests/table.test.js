@@ -447,6 +447,7 @@ David MacKay, ITILA`;
     expect(rows.length).toBe(0);
   });
   it("should create by importing", async () => {
+    //db.set_sql_logging();
     const csv = `item,cost,count, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
@@ -463,6 +464,8 @@ Pencil, 0.5,2, t`;
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
     expect(rows[0].vatable).toBe(true);
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
   });
   it("should fail on bad col nm", async () => {
     const csv = `item,cost,!, vatable
