@@ -546,10 +546,27 @@ class Table {
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
+    const readStream = fs.createReadStream(filePath);
+
     try {
-      const readStream = fs.createReadStream(filePath);
       if (db.copyFrom) {
-        await db.copyFrom(readStream, this.name, fieldNames, client);
+        let theError;
+
+        const copyres = await db
+          .copyFrom(readStream, this.name, fieldNames, client)
+          .catch((cate) => {
+            theError = cate;
+          });
+        if (theError || (copyres && copyres.error)) {
+          theError = theError || copyres.error;
+          return {
+            error: `Error processing CSV file: ${
+              !theError
+                ? theError
+                : theError.error || theError.message || theError
+            }`,
+          };
+        }
       } else {
         await new Promise((resolve, reject) => {
           csvtojson({
@@ -610,8 +627,9 @@ class Table {
     }
     return {
       success:
-        `Imported ${i>1 ? i - 1 - rejects : ""} rows into table ${this.name}` +
-        (rejects ? `. Rejected ${rejects} rows.` : ""),
+        `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${
+          this.name
+        }` + (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
   async import_json_file(filePath, skip_first_data_row) {
