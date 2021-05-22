@@ -177,7 +177,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
 
 const copyFrom = (fileStream, tableName, client) => {
   var stream = client.query(
-    copyStreams.from(`COPY ${sqlsanitize(tableName)} FROM STDIN CSV HEADER`)
+    copyStreams.from(`COPY "${sqlsanitize(tableName)}" FROM STDIN CSV HEADER`)
   );
   return new Promise((resolve, reject) => {
     fileStream.on("error", reject);
