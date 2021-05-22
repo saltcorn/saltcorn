@@ -610,7 +610,7 @@ class Table {
     }
     return {
       success:
-        `Imported ${i ? i - 1 - rejects : ""} rows into table ${this.name}` +
+        `Imported ${i>1 ? i - 1 - rejects : ""} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
