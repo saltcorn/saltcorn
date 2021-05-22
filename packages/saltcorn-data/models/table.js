@@ -545,11 +545,16 @@ class Table {
     var i = 1;
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
+
+    const stats = await fs.promises.stat(filePath)
+    const fileSizeInMegabytes = stats.size / (1024*1024);
+    
     await client.query("BEGIN");
+
     const readStream = fs.createReadStream(filePath);
 
     try {
-      if (db.copyFrom) {
+      if (db.copyFrom && fileSizeInMegabytes>5) {
         let theError;
 
         const copyres = await db
