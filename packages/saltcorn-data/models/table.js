@@ -554,7 +554,7 @@ class Table {
     const readStream = fs.createReadStream(filePath);
 
     try {
-      if (db.copyFrom && fileSizeInMegabytes>5) {
+      if (db.copyFrom && fileSizeInMegabytes>1) {
         let theError;
 
         const copyres = await db
