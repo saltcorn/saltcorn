@@ -551,7 +551,7 @@ class Table {
       if (db.copyFrom) {
         await db.copyFrom(readStream, this.name, fieldNames, client);
       } else {
-        const promise = new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
           csvtojson({
             includeColumns: colRe,
           })
@@ -588,7 +588,6 @@ class Table {
               }
             );
         });
-        await promise;
         readStream.destroy();
       }
     } catch (e) {
@@ -611,7 +610,7 @@ class Table {
     }
     return {
       success:
-        `Imported ${!i ? "" : i - 1 - rejects} rows into table ${this.name}` +
+        `Imported ${i ? i - 1 - rejects : ""} rows into table ${this.name}` +
         (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
