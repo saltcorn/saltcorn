@@ -30,6 +30,7 @@
     "node-fetch": "^2.6.1",
     "nodemailer": "^6.4.17",
     "pg": "^8.2.1",
+    "pg-copy-streams": "^5.1.1",
     "pluralize": "^8.0.0",
     "sqlite3": "^5.0.1",
     "tmp-promise": "^3.0.2",

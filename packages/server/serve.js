@@ -10,7 +10,7 @@ const getApp = require("./app");
 module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
   const app = await getApp(appargs);
   if (!disableScheduler) runScheduler();
-
+  const timeout = +getState().getConfig("timeout", 120);
   const nonGreenlockServer = () => {
     const cert = getState().getConfig("custom_ssl_certificate", "");
     const key = getState().getConfig("custom_ssl_private_key", "");
@@ -19,7 +19,8 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
       const http = require("http");
       const httpServer = http.createServer(app);
       const httpsServer = https.createServer({ key, cert }, app);
-
+      httpServer.setTimeout(timeout * 1000);
+      httpsServer.setTimeout(timeout * 1000);
       httpServer.listen(port, () => {
         console.log("HTTP Server running on port 80");
       });
@@ -27,10 +28,14 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
       httpsServer.listen(443, () => {
         console.log("HTTPS Server running on port 443");
       });
-    } else
-      app.listen(port, () => {
+    } else {
+      const http = require("http");
+      const httpServer = http.createServer(app);
+      httpServer.setTimeout(timeout * 1000);
+      httpServer.listen(port, () => {
         console.log(`Saltcorn listening on http://127.0.0.1:${port}/`);
       });
+    }
   };
   if (port === 80 && getState().getConfig("letsencrypt", false)) {
     const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
@@ -51,7 +56,9 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
           maintainerEmail: admin_users[0].email,
           cluster: false,
         })
-        .serve(app);
+        .serve(app, ({ secureServer }) => {
+          secureServer.setTimeout(timeout * 1000);
+        });
     else nonGreenlockServer();
   } else nonGreenlockServer();
 };

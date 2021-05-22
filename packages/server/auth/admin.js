@@ -280,6 +280,7 @@ const user_settings_form = (req) =>
       "verification_view",
       "elevate_verified",
       "min_role_upload",
+      "timeout",
       "email_mask",
       "allow_forgot",
       "custom_http_headers",

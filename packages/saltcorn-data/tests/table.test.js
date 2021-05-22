@@ -393,7 +393,7 @@ describe("CSV import", () => {
     const csv = `author,Pages
 Joe Celko, 856
 Gordon Kane, 217`;
-    const fnm = "/tmp/test1.csv";
+    const fnm = "/tmp/test1ok.csv";
     await fs.writeFile(fnm, csv);
     const table = await Table.findOne({ name: "books" });
     expect(!!table).toBe(true);
@@ -447,10 +447,11 @@ David MacKay, ITILA`;
     expect(rows.length).toBe(0);
   });
   it("should create by importing", async () => {
+    //db.set_sql_logging();
     const csv = `item,cost,count, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
-    const fnm = "/tmp/test2.csv";
+    const fnm = "/tmp/test2impok.csv";
     await fs.writeFile(fnm, csv);
     const { table } = await Table.create_from_csv("Invoice", fnm);
     const fields = await table.getFields();
@@ -463,6 +464,8 @@ Pencil, 0.5,2, t`;
     const rows = await table.getRows({ item: "Pencil" });
     expect(rows.length).toBe(1);
     expect(rows[0].vatable).toBe(true);
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
   });
   it("should fail on bad col nm", async () => {
     const csv = `item,cost,!, vatable

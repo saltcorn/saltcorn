@@ -1,4 +1,7 @@
 const { Pool } = require("pg");
+const copyStreams = require("pg-copy-streams");
+const { promisify } = require("util");
+const { pipeline } = require("stream");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const { getTenantSchema } = require("./tenants");
@@ -174,6 +177,32 @@ const drop_unique_constraint = async (table_name, field_names) => {
   await pool.query(sql);
 };
 
+const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
+  const quote = (s) => `"${s}"`;
+  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
+    .map(quote)
+    .join(",")}) FROM STDIN CSV HEADER`;
+  sql_log(sql);
+
+  var stream = client.query(copyStreams.from(sql));
+
+  return new Promise((resolve, reject) => {
+    fileStream.on("error", reject);
+    stream.on("error", reject);
+    stream.on("finish", resolve);
+    fileStream.pipe(stream).on("error", reject);
+  });
+};
+const copyFrom = async (fileStream, tableName, fieldNames, client) => {
+  const quote = (s) => `"${s}"`;
+  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
+    .map(quote)
+    .join(",")}) FROM STDIN CSV HEADER`;
+  sql_log(sql);
+
+  const stream = client.query(copyStreams.from(sql));
+  return await promisify(pipeline)(fileStream, stream);
+};
 module.exports = {
   pool,
   query: (text, params) => {
@@ -198,4 +227,5 @@ module.exports = {
   drop_unique_constraint,
   reset_sequence,
   getVersion,
+  copyFrom,
 };
