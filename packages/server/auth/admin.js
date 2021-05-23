@@ -283,6 +283,7 @@ const user_settings_form = (req) =>
       "timeout",
       "email_mask",
       "allow_forgot",
+      "cookie_sessions",
       "custom_http_headers",
     ],
     action: "/useradmin/settings",

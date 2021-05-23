@@ -85,11 +85,15 @@ const getApp = async (opts = {}) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
   }
-  if (true) {
-    app.use(cookieSession({
-      keys: [db.connectObj.session_secret || is.str.generate()],
-      maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict"
-    }))
+
+  if (getState().getConfig("cookie_sessions", false)) {
+    app.use(
+      cookieSession({
+        keys: [db.connectObj.session_secret || is.str.generate()],
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        sameSite: "strict",
+      })
+    );
   } else if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     app.use(

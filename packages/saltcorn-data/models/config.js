@@ -86,6 +86,12 @@ const configTypes = {
     default: true,
     blurb: "Show the login link in the menu",
   },
+  cookie_sessions: {
+    type: "Bool",
+    label: "Cookie sessions",
+    default: false,
+    blurb: "Store sessions entiresly in client cookies for higher performance",
+  },
   new_user_form: {
     type: "View users",
     label: "New user form",
