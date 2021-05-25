@@ -29,8 +29,8 @@ class File {
   static async findOne(where) {
     if (where.id) {
       const { getState } = require("../db/state");
-      const f = getState().files[where.id];
-      if (f) return new File(f);
+      const cf = getState().files[where.id];
+      if (cf) return new File(cf);
     }
     const f = await db.selectMaybeOne("_sc_files", where);
     return f ? new File(f) : null;
