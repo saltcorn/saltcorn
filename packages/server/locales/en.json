@@ -673,5 +673,9 @@
 	"Always show create view": "Always show create view",
 	"If off, only show create view if the query state is about the current user": "If off, only show create view if the query state is about the current user",
 	"Process uptime": "Process uptime",
-	"A configuration error occurred": "A configuration error occurred"
+	"A configuration error occurred": "A configuration error occurred",
+	"HTTP timeout (s)": "HTTP timeout (s)",
+	"Increase if you expect large uploads": "Increase if you expect large uploads",
+	"Cookie sessions": "Cookie sessions",
+	"Store sessions entiresly in client cookies for higher performance": "Store sessions entiresly in client cookies for higher performance"
 }
