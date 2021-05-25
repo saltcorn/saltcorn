@@ -7,6 +7,7 @@ const passport = require("passport");
 const CustomStrategy = require("passport-custom").Strategy;
 const BearerStrategy = require("passport-http-bearer");
 const session = require("express-session");
+const cookieSession = require("cookie-session");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const flash = require("connect-flash");
@@ -18,11 +19,7 @@ const {
   getConfig,
   available_languages,
 } = require("@saltcorn/data/models/config");
-const {
-  setTenant,
-  get_base_url,
-  error_catcher,
-} = require("./routes/utils.js");
+const { setTenant, get_base_url, error_catcher } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
@@ -88,12 +85,21 @@ const getApp = async (opts = {}) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
   }
-  if (db.isSQLite) {
+
+  if (getState().getConfig("cookie_sessions", false)) {
+    app.use(
+      cookieSession({
+        keys: [db.connectObj.session_secret || is.str.generate()],
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        sameSite: "strict",
+      })
+    );
+  } else if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     app.use(
       session({
         store: new SQLiteStore({ db: "sessions.sqlite" }),
-        secret: db.connectObj.session_secret || "tja3j675m5wsjj65",
+        secret: db.connectObj.session_secret || is.str.generate(),
         resave: false,
         saveUninitialized: false,
         cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days

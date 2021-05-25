@@ -53,8 +53,8 @@ const unloadModule = (mod) => {
 const setupDevMode = async () => {
   const dbPath = path.join(defaultDataPath, "scdb.sqlite");
   fs.promises.mkdir(defaultDataPath, { recursive: true });
-
-  await write_connection_config({ sqlite_path: dbPath });
+  const session_secret = gen_password();
+  await write_connection_config({ sqlite_path: dbPath, session_secret });
 
   if (!fs.existsSync(dbPath)) {
     unloadModule("@saltcorn/data/db");

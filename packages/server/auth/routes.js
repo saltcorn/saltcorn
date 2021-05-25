@@ -166,11 +166,17 @@ router.get(
 
 router.get("/logout", setTenant, (req, res) => {
   req.logout();
-  req.session.destroy((err) => {
-    if (err) return next(err);
+  if (req.session.destroy)
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      req.logout();
+      res.redirect("/auth/login");
+    });
+  else {
     req.logout();
+    req.session = null;
     res.redirect("/auth/login");
-  });
+  }
 });
 
 router.get(
@@ -732,11 +738,12 @@ router.post(
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body));
-    if (req.body.remember) {
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
-    } else {
-      req.session.cookie.expires = false; // Cookie expires at end of session
-    }
+    if (req.session.cookie)
+      if (req.body.remember) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
+      } else {
+        req.session.cookie.expires = false; // Cookie expires at end of session
+      }
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     res.redirect("/");
   })

@@ -228,7 +228,7 @@ const string = {
   },
   presets: {
     IP: ({ req }) => req.ip,
-    SessionID: ({ req }) => req.sessionID,
+    SessionID: ({ req }) => req.sessionID || req.cookies['express:sess'],
   },
   validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
     if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
@@ -252,6 +252,7 @@ const is_valid_regexp = (s) => {
     return false;
   }
 };
+
 const int = {
   name: "Integer",
   sql_name: "int",

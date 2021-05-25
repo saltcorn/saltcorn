@@ -74,6 +74,12 @@ jobs:
       - run: packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
+          CI: true
+          SALTCORN_MULTI_TENANT: true
+          SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
       - run: packages/saltcorn-cli/bin/saltcorn run-tests server
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
+          CI: true
+          SALTCORN_MULTI_TENANT: true
+          SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
