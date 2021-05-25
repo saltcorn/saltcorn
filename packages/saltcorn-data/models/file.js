@@ -27,12 +27,18 @@ class File {
   }
 
   static async findOne(where) {
+    if (where.id) {
+      const { getState } = require("../db/state");
+      const f = getState().files[where.id];
+      if (f) return new File(f);
+    }
     const f = await db.selectMaybeOne("_sc_files", where);
     return f ? new File(f) : null;
   }
 
   static async update(id, row) {
     await db.update("_sc_files", row, id);
+    await require("../db/state").getState().refresh_files();
   }
 
   static get_new_path(suggest) {
@@ -72,6 +78,7 @@ class File {
     try {
       await db.deleteWhere("_sc_files", { id: this.id });
       await fs.unlink(this.location);
+      await require("../db/state").getState().refresh_files();
     } catch (e) {
       return { error: e.message };
     }
@@ -84,6 +91,8 @@ class File {
     const { id, ...rest } = file;
     const fid = await db.insert("_sc_files", rest);
     file.id = fid;
+    await require("../db/state").getState().refresh_files();
+
     return file;
   }
 }

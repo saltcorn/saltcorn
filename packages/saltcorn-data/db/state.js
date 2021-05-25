@@ -32,6 +32,7 @@ class State {
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
+    this.files = {};
     this.pages = {};
     this.fields = [];
     this.configs = {};
@@ -63,6 +64,7 @@ class State {
     await this.refresh_views();
     await this.refresh_triggers();
     await this.refresh_tables();
+    await this.refresh_files();
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
@@ -70,6 +72,13 @@ class State {
   }
   async refresh_triggers() {
     this.triggers = await Trigger.findDB();
+  }
+  async refresh_files() {
+    const allfiles = await File.find();
+    this.files = {};
+    for (const f of allfiles) {
+      this.files[f.id] = f;
+    }
   }
   async refresh_tables() {
     const allTables = await db.select(
@@ -192,10 +201,12 @@ class State {
   reload_plugins() {
     this.views = [];
     this.viewtemplates = {};
+    this.triggers = [];
     this.tables = [];
     this.types = {};
     this.pages = {};
     this.fields = [];
+    this.files = {};
     this.configs = {};
     this.fileviews = {};
     this.actions = {};
