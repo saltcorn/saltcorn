@@ -677,5 +677,5 @@
 	"HTTP timeout (s)": "HTTP timeout (s)",
 	"Increase if you expect large uploads": "Increase if you expect large uploads",
 	"Cookie sessions": "Cookie sessions",
-	"Store sessions entiresly in client cookies for higher performance": "Store sessions entiresly in client cookies for higher performance"
+	"Store sessions entirely in client cookies for higher performance": "Store sessions entirely in client cookies for higher performance"
 }

@@ -5,7 +5,11 @@ const { eachView, traverseSync } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
 const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
-const { InvalidConfiguration } = require("../utils");
+const {
+  InvalidConfiguration,
+  satisfies,
+  structuredClone,
+} = require("../utils");
 
 class Page {
   constructor(o) {
@@ -28,12 +32,26 @@ class Page {
   }
 
   static async findOne(where) {
-    const p = await db.selectMaybeOne("_sc_pages", where);
-    return p ? new Page(p) : null;
+    const { getState } = require("../db/state");
+    const p = getState().pages.find(
+      where.id
+        ? (v) => v.id === +where.id
+        : where.name
+        ? (v) => v.name === where.name
+        : satisfies(where)
+    );
+    return p
+      ? new Page({
+          ...p,
+          layout: structuredClone(p.layout),
+          fixed_states: structuredClone(p.fixed_states),
+        })
+      : p;
   }
 
   static async update(id, row) {
     await db.update("_sc_pages", row, id);
+    await require("../db/state").getState().refresh_pages();
   }
 
   static async create(f) {
@@ -41,6 +59,8 @@ class Page {
     const { id, ...rest } = page;
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
+    await require("../db/state").getState().refresh_pages();
+
     return page;
   }
   async delete() {
@@ -51,6 +71,7 @@ class Page {
       await getState().setConfig(role + "_home", "");
     }
     await remove_from_menu({ name: this.name, type: "Page" });
+    await require("../db/state").getState().refresh_pages();
   }
 
   async is_root_page_for_roles() {

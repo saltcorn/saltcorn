@@ -11,7 +11,6 @@ const moment = require("moment");
 
 const db = require(".");
 const { migrate } = require("../migrate");
-const Table = require("../models/table");
 const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
@@ -33,7 +32,7 @@ class State {
     this.tables = [];
     this.types = {};
     this.files = {};
-    this.pages = {};
+    this.pages = [];
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
@@ -65,6 +64,7 @@ class State {
     await this.refresh_triggers();
     await this.refresh_tables();
     await this.refresh_files();
+    await this.refresh_pages();
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
@@ -72,6 +72,10 @@ class State {
   }
   async refresh_triggers() {
     this.triggers = await Trigger.findDB();
+  }
+  async refresh_pages() {
+    const Page = require("../models/page");
+    this.pages = await Page.find();
   }
   async refresh_files() {
     const allfiles = await File.find();
@@ -147,9 +151,6 @@ class State {
     withCfg("viewtemplates", []).forEach((vt) => {
       this.viewtemplates[vt.name] = vt;
     });
-    Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
-      this.pages[k] = v;
-    });
     Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
       this.functions[k] = v;
       this.function_context[k] = typeof v === "function" ? v : v.run;
@@ -204,7 +205,7 @@ class State {
     this.triggers = [];
     this.tables = [];
     this.types = {};
-    this.pages = {};
+    this.pages = [];
     this.fields = [];
     this.files = {};
     this.configs = {};

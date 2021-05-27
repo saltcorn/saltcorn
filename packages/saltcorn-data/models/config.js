@@ -90,7 +90,9 @@ const configTypes = {
     type: "Bool",
     label: "Cookie sessions",
     default: false,
-    blurb: "Store sessions entiresly in client cookies for higher performance",
+    root_only: true,
+    restart_required: true,
+    blurb: "Store sessions entirely in client cookies for higher performance",
   },
   new_user_form: {
     type: "View users",
@@ -230,12 +232,15 @@ const configTypes = {
     label: "LetsEncrypt enabled",
     default: false,
     type: "hidden",
+    root_only: true,
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
   },
   timeout: {
     type: "Integer",
     label: "HTTP timeout (s)",
     default: 120,
+    root_only: true,
+    restart_required: true,
     sublabel: "Increase if you expect large uploads",
   },
   latest_npm_version: {

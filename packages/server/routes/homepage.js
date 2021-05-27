@@ -323,30 +323,18 @@ const get_config_response = async (role_id, res, req) => {
   if (typeof homeCfg !== "string")
     homeCfg = getState().getConfig(legacy_role + "_home");
   if (homeCfg) {
-    if (getState().pages[homeCfg]) {
-      const page = getState().pages[homeCfg];
-      const contents = await page.getPage();
+    const db_page = await Page.findOne({ name: homeCfg });
+
+    if (db_page) {
+      const contents = await db_page.run(req.query, { res, req });
+
       res.sendWrap(
-        page.title
-          ? { title: page.title, description: page.description }
-          : homeCfg,
+        { title: db_page.title, description: db_page.description } ||
+          `${pagename} page`,
         contents
       );
-      return true;
-    } else {
-      const db_page = await Page.findOne({ name: homeCfg });
-
-      if (db_page) {
-        const contents = await db_page.run(req.query, { res, req });
-
-        res.sendWrap(
-          { title: db_page.title, description: db_page.description } ||
-            `${pagename} page`,
-          contents
-        );
-      } else res.redirect(homeCfg);
-      return true;
-    }
+    } else res.redirect(homeCfg);
+    return true;
   }
 };
 module.exports = async (req, res) => {
