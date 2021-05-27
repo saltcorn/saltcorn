@@ -150,7 +150,7 @@ router.get(
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
-      res.set("Cache-Control", `${cacheability}, max-age=3600`);
+      res.set("Cache-Control", `${cacheability}, max-age=86400`);
       res.sendFile(file.location);
     } else {
       req.flash("warning", req.__("Not authorized"));
