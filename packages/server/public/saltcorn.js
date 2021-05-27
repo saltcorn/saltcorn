@@ -224,7 +224,7 @@ function pjax_to(href) {
   else
     $.ajax(href, {
       headers: {
-        "pjaxpageload": "true",
+        pjaxpageload: "true",
       },
       success: function (res, textStatus, request) {
         window.history.pushState(null, "", href);
@@ -343,7 +343,7 @@ function ajax_modal(url, opts = {}) {
   $.ajax(url, {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
-      if (title) $("#scmodal .modal-title").html(title);
+      if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
       $("#scmodal").modal();
       (opts.onOpen || function () {})(res);
@@ -370,7 +370,7 @@ function ajaxSubmitForm(e) {
     },
     error: function (request) {
       var title = request.getResponseHeader("Page-Title");
-      if (title) $("#scmodal .modal-title").html(title);
+      if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       var body = request.responseText;
       if (body) $("#scmodal .modal-body").html(body);
     },

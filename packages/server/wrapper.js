@@ -244,7 +244,7 @@ module.exports = (version_tag) =>
         const renderToHtml = layout.renderBody
           ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
           : defaultRenderToHtml;
-        res.set("Page-Title", title);
+        res.set("Page-Title", encodeURIComponent(title));
         res.send(
           html.length === 1
             ? renderToHtml(html[0], role)
