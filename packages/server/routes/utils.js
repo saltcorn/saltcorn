@@ -89,10 +89,15 @@ const error_catcher = (fn) => (request, response, next) => {
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 const scan_for_page_title = (contents, viewname) => {
-  if (typeof contents === "string" && contents.includes("<!--SCPT:")) {
-    const start = contents.indexOf("<!--SCPT:");
-    const end = contents.indexOf("-->", start);
-    return contents.substring(start + 9, end);
+  let scanstr = "";
+  try {
+    scanstr =
+      typeof contents === "string" ? contents : JSON.stringify(contents);
+  } catch {}
+  if (scanstr.includes("<!--SCPT:")) {
+    const start = scanstr.indexOf("<!--SCPT:");
+    const end = scanstr.indexOf("-->", start);
+    return scanstr.substring(start + 9, end);
   }
 
   return viewname;
