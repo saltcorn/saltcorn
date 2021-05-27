@@ -33,7 +33,7 @@ class State {
     this.tables = [];
     this.types = {};
     this.files = {};
-    this.pages = {};
+    this.pages = [];
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
@@ -147,9 +147,6 @@ class State {
     withCfg("viewtemplates", []).forEach((vt) => {
       this.viewtemplates[vt.name] = vt;
     });
-    Object.entries(withCfg("pages", {})).forEach(([k, v]) => {
-      this.pages[k] = v;
-    });
     Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
       this.functions[k] = v;
       this.function_context[k] = typeof v === "function" ? v : v.run;
@@ -204,7 +201,7 @@ class State {
     this.triggers = [];
     this.tables = [];
     this.types = {};
-    this.pages = {};
+    this.pages = [];
     this.fields = [];
     this.files = {};
     this.configs = {};
