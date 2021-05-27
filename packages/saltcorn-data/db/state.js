@@ -11,7 +11,6 @@ const moment = require("moment");
 
 const db = require(".");
 const { migrate } = require("../migrate");
-const Table = require("../models/table");
 const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
@@ -65,6 +64,7 @@ class State {
     await this.refresh_triggers();
     await this.refresh_tables();
     await this.refresh_files();
+    await this.refresh_pages();
     this.configs = await getAllConfigOrDefaults();
   }
   async refresh_views() {
@@ -72,6 +72,10 @@ class State {
   }
   async refresh_triggers() {
     this.triggers = await Trigger.findDB();
+  }
+  async refresh_pages() {
+    const Page = require("../models/page");
+    this.pages = await Page.find();
   }
   async refresh_files() {
     const allfiles = await File.find();
