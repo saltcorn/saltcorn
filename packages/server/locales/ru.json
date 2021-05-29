@@ -458,5 +458,17 @@
 	"Variable name": "Имя переменной",
 	"Constraints": "Констрейнты",
 	"Recalculate stored fields": "Перевычислить хранимые поля",
-	"Delete all rows": "Удалить все строки"
+	"Delete all rows": "Удалить все строки",
+	"Access Read/Write": "Доступ на Чтение/Запись",
+	"Discover tables": "Обнаружить таблицы",
+	"Relationship diagram": "Диаграмма ERD",
+	"The following tables in your database can be imported into Saltcorn:": "Указанные таблицы могут быть импортированы в Saltcorn:",
+	"Import": "Импорт",
+	"Discover": "Обнаружение",
+	"Discovered tables: %s": "Обнаружены таблицы: %s",
+	"There are no tables in the database that can be imported into Saltcorn.": "В настоящий момент в Базе Данных нет таблиц, которые возможно импортировать в Saltcorn.",
+	"Primary key": "Первичный ключ",
+	"Rename table": "Переименовать таблицу",
+	"Minimum role to read": "Минимальная роль для чтения",
+	"Minimum role to write": "Минимальная роль для записи"
 }
