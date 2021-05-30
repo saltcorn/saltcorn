@@ -51,7 +51,12 @@ const drop_reset_schema = async (schema) => {
 
   await pool.query(sql);
 };
-
+/**
+ * Get count of rows in table
+ * @param tbl - table name
+ * @param whereObj - where object
+ * @returns {Promise<number>} count of tables
+ */
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -62,7 +67,11 @@ const count = async (tbl, whereObj) => {
 
   return parseInt(tq.rows[0].count);
 };
-
+/**
+ * Get version of PostgreSQL
+ * @param short - if true return short version info else full version info
+ * @returns {Promise<*>} returns version
+ */
 const getVersion = async (short) => {
   const sql = `SELECT version();`;
   sql_log(sql);
@@ -74,7 +83,12 @@ const getVersion = async (short) => {
   }
   return v;
 };
-
+/**
+ * Delete rowns in table
+ * @param tbl - table name
+ * @param whereObj - where object
+ * @returns {Promise<*>}
+ */
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -86,7 +100,13 @@ const deleteWhere = async (tbl, whereObj) => {
 
   return tq.rows;
 };
-
+/**
+ * Insert rows into table
+ * @param tbl - table name
+ * @param obj - columns names and data
+ * @param opts - columns attributes
+ * @returns {Promise<*>}
+ */
 const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
@@ -115,7 +135,14 @@ const insert = async (tbl, obj, opts = {}) => {
   if (opts.noid) return;
   else return rows[0][opts.pk_name || "id"];
 };
-
+/**
+ * Update table records
+ * @param tbl - table name
+ * @param obj - columns names and data
+ * @param id - id of record (primary key column value)
+ * @param opts - columns attributes
+ * @returns {Promise<void>}
+ */
 const update = async (tbl, obj, id, opts = {}) => {
   const kvs = Object.entries(obj);
   const assigns = kvs
@@ -129,7 +156,12 @@ const update = async (tbl, obj, id, opts = {}) => {
   sql_log(q, valList);
   await pool.query(q, valList);
 };
-
+/**
+ * Select one record
+ * @param tbl - table name
+ * @param where - where object
+ * @returns {Promise<*>}
+ */
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
   if (rows.length === 0) {
