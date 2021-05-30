@@ -167,7 +167,7 @@ router.get(
               href: "/admin/send-test-email",
               class: "btn btn-primary",
             },
-            "Send test email"
+              req.__("Send test email")
           ),
         ],
       },
@@ -184,8 +184,8 @@ router.get(
     const email = {
       from,
       to: req.user.email,
-      subject: "Saltcorn test email",
-      html: "Hello from Saltcorn",
+      subject: req.__("Saltcorn test email"),
+      html: req.__("Hello from Saltcorn"),
     };
     try {
       await getMailTransport().sendMail(email);
@@ -343,7 +343,7 @@ router.get(
                   ),
                   git_commit &&
                     tr(
-                      th("git commit"),
+                      th(req.__("git commit")),
                       td(
                         a(
                           {
@@ -404,7 +404,7 @@ router.post(
       req.flash("error", req.__("Not possible for tenant"));
       res.redirect("/admin");
     } else {
-      res.write("Starting upgrade, please wait...\n");
+      res.write(req.__("Starting upgrade, please wait...\n"));
       const child = spawn(
         "npm",
         ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
