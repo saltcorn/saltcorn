@@ -49,7 +49,12 @@ const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 
 const router = new Router();
 module.exports = router;
-
+/**
+ * Show Table Form
+ * @param table
+ * @param req
+ * @returns {Promise<Form>}
+ */
 const tableForm = async (table, req) => {
   const fields = await table.getFields();
   const roleOptions = (await User.get_roles()).map((r) => ({
@@ -79,8 +84,9 @@ const tableForm = async (table, req) => {
         : []),
       {
         label: req.__("Minimum role to read"),
-        sublabel:
-          "User must have this role or higher to read rows from the table",
+        sublabel: req.__(
+          "User must have this role or higher to read rows from the table"
+        ),
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
@@ -92,8 +98,9 @@ const tableForm = async (table, req) => {
               label: req.__("Minimum role to write"),
               name: "min_role_write",
               input_type: "select",
-              sublabel:
-                "User must have this role or higher to edit or create new rows in the table",
+              sublabel: req.__(
+                "User must have this role or higher to edit or create new rows in the table"
+              ),
               options: roleOptions,
             },
             {
@@ -150,7 +157,12 @@ router.get(
     });
   })
 );
-
+/**
+ * Discover Database Tables Form
+ * @param tables - list of tables
+ * @param req - HTTP Request
+ * @returns {Form}
+ */
 const discoverForm = (tables, req) => {
   return new Form({
     action: "/table/discover",
@@ -170,7 +182,9 @@ const discoverForm = (tables, req) => {
     })),
   });
 };
-
+/**
+ * List of Discoverable Database Tables
+ */
 router.get(
   "/discover",
   setTenant,
@@ -197,7 +211,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Execute Discover Table
+ */
 router.post(
   "/discover",
   setTenant,
@@ -218,6 +234,9 @@ router.post(
     res.redirect("/table");
   })
 );
+/**
+ * Create Table form CSV file
+ */
 router.get(
   "/create-from-csv",
   setTenant,
@@ -262,7 +281,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Execute Create Table from CSV
+ */
 router.post(
   "/create-from-csv",
   setTenant,
@@ -304,7 +325,9 @@ router.post(
     }
   })
 );
-
+/**
+ * Show Relational Diagram
+ */
 router.get(
   "/relationship-diagram",
   setTenant,
@@ -1011,7 +1034,7 @@ const renameForm = (table_id) =>
     fields: [
       {
         name: "name",
-        label: "New table name",
+        label: req.__("New table name"),
         type: "String",
       },
     ],
