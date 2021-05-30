@@ -102,14 +102,16 @@ router.get(
           p(
             req.__(
               "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-            ) +
+            ) + " " +
               req.__(
                 "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-              ) +
+              ) + " " +
               req.__(
                 "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-              ) +
-              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+              ) + " " +
+              req.__(
+                  'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+              )
           )
       );
     res.sendWrap(
@@ -215,17 +217,17 @@ router.get(
       active_sub: "Tenants",
       contents: {
         type: "card",
-        title: "Tenants",
+        title: req.__("Tenants"),
         contents: [
           mkTable(
             [
               {
-                label: "Subdomain",
+                label: req.__("Subdomain"),
                 key: (r) =>
                   link(getNewURL(req, r.subdomain), text(r.subdomain)),
               },
               {
-                label: "Information",
+                label: req.__("Information"),
                 key: (r) =>
                   a(
                     { href: `/tenant/info/${text(r.subdomain)}` },
@@ -233,7 +235,7 @@ router.get(
                   ),
               },
               {
-                label: "Delete",
+                label: req.__("Delete"),
                 key: (r) =>
                   post_delete_btn(
                     `/tenant/delete/${r.subdomain}`,
@@ -244,8 +246,8 @@ router.get(
             ],
             tens
           ),
-          div(`Found ${tens.length} tenants`),
-          div(link("/tenant/create", "Create new tenant")),
+          div(req.__(`Found %s tenants`,tens.length)),
+          div(link("/tenant/create", req.__("Create new tenant"))),
         ],
       },
     });
@@ -361,7 +363,7 @@ router.get(
         above: [
           {
             type: "card",
-            title: `${text(subdomain)} tenant`,
+            title: req.__(`%s tenant`,text(subdomain)),
             contents: [
               table(
                 tr(th(req.__("E-mail")), td(info.first_user_email)),
@@ -383,7 +385,7 @@ router.get(
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
                   fields: [
-                    { name: "base_url", label: "Base URL", type: "String" },
+                    { name: "base_url", label: req.__("Base URL"), type: "String" },
                   ],
                   values: { base_url: info.base_url },
                 }),
