@@ -1,13 +1,26 @@
+/**
+ * Controls Saltcorn configuration
+ * @type {path.PlatformPath | path}
+ */
 const path = require("path");
 const fs = require("fs");
 const envPaths = require("env-paths");
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
-
+/**
+ * Default data path?
+ * @type {string}
+ */
 const defaultDataPath = pathsWithApp.data;
 const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
-
+/**
+ * Get Git revision of Saltcorn source.
+ * Required to work:
+ *  - Git client installed,
+ *  - Local git with repo Saltcorn sources.
+ * @returns {null} - Return current Git commit
+ */
 const getGitRevision = () => {
   let revision = null;
   let options = { stdio: "pipe", cwd: __dirname };
@@ -19,7 +32,18 @@ const getGitRevision = () => {
   } catch (error) {}
   return revision;
 };
-
+/**
+ * Prepare Saltcorn connection object that controls main Saltcorn instance settings like:
+ * - PostgreSQL or SQLite
+ * - Connection to DB settings
+ * - Multitenant mode
+ * - Web Session secret
+ * - File store path
+ * - Saltcorn confuration inheritance and fixed configuration
+ * For all parameters and priority see the code of function.
+ * @param connSpec
+ * @returns {{sc_version: string, connectionString: *, git_commit: *, version_tag: (*|string)}|{sqlite_path}|boolean}
+ */
 const getConnectObject = (connSpec = {}) => {
   const git_commit = getGitRevision();
   const sc_version = require("../package.json").version;
@@ -75,11 +99,20 @@ const getConnectObject = (connSpec = {}) => {
     return false;
   }
 };
-
+/**
+ * Path to Config directory
+ * @type {string}
+ */
 const configFileDir = pathsNoApp.config;
-
+/**
+ * Path to config file .saltcorn
+ * @type {string}
+ */
 const configFilePath = path.join(configFileDir, ".saltcorn");
-
+/**
+ * Reads Saltcorn configuration file
+ * @returns {boolean|any} - Returns JSON presentation of Saltcorn confuration file. Returns false in case of Exception.
+ */
 const getConfigFile = () => {
   try {
     let rawdata = fs.readFileSync(configFilePath);
@@ -88,7 +121,11 @@ const getConfigFile = () => {
     return false;
   }
 };
-
+/**
+ * Check that Saltcorn configured to use SQLite as database
+ * @param connObj - connectin object
+ * @returns {boolean} - Returns true if Saltcorn configured to use SQLite as database
+ */
 const is_sqlite = (connObj) => {
   if (connObj.connectionString)
     return connObj.connectionString.startsWith("sqlite");

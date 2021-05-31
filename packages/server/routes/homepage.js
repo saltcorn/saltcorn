@@ -11,44 +11,44 @@ const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 
-const tableTable = (tables) =>
+const tableTable = (tables, req) =>
   mkTable(
     [
-      { label: "Name", key: "name" },
-      { label: "Edit", key: (r) => link(`/table/${r.id}`, "Edit") },
+      { label: req.__("Name"), key: "name" },
+      { label: req.__("Edit"), key: (r) => link(`/table/${r.id}`, req.__("Edit")) },
     ],
     tables
   );
 
-const viewTable = (views) =>
+const viewTable = (views, req) =>
   mkTable(
     [
-      { label: "Name", key: "name" },
+      { label: req.__("Name"), key: "name" },
       {
-        label: "Run",
-        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, "Run"),
+        label: req.__("Run"),
+        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
       },
       {
-        label: "Edit",
+        label: req.__("Edit"),
         key: (r) =>
-          link(`/viewedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+          link(`/viewedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
       },
     ],
     views
   );
 
-const pageTable = (pages) =>
+const pageTable = (pages, req) =>
   mkTable(
     [
-      { label: "Name", key: "name" },
+      { label: req.__("Name"), key: "name" },
       {
-        label: "Run",
-        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, "Run"),
+        label: req.__("Run"),
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, req.__("Run")),
       },
       {
-        label: "Edit",
+        label: req.__("Edit"),
         key: (r) =>
-          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, "Edit"),
+          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
       },
     ],
     pages
@@ -231,7 +231,7 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: link("/table", req.__("Tables")),
             contents: div(
-              tableTable(tables),
+              tableTable(tables, req),
               div(
                 a(
                   { href: `/table/new`, class: "btn btn-primary" },
@@ -273,7 +273,7 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: link("/table", req.__("Tables")),
             contents: div(
-              tableTable(tables),
+              tableTable(tables, req),
               div(
                 a(
                   { href: `/table/new`, class: "btn btn-primary" },
@@ -286,7 +286,7 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: link("/viewedit", req.__("Views")),
             contents: [
-              viewTable(views),
+              viewTable(views, req),
               div(
                 a(
                   { href: `/viewedit/new`, class: "btn btn-primary" },
@@ -299,7 +299,7 @@ const no_views_logged_in = async (req, res) => {
             type: "card",
             title: link("/pageedit", req.__("Pages")),
             contents: [
-              pageTable(pages),
+              pageTable(pages, req),
               div(
                 a(
                   { href: `/pageedit/new`, class: "btn btn-primary" },
