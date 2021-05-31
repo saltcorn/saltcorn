@@ -407,10 +407,14 @@ router.get(
                 div(
                   { class: "mt-3 alert alert-danger" },
                   p(
-                    "The address you are using to reach Saltcorn does not match the Base URL."
+                      req.__(
+                          "The address you are using to reach Saltcorn does not match the Base URL."
+                      )
                   ),
                   p(
-                    "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                      req.__(
+                          "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                      )
                   )
                 ),
             ],
@@ -430,7 +434,7 @@ router.get(
                   ? span({ class: "badge badge-primary" }, req.__("Enabled"))
                   : span({ class: "badge badge-secondary" }, req.__("Disabled"))
               ),
-              link("/useradmin/ssl/custom", "Edit custom SSL certificates"),
+              link("/useradmin/ssl/custom", req.__("Edit custom SSL certificates")),
             ],
           },
         ],
@@ -522,7 +526,7 @@ router.get(
             contents: [
               div(
                 user.api_token
-                  ? span({ class: "mr-1" }, "API token for this user: ") +
+                  ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
                       code(user.api_token)
                   : req.__("No API token issued")
               ),
@@ -530,6 +534,7 @@ router.get(
                 { class: "mt-4" },
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
+                    // TBD localization
                   user.api_token ? "Reset" : "Generate",
                   req.csrfToken()
                 )
