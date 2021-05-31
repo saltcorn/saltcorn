@@ -1,3 +1,6 @@
+/**
+ * PostgreSQL data access layer
+ */
 const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
@@ -5,6 +8,7 @@ const { pipeline } = require("stream");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const { getTenantSchema } = require("./tenants");
+
 var connectObj = getConnectObject();
 
 var pool;
@@ -12,24 +16,48 @@ if (connectObj) pool = new Pool(connectObj);
 
 var log_sql_enabled = false;
 
+/**
+ * Control Logging sql statements to console
+ * @param val - if true then log sql statements to console
+ */
 function set_sql_logging(val = true) {
   log_sql_enabled = val;
 }
 
+/**
+ * Log SQL statement to console
+ * @param sql - SQL statement
+ * @param vs - any additional parameter
+ */
 function sql_log(sql, vs) {
   if (log_sql_enabled)
     if (typeof vs === "undefined") console.log(sql);
     else console.log(sql, vs);
 }
+
+/**
+ * Close database connection
+ * @returns {Promise<void>}
+ */
 const close = async () => {
   if (pool) await pool.end();
 };
-
+/**
+ * Change connection (close connection and open new connection from connObj)
+ * @param connObj -
+ * @returns {Promise<void>}
+ */
 const changeConnection = async (connObj = {}) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
 };
-
+/**
+ * Excute Select statement
+ * @param tbl - table name
+ * @param whereObj - where object
+ * @param selectopts - select options
+ * @returns {Promise<*>}
+ */
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `SELECT * FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -40,7 +68,12 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
   return tq.rows;
 };
-
+/**
+ * Reset DB Schema using drop schema and recreate it
+ * Atterntion! You will lost data after call this function!
+ * @param schema - db schema name
+ * @returns {Promise<void>} no result
+ */
 const drop_reset_schema = async (schema) => {
   const sql = `DROP SCHEMA IF EXISTS "${schema}" CASCADE;
   CREATE SCHEMA "${schema}";
@@ -84,10 +117,10 @@ const getVersion = async (short) => {
   return v;
 };
 /**
- * Delete rowns in table
+ * Delete rows in table
  * @param tbl - table name
  * @param whereObj - where object
- * @returns {Promise<*>}
+ * @returns {Promise<*>} result of delete execution
  */
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
@@ -105,7 +138,7 @@ const deleteWhere = async (tbl, whereObj) => {
  * @param tbl - table name
  * @param obj - columns names and data
  * @param opts - columns attributes
- * @returns {Promise<*>}
+ * @returns {Promise<*>} returns primary key column. If promary key column is not defined then return value of Id column.
  */
 const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
@@ -141,7 +174,7 @@ const insert = async (tbl, obj, opts = {}) => {
  * @param obj - columns names and data
  * @param id - id of record (primary key column value)
  * @param opts - columns attributes
- * @returns {Promise<void>}
+ * @returns {Promise<void>} no result
  */
 const update = async (tbl, obj, id, opts = {}) => {
   const kvs = Object.entries(obj);
@@ -160,7 +193,7 @@ const update = async (tbl, obj, id, opts = {}) => {
  * Select one record
  * @param tbl - table name
  * @param where - where object
- * @returns {Promise<*>}
+ * @returns {Promise<*>} return firs record from sql result
  */
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -169,15 +202,27 @@ const selectOne = async (tbl, where) => {
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
   } else return rows[0];
 };
-
+/**
+ * Select one record or null if no records
+ * @param tbl - table name
+ * @param where - where object
+ * @returns {Promise<null|*>} - null if no record or first record data
+ */
 const selectMaybeOne = async (tbl, where) => {
   const rows = await select(tbl, where);
   if (rows.length === 0) return null;
   else return rows[0];
 };
-
+/**
+ * Open db connection
+ * @returns {Promise<*>} db connection object
+ */
 const getClient = async () => await pool.connect();
-
+/**
+ * Reset sequence
+ * @param tblname - table name
+ * @returns {Promise<void>} no result
+ */
 const reset_sequence = async (tblname) => {
   const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
     tblname
@@ -186,8 +231,14 @@ const reset_sequence = async (tblname) => {
   )}";`;
   await pool.query(sql);
 };
-
+/**
+ * Add unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
 const add_unique_constraint = async (table_name, field_names) => {
+  // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
   )}" add CONSTRAINT "${sqlsanitize(table_name)}_${field_names
@@ -198,8 +249,14 @@ const add_unique_constraint = async (table_name, field_names) => {
   sql_log(sql);
   await pool.query(sql);
 };
-
+/**
+ * Drop unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns {Promise<void>} no results
+ */
 const drop_unique_constraint = async (table_name, field_names) => {
+  // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
   )}" drop CONSTRAINT "${sqlsanitize(table_name)}_${field_names
@@ -208,8 +265,16 @@ const drop_unique_constraint = async (table_name, field_names) => {
   sql_log(sql);
   await pool.query(sql);
 };
-
+/**
+ * Copy data from CSV to table?
+ * @param fileStream - file stream
+ * @param tableName - table name
+ * @param fieldNames - list of columns
+ * @param client - db connection
+ * @returns {Promise<unknown>} new Promise
+ */
 const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
+  // TBD describe difference between CopyFrom and CopyFrom1
   const quote = (s) => `"${s}"`;
   const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
     .map(quote)
@@ -225,7 +290,16 @@ const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
     fileStream.pipe(stream).on("error", reject);
   });
 };
+/**
+ * Copy data from CSV to table?
+ * @param fileStream - file stream
+ * @param tableName - table name
+ * @param fieldNames - list of columns
+ * @param client - db connection
+ * @returns {Promise<void>} no results
+ */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
+  // TBD describe difference between CopyFrom and CopyFrom1
   const quote = (s) => `"${s}"`;
   const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
     .map(quote)
@@ -235,6 +309,7 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   const stream = client.query(copyStreams.from(sql));
   return await promisify(pipeline)(fileStream, stream);
 };
+
 module.exports = {
   pool,
   query: (text, params) => {

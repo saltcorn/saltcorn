@@ -583,5 +583,11 @@
 	"%s tenant": "%s tenant",
 	"Set page title": "Задать название страницы",
 	"Skip this section if you do not want to set the page title": "Не заполняйте данную секцию, если вы не хотите задать название страницы",
-	"Page title is a formula?": "Название страницы является формулой?"
+	"Page title is a formula?": "Название страницы является формулой?",
+	"Edit custom SSL certificates": "Настроить кастомный SSL сертификат",
+	"Custom SSL certificate": "Кастомный SSL сертификат",
+	"Custom SSL private key": "Кастомный SSL приватный ключ",
+	"Custom SSL certificates": "Кастомные SSL сертификаты",
+	"Set Base URL configuration first": "Сначала необходимо задать Базовый URL в конфигурации",
+	"Base URL domain %s does not match hostname %s": "Домен Базового URL %s не соответствует hostname %s"
 }
