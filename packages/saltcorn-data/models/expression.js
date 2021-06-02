@@ -111,6 +111,11 @@ const apply_calculated_fields_stored = async (row, fields) => {
     return await transform(row);
   } else return row;
 };
+/**
+ * Recalculate calculated columns that are stored in db
+ * @param table - table object
+ * @returns {Promise<void>}
+ */
 const recalculate_for_stored = async (table) => {
   let rows = [];
   let maxid = 0;
