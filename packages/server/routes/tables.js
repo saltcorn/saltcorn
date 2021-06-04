@@ -183,7 +183,7 @@ const discoverForm = (tables, req) => {
   });
 };
 /**
- * List of Discoverable Database Tables
+ * Table Discover (get)
  */
 router.get(
   "/discover",
@@ -212,7 +212,7 @@ router.get(
   })
 );
 /**
- * Execute Discover Table
+ * Table Discover (post)
  */
 router.post(
   "/discover",
@@ -235,7 +235,7 @@ router.post(
   })
 );
 /**
- * Create Table form CSV file
+ * Create Table from CSV file (get)
  */
 router.get(
   "/create-from-csv",
@@ -282,7 +282,7 @@ router.get(
   })
 );
 /**
- * Execute Create Table from CSV
+ * Create Table from CSV file (post)
  */
 router.post(
   "/create-from-csv",
@@ -326,7 +326,7 @@ router.post(
   })
 );
 /**
- * Show Relational Diagram
+ * Show Relational Diagram (get)
  */
 router.get(
   "/relationship-diagram",
@@ -1146,7 +1146,9 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
-
+/**
+ * Call for Recalculate table columns that stored in db (POST)
+ */
 router.post(
   "/recalc-stored/:name",
   setTenant,

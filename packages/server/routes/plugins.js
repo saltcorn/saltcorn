@@ -60,9 +60,9 @@ const pluginForm = (req, plugin) => {
         required: true,
         attributes: { options: "npm,local,github" },
       }),
-      new Field({ label: "Location", name: "location", input_type: "text" }),
+      new Field({ label: req.__("Location"), name: "location", input_type: "text" }),
       ...(schema === db.connectObj.default_schema
-        ? [new Field({ label: "Version", name: "version", input_type: "text" })]
+        ? [new Field({ label: req.__("Version"), name: "version", input_type: "text" })]
         : []),
     ],
     submitLabel: plugin ? req.__("Save") : req.__("Create"),
