@@ -609,6 +609,7 @@
 	"Table columns": "Столбцы таблиц",
 	"Configuration items": "Параметры конфигурации",
 	"Crashlogs": "Логи ошибок",
-	"%s tenant statistics": "%s tenant statistics",
-	"User settings updated": "Настройки пользователя обновлены"
+	"%s tenant statistics": "Тенант %s, статистика",
+	"User settings updated": "Настройки пользователя обновлены",
+	"URL after delete": "URL после удаления"
 }
