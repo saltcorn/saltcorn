@@ -536,6 +536,7 @@ Field.contract = {
         "section_header",
         "textarea",
         "custom_html",
+        "code"
       ])
     ),
     is_fkey: is.bool,

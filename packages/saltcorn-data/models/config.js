@@ -250,18 +250,18 @@ const configTypes = {
     label: "Latest npm version cache",
   },
   page_custom_css: {
-    type: "String",
-    fieldview: "textarea",
+    input_type: "code",
     label: "Custom CSS",
     default: "",
     hide_value: true,
+    attributes: { mode: "text/css" },
   },
   page_custom_html: {
-    type: "String",
-    fieldview: "textarea",
+    input_type: "code",
     label: "Custom HTML",
     default: "",
     hide_value: true,
+    attributes: { mode: "text/html" },
   },
   custom_http_headers: {
     type: "String",
