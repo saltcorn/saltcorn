@@ -678,5 +678,7 @@
 	"Increase if you expect large uploads": "Increase if you expect large uploads",
 	"Cookie sessions": "Cookie sessions",
 	"Store sessions entirely in client cookies for higher performance": "Store sessions entirely in client cookies for higher performance",
-	"git commit": "git commit"
+	"git commit": "git commit",
+	"Send test email": "Send test email",
+	"Edit custom SSL certificates": "Edit custom SSL certificates"
 }

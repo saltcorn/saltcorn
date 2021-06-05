@@ -264,12 +264,12 @@ const configTypes = {
     attributes: { mode: "text/html" },
   },
   custom_http_headers: {
-    type: "String",
-    fieldview: "textarea",
+    input_type: "code",
     label: "Custom HTTP headers",
     blurb: "Format for each line: Header-Name: value",
     default: "",
     hide_value: true,
+    attributes: { mode: "message/http" },
   },
   next_hourly_event: {
     type: "Date",
