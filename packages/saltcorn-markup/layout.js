@@ -384,6 +384,19 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 }
               : {}),
           },
+          renderBg &&
+            bgType === "Image" &&
+            bgFileId &&
+            +bgFileId &&
+            div(
+              { style: "display:none" },
+              img({
+                height: "1",
+                width: "1",
+                alt: "",
+                src: `/files/serve/${bgFileId}`,
+              })
+            ),
           go(segment.contents)
         )
       );
