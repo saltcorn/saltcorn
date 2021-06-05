@@ -10,6 +10,7 @@ const {
 } = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 const { get_async_expression_function } = require("../models/expression");
+const { div, code } = require("@saltcorn/markup/tags");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 module.exports = {
@@ -207,14 +208,43 @@ module.exports = {
     },
   },
   run_js_code: {
-    configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
+    configFields: async ({ table }) => {
+      const fields = table ? (await table.getFields()).map((f) => f.name) : [];
+      const vars = [      
+        ...(table ? ["row"] : []),
+        "user",
+        "console",
+        "Actions",
+        "Table",
+        ...(table ? ["table"] : []),
+        ...fields,
+      ]
+        .map((f) => code(f))
+        .join(", ");
+      return [
+        {
+          name: "code",
+          label: "Code",
+          input_type: "code",
+          attributes: { mode: "application/javascript" },
+          sublabel: div("Variables in scope: ", vars),
+        },
+      ];
+    },
     run: async ({ row, table, configuration: { code }, user, ...rest }) => {
+      const Actions = {};
+      Object.entries(getState().actions).forEach(([k, v]) => {
+        Actions[k] = (args = {}) => {
+          v.run({ row, table, user, configuration: args, ...rest, ...args });
+        };
+      });
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
         row,
         user,
         console,
+        Actions,
         ...(row || {}),
         ...getState().function_context,
         ...rest,

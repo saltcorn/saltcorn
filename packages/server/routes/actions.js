@@ -325,8 +325,20 @@ router.get(
         );
       },
     };
+    let table, row;
+    if (trigger.table_id) {
+      table = await Table.findOne(trigger.table_id);
+      row = await table.getRow({});
+    }
     try {
-      await trigger.runWithoutRow({ console: fakeConsole });
+      await trigger.runWithoutRow({
+        console: fakeConsole,
+        table,
+        row,
+        ...(row || {}),
+        Table,
+        user: req.user,
+      });
     } catch (e) {
       fakeConsole.error(e.message);
     }
