@@ -680,5 +680,12 @@
 	"Store sessions entirely in client cookies for higher performance": "Store sessions entirely in client cookies for higher performance",
 	"git commit": "git commit",
 	"Send test email": "Send test email",
-	"Edit custom SSL certificates": "Edit custom SSL certificates"
+	"Edit custom SSL certificates": "Edit custom SSL certificates",
+	"User must have this role or higher to read rows from the table": "User must have this role or higher to read rows from the table",
+	"User must have this role or higher to edit or create new rows in the table": "User must have this role or higher to edit or create new rows in the table",
+	"Name of the field": "Name of the field",
+	"The type determines the kind of data that can be stored in the field": "The type determines the kind of data that can be stored in the field",
+	"Calculated from other fields with a formula": "Calculated from other fields with a formula",
+	"There must be a value in every row": "There must be a value in every row",
+	"Different rows must have different values for this field": "Different rows must have different values for this field"
 }
