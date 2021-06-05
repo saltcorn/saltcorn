@@ -216,12 +216,19 @@ module.exports = {
       },
     ],
     run: async ({ row, table, configuration: { code }, user, ...rest }) => {
+      const Actions = {}
+      Object.entries(getState().actions).forEach(([k,v])=>{
+        Actions[k]=(args={})=>{
+          v.run({row, table, user, configuration: args, ...rest, ...args})
+        }
+      })
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
         row,
         user,
         console,
+        Actions,
         ...(row || {}),
         ...getState().function_context,
         ...rest,
