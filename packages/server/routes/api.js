@@ -1,3 +1,7 @@
+/**
+ * API handler
+ * @type {module:express-promise-router}
+ */
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
@@ -28,7 +32,9 @@ const limitFields = (fields) => (r) => {
     return r;
   }
 };
-
+/**
+ * Select Table rows using GET
+ */
 router.get(
   "/:tableName/",
   setTenant,
@@ -85,6 +91,10 @@ router.get(
     )(req, res, next);
   })
 );
+/**
+ * Call Action (Trigger) using POST
+ * Note! You cannot call to table Action (if you will have table with sush name)
+ */
 router.post(
   "/action/:actionname/",
   setTenant,
@@ -109,6 +119,9 @@ router.post(
     }
   })
 );
+/**
+ * Insert into Table using POST
+ */
 router.post(
   "/:tableName/",
   setTenant,
@@ -175,7 +188,10 @@ router.post(
     )(req, res, next);
   })
 );
-
+/**
+ * Update Table row directed by ID using POST
+ * POST api/<table>/id
+ */
 router.post(
   "/:tableName/:id",
   setTenant,
@@ -234,6 +250,9 @@ router.post(
     )(req, res, next);
   })
 );
+/**
+ * Delete Table row by ID using DELETE
+ */
 router.delete(
   "/:tableName/:id",
   setTenant,
@@ -267,3 +286,8 @@ router.delete(
     )(req, res, next);
   })
 );
+// TBD list actions (triggers)
+// TBD list tables
+// TBD list views
+// TBD list pages
+// TBD list files

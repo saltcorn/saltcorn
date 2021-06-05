@@ -46,7 +46,13 @@ const post_btn = (
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}">${
     icon ? `<i class="${icon}"></i>&nbsp;` : ""
   }${s}</button></form>`;
-
+/**
+ * UI Form for Delete Item confirmation
+ * @param href - href
+ * @param req - Request
+ * @param what - Item
+ * @returns {string} return html form
+ */
 const post_delete_btn = (href, req, what) =>
   `<form action="${text(href)}" method="post" >
     <input type="hidden" name="_csrf" value="${req.csrfToken()}">

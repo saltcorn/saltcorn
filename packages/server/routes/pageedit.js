@@ -241,10 +241,18 @@ const getPageList = (rows, roles, req) => {
     )
   );
 };
-
+/**
+ * Root pages configuration Form
+ * Allows to configure root page for each role
+ * @param pages - list of pages
+ * @param roles - list of roles
+ * @param req - request
+ * @returns {Form} return Form
+ */
 const getRootPageForm = (pages, roles, req) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
+    submitLabel: req.__("Save"),
     submitButtonClass: "btn-outline-primary",
     onChange: "remove_outline(this)",
     blurb: req.__(

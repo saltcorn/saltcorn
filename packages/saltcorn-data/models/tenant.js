@@ -1,8 +1,16 @@
+/**
+ * Tenant Management Data Layer Access
+ *
+ */
 const db = require("../db");
 const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
 const { sqlsanitize } = require("../db/internal");
 const { setConfig } = require("./config");
+/**
+ * List all Tenants
+ * @type {*|(function(...[*]=): *)}
+ */
 const getAllTenants = contract(
   is.fun([], is.promise(is.array(is.str))),
   async () => {
@@ -10,11 +18,20 @@ const getAllTenants = contract(
     return tens.map(({ subdomain }) => subdomain);
   }
 );
-
+/**
+ * Create Tenant and switch to It:
+ * - normalize domain name
+ * - create db schema
+ * - reset db schema (create required )
+ * - change current base_url
+ * @type {*|(function(...[*]=): *)}
+ */
 const createTenant = contract(
   is.fun([is.str, is.maybe(is.str)], is.promise(is.undefined)),
   async (subdomain, newurl) => {
+      // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
+    // add info about tenant into main site
     const id = await db.insert(
       "_sc_tenants",
       { subdomain: saneDomain, email: "" },
@@ -32,20 +49,35 @@ const createTenant = contract(
     });
   }
 );
-
+/**
+ * Delete Tenant
+ * Note! This is deleting all tenant data in database!
+ * @type {*|(function(...[*]=): *)}
+ */
 const deleteTenant = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (sub) => {
     const subdomain = domain_sanitize(sub);
+    // drop tenant db schema
     await db.query(`drop schema if exists "${subdomain}" CASCADE `);
+    // delete information about tenant from main site
     await db.deleteWhere("_sc_tenants", { subdomain });
   }
 );
-
+/**
+ * Sanitize Domain (Normalize domain name).
+ * - force to lower case
+ * - remove . in name
+ * @type {*|(function(...[*]=): *)}
+ */
 const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
   sqlsanitize(s.replace(".", "").toLowerCase())
 );
-
+/**
+ * Call fuction f for each Tenant
+ * @param f - called function
+ * @returns {Promise<void>} no result
+ */
 const eachTenant = async (f) => {
   await f();
   if (db.is_it_multi_tenant()) {
