@@ -321,7 +321,6 @@ router.get(
         );
       },
     };
-    console.log(trigger);
     let table, row;
     if (trigger.table_id) {
       table = await Table.findOne(trigger.table_id);
