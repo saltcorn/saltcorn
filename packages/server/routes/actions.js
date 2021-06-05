@@ -1,3 +1,7 @@
+/**
+ * Actions (Triggers) Handler
+ * @type {module:express-promise-router}
+ */
 const Router = require("express-promise-router");
 const {
   isAdmin,

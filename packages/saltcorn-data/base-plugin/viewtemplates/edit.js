@@ -52,7 +52,7 @@ const configuration_workflow = (req) =>
             Delete: [
               {
                 name: "after_delete_url",
-                label: "URL after delete",
+                label: req.__("URL after delete"),
                 type: "String",
               },
             ],
@@ -66,17 +66,17 @@ const configuration_workflow = (req) =>
             });
             fields.push({
               name: "password",
-              label: "Password",
+              label: req.__("Password"),
               type: "String",
             });
             fields.push({
               name: "passwordRepeat",
-              label: "Password Repeat",
+              label: req.__("Password Repeat"),
               type: "String",
             });
             fields.push({
               name: "remember",
-              label: "Remember me",
+              label: req.__("Remember me"),
               type: "Bool",
             });
 
@@ -132,7 +132,7 @@ const configuration_workflow = (req) =>
               formFields.push(
                 new Field({
                   name: "preset_" + f.name,
-                  label: "Preset " + f.label,
+                  label: req.__("Preset %s", f.label),
                   type: "String",
                   attributes: { options: Object.keys(f.presets) },
                 })

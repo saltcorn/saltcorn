@@ -1,3 +1,7 @@
+/**
+ * Auth / Admin
+ * @type {module:express-promise-router}
+ */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -135,7 +139,13 @@ const userForm = contract(
     return form;
   }
 );
-
+/**
+ * Dropdown for User Info in left menu
+ * @param user
+ * @param req
+ * @param can_reset
+ * @returns {string}
+ */
 const user_dropdown = (user, req, can_reset) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(
@@ -287,6 +297,7 @@ const user_settings_form = (req) =>
       "custom_http_headers",
     ],
     action: "/useradmin/settings",
+    submitLabel: req.__("Save"),
   });
 router.get(
   "/settings",
@@ -346,6 +357,7 @@ router.get(
       res.redirect("/useradmin");
       return;
     }
+    // TBD describe logic around letsencrypt
     const letsencrypt = getState().getConfig("letsencrypt", false);
     const has_custom =
       getState().getConfig("custom_ssl_certificate", false) &&
@@ -434,6 +446,7 @@ router.get(
                   ? span({ class: "badge badge-primary" }, req.__("Enabled"))
                   : span({ class: "badge badge-secondary" }, req.__("Disabled"))
               ),
+                // TBD change to button
               link("/useradmin/ssl/custom", req.__("Edit custom SSL certificates")),
             ],
           },
@@ -535,7 +548,7 @@ router.get(
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
                     // TBD localization
-                  user.api_token ? "Reset" : "Generate",
+                  user.api_token ? req.__("Reset") : req.__("Generate"),
                   req.csrfToken()
                 )
               ),
