@@ -210,8 +210,8 @@ module.exports = {
   run_js_code: {
     configFields: async ({ table }) => {
       const fields = table ? (await table.getFields()).map((f) => f.name) : [];
-      const vars = [
-        "row",
+      const vars = [      
+        ...(table ? ["row"] : []),
         "user",
         "console",
         "Actions",
