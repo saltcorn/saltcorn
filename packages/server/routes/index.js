@@ -1,3 +1,7 @@
+/**
+ * Index is Main Router of App
+ * @type {module:express-promise-router}
+ */
 const table = require("./tables");
 const field = require("./fields");
 const list = require("./list");

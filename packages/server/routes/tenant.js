@@ -41,7 +41,12 @@ const { getConfig } = require("@saltcorn/data/models/config");
 
 const router = new Router();
 module.exports = router;
-
+/**
+ * Declare Form to create Tenant
+ * @param req - Request
+ * @returns {Form} - Saltcorn Form Declaration
+ */
+// TBD add form field email for tenant admin
 const tenant_form = (req) =>
   new Form({
     action: "/tenant/create",
@@ -59,12 +64,27 @@ const tenant_form = (req) =>
       },
     ],
   });
-
+/**
+ * Check that user has role that allowed to create tenants
+ * By default Admin role (id is 10) has rights to create tenants.
+ * You can specify config variable "role_to_create_tenant" to overwrite this.
+ * Note that only one role currently can have such rights simultaneously.
+ * @param req - Request
+ * @returns {boolean} true if role has righs to create tenant
+ */
+// TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
 const create_tenant_allowed = (req) => {
   const required_role = +getState().getConfig("role_to_create_tenant") || 10;
   const user_role = req.user ? req.user.role_id : 10;
   return user_role <= required_role;
 };
+/**
+ * Check that String is IPv4 address
+ * @param hostname
+ * @returns {boolean|this is string[]}
+ */
+// TBD not sure that false is correct return if type of is not string
+// TBD Add IPv6 support
 const is_ip_address = (hostname) => {
   if (typeof hostname !== "string") return false;
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
@@ -120,7 +140,12 @@ router.get(
     );
   })
 );
-
+/**
+ * Return URL of new Tenant
+ * @param req - Request
+ * @param subdomain - Tenant Subdomain name string
+ * @returns {string}
+ */
 const getNewURL = (req, subdomain) => {
   var ports = "";
   const host = req.get("host");
@@ -133,11 +158,14 @@ const getNewURL = (req, subdomain) => {
 
   return newurl;
 };
-
+/**
+ * Create Tenant UI Main logic
+ */
 router.post(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
+      // check that multi-tenancy is enabled
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -148,19 +176,25 @@ router.post(
       );
       return;
     }
+    // check that user has rights
     if (!create_tenant_allowed(req)) {
       res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
+    // declare  ui form
     const form = tenant_form(req);
+    // validate ui form
     const valres = form.validate(req.body);
     if (valres.errors)
       res.sendWrap(
         req.__("Create application"),
+        // render ui form if validation finished with error
         renderForm(form, req.csrfToken())
       );
     else {
+        // normalize domain name
       const subdomain = domain_sanitize(valres.success.subdomain);
+      // get list of tenants
       const allTens = await getAllTenants();
       if (allTens.includes(subdomain) || !subdomain) {
         form.errors.subdomain = req.__(
@@ -194,7 +228,9 @@ router.post(
     }
   })
 );
-
+/**
+ * List tenants HTTP GET Web UI
+ */
 router.get(
   "/list",
   setTenant,
@@ -315,24 +351,53 @@ router.post(
     }
   })
 );
+/**
+ * Get Tenant info
+ * @param subdomain
+ * @returns {Promise<*>}
+ */
+// TBD move this function data layer or just separate file(reengineering)
 const get_tenant_info = async (subdomain) => {
   const saneDomain = domain_sanitize(subdomain);
 
   return await db.runWithTenant(saneDomain, async () => {
     let info = {};
+    // TBD fix the first user issue because not always firt user by id is creator of tenant
     const firstUser = await User.find({}, { orderBy: "id", limit: 1 });
     if (firstUser && firstUser.length > 0) {
       info.first_user_email = firstUser[0].email;
     }
+    // users count
     info.nusers = await db.count("users");
+    // roles count
+    info.nroles = await db.count("_sc_roles");
+    // tables count
     info.ntables = await db.count("_sc_tables");
+    // table fields count
+    info.nfields = await db.count("_sc_fields");
+    // views count
     info.nviews = await db.count("_sc_views");
+    // files count
     info.nfiles = await db.count("_sc_files");
+    // pages count
     info.npages = await db.count("_sc_pages");
+    // triggers (actions) ccount
+    info.nactions = await db.count("_sc_triggers");
+    // error messages count
+    info.nerrors = await db.count("_sc_errors");
+    // config items count
+    info.nconfigs = await db.count("_sc_config");
+    // plugins count
+    info.nplugins = await db.count("_sc_plugins");
+    // TBD decide Do we need count tenants, table constraints, migrations
+    // base url
     info.base_url = await getConfig("base_url");
     return info;
   });
 };
+/**
+ * Tenant info
+ */
 router.get(
   "/info/:subdomain",
   setTenant,
@@ -350,6 +415,7 @@ router.get(
     }
     const { subdomain } = req.params;
     const info = await get_tenant_info(subdomain);
+    // get list of files
     let files;
     await db.runWithTenant(subdomain, async () => {
       files = await File.find({});
@@ -363,15 +429,22 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__(`%s tenant`,text(subdomain)),
+            title: req.__(`%s tenant statistics`,text(subdomain)),
+              // TBD make more pretty view - in ideal with charts
             contents: [
               table(
-                tr(th(req.__("E-mail")), td(info.first_user_email)),
-                tr(th(req.__("Users")), td(info.nusers)),
-                tr(th(req.__("Tables")), td(info.ntables)),
-                tr(th(req.__("Views")), td(info.nviews)),
-                tr(th(req.__("Pages")), td(info.npages)),
-                tr(th(req.__("Files")), td(info.nfiles))
+                tr(th(req.__("E-mail")),     td(a({ href: 'mailto:'+info.first_user_email  }, info.first_user_email))),
+                tr(th(req.__("Users")),             td(a({ href: info.base_url+"useradmin"  }, info.nusers))),
+                tr(th(req.__("Roles")),             td(a({ href: info.base_url+"roleadmin"  }, info.nroles))),
+                tr(th(req.__("Tables")),            td(a({ href: info.base_url+"table"      }, info.ntables))),
+                tr(th(req.__("Table columns")),     td(a({ href: info.base_url+"table"      }, info.nfields))),
+                tr(th(req.__("Views")),             td(a({ href: info.base_url+"viewedit"   }, info.nviews))),
+                tr(th(req.__("Pages")),             td(a({ href: info.base_url+"pageedit"   }, info.npages))),
+                tr(th(req.__("Files")),             td(a({ href: info.base_url+"files"      }, info.nfiles))),
+                tr(th(req.__("Actions")),           td(a({ href: info.base_url+"actions"    }, info.nactions))),
+                tr(th(req.__("Plugins")),           td(a({ href: info.base_url+"plugins"    }, info.nplugins))),
+                tr(th(req.__("Configuration items")), td(a({ href: info.base_url+"admin"   }, info.nconfigs))),
+                tr(th(req.__("Crashlogs")),         td(a({ href: info.base_url+"crashlog"     }, info.nerrors)))
               ),
             ],
           },
@@ -382,6 +455,7 @@ router.get(
               renderForm(
                 new Form({
                   action: "/tenant/info/" + text(subdomain),
+                  submitLabel: req.__("Save"),
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
                   fields: [
@@ -417,6 +491,10 @@ router.get(
     });
   })
 );
+/**
+ * Show Information about Tenant
+ * /tenant/info
+ */
 router.post(
   "/info/:subdomain",
   setTenant,
@@ -442,6 +520,9 @@ router.post(
     res.redirect(`/tenant/info/${text(subdomain)}`);
   })
 );
+/**
+ * Execute Delete of tenant
+ */
 router.post(
   "/delete/:sub",
   setTenant,

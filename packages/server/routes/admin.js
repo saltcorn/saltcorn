@@ -80,6 +80,7 @@ const site_id_form = (req) =>
       "multitenancy_enabled",
     ],
     action: "/admin",
+    submitLabel: req.__("Save"),
   });
 
 const email_form = async (req) => {
@@ -96,6 +97,7 @@ const email_form = async (req) => {
     action: "/admin/email",
   });
   form.submitButtonClass = "btn-outline-primary";
+  form.submitLabel = req.__("Save");
   form.onChange =
     "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
