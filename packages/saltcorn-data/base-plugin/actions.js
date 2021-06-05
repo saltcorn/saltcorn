@@ -207,7 +207,14 @@ module.exports = {
     },
   },
   run_js_code: {
-    configFields: [{ name: "code", label: "Code", input_type: "textarea" }],
+    configFields: [
+      {
+        name: "code",
+        label: "Code",
+        input_type: "code",
+        attributes: { mode: "application/javascript" },
+      },
+    ],
     run: async ({ row, table, configuration: { code }, user, ...rest }) => {
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
