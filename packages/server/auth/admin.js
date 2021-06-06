@@ -547,9 +547,7 @@ router.get(
                 )
               ),
               // button for remove api token
-              // TBD Sorry. Need help how to hide correctly button Remove Token when api token is undefined.
-              !user.api_token ? text("") :
-              div(
+              user.api_token && div(
                   { class: "mt-4" },
                   post_btn(
                       `/useradmin/remove-api-token/${user.id}`,
