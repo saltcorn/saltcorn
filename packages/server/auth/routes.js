@@ -14,16 +14,11 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
 const {
-  mkTable,
   renderForm,
-  wrap,
-  h,
-  link,
-  post_btn,
 } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
-  div,
+  a,
   text,
   table,
   tbody,
@@ -48,9 +43,12 @@ module.exports = router;
 
 const loginForm = (req, isCreating) => {
   const postAuthMethods = Object.entries(getState().auth_methods)
+      // TBD unresolved parameter K
+      // TBD unresolved postUsernamePassword
     .filter(([k, v]) => v.postUsernamePassword)
     .map(([k, v]) => v);
   const user_sublabel = postAuthMethods
+      // TBD unresolved usernameLabel
     .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
     .join(", ");
   return new Form({
@@ -168,6 +166,7 @@ router.get("/logout", setTenant, (req, res) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {
+        // TBD unresolved function next
       if (err) return next(err);
       req.logout();
       res.redirect("/auth/login");
@@ -464,7 +463,7 @@ router.get(
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
-      req.flash("danger", "This is the wrong place");
+      req.flash("danger", req.__("This is the wrong place"));
       res.redirect("/auth/login");
       return;
     }
@@ -481,7 +480,7 @@ router.post(
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
-      req.flash("danger", "This is the wrong place");
+      req.flash("danger", req.__("This is the wrong place"));
       res.redirect("/auth/login");
       return;
     }
@@ -713,12 +712,14 @@ const userIdKey = (body) => {
   else return "nokey";
 };
 const ipLimiter = rateLimit({
+    // TBD create config parameter
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   handler,
 });
 
 const userLimiter = rateLimit({
+    // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
   keyGenerator: (req) => userIdKey(req.body),
@@ -740,6 +741,7 @@ router.post(
     userLimiter.resetKey(userIdKey(req.body));
     if (req.session.cookie)
       if (req.body.remember) {
+          // TBD create config parameter
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
       } else {
         req.session.cookie.expires = false; // Cookie expires at end of session
@@ -879,7 +881,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         title: req.__("User"),
         contents: table(
           tbody(
-            tr(th(req.__("Email: ")), td(req.user.email)),
+            tr(th(req.__("Email: ")), td(a({ href: 'mailto:'+req.user.email  }, req.user.email))),
             tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
           )
         ),
@@ -901,7 +903,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
     ],
   };
 };
-
+/**
+ * Set language
+ */
 router.post(
   "/setlanguage",
   setTenant,
@@ -947,7 +951,11 @@ router.get(
     );
   })
 );
-
+/**
+ * Define set email form for user
+ * @param req
+ * @returns {Form}
+ */
 const setEmailForm = (req) =>
   new Form({
     action: "/auth/set-email",
@@ -956,7 +964,9 @@ const setEmailForm = (req) =>
       { name: "email", label: req.__("Email"), type: "String", required: true },
     ],
   });
-
+/**
+ * Render form for set email for user
+ */
 router.get(
   "/set-email",
   setTenant,
@@ -967,7 +977,9 @@ router.get(
     );
   })
 );
-
+/**
+ * Execute set email for user
+ */
 router.post(
   "/set-email",
   setTenant,
@@ -1010,7 +1022,9 @@ router.post(
     );
   })
 );
-
+/**
+ * Execute Change Password for User
+ */
 router.post(
   "/settings",
   setTenant,

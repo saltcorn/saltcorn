@@ -144,7 +144,7 @@ const send_infoarch_page = (args) => {
       ...(tenant_list
         ? [
             { text: "Tenants", href: "/tenant/list" },
-            { text: "Tenant settings", href: "/tenant/settings" },
+            { text: "Multitenancy", href: "/tenant/settings" },
           ]
         : []),
     ],

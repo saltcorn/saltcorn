@@ -589,16 +589,20 @@ router.get(
           ),
       };
     }
+    // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
       div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
       div(
         { class: "mx-auto" },
-        a(
-          { href: `/list/${table.name}` },
-          i({ class: "fas fa-2x fa-edit" }),
+        a( // TBD Decide about edit of users table data - currently doesnt work - I had put link to useradmin
+             { href: table.name === "users" ? `/useradmin/`
+                     :  fields.length === 1 ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                        :`/list/${table.name}` },
+            i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
-          req.__("Edit")
+          // Fix problem with edition of table with only one column ID / Primary Key -
+          fields.length === 1 ? req.__("Add more fields to enable edit") : req.__( "Edit")
         )
       ),
       div(

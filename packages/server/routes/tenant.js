@@ -294,6 +294,7 @@ const tenant_settings_form = (req) =>
     req,
     field_names: ["role_to_create_tenant", "create_tenant_warning"],
     action: "/tenant/settings",
+    submitLabel: req.__("Save"),
   });
 
 router.get(
@@ -316,10 +317,10 @@ router.get(
     send_infoarch_page({
       res,
       req,
-      active_sub: "Tenant settings",
+      active_sub: "Multitenancy settings",
       contents: {
         type: "card",
-        title: req.__("Tenant settings"),
+        title: req.__("Multitenancy settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -336,10 +337,10 @@ router.post(
       send_infoarch_page({
         res,
         req,
-        active_sub: "Tenant settings",
+        active_sub: "Multitenancy settings",
         contents: {
           type: "card",
-          title: req.__("Tenant settings"),
+          title: req.__("Multitenancy settings"),
           contents: [renderForm(form, req.csrfToken())],
         },
       });
