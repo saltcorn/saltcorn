@@ -26,7 +26,7 @@ describe("view list endpoint", () => {
     await request(app)
       .get("/view/authorlist")
       .expect(toInclude("Tolstoy"))
-      .expect(toNotInclude("728"));
+      .expect(toNotInclude(">728<"));
   });
 });
 describe("nonexisting view", () => {

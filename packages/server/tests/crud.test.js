@@ -217,9 +217,9 @@ describe("history", () => {
     await request(app)
       .get("/list/_versions/books/" + tolstoy.id)
       .set("Cookie", loginCookie)
-      .expect(toInclude("729"))
-      .expect(toInclude("730"))
-      .expect(toNotInclude("728"))
+      .expect(toInclude(">729<"))
+      .expect(toInclude(">730<"))
+      .expect(toNotInclude(">728<"))
       .expect(toInclude("Leo Tolstoy"));
   });
   it("restores old version", async () => {

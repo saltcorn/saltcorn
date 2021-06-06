@@ -116,7 +116,7 @@ input[type="color"].form-control {
 }
 
 #builder-main-canvas .is-text a {
-  pointer-events: none;  
+  pointer-events: none;
   text-decoration: underline;
 }
 
@@ -255,3 +255,4 @@ div[data-inline-edit-dest-url]:hover .editicon {
 #scmodal .admin-edit-bar {
   display: none;
 }
+

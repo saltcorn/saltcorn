@@ -150,7 +150,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
     : [];
   const stdHeaders = [
     {
-      headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"</script>`,
+      headerTag: `<script>var _sc_globalCsrf = "${req.csrfToken()}"; var _sc_version_tag = "${version_tag}";</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
     { script: `/static_assets/${version_tag}/saltcorn.js` },
