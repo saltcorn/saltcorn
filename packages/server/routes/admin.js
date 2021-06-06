@@ -82,7 +82,11 @@ const site_id_form = (req) =>
     action: "/admin",
     submitLabel: req.__("Save"),
   });
-
+/**
+ * Email settings form definition
+ * @param req - request
+ * @returns {Promise<Form>} form
+ */
 const email_form = async (req) => {
   const form = await config_fields_form({
     req,

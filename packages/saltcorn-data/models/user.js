@@ -151,8 +151,24 @@ class User {
     );
     return reset_password_token_uuid;
   }
+
+  /**
+   * Add new API token to user
+   * @returns {Promise<*|string>}
+   */
   async getNewAPIToken() {
     const api_token = uuidv4();
+    await db.update("users", { api_token }, this.id);
+    this.api_token = api_token;
+    return api_token;
+  }
+
+  /**
+   * Remove API token for user
+   * @returns {Promise<null>}
+   */
+  async removeAPIToken() {
+    const api_token = null;
     await db.update("users", { api_token }, this.id);
     this.api_token = api_token;
     return api_token;
@@ -163,7 +179,7 @@ class User {
     if (pw.length < 8) return "Too short";
     if (dumbPasswords.check(pw)) return "Too common";
   }
-
+// TBD that validation works
   static valid_email(email) {
     return validator.validate(email);
   }

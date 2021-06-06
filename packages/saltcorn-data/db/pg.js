@@ -182,7 +182,9 @@ const update = async (tbl, obj, id, opts = {}) => {
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
     .join();
   var valList = kvs.map(([k, v]) => v);
-  valList.push(id);
+  // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
+  //valList.push(id === "undefined"? obj[opts.pk_name]: id);
+  valList.push(id === "undefined"? obj[opts.pk_name||"id"]: id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;

@@ -22,22 +22,15 @@ const {
   isAdmin,
   setTenant,
   error_catcher,
-  csrfField,
 } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
   a,
   div,
-  button,
   text,
   span,
   code,
-  form,
-  option,
-  select,
-  br,
-  h4,
   h5,
   i,
   p,
@@ -537,21 +530,33 @@ router.get(
             type: "card",
             title: req.__("API token"),
             contents: [
+              // api token for user
               div(
                 user.api_token
                   ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
                       code(user.api_token)
                   : req.__("No API token issued")
               ),
+              // button for reset or generate api token
               div(
                 { class: "mt-4" },
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
-                    // TBD localization
                   user.api_token ? req.__("Reset") : req.__("Generate"),
                   req.csrfToken()
                 )
               ),
+              // button for remove api token
+              user.api_token && div(
+                  { class: "mt-4" },
+                  post_btn(
+                      `/useradmin/remove-api-token/${user.id}`,
+                      // TBD localization
+                      user.api_token ? req.__("Remove") : req.__("Generate"),
+                      req.csrfToken(),
+                      { req: req, confirm: true }
+                  )
+                ),
             ],
           },
         ],
@@ -559,7 +564,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Save user data
+ */
 router.post(
   "/save",
   setTenant,
@@ -601,7 +608,9 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
-
+/**
+ * Reset password for yser
+ */
 router.post(
   "/reset-password/:id",
   setTenant,
@@ -615,7 +624,9 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
-
+/**
+ * Send verification email for user
+ */
 router.post(
   "/send-verification/:id",
   setTenant,
@@ -635,7 +646,9 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
-
+/**
+ * Get new api token
+ */
 router.post(
   "/gen-api-token/:id",
   setTenant,
@@ -649,7 +662,25 @@ router.post(
     res.redirect(`/useradmin/${u.id}`);
   })
 );
+/**
+ * Remove api token
+ */
+router.post(
+    "/remove-api-token/:id",
+    setTenant,
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const { id } = req.params;
+        const u = await User.findOne({ id });
+        await u.removeAPIToken();
+        req.flash("success", req.__(`API token removed`));
 
+        res.redirect(`/useradmin/${u.id}`);
+    })
+);
+/**
+ * Set random password
+ */
 router.post(
   "/set-random-password/:id",
   setTenant,

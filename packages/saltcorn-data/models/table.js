@@ -36,7 +36,7 @@ const transposeObjects = (objs) => {
   }
   return res;
 };
-
+// TBD configure date format
 const dateFormats = [moment.ISO_8601];
 
 const isDate = function (date) {

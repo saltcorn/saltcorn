@@ -130,7 +130,10 @@ VersionsField.prototype = new jsGrid.Field({
 });
 jsGrid.fields.versions = VersionsField;
 `;
-
+/**
+ * List View Router (show list view)
+ * /list/:table
+ */
 router.get(
   "/:tname",
   setTenant,
