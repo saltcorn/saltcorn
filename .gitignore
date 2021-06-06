@@ -118,3 +118,4 @@ infosec_scan_tmp/
 .DS_Store
 
 docs/
+package-lock.json
