@@ -175,7 +175,36 @@ $(function () {
   $("[data-explainers]").change(function () {
     setExplainer(this);
   });
+
+  const codes = [];
+  $("textarea.to-code").each(function () {
+    codes.push(this);
+  });
+  if (codes.length > 0)
+    enable_codemirror(() => {
+      codes.forEach((el) => {
+        console.log($(el).attr("mode"), el);
+        CodeMirror.fromTextArea(el, {
+          lineNumbers: true,
+          mode: $(el).attr("mode"),
+        });
+      });
+    });
 });
+
+function enable_codemirror(f) {
+  $("<link/>", {
+    rel: "stylesheet",
+    type: "text/css",
+    href: `/static_assets/${_sc_version_tag}/codemirror.css`,
+  }).appendTo("head");
+  $.ajax({
+    url: `/static_assets/${_sc_version_tag}/codemirror.min.js`,
+    dataType: "script",
+    cache: true,
+    success: f,
+  });
+}
 
 //https://stackoverflow.com/a/6021027
 function updateQueryStringParameter(uri, key, value) {

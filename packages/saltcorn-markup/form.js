@@ -53,14 +53,15 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
           div(
             { class: "form-check" },
             inner,
-            
+
             label(
               {
                 for: `input${text_attr(hdr.form_name)}`,
                 class: "form-check-label",
-              }, 
+              },
               text(hdr.label)
-            ),hdr.sublabel && " &mdash; "+i(text(hdr.sublabel)),
+            ),
+            hdr.sublabel && " &mdash; " + i(text(hdr.sublabel)),
             text(error)
           )
         )
@@ -116,6 +117,14 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       }>${opts}</select>`;
     case "textarea":
       return `<textarea class="form-control ${validClass} ${
+        hdr.class || ""
+      }"${maybe_disabled} data-fieldname="${text_attr(
+        hdr.form_name
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+        v[hdr.form_name]
+      )}</textarea>`;
+    case "code":
+      return `<textarea mode="${(hdr.attributes||{}).mode||""}" class="to-code form-control ${validClass} ${
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
