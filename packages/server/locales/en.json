@@ -687,5 +687,6 @@
 	"The type determines the kind of data that can be stored in the field": "The type determines the kind of data that can be stored in the field",
 	"Calculated from other fields with a formula": "Calculated from other fields with a formula",
 	"There must be a value in every row": "There must be a value in every row",
-	"Different rows must have different values for this field": "Different rows must have different values for this field"
+	"Different rows must have different values for this field": "Different rows must have different values for this field",
+	"Add more fields to enable edit": "Add more fields to enable edit"
 }
