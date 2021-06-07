@@ -623,5 +623,16 @@
 	"Tenant settings updated": "Настройки мультитенантности обновлены",
 	"Multitenancy settings": "Мультитенантность (настройки)",
 	"Multitenancy": "Мультитенантность",
-	"Add more fields to enable edit": "Добавьте поля для разблокировки редактирования"
+	"Add more fields to enable edit": "Добавьте поля для разблокировки редактирования",
+	"Role updated": "Роль обновлена",
+	"History": "История",
+	"No row selected": "Не найдено записей",
+	"Single item view": "Single item view",
+	"The underlying individual view of each table row": "The underlying individual view of each table row",
+	"Items per page": "Items per page",
+	"Masonry columns": "Masonry columns",
+	"Hide pagination": "Скрыть пагинацию",
+	"A list view shown on the left, to select rows": "A list view shown on the left, to select rows",
+	"The view to show the selected row": "The view to show the selected row",
+	"Which related tables would you like to show in sub-lists below the selected item?": "Which related tables would you like to show in sub-lists below the selected item?"
 }

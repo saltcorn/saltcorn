@@ -776,7 +776,10 @@ router.post(
     }
   })
 );
-
+/**
+ * Delete Table Route Handler definition
+ * /delete:/id, where id is table id in _sc_tables
+ */
 router.post(
   "/delete/:id",
   setTenant,
@@ -799,6 +802,16 @@ router.post(
     }
   })
 );
+/**
+ * Table badges to show in System Table list views
+ * Currently supports:
+ * - Owned - if ownership_field_id? What is it?
+ * - History - if table has versioning
+ * - External - if this is external table
+ * @param t - table object
+ * @param req - http request
+ * @returns {string} - html string with list of badges
+ */
 const tableBadges = (t, req) => {
   let s = "";
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
@@ -806,6 +819,10 @@ const tableBadges = (t, req) => {
   if (t.external) s += badge("info", req.__("External"));
   return s;
 };
+/**
+ * List View of Tables Route Handler
+ *
+ */
 router.get(
   "/",
   setTenant,

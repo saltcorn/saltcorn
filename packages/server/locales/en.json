@@ -687,5 +687,16 @@
 	"The type determines the kind of data that can be stored in the field": "The type determines the kind of data that can be stored in the field",
 	"Calculated from other fields with a formula": "Calculated from other fields with a formula",
 	"There must be a value in every row": "There must be a value in every row",
-	"Different rows must have different values for this field": "Different rows must have different values for this field"
+	"Different rows must have different values for this field": "Different rows must have different values for this field",
+	"Multitenancy": "Multitenancy",
+	"Subdomain": "Subdomain",
+	"Information": "Information",
+	"Found %s tenants": "Found %s tenants",
+	"Create new tenant": "Create new tenant",
+	"%s tenant statistics": "%s tenant statistics",
+	"Table columns": "Table columns",
+	"Configuration items": "Configuration items",
+	"Crashlogs": "Crashlogs",
+	"Multitenancy settings": "Multitenancy settings",
+	"See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>": "See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>"
 }

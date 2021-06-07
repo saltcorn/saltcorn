@@ -3,7 +3,11 @@ const path = require("path");
 const db = require("./db");
 
 const dateFormat = require("dateformat");
-
+/**
+ * Migrate
+ * @param schema0 - schema name
+ * @returns {Promise<void>}
+ */
 const migrate = async (schema0) => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating", schema);
@@ -62,7 +66,10 @@ const migrate = async (schema0) => {
   }
   if (!is_sqlite) client.release(true);
 };
-
+/**
+ * Create blank migration
+ * @returns {Promise<void>}
+ */
 const create_blank_migration = async () => {
   var time = dateFormat(new Date(), "yyyymmddHHMM");
   const fnm = path.join(__dirname, "migrations", `${time}.js`);
