@@ -194,21 +194,15 @@ class State {
     this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews } };
   }
 
-  remove_plugin(name) {
+  async remove_plugin(name) {
     delete this.plugins[name];
-    this.reload_plugins();
+    await this.reload_plugins();
   }
 
-  reload_plugins() {
-    this.views = [];
+  async reload_plugins() {
     this.viewtemplates = {};
-    this.triggers = [];
-    this.tables = [];
     this.types = {};
-    this.pages = [];
     this.fields = [];
-    this.files = {};
-    this.configs = {};
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
@@ -221,7 +215,7 @@ class State {
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
-    this.refresh();
+    await this.refresh();
   }
 }
 

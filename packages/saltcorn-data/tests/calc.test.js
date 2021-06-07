@@ -188,7 +188,7 @@ describe("calculated", () => {
       getState().functions
     );
     expect(xres).toEqual({
-      expr_string: "add5(1) + add3(4) + (await asyncAdd2(x))",
+      expr_string: "add5(1) + add3(4) + await asyncAdd2(x)",
       isAsync: true,
     });
     await Field.create({
