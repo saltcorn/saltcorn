@@ -116,3 +116,6 @@ infosec_scan_tmp/
 *.pyc
 
 .DS_Store
+
+docs/
+package-lock.json

@@ -43,7 +43,7 @@ jobs:
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
       - run: npm install -g lerna
-      - run: lerna bootstrap
+      - run: lerna bootstrap --no-ci
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
       - run: pip3 install requests pytest

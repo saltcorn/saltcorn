@@ -14,19 +14,19 @@
     "@oclif/plugin-help": "^3.2.2",
     "@saltcorn/data": "^0.5.0",
     "@saltcorn/server": "^0.5.0",
-    "cli-ux": "^5.4.5",
+    "cli-ux": "^5.5.1",
     "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
-    "inquirer": "^7.1.0",
-    "js-yaml": "^4.0.0",
+    "inquirer": "^7.3.3",
+    "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.1",
     "sudo": "^1.0.3",
-    "systeminformation": "^5.6.10",
-    "tcp-port-used": "^1.0.1",
+    "systeminformation": "^5.7.4",
+    "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "^1.22.2",
+    "@oclif/dev-cli": "^1.26.0",
     "globby": "^10.0.2"
   },
   "engines": {
