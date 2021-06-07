@@ -231,7 +231,7 @@ describe("Field.distinct_values", () => {
   });
   it("gives string values", async () => {
     const books = await Table.findOne({ name: "books" });
-    books.insertRow({ author: "Herman Melville", pages: 56 });
+    await books.insertRow({ author: "Herman Melville", pages: 56 });
     const fc = await Field.findOne({ name: "author" });
     const dvs = await fc.distinct_values();
     expect(dvs).toEqual([
