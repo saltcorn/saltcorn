@@ -676,14 +676,14 @@ router.post(
       for (const p of ps) {
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
       }
-      getState().refresh();
+      //await getState().refresh();
     }
     if (form.values.config) {
       //config+crashes+nontable triggers
       await db.deleteWhere("_sc_triggers");
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config");
-      getState().refresh();
+      await getState().refresh();
     }
     if (form.values.users) {
       await db.deleteWhere("_sc_config");
