@@ -87,7 +87,7 @@ describe("User", () => {
       reset_password_token: "",
       password: "newpaass",
     });
-    expect(res2).toEqual({ error: "Invalid token" });
+    expect(res2).toEqual({ error: "Invalid token or invalid token length or incorrect email" });
   });
   it("should reset API token", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
