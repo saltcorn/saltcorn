@@ -1048,7 +1048,7 @@ router.post(
   })
 );
 
-const renameForm = (table_id) =>
+const renameForm = (table_id, req) =>
   new Form({
     action: `/table/rename/${table_id}`,
     labelCols: 3,
@@ -1069,7 +1069,7 @@ router.get(
     const { id } = req.params;
     const table = await Table.findOne({ id });
 
-    const form = renameForm(table.id);
+    const form = renameForm(table.id. req);
     res.sendWrap(req.__(`Rename table %s`, table.name), {
       above: [
         {
@@ -1098,7 +1098,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
-    const form = renameForm(table.id);
+    const form = renameForm(table.id, req);
 
     form.validate(req.body);
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
