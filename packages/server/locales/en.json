@@ -688,7 +688,7 @@
 	"Calculated from other fields with a formula": "Calculated from other fields with a formula",
 	"There must be a value in every row": "There must be a value in every row",
 	"Different rows must have different values for this field": "Different rows must have different values for this field",
-	"Add more fields to enable edit": "Add more fields to enable edit"
+	"Add more fields to enable edit": "Add more fields to enable edit",
 	"Multitenancy": "Multitenancy",
 	"Subdomain": "Subdomain",
 	"Information": "Information",
