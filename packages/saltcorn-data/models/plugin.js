@@ -5,7 +5,14 @@ const { is_stale } = require("./pack");
 const fetch = require("node-fetch");
 const { stringToJSON } = require("../utils");
 
+/**
+ * Plugin Class
+ */
 class Plugin {
+  /**
+   * Plugin constructor
+   * @param o
+   */
   constructor(o) {
     this.id = o.id ? +o.id : o.id;
     this.name = o.name;
@@ -19,13 +26,30 @@ class Plugin {
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
+
+  /**
+   * Find one plugin
+   * @param where - where object
+   * @returns {Promise<Plugin|null|*>} return existing plugin or new plugin
+   */
   static async findOne(where) {
     const p = await db.selectMaybeOne("_sc_plugins", where);
     return p ? new Plugin(p) : p;
   }
+
+  /**
+   * Find plugins
+   * @param where - where object
+   * @returns {Promise<*>} returns plugins list
+   */
   static async find(where) {
     return (await db.select("_sc_plugins", where)).map((p) => new Plugin(p));
   }
+
+  /**
+   * Update or Insert plugin
+   * @returns {Promise<void>}
+   */
   async upsert() {
     const row = {
       name: this.name,
@@ -41,12 +65,22 @@ class Plugin {
       await db.update("_sc_plugins", row, this.id);
     }
   }
+
+  /**
+   * Delete plugin
+   * @returns {Promise<void>}
+   */
   async delete() {
     await db.deleteWhere("_sc_plugins", { id: this.id });
     const { getState } = require("../db/state");
     await getState().remove_plugin(this.name);
   }
 
+  /**
+   * Upgrade plugin version
+   * @param requirePlugin
+   * @returns {Promise<void>}
+   */
   async upgrade_version(requirePlugin) {
     if (this.source === "npm") {
       const old_version = this.version;
@@ -61,6 +95,10 @@ class Plugin {
     }
   }
 
+  /**
+   * List of views relay on this plugin
+   * @returns {Promise<*[]|*>}
+   */
   async dependant_views() {
     const views = await View.find({});
     const { getState } = require("../db/state");
@@ -76,6 +114,10 @@ class Plugin {
       .map((v) => v.name);
   }
 
+  /**
+   * List plugins availabe in store
+   * @returns {Promise<*>}
+   */
   static async store_plugins_available() {
     const { getState } = require("../db/state");
     const stored = getState().getConfig("available_plugins", false);
@@ -104,14 +146,26 @@ class Plugin {
         .map((p) => new Plugin(p))
         .filter((p) => isRoot || !p.has_auth);
   }
+
+  /**
+   *
+   * @returns {Promise<*>}
+   */
   static async store_plugins_available_from_store() {
     //console.log("fetch plugins");
+    // TODO support of other store URLs
     const response = await fetch("http://store.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map((p) => new Plugin(p));
   }
 
+  /**
+   *
+   * @param name
+   * @returns {Promise<null|Plugin>}
+   */
   static async store_by_name(name) {
+    // TODO support of other store URLs
     const response = await fetch(
       "http://store.saltcorn.com/api/extensions?name=" +
         encodeURIComponent(name)
@@ -122,6 +176,7 @@ class Plugin {
     else return null;
   }
 }
+
 Plugin.contract = {
   variables: {
     id: is.maybe(is.posint),

@@ -5,6 +5,9 @@ const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
 const validator = require("email-validator");
 
+/**
+ * User
+ */
 class User {
   constructor(o) {
     this.email = o.email;
@@ -32,13 +35,30 @@ class User {
     contract.class(this);
   }
 
+  /**
+   * Get bcrypt hash for Password
+   * @param pw - password string
+   * @returns {Promise<*>}
+   */
   static async hashPassword(pw) {
     return await bcrypt.hash(pw, 10);
   }
+
+  /**
+   * Check password
+   * @param pw - password string
+   * @returns {*}
+   */
   checkPassword(pw) {
     return bcrypt.compareSync(pw, this.password);
   }
 
+  /**
+   * Change password
+   * @param newpw - new password string
+   * @param expireToken - if true than force reset password token
+   * @returns {Promise<void>} no result
+   */
   async changePasswordTo(newpw, expireToken) {
     const password = await User.hashPassword(newpw);
     this.password = password;
@@ -47,6 +67,13 @@ class User {
     await db.update("users", upd, this.id);
   }
 
+  /**
+   * Find or Create User
+   * @param k
+   * @param v
+   * @param uo
+   * @returns {Promise<{session_object: {_attributes: {}}, _attributes: {}}|User|*|boolean|{error: string}|User>}
+   */
   static async findOrCreateByAttribute(k, v, uo = {}) {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
     if (u) return u;
@@ -71,6 +98,12 @@ class User {
       }
     }
   }
+
+  /**
+   * Create user
+   * @param uo - user object
+   * @returns {Promise<{error: string}|User>}
+   */
   static async create(uo) {
     const { email, password, passwordRepeat, role_id, ...rest } = uo;
     const u = new User({ email, password, role_id });
@@ -93,6 +126,10 @@ class User {
     return u;
   }
 
+  /**
+   * Create session object for user
+   * @returns {{role_id: number, language, id, email, tenant: *}}
+   */
   get session_object() {
     return {
       email: this.email,
@@ -102,6 +139,12 @@ class User {
       tenant: db.getTenantSchema(),
     };
   }
+
+  /**
+   * Authenticate User
+   * @param uo - user object
+   * @returns {Promise<boolean|User>}
+   */
   static async authenticate(uo) {
     const { password, ...uoSearch } = uo;
     const urows = await User.find(uoSearch, { limit: 2 });
@@ -112,30 +155,70 @@ class User {
     if (cmp) return new User(urow);
     else return false;
   }
+
+  /**
+   * Find users list
+   * @param where - where object
+   * @param selectopts - select options
+   * @returns {Promise<*>}
+   */
   static async find(where, selectopts) {
     const us = await db.select("users", where, selectopts);
     return us.map((u) => new User(u));
   }
+
+  /**
+   * Find one user
+   * @param where - where object
+   * @returns {Promise<User|*>}
+   */
   static async findOne(where) {
     const u = await db.selectMaybeOne("users", where);
     return u ? new User(u) : u;
   }
+
+  /**
+   * Check that user table is not empty in database
+   * @deprecated use method count()
+   * @returns {Promise<boolean>} true if there are users in db
+   */
   static async nonEmpty() {
     const res = await db.count("users");
     return res > 0;
   }
+
+  /**
+   * Delete user based on session object
+   * @returns {Promise<void>}
+   */
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
+  /**
+   * Set language for User in database
+   * @param language
+   * @returns {Promise<void>}
+   */
   async set_language(language) {
     await this.update({ language });
   }
+
+  /**
+   * Update User
+   * @param row
+   * @returns {Promise<void>}
+   */
   async update(row) {
     await db.update("users", row, this.id);
   }
+
+  /**
+   * Get new reset token
+   * @returns {Promise<*|string>}
+   */
   async getNewResetToken() {
     const reset_password_token_uuid = uuidv4();
     const reset_password_expiry = new Date();
@@ -174,16 +257,33 @@ class User {
     return api_token;
   }
 
+  /**
+   * Validate password
+   * @param pw
+   * @returns {string}
+   */
   static unacceptable_password_reason(pw) {
     if (typeof pw !== "string") return "Not a string";
     if (pw.length < 8) return "Too short";
     if (dumbPasswords.check(pw)) return "Too common";
   }
-// TBD that validation works
+
+  /**
+   * Validate email
+   * @param email
+   * @returns {boolean}
+   */
+  // TBD that validation works
   static valid_email(email) {
     return validator.validate(email);
   }
 
+  /**
+   * Verification with token
+   * @param email - email sting
+   * @param verification_token - verification token string
+   * @returns {Promise<{error: string}|boolean>} true if verification passed, error string if not
+   */
   static async verifyWithToken({ email, verification_token }) {
     if (
       typeof verification_token !== "string" ||
@@ -203,6 +303,13 @@ class User {
     return true;
   }
 
+  /**
+   * Reset password using token
+   * @param email - email address string
+   * @param reset_password_token - reset password token string
+   * @param password
+   * @returns {Promise<{error: string}|{success: boolean}>}
+   */
   static async resetPasswordWithToken({
     email,
     reset_password_token,
@@ -213,7 +320,7 @@ class User {
       typeof email !== "string" ||
       reset_password_token.length < 10
     )
-      return { error: "Invalid token" };
+      return { error: "Invalid token or invalid token length or incorrect email" };
     const u = await User.findOne({ email });
     if (u && new Date() < u.reset_password_expiry && u.reset_password_token) {
       const match = bcrypt.compareSync(
@@ -234,16 +341,34 @@ class User {
       return { error: "User not found or expired token" };
     }
   }
+
+  /**
+   * Count users in database
+   * @param where
+   * @returns {Promise<number>}
+   */
+  // TBD I think that method is simular to notEmppty() but more powerfull.
+  // TBD use some rules for naming of methods - e.g. this method will have name count_users or countUsers because of methods relay on roles in this class
   static async count(where) {
     return await db.count("users", where || {});
   }
 
+  /**
+   * Get available roles
+   * @returns {Promise<*>}
+   */
   static async get_roles() {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
   }
+
+  /**
+   * Generate password
+   * @returns {*}
+   */
   static generate_password() {
     const candidate = is.str.generate().split(" ").join("");
+    // TBD low performance impact - un
     if (candidate.length < 10) return User.generate_password();
     else return candidate;
   }

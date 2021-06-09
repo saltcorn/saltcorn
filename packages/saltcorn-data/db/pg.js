@@ -1,6 +1,7 @@
 /**
  * PostgreSQL data access layer
  */
+// TODO move postgresql specific to this module
 const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
@@ -25,6 +26,14 @@ function set_sql_logging(val = true) {
 }
 
 /**
+ * Get sql logging state
+ * @returns {boolean} if true then sql logging eabled
+ */
+function get_sql_logging() {
+  return log_sql_enabled;
+}
+
+/**
  * Log SQL statement to console
  * @param sql - SQL statement
  * @param vs - any additional parameter
@@ -42,21 +51,23 @@ function sql_log(sql, vs) {
 const close = async () => {
   if (pool) await pool.end();
 };
+
 /**
  * Change connection (close connection and open new connection from connObj)
- * @param connObj -
+ * @param connObj - connection object
  * @returns {Promise<void>}
  */
 const changeConnection = async (connObj = {}) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
 };
+
 /**
- * Excute Select statement
+ * Execute Select statement
  * @param tbl - table name
  * @param whereObj - where object
  * @param selectopts - select options
- * @returns {Promise<*>}
+ * @returns {Promise<*>} return rows
  */
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
@@ -68,6 +79,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 
   return tq.rows;
 };
+
 /**
  * Reset DB Schema using drop schema and recreate it
  * Atterntion! You will lost data after call this function!
@@ -84,6 +96,7 @@ const drop_reset_schema = async (schema) => {
 
   await pool.query(sql);
 };
+
 /**
  * Get count of rows in table
  * @param tbl - table name
@@ -100,6 +113,7 @@ const count = async (tbl, whereObj) => {
 
   return parseInt(tq.rows[0].count);
 };
+
 /**
  * Get version of PostgreSQL
  * @param short - if true return short version info else full version info
@@ -116,6 +130,7 @@ const getVersion = async (short) => {
   }
   return v;
 };
+
 /**
  * Delete rows in table
  * @param tbl - table name
@@ -133,12 +148,13 @@ const deleteWhere = async (tbl, whereObj) => {
 
   return tq.rows;
 };
+
 /**
  * Insert rows into table
  * @param tbl - table name
  * @param obj - columns names and data
  * @param opts - columns attributes
- * @returns {Promise<*>} returns primary key column. If promary key column is not defined then return value of Id column.
+ * @returns {Promise<*>} returns primary key column or Id column value. If primary key column is not defined then return value of Id column.
  */
 const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
@@ -168,6 +184,7 @@ const insert = async (tbl, obj, opts = {}) => {
   if (opts.noid) return;
   else return rows[0][opts.pk_name || "id"];
 };
+
 /**
  * Update table records
  * @param tbl - table name
@@ -191,11 +208,12 @@ const update = async (tbl, obj, id, opts = {}) => {
   sql_log(q, valList);
   await pool.query(q, valList);
 };
+
 /**
  * Select one record
  * @param tbl - table name
  * @param where - where object
- * @returns {Promise<*>} return firs record from sql result
+ * @returns {Promise<*>} return first record from sql result
  */
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -204,6 +222,7 @@ const selectOne = async (tbl, where) => {
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
   } else return rows[0];
 };
+
 /**
  * Select one record or null if no records
  * @param tbl - table name
@@ -215,13 +234,18 @@ const selectMaybeOne = async (tbl, where) => {
   if (rows.length === 0) return null;
   else return rows[0];
 };
+
 /**
  * Open db connection
+ * Only for PG.
  * @returns {Promise<*>} db connection object
  */
+// TBD Currently this function supported only for PG
 const getClient = async () => await pool.connect();
+
 /**
  * Reset sequence
+ * Only for PG
  * @param tblname - table name
  * @returns {Promise<void>} no result
  */
@@ -233,6 +257,7 @@ const reset_sequence = async (tblname) => {
   )}";`;
   await pool.query(sql);
 };
+
 /**
  * Add unique constraint
  * @param table_name - table name
@@ -251,6 +276,7 @@ const add_unique_constraint = async (table_name, field_names) => {
   sql_log(sql);
   await pool.query(sql);
 };
+
 /**
  * Drop unique constraint
  * @param table_name - table name
@@ -269,6 +295,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
 };
 /**
  * Copy data from CSV to table?
+ * Only for PG
  * @param fileStream - file stream
  * @param tableName - table name
  * @param fieldNames - list of columns
@@ -294,6 +321,7 @@ const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
 };
 /**
  * Copy data from CSV to table?
+ * Only for PG
  * @param fileStream - file stream
  * @param tableName - table name
  * @param fieldNames - list of columns
@@ -329,6 +357,7 @@ module.exports = {
   sql_log,
   changeConnection,
   set_sql_logging,
+  get_sql_logging,
   getClient,
   mkWhere,
   drop_reset_schema,
