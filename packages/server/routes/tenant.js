@@ -263,6 +263,11 @@ router.get(
                   link(getNewURL(req, r.subdomain), text(r.subdomain)),
               },
               {
+                  label: req.__("Description"),
+                  key: (r) =>
+                      text(r.description),
+              },
+              {
                 label: req.__("Information"),
                 key: (r) =>
                   a(

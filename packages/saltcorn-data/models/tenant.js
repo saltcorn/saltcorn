@@ -25,16 +25,28 @@ const getAllTenants = contract(
  * - reset db schema (create required )
  * - change current base_url
  * @type {*|(function(...[*]=): *)}
+ *
+ * Arguments:
+ * subdomain - tenant name (subdomain)
+ * newurl - base url of tenant
+ * email - email of creator
+ * description - description of tenant
  */
 const createTenant = contract(
-  is.fun([is.str, is.maybe(is.str)], is.promise(is.undefined)),
-  async (subdomain, newurl) => {
+  is.fun([is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)], is.promise(is.undefined)),
+  // TODO how to set names for arguments
+  async ( subdomain, newurl, email, description) => {
       // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
+
+    // add email
+    const saneEmail = typeof email !== "undefined" ? email : "";
+    // add description
+    const saneDescription = description !== "undefined" ? description : null;
     // add info about tenant into main site
     const id = await db.insert(
       "_sc_tenants",
-      { subdomain: saneDomain, email: "" },
+      { subdomain: saneDomain, email: saneEmail, description: saneDescription },
       { noid: true }
     );
     //create schema
