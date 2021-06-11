@@ -742,7 +742,7 @@ class Table {
     )) {
       const reffield = fields.find((f) => f.name === ref);
       if (!reffield)
-        throw new InvalidConfiguration(`Key field not found: ${ref}`);
+        throw new InvalidConfiguration(`Key field ${ref} not found in table ${this.name}`);
       const reftable = reffield.reftable_name;
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
