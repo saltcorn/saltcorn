@@ -33,7 +33,7 @@ class ReleaseCommand extends Command {
       );
     };
     const publish = (dir) =>
-      spawnSync("npm", ["publish", "--dry-run"], {
+      spawnSync("npm", ["publish"], {
         stdio: "inherit",
         cwd: `packages/${dir}/`,
       });
@@ -54,7 +54,14 @@ class ReleaseCommand extends Command {
     // 3. run npm update
     // 3. publish
     updatePkgJson("saltcorn-cli");
-
+    spawnSync("npm", ["update"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
+    spawnSync("npm", ["audit", "fix"], {
+        stdio: "inherit",
+        cwd: `packages/saltcorn-cli/`,
+      });
     publish("saltcorn-cli");
     // commit
     // tag
