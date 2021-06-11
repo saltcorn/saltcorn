@@ -59,12 +59,23 @@ class ReleaseCommand extends Command {
       cwd: `packages/saltcorn-cli/`,
     });
     spawnSync("npm", ["audit", "fix"], {
-        stdio: "inherit",
-        cwd: `packages/saltcorn-cli/`,
-      });
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
     publish("saltcorn-cli");
-    // commit
-    // tag
+    //git commit tag and push
+    spawnSync("git", ["commit", "-am", "v" + version], {
+      stdio: "inherit",
+    });
+    spawnSync("git", ["tag", "-a", "v" + version, "-m", "v" + version], {
+      stdio: "inherit",
+    });
+    spawnSync("git", ["push", "origin", "v" + version], {
+      stdio: "inherit",
+    });
+    spawnSync("git", ["push"], {
+      stdio: "inherit",
+    });
     this.exit(0);
   }
 }
