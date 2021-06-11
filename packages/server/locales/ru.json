@@ -627,12 +627,14 @@
 	"Role updated": "Роль обновлена",
 	"History": "История",
 	"No row selected": "Не найдено записей",
-	"Single item view": "Single item view",
-	"The underlying individual view of each table row": "The underlying individual view of each table row",
-	"Items per page": "Items per page",
-	"Masonry columns": "Masonry columns",
+	"Single item view": "Вид одной записи",
+	"The underlying individual view of each table row": "Представление для отображения одной записи",
+	"Items per page": "Строк на страницу",
+	"Masonry columns": "Вид плитками",
 	"Hide pagination": "Скрыть пагинацию",
-	"A list view shown on the left, to select rows": "A list view shown on the left, to select rows",
-	"The view to show the selected row": "The view to show the selected row",
-	"Which related tables would you like to show in sub-lists below the selected item?": "Which related tables would you like to show in sub-lists below the selected item?"
+	"A list view shown on the left, to select rows": "Представление с шаблоном List, отображающее список записей слева",
+	"The view to show the selected row": "Представление, отображающее выбранную запись",
+	"Description allows you to give more information about the table": "Описание позволяет дать больше информации о таблице",
+	"Version history allows to track table data changes": "История версий позволяет осуществлять трекинг изменений данных в таблице",
+	"Description allows you to give more information about the view.": "Описание позволяет дать больше информации о представлении."
 }
