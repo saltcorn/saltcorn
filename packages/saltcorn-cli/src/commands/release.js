@@ -32,13 +32,12 @@ class ReleaseCommand extends Command {
         JSON.stringify(json, null, 2)
       );
     };
-    const publish = (dir) => {
-        console.log("publish", dir);
+    const publish = (dir) =>
       spawnSync("npm", ["publish", "--dry-run"], {
         stdio: "inherit",
-        cwd: `packages/${dir}/package.json`,
+        cwd: `packages/${dir}/`,
       });
-    };
+
     //for each package:
     // 1. update version
     // 2. update dependencies for other packages
