@@ -699,5 +699,12 @@
 	"Configuration items": "Configuration items",
 	"Crashlogs": "Crashlogs",
 	"Multitenancy settings": "Multitenancy settings",
-	"See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>": "See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>"
+	"See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>": "See <a href=\"https://github.com/saltcorn/saltcorn\">GitHub repository</a> for instructions<p>",
+	"API token for this user: ": "API token for this user: ",
+	"Reset": "Reset",
+	"Generate": "Generate",
+	"URL after delete": "URL after delete",
+	"Version history allows to track table data changes": "Version history allows to track table data changes",
+	"Description allows you to give more information about the table": "Description allows you to give more information about the table",
+	"Description allows you to give more information about the view.": "Description allows you to give more information about the view."
 }
