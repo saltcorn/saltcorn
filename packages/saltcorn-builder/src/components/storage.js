@@ -34,6 +34,29 @@ const getColWidths = (segment) => {
 const default_breakpoints = (segment) =>
   ntimes(segment.besides.length, () => segment.breakpoint || "");
 
+const allElements = [
+  Text,
+  Empty,
+  Columns,
+  JoinField,
+  Field,
+  ViewLink,
+  Action,
+  HTMLCode,
+  LineBreak,
+  Aggregation,
+  Card,
+  Image,
+  Link,
+  View,
+  SearchBar,
+  Container,
+  Column,
+  DropDownFilter,
+  Tabs,
+  ToggleFilter,
+];
+
 export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
@@ -58,7 +81,7 @@ export const layoutToNodes = (layout, query, actions) => {
           key={ix}
           alt={segment.alt}
           field={segment.field}
-          srctype={segment.srctype||"File"}
+          srctype={segment.srctype || "File"}
           url={segment.url}
           block={segment.block || false}
           isFormula={segment.isFormula || {}}
@@ -325,6 +348,23 @@ export const craftToSaltcorn = (nodes) => {
     else return { above: node.nodes.map((nm) => go(nodes[nm])) };
   };
   const go = (node) => {
+    const matchElement = allElements.find(
+      (e) =>
+        node.displayName === e.craft.displayName &&
+        e.craft.related.fields &&
+        e.craft.related.segment_type
+    );
+    if (matchElement) {
+      const related = e.craft.related;
+      const s = { type: related.segment_type };
+      if (related.hasContents) s.contents = get_nodes(node);
+      related.fields.forEach((f) => {
+        s[f.segment_name || f.name] = node.props[f.name];
+      });
+      if (related.fields.some((f) => f.canBeFormula))
+        s.isFormula = node.props.isFormula;
+      return s;
+    }
     if (node.isCanvas) {
       if (node.displayName === Container.craft.displayName)
         return {
@@ -368,16 +408,6 @@ export const craftToSaltcorn = (nodes) => {
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
-        };
-      else if (node.displayName === Card.craft.displayName)
-        return {
-          contents: get_nodes(node),
-          type: "card",
-          title: node.props.title,
-          isFormula: node.props.isFormula,
-          url: node.props.url,
-          shadow: node.props.shadow,
-          noPadding: node.props.noPadding,
         };
       else return get_nodes(node);
     }

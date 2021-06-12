@@ -104,5 +104,18 @@ Card.craft = {
   displayName: "Card",
   related: {
     settings: CardSettings,
+    segment_type: "card",
+    hasContents: true,
+    fields: [
+      {
+        label: "Card title",
+        name: "title",
+        type: "String",
+        canBeFormula: true,
+      },
+      { label: "URL", name: "url", type: "String", canBeFormula: true },
+      { label: "Shadow", name: "shadow", type: "Bool" },
+      { label: "No padding", name: "noPadding", type: "Bool" },
+    ],
   },
 };
