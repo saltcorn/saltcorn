@@ -61,6 +61,29 @@ export const layoutToNodes = (layout, query, actions) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
+
+    const MatchElement = allElements.find(
+      (e) =>
+        e.craft.related.fields &&
+        e.craft.related.segment_type &&
+        e.craft.related.segment_type == segment.type
+    );
+    if (MatchElement) {
+      const related = MatchElement.craft.related;
+      const props = {};
+      related.fields.forEach((f) => {
+        const v = segment[f.segment_name || f.name];
+        props[f.name] = typeof v === "undefined" ? f.default : v;
+      });
+      if (related.fields.some((f) => f.canBeFormula))
+        props.isFormula = segment.isFormula;
+      if (related.hasContents)
+        <Element key={ix} canvas {...props} is={MatchElement}>
+          {toTag(segment.contents)}
+        </Element>;
+      else return <MatchElement key={ix} {...props} />;
+    }
+
     if (segment.type === "blank" && segment.isHTML) {
       return <HTMLCode text={segment.contents} />;
     } else if (segment.type === "blank") {
@@ -214,21 +237,6 @@ export const layoutToNodes = (layout, query, actions) => {
           isFormula={segment.isFormula || {}}
         />
       );
-    } else if (segment.type === "card") {
-      return (
-        <Element
-          key={ix}
-          canvas
-          title={segment.title}
-          url={segment.url}
-          shadow={segment.shadow}
-          noPadding={segment.noPadding}
-          isFormula={segment.isFormula || {}}
-          is={Card}
-        >
-          {toTag(segment.contents)}
-        </Element>
-      );
     } else if (segment.type === "container") {
       return (
         <Element
@@ -355,7 +363,7 @@ export const craftToSaltcorn = (nodes) => {
         e.craft.related.segment_type
     );
     if (matchElement) {
-      const related = e.craft.related;
+      const related = matchElement.craft.related;
       const s = { type: related.segment_type };
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
