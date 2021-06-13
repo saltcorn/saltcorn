@@ -100,23 +100,6 @@ export const layoutToNodes = (layout, query, actions) => {
           icon={segment.icon}
         />
       );
-    } else if (segment.type === "link") {
-      return (
-        <Link
-          key={ix}
-          url={segment.url}
-          text={segment.text}
-          block={segment.block || false}
-          nofollow={segment.nofollow || false}
-          target_blank={segment.target_blank || false}
-          isFormula={segment.isFormula || {}}
-          textStyle={segment.textStyle || ""}
-          link_src={segment.link_src || "URL"}
-          link_style={segment.link_style || ""}
-          link_icon={segment.link_icon || ""}
-          link_size={segment.link_size || ""}
-        />
-      );
     } else if (segment.type === "view") {
       return (
         <View
@@ -450,22 +433,7 @@ export const craftToSaltcorn = (nodes) => {
         ntabs: node.props.ntabs,
       };
     }
-    if (node.displayName === Link.craft.displayName) {
-      return {
-        type: "link",
-        text: node.props.text,
-        url: node.props.url,
-        block: node.props.block,
-        nofollow: node.props.nofollow,
-        target_blank: node.props.target_blank,
-        isFormula: node.props.isFormula,
-        textStyle: node.props.textStyle,
-        link_src: node.props.link_src,
-        link_style: node.props.link_style,
-        link_size: node.props.link_size,
-        link_icon: node.props.link_icon,
-      };
-    }
+
     if (node.displayName === View.craft.displayName) {
       return {
         type: "view",
