@@ -5,6 +5,8 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNode } from "@craftjs/core";
+
 
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
@@ -424,13 +426,37 @@ export const SettingsFromFields = (fields) => () => {
   const {
     actions: { setProp },
   } = node;
+  const fullWidth = (f) => f.type === "String";
   return (
     <table className="w-100">
       <tbody>
-      {fields.map((f, ix) => {
-
-
-      })}
+        {fields.map((f, ix) => {
+          <tr key={ix}>
+            {fullWidth(f) ? (
+              <td colSpan="2">
+                <label>{f.label}</label>
+                <ConfigField
+                    field={f}
+                    props={node}
+                    setProp={setProp}                    
+                  />
+              </td>
+            ) : (
+              <Fragment>
+                <td>
+                  <label>{f.label}</label>
+                </td>
+                <td>
+                  <ConfigField
+                    field={f}
+                    props={node}
+                    setProp={setProp}                    
+                  />
+                </td>
+              </Fragment>
+            )}
+          </tr>;
+        })}
       </tbody>
     </table>
   );
