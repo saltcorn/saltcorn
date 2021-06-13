@@ -74,8 +74,8 @@ export const layoutToNodes = (layout, query, actions) => {
       const related = MatchElement.craft.related;
       const props = {};
       related.fields.forEach((f) => {
-        const v = segment[f.segment_name || f.name];
-        props[f.name] = typeof v === "undefined" ? f.default : v;
+        const v = segment[f.segment_name || f.name || f];
+        props[f.name || f] = typeof v === "undefined" ? f.default : v;
       });
       if (related.fields.some((f) => f.canBeFormula))
         props.isFormula = segment.isFormula;
@@ -100,19 +100,6 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
           icon={segment.icon}
-        />
-      );
-    } else if (segment.type === "image") {
-      return (
-        <Image
-          key={ix}
-          alt={segment.alt}
-          field={segment.field}
-          srctype={segment.srctype || "File"}
-          url={segment.url}
-          block={segment.block || false}
-          isFormula={segment.isFormula || {}}
-          fileid={segment.fileid || 0}
         />
       );
     } else if (segment.type === "link") {
@@ -370,7 +357,7 @@ export const craftToSaltcorn = (nodes) => {
       const s = { type: related.segment_type };
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
-        s[f.segment_name || f.name] = node.props[f.name];
+        s[f.segment_name || f.name || f] = node.props[f.name || f];
       });
       if (related.fields.some((f) => f.canBeFormula))
         s.isFormula = node.props.isFormula;
@@ -470,19 +457,6 @@ export const craftToSaltcorn = (nodes) => {
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
         ntabs: node.props.ntabs,
-      };
-    }
-
-    if (node.displayName === Image.craft.displayName) {
-      return {
-        type: "image",
-        alt: node.props.alt,
-        fileid: node.props.fileid,
-        block: node.props.block,
-        srctype: node.props.srctype,
-        url: node.props.url,
-        field: node.props.field,
-        isFormula: node.props.isFormula,
       };
     }
     if (node.displayName === Link.craft.displayName) {
