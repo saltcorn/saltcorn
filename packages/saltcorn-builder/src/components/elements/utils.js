@@ -420,6 +420,8 @@ export const SettingsFromFields = (fields) => () => {
     fields.forEach((f) => {
       ps[f.name] = node.data.props[f.name];
     });
+    if (fields.some((f) => f.canBeFormula))
+      ps.isFormula = node.data.props.isFormula;
     return ps;
   });
   const {
@@ -427,6 +429,18 @@ export const SettingsFromFields = (fields) => () => {
   } = node;
   const fullWidth = (f) => ["String", "Bool", "textarea"].includes(f.type);
   const needLabel = (f) => f.type !== "Bool";
+  const inner = (f) =>
+    f.canBeFormula ? (
+      <OrFormula
+        nodekey={f.name}
+        isFormula={node.isFormula}
+        {...{ setProp, node }}
+      >
+        <ConfigField field={f} props={node} setProp={setProp} />
+      </OrFormula>
+    ) : (
+      <ConfigField field={f} props={node} setProp={setProp} />
+    );
   return (
     <table className="w-100">
       <tbody>
@@ -435,16 +449,14 @@ export const SettingsFromFields = (fields) => () => {
             {fullWidth(f) ? (
               <td colSpan="2">
                 {needLabel(f) && <label>{f.label}</label>}
-                <ConfigField field={f} props={node} setProp={setProp} />
+                {inner(f)}
               </td>
             ) : (
               <Fragment>
                 <td>
                   <label>{f.label}</label>
                 </td>
-                <td>
-                  <ConfigField field={f} props={node} setProp={setProp} />
-                </td>
+                <td>{inner(f)}</td>
               </Fragment>
             )}
           </tr>
