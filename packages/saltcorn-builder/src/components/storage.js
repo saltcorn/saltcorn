@@ -88,9 +88,7 @@ export const layoutToNodes = (layout, query, actions) => {
       else return <MatchElement key={ix} {...props} />;
     }
 
-    if (segment.type === "blank" && segment.isHTML) {
-      return <HTMLCode text={segment.contents} />;
-    } else if (segment.type === "blank") {
+   if (segment.type === "blank") {
       return (
         <Text
           key={ix}
@@ -420,13 +418,6 @@ export const craftToSaltcorn = (nodes) => {
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
         icon: node.props.icon,
-      };
-    }
-    if (node.displayName === HTMLCode.craft.displayName) {
-      return {
-        type: "blank",
-        isHTML: true,
-        contents: node.props.text,
       };
     }
     if (node.displayName === SearchBar.craft.displayName) {

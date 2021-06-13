@@ -177,6 +177,7 @@ Image.craft = {
   },
   related: {
     settings: ImageSettings,
+    segment_type: "image",
     fields: [
       { name: "alt", canBeFormula: true },
       { name: "url", canBeFormula: true },

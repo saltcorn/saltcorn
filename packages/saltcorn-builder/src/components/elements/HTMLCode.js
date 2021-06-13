@@ -23,26 +23,7 @@ export const HTMLCode = ({ text }) => {
   );
 };
 
-export const HTMLCodeSettings = () => {
-  const {
-    actions: { setProp },
-    text,
-  } = useNode((node) => ({
-    text: node.data.props.text,
-  }));
-  return (
-    <div>
-      <label>HTML code</label>
-      <textarea
-        rows="6"
-        type="text"
-        className="text-to-display w-100"
-        value={text}
-        onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
-      ></textarea>
-    </div>
-  );
-};
+
 const fields = [
   {
     label: "HTML Code",
@@ -58,7 +39,7 @@ HTMLCode.craft = {
     settings: SettingsFromFields(fields),
     segment_type: "blank",
     segment_vars: { isHTML: true },
-    segment_match: (segment) => segment.isHtml,
+    segment_match: (segment) => segment.isHTML,
     fields,
   },
 };
