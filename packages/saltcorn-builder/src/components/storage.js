@@ -51,7 +51,6 @@ const allElements = [
   View,
   SearchBar,
   Container,
-  Column,
   DropDownFilter,
   Tabs,
   ToggleFilter,
@@ -64,6 +63,7 @@ export const layoutToNodes = (layout, query, actions) => {
 
     const MatchElement = allElements.find(
       (e) =>
+        e.craft.related &&
         e.craft.related.fields &&
         e.craft.related.segment_type &&
         e.craft.related.segment_type == segment.type
@@ -78,9 +78,11 @@ export const layoutToNodes = (layout, query, actions) => {
       if (related.fields.some((f) => f.canBeFormula))
         props.isFormula = segment.isFormula;
       if (related.hasContents)
+        return (
         <Element key={ix} canvas {...props} is={MatchElement}>
           {toTag(segment.contents)}
-        </Element>;
+          </Element>
+        );
       else return <MatchElement key={ix} {...props} />;
     }
 
@@ -358,6 +360,7 @@ export const craftToSaltcorn = (nodes) => {
   const go = (node) => {
     const matchElement = allElements.find(
       (e) =>
+        e.craft.related &&
         node.displayName === e.craft.displayName &&
         e.craft.related.fields &&
         e.craft.related.segment_type
