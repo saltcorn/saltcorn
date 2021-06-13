@@ -11,7 +11,7 @@ update _sc_views set description = '' where description is null;
 update _sc_fields set description = '' where description is null;
 update _sc_pages set description = '' where description is null;
 `;
-const sql_lite = `
+const sql_sqlite = `
 alter table _sc_triggers add column description1 text default '';
 update _sc_triggers set description = '' where description is null;
 update _sc_triggers set description1 = description;
