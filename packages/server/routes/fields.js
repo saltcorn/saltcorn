@@ -61,7 +61,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Description"),
         name: "description",
-        sublabel: req.__("Description allows to give more infromation about field"),
+        sublabel: req.__("Description allows to give more information about field"),
         input_type: "text",
       }),
       new Field({
