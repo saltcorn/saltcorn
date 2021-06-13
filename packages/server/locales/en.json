@@ -706,5 +706,13 @@
 	"URL after delete": "URL after delete",
 	"Version history allows to track table data changes": "Version history allows to track table data changes",
 	"Description allows you to give more information about the table": "Description allows you to give more information about the table",
-	"Description allows you to give more information about the view.": "Description allows you to give more information about the view."
+	"Description allows you to give more information about the view.": "Description allows you to give more information about the view.",
+	"Description allows to give more information about field": "Description of field allows to give more information about field",
+	"Name of action": "Name of action",
+	"Description allows you to give more information about the action": "Description allows you to give more information about the action",
+	"The action to be taken when the trigger fires": "The action to be taken when the trigger fires",
+	"The table for which the trigger condition is checked.": "The table for which the trigger condition is checked.",
+	"Condition under which the trigger will fire": "Condition under which the trigger will fire",
+	"Test trigger": "Test trigger",
+	"Edit trigger %s": "Edit trigger %s"
 }

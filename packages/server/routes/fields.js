@@ -1,3 +1,8 @@
+/**
+ *
+ * Field Router
+ */
+
 const Router = require("express-promise-router");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -51,6 +56,13 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           if (!id && existing_names.includes(Field.labelToName(s)))
             return req.__("Column %s already exists", s);
         },
+      }),
+      // description
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__("Description allows to give more infromation about field"),
+        input_type: "text",
       }),
       new Field({
         label: req.__("Type"),
@@ -131,6 +143,7 @@ const fieldFlow = (req) =>
         calculated,
         expression,
         stored,
+        description,
       } = context;
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
@@ -145,6 +158,7 @@ const fieldFlow = (req) =>
         calculated,
         expression,
         stored,
+        description,
       };
       if (fldRow.calculated) {
         fldRow.is_unique = false;
@@ -256,12 +270,14 @@ const fieldFlow = (req) =>
               new Field({
                 name: "expression",
                 label: req.__("Formula"),
+                // todo sublabel
                 type: "String",
                 validator: expressionValidator,
               }),
               new Field({
                 name: "test_btn",
                 label: req.__("Test"),
+                // todo sublabel
                 input_type: "custom_html",
                 attributes: {
                   html: `<button type="button" id="test_formula_btn" onclick="test_formula('${
@@ -321,6 +337,7 @@ const fieldFlow = (req) =>
           const formfield = new Field({
             name: "default",
             label: req.__("Default"),
+            // todo sublabel
             type: context.type,
             required: true,
             attributes: {

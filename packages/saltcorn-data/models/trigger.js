@@ -1,11 +1,20 @@
+/**
+ *
+ * Trigger Data Access Layer
+ */
+
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { satisfies } = require("../utils");
 
+/**
+ * Trigger class
+ */
 class Trigger {
   constructor(o) {
     this.name = o.name;
     this.action = o.action;
+    this.description = o.description;
     this.table_id = !o.table_id ? null : +o.table_id;
     this.table_name = o.table_name;
     if (o.table) {
@@ -22,24 +31,45 @@ class Trigger {
     contract.class(this);
   }
 
+  /**
+   * Get JSON from Trigger
+   * @returns {{when_trigger, configuration: any, name, description, action}}
+   */
   get toJson() {
     return {
       name: this.name,
+      description: this.description, // todo not sure that is required
       action: this.action,
       when_trigger: this.when_trigger,
       configuration: this.configuration,
     };
   }
+
+  /**
+   * Find triggers in State cache
+   * @param where - condition
+   * @returns {T[]}
+   */
   static find(where) {
     const { getState } = require("../db/state");
     return getState().triggers.filter(satisfies(where));
   }
 
+  /**
+   * Find triggers in DB
+   * @param where
+   * @param selectopts
+   * @returns {Promise<*>}
+   */
   static async findDB(where, selectopts) {
     const db_flds = await db.select("_sc_triggers", where, selectopts);
     return db_flds.map((dbf) => new Trigger(dbf));
   }
 
+  /**
+   * Find all triggers
+   * @returns {Promise<*>}
+   */
   static async findAllWithTableName() {
     const schema = db.getTenantSchemaPrefix();
 
@@ -49,6 +79,11 @@ class Trigger {
     return rows.map((dbf) => new Trigger(dbf));
   }
 
+  /**
+   * Find one trigger in State cache
+   * @param where
+   * @returns {T}
+   */
   static findOne(where) {
     const { getState } = require("../db/state");
     return getState().triggers.find(
@@ -56,11 +91,22 @@ class Trigger {
     );
   }
 
+  /**
+   * Update trigger
+   * @param id
+   * @param row
+   * @returns {Promise<void>}
+   */
   static async update(id, row) {
     await db.update("_sc_triggers", row, id);
     await require("../db/state").getState().refresh_triggers();
   }
 
+  /**
+   * Create trigger
+   * @param f
+   * @returns {Promise<Trigger>}
+   */
   static async create(f) {
     const trigger = new Trigger(f);
     const { id, table_name, ...rest } = trigger;
@@ -69,11 +115,23 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
     return trigger;
   }
+
+  /**
+   * Delete current trigger
+   * @returns {Promise<void>}
+   */
   async delete() {
     await db.deleteWhere("_sc_triggers", { id: this.id });
     await require("../db/state").getState().refresh_triggers();
   }
 
+  /**
+   * Run table triggers
+   * @param when_trigger
+   * @param table
+   * @param row
+   * @returns {Promise<void>}
+   */
   static async runTableTriggers(when_trigger, table, row) {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
     for (const trigger of triggers) {
@@ -81,6 +139,11 @@ class Trigger {
     }
   }
 
+  /**
+   * Run trigger without row
+   * @param runargs
+   * @returns {Promise<*>}
+   */
   async runWithoutRow(runargs = {}) {
     const { getState } = require("../db/state");
     const action = getState().actions[this.action];
@@ -93,6 +156,13 @@ class Trigger {
       })
     );
   }
+
+  /**
+   * get triggers
+   * @param when_trigger
+   * @param table
+   * @returns {Promise<*>}
+   */
   static async getTableTriggers(when_trigger, table) {
     const { getState } = require("../db/state");
 
@@ -112,6 +182,10 @@ class Trigger {
     return triggers;
   }
 
+  /**
+   *  Trigger when options
+   * @returns {string[]}
+   */
   static get when_options() {
     return [
       "Insert",
@@ -126,7 +200,11 @@ class Trigger {
     ];
   }
 }
-
+// todo clone trigger
+/**
+ * Trigger contract
+ * @type {{variables: {when_trigger: ((function(*=): *)|*), configuration: ((function(*=): *)|*), name: ((function(*=): *)|*), action: ((function(*=): *)|*), id: ((function(*=): *)|*), table_id: ((function(*=): *)|*)}, methods: {delete: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), findOne: ((function(*=): *)|*), create: ((function(*=): *)|*), update: ((function(*=): *)|*), getTableTriggers: ((function(*=): *)|*), runTableTriggers: ((function(*=): *)|*)}}}
+ */
 Trigger.contract = {
   variables: {
     action: is.str,
