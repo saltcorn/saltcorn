@@ -139,8 +139,6 @@ export const layoutToNodes = (layout, query, actions) => {
           state={segment.state}
         />
       );
-    } else if (segment.type === "line_break") {
-      return <LineBreak key={ix} />;
     } else if (segment.type === "search_bar") {
       return (
         <SearchBar
@@ -440,10 +438,7 @@ export const craftToSaltcorn = (nodes) => {
         isHTML: true,
         contents: node.props.text,
       };
-    }
-    if (node.displayName === LineBreak.craft.displayName) {
-      return { type: "line_break" };
-    }
+    }    
     if (node.displayName === SearchBar.craft.displayName) {
       return {
         type: "search_bar",
