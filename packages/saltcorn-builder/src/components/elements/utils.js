@@ -425,7 +425,7 @@ export const SettingsFromFields = (fields) => () => {
   const {
     actions: { setProp },
   } = node;
-  const fullWidth = (f) => ["String", "Bool"].includes(f.type);
+  const fullWidth = (f) => ["String", "Bool", "textarea"].includes(f.type);
   const needLabel = (f) => f.type !== "Bool";
   return (
     <table className="w-100">

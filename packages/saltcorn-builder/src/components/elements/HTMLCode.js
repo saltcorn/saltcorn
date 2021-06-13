@@ -1,6 +1,11 @@
 import React from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps, BlockSetting, TextStyleSetting } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  SettingsFromFields,
+  TextStyleSetting,
+} from "./utils";
 
 export const HTMLCode = ({ text }) => {
   const {
@@ -38,10 +43,22 @@ export const HTMLCodeSettings = () => {
     </div>
   );
 };
+const fields = [
+  {
+    label: "HTML Code",
+    name: "text",
+    type: "textarea",
+    segment_name: "contents"
+  },
+];
 
 HTMLCode.craft = {
   displayName: "HTMLCode",
   related: {
-    settings: HTMLCodeSettings,
+    settings: SettingsFromFields(fields),
+    segment_type: "blank",
+    segment_vars: { isHTML: true },
+    segment_match: (segment) => segment.isHtml,
+    fields,
   },
 };

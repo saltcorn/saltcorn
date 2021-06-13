@@ -66,7 +66,9 @@ export const layoutToNodes = (layout, query, actions) => {
         e.craft.related &&
         e.craft.related.fields &&
         e.craft.related.segment_type &&
-        e.craft.related.segment_type == segment.type
+        e.craft.related.segment_type == segment.type &&
+        (!e.craft.related.segment_match ||
+          e.craft.related.segment_match(segment))
     );
     if (MatchElement) {
       const related = MatchElement.craft.related;
@@ -79,8 +81,8 @@ export const layoutToNodes = (layout, query, actions) => {
         props.isFormula = segment.isFormula;
       if (related.hasContents)
         return (
-        <Element key={ix} canvas {...props} is={MatchElement}>
-          {toTag(segment.contents)}
+          <Element key={ix} canvas {...props} is={MatchElement}>
+            {toTag(segment.contents)}
           </Element>
         );
       else return <MatchElement key={ix} {...props} />;
@@ -372,6 +374,7 @@ export const craftToSaltcorn = (nodes) => {
       });
       if (related.fields.some((f) => f.canBeFormula))
         s.isFormula = node.props.isFormula;
+      if (related.segment_vars) Object.assign(s, related.segment_vars);
       return s;
     }
     if (node.isCanvas) {
@@ -438,7 +441,7 @@ export const craftToSaltcorn = (nodes) => {
         isHTML: true,
         contents: node.props.text,
       };
-    }    
+    }
     if (node.displayName === SearchBar.craft.displayName) {
       return {
         type: "search_bar",
