@@ -108,41 +108,6 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.name}
           state={segment.state}
         />
-      );  
-    } else if (segment.type === "toggle_filter") {
-      return (
-        <ToggleFilter
-          key={ix}
-          name={segment.field_name}
-          value={segment.value}
-          preset_value={segment.preset_value}
-          label={segment.label}
-          size={segment.size}
-          style={segment.style}
-          block={segment.block || false}
-        />
-      );
-    } else if (segment.type === "join_field") {
-      return (
-        <JoinField
-          key={ix}
-          name={segment.join_field}
-          block={segment.block || false}
-          fieldview={segment.fieldview}
-          textStyle={segment.textStyle || ""}
-        />
-      );
-    } else if (segment.type === "aggregation") {
-      return (
-        <Aggregation
-          key={ix}
-          agg_relation={segment.agg_relation}
-          agg_field={segment.agg_field}
-          aggwhere={segment.aggwhere || ""}
-          stat={segment.stat}
-          block={segment.block || false}
-          textStyle={segment.textStyle || ""}
-        />
       );
     } else if (segment.type === "view_link") {
       return (
@@ -410,57 +375,7 @@ export const craftToSaltcorn = (nodes) => {
         state: node.props.state,
       };
     }
-    
-    if (node.displayName === ToggleFilter.craft.displayName) {
-      columns.push({
-        type: "ToggleFilter",
-        field_name: node.props.name,
-        value: node.props.value,
-        preset_value: node.props.preset_value,
-      });
-      return {
-        type: "toggle_filter",
-        block: node.props.block,
-        field_name: node.props.name,
-        value: node.props.value,
-        preset_value: node.props.preset_value,
-        label: node.props.label,
-        size: node.props.size,
-        style: node.props.style,
-      };
-    }
-    if (node.displayName === JoinField.craft.displayName) {
-      columns.push({
-        type: "JoinField",
-        join_field: node.props.name,
-        fieldview: node.props.fieldview,
-      });
-      return {
-        type: "join_field",
-        block: node.props.block,
-        join_field: node.props.name,
-        fieldview: node.props.fieldview,
-        textStyle: node.props.textStyle,
-      };
-    }
-    if (node.displayName === Aggregation.craft.displayName) {
-      columns.push({
-        type: "Aggregation",
-        agg_relation: node.props.agg_relation,
-        agg_field: node.props.agg_field,
-        aggwhere: node.props.aggwhere,
-        stat: node.props.stat,
-      });
-      return {
-        type: "aggregation",
-        block: node.props.block,
-        agg_relation: node.props.agg_relation,
-        agg_field: node.props.agg_field,
-        aggwhere: node.props.aggwhere,
-        stat: node.props.stat,
-        textStyle: node.props.textStyle,
-      };
-    }
+
     if (node.displayName === ViewLink.craft.displayName) {
       columns.push({
         type: "ViewLink",

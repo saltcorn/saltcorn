@@ -144,5 +144,15 @@ Aggregation.craft = {
   displayName: "Aggregation",
   related: {
     settings: AggregationSettings,
+    segment_type: "aggregation",
+    column_type: "Aggregation",
+    fields: [
+      "agg_relation",
+      "textStyle",
+      "block",
+      "agg_field",
+      "aggwhere",
+      "stat",
+    ],
   },
 };
