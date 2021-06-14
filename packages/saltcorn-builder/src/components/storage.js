@@ -109,15 +109,6 @@ export const layoutToNodes = (layout, query, actions) => {
           state={segment.state}
         />
       );
-    } else if (segment.type === "search_bar") {
-      return (
-        <SearchBar
-          key={ix}
-          contents={toTag(segment.contents)}
-          has_dropdown={segment.has_dropdown || false}
-          show_badges={segment.show_badges || false}
-        />
-      );
     } else if (segment.type === "field") {
       return (
         <Field
@@ -403,17 +394,7 @@ export const craftToSaltcorn = (nodes) => {
         icon: node.props.icon,
       };
     }
-    if (node.displayName === SearchBar.craft.displayName) {
-      return {
-        type: "search_bar",
-        has_dropdown: node.props.has_dropdown,
-        show_badges: node.props.show_badges,
-        contents:
-          node.linkedNodes &&
-          node.props.has_dropdown &&
-          go(nodes[node.linkedNodes["search_drop"]]),
-      };
-    }
+
     if (node.displayName === Columns.craft.displayName) {
       const widths = [...node.props.widths, 12 - sum(node.props.widths)];
       return {
