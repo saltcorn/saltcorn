@@ -1,3 +1,8 @@
+/**
+ *
+ * View Data Access Layer
+ */
+
 const db = require("../db");
 const Form = require("../models/form");
 const { contract, is } = require("contractis");
@@ -14,12 +19,16 @@ const { remove_from_menu } = require("./config");
 const { div } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 
+/**
+ * View Class
+ */
 class View {
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
     this.viewtemplate = o.viewtemplate;
     this.exttable_name = o.exttable_name;
+    this.description = o.description;
     if (o.table_id) this.table_id = o.table_id;
     if (o.table && !o.table_id) {
       this.table_id = o.table.id;
@@ -51,12 +60,22 @@ class View {
       : v;
   }
 
+  /**
+   *
+   * @param where
+   * @param selectopts
+   * @returns {Promise<*>}
+   */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const views = await db.select("_sc_views", where, selectopts);
 
     return views.map((v) => new View(v));
   }
 
+  /**
+   *
+   * @returns {Promise<*|*[]>}
+   */
   async get_state_fields() {
     if (this.viewtemplateObj.get_state_fields) {
       return await this.viewtemplateObj.get_state_fields(
@@ -66,12 +85,24 @@ class View {
       );
     } else return [];
   }
+
+  /**
+   * Get menu label
+   * @returns {*|undefined}
+   */
   get menu_label() {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
     const item = menu_items.find((mi) => mi.viewname === this.name);
     return item ? item.label : undefined;
   }
+
+  /**
+   *
+   * @param table
+   * @param pred
+   * @returns {Promise<*[]>}
+   */
   static async find_table_views_where(table, pred) {
     var link_view_opts = [];
     const link_views = await View.find(
@@ -140,19 +171,33 @@ class View {
     );
   }
 
+  /**
+   * Create view in database
+   * @param v
+   * @returns {Promise<View>}
+   */
+  // todo there hard code about roles and flag is_public
   static async create(v) {
+    // is_public flag processing
     if (!v.min_role && typeof v.is_public !== "undefined") {
       v.min_role = v.is_public ? 10 : 8;
       delete v.is_public;
     }
+    // insert view defintion into _sc_views
     const id = await db.insert("_sc_views", v);
+    // refresh views list cache
     await require("../db/state").getState().refresh_views();
     return new View({ id, ...v });
   }
 
+  /**
+   * Clone View
+   * @returns {Promise<View>}
+   */
   async clone() {
     const basename = this.name + " copy";
     let newname;
+    // todo there is hard code linmitation about 100 copies of veiew
     for (let i = 0; i < 100; i++) {
       newname = i ? `${basename} (${i})` : basename;
       const existing = await View.findOne({ name: newname });
@@ -167,6 +212,10 @@ class View {
     return await View.create(createObj);
   }
 
+  /**
+   * Delete current view from db
+   * @returns {Promise<void>}
+   */
   async delete() {
     if (this.viewtemplateObj && this.viewtemplateObj.on_delete)
       await this.viewtemplateObj.on_delete(
@@ -174,16 +223,34 @@ class View {
         this.name,
         this.configuration
       );
+    // delete view from _sc_view
     await db.deleteWhere("_sc_views", { id: this.id });
+    // remove view from menu
     await remove_from_menu({ name: this.name, type: "View" });
+    // fresh view list cache
     await require("../db/state").getState().refresh_views();
   }
+
+  /**
+   * Delete list of views
+   * @param where - condition
+   * @returns {Promise<void>}
+   */
   static async delete(where) {
     const vs = await View.find(where);
     for (const v of vs) await v.delete();
   }
+
+  /**
+   * Update View description
+   * @param v - view name
+   * @param id - id
+   * @returns {Promise<void>}
+   */
   static async update(v, id) {
+    // update view description
     await db.update("_sc_views", v, id);
+    // fresh view list cache
     await require("../db/state").getState().refresh_views();
   }
 
@@ -195,6 +262,13 @@ class View {
     if (!this.viewtemplateObj.authorise_get) return false;
     return await this.viewtemplateObj.authorise_get(arg);
   }
+
+  /**
+   * Run (Execute) View
+   * @param query
+   * @param extraArgs
+   * @returns {Promise<*>}
+   */
   async run(query, extraArgs) {
     return await this.viewtemplateObj.run(
       this.exttable_name || this.table_id,

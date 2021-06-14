@@ -1,3 +1,9 @@
+/**
+ * Embedded Types definition.
+ *
+ * More types can be added by plugin store mechanism https://store.saltcorn.com/
+ */
+
 const moment = require("moment");
 const {
   input,
@@ -18,7 +24,9 @@ const { contract, is } = require("contractis");
 const { radio_group } = require("@saltcorn/markup/helpers");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
+
 const eqStr = (x, y) => `${x}` === `${y}`;
+
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
@@ -45,7 +53,10 @@ const getStrOptions = (v, optsStr) =>
             )
           : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
-
+/**
+ * String type
+ * @type {{read: ((function(*=): (*))|*), presets: {IP: (function({req: *}): string), SessionID: (function({req: *}))}, fieldviews: {as_text: {isEdit: boolean, run: (function(*=): string|string)}, as_link: {isEdit: boolean, run: (function(*=): string)}, as_header: {isEdit: boolean, run: (function(*=): string)}, password: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, img_from_url: {isEdit: boolean, run: (function(*=, *, *): string)}, edit: {isEdit: boolean, run: (function(*=, *=, *, *, *=, *): string), configFields: (function(*): [...[{name: string, label: string, type: string}, {name: string, label: string, type: string, sublabel: string}]|*[], {name: string, label: string, type: string}])}, radio_group: {isEdit: boolean, run: (function(*=, *=, *, *=, *, *): *|string)}, textarea: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}}, contract: (function({options?: *}): (function(*=): *)|*), name: string, attributes: [{name: string, validator(*=): (string|undefined), type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}], sql_name: string, validate_attributes: (function({min_length?: *, max_length?: *, regexp?: *})), validate: (function({min_length?: *, max_length?: *, regexp?: *, re_invalid_error?: *}): function(*=): (boolean|{error: string}))}}
+ */
 const string = {
   name: "String",
   sql_name: "text",
@@ -252,7 +263,10 @@ const is_valid_regexp = (s) => {
     return false;
   }
 };
-
+/**
+ * Integer type
+ * @type {{read: ((function(*=): (number))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*=): string|*)}}, contract: (function({min?: *, max?: *}): function(*=): *), name: string, attributes: [{name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}], sql_name: string, validate_attributes: (function({min?: *, max?: *})), primaryKey: {sql_type: string}, validate: (function({min?: *, max?: *}): function(*): ({error: string}|boolean))}}
+ */
 const int = {
   name: "Integer",
   sql_name: "int",
@@ -301,7 +315,10 @@ const int = {
     return true;
   },
 };
-
+/**
+ * Color Type
+ * @type {{read: ((function(*=): (string))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*): string|string)}}, contract: (function(): (function(*=): *)|*), name: string, attributes: *[], sql_name: string, validate: (function(): function(*): boolean)}}
+ */
 const color = {
   name: "Color",
   sql_name: "text",
@@ -344,7 +361,10 @@ const color = {
     return true;
   },
 };
-
+/**
+ * Float type
+ * @type {{read: ((function(*=): (number))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*=): string|*)}}, contract: (function({min?: *, max?: *}): function(*=): *), name: string, attributes: [{name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}], sql_name: string, validate: (function({min?: *, max?: *}): function(*): ({error: string}|boolean))}}
+ */
 const float = {
   name: "Float",
   sql_name: "double precision",
@@ -402,7 +422,10 @@ const logit = (x) => {
   console.log(x);
   return x;
 };
-
+/**
+ * Date type
+ * @type {{presets: {Now: (function(): Date)}, read: ((function(*=, *=): (Date|null|undefined))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, editDay: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, yearsAgo: {isEdit: boolean, run: ((function(*=, *): (string|string|*))|*)}, show: {isEdit: boolean, run: (function(*=, *=): string|*)}, showDay: {isEdit: boolean, run: (function(*=, *=): string|*)}, format: {isEdit: boolean, run: ((function(*=, *, *=): (string|string|*))|*), configFields: [{name: string, label: string, type: string, sublabel: string}]}, relative: {isEdit: boolean, run: ((function(*=, *=): (string|string|*))|*)}}, contract: (function(): (function(*=): *)|*), name: string, attributes: *[], sql_name: string, validate: (function({}): function(*=): *)}}
+ */
 const date = {
   name: "Date",
   sql_name: "timestamp",
@@ -515,7 +538,10 @@ const date = {
   },
   validate: ({}) => (v) => v instanceof Date && !isNaN(v),
 };
-
+/**
+ * Boolean Type
+ * @type {{readFromFormRecord: ((function(*, *): (boolean|null|boolean))|*), read: ((function(*=): (boolean|null|boolean))|*), fieldviews: {TrueFalse: {isEdit: boolean, run: (function(*): string)}, tristate: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string|string)}, checkboxes: {isEdit: boolean, run: (function(*): string|string)}, edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*): string|string)}}, contract: (function(): (function(*=): *)|*), name: string, listAs: (function(*=): string), attributes: *[], sql_name: string, readFromDB: (function(*=): boolean), validate: (function(): function(*): boolean)}}
+ */
 const bool = {
   name: "Bool",
   sql_name: "boolean",

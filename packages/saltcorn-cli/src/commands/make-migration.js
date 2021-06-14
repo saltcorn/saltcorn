@@ -7,10 +7,18 @@ class MigrationCommand extends Command {
   }
 }
 
-MigrationCommand.description = `Create a new blank migration file
-...
-These migrations track internal structures to the database. You should not
-normally need to run this unless you are a developer.
+MigrationCommand.description = `Create a new blank Database structure migration file.
+These migrations update database structure.
+You should not normally need to run this
+unless you are a developer.
 `;
+
+MigrationCommand.help = `Create a new blank Database structure migration file.
+These migrations update database structure.
+You should not normally need to run this
+unless you are a developer.
+`;
+
+MigrationCommand.usage = "make-migration";
 
 module.exports = MigrationCommand;
