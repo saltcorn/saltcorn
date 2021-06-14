@@ -3,17 +3,35 @@ const { contract, is } = require("contractis");
 const { is_sqlite } = require("./connect");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
+/**
+ * Transform value to correct sql name.
+ * Note! Dont use other symbols than ^A-Za-z_0-9
+ * @type {*|(function(...[*]=): *)}
+ */
 const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
   const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 });
+/**
+ * Transform value to correct sql name.
+ * Instead of sqlsanitize also allows .
+ * For e.g. table name
+ * Note! Dont use other symbols than ^A-Za-z_0-9.
+ * @type {*|(function(...[*]=): *)}
+ */
 const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
   const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 });
-
+/**
+ *
+ * @param v
+ * @param i
+ * @param is_sqlite
+ * @returns {`to_tsvector('english', ${*}) @@ plainto_tsquery('english', $${string})`|`${*} LIKE '%' || ? || '%'`}
+ */
 const whereFTS = (v, i, is_sqlite) => {
   const { fields, table } = v;
   var flds = fields
