@@ -411,6 +411,21 @@ export const ConfigField = ({
         ))}
       </select>
     ),
+    btn_select: () => (
+      <div class="btn-group w-100" role="group">
+        {field.options.map((o, ix) => (
+          <button
+            title={o.title||o.value}
+            type="button"
+            style={{width: `${Math.floor(100/field.options.length)}%`}}
+            class={`btn btn-sm btn-${value !== o.value ? "outline-" : ""}secondary ${field.btnClass ||''}`}
+            onClick={() => myOnChange(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    ),
     DimUnits: () => (
       <Fragment>
         <input

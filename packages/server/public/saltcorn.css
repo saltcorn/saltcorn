@@ -271,3 +271,8 @@ input.dimunit {
 div.settings-panel input[type=number] {
   border-width: 1px;
 }
+
+button.btnstylesel{
+  padding-left: 5px;
+  padding-right: 2px;
+}

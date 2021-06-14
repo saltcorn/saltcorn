@@ -11,7 +11,14 @@ import {
   SettingsSectionHeaderRow,
   SettingsRow,
 } from "./utils";
-
+import {
+  BorderOuter,
+  BorderTop,
+  BorderBottom,
+  BorderLeft,
+  BorderRight,
+  BorderAll,
+} from "react-bootstrap-icons";
 export const Container = ({
   children,
   borderWidth,
@@ -195,6 +202,20 @@ export const ContainerSettings = () => {
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
+  const bstyleopt = (style) => ({
+    value: style,
+    title: style,
+    label: (
+      <div
+        style={{
+          borderLeftStyle: style,
+          borderTopStyle: style,
+          height: "15px",
+          width: "6px",
+        }}
+      ></div>
+    ),
+  });
   return (
     <Accordion>
       <table className="w-100" accordiontitle="Placement">
@@ -205,69 +226,64 @@ export const ContainerSettings = () => {
               <label>Width</label>
             </td>
             <td>
-              <input
-                type="number"
-                value={borderWidth}
-                step="1"
-                className="form-control-sm w-50 d-inline mr-2"
-                min="0"
-                max="20"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderWidth = e.target.value;
-                  })
-                }
-              />
-              px
+              <div className="input-group input-group-sm w-100">
+                <input
+                  type="number"
+                  value={borderWidth}
+                  step="1"
+                  className="form-control w-50"
+                  min="0"
+                  max="20"
+                  onChange={(e) =>
+                    setProp((prop) => {
+                      prop.borderWidth = e.target.value;
+                    })
+                  }
+                />
+                <div class="input-group-append w-50 d-inline">
+                  <span class="input-group-text">px</span>
+                </div>
+              </div>
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Style</label>
-            </td>
-            <td>
-              <select
-                value={borderStyle}
-                className="form-control-sm w-50"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderStyle = e.target.value;
-                  })
-                }
-              >
-                <option>solid</option>
-                <option>dotted</option>
-                <option>dashed</option>
-                <option>double</option>
-                <option>groove</option>
-                <option>ridge</option>
-                <option>inset</option>
-                <option>outset</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Direction</label>
-            </td>
-            <td>
-              <select
-                value={borderDirection}
-                className="form-control-sm w-50"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderDirection = e.target.value;
-                  })
-                }
-              >
-                <option value="">All</option>
-                <option value="top">Top</option>
-                <option value="bottom">Bottom</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-              </select>
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "borderStyle",
+              label: "Style",
+              type: "btn_select",
+              btnClass: "btnstylesel",
+              options: [
+                "solid",
+                "dotted",
+                "dashed",
+                "double",
+                "groove",
+                "ridge",
+                "inset",
+                "outset",
+              ].map(bstyleopt),
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "borderDirection",
+              label: "Direction",
+              type: "btn_select",
+              btnClass: "btnstylesel",
+              options: [
+                { value: "", title: "All", label: <BorderAll /> },
+                { value: "top", title: "All", label: <BorderTop /> },
+                { value: "bottom", title: "All", label: <BorderBottom /> },
+                { value: "left", title: "All", label: <BorderLeft /> },
+                { value: "right", title: "All", label: <BorderRight /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          
           <tr>
             <td>
               <label>Color</label>
@@ -276,13 +292,14 @@ export const ContainerSettings = () => {
               <input
                 type="color"
                 value={borderColor}
-                className="form-control-sm"
+                className="form-control-sm w-50 mr-2"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.borderColor = e.target.value;
                   })
                 }
               />
+              <small>{borderColor}</small>
             </td>
           </tr>
           <SettingsRow
@@ -374,9 +391,7 @@ export const ContainerSettings = () => {
       </table>
       <table className="w-100" accordiontitle="Contents">
         <tbody>
-          <tr>
-            <th colSpan="2">Align</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Align" />
           <tr>
             <td>
               <label>Vert</label>
@@ -438,9 +453,7 @@ export const ContainerSettings = () => {
               </select>
             </td>
           </tr>
-          <tr>
-            <th colSpan="2">Background</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Background" />
           <tr>
             <td>
               <label>Type</label>
@@ -635,9 +648,7 @@ export const ContainerSettings = () => {
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
           {["show", "edit"].includes(options.mode) && (
-            <tr>
-              <th colSpan="2">Formula - show if true</th>
-            </tr>
+            <SettingsSectionHeaderRow title="Formula - show if true" />
           )}
           {["show", "edit"].includes(options.mode) && (
             <tr>
@@ -656,9 +667,7 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           )}
-          <tr>
-            <th colSpan="2">Role</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Role" />
           {options.roles.map(({ role, id }) => (
             <tr key={id}>
               <td colSpan="2">
