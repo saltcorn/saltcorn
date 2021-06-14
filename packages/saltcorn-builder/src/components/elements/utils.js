@@ -411,6 +411,36 @@ export const ConfigField = ({
         ))}
       </select>
     ),
+    DimUnits: () => (
+      <Fragment>
+        <input
+          type="number"
+          value={value}
+          step="1"
+          min="0"
+          max="9999"
+          className="w-50 form-control-sm d-inline dimunit"
+          onChange={(e) => myOnChange(e.target.value)}
+        />
+        <SelectUnits
+          value={or_if_undef(
+            configuration
+              ? configuration[field.name + "Unit"]
+              : props[field.name + "Unit"],
+            "px"
+          )}
+          className="w-50 form-control-sm d-inline dimunit"
+          vert={true}
+          onChange={(e) =>
+            setProp((prop) => {
+              if (configuration)
+                prop.configuration[field.name + "Unit"] = e.target.value;
+              else prop[field.name + "Unit"] = e.target.value;
+            })
+          }
+        />
+      </Fragment>
+    ),
   }[field.input_type || field.type.name || field.type]();
 };
 
@@ -427,45 +457,56 @@ export const SettingsFromFields = (fields) => () => {
   const {
     actions: { setProp },
   } = node;
-  const fullWidth = (f) => ["String", "Bool", "textarea"].includes(f.type);
-  const needLabel = (f) => f.type !== "Bool";
-  const inner = (f) =>
-    f.canBeFormula ? (
-      <OrFormula
-        nodekey={f.name}
-        isFormula={node.isFormula}
-        {...{ setProp, node }}
-      >
-        <ConfigField field={f} props={node} setProp={setProp} />
-      </OrFormula>
-    ) : (
-      <ConfigField field={f} props={node} setProp={setProp} />
-    );
+
   return (
     <table className="w-100">
       <tbody>
         {fields.map((f, ix) => (
-          <tr key={ix}>
-            {fullWidth(f) ? (
-              <td colSpan="2">
-                {needLabel(f) && <label>{f.label}</label>}
-                {inner(f)}
-              </td>
-            ) : (
-              <Fragment>
-                <td>
-                  <label>{f.label}</label>
-                </td>
-                <td>{inner(f)}</td>
-              </Fragment>
-            )}
-          </tr>
+          <SettingsRow field={f} key={ix} node={node} setProp={setProp} />
         ))}
       </tbody>
     </table>
   );
 };
 
+export const SettingsSectionHeaderRow = ({ title }) => (
+  <tr>
+    <th colSpan="2">{title}</th>
+  </tr>
+);
+
+export const SettingsRow = ({ field, node, setProp }) => {
+  const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
+  const needLabel = field.type !== "Bool";
+  const inner = field.canBeFormula ? (
+    <OrFormula
+      nodekey={field.name}
+      isFormula={node.isFormula}
+      {...{ setProp, node }}
+    >
+      <ConfigField field={field} props={node} setProp={setProp} />
+    </OrFormula>
+  ) : (
+    <ConfigField field={field} props={node} setProp={setProp} />
+  );
+  return (
+    <tr>
+      {fullWidth ? (
+        <td colSpan="2">
+          {needLabel && <label>{field.label}</label>}
+          {inner}
+        </td>
+      ) : (
+        <Fragment>
+          <td>
+            <label>{field.label}</label>
+          </td>
+          <td>{inner}</td>
+        </Fragment>
+      )}
+    </tr>
+  );
+};
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

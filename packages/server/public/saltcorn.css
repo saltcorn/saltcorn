@@ -256,3 +256,18 @@ div[data-inline-edit-dest-url]:hover .editicon {
   display: none;
 }
 
+select.dimunit {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+}
+
+input.dimunit {
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-width: 1px;
+  border-right: none;
+}
+
+div.settings-panel input[type=number] {
+  border-width: 1px;
+}

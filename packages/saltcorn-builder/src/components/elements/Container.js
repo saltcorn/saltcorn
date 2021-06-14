@@ -8,6 +8,8 @@ import {
   OrFormula,
   parseStyles,
   SelectUnits,
+  SettingsSectionHeaderRow,
+  SettingsRow,
 } from "./utils";
 
 export const Container = ({
@@ -59,7 +61,9 @@ export const Container = ({
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        [`border${borderDirection? `-${borderDirection}`:''}`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
+        [`border${
+          borderDirection ? `-${borderDirection}` : ""
+        }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
@@ -195,9 +199,7 @@ export const ContainerSettings = () => {
     <Accordion>
       <table className="w-100" accordiontitle="Placement">
         <tbody>
-          <tr>
-            <th colSpan="2">Border</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Border" />
           <tr>
             <td>
               <label>Width</label>
@@ -283,125 +285,27 @@ export const ContainerSettings = () => {
               />
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Radius</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={borderRadius}
-                step="1"
-                min="0"
-                max="999"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderRadius = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={borderRadiusUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderRadiusUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="2">Size</th>
-          </tr>
-          <tr>
-            <td>
-              <label>Min height</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={minHeight}
-                step="1"
-                min="0"
-                max="999"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.minHeight = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={minHeightUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.minHeightUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Height</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={height}
-                step="1"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.height = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={heightUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.heightUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>{" "}
-          <tr>
-            <td>
-              <label>Width</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={width}
-                step="1"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.width = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={widthUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={false}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.widthUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
+          <SettingsRow
+            field={{ name: "borderRadius", label: "Radius", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsSectionHeaderRow title="Size" />
+          <SettingsRow
+            field={{ name: "minHeight", label: "Min height", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "height", label: "Height", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "width", label: "Widths", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
           <tr>
             <td colSpan="2">
               <BlockSetting block={block} setProp={setProp} />
