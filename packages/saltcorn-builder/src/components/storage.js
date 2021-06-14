@@ -109,22 +109,6 @@ export const layoutToNodes = (layout, query, actions) => {
           state={segment.state}
         />
       );
-    } else if (segment.type === "view_link") {
-      return (
-        <ViewLink
-          key={ix}
-          name={segment.view}
-          label={segment.view_label}
-          block={segment.block || false}
-          inModal={segment.in_modal || false}
-          minRole={segment.minRole || 10}
-          isFormula={segment.isFormula || {}}
-          link_style={segment.link_style || ""}
-          link_icon={segment.link_icon || ""}
-          link_size={segment.link_size || ""}
-          textStyle={segment.textStyle || ""}
-        />
-      );
     } else if (segment.type === "action") {
       return (
         <Action
@@ -376,27 +360,6 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
 
-    if (node.displayName === ViewLink.craft.displayName) {
-      columns.push({
-        type: "ViewLink",
-        view: node.props.name,
-        in_modal: node.props.inModal,
-        minRole: node.props.minRole,
-      });
-      return {
-        type: "view_link",
-        block: node.props.block,
-        in_modal: node.props.inModal,
-        view_label: node.props.label,
-        view: node.props.name,
-        isFormula: node.props.isFormula,
-        minRole: node.props.minRole,
-        link_style: node.props.link_style,
-        link_icon: node.props.link_icon,
-        link_size: node.props.link_size,
-        textStyle: node.props.textStyle,
-      };
-    }
     if (node.displayName === Action.craft.displayName) {
       const newid = rand_ident();
       columns.push({
