@@ -1,3 +1,8 @@
+/**
+ * Action description
+ *
+ */
+
 const fetch = require("node-fetch");
 const vm = require("vm");
 const Table = require("../models/table");
@@ -13,15 +18,17 @@ const { get_async_expression_function } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
+// todo add translation
 module.exports = {
   webhook: {
     configFields: [
-      { name: "url", label: "URL", type: "String" },
+      { name: "url", label: "URL", type: "String", sublabel: "Trigger will call specified URL" },
       {
         name: "body",
         label: "JSON body",
         sublabel: "Leave blank to use row from table",
         type: "String",
+        fieldview: "textarea", // I think that textarea is better
       },
     ],
     run: async ({ row, configuration: { url, body } }) => {
@@ -57,6 +64,7 @@ module.exports = {
         {
           name: "to_email",
           label: "Recipient email address",
+          sublabel: "Select email addresses for send email. Choose option to get more information",
           input_type: "select",
           required: true,
 
@@ -64,7 +72,7 @@ module.exports = {
         },
         {
           name: "to_email_field",
-          label: "Field with address",
+          label: "Field with email address",
           sublabel:
             "Field with email address a String, or Key to user who will receive email",
           input_type: "select",
@@ -76,12 +84,14 @@ module.exports = {
         {
           name: "to_email_fixed",
           label: "Fixed address",
+          sublabel: "Email address to send emails", // todo send to few addresses?
           type: "String",
           showIf: { to_email: "Fixed" },
         },
         {
           name: "subject",
           label: "Subject",
+          sublabel: "Subject of email",
           type: "String",
           required: true,
         },
@@ -122,6 +132,8 @@ module.exports = {
       const view = await View.findOne({ name: viewname });
       const htmlBs = await view.run({ id: row.id }, mockReqRes);
       const html = await transformBootstrapEmail(htmlBs);
+      console.log("Sending email from %s to %s with subject %s to_email",
+          getState().getConfig("email_from"), to_addr, subject, to_addr);
       const email = {
         from: getState().getConfig("email_from"),
         to: to_addr,
@@ -141,6 +153,7 @@ module.exports = {
         {
           name: "joined_table",
           label: "Relation",
+          sublabel: "Relation", // todo more detailed explanation
           input_type: "select",
           options: child_field_list,
         },
@@ -182,6 +195,7 @@ module.exports = {
         {
           name: "table",
           label: "Table",
+          sublabel: "Table", //todo more detailed explanation
           input_type: "select",
           options: tables.map((t) => t.name),
         },

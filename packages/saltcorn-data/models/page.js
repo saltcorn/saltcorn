@@ -1,3 +1,7 @@
+/**
+ * Page Data Access Layer
+ */
+
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
@@ -11,6 +15,9 @@ const {
   structuredClone,
 } = require("../utils");
 
+/**
+ * Page Class
+ */
 class Page {
   constructor(o) {
     this.name = o.name;
@@ -26,11 +33,23 @@ class Page {
         : o.fixed_states || {};
     contract.class(this);
   }
+
+  /**
+   * Find pages in DB
+   * @param where
+   * @param selectopts
+   * @returns {Promise<*>}
+   */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const db_flds = await db.select("_sc_pages", where, selectopts);
     return db_flds.map((dbf) => new Page(dbf));
   }
 
+  /**
+   * Find one page
+   * @param where
+   * @returns {Promise<Page|*>}
+   */
   static async findOne(where) {
     const { getState } = require("../db/state");
     const p = getState().pages.find(
@@ -49,11 +68,22 @@ class Page {
       : p;
   }
 
+  /**
+   * Update page
+   * @param id
+   * @param row
+   * @returns {Promise<void>}
+   */
   static async update(id, row) {
     await db.update("_sc_pages", row, id);
     await require("../db/state").getState().refresh_pages();
   }
 
+  /**
+   * Create page
+   * @param f
+   * @returns {Promise<Page>}
+   */
   static async create(f) {
     const page = new Page(f);
     const { id, ...rest } = page;
@@ -63,6 +93,11 @@ class Page {
 
     return page;
   }
+
+  /**
+   * Delete current page
+   * @returns {Promise<void>}
+   */
   async delete() {
     await db.deleteWhere("_sc_pages", { id: this.id });
     const root_page_for_roles = await this.is_root_page_for_roles();
@@ -74,6 +109,10 @@ class Page {
     await require("../db/state").getState().refresh_pages();
   }
 
+  /**
+   * Is root page for role
+   * @returns {Promise<*>}
+   */
   async is_root_page_for_roles() {
     const User = require("./user");
     const { getState } = require("../db/state");
@@ -84,12 +123,21 @@ class Page {
       .map((r) => r.role);
   }
 
+  /**
+   * get menu label for page
+   * @returns {*|undefined}
+   */
   get menu_label() {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
     const item = menu_items.find((mi) => mi.pagename === this.name);
     return item ? item.label : undefined;
   }
+
+  /**
+   * Clone page
+   * @returns {Promise<Page>}
+   */
   async clone() {
     const basename = this.name + " copy";
     let newname;
@@ -105,6 +153,13 @@ class Page {
     delete createObj.id;
     return await Page.create(createObj);
   }
+
+  /**
+   * Run (Show) page
+   * @param querystate
+   * @param extraArgs
+   * @returns {Promise<any>}
+   */
   async run(querystate, extraArgs) {
     await eachView(this.layout, async (segment) => {
       const view = await View.findOne({ name: segment.view });
@@ -137,6 +192,10 @@ class Page {
   }
 }
 
+/**
+ * Page contract
+ * @type {{variables: {min_role: ((function(*=): *)|*), layout: ((function(*=): *)|*), name: ((function(*=): *)|*), fixed_states: ((function(*=): *)|*), description: ((function(*=): *)|*), id: ((function(*=): *)|*), title: ((function(*=): *)|*)}, methods: {run: ((function(*=): *)|*), delete: ((function(*=): *)|*), is_root_page_for_roles: ((function(*=): *)|*), menu_label: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), findOne: ((function(*=): *)|*), create: ((function(*=): *)|*), update: ((function(*=): *)|*)}}}
+ */
 Page.contract = {
   variables: {
     name: is.str,

@@ -82,7 +82,17 @@ const tableForm = async (table, req) => {
             },
           ]
         : []),
-      {
+        // description of table
+        {
+            label: req.__("Description"),
+            name: "description",
+            input_type: "text",
+            sublabel: req.__(
+                "Description allows you to give more information about the table"
+            ),
+            //options: roleOptions,
+        },
+        {
         label: req.__("Minimum role to read"),
         sublabel: req.__(
           "User must have this role or higher to read rows from the table"
@@ -105,6 +115,9 @@ const tableForm = async (table, req) => {
             },
             {
               label: req.__("Version history"),
+              sublabel: req.__(
+                    "Version history allows to track table data changes"
+                ),
               name: "versioned",
               type: "Bool",
             },

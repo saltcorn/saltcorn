@@ -1,3 +1,8 @@
+/**
+ * View Edit Router
+ *
+ */
+
 const Router = require("express-promise-router");
 
 const {
@@ -112,6 +117,17 @@ router.get(
                 key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
                 sortlink: `javascript:set_state_field('_sortby', 'name')`,
               },
+              // description - currently I dont want to show description in view list
+              // because description can be long
+              /*
+              {
+                  label: req.__("Description"),
+                  key: "description",
+                  // this is sorting by column
+                  sortlink: `javascript:set_state_field('_sortby', 'description')`,
+              },
+              */
+              // template
               {
                 label: req.__("Template"),
                 key: "viewtemplate",
@@ -187,6 +203,14 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         sublabel: req.__(
           "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
         ),
+      }),
+      new Field({
+          label: req.__("Description"),
+          name: "description",
+          type: "String",
+          sublabel: req.__(
+              "Description allows you to give more information about the view."
+          ),
       }),
       new Field({
         label: req.__("Template"),

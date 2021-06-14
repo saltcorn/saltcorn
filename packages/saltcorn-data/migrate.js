@@ -1,13 +1,20 @@
+/**
+ * DB structure migration functionality
+ * @type {module:fs}
+ */
 const fs = require("fs");
 const path = require("path");
 const db = require("./db");
 
 const dateFormat = require("dateformat");
+// todo create functionality to rollback migrations
+// todo run db backup before run migration / rollback of migration
 /**
  * Migrate
  * @param schema0 - schema name
  * @returns {Promise<void>}
  */
+    // todo resolve database specific
 const migrate = async (schema0) => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating", schema);
@@ -46,7 +53,7 @@ const migrate = async (schema0) => {
   for (const file of files) {
     const name = file.replace(".js", "");
     if (!dbmigrations.includes(name)) {
-      //console.log("Running migration", name);
+      console.log("Tenant %s running migration %s", schema0, name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
         if (!(is_sqlite && contents.sql.includes("DROP COLUMN")))
@@ -61,6 +68,7 @@ const migrate = async (schema0) => {
       if (contents.js) {
         await contents.js();
       }
+      // todo add columns with date & user when / who runs migration
       await db.insert("_sc_migrations", { migration: name }, { noid: true });
     }
   }
@@ -70,6 +78,7 @@ const migrate = async (schema0) => {
  * Create blank migration
  * @returns {Promise<void>}
  */
+// todo add rollbacksql statement
 const create_blank_migration = async () => {
   var time = dateFormat(new Date(), "yyyymmddHHMM");
   const fnm = path.join(__dirname, "migrations", `${time}.js`);

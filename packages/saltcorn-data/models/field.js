@@ -1,3 +1,8 @@
+/**
+ *
+ * Field Data Access Layer
+ */
+
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
@@ -13,7 +18,14 @@ const readKey = (v, field) => {
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
 
+/**
+ * Field Class
+ */
 class Field {
+  /**
+   * Constructor
+   * @param o
+   */
   constructor(o) {
     if (!o.type && !o.input_type)
       throw new Error(`Field ${o.name} initialised with no type`);
@@ -28,6 +40,7 @@ class Field {
     this.id = o.id;
     this.default = o.default;
     this.sublabel = o.sublabel;
+    this.description = o.description;
     const { getState } = require("../db/state");
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
@@ -80,6 +93,11 @@ class Field {
     }
     contract.class(this);
   }
+
+  /**
+   * To Json
+   * @returns {{expression, fieldview, is_unique: (boolean), label: *, table_id: *, type: (string|*), primary_key: (*|boolean), sublabel, required: (boolean), refname: (string|*), reftable_name: (string|*|Table), stored: (*|boolean), name: (*), attributes: any, id, calculated: (*|boolean), reftype: (string|*)}}
+   */
   get toJson() {
     return {
       id: this.id,
@@ -99,18 +117,35 @@ class Field {
       primary_key: this.primary_key,
       reftype: this.reftype,
       refname: this.refname,
+      description: this.description, //
     };
   }
 
+  /**
+   * Label 2 Name
+   * @param label
+   * @returns {*}
+   */
+  // todo from internalization point of view better to separate label, name. sqlname
+  // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label) {
     return sqlsanitize(label.toLowerCase().replace(" ", "_"));
   }
 
+  /**
+   * ???
+   * @returns {string|*}
+   */
   get form_name() {
     if (this.parent_field) return `${this.parent_field}_${this.name}`;
     else return this.name;
   }
 
+  /**
+   * Fill fkey options???
+   * @param force_allow_none
+   * @returns {Promise<void>}
+   */
   async fill_fkey_options(force_allow_none = false) {
     if (
       this.is_fkey &&
@@ -136,6 +171,12 @@ class Field {
       this.options = [...new Set(allOpts)];
     }
   }
+
+  /**
+   * Distinct Values
+   * @param req
+   * @returns {Promise<[{label: string, value: string}, {jsvalue: boolean, label, value: string}, {jsvalue: boolean, label, value: string}]|[{label: string, value: string}, ...*]|*[]>}
+   */
   async distinct_values(req) {
     const __ = req && req.__ ? req.__ : (s) => s;
     if (

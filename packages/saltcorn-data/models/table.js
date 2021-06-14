@@ -1,3 +1,7 @@
+/**
+ * Table Database Access Layer
+ *
+ */
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
 const Field = require("./field");
@@ -36,13 +40,13 @@ const transposeObjects = (objs) => {
   }
   return res;
 };
-// TBD configure date format
+// todo configure date format
 const dateFormats = [moment.ISO_8601];
 
 const isDate = function (date) {
   return moment(date, dateFormats, true).isValid();
 };
-
+// todo resolve database specific
 const normalise_error_message = (msg) =>
   db.isSQLite
     ? msg.replace(
@@ -54,6 +58,9 @@ const normalise_error_message = (msg) =>
         "Duplicate value for unique field: $2"
       );
 
+/**
+ * Table class
+ */
 class Table {
   constructor(o) {
     this.name = o.name;
@@ -63,10 +70,17 @@ class Table {
     this.ownership_field_id = o.ownership_field_id;
     this.versioned = !!o.versioned;
     this.external = false;
+    this.description = o.description;
     if (o.fields) this.fields = o.fields.map((f) => new Field(f));
     contract.class(this);
   }
 
+  /**
+   *
+   * Find one Table
+   * @param where - where condition
+   * @returns {Promise<*|Table|null>} table or null
+   */
   static async findOne(where) {
     if (
       where &&
@@ -92,6 +106,12 @@ class Table {
     return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
+  /**
+   * Find Tables
+   * @param where - where condition
+   * @param selectopts - options
+   * @returns {Promise<*>} table list
+   */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const tbls = await db.select("_sc_tables", where, selectopts);
 
@@ -116,48 +136,86 @@ class Table {
     }
     return [...dbs, ...externals];
   }
+
+  /**
+   * Get owner column name
+   * @param fields - fields list
+   * @returns {null|*} null or owner column name
+   */
   owner_fieldname_from_fields(fields) {
     if (!this.ownership_field_id) return null;
     const field = fields.find((f) => f.id === this.ownership_field_id);
     return field.name;
   }
+
+  /**
+   * Get owner column name
+   * @returns {Promise<string|null|*>}
+   */
   async owner_fieldname() {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
     const fields = await this.getFields();
     return this.owner_fieldname_from_fields(fields);
   }
+
+  /**
+   * Check if user is owner of row
+   * @param user - user
+   * @param row - table row
+   * @returns {Promise<string|null|*|boolean>}
+   */
   async is_owner(user, row) {
     if (!user) return false;
     const field_name = await this.owner_fieldname();
     return field_name && row[field_name] === user.id;
   }
+
+  /**
+   * Create table
+   * @param name - table name
+   * @param options - table fields
+   * @returns {Promise<Table>} table
+   */
   static async create(name, options = {}) {
     const schema = db.getTenantSchemaPrefix();
+    // create table in database
     await db.query(
       `create table ${schema}"${sqlsanitize(name)}" (id ${
         db.isSQLite ? "integer" : "serial"
       } primary key)`
     );
+    // populate table definition row
     const tblrow = {
       name,
       versioned: options.versioned || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
+      description: options.description || "",
     };
+    // insert table defintion into _sc_tables
     const id = await db.insert("_sc_tables", tblrow);
+    // add primary key columnt ID
     await db.query(
       `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
           values($1,'id','ID','Integer', '{}', true, true, true)`,
       [id]
     );
+    // create table
     const table = new Table({ ...tblrow, id });
+    // create table history
     if (table.versioned) await table.create_history_table();
+    // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
     return table;
   }
+
+  /**
+   * Drop current table
+   * @returns {Promise<void>}
+   */
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
@@ -191,10 +249,19 @@ class Table {
     await require("../db/state").getState().refresh_tables();
   }
 
+  /***
+   * get Table SQL Name
+   * @returns {string}
+   */
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
 
+  /**
+   * Delete rows from table
+   * @param where - condition
+   * @returns {Promise<void>}
+   */
   async deleteRows(where) {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     if (triggers.length > 0) {
@@ -207,6 +274,12 @@ class Table {
     }
     await db.deleteWhere(this.name, where);
   }
+
+  /**
+   * ????
+   * @param row
+   * @returns {*}
+   */
   readFromDB(row) {
     for (const f of this.fields) {
       if (f.type && f.type.readFromDB)
@@ -214,6 +287,12 @@ class Table {
     }
     return row;
   }
+
+  /**
+   * Get one row from table in db
+   * @param where
+   * @returns {Promise<null|*>}
+   */
   async getRow(where) {
     await this.getFields();
     const row = await db.selectMaybeOne(this.name, where);
@@ -221,6 +300,12 @@ class Table {
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
+  /**
+   * Get rows from Table in db
+   * @param where
+   * @param selopts
+   * @returns {Promise<*>}
+   */
   async getRows(where, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
@@ -230,9 +315,21 @@ class Table {
     );
   }
 
+  /**
+   * Count amount of rows in db table
+   * @param where
+   * @returns {Promise<number>}
+   */
   async countRows(where) {
     return await db.count(this.name, where);
   }
+
+  /**
+   * Return distinct Values for column in table
+   * ????
+   * @param fieldnm
+   * @returns {Promise<*>}
+   */
 
   async distinctValues(fieldnm) {
     const res = await db.query(
@@ -241,6 +338,13 @@ class Table {
     return res.rows.map((r) => r[fieldnm]);
   }
 
+  /**
+   * Update row
+   * @param v_in
+   * @param id
+   * @param _userid
+   * @returns {Promise<void>}
+   */
   async updateRow(v_in, id, _userid) {
     let existing;
     let v;
@@ -276,8 +380,15 @@ class Table {
     const newRow = { ...existing, ...v, [pk_name]: id };
     await Trigger.runTableTriggers("Update", this, newRow);
 
-    return;
-  }
+}
+
+  /**
+   * Try to Update row
+   * @param v
+   * @param id
+   * @param _userid
+   * @returns {Promise<{error}|{success: boolean}>}
+   */
   async tryUpdateRow(v, id, _userid) {
     try {
       await this.updateRow(v, id, _userid);
@@ -287,6 +398,12 @@ class Table {
     }
   }
 
+  /**
+   * ????
+   * @param id
+   * @param field_name
+   * @returns {Promise<void>}
+   */
   async toggleBool(id, field_name) {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
@@ -304,10 +421,20 @@ class Table {
     }
   }
 
+  /**
+   * Get primary key field
+   * @returns {*}
+   */
   get pk_name() {
     return this.fields.find((f) => f.primary_key).name;
   }
 
+  /**
+   * Insert row
+   * @param v_in
+   * @param _userid
+   * @returns {Promise<*>}
+   */
   async insertRow(v_in, _userid) {
     await this.getFields();
     const v = await apply_calculated_fields_stored(v_in, this.fields);
@@ -325,6 +452,12 @@ class Table {
     return id;
   }
 
+  /**
+   * Try to Insert row
+   * @param v
+   * @param _userid
+   * @returns {Promise<{error}|{success: *}>}
+   */
   async tryInsertRow(v, _userid) {
     try {
       const id = await this.insertRow(v, _userid);
@@ -334,6 +467,10 @@ class Table {
     }
   }
 
+  /**
+   * Get Fields list for table
+   * @returns {Promise<*>}
+   */
   async getFields() {
     if (!this.fields) {
       this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
@@ -341,6 +478,11 @@ class Table {
     return this.fields;
   }
 
+  /**
+   * Create history table
+   * @returns {Promise<void>}
+   */
+  // todo create function that returns history table name for table
   async create_history_table() {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
@@ -350,6 +492,7 @@ class Table {
     );
     const pk = fields.find((f) => f.primary_key).name;
 
+    // create history table
     await db.query(
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
@@ -360,6 +503,11 @@ class Table {
           );`
     );
   }
+
+  /**
+   * Drop history table
+   * @returns {Promise<void>}
+   */
   async drop_history_table() {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
@@ -367,6 +515,11 @@ class Table {
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
   }
 
+  /**
+   * Rename table
+   * @param new_name
+   * @returns {Promise<void>}
+   */
   async rename(new_name) {
     //in transaction
     if (db.isSQLite)
@@ -424,6 +577,11 @@ class Table {
     Object.assign(this, new_table_rec);
   }
 
+  /**
+   * Get table history data
+   * @param id
+   * @returns {Promise<*>}
+   */
   async get_history(id) {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
@@ -432,16 +590,26 @@ class Table {
     );
   }
 
+  /**
+   * Enable constraints
+   * @returns {Promise<void>}
+   */
   async enable_fkey_constraints() {
     const fields = await this.getFields();
     for (const f of fields) await f.enable_fkey_constraint(this);
   }
 
+  /**
+   * Table Create from CSV
+   * @param name
+   * @param filePath
+   * @returns {Promise<{error: string}|{error: string}|{error: string}|{error: string}|{error: string}|{success: string}|{error: (string|string|*)}>}
+   */
   static async create_from_csv(name, filePath) {
-    var rows;
+    let rows;
     try {
       const s = await getLines(filePath, 500);
-      rows = await csvtojson().fromString(s);
+      rows = await csvtojson().fromString(s); // todo agrument type unknown
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
@@ -451,7 +619,7 @@ class Table {
       const required = vs.every((v) => v !== "");
       const nonEmpties = vs.filter((v) => v !== "");
       const isBools = "true false yes no on off y n t f".split(" ");
-      var type;
+      let type;
       if (
         nonEmpties.every((v) =>
           //https://www.postgresql.org/docs/11/datatype-boolean.html
@@ -511,15 +679,22 @@ class Table {
     return parse_res;
   }
 
+  /**
+   * Import CSV file to existing table
+   * @param filePath
+   * @param recalc_stored
+   * @param skip_first_data_row
+   * @returns {Promise<{error: string}|{success: string}>}
+   */
   async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
-    var headers;
+    let headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
       const s = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
         noheader: true,
-      }).fromString(s);
+      }).fromString(s); // todo agrument type unknown
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
@@ -542,7 +717,7 @@ class Table {
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
     const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
 
-    var i = 1;
+    let i = 1;
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
 
@@ -603,7 +778,7 @@ class Table {
                 }
               },
               (err) => {
-                reject({ error: !e ? e : err.message || err });
+                reject({ error: !err ? err : err.message || err });
               },
               () => {
                 resolve();
@@ -628,7 +803,7 @@ class Table {
       await db.reset_sequence(this.name);
 
     if (recalc_stored && this.fields.some((f) => f.calculated && f.stored)) {
-      recalculate_for_stored(this);
+      await recalculate_for_stored(this);
     }
     return {
       success:
@@ -637,13 +812,21 @@ class Table {
         }` + (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
+
+  /**
+   * Import JSON table description
+   * @param filePath
+   * @param skip_first_data_row
+   * @returns {Promise<{error: string}|{success: string}>}
+   */
   async import_json_file(filePath, skip_first_data_row) {
+    // todo argument type buffer is not assignable for type String...
     const file_rows = JSON.parse(await fs.promises.readFile(filePath));
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
 
-    var i = 1;
+    let i = 1;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
     for (const rec of file_rows) {
@@ -677,10 +860,15 @@ class Table {
     };
   }
 
+  /**
+   * Get parent relations for table
+   * @param allow_double
+   * @returns {Promise<{parent_relations: *[], parent_field_list: *[]}>}
+   */
   async get_parent_relations(allow_double) {
     const fields = await this.getFields();
-    var parent_relations = [];
-    var parent_field_list = [];
+    let parent_relations = [];
+    let parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
         const table = await Table.findOne({ name: f.reftable_name });
@@ -706,10 +894,14 @@ class Table {
     return { parent_relations, parent_field_list };
   }
 
+  /**
+   * Get child relations for table
+   * @returns {Promise<{child_relations: *[], child_field_list: *[]}>}
+   */
   async get_child_relations() {
     const cfields = await Field.find({ reftable_name: this.name });
-    var child_relations = [];
-    var child_field_list = [];
+    let child_relations = [];
+    let child_field_list = [];
     for (const f of cfields) {
       if (f.is_fkey) {
         const table = await Table.findOne({ id: f.table_id });
@@ -720,12 +912,18 @@ class Table {
     }
     return { child_relations, child_field_list };
   }
+
+  /**
+   *
+   * @param opts
+   * @returns {Promise<{values, sql: string}>}
+   */
   async getJoinedQuery(opts = {}) {
     const fields = await this.getFields();
-    var fldNms = [];
-    var joinq = "";
-    var joinTables = [];
-    var joinFields = opts.joinFields || [];
+    let fldNms = [];
+    let joinq = "";
+    let joinTables = [];
+    let joinFields = opts.joinFields || [];
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -811,7 +1009,7 @@ class Table {
       }
     );
 
-    var whereObj = {};
+    let whereObj = {};
     if (opts.where) {
       Object.keys(opts.where).forEach((k) => {
         if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
@@ -843,6 +1041,10 @@ class Table {
   }
 }
 
+/**
+ * Table contract
+ * @type {{variables: {name: ((function(*=): *)|*)}, methods: {updateRow: ((function(*=): *)|*), get_history: ((function(*=): *)|*), tryUpdateRow: ((function(*=): *)|*), deleteRows: ((function(*=): *)|*), update: ((function(*=): *)|*), getRows: ((function(*=): *)|*), getRow: ((function(*=): *)|*), delete: ((function(*=): *)|*), get_parent_relations: ((function(*=): *)|*), get_child_relations: ((function(*=): *)|*), tryInsertRow: ((function(*=): *)|*), getFields: ((function(*=): *)|*), insertRow: ((function(*=): *)|*), toggleBool: ((function(*=): *)|*), getJoinedRows: ((function(*=): *)|*), countRows: ((function(*=): *)|*), distinctValues: ((function(*=): *)|*), sql_name: ((function(*=): *)|*), import_csv_file: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), create_from_csv: ((function(*=): *)|*), findOne: ((function(*=): *)|*), find_with_external: ((function(*=): *)|*), create: ((function(*=): *)|*)}, constructs: {name: ((function(*=): *)|*)}}}
+ */
 Table.contract = {
   constructs: { name: is.str },
   variables: { name: is.str },
