@@ -88,7 +88,7 @@ export const layoutToNodes = (layout, query, actions) => {
       else return <MatchElement key={ix} {...props} />;
     }
 
-   if (segment.type === "blank") {
+    if (segment.type === "blank") {
       return (
         <Text
           key={ix}
@@ -108,28 +108,7 @@ export const layoutToNodes = (layout, query, actions) => {
           name={segment.name}
           state={segment.state}
         />
-      );
-    } else if (segment.type === "field") {
-      return (
-        <Field
-          key={ix}
-          name={segment.field_name}
-          fieldview={segment.fieldview}
-          block={segment.block || false}
-          textStyle={segment.textStyle || ""}
-          configuration={segment.configuration || {}}
-        />
-      );
-    } else if (segment.type === "dropdown_filter") {
-      return (
-        <DropDownFilter
-          key={ix}
-          name={segment.field_name}
-          neutral_label={segment.neutral_label || ""}
-          block={segment.block || false}
-          full_width={segment.full_width || false}
-        />
-      );
+      );  
     } else if (segment.type === "toggle_filter") {
       return (
         <ToggleFilter
@@ -334,6 +313,13 @@ export const craftToSaltcorn = (nodes) => {
       if (related.fields.some((f) => f.canBeFormula))
         s.isFormula = node.props.isFormula;
       if (related.segment_vars) Object.assign(s, related.segment_vars);
+      if (related.column_type) {
+        const c = { type: related.column_type };
+        related.fields.forEach((f) => {
+          c[f.column_name || f.name || f] = node.props[f.name || f];
+        });
+        columns.push(c);
+      }
       return s;
     }
     if (node.isCanvas) {
@@ -424,35 +410,7 @@ export const craftToSaltcorn = (nodes) => {
         state: node.props.state,
       };
     }
-    if (node.displayName === Field.craft.displayName) {
-      columns.push({
-        type: "Field",
-        field_name: node.props.name,
-        fieldview: node.props.fieldview,
-        configuration: node.props.configuration,
-      });
-      return {
-        type: "field",
-        block: node.props.block,
-        field_name: node.props.name,
-        fieldview: node.props.fieldview,
-        textStyle: node.props.textStyle,
-        configuration: node.props.configuration,
-      };
-    }
-    if (node.displayName === DropDownFilter.craft.displayName) {
-      columns.push({
-        type: "DropDownFilter",
-        field_name: node.props.name,
-      });
-      return {
-        type: "dropdown_filter",
-        block: node.props.block,
-        neutral_label: node.props.neutral_label,
-        full_width: node.props.full_width,
-        field_name: node.props.name,
-      };
-    }
+    
     if (node.displayName === ToggleFilter.craft.displayName) {
       columns.push({
         type: "ToggleFilter",
