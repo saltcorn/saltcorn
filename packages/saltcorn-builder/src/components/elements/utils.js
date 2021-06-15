@@ -5,6 +5,7 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNode } from "@craftjs/core";
 
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
@@ -326,17 +327,30 @@ export const ConfigForm = ({
 
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
-export const ConfigField = ({ field, configuration, setProp, onChange }) => {
+export const ConfigField = ({
+  field,
+  configuration,
+  setProp,
+  onChange,
+  props,
+}) => {
   const myOnChange = (v) => {
-    setProp((prop) => (prop.configuration[field.name] = v));
+    setProp((prop) => {
+      if (configuration) prop.configuration[field.name] = v;
+      else prop[field.name] = v;
+    });
     onChange && onChange(field.name, v);
   };
+  const value = or_if_undef(
+    configuration ? configuration[field.name] : props[field.name],
+    field.default
+  );
   return {
     String: () => (
       <input
         type="text"
         className="form-control"
-        value={configuration[field.name]}
+        value={value}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -345,7 +359,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) => {
         type="number"
         className="form-control"
         step={1}
-        value={or_if_undef(configuration[field.name], field.default)}
+        value={value}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -353,16 +367,16 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) => {
       <input
         type="number"
         className="form-control"
+        value={value}
         step={0.01}
-        value={configuration[field.name]}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     Color: () => (
       <input
         type="color"
+        value={value}
         className="form-control"
-        value={configuration[field.name]}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -371,7 +385,7 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) => {
         <input
           type="checkbox"
           className="form-check-input"
-          checked={configuration[field.name]}
+          checked={value}
           onChange={(e) => myOnChange(e.target.checked)}
         />
         <label className="form-check-label">{field.label}</label>
@@ -382,14 +396,14 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) => {
         rows="6"
         type="text"
         className="form-control"
-        value={configuration[field.name]}
+        value={value}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
     select: () => (
       <select
         className="form-control"
-        value={configuration[field.name]}
+        value={value}
         onChange={(e) => myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (
@@ -397,9 +411,124 @@ export const ConfigField = ({ field, configuration, setProp, onChange }) => {
         ))}
       </select>
     ),
+    btn_select: () => (
+      <div class="btn-group w-100" role="group">
+        {field.options.map((o, ix) => (
+          <button
+            title={o.title || o.value}
+            type="button"
+            style={{ width: `${Math.floor(100 / field.options.length)}%` }}
+            class={`btn btn-sm btn-${
+              value !== o.value ? "outline-" : ""
+            }secondary ${field.btnClass || ""}`}
+            onClick={() => myOnChange(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    ),
+    DimUnits: () => (
+      <Fragment>
+        <input
+          type="number"
+          value={value}
+          step="1"
+          min="0"
+          max="9999"
+          className="w-50 form-control-sm d-inline dimunit"
+          onChange={(e) => myOnChange(e.target.value)}
+        />
+        <SelectUnits
+          value={or_if_undef(
+            configuration
+              ? configuration[field.name + "Unit"]
+              : props[field.name + "Unit"],
+            "px"
+          )}
+          className="w-50 form-control-sm d-inline dimunit"
+          vert={true}
+          onChange={(e) =>
+            setProp((prop) => {
+              if (configuration)
+                prop.configuration[field.name + "Unit"] = e.target.value;
+              else prop[field.name + "Unit"] = e.target.value;
+            })
+          }
+        />
+      </Fragment>
+    ),
   }[field.input_type || field.type.name || field.type]();
 };
 
+export const SettingsFromFields = (fields) => () => {
+  const node = useNode((node) => {
+    const ps = {};
+    fields.forEach((f) => {
+      ps[f.name] = node.data.props[f.name];
+    });
+    if (fields.some((f) => f.canBeFormula))
+      ps.isFormula = node.data.props.isFormula;
+    return ps;
+  });
+  const {
+    actions: { setProp },
+  } = node;
+
+  return (
+    <table className="w-100">
+      <tbody>
+        {fields.map((f, ix) => (
+          <SettingsRow field={f} key={ix} node={node} setProp={setProp} />
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+export const SettingsSectionHeaderRow = ({ title }) => (
+  <tr>
+    <th colSpan="2">{title}</th>
+  </tr>
+);
+
+export const SettingsRow = ({ field, node, setProp, onChange }) => {
+  const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
+  const needLabel = field.type !== "Bool";
+  const inner = field.canBeFormula ? (
+    <OrFormula
+      nodekey={field.name}
+      isFormula={node.isFormula}
+      {...{ setProp, node }}
+    >
+      <ConfigField field={field} props={node} setProp={setProp} onChange={onChange}/>
+    </OrFormula>
+  ) : (
+    <ConfigField
+      field={field}
+      props={node}
+      setProp={setProp}
+      onChange={onChange}
+    />
+  );
+  return (
+    <tr>
+      {fullWidth ? (
+        <td colSpan="2">
+          {needLabel && <label>{field.label}</label>}
+          {inner}
+        </td>
+      ) : (
+        <Fragment>
+          <td>
+            <label>{field.label}</label>
+          </td>
+          <td>{inner}</td>
+        </Fragment>
+      )}
+    </tr>
+  );
+};
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

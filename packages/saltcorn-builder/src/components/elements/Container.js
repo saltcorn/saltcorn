@@ -8,8 +8,32 @@ import {
   OrFormula,
   parseStyles,
   SelectUnits,
+  SettingsSectionHeaderRow,
+  SettingsRow,
 } from "./utils";
-
+import {
+  BorderOuter,
+  BorderTop,
+  BorderBottom,
+  BorderLeft,
+  BorderRight,
+  BorderAll,
+  AlignTop,
+  AlignMiddle,
+  AlignStart,
+  AlignEnd,
+  AlignCenter,
+  Justify,
+  AlignBottom,
+  SlashCircle,
+  Image,
+  Rainbow,
+  Palette,
+  EyeFill,
+  EyeSlashFill,
+} from "react-bootstrap-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 export const Container = ({
   children,
   borderWidth,
@@ -59,7 +83,9 @@ export const Container = ({
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        [`border${borderDirection? `-${borderDirection}`:''}`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
+        [`border${
+          borderDirection ? `-${borderDirection}` : ""
+        }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
@@ -191,81 +217,88 @@ export const ContainerSettings = () => {
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
+  const bstyleopt = (style) => ({
+    value: style,
+    title: style,
+    label: (
+      <div
+        style={{
+          borderLeftStyle: style,
+          borderTopStyle: style,
+          height: "15px",
+          width: "6px",
+        }}
+      ></div>
+    ),
+  });
   return (
     <Accordion>
       <table className="w-100" accordiontitle="Placement">
         <tbody>
-          <tr>
-            <th colSpan="2">Border</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Border" />
           <tr>
             <td>
               <label>Width</label>
             </td>
             <td>
-              <input
-                type="number"
-                value={borderWidth}
-                step="1"
-                className="form-control-sm w-50 d-inline mr-2"
-                min="0"
-                max="20"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderWidth = e.target.value;
-                  })
-                }
-              />
-              px
+              <div className="input-group input-group-sm w-100">
+                <input
+                  type="number"
+                  value={borderWidth}
+                  step="1"
+                  className="form-control w-50"
+                  min="0"
+                  max="20"
+                  onChange={(e) =>
+                    setProp((prop) => {
+                      prop.borderWidth = e.target.value;
+                    })
+                  }
+                />
+                <div class="input-group-append w-50 d-inline">
+                  <span class="input-group-text">px</span>
+                </div>
+              </div>
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Style</label>
-            </td>
-            <td>
-              <select
-                value={borderStyle}
-                className="form-control-sm w-50"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderStyle = e.target.value;
-                  })
-                }
-              >
-                <option>solid</option>
-                <option>dotted</option>
-                <option>dashed</option>
-                <option>double</option>
-                <option>groove</option>
-                <option>ridge</option>
-                <option>inset</option>
-                <option>outset</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Direction</label>
-            </td>
-            <td>
-              <select
-                value={borderDirection}
-                className="form-control-sm w-50"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderDirection = e.target.value;
-                  })
-                }
-              >
-                <option value="">All</option>
-                <option value="top">Top</option>
-                <option value="bottom">Bottom</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-              </select>
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "borderStyle",
+              label: "Style",
+              type: "btn_select",
+              btnClass: "btnstylesel",
+              options: [
+                "solid",
+                "dotted",
+                "dashed",
+                "double",
+                "groove",
+                "ridge",
+                "inset",
+                "outset",
+              ].map(bstyleopt),
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "borderDirection",
+              label: "Direction",
+              type: "btn_select",
+              btnClass: "btnstylesel",
+              options: [
+                { value: "", title: "None", label: <BorderAll /> },
+                { value: "top", title: "Top", label: <BorderTop /> },
+                { value: "bottom", title: "Bottom", label: <BorderBottom /> },
+                { value: "left", title: "Left", label: <BorderLeft /> },
+                { value: "right", title: "Right", label: <BorderRight /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+
           <tr>
             <td>
               <label>Color</label>
@@ -274,134 +307,37 @@ export const ContainerSettings = () => {
               <input
                 type="color"
                 value={borderColor}
-                className="form-control-sm"
+                className="form-control-sm w-50 mr-2"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.borderColor = e.target.value;
                   })
                 }
               />
+              <small>{borderColor}</small>
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Radius</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={borderRadius}
-                step="1"
-                min="0"
-                max="999"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderRadius = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={borderRadiusUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderRadiusUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="2">Size</th>
-          </tr>
-          <tr>
-            <td>
-              <label>Min height</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={minHeight}
-                step="1"
-                min="0"
-                max="999"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.minHeight = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={minHeightUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.minHeightUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Height</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={height}
-                step="1"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.height = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={heightUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={true}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.heightUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>{" "}
-          <tr>
-            <td>
-              <label>Width</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={width}
-                step="1"
-                className="w-50 form-control-sm d-inline"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.width = e.target.value;
-                  })
-                }
-              />
-              <SelectUnits
-                value={widthUnit}
-                className="w-50 form-control-sm d-inline"
-                vert={false}
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.widthUnit = e.target.value;
-                  })
-                }
-              />
-            </td>
-          </tr>
+          <SettingsRow
+            field={{ name: "borderRadius", label: "Radius", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsSectionHeaderRow title="Size" />
+          <SettingsRow
+            field={{ name: "minHeight", label: "Min height", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "height", label: "Height", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "width", label: "Widths", type: "DimUnits" }}
+            node={node}
+            setProp={setProp}
+          />
           <tr>
             <td colSpan="2">
               <BlockSetting block={block} setProp={setProp} />
@@ -470,99 +406,82 @@ export const ContainerSettings = () => {
       </table>
       <table className="w-100" accordiontitle="Contents">
         <tbody>
-          <tr>
-            <th colSpan="2">Align</th>
-          </tr>
-          <tr>
-            <td>
-              <label>Vert</label>
-            </td>
-            <td>
-              <select
-                value={vAlign}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.vAlign = e.target.value;
-                  })
-                }
-              >
-                <option>top</option>
-                <option>middle</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Horiz</label>
-            </td>
-            <td>
-              <select
-                value={hAlign}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.hAlign = e.target.value;
-                  })
-                }
-              >
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="justify">Justify</option>
-                <option value="right">Right</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Overflow</label>
-            </td>
-            <td>
-              <select
-                value={overflow}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.overflow = e.target.value;
-                  })
-                }
-              >
-                <option value="visible">visible</option>
-                <option value="hidden">hidden</option>
-                <option value="scroll">scroll</option>
-                <option value="auto">auto</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="2">Background</th>
-          </tr>
-          <tr>
-            <td>
-              <label>Type</label>
-            </td>
-            <td>
-              <select
-                className="form-control-sm"
-                value={bgType}
-                onChange={(e) => {
-                  setProp((prop) => {
-                    prop.bgType = e.target.value;
-                  });
-                  setProp((prop) => {
-                    prop.bgFileId =
-                      prop.bgFileId ||
-                      (options.images.length > 0 && options.images[0].id);
-                  });
-                }}
-              >
-                <option>None</option>
-                <option>Image</option>
-                <option>Color</option>
-                <option>Gradient</option>
-              </select>
-            </td>
-          </tr>
+          <SettingsSectionHeaderRow title="Align" />
+          <SettingsRow
+            field={{
+              name: "vAlign",
+              label: "Vertical",
+              type: "btn_select",
+              options: [
+                { value: "top", title: "All", label: <AlignTop /> },
+                { value: "middle", title: "All", label: <AlignMiddle /> },
+                { value: "bottom", title: "All", label: <AlignBottom /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "hAlign",
+              label: "Horizontal",
+              type: "btn_select",
+              options: [
+                { value: "left", title: "Left", label: <AlignStart /> },
+                { value: "center", title: "Center", label: <AlignCenter /> },
+                { value: "right", title: "Right", label: <AlignEnd /> },
+                { value: "justify", title: "Justify", label: <Justify /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "overflow",
+              label: "Overflow",
+              type: "btn_select",
+              options: [
+                { value: "visible", title: "Visible", label: <EyeFill /> },
+                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
+                {
+                  value: "scroll",
+                  title: "Scroll",
+                  label: <FontAwesomeIcon icon={faScroll} />,
+                },
+                {
+                  value: "auto",
+                  title: "Auto",
+                  label: <FontAwesomeIcon icon={faRobot} />,
+                },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsSectionHeaderRow title="Background" />
+          <SettingsRow
+            field={{
+              name: "bgType",
+              label: "Type",
+              type: "btn_select",
+              options: [
+                { value: "None", label: <SlashCircle /> },
+                { value: "Image", label: <Image /> },
+                { value: "Color", label: <Palette /> },
+                { value: "Gradient", label: <Rainbow /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+            onChange={(v) =>
+              setProp((prop) => {
+                prop.bgFileId =
+                  prop.bgFileId ||
+                  (options.images.length > 0 && options.images[0].id);
+              })
+            }
+          />
           {bgType === "Gradient" && (
             <Fragment>
               <tr>
@@ -638,7 +557,7 @@ export const ContainerSettings = () => {
                 <td>
                   <select
                     value={bgFileId}
-                    className="form-control-sm"
+                    className="form-control-sm w-100"
                     onChange={(e) =>
                       setProp((prop) => (prop.bgFileId = e.target.value))
                     }
@@ -675,7 +594,7 @@ export const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td></td>
+              <td>Color</td>
               <td>
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input
@@ -731,9 +650,7 @@ export const ContainerSettings = () => {
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
           {["show", "edit"].includes(options.mode) && (
-            <tr>
-              <th colSpan="2">Formula - show if true</th>
-            </tr>
+            <SettingsSectionHeaderRow title="Formula - show if true" />
           )}
           {["show", "edit"].includes(options.mode) && (
             <tr>
@@ -752,9 +669,7 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           )}
-          <tr>
-            <th colSpan="2">Role</th>
-          </tr>
+          <SettingsSectionHeaderRow title="Role" />
           {options.roles.map(({ role, id }) => (
             <tr key={id}>
               <td colSpan="2">

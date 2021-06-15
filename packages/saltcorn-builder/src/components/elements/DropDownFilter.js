@@ -102,5 +102,13 @@ DropDownFilter.craft = {
   displayName: "DropDownFilter",
   related: {
     settings: DropDownFilterSettings,
+    segment_type: "dropdown_filter",
+    column_type: "DropDownFilter",
+    fields: [
+      { name: "name", segment_name: "field_name", column_name: "field_name" },
+      "full_width",
+      "neutral_label",
+      "block",
+    ],
   },
 };

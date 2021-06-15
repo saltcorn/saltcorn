@@ -177,5 +177,14 @@ Image.craft = {
   },
   related: {
     settings: ImageSettings,
+    segment_type: "image",
+    fields: [
+      { name: "alt", canBeFormula: true },
+      { name: "url", canBeFormula: true },
+      { name: "srctype", default: "File" },
+      { name: "fileid", default: 0 },
+      "field",
+      "block",
+    ],
   },
 };

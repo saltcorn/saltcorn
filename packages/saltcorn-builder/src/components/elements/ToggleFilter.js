@@ -3,7 +3,15 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({ name, value, preset_value, block, label, size, style }) => {
+export const ToggleFilter = ({
+  name,
+  value,
+  preset_value,
+  block,
+  label,
+  size,
+  style,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -193,5 +201,16 @@ ToggleFilter.craft = {
   displayName: "ToggleFilter",
   related: {
     settings: ToggleFilterSettings,
+    segment_type: "toggle_filter",
+    column_type: "ToggleFilter",
+    fields: [
+      { name: "name", segment_name: "field_name", column_name: "field_name" },
+      "value",
+      "preset_value",
+      "block",
+      "label",
+      "size",
+      "style",
+    ],
   },
 };
