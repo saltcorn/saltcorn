@@ -335,6 +335,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               customClass || false,
               hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
+              vAlign === "bottom" && "d-flex align-items-end",
               vAlign === "middle" &&
                 hAlign === "center" &&
                 "justify-content-center",

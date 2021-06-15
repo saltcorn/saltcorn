@@ -18,7 +18,22 @@ import {
   BorderLeft,
   BorderRight,
   BorderAll,
+  AlignTop,
+  AlignMiddle,
+  AlignStart,
+  AlignEnd,
+  AlignCenter,
+  Justify,
+  Eye,
+  EyeSlash,
+  AlignBottom,
+  SlashCircle,
+  Image,
+  Rainbow,
+  Palette,
 } from "react-bootstrap-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 export const Container = ({
   children,
   borderWidth,
@@ -273,17 +288,17 @@ export const ContainerSettings = () => {
               type: "btn_select",
               btnClass: "btnstylesel",
               options: [
-                { value: "", title: "All", label: <BorderAll /> },
-                { value: "top", title: "All", label: <BorderTop /> },
-                { value: "bottom", title: "All", label: <BorderBottom /> },
-                { value: "left", title: "All", label: <BorderLeft /> },
-                { value: "right", title: "All", label: <BorderRight /> },
+                { value: "", title: "None", label: <BorderAll /> },
+                { value: "top", title: "Top", label: <BorderTop /> },
+                { value: "bottom", title: "Bottom", label: <BorderBottom /> },
+                { value: "left", title: "Left", label: <BorderLeft /> },
+                { value: "right", title: "Right", label: <BorderRight /> },
               ],
             }}
             node={node}
             setProp={setProp}
           />
-          
+
           <tr>
             <td>
               <label>Color</label>
@@ -392,94 +407,81 @@ export const ContainerSettings = () => {
       <table className="w-100" accordiontitle="Contents">
         <tbody>
           <SettingsSectionHeaderRow title="Align" />
-          <tr>
-            <td>
-              <label>Vert</label>
-            </td>
-            <td>
-              <select
-                value={vAlign}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.vAlign = e.target.value;
-                  })
-                }
-              >
-                <option>top</option>
-                <option>middle</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Horiz</label>
-            </td>
-            <td>
-              <select
-                value={hAlign}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.hAlign = e.target.value;
-                  })
-                }
-              >
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="justify">Justify</option>
-                <option value="right">Right</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Overflow</label>
-            </td>
-            <td>
-              <select
-                value={overflow}
-                className="form-control-sm"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.overflow = e.target.value;
-                  })
-                }
-              >
-                <option value="visible">visible</option>
-                <option value="hidden">hidden</option>
-                <option value="scroll">scroll</option>
-                <option value="auto">auto</option>
-              </select>
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "vAlign",
+              label: "Vertical",
+              type: "btn_select",
+              options: [
+                { value: "top", title: "All", label: <AlignTop /> },
+                { value: "middle", title: "All", label: <AlignMiddle /> },
+                { value: "bottom", title: "All", label: <AlignBottom /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "hAlign",
+              label: "Horizontal",
+              type: "btn_select",
+              options: [
+                { value: "left", title: "Left", label: <AlignStart /> },
+                { value: "center", title: "Center", label: <AlignCenter /> },
+                { value: "right", title: "Right", label: <AlignEnd /> },
+                { value: "justify", title: "Justify", label: <Justify /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "overflow",
+              label: "Overflow",
+              type: "btn_select",
+              options: [
+                { value: "visible", title: "Visible", label: <Eye /> },
+                { value: "hidden", title: "Hidden", label: <EyeSlash /> },
+                {
+                  value: "scroll",
+                  title: "Scroll",
+                  label: <FontAwesomeIcon icon={faScroll} />,
+                },
+                {
+                  value: "auto",
+                  title: "Auto",
+                  label: <FontAwesomeIcon icon={faRobot} />,
+                },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
           <SettingsSectionHeaderRow title="Background" />
-          <tr>
-            <td>
-              <label>Type</label>
-            </td>
-            <td>
-              <select
-                className="form-control-sm"
-                value={bgType}
-                onChange={(e) => {
-                  setProp((prop) => {
-                    prop.bgType = e.target.value;
-                  });
-                  setProp((prop) => {
-                    prop.bgFileId =
-                      prop.bgFileId ||
-                      (options.images.length > 0 && options.images[0].id);
-                  });
-                }}
-              >
-                <option>None</option>
-                <option>Image</option>
-                <option>Color</option>
-                <option>Gradient</option>
-              </select>
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "bgType",
+              label: "Type",
+              type: "btn_select",
+              options: [
+                { value: "None", label: <SlashCircle /> },
+                { value: "Image", label: <Image /> },
+                { value: "Color", label: <Palette /> },
+                { value: "Gradient", label: <Rainbow /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+            onChange={(v) =>
+              setProp((prop) => {
+                prop.bgFileId =
+                  prop.bgFileId ||
+                  (options.images.length > 0 && options.images[0].id);
+              })
+            }
+          />
           {bgType === "Gradient" && (
             <Fragment>
               <tr>
@@ -555,7 +557,7 @@ export const ContainerSettings = () => {
                 <td>
                   <select
                     value={bgFileId}
-                    className="form-control-sm"
+                    className="form-control-sm w-100"
                     onChange={(e) =>
                       setProp((prop) => (prop.bgFileId = e.target.value))
                     }

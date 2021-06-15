@@ -415,10 +415,12 @@ export const ConfigField = ({
       <div class="btn-group w-100" role="group">
         {field.options.map((o, ix) => (
           <button
-            title={o.title||o.value}
+            title={o.title || o.value}
             type="button"
-            style={{width: `${Math.floor(100/field.options.length)}%`}}
-            class={`btn btn-sm btn-${value !== o.value ? "outline-" : ""}secondary ${field.btnClass ||''}`}
+            style={{ width: `${Math.floor(100 / field.options.length)}%` }}
+            class={`btn btn-sm btn-${
+              value !== o.value ? "outline-" : ""
+            }secondary ${field.btnClass || ""}`}
             onClick={() => myOnChange(o.value)}
           >
             {o.label}
@@ -490,7 +492,7 @@ export const SettingsSectionHeaderRow = ({ title }) => (
   </tr>
 );
 
-export const SettingsRow = ({ field, node, setProp }) => {
+export const SettingsRow = ({ field, node, setProp, onChange }) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -499,10 +501,15 @@ export const SettingsRow = ({ field, node, setProp }) => {
       isFormula={node.isFormula}
       {...{ setProp, node }}
     >
-      <ConfigField field={field} props={node} setProp={setProp} />
+      <ConfigField field={field} props={node} setProp={setProp} onChange={onChange}/>
     </OrFormula>
   ) : (
-    <ConfigField field={field} props={node} setProp={setProp} />
+    <ConfigField
+      field={field}
+      props={node}
+      setProp={setProp}
+      onChange={onChange}
+    />
   );
   return (
     <tr>
