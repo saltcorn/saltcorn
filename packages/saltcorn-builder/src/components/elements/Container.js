@@ -24,13 +24,13 @@ import {
   AlignEnd,
   AlignCenter,
   Justify,
-  Eye,
-  EyeSlash,
   AlignBottom,
   SlashCircle,
   Image,
   Rainbow,
   Palette,
+  EyeFill,
+  EyeSlashFill,
 } from "react-bootstrap-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
@@ -442,8 +442,8 @@ export const ContainerSettings = () => {
               label: "Overflow",
               type: "btn_select",
               options: [
-                { value: "visible", title: "Visible", label: <Eye /> },
-                { value: "hidden", title: "Hidden", label: <EyeSlash /> },
+                { value: "visible", title: "Visible", label: <EyeFill /> },
+                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
                 {
                   value: "scroll",
                   title: "Scroll",
@@ -594,7 +594,7 @@ export const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td></td>
+              <td>Color</td>
               <td>
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input

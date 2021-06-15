@@ -20,6 +20,7 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
+import { BoundingBox, Diagram3Fill, SegmentedNav, TextareaT } from "react-bootstrap-icons";
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
@@ -45,9 +46,8 @@ const WrapElem = ({
     <div className="inner" style={fontSize ? { fontSize } : {}}>
       {(text && (bold ? <strong>{text}</strong> : text)) ||
         (icons &&
-          icons.map((ic, ix) => <i key={ix} className={`${ic}`}></i>)) || (
-          <i className={`fa-lg ${icon}`}></i>
-        )}
+          icons.map((ic, ix) => <i key={ix} className={`${ic}`}></i>)) ||
+        (typeof icon === "string" ? <i className={`fa-lg ${icon}`}></i> : icon)}
     </div>
     <label>{label}</label>
   </div>
@@ -55,7 +55,7 @@ const WrapElem = ({
 const TextElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
-    text="T"
+    icon={<TextareaT className="mb-2" />}
     fontSize="22px"
     title="Text"
     bold
@@ -77,7 +77,7 @@ const ColumnsElem = ({ connectors }) => (
 const TabsElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
-    icon="fas fa-list-ul"
+    icon={<SegmentedNav className="mb-2 h4" />}
     title="Tabbed content"
     label="Tabs"
   >
@@ -164,7 +164,7 @@ const SearchElem = ({ connectors }) => (
 const ContainerElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
-    icon="fas fa-box-open"
+    icon={<BoundingBox className="mb-2 h5" />}
     title="Container"
     label="Contain"
   >
@@ -215,7 +215,7 @@ const ToggleFilterElem = ({ connectors, fields }) => (
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
-    icon="fas fa-ruler-combined"
+    icon={<Diagram3Fill className="mb-2 h5"/>}
     title="Join field"
     label="Join"
     disable={options.parent_field_list.length === 0}
