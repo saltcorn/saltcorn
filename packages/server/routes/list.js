@@ -1,3 +1,10 @@
+/**
+ * List Data from Table (Router)
+ * Used in Admin
+ * ${base_url}/list
+ * Look to server/public/gridedit.js for main logic of grid editor
+ */
+
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
@@ -12,7 +19,9 @@ const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
-
+/**
+ * Show list of table data history (GET handler)
+ */
 router.get(
   "/_versions/:name/:id",
   setTenant,
@@ -54,7 +63,9 @@ router.get(
     );
   })
 );
-
+/**
+ * Restore version of data in table (POST handler)
+ */
 router.post(
   "/_restore/:name/:id/:_version",
   setTenant,
@@ -75,6 +86,12 @@ router.post(
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
 );
+/**
+ * Saltcorn Type to JSGrid Type
+ * @param t
+ * @param field
+ * @returns {{name, title}}
+ */
 const typeToJsGridType = (t, field) => {
   var jsgField = { name: field.name, title: field.label };
   if (t.name === "String" && field.attributes && field.attributes.options) {
@@ -112,7 +129,9 @@ const typeToJsGridType = (t, field) => {
   }
   return jsgField;
 };
-
+/**
+ * Version Field
+ */
 const versionsField = (tname) => `
 var VersionsField = function(config) {
   jsGrid.Field.call(this, config);
@@ -130,8 +149,9 @@ VersionsField.prototype = new jsGrid.Field({
 });
 jsGrid.fields.versions = VersionsField;
 `;
+// end of versionsField
 /**
- * List View Router (show list view)
+ * Table Data List Viewer (GET handler))
  * /list/:table
  */
 router.get(
@@ -165,33 +185,39 @@ router.get(
       {
         title: req.__(`%s data table`, table.name),
         headers: [
+          //jsgrid - grid editor external component
           {
             script:
               "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js",
             integrity:
               "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
           },
+          // date flat picker external component
           {
             script:
               "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.js",
             integrity:
               "sha512-Nc36QpQAS2BOjt0g/CqfIi54O6+UWTI3fmqJsnXoU6rNYRq8vIQQkZmkrRnnk4xKgMC3ESWp69ilLpDm6Zu8wQ==",
           },
+          // main logic for grid editor is here
           {
             script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
           },
+           //css for jsgrid - grid editor external component
           {
             css:
               "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css",
             integrity:
               "sha512-3Epqkjaaaxqq/lt5RLJsTzP6cCIFyipVRcY4BcPfjOiGM1ZyFCv4HHeWS7eCPVaAigY3Ha3rhRgOsWaWIClqQQ==",
           },
+          // css theme for jsgrid - grid editor external component
           {
             css:
               "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css",
             integrity:
               "sha512-jx8R09cplZpW0xiMuNFEyJYiGXJM85GUL+ax5G3NlZT3w6qE7QgxR4/KE1YXhKxijdVTDNcQ7y6AJCtSpRnpGg==",
           },
+          // css for date flat picker external component
           {
             css:
               "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.css",
