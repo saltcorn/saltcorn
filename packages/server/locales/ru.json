@@ -650,5 +650,16 @@
 	"Edit trigger": "Изменить триггер",
 	"Email sent to %s with no errors": "Email отправлен %s без ошибок",
 	"Action %s run successfully with no console output": "Действие (триггер) %s выполнено успешно без вывода результатов в консоль",
-	"Edit trigger %s": "Изменить триггер %s"
+	"Edit trigger %s": "Изменить триггер %s",
+	"%s constraints": "%s constraints",
+	"Add constraint": "Add constraint",
+	"Tick the boxes for the fields that should be jointly unique": "Tick the boxes for the fields that should be jointly unique",
+	"Add constraint to %s": "Add constraint to %s",
+	"New table name": "New table name",
+	"Rename table %s": "Rename table %s",
+	"Started recalculating stored fields": "Started recalculating stored fields",
+	"The user name to access SMTP server for sending emails.": "The user name to access SMTP server for sending emails.",
+	"The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.": "The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.",
+	"The port of your SMTP server": "The port of your SMTP server",
+	"Description allows to give more information about field": "Description allows to give more information about field"
 }

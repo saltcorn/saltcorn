@@ -1,3 +1,7 @@
+/**
+ * Saltcorn App
+ */
+
 const express = require("express");
 const mountRoutes = require("./routes");
 
@@ -30,12 +34,12 @@ const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
 
 const locales = Object.keys(available_languages);
-
+// i18n configuration
 const i18n = new I18n({
   locales,
   directory: path.join(__dirname, "locales"),
 });
-
+// todo console.log app instance info when app starts - avoid to show secrets (password, etc)
 const getApp = async (opts = {}) => {
   const app = express();
   let sql_log;
@@ -54,14 +58,19 @@ const getApp = async (opts = {}) => {
     }
     process.exit(1);
   }
-
+  // switch on sql logging
   if (sql_log) db.set_sql_logging(); // dont override cli flag
+// migrate database
   if (!opts.disableMigrate) await migrate();
-
+  // load all plugins
   await loadAllPlugins();
+  // get development mode status
   const development_mode = getState().getConfig("development_mode", false);
+  // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
+  // https://www.npmjs.com/package/helmet
+  // helmet is secure app by adding HTTP headers
   app.use(helmet());
   app.use(
     express.json({
@@ -70,8 +79,11 @@ const getApp = async (opts = {}) => {
       },
     })
   );
+  // extenetede url encoding in use
   app.use(express.urlencoded({ extended: true }));
 
+  // add fileupload feature
+  // todo ability to configure filetmp dir - add new config / env parameter
   app.use(
     fileUpload({
       useTempFiles: true,
@@ -79,13 +91,16 @@ const getApp = async (opts = {}) => {
       tempFileDir: "/tmp/",
     })
   );
+  // cookies
   app.use(require("cookie-parser")());
+  // i18n support
   app.use(i18n.init);
-
+  // init multitenant mode
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
   }
-
+  //
+  // todo ability to configure session_secret Age
   if (getState().getConfig("cookie_sessions", false)) {
     app.use(
       cookieSession({
@@ -94,7 +109,7 @@ const getApp = async (opts = {}) => {
         sameSite: "strict",
       })
     );
-  } else if (db.isSQLite) {
+  } else if (db.isSQLite) { // todo database specific
     var SQLiteStore = require("connect-sqlite3")(session);
     app.use(
       session({
@@ -105,7 +120,7 @@ const getApp = async (opts = {}) => {
         cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
       })
     );
-  } else {
+  } else { // todo database specific
     const pgSession = require("connect-pg-simple")(session);
 
     app.use(
@@ -233,9 +248,9 @@ const getApp = async (opts = {}) => {
     });
 
   mountRoutes(app);
-
+  // set tenant homepage as / root
   app.get("/", setTenant, error_catcher(homepage));
-
+  // /robots.txt
   app.get(
     "/robots.txt",
     setTenant,
@@ -248,6 +263,7 @@ Sitemap: ${base}sitemap.xml
 `);
     })
   );
+  // /sitemap.xml
   app.get(
     "/sitemap.xml",
     setTenant,
@@ -286,8 +302,9 @@ Sitemap: ${base}sitemap.xml
   );
   if (!opts.disableCatch) app.use(errors);
 
+  // file store ensure
   await File.ensure_file_store();
-
+  // 404 handling
   app.get("*", function (req, res) {
     res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
   });
