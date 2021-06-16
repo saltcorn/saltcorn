@@ -23,7 +23,6 @@ export const View = ({ name, view, state }) => {
   const label = theview ? theview.label : view;
   const { previews, setPreviews } = useContext(previewCtx);
   const myPreview = previews[node_id];
-  console.log({ name, view });
   useEffect(() => {
     fetchViewPreview({
       options,

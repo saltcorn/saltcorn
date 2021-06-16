@@ -2,9 +2,7 @@ import React, { Fragment, useState } from "react";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCaretDown,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 
 export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
   const {
@@ -114,5 +112,8 @@ SearchBar.craft = {
   },
   related: {
     settings: SearchBarSettings,
+    segment_type: "search_bar",
+    hasContents: true,
+    fields: ["has_dropdown", "show_badges"],
   },
 };

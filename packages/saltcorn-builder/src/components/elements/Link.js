@@ -234,5 +234,18 @@ Link.craft = {
   displayName: "Link",
   related: {
     settings: LinkSettings,
+    segment_type: "link",
+    fields: [
+      { name: "text", canBeFormula: true },
+      { name: "url", canBeFormula: true },
+      { name: "link_src", default: "URL" },
+      "block",
+      "nofollow",
+      "target_blank",
+      "textStyle",
+      "link_size",
+      "link_icon",
+      "link_style",
+    ],
   },
 };

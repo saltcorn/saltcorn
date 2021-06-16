@@ -48,7 +48,6 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
       // todo there can be added other parameters for httpserver
       httpServer.setTimeout(timeout * 1000);
       httpServer.listen(port, () => {
-        console.log(`Saltcorn listening on http://127.0.0.1:${port}/`);
         console.log(`Saltcorn listening on http://localhost:${port}/`);
       });
     }

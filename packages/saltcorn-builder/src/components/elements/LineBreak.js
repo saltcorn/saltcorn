@@ -1,5 +1,6 @@
 import React, { Fragment } from "react";
 import { useNode } from "@craftjs/core";
+import { SettingsFromFields } from "./utils";
 
 export const LineBreak = ({}) => {
   const {
@@ -21,4 +22,9 @@ export const LineBreak = ({}) => {
 
 LineBreak.craft = {
   displayName: "LineBreak",
+  related: {
+    settings: SettingsFromFields([]),
+    segment_type: "line_break",
+    fields: [],
+  },
 };
