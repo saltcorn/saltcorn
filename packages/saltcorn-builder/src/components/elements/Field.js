@@ -86,7 +86,11 @@ export const FieldSettings = () => {
 
   return (
     <Fragment>
-      <i><small>Previews shown in canvas are indicative based on random rows</small></i>
+      <i>
+        <small>
+          Previews shown in canvas are indicative based on random rows
+        </small>
+      </i>
       <table className="w-100">
         <tbody>
           <tr>
@@ -173,5 +177,13 @@ Field.craft = {
   displayName: "Field",
   related: {
     settings: FieldSettings,
+    segment_type: "field",
+    column_type: "Field",
+    fields: [
+      { name: "name", segment_name: "field_name", column_name: "field_name" },
+      "fieldview",
+      "textStyle",
+      "configuration",
+    ],
   },
 };

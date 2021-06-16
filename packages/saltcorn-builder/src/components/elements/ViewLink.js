@@ -6,7 +6,7 @@ import {
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
-  TextStyleSetting
+  TextStyleSetting,
 } from "./utils";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
@@ -167,5 +167,18 @@ ViewLink.craft = {
   },
   related: {
     settings: ViewLinkSettings,
+    segment_type: "view_link",
+    column_type: "ViewLink",
+    fields: [
+      { name: "name", segment_name: "view", column_name: "view" },
+      { name: "label", segment_name: "view_label", canBeFormula: true },
+      "block",
+      "textStyle",
+      "in_modal",
+      "minRole",
+      "link_style",
+      "link_icon",
+      "link_size",
+    ],
   },
 };

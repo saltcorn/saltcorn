@@ -152,5 +152,13 @@ JoinField.craft = {
   displayName: "JoinField",
   related: {
     settings: JoinFieldSettings,
+    segment_type: "join_field",
+    column_type: "JoinField",
+    fields: [
+      { name: "name", segment_name: "join_field", column_name: "join_field" },
+      "fieldview",
+      "textStyle",
+      "block",
+    ],
   },
 };
