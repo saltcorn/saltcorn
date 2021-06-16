@@ -714,5 +714,9 @@
 	"The table for which the trigger condition is checked.": "The table for which the trigger condition is checked.",
 	"Condition under which the trigger will fire": "Condition under which the trigger will fire",
 	"Test trigger": "Test trigger",
-	"Edit trigger %s": "Edit trigger %s"
+	"Edit trigger %s": "Edit trigger %s",
+	"The user password or application token to access SMTP server for sending emails": "The user password or application token to access SMTP server for sending emails",
+	"The port of your SMTP server": "The port of your SMTP server",
+	"The user name to access SMTP server for sending emails.": "The user name to access SMTP server for sending emails.",
+	"The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.": "The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password."
 }
