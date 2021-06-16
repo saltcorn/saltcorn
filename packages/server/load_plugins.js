@@ -41,7 +41,7 @@ const loadPlugin = async (plugin, force) => {
   );
   if (res.plugin_module.onLoad) {
     try {
-      await res.plugin_module.onLoad();
+      await res.plugin_module.onLoad(plugin.configuration);
     } catch (error) {
       console.error(error);
     }
@@ -110,7 +110,7 @@ const loadAndSaveNewPlugin = async (plugin, force) => {
   getState().registerPlugin(plugin.name, plugin_module, undefined, location);
   if (plugin_module.onLoad) {
     try {
-      await plugin_module.onLoad();
+      await plugin_module.onLoad(plugin.configuration);
     } catch (error) {
       console.error(error);
     }
