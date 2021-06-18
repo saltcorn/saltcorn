@@ -714,5 +714,6 @@
 	"The table for which the trigger condition is checked.": "The table for which the trigger condition is checked.",
 	"Condition under which the trigger will fire": "Condition under which the trigger will fire",
 	"Test trigger": "Test trigger",
-	"Edit trigger %s": "Edit trigger %s"
+	"Edit trigger %s": "Edit trigger %s",
+	"Preset %s": "Preset %s"
 }
