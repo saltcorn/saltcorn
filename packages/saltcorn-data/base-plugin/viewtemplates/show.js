@@ -25,6 +25,7 @@ const {
   calcfldViewConfig,
   getActionConfigFields,
   run_action_column,
+  readState,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -199,6 +200,7 @@ const run = async (
     );
   }
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  readState(state, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   const rows = await tbl.getJoinedRows({
     where: qstate,
