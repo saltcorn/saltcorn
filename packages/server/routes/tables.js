@@ -132,7 +132,9 @@ const tableForm = async (table, req) => {
   }
   return form;
 };
-
+/**
+ * New table (GET handler)
+ */
 router.get(
   "/new/",
   setTenant,
@@ -196,15 +198,16 @@ const discoverForm = (tables, req) => {
   });
 };
 /**
- * Table Discover (get)
+ * Table Discover (GET handler)
  */
 router.get(
   "/discover",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+    // get list of discoverable tables
     const tbls = await discoverable_tables();
-
+    // create discoverable tables list form
     const form = discoverForm(tbls, req);
     res.sendWrap(req.__("Discover tables"), {
       above: [
@@ -447,7 +450,9 @@ const attribBadges = (f) => {
   }
   return s;
 };
-
+/**
+ * Table Constructor (GET Handler)
+ */
 router.get(
   "/:idorname",
   setTenant,
@@ -652,6 +657,7 @@ router.get(
             })
           )
         ),
+      // only if table is not external
       !table.external &&
         div(
           { class: "mx-auto" },
@@ -663,6 +669,7 @@ router.get(
               },
               '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
             ),
+            // rename table doesnt supported for sqlite
             !db.isSQLite &&
               a(
                 {
@@ -687,6 +694,7 @@ router.get(
           ])
         )
     );
+    // add table form
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
@@ -725,7 +733,9 @@ router.get(
     });
   })
 );
-
+/**
+ *
+ */
 router.post(
   "/",
   setTenant,
@@ -833,7 +843,7 @@ const tableBadges = (t, req) => {
   return s;
 };
 /**
- * List View of Tables Route Handler
+ * List Views of Tables (GET Handler)
  *
  */
 router.get(
@@ -923,7 +933,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Download CSV file
+ */
 router.get(
   "/download/:name",
   setTenant,
@@ -946,7 +958,9 @@ router.get(
     }).pipe(res);
   })
 );
-
+/**
+ * Show list of Constraints for Table (GET Handler)
+ */
 router.get(
   "/constraints/:id",
   setTenant,
@@ -992,18 +1006,27 @@ router.get(
     });
   })
 );
-
-const constraintForm = (table_id, fields) =>
+/**
+ * Constraint Fields Edition Form
+ * Choosing fields for adding to contrain
+ * @param table_id
+ * @param fields
+ * @returns {Form}
+ */
+const constraintForm = (req, table_id, fields) =>
   new Form({
     action: `/table/add-constraint/${table_id}`,
-    blurb: "Tick the boxes for the fields that should be jointly unique",
+    blurb: req.__("Tick the boxes for the fields that should be jointly unique"),
     fields: fields.map((f) => ({
       name: f.name,
       label: f.label,
       type: "Bool",
     })),
   });
-
+/**
+ * Add constraint GET handler
+ * ${base_url}/table/add-constraint/:id
+ */
 router.get(
   "/add-constraint/:id",
   setTenant,
@@ -1012,7 +1035,7 @@ router.get(
     const { id } = req.params;
     const table = await Table.findOne({ id });
     const fields = await table.getFields();
-    const form = constraintForm(table.id, fields);
+    const form = constraintForm(req, table.id, fields);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
       above: [
         {
@@ -1036,7 +1059,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Add constraint POST handler
+ */
 router.post(
   "/add-constraint/:id",
   setTenant,
@@ -1045,7 +1070,7 @@ router.post(
     const { id } = req.params;
     const table = await Table.findOne({ id });
     const fields = await table.getFields();
-    const form = constraintForm(table.id, fields);
+    const form = constraintForm(req, table.id, fields);
     form.validate(req.body);
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
@@ -1060,7 +1085,13 @@ router.post(
     res.redirect(`/table/constraints/${table.id}`);
   })
 );
-
+/**
+ * Rename Table Form
+ * Allows to set up new table name
+ * @param table_id
+ * @param req
+ * @returns {Form}
+ */
 const renameForm = (table_id, req) =>
   new Form({
     action: `/table/rename/${table_id}`,
@@ -1073,7 +1104,9 @@ const renameForm = (table_id, req) =>
       },
     ],
   });
-
+/**
+ * Rename Table GET handler
+ */
 router.get(
   "/rename/:id",
   setTenant,
@@ -1082,7 +1115,7 @@ router.get(
     const { id } = req.params;
     const table = await Table.findOne({ id });
 
-    const form = renameForm(table.id. req);
+    const form = renameForm(table.id, req);
     res.sendWrap(req.__(`Rename table %s`, table.name), {
       above: [
         {
@@ -1104,6 +1137,9 @@ router.get(
     });
   })
 );
+/**
+ * Rename Table POST Handler
+ */
 router.post(
   "/rename/:id",
   setTenant,
@@ -1121,6 +1157,9 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+/**
+ * Delete constraint POST handler
+ */
 router.post(
   "/delete-constraint/:id",
   setTenant,
@@ -1132,7 +1171,9 @@ router.post(
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
-
+/**
+ * Import Table Data from CSV POST handler
+ */
 router.post(
   "/upload_to_table/:name",
   setTenant,
@@ -1161,7 +1202,9 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
-
+/**
+ * Delete All rows from Table
+ */
 router.post(
   "/delete-all-rows/:name",
   setTenant,
@@ -1181,7 +1224,7 @@ router.post(
   })
 );
 /**
- * Call for Recalculate table columns that stored in db (POST)
+ * Call for Recalculate table columns that stored in db (POST Handler)
  */
 router.post(
   "/recalc-stored/:name",

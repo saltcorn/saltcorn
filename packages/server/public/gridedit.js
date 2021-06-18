@@ -1,5 +1,14 @@
+/**
+ * jsgrid_controller
+ * @param table_name -
+ * @param vc -
+ * @param keyfields -
+ * @returns {{deleteItem: (function(*): *), loadData: (function(*=): *), updateItem: (function(*=): *), insertItem: (function(*=): *)}}
+ */
+
 function jsgrid_controller(table_name, vc, keyfields) {
   var url = "/api/" + table_name + "/";
+  //
   var fixKeys = function (item) {
     keyfields.forEach((kf) => {
       if (kf.type === "Integer") item[kf.name] = +item[kf.name];
@@ -22,6 +31,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
     };
   };
   return {
+    // load of data
     loadData: function (filter) {
       var data = $.Deferred();
       $.ajax({
@@ -34,6 +44,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
       });
       return data.promise();
     },
+    // insert row
     insertItem: function (item) {
       var data = $.Deferred();
       $.ajax({
@@ -55,6 +66,7 @@ function jsgrid_controller(table_name, vc, keyfields) {
       });
       return data.promise();
     },
+    // update row
     updateItem: function (item) {
       var data = $.Deferred();
       $.ajax({
@@ -71,10 +83,12 @@ function jsgrid_controller(table_name, vc, keyfields) {
       });
       return data.promise();
     },
+    // delete row
     deleteItem: function (item) {
       return $.ajax({
         type: "DELETE",
         url: url + item.id,
+        data: item, // to process primary keys different from id
         headers: {
           "CSRF-Token": _sc_globalCsrf,
         },

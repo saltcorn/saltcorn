@@ -20,7 +20,7 @@ const discoverable_tables = async (schema0) => {
   const {
     rows,
   } = await db.query(
-    "select * from information_schema.tables where table_schema=$1",
+    "select * from information_schema.tables where table_schema=$1 order by table_name",
     [schema]
   );
   const myTables = await Table.find({});

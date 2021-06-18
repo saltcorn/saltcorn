@@ -255,6 +255,7 @@ router.post(
  */
 router.delete(
   "/:tableName/:id",
+  // in case of primary key different from id - id will be string "undefined"
   setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
@@ -273,8 +274,17 @@ router.delete(
           ? user.role_id
           : 10;
         if (role <= table.min_role_write) {
+
           try {
-            await table.deleteRows({ id });
+            if(id === "undefined"){
+                const pk_name = table.pk_name;
+                //const fields = await table.getFields();
+                const row = req.body;
+                //readState(row, fields);
+                await table.deleteRows({  [pk_name]:  row[pk_name]} );
+            }
+            else
+                await table.deleteRows({ id });
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });

@@ -23,7 +23,13 @@ const {
   structuredClone,
   getLines,
 } = require("../utils");
-
+/**
+ * Transponce Objects
+ * TODO more detailed explanation
+ * TODO refactor - move to object util module?
+ * @param objs
+ * @returns {{}}
+ */
 const transposeObjects = (objs) => {
   const keys = new Set();
   for (const o of objs) {
@@ -40,13 +46,26 @@ const transposeObjects = (objs) => {
   }
   return res;
 };
-// todo configure date format
+// todo support also other date formats https://momentjs.com/docs/
 const dateFormats = [moment.ISO_8601];
-
+// todo refactor - move to separated data utils module?
+/**
+ * Is Valid Date of format moment.ISO_8601,
+ * example 2010-01-01T05:06:07
+ *
+ * @param date
+ * @returns {boolean}
+ */
 const isDate = function (date) {
   return moment(date, dateFormats, true).isValid();
 };
 // todo resolve database specific
+/**
+ * Normalise specific error message according db specific
+ * @param msg
+ * @returns {*}
+ */
+// todo refactor
 const normalise_error_message = (msg) =>
   db.isSQLite
     ? msg.replace(
@@ -117,6 +136,13 @@ class Table {
 
     return tbls.map((t) => new Table(t));
   }
+
+  /**
+   * Find Tables including external tables
+   * @param where0
+   * @param selectopts
+   * @returns {Promise<*[]>}
+   */
   static async find_with_external(
     where0 = {},
     selectopts = { orderBy: "name", nocase: true }
@@ -263,11 +289,13 @@ class Table {
    * @returns {Promise<void>}
    */
   async deleteRows(where) {
+    // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     if (triggers.length > 0) {
       const rows = await this.getRows(where);
       for (const trigger of triggers) {
         for (const row of rows) {
+          // run triggers on delete
           await trigger.run(row);
         }
       }
@@ -276,7 +304,7 @@ class Table {
   }
 
   /**
-   * ????
+   * Returns row with only fields that can be read from db (readFromDB flag)
    * @param row
    * @returns {*}
    */
@@ -340,9 +368,9 @@ class Table {
 
   /**
    * Update row
-   * @param v_in
-   * @param id
-   * @param _userid
+   * @param v_in - colums with values to update
+   * @param id - id value
+   * @param _userid - user id
    * @returns {Promise<void>}
    */
   async updateRow(v_in, id, _userid) {
@@ -558,8 +586,15 @@ class Table {
     client.release(true);
     await require("../db/state").getState().refresh_tables();
   }
+
+  /**
+   * Update Table description in _sc_table
+   * Also creates / drops history table for table
+   * @param new_table_rec
+   * @returns {Promise<void>}
+   */
   async update(new_table_rec) {
-    //TODO RENAME TABLE
+
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });

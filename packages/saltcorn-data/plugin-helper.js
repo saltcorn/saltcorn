@@ -1,3 +1,7 @@
+/**
+ * Plugin-helper
+ *
+ */
 const View = require("./models/view");
 const Field = require("./models/field");
 const Table = require("./models/table");
@@ -16,7 +20,17 @@ const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToSQL } = require("./models/expression");
-
+/**
+ *
+ * @param url
+ * @param label
+ * @param popup
+ * @param link_style
+ * @param link_size
+ * @param link_icon
+ * @param textStyle
+ * @returns {string}
+ */
 const link_view = (
   url,
   label,
@@ -64,7 +78,10 @@ const stateToQueryString = contract(
     );
   }
 );
-
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const calcfldViewOptions = contract(
   is.fun(
     [is.array(is.class("Field")), is.bool],
@@ -115,6 +132,10 @@ const calcfldViewOptions = contract(
     return { field_view_options: fvs, handlesTextStyle };
   }
 );
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const calcfldViewConfig = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
   async (fields, isEdit) => {
@@ -134,7 +155,10 @@ const calcfldViewConfig = contract(
     return fieldViewConfigForms;
   }
 );
-
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const get_link_view_opts = contract(
   is.fun(
     [is_tablely, is.str],
@@ -170,12 +194,20 @@ const get_link_view_opts = contract(
     return link_view_opts;
   }
 );
-
+/**
+ * Get Action configuration fields
+ * @param action
+ * @param table
+ * @returns {Promise<*|[{name: string, label: string, type: string}, {name: string, label: string, type: string, sublabel: string}]|[{name: string, label: string, type: string, sublabel: string}]|[{name: string, type: string}]|[{name: string, label: string, type: string}]|*|*[]>}
+ */
 const getActionConfigFields = async (action, table) =>
   typeof action.configFields === "function"
     ? await action.configFields({ table })
     : action.configFields || [];
-
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const field_picker_fields = contract(
   is.fun(
     is.obj({ table: is_tablely, viewname: is.str }),
@@ -558,7 +590,10 @@ const field_picker_fields = contract(
     ];
   }
 );
-
+/**
+ * get_child_views Contract
+ * @type {*|(function(...[*]=): *)}
+ */
 const get_child_views = contract(
   is.fun(
     [is_tablely, is.str],
@@ -587,7 +622,10 @@ const get_child_views = contract(
     return child_views;
   }
 );
-
+/**
+ * get_parent_views Contract
+ * @type {*|(function(...[*]=): *)}
+ */
 const get_parent_views = contract(
   is.fun(
     [is_tablely, is.str],
@@ -622,7 +660,10 @@ const get_parent_views = contract(
     return parent_views;
   }
 );
-
+/**
+ * picked_fields_to_query Contract
+ * @type {*|(function(...[*]=): *)}
+ */
 const picked_fields_to_query = contract(
   is.fun([is.array(is_column), is.array(is.class("Field"))], is_table_query),
   (columns, fields) => {
@@ -691,7 +732,10 @@ const picked_fields_to_query = contract(
     return { joinFields, aggregations };
   }
 );
-
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const stateFieldsToQuery = contract(
   is.fun(is.obj(), is.obj()),
   ({ state, fields, prefix = "" }) => {
@@ -720,10 +764,20 @@ const stateFieldsToQuery = contract(
     return q;
   }
 );
+/**
+ *
+ * @param container
+ * @param key
+ * @param x
+ */
 const addOrCreateList = (container, key, x) => {
   if (container[key]) container[key].push(x);
   else container[key] = [x];
 };
+/**
+ *
+ * @type {*|(function(...[*]=): *)}
+ */
 const stateFieldsToWhere = contract(
   is.fun(
     is.obj({
@@ -783,7 +837,10 @@ const stateFieldsToWhere = contract(
     return qstate;
   }
 );
-
+/**
+ * initial_config_all_fields Contract
+ * @type {*|(function(...[*]=): *)}
+ */
 const initial_config_all_fields = contract(
   is.fun(
     is.bool,
@@ -892,12 +949,21 @@ const initial_config_all_fields = contract(
     return cfg;
   }
 );
-
+/**
+ *
+ * @param x
+ * @returns {number|undefined}
+ */
 const strictParseInt = (x) => {
   const y = +x;
   return !isNaN(y) && y ? y : undefined;
 };
-
+/**
+ *
+ * @param state
+ * @param fields
+ * @returns {*}
+ */
 const readState = (state, fields) => {
   fields.forEach((f) => {
     const current = state[f.name];
@@ -912,7 +978,12 @@ const readState = (state, fields) => {
   });
   return state;
 };
-
+/**
+ *
+ * @param state
+ * @param fields
+ * @returns {boolean|*}
+ */
 const readStateStrict = (state, fields) => {
   let hasErrors = false;
   fields.forEach((f) => {
@@ -940,7 +1011,12 @@ const readStateStrict = (state, fields) => {
   });
   return hasErrors ? false : state;
 };
-
+/**
+ *
+ * @param get_json_list
+ * @param fields0
+ * @returns {any[]|{child_relations: *[], child_field_list: *[]}|{readonly min_role_read: *, get_child_relations(): {child_relations: [], child_field_list: []}, external: boolean, getFields(): *, owner_fieldname(): null, getJoinedRows(*=): Promise<*|*>, countRows(*): Promise<*>, distinctValues(*): Promise<*>, getRows: ((function(*=, *=): Promise<*|*>)|*), fields, get_parent_relations(): {parent_relations: [], parent_field_list: []}}|{parent_relations: *[], parent_field_list: *[]}|null|*|number|Promise<*|*>}
+ */
 const json_list_to_external_table = (get_json_list, fields0) => {
   const fields = fields0.map((f) =>
     f.constructor.name === Object.name ? new Field(f) : f
@@ -1007,7 +1083,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   };
   return tbl;
 };
-
+/**
+ *
+ * @param col
+ * @param req
+ * @param rest
+ * @returns {Promise<*>}
+ */
 const run_action_column = async ({ col, req, ...rest }) => {
   let state_action = getState().actions[col.action_name];
   let configuration;
