@@ -796,10 +796,14 @@ const stateFieldsToWhere = contract(
       const field = fields.find((fld) => fld.name == k);
       if (k.startsWith("_fromdate_")) {
         const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
-        addOrCreateList(qstate, datefield, { gt: new Date(v), equal: true });
+        const dfield = fields.find((fld) => fld.name == datefield);
+        if (dfield)
+          addOrCreateList(qstate, datefield, { gt: new Date(v), equal: true });
       } else if (k.startsWith("_todate_")) {
         const datefield = db.sqlsanitize(k.replace("_todate_", ""));
-        addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
+        const dfield = fields.find((fld) => fld.name == datefield);
+        if (dfield)
+          addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
       } else if (
         field &&
         field.type.name === "String" &&

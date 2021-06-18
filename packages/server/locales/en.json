@@ -715,6 +715,7 @@
 	"Condition under which the trigger will fire": "Condition under which the trigger will fire",
 	"Test trigger": "Test trigger",
 	"Edit trigger %s": "Edit trigger %s",
+	"Preset %s": "Preset %s",
 	"The user password or application token to access SMTP server for sending emails": "The user password or application token to access SMTP server for sending emails",
 	"The port of your SMTP server": "The port of your SMTP server",
 	"The user name to access SMTP server for sending emails.": "The user name to access SMTP server for sending emails.",

@@ -183,7 +183,7 @@ Field.craft = {
       { name: "name", segment_name: "field_name", column_name: "field_name" },
       "fieldview",
       "textStyle",
-      "configuration",
+      { name: "configuration", default: {} },
     ],
   },
 };

@@ -174,7 +174,7 @@ ViewLink.craft = {
       { name: "label", segment_name: "view_label", canBeFormula: true },
       "block",
       "textStyle",
-      "in_modal",
+      { name: "inModal", segment_name: "in_modal", column_name: "in_modal" },
       "minRole",
       "link_style",
       "link_icon",
