@@ -257,7 +257,7 @@ then
 
 `jsdoc -c deploy/jsdoc.conf.json`
 
-JSDocs will then be available in docs. 
+JSDocs will then be available in `docs/`. 
 
 To deploy these to https://saltcorn.github.io/jsdocs/:
 
