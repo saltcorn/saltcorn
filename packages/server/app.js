@@ -60,8 +60,8 @@ const getApp = async (opts = {}) => {
   }
   // switch on sql logging
   if (sql_log) db.set_sql_logging(); // dont override cli flag
-// migrate database
-  if (!opts.disableMigrate) await migrate();
+  // migrate database
+  if (!opts.disableMigrate) await migrate(db.connectObj.default_schema, true);
   // load all plugins
   await loadAllPlugins();
   // get development mode status
