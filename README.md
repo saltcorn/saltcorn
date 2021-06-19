@@ -248,3 +248,22 @@ to also watch a local module
 in `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run builddev`
+
+### Build jsdocs
+
+`npm istall -g jsdoc`
+
+then 
+
+`jsdoc -c deploy/jsdoc.conf.json`
+
+JSDocs will then be available in docs. 
+
+To deploy these to https://saltcorn.github.io/jsdocs/:
+
+```
+cp -R docs/* /path/to/jsdocs
+cd /path/to/jsdocs
+git add .
+git commit -am 'version number or other message...'
+```
