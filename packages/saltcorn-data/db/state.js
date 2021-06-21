@@ -398,7 +398,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
     try {
       tenants[domain] = new State();
       if (!disableMigrate)
-        await db.runWithTenant(domain, () => migrate(domain));
+        await db.runWithTenant(domain, () => migrate(domain, true));
       await db.runWithTenant(domain, plugin_loader);
       set_tenant_base_url(domain, tenants[domain].configs.base_url.value);
     } catch (err) {

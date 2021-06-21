@@ -14,8 +14,8 @@ const dateFormat = require("dateformat");
  * @param schema0 - schema name
  * @returns {Promise<void>}
  */
-    // todo resolve database specific
-const migrate = async (schema0) => {
+// todo resolve database specific
+const migrate = async (schema0, verbose) => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating", schema);
   const is_sqlite = db.isSQLite;
@@ -53,7 +53,7 @@ const migrate = async (schema0) => {
   for (const file of files) {
     const name = file.replace(".js", "");
     if (!dbmigrations.includes(name)) {
-      console.log("Tenant %s running migration %s", schema0, name);
+      if (verbose) console.log("Tenant %s running migration %s", schema0, name);
       const contents = require(path.join(__dirname, "migrations", name));
       if (contents.sql) {
         if (!(is_sqlite && contents.sql.includes("DROP COLUMN")))

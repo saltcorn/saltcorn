@@ -58,6 +58,14 @@ describe("files admin", () => {
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
+  it("serve file by name", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/files/serve/rick.png")
+      .set("Cookie", loginCookie)
+      .expect(toSucceed());
+  });
 
   it("serve missing file", async () => {
     const app = await getApp({ disableCsrf: true });
