@@ -4,6 +4,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
 const fs = require("fs");
 const proc = require("child_process");
+const tmp = require("tmp-promise");
+
 const manager = new PluginManager({
   staticDependencies: {
     contractis: require("contractis"),
@@ -52,13 +54,28 @@ const loadPlugin = async (plugin, force) => {
 
 const gitPullOrClone = async (plugin) => {
   await fs.promises.mkdir("git_plugins", { recursive: true });
+  let keyfnm,
+    setKey = "";
+  if (plugin.deploy_private_key) {
+    keyfnm = await tmp.tmpName();
+    await fs.promises.writeFile(
+      keyfnm,
+      plugin.deploy_private_key.replace(/[\r]+/g, "") + "\n",
+      {
+        mode: 0o600,
+        encoding: "ascii",
+      }
+    );
+    setKey = `-c core.sshCommand="ssh -i ${keyfnm}" `;
+  }
   const dir = `git_plugins/${plugin.name}`;
   if (fs.existsSync(dir)) {
-    proc.execSync(`git -C ${dir} pull`);
+    proc.execSync(`git ${setKey} -C ${dir} pull`);
   } else {
-    proc.execSync(`git clone ${plugin.location} ${dir}`);
+    proc.execSync(`git ${setKey} clone ${plugin.location} ${dir}`);
   }
-  return dir
+  if (plugin.deploy_private_key) await fs.promises.unlink(keyfnm);
+  return dir;
 };
 
 const requirePlugin = async (plugin, force) => {
