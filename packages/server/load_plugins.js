@@ -2,7 +2,8 @@ const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
-
+const fs = require("fs");
+const proc = require("child_process");
 const manager = new PluginManager({
   staticDependencies: {
     contractis: require("contractis"),
@@ -49,6 +50,17 @@ const loadPlugin = async (plugin, force) => {
   return res;
 };
 
+const gitPullOrClone = async (plugin) => {
+  await fs.promises.mkdir("git_plugins", { recursive: true });
+  const dir = `git_plugins/${plugin.name}`;
+  if (fs.existsSync(dir)) {
+    proc.execSync(`git -C ${dir} pull`);
+  } else {
+    proc.execSync(`git clone ${plugin.location} ${dir}`);
+  }
+  return dir
+};
+
 const requirePlugin = async (plugin, force) => {
   const installed_plugins = (await manager.list()).map((p) => p.name);
   if (
@@ -65,6 +77,12 @@ const requirePlugin = async (plugin, force) => {
     }
   } else if (plugin.source === "local") {
     const plinfo = await manager.installFromPath(plugin.location, {
+      force: true,
+    });
+    return { plugin_module: manager.require(plugin.name), ...plinfo };
+  } else if (plugin.source === "git") {
+    const loc = await gitPullOrClone(plugin);
+    const plinfo = await manager.installFromPath(loc, {
       force: true,
     });
     return { plugin_module: manager.require(plugin.name), ...plinfo };
