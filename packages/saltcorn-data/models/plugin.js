@@ -185,7 +185,7 @@ Plugin.contract = {
     version: is.maybe(is.str),
     documentation_link: is.maybe(is.str),
     configuration: is.maybe(is.obj()),
-    source: is.one_of(["npm", "github", "local"]),
+    source: is.one_of(["npm", "github", "local", "git"]),
   },
   methods: {
     upsert: is.fun([], is.promise(is.eq(undefined))),

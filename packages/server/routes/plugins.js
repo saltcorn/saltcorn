@@ -58,7 +58,7 @@ const pluginForm = (req, plugin) => {
         name: "source",
         type: getState().types.String,
         required: true,
-        attributes: { options: "npm,local,github" },
+        attributes: { options: "npm,local,github,git" },
       }),
       new Field({ label: req.__("Location"), name: "location", input_type: "text" }),
       ...(schema === db.connectObj.default_schema
@@ -104,6 +104,7 @@ const get_store_items = async () => {
       description: plugin.description,
       has_theme: local_has_theme(plugin.name),
       github: plugin.source === "github",
+      git: plugin.source === "git",
       local: plugin.source === "local",
     }));
 
@@ -159,6 +160,7 @@ const store_item_html = (req) => (item) => ({
       item.has_theme && badge(req.__("Theme")),
       item.has_auth && badge(req.__("Authentication")),
       item.github && badge("GitHub"),
+      item.git && badge("Git"),
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed"))
     ),
