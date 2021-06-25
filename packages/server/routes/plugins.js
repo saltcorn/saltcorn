@@ -60,10 +60,28 @@ const pluginForm = (req, plugin) => {
         required: true,
         attributes: { options: "npm,local,github,git" },
       }),
-      new Field({ label: req.__("Location"), name: "location", input_type: "text" }),
+      new Field({
+        label: req.__("Location"),
+        name: "location",
+        input_type: "text",
+      }),
       ...(schema === db.connectObj.default_schema
-        ? [new Field({ label: req.__("Version"), name: "version", input_type: "text" })]
+        ? [
+            new Field({
+              label: req.__("Version"),
+              name: "version",
+              input_type: "text",
+            }),
+          ]
         : []),
+      new Field({
+        label: req.__("Private SSH key"),
+        sublabel:
+          "Optional, for private repositories. Generate key by running ssh-keygen, then upload public key as GitHub or GitLab deploy key",
+        name: "deploy_private_key",
+        input_type: "textarea",
+        showIf: { source: "git" },
+      }),
     ],
     submitLabel: plugin ? req.__("Save") : req.__("Create"),
   });

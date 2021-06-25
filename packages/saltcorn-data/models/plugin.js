@@ -23,6 +23,7 @@ class Plugin {
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
     this.has_auth = o.has_auth;
+    this.deploy_private_key = o.deploy_private_key;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
