@@ -58,12 +58,30 @@ const pluginForm = (req, plugin) => {
         name: "source",
         type: getState().types.String,
         required: true,
-        attributes: { options: "npm,local,github" },
+        attributes: { options: "npm,local,github,git" },
       }),
-      new Field({ label: req.__("Location"), name: "location", input_type: "text" }),
+      new Field({
+        label: req.__("Location"),
+        name: "location",
+        input_type: "text",
+      }),
       ...(schema === db.connectObj.default_schema
-        ? [new Field({ label: req.__("Version"), name: "version", input_type: "text" })]
+        ? [
+            new Field({
+              label: req.__("Version"),
+              name: "version",
+              input_type: "text",
+            }),
+          ]
         : []),
+      new Field({
+        label: req.__("Private SSH key"),
+        sublabel:
+          "Optional, for private repositories. Generate key by running ssh-keygen, then upload public key as GitHub or GitLab deploy key",
+        name: "deploy_private_key",
+        input_type: "textarea",
+        showIf: { source: "git" },
+      }),
     ],
     submitLabel: plugin ? req.__("Save") : req.__("Create"),
   });
@@ -104,6 +122,7 @@ const get_store_items = async () => {
       description: plugin.description,
       has_theme: local_has_theme(plugin.name),
       github: plugin.source === "github",
+      git: plugin.source === "git",
       local: plugin.source === "local",
     }));
 
@@ -159,6 +178,7 @@ const store_item_html = (req) => (item) => ({
       item.has_theme && badge(req.__("Theme")),
       item.has_auth && badge(req.__("Authentication")),
       item.github && badge("GitHub"),
+      item.git && badge("Git"),
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed"))
     ),
