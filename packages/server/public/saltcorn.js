@@ -190,6 +190,34 @@ $(function () {
         });
       });
     });
+  const locale =
+    navigator.userLanguage ||
+    (navigator.languages &&
+      navigator.languages.length &&
+      navigator.languages[0]) ||
+    navigator.language ||
+    navigator.browserLanguage ||
+    navigator.systemLanguage ||
+    "en";
+
+  $("time[locale-time-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = JSON.parse(el.attr("locale-time-options"));
+    el.text(date.toLocaleTimeString(locale, options));
+  });
+  $("time[locale-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = JSON.parse(el.attr("locale-options"));
+    el.text(date.toLocaleString(locale, options));
+  });
+  $("time[locale-date-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = JSON.parse(el.attr("locale-date-options"));
+    el.text(date.toLocaleDateString(locale, options));
+  });
 });
 
 function enable_codemirror(f) {

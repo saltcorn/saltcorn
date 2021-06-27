@@ -75,6 +75,7 @@ module.exports = {
   small: mkTag("small", true),
   pre: mkTag("pre"),
   code: mkTag("code"),
+  time: mkTag("time"),
   header: mkTag("header"),
   footer: mkTag("footer"),
   section: mkTag("section"),
