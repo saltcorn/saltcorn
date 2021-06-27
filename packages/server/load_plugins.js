@@ -1,8 +1,17 @@
+/**
+ * Load plugins
+ * File: load_plugins.js
+ *
+ */
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
 
+/**
+ * Create plugin manager with default list of core plugins
+ * @type {PluginManager}
+ */
 const manager = new PluginManager({
   staticDependencies: {
     contractis: require("contractis"),
@@ -30,9 +39,17 @@ const manager = new PluginManager({
     "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
   },
 });
-
+/**
+ * Load one plugin
+ * TODO correct names for functions loadPlugin, requirePlugin - currently uncler
+ * @param plugin - plugin to load
+ * @param force - force flag
+ * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
+ */
 const loadPlugin = async (plugin, force) => {
+  // load pluging
   const res = await requirePlugin(plugin, force);
+  // register plugin
   getState().registerPlugin(
     plugin.name,
     res.plugin_module,
@@ -43,12 +60,17 @@ const loadPlugin = async (plugin, force) => {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
     } catch (error) {
-      console.error(error);
+      console.error(error); // todo i think that situation is not resolved
     }
   }
   return res;
 };
-
+/**
+ *
+ * @param plugin
+ * @param force
+ * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: any, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
+ */
 const requirePlugin = async (plugin, force) => {
   const installed_plugins = (await manager.list()).map((p) => p.name);
   if (
@@ -79,26 +101,36 @@ const requirePlugin = async (plugin, force) => {
       return { plugin_module: manager.require(plugin.location), ...plinfo };
     }
   }
+  else throw new Error("Unknown plugin source: "+plugin.source );
 };
-
+/**
+ * Load all plugins
+ * @returns {Promise<void>}
+ */
 const loadAllPlugins = async () => {
   await getState().refresh();
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
-      const res = await loadPlugin(plugin);
+      await loadPlugin(plugin);
     } catch (e) {
       console.error(e);
     }
   }
   await getState().refresh();
 };
-
+/**
+ * Load Plugin and its dependencies and save into local installation
+ * @param plugin
+ * @param force
+ * @returns {Promise<void>}
+ */
 const loadAndSaveNewPlugin = async (plugin, force) => {
   const { version, plugin_module, location } = await requirePlugin(
     plugin,
     force
   );
+  // install dependecies
   for (const loc of plugin_module.dependencies || []) {
     const existing = await Plugin.findOne({ location: loc });
     if (!existing && loc !== plugin.location) {
