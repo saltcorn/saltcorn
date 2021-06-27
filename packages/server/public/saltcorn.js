@@ -199,23 +199,24 @@ $(function () {
     navigator.browserLanguage ||
     navigator.systemLanguage ||
     "en";
-
+  const parse = s => JSON.parse(decodeURIComponent(s))
   $("time[locale-time-options]").each(function () {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
-    const options = JSON.parse(el.attr("locale-time-options"));
+    console.log(decodeURIComponent(el.attr("locale-time-options")));
+    const options = parse(el.attr("locale-time-options"));
     el.text(date.toLocaleTimeString(locale, options));
   });
   $("time[locale-options]").each(function () {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
-    const options = JSON.parse(el.attr("locale-options"));
+    const options = parse(el.attr("locale-options"));
     el.text(date.toLocaleString(locale, options));
   });
   $("time[locale-date-options]").each(function () {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
-    const options = JSON.parse(el.attr("locale-date-options"));
+    const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
 });

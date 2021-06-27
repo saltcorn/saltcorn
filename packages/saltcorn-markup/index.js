@@ -2,7 +2,7 @@ const renderForm = require("./form");
 const renderBuilder = require("./builder");
 const mkTable = require("./table");
 const tabs = require("./tabs");
-const { a, text, div, button } = require("./tags");
+const { a, text, div, button, time } = require("./tags");
 
 const link = (href, s) => a({ href: text(href) }, text(s));
 
@@ -106,6 +106,17 @@ const settingsDropdown = (id, elems) =>
     )
   );
 
+const localeHourMinute = (date) =>
+  time(
+    {
+      datetime: date.toISOString(),
+      "locale-time-options": encodeURIComponent(
+        `{ "hour": "2-digit", "minute": "2-digit" }`
+      ),
+    },
+    date.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })
+  );
+
 module.exports = {
   mkTable,
   renderForm,
@@ -116,4 +127,5 @@ module.exports = {
   post_delete_btn,
   post_dropdown_item,
   tabs,
+  localeHourMinute,
 };
