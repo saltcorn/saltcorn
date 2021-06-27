@@ -4,6 +4,23 @@ class ServeCommand extends Command {
     const { flags } = this.parse(ServeCommand);
     const serveArgs = {};
     serveArgs.port = flags.port || 3000;
+    if (flags.addschema) {
+      try {
+        const { getConfig } = require("@saltcorn/data/models/config");
+        await getConfig("log_sql");
+      } catch (e) {
+        const msg = e.message;
+        if (msg && msg.includes("_sc_config")) {
+          console.log("Adding Saltcorn schema to database...");
+          const reset = require("@saltcorn/data/db/reset_schema");
+          await reset(true);
+        } else {
+          console.error("Database is not reachable. The error was: ", msg);          
+          process.exit(1);
+        }
+        
+      }
+    }
     if (flags.nomigrate) serveArgs.disableMigrate = true;
     if (flags.noscheduler) serveArgs.disableScheduler = true;
     if (flags.verbose) {
@@ -19,7 +36,9 @@ ServeCommand.description = `Start the Saltcorn server`;
 
 ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
+  port: flags.integer({ char: "p", description: "port", default: 3000 }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
+  addschema: flags.boolean({ char: "a", description: "Add schema if missing" }),
   nomigrate: flags.boolean({ char: "n", description: "No migrations" }),
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),
 };
