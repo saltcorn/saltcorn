@@ -6,18 +6,18 @@
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
-  // doesnot use mkTable,
+  mkTable,
   renderForm,
   link,
   post_btn,
-  // doesnot use post_delete_btn,
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/data/models/pack");
-//doesnot use const { getConfig, setConfig } = require("@saltcorn/data/models/config");
+const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {
   plugin_types_info_card,
@@ -27,6 +27,8 @@ const {
 } = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
+  h5,
+  nbsp,
   a,
   div,
   span,
@@ -39,6 +41,7 @@ const {
   th,
   td,
   p,
+  strong,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
@@ -63,39 +66,50 @@ const pluginForm = (req, plugin) => {
           label: req.__("Name"),
           name: "name",
           input_type: "text",
-          sublabel: req.__("Plugin name")
+          sublabel: req.__("Plugin name"),
       }),
       new Field({
         label: req.__("Source"),
         name: "source",
         type: getState().types.String,
         required: true,
-        attributes: { options: "npm,local,github" },
+        attributes: { options: "npm,local,github,git" },
         sublabel: req.__(
             "Source of plugin for install. Few options:"+
             "npm - download from npm repository,"+
             "local - get from local file system,"+
-            "github - download from github"
-        )
+            "github - download from github,"+
+            "git - get from git"
+        ),
       }),
       new Field({
-          label: req.__("Location"),
-          name: "location",
-          input_type: "text",
-          sublabel: req.__(
-              "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, "+
-               "for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, "+
-              "for github - name of github project."
-          )
+        label: req.__("Location"),
+        name: "location",
+        input_type: "text",
+        sublabel: req.__(
+            "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, "+
+            "for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, "+
+            "for github - name of github project."
+        ),
       }),
       ...(schema === db.connectObj.default_schema
-        ? [new Field({
+        ? [
+            new Field({
               label: req.__("Version"),
               name: "version",
               input_type: "text",
-              sublabel: req.__("Version of plugin, latest is default value")
-        })]
+              sublabel: req.__("Version of plugin, latest is default value"),
+            }),
+          ]
         : []),
+      new Field({
+        label: req.__("Private SSH key"),
+        sublabel:
+          "Optional, for private repositories. Generate key by running ssh-keygen, then upload public key as GitHub or GitLab deploy key",
+        name: "deploy_private_key",
+        input_type: "textarea",
+        showIf: { source: "git" },
+      }),
     ],
     submitLabel: plugin ? req.__("Save") : req.__("Create"),
   });
@@ -123,7 +137,7 @@ const get_store_items = async () => {
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
-  //const schema = db.getTenantSchema();
+  const schema = db.getTenantSchema();
   const installed_plugin_names = installed_plugins.map((p) => p.name);
   const store_plugin_names = instore.map((p) => p.name);
   const plugins_item = instore.map((plugin) => ({
@@ -145,6 +159,7 @@ const get_store_items = async () => {
       description: plugin.description,
       has_theme: local_has_theme(plugin.name),
       github: plugin.source === "github",
+      git: plugin.source === "git",
       local: plugin.source === "local",
     }));
 
@@ -200,6 +215,7 @@ const store_item_html = (req) => (item) => ({
       item.has_theme && badge(req.__("Theme")),
       item.has_auth && badge(req.__("Authentication")),
       item.github && badge("GitHub"),
+      item.git && badge("Git"),
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed"))
     ),

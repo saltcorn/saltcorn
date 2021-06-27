@@ -322,14 +322,16 @@ const renderRows = async (
         )[0];
       } else {
         let state;
+        const pk_name = table.pk_name;
         switch (view.view_select.type) {
           case "Own":
-            state = { id: row.id };
+            state = { [pk_name]: row[pk_name] };
             break;
           case "ChildList":
-            state = { [view.view_select.field_name]: row.id };
+            state = { [view.view_select.field_name]: row[pk_name] };
             break;
           case "ParentShow":
+            //todo set by pk name of parent tablr
             state = { id: row[view.view_select.field_name] };
             break;
         }

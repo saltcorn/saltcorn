@@ -30,6 +30,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("./utils");
 const { editRoleForm } = require("../markup/forms.js");
+const { strictParseInt } = require("@saltcorn/data/plugin-helper");
 
 const router = new Router();
 module.exports = router;
@@ -140,7 +141,11 @@ router.get(
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const { id } = req.params;
-    const file = await File.findOne({ id });
+    let file;
+    if (typeof strictParseInt(id) !== "undefined")
+      file = await File.findOne({ id });
+    else file = await File.findOne({ filename: id });
+
     if (!file) {
       res
         .status(404)

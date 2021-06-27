@@ -23,6 +23,7 @@ class Plugin {
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
     this.has_auth = o.has_auth;
+    this.deploy_private_key = o.deploy_private_key;
     this.configuration = stringToJSON(o.configuration);
     contract.class(this);
   }
@@ -185,7 +186,7 @@ Plugin.contract = {
     version: is.maybe(is.str),
     documentation_link: is.maybe(is.str),
     configuration: is.maybe(is.obj()),
-    source: is.one_of(["npm", "github", "local"]),
+    source: is.one_of(["npm", "github", "local", "git"]),
   },
   methods: {
     upsert: is.fun([], is.promise(is.eq(undefined))),

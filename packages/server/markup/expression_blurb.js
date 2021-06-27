@@ -13,8 +13,8 @@ const toJsType = (type) =>
   }[type] || type);
 
 const intExamples = (type, fields) => {
-  const boolFields = fields.filter((f) => f.type.name === "Bool");
-  const intFields = fields.filter((f) => f.type.name === "Integer");
+  const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
+  const intFields = fields.filter((f) => f.type && f.type.name === "Integer");
   const exs = ["3"];
   if (boolFields.length > 0) {
     const b = is.one_of(boolFields).generate();
@@ -28,7 +28,7 @@ const intExamples = (type, fields) => {
 };
 
 const colorExamples = (type, fields) => {
-  const boolFields = fields.filter((f) => f.type.name === "Bool");
+  const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const exs = [`"#06ab6d1"`];
   if (boolFields.length > 0) {
     const b = is.one_of(boolFields).generate();
@@ -37,8 +37,8 @@ const colorExamples = (type, fields) => {
   return exs;
 };
 const stringExamples = (type, fields) => {
-  const boolFields = fields.filter((f) => f.type.name === "Bool");
-  const strFields = fields.filter((f) => f.type.name === "String");
+  const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
+  const strFields = fields.filter((f) => f.type && f.type.name === "String");
   const exs = [`"Hello world!"`];
   if (boolFields.length > 0) {
     const b = is.one_of(boolFields).generate();
@@ -51,9 +51,9 @@ const stringExamples = (type, fields) => {
   return exs;
 };
 const floatExamples = (type, fields) => {
-  const boolFields = fields.filter((f) => f.type.name === "Bool");
+  const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const numFields = fields.filter(
-    (f) => f.type.name === "Integer" || f.type.name === "Float"
+    (f) => f.type && (f.type.name === "Integer" || f.type.name === "Float")
   );
   const exs = ["3.14"];
   if (boolFields.length > 0) {
@@ -74,9 +74,9 @@ const floatExamples = (type, fields) => {
   return exs;
 };
 const boolExamples = (type, fields) => {
-  const boolFields = fields.filter((f) => f.type.name === "Bool");
+  const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const numFields = fields.filter(
-    (f) => f.type.name === "Integer" || f.type.name === "Float"
+    (f) => (f.type && f.type.name === "Integer") || f.type.name === "Float"
   );
   const exs = ["true"];
   if (boolFields.length > 0) {

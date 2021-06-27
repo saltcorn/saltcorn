@@ -7,6 +7,9 @@ const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
 const { getState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
+const fs = require("fs");
+const proc = require("child_process");
+const tmp = require("tmp-promise");
 
 /**
  * Create plugin manager with default list of core plugins
@@ -71,6 +74,33 @@ const loadPlugin = async (plugin, force) => {
  * @param force
  * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: any, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
  */
+
+const gitPullOrClone = async (plugin) => {
+  await fs.promises.mkdir("git_plugins", { recursive: true });
+  let keyfnm,
+    setKey = "";
+  if (plugin.deploy_private_key) {
+    keyfnm = await tmp.tmpName();
+    await fs.promises.writeFile(
+      keyfnm,
+      plugin.deploy_private_key.replace(/[\r]+/g, "") + "\n",
+      {
+        mode: 0o600,
+        encoding: "ascii",
+      }
+    );
+    setKey = `-c core.sshCommand="ssh -i ${keyfnm}" `;
+  }
+  const dir = `git_plugins/${plugin.name}`;
+  if (fs.existsSync(dir)) {
+    proc.execSync(`git ${setKey} -C ${dir} pull`);
+  } else {
+    proc.execSync(`git ${setKey} clone ${plugin.location} ${dir}`);
+  }
+  if (plugin.deploy_private_key) await fs.promises.unlink(keyfnm);
+  return dir;
+};
+
 const requirePlugin = async (plugin, force) => {
   const installed_plugins = (await manager.list()).map((p) => p.name);
   if (
@@ -87,6 +117,12 @@ const requirePlugin = async (plugin, force) => {
     }
   } else if (plugin.source === "local") {
     const plinfo = await manager.installFromPath(plugin.location, {
+      force: true,
+    });
+    return { plugin_module: manager.require(plugin.name), ...plinfo };
+  } else if (plugin.source === "git") {
+    const loc = await gitPullOrClone(plugin);
+    const plinfo = await manager.installFromPath(loc, {
       force: true,
     });
     return { plugin_module: manager.require(plugin.name), ...plinfo };
