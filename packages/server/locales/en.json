@@ -719,5 +719,14 @@
 	"The user password or application token to access SMTP server for sending emails": "The user password or application token to access SMTP server for sending emails",
 	"The port of your SMTP server": "The port of your SMTP server",
 	"The user name to access SMTP server for sending emails.": "The user name to access SMTP server for sending emails.",
-	"The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.": "The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password."
+	"The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.": "The user password or app password to access SMTP server for sending emails. If your SMTP provider allows to create app password for using from application We recommends to use app password instead of user password.",
+	"Plugin name": "Plugin name",
+	"Source of plugin for install\nnpm - download from npm repository\nlocal - get from local file system\ngithub - download from github": "Source of plugin for install\nnpm - download from npm repository\nlocal - get from local file system\ngithub - download from github",
+	"Depends from Source: \nnpm - \n": "Depends from Source: \nnpm - \n",
+	"Version of plugin": "Version of plugin",
+	"CSV Delimiter": "CSV Delimiter",
+	"CSV quote": "CSV quote",
+	"CSV trim": "CSV trim",
+	"CSV check column type": "CSV check column type",
+	"CSV Ignore Empty": "CSV Ignore Empty"
 }
