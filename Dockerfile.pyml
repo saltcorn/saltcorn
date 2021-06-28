@@ -24,4 +24,4 @@ ENV SALTCORN_DISABLE_UPGRADE "true"
 
 RUN npm install -g @saltcorn/cli@0.5.1-beta.1 --unsafe
 
-ENTRYPOINT ["/usr/local/bin/saltcorn"]
+ENTRYPOINT ["/usr/bin/saltcorn"]
