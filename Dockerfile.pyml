@@ -19,9 +19,15 @@ RUN pip3 install --upgrade tensorflow && \
         sklearn \
         matplotlib 
 
+RUN npm install -g lerna
+
 ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
+WORKDIR /opt/saltcorn
 
-RUN npm install -g @saltcorn/cli@0.5.1-beta.1 --unsafe
+COPY . /opt/saltcorn
+RUN lerna bootstrap
 
-ENTRYPOINT ["/usr/bin/saltcorn"]
+ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
+
+ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]
