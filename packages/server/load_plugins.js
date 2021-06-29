@@ -55,7 +55,7 @@ const loadPlugin = async (plugin, force) => {
 const gitPullOrClone = async (plugin) => {
   await fs.promises.mkdir("git_plugins", { recursive: true });
   let keyfnm,
-    setKey = "";
+    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'" `;
   if (plugin.deploy_private_key) {
     keyfnm = await tmp.tmpName();
     await fs.promises.writeFile(
@@ -66,7 +66,7 @@ const gitPullOrClone = async (plugin) => {
         encoding: "ascii",
       }
     );
-    setKey = `-c core.sshCommand="ssh -i ${keyfnm}" `;
+    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no' -i ${keyfnm}" `;
   }
   const dir = `git_plugins/${plugin.name}`;
   if (fs.existsSync(dir)) {
