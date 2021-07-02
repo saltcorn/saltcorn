@@ -58,6 +58,7 @@ class Plugin {
       location: this.location,
       version: this.version,
       configuration: this.configuration,
+      deploy_private_key: this.deploy_private_key,
     };
     if (typeof this.id === "undefined") {
       // insert
