@@ -1,1 +1,1 @@
-libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban libcap2-bin unattended-upgrades
+libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban git libcap2-bin unattended-upgrades
