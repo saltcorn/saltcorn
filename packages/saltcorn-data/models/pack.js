@@ -60,6 +60,7 @@ const plugin_pack = contract(pack_fun, async (name) => {
     source: plugin.source,
     location: plugin.location,
     configuration: plugin.configuration,
+    deploy_private_key: plugin.deploy_private_key
   };
 });
 const page_pack = contract(pack_fun, async (name) => {
