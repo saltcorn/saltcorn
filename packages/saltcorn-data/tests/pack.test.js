@@ -67,6 +67,7 @@ describe("pack create", () => {
       configuration: null,
       location: "@saltcorn/base-plugin",
       name: "base",
+      deploy_private_key: null,
       source: "npm",
     });
   });
