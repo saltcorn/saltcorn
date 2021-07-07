@@ -106,16 +106,22 @@ const settingsDropdown = (id, elems) =>
     )
   );
 
-const localeHourMinute = (
-  date,
-  options = { hour: "2-digit", minute: "2-digit" }
-) =>
+const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
   time(
     {
       datetime: date.toISOString(),
-      "locale-time-options": encodeURIComponent( JSON.stringify(options)),
+      "locale-time-options": encodeURIComponent(JSON.stringify(options)),
     },
     date.toLocaleTimeString("en", options)
+  );
+
+const localeDateTime = (date, options = {}) =>
+  time(
+    {
+      datetime: date.toISOString(),
+      "locale-options": encodeURIComponent(JSON.stringify(options)),
+    },
+    date.toLocaleString("en", options)
   );
 
 const localeDate = (date, options = {}) =>
@@ -137,6 +143,7 @@ module.exports = {
   post_delete_btn,
   post_dropdown_item,
   tabs,
-  localeHourMinute,
+  localeTime,
   localeDate,
+  localeDateTime,
 };
