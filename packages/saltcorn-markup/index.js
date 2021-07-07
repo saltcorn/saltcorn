@@ -2,7 +2,7 @@ const renderForm = require("./form");
 const renderBuilder = require("./builder");
 const mkTable = require("./table");
 const tabs = require("./tabs");
-const { a, text, div, button } = require("./tags");
+const { a, text, div, button, time } = require("./tags");
 
 const link = (href, s) => a({ href: text(href) }, text(s));
 
@@ -106,6 +106,33 @@ const settingsDropdown = (id, elems) =>
     )
   );
 
+const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
+  time(
+    {
+      datetime: date.toISOString(),
+      "locale-time-options": encodeURIComponent(JSON.stringify(options)),
+    },
+    date.toLocaleTimeString("en", options)
+  );
+
+const localeDateTime = (date, options = {}) =>
+  time(
+    {
+      datetime: date.toISOString(),
+      "locale-options": encodeURIComponent(JSON.stringify(options)),
+    },
+    date.toLocaleString("en", options)
+  );
+
+const localeDate = (date, options = {}) =>
+  time(
+    {
+      datetime: date.toISOString(),
+      "locale-date-options": encodeURIComponent(JSON.stringify(options)),
+    },
+    date.toLocaleDateString("en", options)
+  );
+
 module.exports = {
   mkTable,
   renderForm,
@@ -116,4 +143,7 @@ module.exports = {
   post_delete_btn,
   post_dropdown_item,
   tabs,
+  localeTime,
+  localeDate,
+  localeDateTime,
 };

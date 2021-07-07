@@ -60,6 +60,7 @@ const plugin_pack = contract(pack_fun, async (name) => {
     source: plugin.source,
     location: plugin.location,
     configuration: plugin.configuration,
+    deploy_private_key: plugin.deploy_private_key,
   };
 });
 const page_pack = contract(pack_fun, async (name) => {
@@ -293,7 +294,10 @@ const fetch_available_packs = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
   async () => {
     const stored = getState().getConfigCopy("available_packs", false);
-    const stored_at = getState().getConfigCopy("available_packs_fetched_at", false);
+    const stored_at = getState().getConfigCopy(
+      "available_packs_fetched_at",
+      false
+    );
     //console.log("in fetch", stored_at, stored)
     if (!stored || !stored_at || is_stale(stored_at)) {
       const from_api = await fetch_available_packs_from_store();
