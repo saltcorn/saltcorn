@@ -131,7 +131,7 @@ function rep_down(e) {
   }
 }
 
-$(function () {
+function initialize_page() {
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();
@@ -190,7 +190,37 @@ $(function () {
         });
       });
     });
-});
+  const locale =
+    navigator.userLanguage ||
+    (navigator.languages &&
+      navigator.languages.length &&
+      navigator.languages[0]) ||
+    navigator.language ||
+    navigator.browserLanguage ||
+    navigator.systemLanguage ||
+    "en";
+  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  $("time[locale-time-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-time-options"));
+    el.text(date.toLocaleTimeString(locale, options));
+  });
+  $("time[locale-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-options"));
+    el.text(date.toLocaleString(locale, options));
+  });
+  $("time[locale-date-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-date-options"));
+    el.text(date.toLocaleDateString(locale, options));
+  });
+}
+
+$(initialize_page);
 
 function enable_codemirror(f) {
   $("<link/>", {
@@ -258,6 +288,7 @@ function pjax_to(href) {
       success: function (res, textStatus, request) {
         window.history.pushState(null, "", href);
         $("#page-inner-content").html(res);
+        initialize_page()
       },
     });
 }

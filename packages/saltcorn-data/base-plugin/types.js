@@ -428,7 +428,7 @@ const logit = (x) => {
  */
 const date = {
   name: "Date",
-  sql_name: "timestamp",
+  sql_name: "timestamptz",
   contract: () => is.date,
   attributes: [],
   fieldviews: {
