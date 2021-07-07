@@ -8,17 +8,29 @@ const { contract, is } = require("contractis");
 const latestVersion = require("latest-version");
 const { getConfigFile, configFilePath } = require("../db/connect");
 const fs = require("fs");
-
+const moment = require("moment-timezone");
 /**
  * Config variables types
  * @type {{custom_ssl_private_key: {default: string, fieldview: string, label: string, type: string, hide_value: boolean}, allow_signup: {default: boolean, label: string, type: string, blurb: string}, smtp_host: {default: string, label: string, type: string, blurb: string}, min_role_upload: {default: string, label: string, type: string, blurb: string, required: boolean}, next_hourly_event: {default: null, label: string, type: string}, favicon_id: {default: number, attributes: {select_file_where: {min_role_read: number, mime_super: string}}, label: string, type: string, blurb: string}, login_form: {default: string, label: string, type: string, blurb: string}, installed_packs: {default: *[], label: string, type: string}, custom_ssl_certificate: {default: string, fieldview: string, label: string, type: string, hide_value: boolean}, page_custom_css: {default: string, input_type: string, attributes: {mode: string}, label: string, hide_value: boolean}, cookie_sessions: {default: boolean, restart_required: boolean, root_only: boolean, label: string, type: string, blurb: string}, elevate_verified: {label: string, type: string, blurb: string}, available_plugins: {label: string, type: string}, login_menu: {default: boolean, label: string, type: string, blurb: string}, role_to_create_tenant: {default: string, label: string, type: string, blurb: string}, available_packs: {label: string, type: string}, site_name: {default: string, label: string, type: string, blurb: string}, log_sql: {default: boolean, onChange(*=): void, label: string, type: string, blurb: string}, next_weekly_event: {default: null, label: string, type: string}, admin_home: {default: string, label: string, type: string}, smtp_port: {default: string, label: string, type: string}, allow_forgot: {default: boolean, label: string, type: string, blurb: string}, menu_items: {label: string, type: string}, email_mask: {default: string, label: string, type: string, blurb: string}, latest_npm_version: {default: {}, label: string, type: string}, next_daily_event: {default: null, label: string, type: string}, exttables_min_role_read: {default: {}, label: string, type: string}, layout_by_role: {default: {}, label: string, type: string}, timeout: {default: number, restart_required: boolean, root_only: boolean, label: string, type: string, sublabel: string}, smtp_username: {default: string, label: string, type: string}, smtp_password: {default: string, input_type: string, label: string, type: string}, create_tenant_warning: {default: boolean, label: string, type: string, blurb: string}, home_page_by_role: {label: string, type: string}, staff_home: {default: string, label: string, type: string}, development_mode: {default: boolean, label: string, type: string, blurb: string}, page_custom_html: {default: string, input_type: string, attributes: {mode: string}, label: string, hide_value: boolean}, multitenancy_enabled: {default: boolean, restart_required: boolean, onChange(*=): void, root_only: boolean, label: string, type: string}, signup_form: {default: string, label: string, type: string, blurb: string}, user_home: {default: string, label: string, type: string}, base_url: {default: string, onChange(*=): void, label: string, type: string, blurb: string}, site_logo_id: {default: number, attributes: {select_file_where: {min_role_read: number, mime_super: string}}, label: string, type: string, blurb: string}, available_plugins_fetched_at: {label: string, type: string}, user_settings_form: {default: string, label: string, type: string, blurb: string}, public_home: {default: string, label: string, type: string}, new_user_form: {default: string, label: string, type: string, blurb: string}, smtp_secure: {default: boolean, label: string, type: string, sublabel: string}, globalSearch: {label: string, type: string}, letsencrypt: {default: boolean, root_only: boolean, label: string, type: string, blurb: string}, verification_view: {default: string, label: string, type: string, blurb: string}, available_packs_fetched_at: {label: string, type: string}, email_from: {default: string, label: string, type: string, blurb: string}, custom_http_headers: {default: string, input_type: string, attributes: {mode: string}, label: string, blurb: string, hide_value: boolean}}}
  */
+
+const allTimezones = moment.tz.names();
+const defaultTimezone = moment.tz.guess();
+
 const configTypes = {
   site_name: {
     type: "String",
     label: "Site name",
     default: "Saltcorn",
     blurb: "A short string which is the name of your site",
+  },
+  timezone: {
+    type: "String",
+    label: "Home Timezone",
+    default: defaultTimezone,
+    attributes: {
+      options: allTimezones,
+    },
   },
   site_logo_id: {
     type: "File",
@@ -205,8 +217,7 @@ const configTypes = {
     type: "String",
     label: "SMTP username",
     default: "",
-    blurb:
-        "The user name to access SMTP server for sending emails.",
+    blurb: "The user name to access SMTP server for sending emails.",
   },
   smtp_password: {
     type: "String",
@@ -214,16 +225,15 @@ const configTypes = {
     default: "",
     input_type: "password",
     blurb:
-        "The user password or app password to access SMTP server for sending emails. "+
-        "If your SMTP provider allows to create app password for using from application "+
-        "We recommends to use app password instead of user password.",
+      "The user password or app password to access SMTP server for sending emails. " +
+      "If your SMTP provider allows to create app password for using from application " +
+      "We recommends to use app password instead of user password.",
   },
   smtp_port: {
     type: "Integer",
     label: "SMTP port",
     default: "25",
-    blurb:
-        "The port of your SMTP server",
+    blurb: "The port of your SMTP server",
   },
   smtp_secure: {
     type: "Bool",

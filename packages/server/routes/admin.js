@@ -70,6 +70,7 @@ const site_id_form = (req) =>
     req,
     field_names: [
       "site_name",
+      "timezone",
       "site_logo_id",
       "favicon_id",
       "base_url",
