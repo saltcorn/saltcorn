@@ -130,8 +130,13 @@ function rep_down(e) {
     $(myrep).swapWith(swap_with);
   }
 }
-
+let loadPage = true;
 function initialize_page() {
+  $(window).bind("popstate", function (event) {
+    const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
+    if (loadPage)
+      window.location.assign(ensure_no_final_hash(window.location.href));
+  });
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();
@@ -280,18 +285,25 @@ function unset_state_field(key) {
 
 function pjax_to(href) {
   if (!$("#page-inner-content").length) window.location.href = href;
-  else
+  else {
+    loadPage = false;
     $.ajax(href, {
       headers: {
         pjaxpageload: "true",
       },
       success: function (res, textStatus, request) {
-        window.history.pushState(null, "", href);
+        window.history.pushState({ url: href }, "", href);
+        setTimeout(() => {
+          loadPage = true;
+        }, 0);
+
         $("#page-inner-content").html(res);
-        initialize_page()
+        initialize_page();
       },
     });
+  }
 }
+
 function href_to(href) {
   window.location.href = href;
 }
