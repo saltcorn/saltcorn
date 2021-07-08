@@ -130,13 +130,7 @@ function rep_down(e) {
     $(myrep).swapWith(swap_with);
   }
 }
-let loadPage = true;
 function initialize_page() {
-  $(window).bind("popstate", function (event) {
-    const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
-    if (loadPage)
-      window.location.assign(ensure_no_final_hash(window.location.href));
-  });
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();
@@ -282,6 +276,15 @@ function set_state_fields(kvs) {
 function unset_state_field(key) {
   pjax_to(removeQueryStringParameter(window.location.href, key));
 }
+
+let loadPage = true;
+$(function () {
+  $(window).bind("popstate", function (event) {
+    const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
+    if (loadPage)
+      window.location.assign(ensure_no_final_hash(window.location.href));
+  });
+});
 
 function pjax_to(href) {
   if (!$("#page-inner-content").length) window.location.href = href;
