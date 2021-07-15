@@ -45,7 +45,8 @@ const restore_backup = (csrf, inner) =>
     })
   );
 
-const add_edit_bar = ({ role, title, contents, what, url }) => {
+const add_edit_bar = ({ role, title, contents, what, url, req }) => {
+  if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
   if (role > 1) return contents;
   const bar = div(
     { class: "alert alert-light d-print-none admin-edit-bar" },
@@ -235,7 +236,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
     values[name] = state.getConfig(name);
     if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
       continue;
-    const isView = (configTypes[name].type||"").startsWith("View ");
+    const isView = (configTypes[name].type || "").startsWith("View ");
     const isRole = configTypes[name].type === "Role";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;

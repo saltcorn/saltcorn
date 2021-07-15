@@ -42,7 +42,10 @@ class ReleaseCommand extends Command {
     // 1. update version
     // 2. update dependencies for other packages
     // 3. publish
-
+    spawnSync("npm", ["install"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
       if (p.publish) publish(p.dir);
@@ -74,6 +77,9 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
     });
     spawnSync("git", ["push"], {
+      stdio: "inherit",
+    });
+    spawnSync("rm", ["-rf", "packages/saltcorn-cli/node_modules"], {
       stdio: "inherit",
     });
     this.exit(0);
