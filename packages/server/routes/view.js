@@ -49,6 +49,7 @@ router.get(
         what: req.__("View"),
         url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
         contents,
+        req
       })
     );
   })
