@@ -495,7 +495,7 @@ router.get(
 
     const location = getState().plugin_locations[plugin];
     if (location) {
-      var safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
+      const safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "public", safeFile);
       if (fs.existsSync(fullpath)) res.sendFile(fullpath);
       else res.status(404).send(req.__("Not found"));
@@ -504,6 +504,27 @@ router.get(
     }
   })
 );
+
+router.get(
+  "/pubdeps/:plugin/:dependency/*",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const { plugin, dependency } = req.params;
+    const filepath = req.params[0];
+
+    const pluginObj = getState().plugins[plugin];
+    if(pluginObj && pluginObj.serve_dependencies && pluginObj.serve_dependencies[dependency]) {
+      const deppath = path.dirname(pluginObj.serve_dependencies[dependency])
+      const safeFile = path.normalize(filepath).replace(/^(\.\.(\/|\\|$))+/, "");
+      const abspath = path.join(deppath, safeFile)
+      if (fs.existsSync(abspath)) res.sendFile(abspath);
+      else res.status(404).send(req.__("Not found"));
+    } else {
+      res.status(404).send(req.__("Not found"));
+    }
+  })
+);
+
 router.get(
   "/info/:name",
   setTenant,

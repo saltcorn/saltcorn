@@ -315,6 +315,9 @@ const exportRenderBody = ({ title, body, alerts, role }) =>
 
 module.exports = {
   sc_plugin_api_version: 1,
+  serve_dependencies: {
+    "startbootstrap-sb-admin-2": require.resolve("startbootstrap-sb-admin-2/package.json"),
+  },
   layout: {
     wrap,
     authWrap,
