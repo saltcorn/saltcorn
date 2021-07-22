@@ -37,9 +37,8 @@ describe("Action", () => {
     await table.insertRow({ name: "Don Fabrizio" });
     expect(getActionCounter()).toBe(1);
     const trigger1 = await Trigger.findOne({ id: trigger.id });
-    expect(!!trigger1).toBe(true)
-    expect(trigger1.id).toBe(trigger.id)
-
+    expect(!!trigger1).toBe(true);
+    expect(trigger1.id).toBe(trigger.id);
   });
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);
@@ -174,6 +173,7 @@ describe("Scheduler", () => {
     runScheduler({
       stop_when: () => stopSched,
       tickSeconds: 1,
+      disableAvailabilityCheck: true,
     });
     await sleep(500);
     expect(getActionCounter()).toBe(1);

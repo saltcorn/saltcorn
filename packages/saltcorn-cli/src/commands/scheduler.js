@@ -7,7 +7,7 @@ class ScheduleCommand extends Command {
       db.set_sql_logging();
     }
     const runScheduler = require("@saltcorn/data/models/scheduler");
-    await runScheduler();
+    await runScheduler({ disableAvailabilityCheck: true });
   }
 }
 

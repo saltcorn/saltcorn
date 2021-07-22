@@ -34,12 +34,24 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   return triggers;
 };
 
+let availabilityPassed = false;
+
+const checkAvailability = async (port) => {
+  console.log("running availability check");
+};
+
 const runScheduler = async ({
   stop_when = () => false,
   tickSeconds = 60 * 5,
+  disableAvailabilityCheck = false,
+  port,
+  disableScheduler,
 } = {}) => {
   let stopit;
   const run = async () => {
+    if (!disableAvailabilityCheck) await checkAvailability(port);
+    if (disableScheduler) return;
+
     stopit = await stop_when();
     if (stopit) return;
     await eachTenant(async () => {
