@@ -3,6 +3,7 @@ const { eachTenant } = require("./tenant");
 const Trigger = require("./trigger");
 const db = require("../db");
 const { getState } = require("../db/state");
+const fetch = require("node-fetch");
 
 const sleepUntil = (date, plusSeconds) => {
   const waitTill = new Date();
@@ -37,7 +38,24 @@ const getIntervalTriggersDueNow = async (name, hours) => {
 let availabilityPassed = false;
 
 const checkAvailability = async (port) => {
-  console.log("running availability check");
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/`);
+    const pass = response.status < 400;
+    if (pass) availabilityPassed = true;
+    else if (availabilityPassed) {
+      console.error("Availability check failed, restarting...");
+      try {
+        await Crash.create(new Error("Availability check failed"), {
+          url: "/",
+          headers: {},
+        });
+      } catch {}
+      process.exit(1);
+    }
+  } catch (e) {
+    console.error("Error in availability check", e);
+    if (availabilityPassed) process.exit(1);
+  }
 };
 
 const runScheduler = async ({
