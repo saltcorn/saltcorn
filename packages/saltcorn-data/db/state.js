@@ -55,6 +55,7 @@ class State {
     this.functions = { moment };
     this.keyFieldviews = {};
     this.external_tables = {};
+    this.features = {}
     contract.class(this);
   }
 
