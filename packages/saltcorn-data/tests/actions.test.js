@@ -173,7 +173,6 @@ describe("Scheduler", () => {
     runScheduler({
       stop_when: () => stopSched,
       tickSeconds: 1,
-      disableAvailabilityCheck: true,
     });
     await sleep(500);
     expect(getActionCounter()).toBe(1);

@@ -18,7 +18,9 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   const cfgField = `next_${name.toLowerCase()}_event`;
   const now = new Date();
   let due = state.getConfigCopy(cfgField, false);
+  //console.log({due, name, now});
   if (!due) {
+    
     //first run, set rnd due
     const due_in_hrs = Math.random() * hours;
     if (hours < 4) now.setMinutes(now.getMinutes() + due_in_hrs * 60);
@@ -28,6 +30,7 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   }
   due = new Date(due);
   if (due > now) return [];
+  //console.log("after check", {due, name, now});
   const triggers = await Trigger.find({ when_trigger: name });
   due.setHours(due.getHours() + hours);
   await state.setConfig(cfgField, due);
@@ -38,6 +41,7 @@ const getIntervalTriggersDueNow = async (name, hours) => {
 let availabilityPassed = false;
 
 const checkAvailability = async (port) => {
+  console.log("avaialability check");
   try {
     const response = await fetch(`http://127.0.0.1:${port}/`);
     const pass = response.status < 400;
@@ -61,13 +65,13 @@ const checkAvailability = async (port) => {
 const runScheduler = async ({
   stop_when = () => false,
   tickSeconds = 60 * 5,
-  disableAvailabilityCheck = false,
+  watchReaper,
   port,
   disableScheduler,
 } = {}) => {
   let stopit;
   const run = async () => {
-    if (!disableAvailabilityCheck) await checkAvailability(port);
+    if (watchReaper) await checkAvailability(port);
     if (disableScheduler) return;
 
     stopit = await stop_when();

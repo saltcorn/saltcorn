@@ -12,7 +12,7 @@ const path = require("path");
 
 const getApp = require("./app");
 
-module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
+module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   const app = await getApp(appargs);
   // todo add timeout to config
   const timeout = +getState().getConfig("timeout", 120);
@@ -77,5 +77,5 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
     else nonGreenlockServer();
   } else nonGreenlockServer();
   // todo add disableScheduler to config
-  setTimeout(() => runScheduler({port, disableScheduler}), 1000);
+  setTimeout(() => runScheduler({ port, watchReaper }), 1000);
 };
