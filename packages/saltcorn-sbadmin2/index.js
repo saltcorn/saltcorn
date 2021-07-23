@@ -220,7 +220,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.3/css/sb-admin-2.min.css" integrity="sha256-YAjjk/fYhP2bZUoaAEYJ+2d3EHBylYEgj9TomVgBjyg=" crossorigin="anonymous">
+    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
