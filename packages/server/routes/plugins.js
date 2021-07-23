@@ -506,7 +506,7 @@ router.get(
 );
 
 router.get(
-  "/pubdeps/:plugin/:dependency/*",
+  "/pubdeps/:plugin/:dependency/:version/*",
   setTenant,
   error_catcher(async (req, res) => {
     const { plugin, dependency } = req.params;

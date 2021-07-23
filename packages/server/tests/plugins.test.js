@@ -89,7 +89,7 @@ describe("Plugin Endpoints", () => {
       .get("/plugins/public/any-bootstrap-theme/test.txt")
       .expect(toInclude("testfilecontents"));
     await request(app)
-      .get("/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/css/sb-admin-2.min.css")
+      .get("/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css")
       .expect(toInclude("Start Bootstrap"));
 
     await request(app)
