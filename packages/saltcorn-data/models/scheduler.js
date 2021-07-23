@@ -46,7 +46,7 @@ let availabilityPassed = false;
 
 const checkAvailability = async (port) => {
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/`);
+    const response = await fetch(`http://127.0.0.1:${port}/auth/login`);
     const pass = response.status < 400;
     if (pass) availabilityPassed = true;
     else if (availabilityPassed) {
