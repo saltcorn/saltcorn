@@ -20,7 +20,6 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   let due = state.getConfigCopy(cfgField, false);
   //console.log({due, name, now});
   if (!due) {
-    
     //first run, set rnd due
     const due_in_hrs = Math.random() * hours;
     if (hours < 4) now.setMinutes(now.getMinutes() + due_in_hrs * 60);
@@ -33,6 +32,11 @@ const getIntervalTriggersDueNow = async (name, hours) => {
   //console.log("after check", {due, name, now});
   const triggers = await Trigger.find({ when_trigger: name });
   due.setHours(due.getHours() + hours);
+  if (now > due) {
+    // we must have skipped events, e.g. if not running continuously
+    due = now;
+    due.setHours(due.getHours() + hours);
+  }
   await state.setConfig(cfgField, due);
 
   return triggers;
@@ -41,7 +45,6 @@ const getIntervalTriggersDueNow = async (name, hours) => {
 let availabilityPassed = false;
 
 const checkAvailability = async (port) => {
-  console.log("avaialability check");
   try {
     const response = await fetch(`http://127.0.0.1:${port}/`);
     const pass = response.status < 400;
