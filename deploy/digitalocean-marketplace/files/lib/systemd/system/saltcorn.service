@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 User=saltcorn
 WorkingDirectory=/home/saltcorn
-ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
+ExecStart=/home/saltcorn/.local/bin/saltcorn serve -r -p 80
 Restart=always
 Environment="NODE_ENV=production"
 

@@ -12,10 +12,8 @@ const path = require("path");
 
 const getApp = require("./app");
 
-module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
+module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   const app = await getApp(appargs);
-  // todo add disableScheduler to config
-  if (!disableScheduler) runScheduler();
   // todo add timeout to config
   const timeout = +getState().getConfig("timeout", 120);
   // Server without letsencrypt
@@ -40,7 +38,8 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
       httpsServer.listen(443, () => {
         console.log("HTTPS Server running on port 443");
       });
-    } else { // server with http only
+    } else {
+      // server with http only
       const http = require("http");
       const httpServer = http.createServer(app);
       // todo timeout to config
@@ -77,4 +76,6 @@ module.exports = async ({ port = 3000, disableScheduler, ...appargs } = {}) => {
         });
     else nonGreenlockServer();
   } else nonGreenlockServer();
+  // todo add disableScheduler to config
+  setTimeout(() => runScheduler({ port, watchReaper }), 1000);
 };
