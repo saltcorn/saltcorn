@@ -30,6 +30,7 @@
     "i18n": "^0.13.2",
     "live-plugin-manager": "^0.15.1",
     "moment": "^2.27.0",
+    "node-fetch": "^2.6.1",
     "passport": "^0.4.1",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
