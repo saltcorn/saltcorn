@@ -1,7 +1,6 @@
-const notify = require("sd-notify");
 const fetch = require("node-fetch");
 
-const watchDog = (interval, { port }) => {
+const watchDog = (interval, notify, { port }) => {
   //we want to do a request every 5 mins
   const pings_per_5_min = (5 * 60000) / interval;
 
@@ -14,13 +13,16 @@ const watchDog = (interval, { port }) => {
 };
 
 module.exports = (opts) => {
-  notify.ready();
-  const watchdogInterval = notify.watchdogInterval();
-  console.log({ watchdogInterval });
-  if (watchdogInterval && watchdogInterval > 0) {
-    const interval = Math.floor(watchdogInterval / 2);
-    setInterval(() => {
-      watchDog(interval, opts);
-    }, interval);
-  }
+  try {
+    const notify = require("sd-notify");
+    notify.ready();
+    const watchdogInterval = notify.watchdogInterval();
+    console.log({ watchdogInterval });
+    if (watchdogInterval && watchdogInterval > 0) {
+      const interval = Math.floor(watchdogInterval / 2);
+      setInterval(() => {
+        watchDog(interval, notify, opts);
+      }, interval);
+    }
+  } catch {}
 };
