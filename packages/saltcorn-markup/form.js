@@ -33,7 +33,6 @@ const mkShowIf = (sIf) =>
     )
     .join(" && ");
 
-const isCheck = (hdr) => hdr.type && hdr.type.name === "Bool";
 const isHoriz = (formStyle) => formStyle === "horiz";
 const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
   div(
@@ -43,29 +42,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
         "data-show-if": mkShowIf(hdr.showIf),
       }),
     },
-    isCheck(hdr)
-      ? div(
-          {
-            class:
-              isHoriz(fStyle) &&
-              `col-sm-${12 - labelCols} offset-md-${labelCols}`,
-          },
-          div(
-            { class: "form-check" },
-            inner,
-
-            label(
-              {
-                for: `input${text_attr(hdr.form_name)}`,
-                class: "form-check-label",
-              },
-              text(hdr.label)
-            ),
-            hdr.sublabel && " &mdash; " + i(text(hdr.sublabel)),
-            text(error)
-          )
-        )
-      : hdr.input_type === "section_header"
+      hdr.input_type === "section_header"
       ? div({ class: `col-sm-12` }, h5(text(hdr.label)))
       : [
           label(

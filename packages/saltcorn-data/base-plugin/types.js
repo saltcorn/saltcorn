@@ -577,7 +577,7 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          class: ["form-check-input", cls],
+          class: ["mr-2 mt-2p5", cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           disabled: attrs.disabled,
