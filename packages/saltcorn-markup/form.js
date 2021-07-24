@@ -42,15 +42,17 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
         "data-show-if": mkShowIf(hdr.showIf),
       }),
     },
-      hdr.input_type === "section_header"
+    hdr.input_type === "section_header"
       ? div({ class: `col-sm-12` }, h5(text(hdr.label)))
       : [
-          label(
-            {
-              for: `input${text_attr(hdr.form_name)}`,
-              class: isHoriz(fStyle) && `col-sm-${labelCols} col-form-label`,
-            },
-            text(hdr.label)
+          div(
+            { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
+            label(
+              {
+                for: `input${text_attr(hdr.form_name)}`,                
+              },
+              text(hdr.label)
+            )
           ),
           div(
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
@@ -101,7 +103,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         v[hdr.form_name]
       )}</textarea>`;
     case "code":
-      return `<textarea mode="${(hdr.attributes||{}).mode||""}" class="to-code form-control ${validClass} ${
+      return `<textarea mode="${
+        (hdr.attributes || {}).mode || ""
+      }" class="to-code form-control ${validClass} ${
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
