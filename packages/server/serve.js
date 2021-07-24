@@ -64,7 +64,7 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
     const certs = await greenlock._find({});
     console.log("Certificates:", certs);
     if (certs && certs.length > 0)
-      require("greenlock-express")
+      require("@saltcorn/greenlock-express")
         .init({
           packageRoot: __dirname,
           configDir: path.join(file_store, "greenlock.d"),
@@ -78,4 +78,5 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   } else nonGreenlockServer();
   // todo add disableScheduler to config
   setTimeout(() => runScheduler({ port, watchReaper }), 1000);
+  require("./systemd")({ port });
 };
