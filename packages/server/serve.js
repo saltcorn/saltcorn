@@ -64,7 +64,7 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
     const certs = await greenlock._find({});
     console.log("Certificates:", certs);
     if (certs && certs.length > 0)
-      require("greenlock-express")
+      require("@root/greenlock-express")
         .init({
           packageRoot: __dirname,
           configDir: path.join(file_store, "greenlock.d"),
