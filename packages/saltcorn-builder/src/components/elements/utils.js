@@ -196,12 +196,13 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
     })
     .then(function (html) {
       $(".preview-scratchpad").html(html);
+      $(".preview-scratchpad").find("a").attr("href", "#");
       $(".preview-scratchpad")
         .find("[onclick], button, a, input, select")
-        .attr("onclick", "")
-        .attr("href", "#");
+        .attr("onclick", "return false");
+
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("input, textarea").attr("disabled", true);
+      $(".preview-scratchpad").find("textarea").attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
@@ -501,7 +502,12 @@ export const SettingsRow = ({ field, node, setProp, onChange }) => {
       isFormula={node.isFormula}
       {...{ setProp, node }}
     >
-      <ConfigField field={field} props={node} setProp={setProp} onChange={onChange}/>
+      <ConfigField
+        field={field}
+        props={node}
+        setProp={setProp}
+        onChange={onChange}
+      />
     </OrFormula>
   ) : (
     <ConfigField

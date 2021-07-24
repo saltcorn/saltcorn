@@ -580,10 +580,10 @@ const bool = {
           class: ["mr-2 mt-1", cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
-          disabled: attrs.disabled,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
+          ...(attrs.disabled && {onclick: "return false;"})
         }),
     },
     tristate: {
