@@ -35,7 +35,8 @@
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
-    "tmp-promise": "^3.0.2"
+    "tmp-promise": "^3.0.2",
+    "sd-notify": "^2.8.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

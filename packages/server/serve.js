@@ -78,4 +78,5 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   } else nonGreenlockServer();
   // todo add disableScheduler to config
   setTimeout(() => runScheduler({ port, watchReaper }), 1000);
+  require("./systemd")({ port });
 };
