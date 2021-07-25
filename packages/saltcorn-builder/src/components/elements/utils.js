@@ -181,7 +181,7 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
-const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
+const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
   fetch(url, {
     method: "POST",
     headers: {
@@ -204,6 +204,9 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
       //.attr("disabled", true);
       $(".preview-scratchpad").find("textarea").attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
+      if (isView) {
+        $(".preview-scratchpad").find("input").attr("readonly", true);
+      }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
@@ -247,6 +250,7 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     setPreviews,
     url: `/view/${viewname}/preview`,
     body,
+    isView: true,
   });
 };
 
