@@ -277,6 +277,6 @@ button.btnstylesel{
   padding-right: 2px;
 }
 
-.mt-2p5, .my-2p5 {
-  margin-top: .75rem!important;
+.ml-m1 {
+  margin-left: -1rem;
 }
