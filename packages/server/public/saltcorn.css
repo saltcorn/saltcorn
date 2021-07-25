@@ -276,3 +276,7 @@ button.btnstylesel{
   padding-left: 5px;
   padding-right: 2px;
 }
+
+.ml-m1 {
+  margin-left: -1rem;
+}

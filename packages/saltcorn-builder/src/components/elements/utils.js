@@ -181,7 +181,7 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
-const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
+const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
   fetch(url, {
     method: "POST",
     headers: {
@@ -196,13 +196,17 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id }) => {
     })
     .then(function (html) {
       $(".preview-scratchpad").html(html);
+      $(".preview-scratchpad").find("a").attr("href", "#");
       $(".preview-scratchpad")
         .find("[onclick], button, a, input, select")
-        .attr("onclick", "")
-        .attr("href", "#");
+        .attr("onclick", "return false");
+
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("input, textarea").attr("disabled", true);
+      $(".preview-scratchpad").find("textarea").attr("disabled", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
+      if (isView) {
+        $(".preview-scratchpad").find("input").attr("readonly", true);
+      }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
@@ -246,6 +250,7 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     setPreviews,
     url: `/view/${viewname}/preview`,
     body,
+    isView: true,
   });
 };
 
@@ -501,7 +506,12 @@ export const SettingsRow = ({ field, node, setProp, onChange }) => {
       isFormula={node.isFormula}
       {...{ setProp, node }}
     >
-      <ConfigField field={field} props={node} setProp={setProp} onChange={onChange}/>
+      <ConfigField
+        field={field}
+        props={node}
+        setProp={setProp}
+        onChange={onChange}
+      />
     </OrFormula>
   ) : (
     <ConfigField
