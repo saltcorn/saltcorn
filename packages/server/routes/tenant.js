@@ -24,6 +24,7 @@ const {
   tr,
   th,
   td,
+  code,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
@@ -139,7 +140,14 @@ router.get(
       );
     res.sendWrap(
       req.__("Create application"),
-      renderForm(tenant_form(req), req.csrfToken())
+      renderForm(tenant_form(req), req.csrfToken()) +
+        p(
+          { class: "mt-2" },
+          req.__("To login to a previously created application, go to: "),
+          code(`${req.protocol}://`) +
+            i(req.__("Application name")) +
+            code("." + req.hostname)
+        )
     );
   })
 );
