@@ -122,15 +122,18 @@ router.get(
           p(
             req.__(
               "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-            ) + " " +
+            ) +
+              " " +
               req.__(
                 "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-              ) + " " +
+              ) +
+              " " +
               req.__(
                 "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-              ) + " " +
+              ) +
+              " " +
               req.__(
-                  'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+                'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
               )
           )
       );
@@ -153,7 +156,7 @@ const getNewURL = (req, subdomain) => {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const hostname = req.hostname
+  const hostname = req.hostname;
   const newurl = `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 
   return newurl;
@@ -165,7 +168,7 @@ router.post(
   "/create",
   setTenant,
   error_catcher(async (req, res) => {
-      // check that multi-tenancy is enabled
+    // check that multi-tenancy is enabled
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -192,7 +195,7 @@ router.post(
         renderForm(form, req.csrfToken())
       );
     else {
-        // normalize domain name
+      // normalize domain name
       const subdomain = domain_sanitize(valres.success.subdomain);
       // get list of tenants
       const allTens = await getAllTenants();
@@ -220,7 +223,9 @@ router.post(
             p(
               req.__(
                 "Please click the above link now to create the first user."
-              )
+              ) +
+                " " +
+                req.__("Use this link to revisit your application at any time.")
             )
           )
         );
@@ -263,9 +268,8 @@ router.get(
                   link(getNewURL(req, r.subdomain), text(r.subdomain)),
               },
               {
-                  label: req.__("Description"),
-                  key: (r) =>
-                      text(r.description),
+                label: req.__("Description"),
+                key: (r) => text(r.description),
               },
               {
                 label: req.__("Information"),
@@ -287,7 +291,7 @@ router.get(
             ],
             tens
           ),
-          div(req.__(`Found %s tenants`,tens.length)),
+          div(req.__(`Found %s tenants`, tens.length)),
           div(link("/tenant/create", req.__("Create new tenant"))),
         ],
       },
@@ -435,22 +439,63 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__(`%s tenant statistics`,text(subdomain)),
-              // TBD make more pretty view - in ideal with charts
+            title: req.__(`%s tenant statistics`, text(subdomain)),
+            // TBD make more pretty view - in ideal with charts
             contents: [
               table(
-                tr(th(req.__("E-mail")),     td(a({ href: 'mailto:'+info.first_user_email  }, info.first_user_email))),
-                tr(th(req.__("Users")),             td(a({ href: info.base_url+"useradmin"  }, info.nusers))),
-                tr(th(req.__("Roles")),             td(a({ href: info.base_url+"roleadmin"  }, info.nroles))),
-                tr(th(req.__("Tables")),            td(a({ href: info.base_url+"table"      }, info.ntables))),
-                tr(th(req.__("Table columns")),     td(a({ href: info.base_url+"table"      }, info.nfields))),
-                tr(th(req.__("Views")),             td(a({ href: info.base_url+"viewedit"   }, info.nviews))),
-                tr(th(req.__("Pages")),             td(a({ href: info.base_url+"pageedit"   }, info.npages))),
-                tr(th(req.__("Files")),             td(a({ href: info.base_url+"files"      }, info.nfiles))),
-                tr(th(req.__("Actions")),           td(a({ href: info.base_url+"actions"    }, info.nactions))),
-                tr(th(req.__("Plugins")),           td(a({ href: info.base_url+"plugins"    }, info.nplugins))),
-                tr(th(req.__("Configuration items")), td(a({ href: info.base_url+"admin"   }, info.nconfigs))),
-                tr(th(req.__("Crashlogs")),         td(a({ href: info.base_url+"crashlog"     }, info.nerrors)))
+                tr(
+                  th(req.__("E-mail")),
+                  td(
+                    a(
+                      { href: "mailto:" + info.first_user_email },
+                      info.first_user_email
+                    )
+                  )
+                ),
+                tr(
+                  th(req.__("Users")),
+                  td(a({ href: info.base_url + "useradmin" }, info.nusers))
+                ),
+                tr(
+                  th(req.__("Roles")),
+                  td(a({ href: info.base_url + "roleadmin" }, info.nroles))
+                ),
+                tr(
+                  th(req.__("Tables")),
+                  td(a({ href: info.base_url + "table" }, info.ntables))
+                ),
+                tr(
+                  th(req.__("Table columns")),
+                  td(a({ href: info.base_url + "table" }, info.nfields))
+                ),
+                tr(
+                  th(req.__("Views")),
+                  td(a({ href: info.base_url + "viewedit" }, info.nviews))
+                ),
+                tr(
+                  th(req.__("Pages")),
+                  td(a({ href: info.base_url + "pageedit" }, info.npages))
+                ),
+                tr(
+                  th(req.__("Files")),
+                  td(a({ href: info.base_url + "files" }, info.nfiles))
+                ),
+                tr(
+                  th(req.__("Actions")),
+                  td(a({ href: info.base_url + "actions" }, info.nactions))
+                ),
+                tr(
+                  th(req.__("Plugins")),
+                  td(a({ href: info.base_url + "plugins" }, info.nplugins))
+                ),
+                tr(
+                  th(req.__("Configuration items")),
+                  td(a({ href: info.base_url + "admin" }, info.nconfigs))
+                ),
+                tr(
+                  th(req.__("Crashlogs")),
+                  td(a({ href: info.base_url + "crashlog" }, info.nerrors))
+                )
               ),
             ],
           },
@@ -465,7 +510,11 @@ router.get(
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
                   fields: [
-                    { name: "base_url", label: req.__("Base URL"), type: "String" },
+                    {
+                      name: "base_url",
+                      label: req.__("Base URL"),
+                      type: "String",
+                    },
                   ],
                   values: { base_url: info.base_url },
                 }),

@@ -723,5 +723,6 @@
 	"Tick the boxes for the fields that should be jointly unique": "Tick the boxes for the fields that should be jointly unique",
 	"Private SSH key": "Private SSH key",
 	"Timezone": "Timezone",
-	"Home Timezone": "Home Timezone"
+	"Home Timezone": "Home Timezone",
+	"Use this link to revisit your application at any time.": "Use this link to revisit your application at any time."
 }
