@@ -270,7 +270,8 @@ class Field {
       ? type.readFromFormRecord(whole_rec, this.form_name)
       : type.read(whole_rec[this.form_name], this.attributes);
     if (typeof readval === "undefined" || readval === null)
-      if (this.required) return { error: "Unable to read " + type.name };
+      if (this.required && this.type !== "File")
+        return { error: "Unable to read " + type.name };
       else return { success: null };
     const tyvalres =
       type && type.validate
@@ -528,7 +529,6 @@ class Field {
     });
     await require("../db/state").getState().refresh_tables();
 
-
     if (table.versioned && !f.calculated) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
@@ -577,7 +577,7 @@ Field.contract = {
         "section_header",
         "textarea",
         "custom_html",
-        "code"
+        "code",
       ])
     ),
     is_fkey: is.bool,
