@@ -67,6 +67,15 @@ router.get(
                     },
                     {
                         type: "card",
+                        title: req.__("Event types"),
+                        contents: div(
+                            Trigger.when_options
+                                .map((a) => span({class: "badge badge-secondary"}, a))
+                                .join("&nbsp;")
+                        ),
+                    },
+                    {
+                        type: "card",
                         title: req.__("Triggers"),
                         contents: div(
                             mkTable(

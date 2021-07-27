@@ -725,5 +725,6 @@
 	"Timezone": "Timezone",
 	"Home Timezone": "Home Timezone",
 	"Use this link to revisit your application at any time.": "Use this link to revisit your application at any time.",
-	"To login to a previously created application, go to: ": "To login to a previously created application, go to: "
+	"To login to a previously created application, go to: ": "To login to a previously created application, go to: ",
+	"Event types": "Event types"
 }
