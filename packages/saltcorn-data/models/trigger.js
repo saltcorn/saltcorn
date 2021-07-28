@@ -22,6 +22,7 @@ class Trigger {
       this.table_name = o.table.name;
     }
     this.when_trigger = o.when_trigger;
+    this.channel = o.channel;
     this.id = !o.id ? null : +o.id;
     this.configuration =
       typeof o.configuration === "string"
@@ -38,10 +39,12 @@ class Trigger {
   get toJson() {
     return {
       name: this.name,
-      description: this.description, // todo not sure that is required
+      description: this.description,
       action: this.action,
       when_trigger: this.when_trigger,
       configuration: this.configuration,
+      table_id: this.table_id,
+      channel: this.channel
     };
   }
 
@@ -127,7 +130,30 @@ class Trigger {
 
   // currently the samne as runTableTriggers
   static async emitEvent(eventType, channel, user, payload) {
-    await Trigger.runTableTriggers(eventType, channel, payload);
+    const { getState } = require("../db/state");
+    const findArgs = { when_trigger: eventType };
+
+    let table;
+    if (["Insert", "Update", "Delete"].includes(channel)) {
+      const Table = require("./table");
+      table = await Table.findOne({ name: channel });
+      findArgs.table_id = table.id;
+    } else if (channel) findArgs.channel = channel;
+    
+    const triggers = await Trigger.find(findArgs);
+    
+    for (const trigger of triggers) {
+      const action = getState().actions[trigger.action];
+      action &&
+        action.run &&
+        (await action.run({
+          table,
+          channel,
+          configuration: trigger.configuration,
+          row: payload,
+          ...payload,
+        }));
+    }
   }
 
   /**
