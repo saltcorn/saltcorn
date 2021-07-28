@@ -2,7 +2,7 @@
   "name": "@saltcorn/cli",
   "description": "Command-line interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
-  "version": "0.5.1",
+  "version": "0.5.2-beta.0",
   "author": "Tom Nielsen @glutamate",
   "bin": {
     "saltcorn": "./bin/saltcorn"
@@ -12,8 +12,8 @@
     "@oclif/command": "^1.8.0",
     "@oclif/config": "^1.17.0",
     "@oclif/plugin-help": "^3.2.2",
-    "@saltcorn/data": "0.5.1",
-    "@saltcorn/server": "0.5.1",
+    "@saltcorn/data": "0.5.2-beta.0",
+    "@saltcorn/server": "0.5.2-beta.0",
     "cli-ux": "^5.6.3",
     "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
@@ -21,7 +21,7 @@
     "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.1",
     "sudo": "^1.0.3",
-    "systeminformation": "^5.7.7",
+    "systeminformation": "^5.7.13",
     "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
   },
