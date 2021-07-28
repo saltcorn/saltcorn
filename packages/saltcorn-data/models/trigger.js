@@ -128,7 +128,7 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
   }
 
-  // currently the samne as runTableTriggers
+  // Emit an event: run associated triggers
   static async emitEvent(eventType, channel, user, payload) {
     const { getState } = require("../db/state");
     const findArgs = { when_trigger: eventType };

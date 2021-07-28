@@ -9,6 +9,7 @@ const Table = require("../models/table");
 const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
+const Trigger = require("../models/trigger");
 const {
   getMailTransport,
   transformBootstrapEmail,
@@ -22,7 +23,12 @@ const { div, code } = require("@saltcorn/markup/tags");
 module.exports = {
   webhook: {
     configFields: [
-      { name: "url", label: "URL", type: "String", sublabel: "Trigger will call specified URL" },
+      {
+        name: "url",
+        label: "URL",
+        type: "String",
+        sublabel: "Trigger will call specified URL",
+      },
       {
         name: "body",
         label: "JSON body",
@@ -64,7 +70,8 @@ module.exports = {
         {
           name: "to_email",
           label: "Recipient email address",
-          sublabel: "Select email addresses for send email. Choose option to get more information",
+          sublabel:
+            "Select email addresses for send email. Choose option to get more information",
           input_type: "select",
           required: true,
 
@@ -132,8 +139,13 @@ module.exports = {
       const view = await View.findOne({ name: viewname });
       const htmlBs = await view.run({ id: row.id }, mockReqRes);
       const html = await transformBootstrapEmail(htmlBs);
-      console.log("Sending email from %s to %s with subject %s to_email",
-          getState().getConfig("email_from"), to_addr, subject, to_addr);
+      console.log(
+        "Sending email from %s to %s with subject %s to_email",
+        getState().getConfig("email_from"),
+        to_addr,
+        subject,
+        to_addr
+      );
       const email = {
         from: getState().getConfig("email_from"),
         to: to_addr,
@@ -224,7 +236,7 @@ module.exports = {
   run_js_code: {
     configFields: async ({ table }) => {
       const fields = table ? (await table.getFields()).map((f) => f.name) : [];
-      const vars = [      
+      const vars = [
         ...(table ? ["row"] : []),
         "user",
         "console",
@@ -252,6 +264,8 @@ module.exports = {
           v.run({ row, table, user, configuration: args, ...rest, ...args });
         };
       });
+      const emitEvent = (eventType, channel, payload) =>
+        Trigger.emitEvent(eventType, channel, user, payload);
       const f = vm.runInNewContext(`async () => {${code}}`, {
         Table,
         table,
@@ -259,6 +273,7 @@ module.exports = {
         user,
         console,
         Actions,
+        emitEvent,
         ...(row || {}),
         ...getState().function_context,
         ...rest,
