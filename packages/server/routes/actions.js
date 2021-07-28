@@ -138,7 +138,9 @@ const triggerForm = async (req, trigger) => {
     id = trigger.id;
     form_action = `/actions/trigger/${id}`;
   } else form_action = "/actions/trigger";
-
+  const hasChannel = Object.entries(getState().eventTypes)
+    .filter(([k, v]) => v.hasChannel)
+    .map(([k, v]) => k);
   const form = new Form({
     action: form_action,
     fields: [
@@ -181,6 +183,13 @@ const triggerForm = async (req, trigger) => {
         sublabel: req.__(
           "The table for which the trigger condition is checked."
         ),
+      },
+      {
+        name: "channel",
+        label: req.__("Channel"),
+        type: "String",
+        sublabel: req.__("Leave blank for all channels"),
+        showIf: { when_trigger: hasChannel },
       },
     ],
   });
