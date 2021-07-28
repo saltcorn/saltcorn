@@ -26,6 +26,7 @@ class ReleaseCommand extends Command {
       if (json.dependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
           if (json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
+          if (json.devDependencies && json.devDependencies[dpkgnm]) json.devDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
         `packages/${dir}/package.json`,
