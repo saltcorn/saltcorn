@@ -22,6 +22,7 @@ class Trigger {
       this.table_name = o.table.name;
     }
     this.when_trigger = o.when_trigger;
+    this.channel = o.channel;
     this.id = !o.id ? null : +o.id;
     this.configuration =
       typeof o.configuration === "string"
@@ -38,10 +39,12 @@ class Trigger {
   get toJson() {
     return {
       name: this.name,
-      description: this.description, // todo not sure that is required
+      description: this.description,
       action: this.action,
       when_trigger: this.when_trigger,
       configuration: this.configuration,
+      table_id: this.table_id,
+      channel: this.channel
     };
   }
 
@@ -125,6 +128,34 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
   }
 
+  // currently the samne as runTableTriggers
+  static async emitEvent(eventType, channel, user, payload) {
+    const { getState } = require("../db/state");
+    const findArgs = { when_trigger: eventType };
+
+    let table;
+    if (["Insert", "Update", "Delete"].includes(channel)) {
+      const Table = require("./table");
+      table = await Table.findOne({ name: channel });
+      findArgs.table_id = table.id;
+    } else if (channel) findArgs.channel = channel;
+    
+    const triggers = await Trigger.find(findArgs);
+    
+    for (const trigger of triggers) {
+      const action = getState().actions[trigger.action];
+      action &&
+        action.run &&
+        (await action.run({
+          table,
+          channel,
+          configuration: trigger.configuration,
+          row: payload,
+          ...payload,
+        }));
+    }
+  }
+
   /**
    * Run table triggers
    * @param when_trigger
@@ -187,6 +218,8 @@ class Trigger {
    * @returns {string[]}
    */
   static get when_options() {
+    const { getState } = require("../db/state");
+
     return [
       "Insert",
       "Update",
@@ -197,6 +230,7 @@ class Trigger {
       "Often",
       "API call",
       "Never",
+      ...Object.keys(getState().eventTypes),
     ];
   }
 }
@@ -210,7 +244,7 @@ Trigger.contract = {
     action: is.str,
     table_id: is.maybe(is.posint),
     name: is.maybe(is.str),
-    when_trigger: is.one_of(Trigger.when_options),
+    when_trigger: is.str,
     id: is.maybe(is.posint),
     configuration: is.obj(),
   },
@@ -226,11 +260,11 @@ Trigger.contract = {
     findOne: is.fun(is.obj(), is.maybe(is.class("Trigger"))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     runTableTriggers: is.fun(
-      [is.one_of(Trigger.when_options), is.class("Table"), is.obj({})],
+      [is.str, is.class("Table"), is.obj({})],
       is.promise(is.undefined)
     ),
     getTableTriggers: is.fun(
-      [is.one_of(Trigger.when_options), is.class("Table")],
+      [is.str, is.class("Table")],
       is.promise(
         is.array(is.obj({ action: is.str, run: is.fun(is.obj({}), is.any) }))
       )
