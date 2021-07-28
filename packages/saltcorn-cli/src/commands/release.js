@@ -23,9 +23,9 @@ class ReleaseCommand extends Command {
     const updatePkgJson = (dir) => {
       const json = require(`../../../${dir}/package.json`);
       json.version = version;
-      if (json.dependencies)
+      if (json.dependencies || json.devDependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
-          if (json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
+          if (json.dependencies && json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
           if (json.devDependencies && json.devDependencies[dpkgnm]) json.devDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
