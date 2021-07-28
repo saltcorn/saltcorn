@@ -728,5 +728,6 @@
 	"To login to a previously created application, go to: ": "To login to a previously created application, go to: ",
 	"Event types": "Event types",
 	"Channel": "Channel",
-	"Leave blank for all channels": "Leave blank for all channels"
+	"Leave blank for all channels": "Leave blank for all channels",
+	"Table or Channel": "Table or Channel"
 }
