@@ -125,6 +125,11 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
   }
 
+  // currently the samne as runTableTriggers
+  static async emitEvent(eventType, channel, user, payload) {
+    await Trigger.runTableTriggers(eventType, channel, payload);
+  }
+
   /**
    * Run table triggers
    * @param when_trigger
@@ -210,7 +215,7 @@ Trigger.contract = {
     action: is.str,
     table_id: is.maybe(is.posint),
     name: is.maybe(is.str),
-    when_trigger: is.one_of(Trigger.when_options),
+    when_trigger: is.str,
     id: is.maybe(is.posint),
     configuration: is.obj(),
   },
@@ -226,11 +231,11 @@ Trigger.contract = {
     findOne: is.fun(is.obj(), is.maybe(is.class("Trigger"))),
     update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
     runTableTriggers: is.fun(
-      [is.one_of(Trigger.when_options), is.class("Table"), is.obj({})],
+      [is.str, is.class("Table"), is.obj({})],
       is.promise(is.undefined)
     ),
     getTableTriggers: is.fun(
-      [is.one_of(Trigger.when_options), is.class("Table")],
+      [is.str, is.class("Table")],
       is.promise(
         is.array(is.obj({ action: is.str, run: is.fun(is.obj({}), is.any) }))
       )
