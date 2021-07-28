@@ -13,7 +13,8 @@ const watchDog = (interval, notify, { port }) => {
             console.log("watchdog user count", c);
             notify.watchdog();
           })
-          .catch(() => {
+          .catch((e) => {
+            console.error(e);
             process.exit(1);
           });
       } else {
@@ -24,12 +25,14 @@ const watchDog = (interval, notify, { port }) => {
             if (response.status < 400) notify.watchdog();
             else process.exit(1);
           })
-          .catch(() => {
+          .catch((e) => {
+            console.error(e);
             process.exit(1);
           });
       }
-    } else if (!restart_needed) return notify.watchdog();
+    } else return notify.watchdog();
   } catch (e) {
+    console.error(e);
     process.exit(1);
   }
 };
