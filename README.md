@@ -66,6 +66,8 @@ then run
 
 ### Setup (manual)
 
+NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in paticular the last section.
+
 Skip this section if you ran `saltcorn setup`
 
 1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`

@@ -15,14 +15,14 @@ class ServeCommand extends Command {
           const reset = require("@saltcorn/data/db/reset_schema");
           await reset(true);
         } else {
-          console.error("Database is not reachable. The error was: ", msg);          
+          console.error("Database is not reachable. The error was: ", msg);
           process.exit(1);
         }
-        
       }
     }
     if (flags.nomigrate) serveArgs.disableMigrate = true;
     if (flags.noscheduler) serveArgs.disableScheduler = true;
+    if (flags.watchReaper) serveArgs.watchReaper = true;
     if (flags.verbose) {
       const db = require("@saltcorn/data/db");
       db.set_sql_logging();
@@ -38,6 +38,7 @@ ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
+  watchReaper: flags.boolean({ char: "r", description: "Watch reaper" }),
   addschema: flags.boolean({ char: "a", description: "Add schema if missing" }),
   nomigrate: flags.boolean({ char: "n", description: "No migrations" }),
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),

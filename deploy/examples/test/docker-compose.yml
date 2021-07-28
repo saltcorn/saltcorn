@@ -4,7 +4,7 @@ services:
   saltcorn-app:
     image: saltcorn/saltcorn
     container_name: saltcorn
-    depends-on:
+    depends_on:
       - saltcorn-db
     command: "serve"
     restart: always
@@ -35,7 +35,10 @@ services:
       - ./data:/var/lib/postgresql/data #save the db to a mount point if you wish, otherwise will use docker container management
       - ./docker-entrypoint-initdb.sql:/docker-entrypoint-initdb.d/init.sql # This is the init script for the database
     environment:
-      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_USER=${PGUSER} # initdb.sql script will only work for user "postgres"
       - POSTGRES_PASSWORD=${PGPASSWORD}
       - POSTGRES_DB=${PGDATABASE}
 
+networks:
+  saltcorn:
+    name: saltcorn-net

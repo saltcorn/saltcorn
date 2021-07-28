@@ -187,42 +187,27 @@ router.get(
         headers: [
           //jsgrid - grid editor external component
           {
-            script:
-              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js",
-            integrity:
-              "sha512-blBYtuTn9yEyWYuKLh8Faml5tT/5YPG0ir9XEABu5YCj7VGr2nb21WPFT9pnP4fcC3y0sSxJR1JqFTfTALGuPQ==",
+            script: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.js`,
           },
           // date flat picker external component
           {
-            script:
-              "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.js",
-            integrity:
-              "sha512-Nc36QpQAS2BOjt0g/CqfIi54O6+UWTI3fmqJsnXoU6rNYRq8vIQQkZmkrRnnk4xKgMC3ESWp69ilLpDm6Zu8wQ==",
+            script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
           },
           // main logic for grid editor is here
           {
             script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
           },
-           //css for jsgrid - grid editor external component
+          //css for jsgrid - grid editor external component
           {
-            css:
-              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css",
-            integrity:
-              "sha512-3Epqkjaaaxqq/lt5RLJsTzP6cCIFyipVRcY4BcPfjOiGM1ZyFCv4HHeWS7eCPVaAigY3Ha3rhRgOsWaWIClqQQ==",
+            css: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.css`,
           },
           // css theme for jsgrid - grid editor external component
           {
-            css:
-              "https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css",
-            integrity:
-              "sha512-jx8R09cplZpW0xiMuNFEyJYiGXJM85GUL+ax5G3NlZT3w6qE7QgxR4/KE1YXhKxijdVTDNcQ7y6AJCtSpRnpGg==",
+            css: `/static_assets/${db.connectObj.version_tag}/jsgrid-theme.min.css`,
           },
           // css for date flat picker external component
           {
-            css:
-              "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.6/flatpickr.min.css",
-            integrity:
-              "sha512-OtwMKauYE8gmoXusoKzA/wzQoh7WThXJcJVkA29fHP58hBF7osfY0WLCIZbwkeL9OgRCxtAfy17Pn3mndQ4PZQ==",
+            css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
           },
         ],
       },

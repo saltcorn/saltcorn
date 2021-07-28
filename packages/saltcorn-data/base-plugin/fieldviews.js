@@ -7,6 +7,7 @@ const {
   span,
   text_attr,
   script,
+  input,
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
@@ -29,6 +30,17 @@ const select = {
     },
   ],
   run: (nm, v, attrs, cls, reqd, field) => {
+    if (attrs.disabled)
+      return (
+        input({
+          class: `${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          readonly: true,
+          placeholder: v || field.label,
+        }) + span({ class: "ml-m1" }, "v")
+      );
     return tags.select(
       {
         class: `form-control ${cls} ${field.class || ""}`,
