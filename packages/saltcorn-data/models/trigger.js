@@ -192,6 +192,8 @@ class Trigger {
    * @returns {string[]}
    */
   static get when_options() {
+    const { getState } = require("../db/state");
+
     return [
       "Insert",
       "Update",
@@ -202,6 +204,7 @@ class Trigger {
       "Often",
       "API call",
       "Never",
+      ...Object.keys(getState().eventTypes),
     ];
   }
 }
