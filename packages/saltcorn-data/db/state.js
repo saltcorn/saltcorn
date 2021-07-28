@@ -439,6 +439,8 @@ const process_init_time = new Date();
  */
 const get_process_init_time = () => process_init_time;
 
+const features = { serve_static_dependencies: true };
+
 module.exports = {
   getState,
   getTenant,
@@ -448,4 +450,5 @@ module.exports = {
   get_other_domain_tenant,
   set_tenant_base_url,
   get_process_init_time,
+  features
 };
