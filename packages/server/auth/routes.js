@@ -13,9 +13,7 @@ const {
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
-const {
-  renderForm,
-} = require("@saltcorn/markup");
+const { renderForm } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
   a,
@@ -38,17 +36,18 @@ const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const Trigger = require("@saltcorn/data/models/trigger");
 const router = new Router();
 module.exports = router;
 
 const loginForm = (req, isCreating) => {
   const postAuthMethods = Object.entries(getState().auth_methods)
-      // TBD unresolved parameter K
-      // TBD unresolved postUsernamePassword
+    // TBD unresolved parameter K
+    // TBD unresolved postUsernamePassword
     .filter(([k, v]) => v.postUsernamePassword)
     .map(([k, v]) => v);
   const user_sublabel = postAuthMethods
-      // TBD unresolved usernameLabel
+    // TBD unresolved usernameLabel
     .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
     .join(", ");
   return new Form({
@@ -166,7 +165,7 @@ router.get("/logout", setTenant, (req, res) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {
-        // TBD unresolved function next
+      // TBD unresolved function next
       if (err) return next(err);
       req.logout();
       res.redirect("/auth/login");
@@ -356,6 +355,7 @@ router.post(
           },
           function (err) {
             if (!err) {
+              Trigger.emitEvent("Login", null, u);
               res.redirect("/");
             } else {
               req.flash("danger", err);
@@ -449,6 +449,7 @@ const signup_login_with_user = (u, req, res) =>
     },
     function (err) {
       if (!err) {
+        Trigger.emitEvent("Login", null, u);
         res.redirect("/");
       } else {
         req.flash("danger", err);
@@ -712,14 +713,14 @@ const userIdKey = (body) => {
   else return "nokey";
 };
 const ipLimiter = rateLimit({
-    // TBD create config parameter
+  // TBD create config parameter
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   handler,
 });
 
 const userLimiter = rateLimit({
-    // TBD create config parameter
+  // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
   keyGenerator: (req) => userIdKey(req.body),
@@ -741,11 +742,12 @@ router.post(
     userLimiter.resetKey(userIdKey(req.body));
     if (req.session.cookie)
       if (req.body.remember) {
-          // TBD create config parameter
+        // TBD create config parameter
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
       } else {
         req.session.cookie.expires = false; // Cookie expires at end of session
       }
+    Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     res.redirect("/");
   })
@@ -798,6 +800,7 @@ const loginCallback = (req, res) => () => {
   if (!req.user.email) {
     res.redirect("/auth/set-email");
   } else {
+    Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     res.redirect("/");
   }
@@ -881,7 +884,10 @@ const userSettings = async ({ req, res, pwform, user }) => {
         title: req.__("User"),
         contents: table(
           tbody(
-            tr(th(req.__("Email: ")), td(a({ href: 'mailto:'+req.user.email  }, req.user.email))),
+            tr(
+              th(req.__("Email: ")),
+              td(a({ href: "mailto:" + req.user.email }, req.user.email))
+            ),
             tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
           )
         ),

@@ -44,7 +44,7 @@ class Trigger {
       when_trigger: this.when_trigger,
       configuration: this.configuration,
       table_id: this.table_id,
-      channel: this.channel
+      channel: this.channel,
     };
   }
 
@@ -139,9 +139,9 @@ class Trigger {
       table = await Table.findOne({ name: channel });
       findArgs.table_id = table.id;
     } else if (channel) findArgs.channel = channel;
-    
+
     const triggers = await Trigger.find(findArgs);
-    
+
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
       action &&
@@ -149,9 +149,10 @@ class Trigger {
         (await action.run({
           table,
           channel,
+          user,
           configuration: trigger.configuration,
           row: payload,
-          ...payload,
+          ...(payload || {}),
         }));
     }
   }
@@ -230,6 +231,9 @@ class Trigger {
       "Often",
       "API call",
       "Never",
+      "Login",
+      "Error",
+      "Startup",
       ...Object.keys(getState().eventTypes),
     ];
   }
