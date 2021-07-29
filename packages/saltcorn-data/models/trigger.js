@@ -44,7 +44,7 @@ class Trigger {
       when_trigger: this.when_trigger,
       configuration: this.configuration,
       table_id: this.table_id,
-      channel: this.channel
+      channel: this.channel,
     };
   }
 
@@ -76,7 +76,7 @@ class Trigger {
   static async findAllWithTableName() {
     const schema = db.getTenantSchemaPrefix();
 
-    const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger 
+    const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger, a.channel 
     from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
     const { rows } = await db.query(sql);
     return rows.map((dbf) => new Trigger(dbf));
@@ -128,8 +128,9 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
   }
 
-  // currently the samne as runTableTriggers
-  static async emitEvent(eventType, channel, user, payload) {
+  // Emit an event: run associated triggers
+  static async emitEvent(eventType, channel, userPW = {}, payload) {
+    const { password, ...user } = userPW;
     const { getState } = require("../db/state");
     const findArgs = { when_trigger: eventType };
 
@@ -139,9 +140,9 @@ class Trigger {
       table = await Table.findOne({ name: channel });
       findArgs.table_id = table.id;
     } else if (channel) findArgs.channel = channel;
-    
+
     const triggers = await Trigger.find(findArgs);
-    
+
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
       action &&
@@ -149,9 +150,10 @@ class Trigger {
         (await action.run({
           table,
           channel,
+          user,
           configuration: trigger.configuration,
           row: payload,
-          ...payload,
+          ...(payload || {}),
         }));
     }
   }
@@ -230,6 +232,9 @@ class Trigger {
       "Often",
       "API call",
       "Never",
+      "Login",
+      "Error",
+      "Startup",
       ...Object.keys(getState().eventTypes),
     ];
   }

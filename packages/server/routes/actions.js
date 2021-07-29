@@ -50,6 +50,7 @@ router.get(
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
     const base_url = get_base_url(req);
+    console.log(triggers);
     send_events_page({
       res,
       req,
@@ -82,7 +83,10 @@ router.get(
                 [
                   { label: req.__("Name"), key: "name" },
                   { label: req.__("Action"), key: "action" },
-                  { label: req.__("Table"), key: "table_name" },
+                  {
+                    label: req.__("Table or Channel"),
+                    key: (r) => r.table_name || r.channel,
+                  },
                   {
                     label: req.__("When"),
                     key: (a) =>
