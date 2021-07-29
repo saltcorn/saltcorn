@@ -129,7 +129,8 @@ class Trigger {
   }
 
   // Emit an event: run associated triggers
-  static async emitEvent(eventType, channel, user, payload) {
+  static async emitEvent(eventType, channel, userPW, payload) {
+    const { password, ...user } = userPW;
     const { getState } = require("../db/state");
     const findArgs = { when_trigger: eventType };
 
