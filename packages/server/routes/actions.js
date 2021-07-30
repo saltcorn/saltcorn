@@ -50,7 +50,6 @@ router.get(
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
     const base_url = get_base_url(req);
-    console.log(triggers);
     send_events_page({
       res,
       req,
@@ -485,6 +484,67 @@ router.get(
           ),
         },
       });
+    }
+  })
+);
+
+const logSettingsForm = (req) =>
+  new Form({
+    action: "/actions/logsettings",
+    blurb: req.__("Which events should be logged?"),
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    fields: Trigger.when_options.map((w) => ({
+      name: w,
+      label: w,
+      type: "Bool",
+    })),
+  });
+
+router.get(
+  "/logsettings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = logSettingsForm(req);
+    form.values = getState().getConfig("event_log_settings", {});
+    send_events_page({
+      res,
+      req,
+      active_sub: "Log settings",
+      //sub2_page: "Events to log",
+      contents: {
+        type: "card",
+        title: req.__("Events to log"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+router.post(
+  "/logsettings",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = logSettingsForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Log settings",
+        //sub2_page: "Events to log",
+        contents: {
+          type: "card",
+          title: req.__("Events to log"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else {
+      await getState().setConfig("event_log_settings", form.values);
+
+      res.redirect(`/actions/logsettings`);
     }
   })
 );
