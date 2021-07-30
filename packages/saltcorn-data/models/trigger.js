@@ -6,6 +6,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { satisfies } = require("../utils");
+const EventLog = require("./eventlog");
 
 /**
  * Trigger class
@@ -156,6 +157,13 @@ class Trigger {
           ...(payload || {}),
         }));
     }
+    EventLog.create({
+      event_type: eventType,
+      channel,
+      user_id: userPW.id || null,
+      payload,
+      occur_at: new Date(),
+    });
   }
 
   /**
@@ -170,6 +178,13 @@ class Trigger {
     for (const trigger of triggers) {
       await trigger.run(row);
     }
+    EventLog.create({
+      event_type: eventType,
+      channel,
+      user_id: userPW.id || null,
+      payload,
+      occur_at: new Date(),
+    });
   }
 
   /**
