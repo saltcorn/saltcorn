@@ -11,6 +11,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const path = require("path");
 
 const getApp = require("./app");
+const Trigger = require("@saltcorn/data/models/trigger");
 
 module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   const app = await getApp(appargs);
@@ -79,4 +80,5 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
   // todo add disableScheduler to config
   setTimeout(() => runScheduler({ port, watchReaper }), 1000);
   require("./systemd")({ port });
+  Trigger.emitEvent("Startup")
 };

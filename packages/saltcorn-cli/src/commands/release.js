@@ -17,15 +17,16 @@ class ReleaseCommand extends Command {
       "@saltcorn/base-plugin": { dir: "saltcorn-base-plugin", publish: true },
       //"saltcorn-cli", publish: true},
       "@saltcorn/markup": { dir: "saltcorn-markup", publish: true },
-      "@saltcorn/sbadmin": { dir: "saltcorn-sbadmin2", publish: true },
+      "@saltcorn/sbadmin2": { dir: "saltcorn-sbadmin2", publish: true },
     };
 
     const updatePkgJson = (dir) => {
       const json = require(`../../../${dir}/package.json`);
       json.version = version;
-      if (json.dependencies)
+      if (json.dependencies || json.devDependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
-          if (json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
+          if (json.dependencies && json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
+          if (json.devDependencies && json.devDependencies[dpkgnm]) json.devDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
         `packages/${dir}/package.json`,
@@ -79,9 +80,8 @@ class ReleaseCommand extends Command {
     spawnSync("git", ["push"], {
       stdio: "inherit",
     });
-    spawnSync("rm", ["-rf", "packages/saltcorn-cli/node_modules"], {
-      stdio: "inherit",
-    });
+    console.log("Now run:\n")
+    console.log("  rm -rf packages/saltcorn-cli/node_modules\n")
     this.exit(0);
   }
 }

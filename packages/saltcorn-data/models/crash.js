@@ -37,20 +37,24 @@ class Crash {
       ? this.message.substring(0, 90)
       : this.message;
   }
-  static async create(err, req) {
+  static async create(err, req = {}) {
     const schema = db.getTenantSchema();
+    const payload = {
+      stack: err.stack,
+      message: err.message,
+      occur_at: new Date(),
+      tenant: schema,
+      user_id: req.user ? req.user.id : null,
+      body: req.body ? { body: req.body } : null,
+      url: req.url,
+      headers: req.headers,
+    };
     await db.runWithTenant(db.connectObj.default_schema, async () => {
-      await db.insert("_sc_errors", {
-        stack: err.stack,
-        message: err.message,
-        occur_at: new Date(),
-        tenant: schema,
-        user_id: req.user ? req.user.id : null,
-        body: req.body ? { body: req.body } : null,
-        url: req.url,
-        headers: req.headers,
-      });
+      await db.insert("_sc_errors", payload);
     });
+    const Trigger = require("./trigger");
+
+    Trigger.emitEvent("Error", null, req.user, payload);
   }
 }
 
