@@ -49,6 +49,7 @@ class State {
     this.plugins = {};
     this.plugin_cfgs = {};
     this.plugin_locations = {};
+    this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
     this.function_context = { moment };
@@ -240,6 +241,9 @@ class State {
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
       this.actions[k] = v;
     });
+    Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
+      this.eventTypes[k] = v;
+    });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
     });
@@ -310,6 +314,7 @@ class State {
     this.functions = { moment };
     this.keyFieldviews = {};
     this.external_tables = {};
+    this.eventTypes = {};
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });

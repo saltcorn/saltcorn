@@ -15,7 +15,10 @@ const tableTable = (tables, req) =>
   mkTable(
     [
       { label: req.__("Name"), key: "name" },
-      { label: req.__("Edit"), key: (r) => link(`/table/${r.id}`, req.__("Edit")) },
+      {
+        label: req.__("Edit"),
+        key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+      },
     ],
     tables
   );
@@ -203,7 +206,7 @@ const no_views_logged_in = async (req, res) => {
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const can_update =
       packagejson.version !== latest && !process.env.SALTCORN_DISABLE_UPGRADE;
-    if (latest && can_update)
+    if (latest && can_update && isRoot)
       req.flash(
         "warning",
         req.__(
