@@ -29,6 +29,7 @@ const { div, code, a, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
+const EventLog = require("@saltcorn/data/models/eventlog");
 
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
@@ -546,5 +547,54 @@ router.post(
 
       res.redirect(`/actions/logsettings`);
     }
+  })
+);
+
+router.get(
+  "/eventlog",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const state = req.query,
+      rows_per_page = 20,
+      page_opts = { hover: true },
+      current_page = parseInt(state._page) || 1,
+      offset = (parseInt(state._page) - 1) * rows_per_page;
+
+    const evlog = await EventLog.find(
+      {},
+      { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
+    );
+    if (evlog.length === rows_per_page || current_page > 1) {
+      const nrows = await EventLog.count();
+      if (nrows > rows_per_page || current_page > 1) {
+        page_opts.pagination = {
+          current_page,
+          pages: Math.ceil(nrows / rows_per_page),
+          get_page_link: (n) => `javascript:gopage(${n}, ${rows_per_page})`,
+        };
+      }
+    }
+    send_events_page({
+      res,
+      req,
+      active_sub: "Event log",
+      //sub2_page: "Events to log",
+      contents: {
+        type: "card",
+        title: req.__("Event log"),
+        contents: mkTable(
+          [
+           
+            { label: req.__("When"), key: (r) => r.reltime },
+            { label: req.__("Type"), key: "event_type" },
+            { label: req.__("Channel"), key: "channel" },
+            
+          ],
+          evlog,
+          page_opts
+        ),
+      },
+    });
   })
 );

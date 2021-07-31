@@ -1,4 +1,6 @@
 const db = require("../db");
+const moment = require("moment");
+
 const { contract, is } = require("contractis");
 
 class EventLog {
@@ -26,7 +28,9 @@ class EventLog {
   static async count(where) {
     return await db.count("_sc_event_log", where || {});
   }
-
+  get reltime() {
+    return moment(this.occur_at).fromNow();
+  }
   static async create(o) {
     const { getState } = require("../db/state");
 
@@ -44,16 +48,16 @@ EventLog.contract = {
   variables: {
     id: is.maybe(is.posint),
     event_type: is.str,
-    channel: is.str,
+    channel: is.maybe(is.str),
     occur_at: is.class("Date"),
     user_id: is.maybe(is.posint),
-    payload: is.obj(),
+    payload: is.maybe(is.obj()),
   },
   methods: {},
   static_methods: {
-    find: is.fun(is.obj(), is.promise(is.array(is.class("Crash")))),
-    findOne: is.fun(is.obj(), is.promise(is.class("Crash"))),
-    create: is.fun([is.obj(), is.obj()], is.promise(is.any)),
+    find: is.fun(is.obj(), is.promise(is.array(is.class("EventLog")))),
+    findOne: is.fun(is.obj(), is.promise(is.class("EventLog"))),
+    create: is.fun(is.obj(), is.promise(is.any)),
   },
 };
 
