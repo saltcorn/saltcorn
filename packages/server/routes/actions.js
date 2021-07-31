@@ -25,7 +25,18 @@ const {
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
-const { div, code, a, span } = require("@saltcorn/markup/tags");
+const {
+  div,
+  code,
+  a,
+  span,
+  tr,
+  table,
+  tbody,
+  td,
+  th,
+  pre,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
@@ -585,14 +596,49 @@ router.get(
         title: req.__("Event log"),
         contents: mkTable(
           [
-           
-            { label: req.__("When"), key: (r) => r.reltime },
+            {
+              label: req.__("When"),
+              key: (r) => a({ href: `/actions/eventlog/${r.id}` }, r.reltime),
+            },
             { label: req.__("Type"), key: "event_type" },
             { label: req.__("Channel"), key: "channel" },
-            
           ],
           evlog,
           page_opts
+        ),
+      },
+    });
+  })
+);
+
+router.get(
+  "/eventlog/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const ev = await EventLog.findOne({ id });
+    send_events_page({
+      res,
+      req,
+      active_sub: "Event log",
+      sub2_page: ev.id,
+      contents: {
+        type: "card",
+        contents: table(
+          { class: "table eventlog" },
+          tbody(
+            tr(th(req.__("When")), td(ev.reltime)),
+            tr(th(req.__("Type")), td(ev.event_type)),
+            tr(th(req.__("Channel")), td(ev.channel)),
+            tr(
+              // th(req.__("Data")),
+              td(
+                { colspan: "2", class: "payload" },
+                div(ev.payload ? pre(JSON.stringify(ev.payload, null, 2)) : "")
+              )
+            )
+          )
         ),
       },
     });
