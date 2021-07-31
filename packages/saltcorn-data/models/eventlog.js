@@ -24,6 +24,17 @@ class EventLog {
     const u = await db.selectOne("_sc_event_log", where);
     return new EventLog(u);
   }
+  static async findOneWithUser(id) {
+    const { rows } = await db.query(
+      "select el.*, u.email from _sc_event_log el left join users u on el.user_id = u.id where el.id = $1",
+      [id]
+    );
+    console.log({rows});
+    const u = rows[0];
+    const el = new EventLog(u);
+    el.email = u.email;
+    return el;
+  }
 
   static async count(where) {
     return await db.count("_sc_event_log", where || {});

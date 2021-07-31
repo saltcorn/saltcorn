@@ -617,7 +617,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const ev = await EventLog.findOne({ id });
+    const ev = await EventLog.findOneWithUser(id);
     send_events_page({
       res,
       req,
@@ -625,21 +625,20 @@ router.get(
       sub2_page: ev.id,
       contents: {
         type: "card",
-        contents: table(
-          { class: "table eventlog" },
-          tbody(
-            tr(th(req.__("When")), td(ev.reltime)),
-            tr(th(req.__("Type")), td(ev.event_type)),
-            tr(th(req.__("Channel")), td(ev.channel)),
-            tr(
-              // th(req.__("Data")),
-              td(
-                { colspan: "2", class: "payload" },
-                div(ev.payload ? pre(JSON.stringify(ev.payload, null, 2)) : "")
-              )
+        contents:
+          table(
+            { class: "table eventlog" },
+            tbody(
+              tr(th(req.__("When")), td(ev.reltime)),
+              tr(th(req.__("Type")), td(ev.event_type)),
+              tr(th(req.__("Channel")), td(ev.channel)),
+              tr(th(req.__("User")), td(ev.email))
             )
-          )
-        ),
+          ) +
+          div(
+            { class: "eventpayload" },
+            ev.payload ? pre(JSON.stringify(ev.payload, null, 2)) : ""
+          ),
       },
     });
   })
