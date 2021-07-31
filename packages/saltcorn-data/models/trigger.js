@@ -131,7 +131,7 @@ class Trigger {
 
   // Emit an event: run associated triggers
   static async emitEvent(eventType, channel, userPW = {}, payload) {
-    const { password, ...user } = userPW;
+    const { password, ...user } = userPW || {};
     const { getState } = require("../db/state");
     const findArgs = { when_trigger: eventType };
 
@@ -160,7 +160,7 @@ class Trigger {
     EventLog.create({
       event_type: eventType,
       channel,
-      user_id: userPW.id || null,
+      user_id: (userPW || {}).id || null,
       payload,
       occur_at: new Date(),
     });
@@ -248,6 +248,7 @@ class Trigger {
       "API call",
       "Never",
       "Login",
+      "LoginFailed",
       "Error",
       "Startup",
       ...Object.keys(getState().eventTypes),
