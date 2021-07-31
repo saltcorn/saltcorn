@@ -45,7 +45,7 @@ class EventLog {
   static async create(o) {
     const { getState } = require("../db/state");
 
-    const settings = getState().getConfig("event_log_settings", { Error: true });
+    const settings = getState().getConfig("event_log_settings", {});
 
     if (!settings[o.event_type]) return;
     const ev = new EventLog(o);

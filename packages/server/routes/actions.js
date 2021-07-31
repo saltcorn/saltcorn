@@ -520,7 +520,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = logSettingsForm(req);
-    form.values = getState().getConfig("event_log_settings", { Error: true });
+    form.values = getState().getConfig("event_log_settings", {});
     send_events_page({
       res,
       req,

@@ -286,7 +286,7 @@ const configTypes = {
   event_log_settings: {
     type: "hidden",
     label: "Event log settings",
-    default: { Error: true },
+    default: {},
   },
   page_custom_css: {
     input_type: "code",
