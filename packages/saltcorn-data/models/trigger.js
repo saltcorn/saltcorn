@@ -179,10 +179,10 @@ class Trigger {
       await trigger.run(row);
     }
     EventLog.create({
-      event_type: eventType,
-      channel,
-      user_id: userPW.id || null,
-      payload,
+      event_type: when_trigger,
+      channel: table.name,
+      user_id: null,
+      payload: row,
       occur_at: new Date(),
     });
   }

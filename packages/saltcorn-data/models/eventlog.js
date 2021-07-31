@@ -35,6 +35,7 @@ class EventLog {
     const { getState } = require("../db/state");
 
     const settings = getState().getConfig("event_log_settings", {});
+
     if (!settings[o.event_type]) return;
     const ev = new EventLog(o);
     const { id, ...rest } = ev;
