@@ -22,6 +22,7 @@ const {
   settingsDropdown,
   post_dropdown_item,
   post_delete_btn,
+  localeDateTime,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
@@ -629,7 +630,7 @@ router.get(
           table(
             { class: "table eventlog" },
             tbody(
-              tr(th(req.__("When")), td(ev.reltime)),
+              tr(th(req.__("When")), td(localeDateTime(ev.occur_at))),
               tr(th(req.__("Type")), td(ev.event_type)),
               tr(th(req.__("Channel")), td(ev.channel)),
               tr(th(req.__("User")), td(ev.email))
