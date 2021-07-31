@@ -4,7 +4,7 @@ const sql = `create table _sc_event_log (
     channel text,
     occur_at timestamp not null,
     user_id int,
-    payload jsonb,
+    payload jsonb
 );`;
 
 module.exports = { sql };
