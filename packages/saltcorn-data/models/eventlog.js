@@ -1,6 +1,5 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
-const { getState } = require("../db/state");
 
 class EventLog {
   constructor(o) {
@@ -29,6 +28,8 @@ class EventLog {
   }
 
   static async create(o) {
+    const { getState } = require("../db/state");
+
     const settings = getState().getConfig("event_log_settings", {});
     if (!settings[o.event_type]) return;
     const ev = new EventLog(o);
