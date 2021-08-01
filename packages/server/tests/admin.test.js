@@ -99,7 +99,7 @@ describe("event log", () => {
       .post("/eventlog/settings")
       .set("Cookie", loginCookie)
       .send("LoginFailed=on")
-      .expect(toRedirect("/actions/logsettings"));
+      .expect(toRedirect("/eventlog/settings"));
   });
 
   it("tries to log in with wrong password", async () => {
