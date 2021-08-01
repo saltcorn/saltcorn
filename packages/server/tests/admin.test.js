@@ -90,7 +90,8 @@ describe("admin page", () => {
 });
 
 describe("event log", () => {
-  itShouldRedirectUnauthToLogin("/actions/eventlog");
+  itShouldRedirectUnauthToLogin("/eventlog");
+  itShouldRedirectUnauthToLogin("/eventlog/settings");
   it("show enable loginattempt logging", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
