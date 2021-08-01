@@ -28,6 +28,7 @@ const del = require("./delete");
 const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
 const roleadmin = require("../auth/roleadmin");
+const scapi = require("./scapi");
 
 module.exports = (app) => {
   app.use("/table", table);
@@ -56,4 +57,5 @@ module.exports = (app) => {
   app.use("/auth", auth);
   app.use("/useradmin", useradmin);
   app.use("/roleadmin", roleadmin);
+  app.use("/scapi", scapi);
 };
