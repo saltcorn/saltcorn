@@ -175,8 +175,8 @@ const send_events_page = (args) => {
     main_section_href: "/events",
     sub_sections: [
       { text: "Actions", href: "/actions" },
-      { text: "Log settings", href: "/actions/logsettings" },
-      { text: "Event log", href: "/actions/eventlog" },
+      { text: "Log settings", href: "/eventlog/settings" },
+      { text: "Event log", href: "/eventlog" },
       ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
     ],
     ...args,

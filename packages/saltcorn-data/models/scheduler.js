@@ -44,7 +44,7 @@ const getIntervalTriggersDueNow = async (name, hours) => {
     channel: null,
     user_id: null,
     payload:null,
-    occur_at: now,
+    occur_at: new Date(),
   });
   return triggers;
 };

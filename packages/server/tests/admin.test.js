@@ -75,9 +75,9 @@ describe("admin page", () => {
     ["/search/config", "Search configuration"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
-  adminPageContains([["/actions/eventlog", "Event log"]]);
+  adminPageContains([["/eventlog", "Event log"]]);
   adminPageContains([
-    ["/actions/logsettings", "Which events should be logged?"],
+    ["/eventlog/settings", "Which events should be logged?"],
   ]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -95,7 +95,7 @@ describe("event log", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/logsettings")
+      .post("/eventlog/settings")
       .set("Cookie", loginCookie)
       .send("LoginFailed=on")
       .expect(toRedirect("/actions/logsettings"));
@@ -114,7 +114,7 @@ describe("event log", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/eventlog")
+      .get("/eventlog")
       .set("Cookie", loginCookie)
       .expect(toInclude("LoginFailed"));
   });
@@ -123,7 +123,7 @@ describe("event log", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/eventlog/"+evs[0].id)
+      .get("/eventlog/"+evs[0].id)
       .set("Cookie", loginCookie)
       .expect(toInclude("table eventlog"));
   });
