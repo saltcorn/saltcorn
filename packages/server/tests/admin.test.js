@@ -74,6 +74,10 @@ describe("admin page", () => {
     ["/search/config", "Search configuration"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
+  adminPageContains([["/actions/eventlog", "Event log"]]);
+  adminPageContains([
+    ["/actions/logsettings", "Which events should be logged?"],
+  ]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
