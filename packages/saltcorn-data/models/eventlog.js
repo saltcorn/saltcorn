@@ -25,7 +25,9 @@ class EventLog {
     return new EventLog(u);
   }
   static async findOneWithUser(id) {
-    const { rows } = await db.query(
+    const {
+      rows,
+    } = await db.query(
       "select el.*, u.email from _sc_event_log el left join users u on el.user_id = u.id where el.id = $1",
       [id]
     );
@@ -45,13 +47,31 @@ class EventLog {
     const { getState } = require("../db/state");
 
     const settings = getState().getConfig("event_log_settings", {});
-
     if (!settings[o.event_type]) return;
+    const hasTable = EventLog.hasTable(o.event_type);
+    if (hasTable && !settings[`${o.event_type}_${o.channel}`]) return;
+    const hasChannel = EventLog.hasChannel(o.event_type);
+    if (hasChannel && settings[`${o.event_type}_channel`]) {
+      const wantChannels = settings[`${o.event_type}_channel`]
+        .split(",")
+        .map((s) => s.trim());
+      if (!wantChannels.includes(o.channel)) return;
+    }
     const ev = new EventLog(o);
     const { id, ...rest } = ev;
 
     ev.id = await db.insert("_sc_event_log", rest);
     return ev;
+  }
+
+  static hasTable(evType) {
+    return ["Insert", "Update", "Delete"].includes(evType);
+  }
+
+  static hasChannel(evType) {
+    const { getState } = require("../db/state");
+    const t = getState().eventTypes[evType];
+    return t && t.hasChannel;
   }
 }
 

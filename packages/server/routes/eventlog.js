@@ -41,26 +41,50 @@ const Table = require("@saltcorn/data/models/table");
 const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
 
-
-const logSettingsForm = (req) =>
-  new Form({
+const logSettingsForm = async (req) => {
+  const fields = [];
+  for (const w of Trigger.when_options) {
+    fields.push({
+      name: w,
+      label: w,
+      type: "Bool",
+    });
+    if (EventLog.hasTable(w)) {
+      const tables = await Table.find({}, { orderBy: "name" });
+      for (const table of tables) {
+        fields.push({
+          name: `${w}_${table.name}`,
+          label: `&nbsp;&nbsp;&nbsp;${w} ${table.name}`,
+          type: "Bool",
+          showIf: { [w]: true },
+        });
+      }
+    }
+    if (EventLog.hasChannel(w))
+      fields.push({
+        name: w + "_channel",
+        label: w + " channel",
+        sublabel:
+          "Channels to create events for. Separate by comma; leave blank for all",
+        type: "String",
+        showIf: { [w]: true },
+      });
+  }
+  return new Form({
     action: "/eventlog/settings",
     blurb: req.__("Which events should be logged?"),
     submitButtonClass: "btn-outline-primary",
     onChange: "remove_outline(this)",
-    fields: Trigger.when_options.map((w) => ({
-      name: w,
-      label: w,
-      type: "Bool",
-    })),
+    fields,
   });
+};
 
 router.get(
   "/settings",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = logSettingsForm(req);
+    const form = await logSettingsForm(req);
     form.values = getState().getConfig("event_log_settings", {});
     send_events_page({
       res,
@@ -81,7 +105,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = logSettingsForm(req);
+    const form = await logSettingsForm(req);
     form.validate(req.body);
     if (form.hasErrors) {
       send_events_page({
