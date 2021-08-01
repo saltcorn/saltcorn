@@ -6,6 +6,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { satisfies } = require("../utils");
+const EventLog = require("./eventlog");
 
 /**
  * Trigger class
@@ -130,7 +131,7 @@ class Trigger {
 
   // Emit an event: run associated triggers
   static async emitEvent(eventType, channel, userPW = {}, payload) {
-    const { password, ...user } = userPW;
+    const { password, ...user } = userPW || {};
     const { getState } = require("../db/state");
     const findArgs = { when_trigger: eventType };
 
@@ -156,6 +157,13 @@ class Trigger {
           ...(payload || {}),
         }));
     }
+    EventLog.create({
+      event_type: eventType,
+      channel,
+      user_id: (userPW || {}).id || null,
+      payload,
+      occur_at: new Date(),
+    });
   }
 
   /**
@@ -170,6 +178,13 @@ class Trigger {
     for (const trigger of triggers) {
       await trigger.run(row);
     }
+    EventLog.create({
+      event_type: when_trigger,
+      channel: table.name,
+      user_id: null,
+      payload: row,
+      occur_at: new Date(),
+    });
   }
 
   /**
@@ -233,6 +248,7 @@ class Trigger {
       "API call",
       "Never",
       "Login",
+      "LoginFailed",
       "Error",
       "Startup",
       ...Object.keys(getState().eventTypes),

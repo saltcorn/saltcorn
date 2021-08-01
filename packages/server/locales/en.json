@@ -729,5 +729,9 @@
 	"Event types": "Event types",
 	"Channel": "Channel",
 	"Leave blank for all channels": "Leave blank for all channels",
-	"Table or Channel": "Table or Channel"
+	"Table or Channel": "Table or Channel",
+	"Events to log": "Events to log",
+	"Log settings": "Log settings",
+	"Which events should be logged?": "Which events should be logged?",
+	"Event log": "Event log"
 }

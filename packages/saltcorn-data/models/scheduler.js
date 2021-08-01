@@ -4,6 +4,7 @@ const Trigger = require("./trigger");
 const db = require("../db");
 const { getState } = require("../db/state");
 const fetch = require("node-fetch");
+const EventLog = require("./eventlog");
 
 const sleepUntil = (date, plusSeconds) => {
   const waitTill = new Date();
@@ -38,7 +39,13 @@ const getIntervalTriggersDueNow = async (name, hours) => {
     due.setHours(due.getHours() + hours);
   }
   await state.setConfig(cfgField, due);
-
+  EventLog.create({
+    event_type: name,
+    channel: null,
+    user_id: null,
+    payload:null,
+    occur_at: new Date(),
+  });
   return triggers;
 };
 
@@ -81,6 +88,14 @@ const runScheduler = async ({
     if (stopit) return;
     await eachTenant(async () => {
       const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
+      EventLog.create({
+        event_type: "Often",
+        channel: null,
+        user_id: null,
+        payload:null,
+        occur_at: new Date(),
+      });
 
       const triggers = await Trigger.find({ when_trigger: "Often" });
       const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);

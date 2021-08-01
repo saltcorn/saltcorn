@@ -280,10 +280,13 @@ const configTypes = {
   },
   latest_npm_version: {
     type: "hidden",
-    //label: "Layout by role", - i think this is was wrong label
     label: "Latest npm version cache",
     default: {},
-    //label: "Latest npm version cache",
+  },
+  event_log_settings: {
+    type: "hidden",
+    label: "Event log settings",
+    default: {},
   },
   page_custom_css: {
     input_type: "code",
