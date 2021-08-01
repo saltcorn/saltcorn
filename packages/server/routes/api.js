@@ -1,16 +1,25 @@
 /**
- * API handler
+ * Table Data API handler
+ * Allows to manipulate with saltcorn tables data.
+ *
+ * Attention! Currently you cannot insert / update users table via this api
+ * because users table has specific meaning in SC and
+ * not all required (mandatory) fields of user available via this api.
+ * For now this is platform limitation.
+ * To solve this in future needs to publish sc_role table into user tables of saltcorn.
+ *
+ * Documentation: https://wiki.saltcorn.com/view/ShowPage?title=API
  * @type {module:express-promise-router}
  */
 const Router = require("express-promise-router");
-const db = require("@saltcorn/data/db");
-const { isAdmin, setTenant, error_catcher } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+//const db = require("@saltcorn/data/db");
+const { setTenant, error_catcher } = require("./utils.js");
+//const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
+//const Field = require("@saltcorn/data/models/field");
 const Trigger = require("@saltcorn/data/models/trigger");
-const load_plugins = require("../load_plugins");
+//const load_plugins = require("../load_plugins");
 const passport = require("passport");
 
 const {
@@ -22,7 +31,7 @@ module.exports = router;
 
 const limitFields = (fields) => (r) => {
   if (fields) {
-    var res = {};
+    let res = {};
 
     fields.split(",").forEach((f) => {
       res[f] = r[f];
@@ -32,9 +41,45 @@ const limitFields = (fields) => (r) => {
     return r;
   }
 };
+
+/**
+ * Check that user has right to read table data (only read in terms of CRUD)
+ * @param req - httprequest
+ * @param user - user based on access token
+ * @param table
+ * @returns {boolean}
+ */
+function accessAllowedRead(req, user, table){
+    const role = req.isAuthenticated()
+        ? req.user.role_id
+        : user && user.role_id
+            ? user.role_id
+            : 10;
+
+    return role <= table.min_role_read;
+}
+
+/**
+ * Check that user has right to write table data (create, update, delete in terms of  CRUD)
+ * @param req - httprequest
+ * @param user - user based on access token
+ * @param table
+ * @returns {boolean}
+ */
+function accessAllowedWrite(req, user, table){
+    const role = req.isAuthenticated()
+        ? req.user.role_id
+        : user && user.role_id
+            ? user.role_id
+            : 10;
+
+    return role <= table.min_role_write;
+
+}
 /**
  * Select Table rows using GET
  */
+// todo add paging
 router.get(
   "/:tableName/",
   setTenant,
@@ -52,13 +97,8 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err, user, info) {
-        const role = req.isAuthenticated()
-          ? req.user.role_id
-          : user && user.role_id
-          ? user.role_id
-          : 10;
-        if (role <= table.min_role_read) {
-          var rows;
+        if (accessAllowedRead(req, user, table)) {
+          let rows;
           if (versioncount === "on") {
             const joinOpts = {
               orderBy: "id",
@@ -100,6 +140,10 @@ router.post(
   setTenant,
   error_catcher(async (req, res, next) => {
     const { actionname } = req.params;
+    // todo protect action by authorization check
+    // todo we need protection from hackers
+    // todo add to trigger role that can call it
+    // todo include role public - anyone can call it
 
     const trigger = await Trigger.findOne({
       name: actionname,
@@ -136,12 +180,7 @@ router.post(
       "api-bearer",
       { session: false },
       async function (err, user, info) {
-        const role = req.isAuthenticated()
-          ? req.user.role_id
-          : user && user.role_id
-          ? user.role_id
-          : 10;
-        if (role <= table.min_role_write) {
+        if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
           const fields = await table.getFields();
           readState(row, fields);
@@ -206,12 +245,7 @@ router.post(
       "api-bearer",
       { session: false },
       async function (err, user, info) {
-        const role = req.isAuthenticated()
-          ? req.user.role_id
-          : user && user.role_id
-          ? user.role_id
-          : 10;
-        if (role <= table.min_role_write) {
+        if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
           const fields = await table.getFields();
           readState(row, fields);
@@ -268,12 +302,7 @@ router.delete(
       "api-bearer",
       { session: false },
       async function (err, user, info) {
-        const role = req.isAuthenticated()
-          ? req.user.role_id
-          : user && user.role_id
-          ? user.role_id
-          : 10;
-        if (role <= table.min_role_write) {
+        if (accessAllowedWrite(req, user, table)) {
 
           try {
             if(id === "undefined"){
@@ -296,8 +325,3 @@ router.delete(
     )(req, res, next);
   })
 );
-// TBD list actions (triggers)
-// TBD list tables
-// TBD list views
-// TBD list pages
-// TBD list files

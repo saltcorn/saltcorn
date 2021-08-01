@@ -1,3 +1,8 @@
+/**
+ * Plugin Handler for Admin zone
+ */
+
+
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -46,24 +51,46 @@ const { flash_restart } = require("../markup/admin.js");
 
 const router = new Router();
 module.exports = router;
-
+/**
+ * Plugin Form Creation
+ * @param req
+ * @param plugin
+ * @returns {Form}
+ */
 const pluginForm = (req, plugin) => {
   const schema = db.getTenantSchema();
   const form = new Form({
     action: "/plugins",
     fields: [
-      new Field({ label: req.__("Name"), name: "name", input_type: "text" }),
+      new Field({
+          label: req.__("Name"),
+          name: "name",
+          input_type: "text",
+          sublabel: req.__("Plugin name"),
+      }),
       new Field({
         label: req.__("Source"),
         name: "source",
         type: getState().types.String,
         required: true,
         attributes: { options: "npm,local,github,git" },
+        sublabel: req.__(
+            "Source of plugin for install. Few options:"+
+            "npm - download from npm repository,"+
+            "local - get from local file system,"+
+            "github - download from github,"+
+            "git - get from git"
+        ),
       }),
       new Field({
         label: req.__("Location"),
         name: "location",
         input_type: "text",
+        sublabel: req.__(
+            "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, "+
+            "for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, "+
+            "for github - name of github project."
+        ),
       }),
       ...(schema === db.connectObj.default_schema
         ? [
@@ -71,6 +98,7 @@ const pluginForm = (req, plugin) => {
               label: req.__("Version"),
               name: "version",
               input_type: "text",
+              sublabel: req.__("Version of plugin, latest is default value"),
             }),
           ]
         : []),
@@ -91,10 +119,19 @@ const pluginForm = (req, plugin) => {
   }
   return form;
 };
+/**
+ * Returns true if plugin has own theme
+ * @param name -plugin name
+ * @returns {*|boolean}
+ */
 const local_has_theme = (name) => {
   const mod = getState().plugins[name];
   return mod ? mod.layout : false;
 };
+/**
+ * Get Pluging store itmes
+ * @returns {Promise<*[]>}
+ */
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const instore = await Plugin.store_plugins_available();
@@ -396,7 +433,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
-        widths: items.map((item) => 4),
+        widths: items.map((item) => 4), // todo warning that item uis unused
       },
     ],
   };

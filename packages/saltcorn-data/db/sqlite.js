@@ -6,7 +6,7 @@ const sqlite3 = require("sqlite3").verbose();
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
 const { getConnectObject } = require("./connect");
 const fs = require("fs").promises;
-var connectObj = getConnectObject();
+const connectObj = getConnectObject(); // was var
 /**
  * Get sqlite path
  * @returns {*}
@@ -15,10 +15,10 @@ const get_db_filepath = () => {
   if (connectObj.sqlite_path) return connectObj.sqlite_path;
 };
 
-var current_filepath = get_db_filepath();
-var sqliteDatabase = new sqlite3.Database(current_filepath);
+let current_filepath = get_db_filepath();
+let sqliteDatabase = new sqlite3.Database(current_filepath);
 
-var log_sql_enabled = false;
+let log_sql_enabled = false;
 
 /**
  * Control Logging sql statements to console
@@ -104,14 +104,15 @@ const mkVal = ([k, v]) => (reprAsJson(v) ? JSON.stringify(v) : v);
 
 /**
  * Drop unique constraint
- * @param table_name - table name
- * @param field_names - list of columns (members of constraint)
+ * @param tbl - table name
+ * @param obj - list of column=value pairs
+ * @param id - primary key column value
  * @returns {Promise<void>} no results
  */
 const update = async (tbl, obj, id) => {
   const kvs = Object.entries(obj);
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
-  var valList = kvs.map(mkVal);
+  let valList = kvs.map(mkVal);
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
@@ -129,7 +130,6 @@ const deleteWhere = async (tbl, whereObj) => {
 
   const tq = await query(sql, values);
 
-  return;
 };
 /**
  * Insert rows into table
@@ -206,7 +206,6 @@ const count = async (tbl, whereObj) => {
 };
 /**
  * Get version of PostgreSQL
- * @param short - if true return short version info else full version info
  * @returns {Promise<*>} returns version
  */
 const getVersion = async () => {
@@ -217,9 +216,8 @@ const getVersion = async () => {
 };
 
 /**
- * Reset DB Schema using drop schema and recreate it
- * Atterntion! You will lost data after call this function!
- * @param schema - db schema name
+ * Reset DB Schema using drop schema and recreate it.
+ * Attention! You will lost data after call this function!
  * @returns {Promise<void>} no result
  */
 const drop_reset_schema = async () => {
