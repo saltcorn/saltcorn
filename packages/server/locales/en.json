@@ -738,5 +738,13 @@
 	"Channels": "Channels",
 	"Custom": "Custom",
 	"Create custom event": "Create custom event",
-	"Yes": "Yes"
+	"Yes": "Yes",
+	"Alternative destinations if formula evaluates to true": "Alternative destinations if formula evaluates to true",
+	"Default view when done": "Default view when done",
+	"This is the view to which the user will be sent when the form is submitted, unless a formula below is true.": "This is the view to which the user will be sent when the form is submitted, unless a formula below is true.",
+	"You can send the user to an different view depending on the day the user has submitted. Ignore this option if you always want to send the user to the same destination": "You can send the user to an different view depending on the day the user has submitted. Ignore this option if you always want to send the user to the same destination",
+	"Plugin name": "Plugin name",
+	"Source of plugin for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git": "Source of plugin for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git",
+	"For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.": "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.",
+	"Version of plugin, latest is default value": "Version of plugin, latest is default value"
 }
