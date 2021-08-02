@@ -738,5 +738,7 @@
 	"Channels": "Channels",
 	"Custom": "Custom",
 	"Create custom event": "Create custom event",
-	"Yes": "Yes"
+	"Yes": "Yes",
+	"Alternative destinations if formula evaluates to true": "Alternative destinations if formula evaluates to true",
+	"Default view when done": "Default view when done"
 }

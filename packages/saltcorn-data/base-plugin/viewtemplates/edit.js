@@ -8,6 +8,8 @@ const Workflow = require("../../models/workflow");
 const { getState } = require("../../db/state");
 const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
+const FieldRepeat = require("../../models/fieldrepeat");
+
 const {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -183,13 +185,40 @@ const configuration_workflow = (req) =>
             fields: [
               {
                 name: "view_when_done",
-                label: req.__("View when done"),
+                label: req.__("Default view when done"),
+                sublabel: req.__(
+                  "This is the view to which the user will be sent when the form is submitted, unless a formula below is true."
+                ),
                 type: "String",
                 required: true,
                 attributes: {
                   options: done_view_opts,
                 },
               },
+              {
+                label: req.__(
+                  "Alternative destinations if formula evaluates to true"
+                ),
+                sublabel: req.__(
+                  "You can send the user to an different view depending on the day the user has submitted. Ignore this option if you always want to send the user to the same destination"
+                ),
+                input_type: "section_header",
+              },
+              new FieldRepeat({
+                name: "formula_destinations",
+                fields: [
+                  { type: "String", name: "expression", label: "Formula" },
+                  {
+                    name: "view",
+                    label: req.__("View"),
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: done_view_opts,
+                    },
+                  },
+                ],
+              }),
             ],
           });
         },
