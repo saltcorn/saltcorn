@@ -736,5 +736,7 @@
 	"Event log": "Event log",
 	"Custom Events": "Custom Events",
 	"Channels": "Channels",
-	"Custom": "Custom"
+	"Custom": "Custom",
+	"Create custom event": "Create custom event",
+	"Yes": "Yes"
 }

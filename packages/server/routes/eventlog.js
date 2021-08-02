@@ -34,6 +34,7 @@ const {
   table,
   tbody,
   td,
+  i,
   th,
   pre,
 } = require("@saltcorn/markup/tags");
@@ -106,34 +107,114 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const cevs = getState().getConfig("custom_events", []);
+    console.log(cevs);
     send_events_page({
       res,
       req,
-      active_sub: "Custom",
+      active_sub: "Custom", 
       //sub2_page: "Events to log",
       contents: {
         type: "card",
         title: req.__("Custom Events"),
-        contents: mkTable(
-          [
+        contents:
+          mkTable(
+            [
+              {
+                label: req.__("Name"),
+                key: "name",
+              },
+              {
+                label: req.__("Channels"),
+                key: (r) => (r.hasChannel ? req.__("Yes") : ""),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) =>
+                  post_delete_btn(`/eventlog/custom/delete/${r.name}`, req),
+              },
+            ],
+            cevs
+          ) +
+          a(
             {
-              label: req.__("Name"),
-              key: "name",
+              href: "/eventlog/custom/new",
+              class: "btn btn-primary mt-1 mr-3",
             },
-            { label: req.__("Channels"), key: "hasChannel" },
-            {
-              label: req.__("Delete"),
-              key: (r) =>
-                post_delete_btn(`/eventlog/custom/delete/${r.name}`, req),
-            },
-          ],
-          cevs
-        ),
+            i({ class: "fas fa-plus-square mr-1" }),
+            req.__("Create custom event")
+          ),
       },
     });
   })
 );
 
+const customEventForm = () =>
+  new Form({
+    action: "/eventlog/custom/new",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    fields: [
+      {
+        name: "name",
+        label: "Name",
+        type: "String",
+      },
+      {
+        name: "hasChannel",
+        label: "Has channels?",
+        type: "Bool",
+      },
+    ],
+  });
+
+router.get(
+  "/custom/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = customEventForm();
+    send_events_page({
+      res,
+      req,
+      active_sub: "Custom",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("Create custom event"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+router.post(
+  "/custom/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = customEventForm();
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Custom",
+        sub2_page: "New",
+        contents: {
+          type: "card",
+          title: req.__("Create custom event"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else {
+      const cevs = getState().getConfig("custom_events", []);
+
+      await getState().setConfig("custom_events", [...cevs, form.values]);
+
+      res.redirect(`/eventlog/custom`);
+    }
+  })
+);
 router.post(
   "/settings",
   setTenant,
