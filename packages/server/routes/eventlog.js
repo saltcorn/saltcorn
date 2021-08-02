@@ -107,7 +107,6 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const cevs = getState().getConfig("custom_events", []);
-    console.log(cevs);
     send_events_page({
       res,
       req,
