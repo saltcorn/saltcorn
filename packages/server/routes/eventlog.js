@@ -210,6 +210,7 @@ router.post(
       const cevs = getState().getConfig("custom_events", []);
 
       await getState().setConfig("custom_events", [...cevs, form.values]);
+      await getState().refresh();
 
       res.redirect(`/eventlog/custom`);
     }
@@ -229,7 +230,7 @@ router.post(
       "custom_events",
       cevs.filter((cev) => cev.name !== name)
     );
-
+    await getState().reload_plugins();
     res.redirect(`/eventlog/custom`);
   })
 );
