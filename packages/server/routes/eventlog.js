@@ -34,6 +34,7 @@ const {
   table,
   tbody,
   td,
+  i,
   th,
   pre,
 } = require("@saltcorn/markup/tags");
@@ -97,6 +98,139 @@ router.get(
         contents: renderForm(form, req.csrfToken()),
       },
     });
+  })
+);
+
+router.get(
+  "/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const cevs = getState().getConfig("custom_events", []);
+    send_events_page({
+      res,
+      req,
+      active_sub: "Custom",
+      //sub2_page: "Events to log",
+      contents: {
+        type: "card",
+        title: req.__("Custom Events"),
+        contents:
+          mkTable(
+            [
+              {
+                label: req.__("Name"),
+                key: "name",
+              },
+              {
+                label: req.__("Channels"),
+                key: (r) => (r.hasChannel ? req.__("Yes") : ""),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) =>
+                  post_delete_btn(`/eventlog/custom/delete/${r.name}`, req),
+              },
+            ],
+            cevs
+          ) +
+          a(
+            {
+              href: "/eventlog/custom/new",
+              class: "btn btn-primary mt-1 mr-3",
+            },
+            i({ class: "fas fa-plus-square mr-1" }),
+            req.__("Create custom event")
+          ),
+      },
+    });
+  })
+);
+
+const customEventForm = () =>
+  new Form({
+    action: "/eventlog/custom/new",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    fields: [
+      {
+        name: "name",
+        label: "Name",
+        type: "String",
+      },
+      {
+        name: "hasChannel",
+        label: "Has channels?",
+        type: "Bool",
+      },
+    ],
+  });
+
+router.get(
+  "/custom/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = customEventForm();
+    send_events_page({
+      res,
+      req,
+      active_sub: "Custom",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("Create custom event"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+router.post(
+  "/custom/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = customEventForm();
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Custom",
+        sub2_page: "New",
+        contents: {
+          type: "card",
+          title: req.__("Create custom event"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else {
+      const cevs = getState().getConfig("custom_events", []);
+
+      await getState().setConfig("custom_events", [...cevs, form.values]);
+      await getState().refresh();
+
+      res.redirect(`/eventlog/custom`);
+    }
+  })
+);
+
+router.post(
+  "/custom/delete/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+
+    const cevs = getState().getConfig("custom_events", []);
+
+    await getState().setConfig(
+      "custom_events",
+      cevs.filter((cev) => cev.name !== name)
+    );
+    await getState().reload_plugins();
+    res.redirect(`/eventlog/custom`);
   })
 );
 

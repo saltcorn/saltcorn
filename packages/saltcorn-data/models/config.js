@@ -288,6 +288,11 @@ const configTypes = {
     label: "Event log settings",
     default: {},
   },
+  custom_events: {
+    type: "hidden",
+    label: "Custom events",
+    default: [],
+  },
   page_custom_css: {
     input_type: "code",
     label: "Custom CSS",
