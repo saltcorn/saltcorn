@@ -32,6 +32,7 @@ const csrf = require("csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
+const Trigger = require("@saltcorn/data/models/trigger");
 
 const locales = Object.keys(available_languages);
 // i18n configuration
@@ -109,7 +110,8 @@ const getApp = async (opts = {}) => {
         sameSite: "strict",
       })
     );
-  } else if (db.isSQLite) { // todo database specific
+  } else if (db.isSQLite) {
+    // todo database specific
     var SQLiteStore = require("connect-sqlite3")(session);
     app.use(
       session({
@@ -120,7 +122,8 @@ const getApp = async (opts = {}) => {
         cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
       })
     );
-  } else { // todo database specific
+  } else {
+    // todo database specific
     const pgSession = require("connect-pg-simple")(session);
 
     app.use(
@@ -191,6 +194,8 @@ const getApp = async (opts = {}) => {
         const mu = await User.authenticate(userobj);
         if (mu) return done(null, mu.session_object);
         else {
+          const { password, ...nopw } = userobj;
+          Trigger.emitEvent("LoginFailed", null, null, nopw);
           return done(
             null,
             false,

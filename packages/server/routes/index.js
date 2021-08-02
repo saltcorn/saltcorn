@@ -13,6 +13,7 @@ const files = require("./files");
 const menu = require("./menu");
 const admin = require("./admin");
 const actions = require("./actions");
+const eventlog = require("./eventlog");
 const infoarch = require("./infoarch");
 const events = require("./events");
 const tenant = require("./tenant");
@@ -47,6 +48,7 @@ module.exports = (app) => {
   app.use("/settings", settings);
   app.use("/pageedit", pageedit);
   app.use("/actions", actions);
+  app.use("/eventlog", eventlog);
   app.use("/site-structure", infoarch);
   app.use("/search", search);
   app.use("/admin", admin);

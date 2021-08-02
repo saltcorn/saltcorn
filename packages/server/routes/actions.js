@@ -22,13 +22,26 @@ const {
   settingsDropdown,
   post_dropdown_item,
   post_delete_btn,
+  localeDateTime,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
-const { div, code, a, span } = require("@saltcorn/markup/tags");
+const {
+  div,
+  code,
+  a,
+  span,
+  tr,
+  table,
+  tbody,
+  td,
+  th,
+  pre,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
+const EventLog = require("@saltcorn/data/models/eventlog");
 
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
@@ -50,7 +63,6 @@ router.get(
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
     const base_url = get_base_url(req);
-    console.log(triggers);
     send_events_page({
       res,
       req,

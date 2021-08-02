@@ -15,6 +15,7 @@ const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const EventLog = require("@saltcorn/data/models/eventlog");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -74,6 +75,10 @@ describe("admin page", () => {
     ["/search/config", "Search configuration"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
+  adminPageContains([["/eventlog", "Event log"]]);
+  adminPageContains([
+    ["/eventlog/settings", "Which events should be logged?"],
+  ]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -81,6 +86,47 @@ describe("admin page", () => {
       .post("/admin/backup")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
+  });
+});
+
+describe("event log", () => {
+  itShouldRedirectUnauthToLogin("/eventlog");
+  itShouldRedirectUnauthToLogin("/eventlog/settings");
+  it("show enable loginattempt logging", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/eventlog/settings")
+      .set("Cookie", loginCookie)
+      .send("LoginFailed=on")
+      .expect(toRedirect("/eventlog/settings"));
+  });
+
+  it("tries to log in with wrong password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=fotyjtyjr")
+      .expect(toRedirect("/auth/login"));
+  });
+
+  it("shows entry in event log list", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/eventlog")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("LoginFailed"));
+  });
+  it("shows an entry in event log", async () => {
+    const evs = await EventLog.find({})
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/eventlog/"+evs[0].id)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("table eventlog"));
   });
 });
 
