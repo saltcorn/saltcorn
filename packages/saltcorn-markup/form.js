@@ -43,7 +43,7 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       }),
     },
     hdr.input_type === "section_header"
-      ? div({ class: `col-sm-12` }, h5(text(hdr.label)))
+      ? div({ class: `col-sm-12` }, h5(text(hdr.label)), hdr.sublabel && p(i(hdr.sublabel)) )
       : [
           div(
             { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
@@ -167,7 +167,7 @@ const mkFormRow = (v, errors, formStyle, labelCols) => (hdr) =>
 const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   const adder = a(
     {
-      class: "btn btn-sm btn-outline-primary",
+      class: "btn btn-sm btn-outline-primary mb-3",
       href: `javascript:add_repeater('${hdr.form_name}')`,
       title: "Add",
     },
