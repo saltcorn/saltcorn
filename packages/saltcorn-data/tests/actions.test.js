@@ -178,7 +178,7 @@ describe("Scheduler", () => {
       min_role: 10,
     });
     let stopSched = false;
-    await runScheduler({
+    runScheduler({
       stop_when: () => stopSched,
       tickSeconds: 1,
     });
