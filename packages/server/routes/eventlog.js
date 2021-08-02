@@ -111,7 +111,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Custom", 
+      active_sub: "Custom",
       //sub2_page: "Events to log",
       contents: {
         type: "card",
@@ -215,6 +215,25 @@ router.post(
     }
   })
 );
+
+router.post(
+  "/custom/delete/:name",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+
+    const cevs = getState().getConfig("custom_events", []);
+
+    await getState().setConfig(
+      "custom_events",
+      cevs.filter((cev) => cev.name !== name)
+    );
+
+    res.redirect(`/eventlog/custom`);
+  })
+);
+
 router.post(
   "/settings",
   setTenant,
