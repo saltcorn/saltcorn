@@ -18,11 +18,11 @@ const {
   mkTable,
   renderForm,
   link,
-  post_btn,
-  settingsDropdown,
-  post_dropdown_item,
+//  post_btn,
+//  settingsDropdown,
+//  post_dropdown_item,
   post_delete_btn,
-  localeDateTime,
+//  localeDateTime,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
@@ -31,17 +31,18 @@ const {
   code,
   a,
   span,
-  tr,
-  table,
-  tbody,
-  td,
-  th,
-  pre,
+//  tr,
+//  table,
+//  tbody,
+//  td,
+//  th,
+//  pre,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
+const User = require("@saltcorn/data/models/user");
 
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
@@ -146,6 +147,10 @@ router.get(
  * @returns {Promise<Form>}
  */
 const triggerForm = async (req, trigger) => {
+    const roleOptions = (await User.get_roles()).map((r) => ({
+        value: r.id,
+        label: r.role,
+    }));
   const actions = await getActions();
   const tables = await Table.find({});
   let id;
@@ -206,6 +211,16 @@ const triggerForm = async (req, trigger) => {
         type: "String",
         sublabel: req.__("Leave blank for all channels"),
         showIf: { when_trigger: hasChannel },
+      },
+      {
+        name: "min_role",
+        label: req.__("Minimum role"),
+        sublabel: req.__(
+            "User must have this role or higher to make API call for action (trigger)"
+        ),
+        input_type: "select",
+        showIf: { when_trigger: ["API call"] },
+        options: roleOptions,
       },
     ],
   });

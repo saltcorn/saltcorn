@@ -29,6 +29,7 @@ class Trigger {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration || {};
+    this.min_role = +o.min_role;
 
     contract.class(this);
   }
@@ -46,6 +47,7 @@ class Trigger {
       configuration: this.configuration,
       table_id: this.table_id,
       channel: this.channel,
+      min_role: this.min_role,
     };
   }
 
@@ -77,7 +79,7 @@ class Trigger {
   static async findAllWithTableName() {
     const schema = db.getTenantSchemaPrefix();
 
-    const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger, a.channel 
+    const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger, a.channel, a.min_role 
     from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
     const { rows } = await db.query(sql);
     return rows.map((dbf) => new Trigger(dbf));
@@ -268,6 +270,7 @@ Trigger.contract = {
     when_trigger: is.str,
     id: is.maybe(is.posint),
     configuration: is.obj(),
+    min_role: is.posint,
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
