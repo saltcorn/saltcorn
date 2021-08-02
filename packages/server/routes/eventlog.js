@@ -100,6 +100,40 @@ router.get(
   })
 );
 
+router.get(
+  "/custom",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const cevs = getState().getConfig("custom_events", []);
+    send_events_page({
+      res,
+      req,
+      active_sub: "Custom",
+      //sub2_page: "Events to log",
+      contents: {
+        type: "card",
+        title: req.__("Custom Events"),
+        contents: mkTable(
+          [
+            {
+              label: req.__("Name"),
+              key: "name",
+            },
+            { label: req.__("Channels"), key: "hasChannel" },
+            {
+              label: req.__("Delete"),
+              key: (r) =>
+                post_delete_btn(`/eventlog/custom/delete/${r.name}`, req),
+            },
+          ],
+          cevs
+        ),
+      },
+    });
+  })
+);
+
 router.post(
   "/settings",
   setTenant,
