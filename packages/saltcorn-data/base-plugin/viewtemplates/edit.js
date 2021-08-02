@@ -9,6 +9,7 @@ const { getState } = require("../../db/state");
 const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
+const { get_expression_function } = require("../../models/expression");
 
 const {
   initial_config_all_fields,
@@ -410,7 +411,7 @@ const fill_presets = async (table, req, fixed) => {
 const runPost = async (
   table_id,
   viewname,
-  { columns, layout, fixed, view_when_done },
+  { columns, layout, fixed, view_when_done, formula_destinations },
   state,
   body,
   { res, req, redirect }
@@ -432,7 +433,7 @@ const runPost = async (
     await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
-    var row;
+    let row;
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
@@ -477,32 +478,46 @@ const runPost = async (
         return;
       }
     }
-    if (redirect) res.redirect(redirect);
-    else if (!view_when_done) {
+    if (redirect) {
+      res.redirect(redirect);
+      return;
+    }
+    if (!view_when_done) {
+      res.redirect(`/`);
+      return;
+    }
+
+    let use_view_when_done = view_when_done;
+    for (const { view, expression } of formula_destinations || []) {
+      if (expression) {
+        const f = get_expression_function(expression, fields);
+        if (f(row)) {
+          use_view_when_done = view;
+          continue;
+        }
+      }
+    }
+    const [viewname_when_done, relation] = use_view_when_done.split(".");
+    const nxview = await View.findOne({ name: viewname_when_done });
+    //console.log()
+    if (!nxview) {
+      req.flash(
+        "warning",
+        `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
+      );
       res.redirect(`/`);
     } else {
-      const [viewname_when_done, relation] = view_when_done.split(".");
-      const nxview = await View.findOne({ name: viewname_when_done });
-      //console.log()
-      if (!nxview) {
-        req.flash(
-          "warning",
-          `View "${view_when_done}" not found - change "View when done" in "${viewname}" view`
+      const state_fields = await nxview.get_state_fields();
+      if (
+        (nxview.table_id === table_id || relation) &&
+        state_fields.some((sf) => sf.name === pk.name)
+      )
+        res.redirect(
+          `/view/${text(viewname_when_done)}?${pk.name}=${text(
+            relation ? row[relation] : id
+          )}`
         );
-        res.redirect(`/`);
-      } else {
-        const state_fields = await nxview.get_state_fields();
-        if (
-          (nxview.table_id === table_id || relation) &&
-          state_fields.some((sf) => sf.name === pk.name)
-        )
-          res.redirect(
-            `/view/${text(viewname_when_done)}?${pk.name}=${text(
-              relation ? row[relation] : id
-            )}`
-          );
-        else res.redirect(`/view/${text(viewname_when_done)}`);
-      }
+      else res.redirect(`/view/${text(viewname_when_done)}`);
     }
   }
 };
