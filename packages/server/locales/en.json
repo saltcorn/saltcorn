@@ -733,5 +733,10 @@
 	"Events to log": "Events to log",
 	"Log settings": "Log settings",
 	"Which events should be logged?": "Which events should be logged?",
-	"Event log": "Event log"
+	"Event log": "Event log",
+	"Custom Events": "Custom Events",
+	"Channels": "Channels",
+	"Custom": "Custom",
+	"Create custom event": "Create custom event",
+	"Yes": "Yes"
 }

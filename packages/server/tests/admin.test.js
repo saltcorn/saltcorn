@@ -79,6 +79,12 @@ describe("admin page", () => {
   adminPageContains([
     ["/eventlog/settings", "Which events should be logged?"],
   ]);
+  adminPageContains([
+    ["/eventlog/custom", "Custom Events"],
+  ]);
+  adminPageContains([
+    ["/eventlog/custom/new", "Has channels?"],
+  ]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

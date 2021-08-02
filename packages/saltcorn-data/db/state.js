@@ -87,6 +87,9 @@ class State {
     await this.refresh_files();
     await this.refresh_pages();
     this.configs = await getAllConfigOrDefaults();
+    this.getConfig('custom_events', []).forEach((cev) => {
+      this.eventTypes[cev.name] = cev;
+    });
   }
 
   /**
@@ -455,5 +458,5 @@ module.exports = {
   get_other_domain_tenant,
   set_tenant_base_url,
   get_process_init_time,
-  features
+  features,
 };
