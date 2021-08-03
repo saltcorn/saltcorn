@@ -56,6 +56,7 @@ class State {
     this.functions = { moment };
     this.keyFieldviews = {};
     this.external_tables = {};
+    this.verifier = null;
     contract.class(this);
   }
 
@@ -269,6 +270,10 @@ class State {
     if (layout) {
       this.layouts[name] = contract(is_plugin_layout, layout);
     }
+    const verifier = withCfg("verifier_workflow");
+    if (verifier) {
+      this.verifier = verifier;
+    }
     withCfg("headers", []).forEach((h) => {
       if (!this.headers.includes(h)) this.headers.push(h);
     });
@@ -318,6 +323,7 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
+    this.verifier = null;
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
