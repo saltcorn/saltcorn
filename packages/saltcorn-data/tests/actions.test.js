@@ -32,7 +32,6 @@ describe("Action", () => {
       action: "incrementCounter",
       table_id: table.id,
       when_trigger: "Insert",
-      min_role: 10,
     });
     expect(getActionCounter()).toBe(0);
     await table.insertRow({ name: "Don Fabrizio" });
@@ -51,7 +50,6 @@ describe("Action", () => {
       table_id: table.id,
       when_trigger: "Update",
       configuration: { number: 17 },
-      min_role: 10,
     });
     expect(getActionCounter()).toBe(1);
     const don = await table.getRow({ name: "Don Fabrizio" });
@@ -68,7 +66,6 @@ describe("Action", () => {
       table_id: table.id,
       when_trigger: "Delete",
       configuration: { number: 37 },
-      min_role: 10,
     });
     expect(getActionCounter()).toBe(17);
     await table.deleteRows({ name: "Don Fabrizio" });
@@ -90,7 +87,6 @@ describe("Action", () => {
         await table.insertRow({ name: "TriggeredInsert" });
       `,
       },
-      min_role: 10,
     });
     await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
     const patients = await Table.findOne({ name: "patients" });
@@ -110,7 +106,6 @@ describe("Action", () => {
         // to inspect https://pipedream.com/sources/dc_jku44wk
         url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
       },
-      min_role: 10,
     });
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
     await table.updateRow({ pages: 210 }, row.id);
@@ -132,7 +127,6 @@ describe("Action", () => {
     const trigger = await Trigger.findOne({
       table_id: table.id,
       when_trigger: "Update",
-      min_role: 10,
     });
     expect(trigger.action).toBe("webhook");
     await Trigger.update(trigger.id, { when_trigger: "Insert" });
@@ -161,7 +155,6 @@ describe("Action", () => {
         url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
         body: "",
       },
-      min_role: 10,
     });
     await table.insertRow({ author: "NK Jemisin", pages: 901 });
   });
@@ -175,7 +168,6 @@ describe("Scheduler", () => {
     await Trigger.create({
       action: "incrementCounter",
       when_trigger: "Often",
-      min_role: 10,
     });
     let stopSched = false;
     runScheduler({

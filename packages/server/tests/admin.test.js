@@ -359,7 +359,6 @@ describe("actions", () => {
       .send("action=run_js_code")
       .send("table_id=2")
       .send("when_trigger=Insert")
-      .send("min_role=1")
       .expect(toRedirect("/actions/configure/1"));
   });
   it("show edit", async () => {

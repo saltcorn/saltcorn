@@ -29,7 +29,7 @@ class Trigger {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration || {};
-    this.min_role = +o.min_role;
+    this.min_role = !o.min_role? null : +o.min_role;
 
     contract.class(this);
   }
@@ -270,7 +270,7 @@ Trigger.contract = {
     when_trigger: is.str,
     id: is.maybe(is.posint),
     configuration: is.obj(),
-    min_role: is.posint,
+    min_role: is.maybe(is.posint),
   },
   methods: {
     delete: is.fun([], is.promise(is.undefined)),
