@@ -77,6 +77,22 @@ function accessAllowedWrite(req, user, table){
 
 }
 /**
+ * Check that user has right to trigger call
+ * @param req - httprequest
+ * @param user - user based on access token
+ * @param trigger
+ * @returns {boolean}
+ */
+function accessAllowed(req, user, trigger){
+    const role = req.isAuthenticated()
+        ? req.user.role_id
+        : user && user.role_id
+            ? user.role_id
+            : 10;
+
+    return role <= trigger.min_role;
+}
+/**
  * Select Table rows using GET
  */
 // todo add paging
@@ -133,7 +149,7 @@ router.get(
 );
 /**
  * Call Action (Trigger) using POST
- * Note! You cannot call to table Action (if you will have table with sush name)
+ * Attention! if you have table with name "action" it can be problem in future
  */
 router.post(
   "/action/:actionname/",
@@ -149,18 +165,32 @@ router.post(
       name: actionname,
       when_trigger: "API call",
     });
-    if (!trigger) res.status(400).json({ error: req.__("Not found") });
-    try {
-      const action = getState().actions[trigger.action];
-      const resp = await action.run({
-        configuration: trigger.configuration,
-        body: req.body,
-        req,
-      });
-      res.json({ success: true, data: resp });
-    } catch (e) {
-      res.status(400).json({ success: false, error: e.message });
+
+    if (!trigger){
+        res.status(400).json({ error: req.__("Not found") });
+        return;
     }
+    await passport.authenticate(
+        "api-bearer",
+        { session: false },
+        async function (err, user, info) {
+            if (accessAllowed(req, user, trigger)) {
+                try {
+                    const action = getState().actions[trigger.action];
+                    const resp = await action.run({
+                        configuration: trigger.configuration,
+                        body: req.body,
+                        req,
+                    });
+                    res.json({success: true, data: resp});
+                } catch (e) {
+                    res.status(400).json({success: false, error: e.message});
+                }
+            } else {
+              res.status(401).json({ error: req.__("Not authorized") });
+            }
+        }
+    )(req, res, next);
   })
 );
 /**

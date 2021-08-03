@@ -422,6 +422,7 @@ describe("actions", () => {
       .send("name=myact")
       .send("action=run_js_code")
       .send("when_trigger=API+call")
+      .send("min_role=1")
       .expect(toRedirect("/actions/configure/2"));
     await request(app)
       .post("/actions/configure/2")

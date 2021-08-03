@@ -1,5 +1,5 @@
 const Table = require("../models/table");
-const Field = require("../models/field");
+//const Field = require("../models/field");
 const Trigger = require("../models/trigger");
 const runScheduler = require("../models/scheduler");
 const db = require("../db");
@@ -112,7 +112,7 @@ describe("Action", () => {
   });
 
   it("should list triggers", async () => {
-    const table = await Table.findOne({ name: "books" });
+    //const table = await Table.findOne({ name: "books" });
 
     const triggers = await Trigger.findAllWithTableName();
     expect(triggers.length).toBe(5);
@@ -130,13 +130,13 @@ describe("Action", () => {
     });
     expect(trigger.action).toBe("webhook");
     await Trigger.update(trigger.id, { when_trigger: "Insert" });
-    const ins_trigger = await Trigger.find({
+    const ins_trigger = Trigger.find({
       table_id: table.id,
       when_trigger: "Insert",
     });
     expect(ins_trigger.length).toBe(2);
     await trigger.delete();
-    const ins_trigger1 = await Trigger.find({
+    const ins_trigger1 = Trigger.find({
       table_id: table.id,
       when_trigger: "Insert",
     });
