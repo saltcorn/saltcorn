@@ -94,7 +94,9 @@ describe("admin page", () => {
       .expect(toSucceed());
   });
 });
-
+/**
+ * Event log tests
+ */
 describe("event log", () => {
   itShouldRedirectUnauthToLogin("/eventlog");
   itShouldRedirectUnauthToLogin("/eventlog/settings");
@@ -135,7 +137,9 @@ describe("event log", () => {
       .expect(toInclude("table eventlog"));
   });
 });
-
+/**
+ * Crash log tests
+ */
 describe("crash log", () => {
   itShouldRedirectUnauthToLogin("/crashlog");
   it("show crashlog list", async () => {
@@ -179,7 +183,9 @@ describe("crash log", () => {
       .expect(toInclude("stack"));
   });
 });
-
+/**
+ * Menu editor tests
+ */
 describe("menu editor", () => {
   itShouldRedirectUnauthToLogin("/menu");
   it("show menu editor", async () => {
@@ -284,7 +290,9 @@ describe("menu editor", () => {
       .expect(toInclude("<urlset"));
   });
 });
-
+/**
+ * Role tests (roleadmin tests)
+ */
 describe("roleadmin", () => {
   itShouldRedirectUnauthToLogin("/roleadmin");
   itShouldRedirectUnauthToLogin("/roleadmin/new");
@@ -330,6 +338,9 @@ describe("roleadmin", () => {
     expect(roles).not.toContainEqual({ id: 5, role: "muppets" });
   });
 });
+/**
+ * Actions tests (Trigger tests)
+ */
 describe("actions", () => {
   itShouldRedirectUnauthToLogin("/actions");
   it("show actions editor", async () => {
@@ -345,7 +356,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/trigger/new")
+      .get("/actions/new")
       .set("Cookie", loginCookie)
       .expect(toInclude("New trigger"))
       .expect(toInclude("webhook"));
@@ -354,7 +365,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/trigger")
+      .post("/actions/new")
       .set("Cookie", loginCookie)
       .send("action=run_js_code")
       .send("table_id=2")
@@ -365,7 +376,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/trigger/1")
+      .get("/actions/edit/1")
       .set("Cookie", loginCookie)
       .expect(toInclude("Edit trigger"))
       .expect(toInclude("run_js_code"));
@@ -417,7 +428,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/trigger")
+      .post("/actions/new")
       .set("Cookie", loginCookie)
       .send("name=myact")
       .send("action=run_js_code")
@@ -445,6 +456,9 @@ describe("actions", () => {
       .expect(toRedirect("/actions/"));
   });
 });
+/**
+ * Pages tests
+ */
 describe("clear all page", () => {
   itShouldRedirectUnauthToLogin("/admin/clear-all");
   it("show page", async () => {
