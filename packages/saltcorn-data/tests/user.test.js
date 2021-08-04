@@ -187,7 +187,7 @@ describe("User fields", () => {
     });
     expect(u.email).toBe("foo1@bar.com");
     expect(u.role_id).toBe(8);
-    expect(u.height).toBe(undefined);
+    expect(u.height).toBe(183);
     expect(u.password === "YEge56FGew").toBe(false);
     const ut = await table.getRow({ id: u.id });
     expect(ut.email).toBe("foo1@bar.com");

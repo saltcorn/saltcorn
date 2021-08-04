@@ -450,7 +450,8 @@ const signup_login_with_user = (u, req, res) =>
     function (err) {
       if (!err) {
         Trigger.emitEvent("Login", null, u);
-        res.redirect("/");
+        if (getState().verifier) res.redirect("/auth/verification-flow");
+        else res.redirect("/");
       } else {
         req.flash("danger", err);
         res.redirect("/auth/signup");
@@ -1018,6 +1019,7 @@ router.post(
       },
       function (err) {
         if (!err) {
+          Trigger.emitEvent("Login", null, u);
           req.flash("success", req.__("Welcome, %s!", u.email));
           res.redirect("/");
         } else {
@@ -1074,5 +1076,39 @@ router.post(
         res.redirect("/auth/settings");
       }
     }
+  })
+);
+
+router.all(
+  "/verification-flow",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const verifier = await (getState().verifier || (() => null))(req.user);
+    if (!verifier) {
+      res.redirect("/");
+      return;
+    }
+    verifier.action = "/auth/verification-flow";
+    const wfres = await verifier.run(req.body || {}, req);
+    if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+    if (wfres.renderForm) {
+      res.sendWrap(
+        req.__(`Account verification`),
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
+      return;
+    }
+    if (wfres.verified === true) {
+      const user = await User.findOne({ id: req.user.id });
+      await user.set_to_verified();
+      req.flash("success", req.__("User verified"));
+    }
+    if (wfres.verified === false) {
+      req.flash("danger", req.__("User verification failed"));
+      res.redirect(wfres.redirect || "/auth/verification-flow");
+      return;
+    }
+    res.redirect(wfres.redirect || "/");
   })
 );
