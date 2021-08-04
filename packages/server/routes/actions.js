@@ -54,7 +54,7 @@ const getActions = async () => {
   });
 };
 /**
- * Actions (Trigger) List (GET)
+ * Show list of Actions (Triggers) (HTTP GET)
  */
 router.get(
   "/",
@@ -117,7 +117,7 @@ router.get(
                   {
                     label: req.__("Edit"),
                     key: (r) =>
-                      link(`/actions/trigger/${r.id}`, req.__("Edit")),
+                      link(`/actions/edit/${r.id}`, req.__("Edit")),
                   },
                   {
                     label: req.__("Configure"),
@@ -132,7 +132,7 @@ router.get(
                 triggers,
                 { hover: true }
               ),
-              link("/actions/trigger/new", req.__("Add trigger"))
+              link("/actions/new", req.__("Add trigger"))
             ),
           },
         ],
@@ -157,8 +157,8 @@ const triggerForm = async (req, trigger) => {
   let form_action;
   if (typeof trigger !== "undefined") {
     id = trigger.id;
-    form_action = `/actions/trigger/${id}`;
-  } else form_action = "/actions/trigger";
+    form_action = `/actions/edit/${id}`;
+  } else form_action = "/actions/new";
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
@@ -231,10 +231,10 @@ const triggerForm = async (req, trigger) => {
   return form;
 };
 /**
- * Create new Trigger (get)
+ * Show form to create new Trigger (get)
  */
 router.get(
-  "/trigger/new",
+  "/new",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
@@ -253,10 +253,10 @@ router.get(
   })
 );
 /**
- * Edit Trigger (get)
+ * Show form to Edit existing Trigger (get)
  */
 router.get(
-  "/trigger/:id",
+  "/edit/:id",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
@@ -279,10 +279,10 @@ router.get(
   })
 );
 /**
- * POST for new trigger
+ * POST for new or existing trigger (Save trigger)
  */
 router.post(
-  "/trigger",
+  "/new",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
@@ -315,10 +315,10 @@ router.post(
   })
 );
 /**
- * POST for existing trigger
+ * POST for existing trigger (Save trigger)
  */
 router.post(
-  "/trigger/:id",
+  "/edit/:id",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
