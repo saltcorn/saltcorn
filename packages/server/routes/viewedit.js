@@ -9,21 +9,21 @@ const {
   renderForm,
   mkTable,
   link,
-  post_btn,
-  post_delete_btn,
+  //post_btn,
+  //post_delete_btn,
   post_dropdown_item,
   renderBuilder,
   settingsDropdown,
 } = require("@saltcorn/markup");
 const {
-  span,
-  h5,
+  //span,
+  //h5,
   h4,
-  nbsp,
+  //nbsp,
   p,
   a,
   div,
-  button,
+  //button,
   text,
 } = require("@saltcorn/markup/tags");
 
@@ -382,19 +382,17 @@ router.post(
         form.hasErrors = true;
         sendForm(form);
       } else {
-        if (!req.body.id) {
-          const existing_views = await View.find();
-          const view_names = existing_views.map((v) => v.name);
-          if (view_names.includes(result.success.name)) {
-            form.errors.name = req.__("A view with this name already exists");
-            form.hasErrors = true;
-            sendForm(form);
-            return;
+          const existing_view = await View.findOne({ name: result.success.name });
+          if(typeof existing_view!=="undefined")
+              if(req.body.id!=existing_view.id){  // may be need !== but doesnt work
+              form.errors.name = req.__("A view with this name already exists");
+              form.hasErrors = true;
+              sendForm(form);
+              return;
           }
-        }
 
-        var v = result.success;
-        if (v.table_name) {
+          const v = result.success;
+          if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
           if (table && table.id) v.table_id = table.id;
           else if (table && table.external) v.exttable_name = v.table_name;
