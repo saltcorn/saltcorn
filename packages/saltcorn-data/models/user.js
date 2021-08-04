@@ -32,6 +32,24 @@ class User {
         ? new Date(o.reset_password_expiry)
         : o.reset_password_expiry || null;
     this.role_id = o.role_id ? +o.role_id : 8;
+
+    const {
+      email,
+      password,
+      language,
+      _attributes,
+      api_token,
+      verification_token,
+      verified_on,
+      disabled,
+      id,
+      reset_password_token,
+      reset_password_expiry,
+      role_id,
+      ...rest
+    } = o;
+    Object.assign(this, rest);
+
     contract.class(this);
   }
 
@@ -320,7 +338,9 @@ class User {
       typeof email !== "string" ||
       reset_password_token.length < 10
     )
-      return { error: "Invalid token or invalid token length or incorrect email" };
+      return {
+        error: "Invalid token or invalid token length or incorrect email",
+      };
     const u = await User.findOne({ email });
     if (u && new Date() < u.reset_password_expiry && u.reset_password_token) {
       const match = bcrypt.compareSync(
