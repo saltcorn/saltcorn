@@ -749,5 +749,6 @@
 	"Version of plugin, latest is default value": "Version of plugin, latest is default value",
 	"Account verification": "Account verification",
 	"User verification failed": "User verification failed",
-	"User verified": "User verified"
+	"User verified": "User verified",
+	"Error editing user: %s": "Error editing user: %s"
 }
