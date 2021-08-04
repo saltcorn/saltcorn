@@ -1076,3 +1076,24 @@ router.post(
     }
   })
 );
+
+router.all(
+  "/verification-flow",
+  setTenant,
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const verifier = await (getState().verifier || (() => null))(req.user);
+    if (!verifier) {
+      res.redirect("/");
+      return;
+    }
+    const wfres = await verifier.run({}, req);
+    if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+    if (wfres.renderForm)
+      res.sendWrap(
+        req.__(`Account verification`),
+        renderForm(wfres.renderForm, req.csrfToken())
+      );
+    else res.redirect(wfres.redirect);
+  })
+);
