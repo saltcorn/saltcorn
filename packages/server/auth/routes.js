@@ -450,7 +450,8 @@ const signup_login_with_user = (u, req, res) =>
     function (err) {
       if (!err) {
         Trigger.emitEvent("Login", null, u);
-        res.redirect("/");
+        if (getState().verifier) res.redirect("/auth/verification-flow");
+        else res.redirect("/");
       } else {
         req.flash("danger", err);
         res.redirect("/auth/signup");
@@ -1018,6 +1019,7 @@ router.post(
       },
       function (err) {
         if (!err) {
+          Trigger.emitEvent("Login", null, u);
           req.flash("success", req.__("Welcome, %s!", u.email));
           res.redirect("/");
         } else {
