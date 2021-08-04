@@ -2,6 +2,7 @@
  * Auth / Admin
  * @type {module:express-promise-router}
  */
+// todo refactor to few modules + rename to be in sync with router url
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -53,6 +54,7 @@ const getUserFields = async () => {
   const userFields = (await userTable.getFields()).filter(
     (f) => !f.calculated && f.name !== "id"
   );
+  //console.log("userFields:",userFields);
   const iterForm = async (cfgField) => {
     const signup_form_name = getState().getConfig(cfgField, "");
     if (signup_form_name) {
@@ -73,6 +75,10 @@ const getUserFields = async () => {
 
   return userFields;
 };
+/**
+ * User Form
+ * @type {*|(function(...[*]=): *)}
+ */
 const userForm = contract(
   is.fun(
     [is.obj({}), is.maybe(is.class("User"))],
@@ -249,7 +255,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Send User Form for create new User
+ */
 router.get(
   "/new",
   setTenant,
@@ -572,6 +580,7 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
+
     let {
       email,
       password,
@@ -597,13 +606,22 @@ router.post(
         role_id: +role_id,
         ...rest,
       });
-      const pwflash =
-        rnd_password && !send_pwreset_email
-          ? req.__(` with password %s`, code(password))
-          : "";
-      if (u.error) req.flash("error", u.error);
-      else req.flash("success", req.__(`User %s created`, email) + pwflash);
-      if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
+      // refactored to catch user errors errors and stop processing if any errors
+      if (u.error) {
+          req.flash("error", u.error); // todo change to prompt near field like done for views
+          // todo return to create user form
+      }
+      else {
+          const pwflash =
+              rnd_password && !send_pwreset_email
+                  ? req.__(` with password %s`, code(password))
+                  : "";
+
+          req.flash("success", req.__(`User %s created`, email) + pwflash);
+
+          if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
+      }
+
     }
     res.redirect(`/useradmin`);
   })
