@@ -746,5 +746,8 @@
 	"Plugin name": "Plugin name",
 	"Source of plugin for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git": "Source of plugin for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git",
 	"For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.": "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.",
-	"Version of plugin, latest is default value": "Version of plugin, latest is default value"
+	"Version of plugin, latest is default value": "Version of plugin, latest is default value",
+	"Account verification": "Account verification",
+	"User verification failed": "User verification failed",
+	"User verified": "User verified"
 }

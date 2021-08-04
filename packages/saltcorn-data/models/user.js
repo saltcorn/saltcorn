@@ -312,12 +312,17 @@ class User {
       return { error: "Invalid token" };
     const u = await User.findOne({ email, verification_token });
     if (!u) return { error: "Invalid token" };
+    return await u.set_to_verified();
+  }
+
+  async set_to_verified() {
     const upd = { verified_on: new Date() };
     const { getState } = require("../db/state");
 
     const elevate_verified = +getState().getConfig("elevate_verified");
-    if (elevate_verified) upd.role_id = Math.min(elevate_verified, u.role_id);
-    await db.update("users", upd, u.id);
+    if (elevate_verified)
+      upd.role_id = Math.min(elevate_verified, this.role_id);
+    await db.update("users", upd, this.id);
     return true;
   }
 

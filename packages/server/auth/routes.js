@@ -1087,13 +1087,26 @@ router.all(
       res.redirect("/");
       return;
     }
-    const wfres = await verifier.run({}, req);
+    verifier.action = "/auth/verification-flow";
+    const wfres = await verifier.run(req.body || {}, req);
     if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
-    if (wfres.renderForm)
+    if (wfres.renderForm) {
       res.sendWrap(
         req.__(`Account verification`),
         renderForm(wfres.renderForm, req.csrfToken())
       );
-    else res.redirect(wfres.redirect);
+      return;
+    }
+    if (wfres.verified === true) {
+      const user = await User.findOne({ id: req.user.id });
+      await user.set_to_verified();
+      req.flash("success", req.__("User verified"));
+    }
+    if (wfres.verified === false) {
+      req.flash("danger", req.__("User verification failed"));
+      res.redirect(wfres.redirect || "/auth/verification-flow");
+      return;
+    }
+    res.redirect(wfres.redirect || "/");
   })
 );
