@@ -61,14 +61,17 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Description"),
         name: "description",
-        sublabel: req.__("Description allows to give more information about field"),
+        sublabel: req.__(
+          "Description allows to give more information about field"
+        ),
         input_type: "text",
       }),
       new Field({
         label: req.__("Type"),
         name: "type",
-        sublabel:
-            req.__("The type determines the kind of data that can be stored in the field"),
+        sublabel: req.__(
+          "The type determines the kind of data that can be stored in the field"
+        ),
         input_type: "select",
         options: isPrimary
           ? primaryTypes
@@ -96,7 +99,9 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Unique"),
         name: "is_unique",
-        sublabel: req.__("Different rows must have different values for this field"),
+        sublabel: req.__(
+          "Different rows must have different values for this field"
+        ),
         showIf: { calculated: false },
         type: "Bool",
       }),
@@ -431,6 +436,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const f = await Field.findOne({ id });
+    if (!f) {
+      req.flash("danger", req.__(`Field not found`));
+      res.redirect(`/table`);
+      return;
+    }
     const table_id = f.table_id;
 
     await f.delete();
