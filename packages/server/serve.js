@@ -22,23 +22,34 @@ module.exports = async ({
   ...appargs
 } = {}) => {
   if (cluster.isMaster) {
-    for (let i = 0; i < numCPUs; i++) {
-      cluster.fork();
-    }
-    setTimeout(() => {
-      //TODO after work is up instead
-      runScheduler({ port, watchReaper, disableScheduler });
-      require("./systemd")({ port });
-    }, 1000);
+    let started = false;
+    const workers = {};
+    const addWorker = (worker) => {
+      workers[worker.process.pid] = worker;
+      worker.on("message", function (msg) {
+        if (msg === "Start" && !started) {
+          started = true;
+          runScheduler({ port, watchReaper, disableScheduler });
+          require("./systemd")({ port });
+        }
+      });
+    };
+    for (let i = 0; i < numCPUs; i++) addWorker(cluster.fork());
 
     Trigger.emitEvent("Startup");
 
     cluster.on("exit", (worker, code, signal) => {
       console.log(`worker ${worker.process.pid} died`);
-      cluster.fork();
+      delete workers[worker.process.pid];
+      addWorker(cluster.fork());
     });
   } else {
-    await runWorker();
+    await runWorker({
+      port,
+      watchReaper,
+      disableScheduler,
+      ...appargs,
+    });
   }
 };
 
@@ -111,5 +122,6 @@ const runWorker = async ({
         });
     else nonGreenlockServer();
   } else nonGreenlockServer();
-  console.log("Worker started with pid:", process.pid);
+  //console.log("Worker started with pid:", process.pid);
+  process.send("Start");
 };
