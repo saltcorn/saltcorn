@@ -189,7 +189,7 @@ const configuration_workflow = (req) =>
               //console.log(ff);
               ff.options.push({
                 label: "LoggedIn",
-                value: "_preset_LoggedIn",
+                value: "Preset:LoggedIn",
               });
             }
           });
@@ -334,8 +334,9 @@ const run = async (
     false,
     extraOpts.req
   );
-  readState(stateWithId, fields);
+  readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
+
   const where = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
@@ -471,8 +472,6 @@ module.exports = {
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
-    const ds1 = ds && removeDefaultColor(removeEmptyStrings(ds));
-    console.log(ds1);
-    return ds1
+    return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
 };
