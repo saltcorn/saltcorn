@@ -12,8 +12,37 @@ const path = require("path");
 
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
+const cluster = require("cluster");
+const numCPUs = require("os").cpus().length;
 
 module.exports = async ({
+  port = 3000,
+  watchReaper,
+  disableScheduler,
+  ...appargs
+} = {}) => {
+  if (cluster.isMaster) {
+    for (let i = 0; i < numCPUs; i++) {
+      cluster.fork();
+    }
+    setTimeout(() => {
+      //TODO after work is up instead
+      runScheduler({ port, watchReaper, disableScheduler });
+      require("./systemd")({ port });
+    }, 1000);
+
+    Trigger.emitEvent("Startup");
+
+    cluster.on("exit", (worker, code, signal) => {
+      console.log(`worker ${worker.process.pid} died`);
+      cluster.fork();
+    });
+  } else {
+    await runWorker();
+  }
+};
+
+const runWorker = async ({
   port = 3000,
   watchReaper,
   disableScheduler,
@@ -82,8 +111,5 @@ module.exports = async ({
         });
     else nonGreenlockServer();
   } else nonGreenlockServer();
-  // todo add disableScheduler to config
-  setTimeout(() => runScheduler({ port, watchReaper, disableScheduler }), 1000);
-  require("./systemd")({ port });
-  Trigger.emitEvent("Startup");
+  console.log("Worker started with pid:", process.pid);
 };
