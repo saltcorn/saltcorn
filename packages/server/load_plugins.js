@@ -144,7 +144,7 @@ const requirePlugin = async (plugin, force) => {
  * @returns {Promise<void>}
  */
 const loadAllPlugins = async () => {
-  await getState().refresh();
+  await getState().refresh(true);
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
@@ -153,7 +153,7 @@ const loadAllPlugins = async () => {
       console.error(e);
     }
   }
-  await getState().refresh();
+  await getState().refresh(true);
 };
 /**
  * Load Plugin and its dependencies and save into local installation
