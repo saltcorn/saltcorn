@@ -920,7 +920,7 @@ router.post(
   error_catcher(async (req, res) => {
     const u = await User.findOne({ id: req.user.id });
     const newlang = available_languages[req.body.locale];
-    if (newlang) {
+    if (newlang && u) {
       await u.set_language(req.body.locale);
       req.login(
         {
