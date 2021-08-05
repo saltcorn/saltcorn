@@ -32,6 +32,9 @@ module.exports = async ({
           runScheduler({ port, watchReaper, disableScheduler });
           require("./systemd")({ port });
         }
+        if (msg === "RestartServer") {
+          process.exit(0)
+        }
       });
     };
     for (let i = 0; i < numCPUs; i++) addWorker(cluster.fork());
