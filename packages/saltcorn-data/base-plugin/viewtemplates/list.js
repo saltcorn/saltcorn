@@ -183,6 +183,16 @@ const configuration_workflow = (req) =>
             blurb: req.__("Default search form values when first loaded"),
           });
           await form.fill_fkey_options(true);
+          form.fields.forEach((ff) => {
+            if (ff.reftable_name === "users" && ff.options) {
+              // key to user
+              //console.log(ff);
+              ff.options.push({
+                label: "LoggedIn",
+                value: "_preset_LoggedIn",
+              });
+            }
+          });
           return form;
         },
       },
@@ -461,6 +471,8 @@ module.exports = {
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
-    return ds && removeDefaultColor(removeEmptyStrings(ds));
+    const ds1 = ds && removeDefaultColor(removeEmptyStrings(ds));
+    console.log(ds1);
+    return ds1
   },
 };
