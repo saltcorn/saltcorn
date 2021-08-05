@@ -11,6 +11,8 @@ const { InvalidAdminAction } = require("../utils");
 
 const readKey = (v, field) => {
   if (v === "") return null;
+  if (typeof v === "string" && v.startsWith('Preset:')) 
+    return v
   const { getState } = require("../db/state");
 
   const type = getState().types[field.reftype];

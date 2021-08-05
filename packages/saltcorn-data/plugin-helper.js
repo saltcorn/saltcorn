@@ -964,12 +964,15 @@ const strictParseInt = (x) => {
  * @param fields
  * @returns {*}
  */
-const readState = (state, fields) => {
+const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
       if (f.type.read) state[f.name] = f.type.read(current);
-      else if (f.type === "Key" || f.type === "File")
+      else if (typeof current === "string" && current.startsWith("Preset:")) {
+        const preset = f.presets[current.replace("Preset:", "")];
+        state[f.name] = preset(req);
+      } else if (f.type === "Key" || f.type === "File")
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null
