@@ -87,35 +87,47 @@ class State {
     await this.refresh_tables();
     await this.refresh_files();
     await this.refresh_pages();
+    await this.refresh_config();
+  }
+  /**
+   * Refresh config
+   * @returns {Promise<void>}
+   */
+  async refresh_config(noSignal) {
     this.configs = await getAllConfigOrDefaults();
-    this.getConfig('custom_events', []).forEach((cev) => {
+    this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
+    if (!noSignal) process.send("refresh_config");
+
   }
 
   /**
    * Refresh views
    * @returns {Promise<void>}
    */
-  async refresh_views() {
+  async refresh_views(noSignal) {
     this.views = await View.find();
+    if (!noSignal) process.send("refresh_views");
   }
 
   /**
    * Refresh triggers
    * @returns {Promise<void>}
    */
-  async refresh_triggers() {
+  async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
+    if (!noSignal) process.send("refresh_triggers");
   }
 
   /**
    * Refresh pages
    * @returns {Promise<void>}
    */
-  async refresh_pages() {
+  async refresh_pages(noSignal) {
     const Page = require("../models/page");
     this.pages = await Page.find();
+    if (!noSignal) process.send("refresh_pages");
   }
 
   /**
@@ -123,19 +135,20 @@ class State {
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
-  async refresh_files() {
+  async refresh_files(noSignal) {
     const allfiles = await File.find();
     this.files = {};
     for (const f of allfiles) {
       this.files[f.id] = f;
     }
+    if (!noSignal) process.send("refresh_files");
   }
 
   /**
    * Refresh tables & fields
    * @returns {Promise<void>}
    */
-  async refresh_tables() {
+  async refresh_tables(noSignal) {
     const allTables = await db.select(
       "_sc_tables",
       {},
@@ -150,6 +163,7 @@ class State {
       table.fields = allFields.filter((f) => f.table_id === table.id);
     }
     this.tables = allTables;
+    if (!noSignal) process.send("refresh_tables");
   }
 
   /**
