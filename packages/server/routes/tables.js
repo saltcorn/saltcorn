@@ -82,17 +82,17 @@ const tableForm = async (table, req) => {
             },
           ]
         : []),
-        // description of table
-        {
-            label: req.__("Description"),
-            name: "description",
-            input_type: "text",
-            sublabel: req.__(
-                "Description allows you to give more information about the table"
-            ),
-            //options: roleOptions,
-        },
-        {
+      // description of table
+      {
+        label: req.__("Description"),
+        name: "description",
+        input_type: "text",
+        sublabel: req.__(
+          "Description allows you to give more information about the table"
+        ),
+        //options: roleOptions,
+      },
+      {
         label: req.__("Minimum role to read"),
         sublabel: req.__(
           "User must have this role or higher to read rows from the table"
@@ -116,8 +116,8 @@ const tableForm = async (table, req) => {
             {
               label: req.__("Version history"),
               sublabel: req.__(
-                    "Version history allows to track table data changes"
-                ),
+                "Version history allows to track table data changes"
+              ),
               name: "versioned",
               type: "Bool",
             },
@@ -613,14 +613,22 @@ router.get(
       div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
       div(
         { class: "mx-auto" },
-        a( // TBD Decide about edit of users table data - currently doesnt work - I had put link to useradmin
-             { href: table.name === "users" ? `/useradmin/`
-                     :  fields.length === 1 ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                        :`/list/${table.name}` },
-            i({ class: "fas fa-2x fa-edit" }),
+        a(
+          // TBD Decide about edit of users table data - currently doesnt work - I had put link to useradmin
+          {
+            href:
+              table.name === "users"
+                ? `/useradmin/`
+                : fields.length === 1
+                ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                : `/list/${table.name}`,
+          },
+          i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
           // Fix problem with edition of table with only one column ID / Primary Key -
-          fields.length === 1 ? req.__("Add more fields to enable edit") : req.__( "Edit")
+          fields.length === 1
+            ? req.__("Add more fields to enable edit")
+            : req.__("Edit")
         )
       ),
       div(
@@ -968,6 +976,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     const cons = await TableConstraint.find({ table_id: table.id });
     res.sendWrap(req.__(`%s constraints`, table.name), {
       above: [
@@ -1016,7 +1029,9 @@ router.get(
 const constraintForm = (req, table_id, fields) =>
   new Form({
     action: `/table/add-constraint/${table_id}`,
-    blurb: req.__("Tick the boxes for the fields that should be jointly unique"),
+    blurb: req.__(
+      "Tick the boxes for the fields that should be jointly unique"
+    ),
     fields: fields.map((f) => ({
       name: f.name,
       label: f.label,
@@ -1034,6 +1049,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     const fields = await table.getFields();
     const form = constraintForm(req, table.id, fields);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
@@ -1069,6 +1089,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     const fields = await table.getFields();
     const form = constraintForm(req, table.id, fields);
     form.validate(req.body);
