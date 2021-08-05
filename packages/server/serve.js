@@ -15,6 +15,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const cluster = require("cluster");
 const numCPUs = require("os").cpus().length;
 
+// helpful https://gist.github.com/jpoehls/2232358
+
 module.exports = async ({
   port = 3000,
   watchReaper,
@@ -33,7 +35,13 @@ module.exports = async ({
           require("./systemd")({ port });
         }
         if (msg === "RestartServer") {
-          process.exit(0)
+          process.exit(0);
+        }
+        if (typeof msg === "string" && msg.startsWith("refresh_")) {
+          console.log(msg);
+          Object.entries(workers).forEach(([pid, w])=>{
+            w.send(msg)
+          })
         }
       });
     };
@@ -47,6 +55,11 @@ module.exports = async ({
       addWorker(cluster.fork());
     });
   } else {
+    process.on('message', function(msg) {
+      console.log('Worker ' + process.pid + ' received message from master.', msg);
+      getState()[msg](true);
+    });
+  
     await runWorker({
       port,
       watchReaper,

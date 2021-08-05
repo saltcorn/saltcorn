@@ -81,13 +81,13 @@ class State {
    * Refresh State cache for all Saltcorn main objects
    * @returns {Promise<void>}
    */
-  async refresh() {
-    await this.refresh_views();
-    await this.refresh_triggers();
-    await this.refresh_tables();
-    await this.refresh_files();
-    await this.refresh_pages();
-    await this.refresh_config();
+  async refresh(noSignal) {
+    await this.refresh_views(noSignal);
+    await this.refresh_triggers(noSignal);
+    await this.refresh_tables(noSignal);
+    await this.refresh_files(noSignal);
+    await this.refresh_pages(noSignal);
+    await this.refresh_config(noSignal);
   }
   /**
    * Refresh config
