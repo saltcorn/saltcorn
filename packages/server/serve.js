@@ -45,7 +45,10 @@ module.exports = async ({
         }
       });
     };
-    for (let i = 0; i < numCPUs; i++) addWorker(cluster.fork());
+    const useNCpus = process.env.SALTCORN_NWORKERS
+      ? +process.env.SALTCORN_NWORKERS
+      : numCPUs;
+    for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
     Trigger.emitEvent("Startup");
 
