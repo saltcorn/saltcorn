@@ -29,6 +29,8 @@ const {
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 const { structuredClone } = require("../utils");
 
+process.send = process.send || function () {};
+
 /**
  * State class
  */
@@ -99,7 +101,6 @@ class State {
       this.eventTypes[cev.name] = cev;
     });
     if (!noSignal) process.send("refresh_config");
-
   }
 
   /**
