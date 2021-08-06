@@ -227,9 +227,12 @@ class State {
    * @param key - key of parameter
    * @returns {Promise<void>}
    */
-  async deleteConfig(key) {
-    await deleteConfig(key);
-    delete this.configs[key];
+  async deleteConfig(...keys) {
+    for (const key of keys) {
+      await deleteConfig(key);
+      delete this.configs[key];
+    }
+    process.send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -350,7 +353,8 @@ class State {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
     await this.refresh(true);
-    if (!noSignal) process.send({ refresh: "plugins" , tenant: db.getTenantSchema()});
+    if (!noSignal)
+      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 }
 

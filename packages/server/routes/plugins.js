@@ -2,7 +2,6 @@
  * Plugin Handler for Admin zone
  */
 
-
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -63,10 +62,10 @@ const pluginForm = (req, plugin) => {
     action: "/plugins",
     fields: [
       new Field({
-          label: req.__("Name"),
-          name: "name",
-          input_type: "text",
-          sublabel: req.__("Plugin name"),
+        label: req.__("Name"),
+        name: "name",
+        input_type: "text",
+        sublabel: req.__("Plugin name"),
       }),
       new Field({
         label: req.__("Source"),
@@ -75,10 +74,10 @@ const pluginForm = (req, plugin) => {
         required: true,
         attributes: { options: "npm,local,github,git" },
         sublabel: req.__(
-            "Source of plugin for install. Few options:"+
-            "npm - download from npm repository,"+
-            "local - get from local file system,"+
-            "github - download from github,"+
+          "Source of plugin for install. Few options:" +
+            "npm - download from npm repository," +
+            "local - get from local file system," +
+            "github - download from github," +
             "git - get from git"
         ),
       }),
@@ -87,8 +86,8 @@ const pluginForm = (req, plugin) => {
         name: "location",
         input_type: "text",
         sublabel: req.__(
-            "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, "+
-            "for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, "+
+          "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, " +
+            "for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, " +
             "for github - name of github project."
         ),
       }),
@@ -534,7 +533,7 @@ router.get(
     if (location) {
       const safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "public", safeFile);
-      if (fs.existsSync(fullpath)) res.sendFile(fullpath,{ maxAge: "1h" });
+      if (fs.existsSync(fullpath)) res.sendFile(fullpath, { maxAge: "1h" });
       else res.status(404).send(req.__("Not found"));
     } else {
       res.status(404).send(req.__("Not found"));
@@ -560,7 +559,8 @@ router.get(
         .normalize(filepath)
         .replace(/^(\.\.(\/|\\|$))+/, "");
       const abspath = path.join(deppath, safeFile);
-      if (fs.existsSync(abspath)) res.sendFile(abspath, { maxAge: '100d' }); //100d
+      if (fs.existsSync(abspath)) res.sendFile(abspath, { maxAge: "100d" });
+      //100d
       else res.status(404).send(req.__("Not found"));
     } else {
       res.status(404).send(req.__("Not found"));
@@ -676,10 +676,12 @@ router.get(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    await getState().deleteConfig("available_plugins");
-    await getState().deleteConfig("available_plugins_fetched_at");
-    await getState().deleteConfig("available_packs");
-    await getState().deleteConfig("available_packs_fetched_at");
+    await getState().deleteConfig(
+      "available_plugins",
+      "available_plugins_fetched_at",
+      "available_packs",
+      "available_packs_fetched_at"
+    );
     req.flash("success", req.__(`Store refreshed`));
 
     res.redirect(`/plugins`);
