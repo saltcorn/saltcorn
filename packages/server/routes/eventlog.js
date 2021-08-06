@@ -229,7 +229,7 @@ router.post(
       "custom_events",
       cevs.filter((cev) => cev.name !== name)
     );
-    await getState().reload_plugins();
+    await getState().refresh_plugins();
     res.redirect(`/eventlog/custom`);
   })
 );

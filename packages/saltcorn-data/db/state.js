@@ -316,14 +316,14 @@ class State {
    */
   async remove_plugin(name) {
     delete this.plugins[name];
-    await this.reload_plugins();
+    await this.refresh_plugins();
   }
 
   /**
    * Reload plugins
    * @returns {Promise<void>}
    */
-  async reload_plugins() {
+  async refresh_plugins(noSignal) {
     this.viewtemplates = {};
     this.types = {};
     this.fields = [];
@@ -341,7 +341,8 @@ class State {
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
-    await this.refresh();
+    await this.refresh(true);
+    if (!noSignal) process.send("refresh_plugins");
   }
 }
 
