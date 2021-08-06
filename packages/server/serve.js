@@ -17,7 +17,7 @@ const path = require("path");
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
 const cluster = require("cluster");
-const { loadAllPlugins } = require("./load_plugins");
+const { loadAllPlugins, loadAndSaveNewPlugin } = require("./load_plugins");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 
@@ -73,7 +73,7 @@ module.exports = async ({
         if (msg === "RestartServer") {
           process.exit(0);
         }
-        if (msg.refresh || msg.createTenant) {
+        if (msg.refresh || msg.createTenant || msg.installPlugin) {
           //console.log(msg);
           Object.entries(workers).forEach(([pid, w]) => {
             if (pid !== worker.process.pid) w.send(msg);
@@ -94,18 +94,19 @@ module.exports = async ({
       addWorker(cluster.fork());
     });
   } else {
-    process.on("message", function (msg) {
-      //console.log("worker rec", msg);
-      if (msg.refresh && msg.tenant) {
-        db.runWithTenant(msg.tenant, () =>
-          getState()[`refresh_${msg.refresh}`](true)
-        );
+    const dispatchMsg = ({ tenant, ...msg }) => {
+      if (tenant) {
+        db.runWithTenant(tenant, () => dispatchMsg(msg));
+        return;
       }
       if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
-
       if (msg.createTenant)
         create_tenant(msg.createTenant, loadAllPlugins, "", true);
-    });
+      if (msg.installPlugin) {
+        loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
+      }
+    };
+    process.on("message", dispatchMsg);
 
     await runWorker({
       port,

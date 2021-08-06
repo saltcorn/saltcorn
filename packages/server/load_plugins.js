@@ -136,8 +136,7 @@ const requirePlugin = async (plugin, force) => {
       const plinfo = manager.getInfo(plugin.location);
       return { plugin_module: manager.require(plugin.location), ...plinfo };
     }
-  }
-  else throw new Error("Unknown plugin source: "+plugin.source );
+  } else throw new Error("Unknown plugin source: " + plugin.source);
 };
 /**
  * Load all plugins
@@ -161,7 +160,7 @@ const loadAllPlugins = async () => {
  * @param force
  * @returns {Promise<void>}
  */
-const loadAndSaveNewPlugin = async (plugin, force) => {
+const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   const { version, plugin_module, location } = await requirePlugin(
     plugin,
     force
@@ -171,7 +170,9 @@ const loadAndSaveNewPlugin = async (plugin, force) => {
     const existing = await Plugin.findOne({ location: loc });
     if (!existing && loc !== plugin.location) {
       await loadAndSaveNewPlugin(
-        new Plugin({ name: loc, location: loc, source: "npm" })
+        new Plugin({ name: loc, location: loc, source: "npm" }),
+        force,
+        noSignalOrDB
       );
     }
   }
@@ -184,7 +185,9 @@ const loadAndSaveNewPlugin = async (plugin, force) => {
     }
   }
   if (version) plugin.version = version;
-  await plugin.upsert();
+  if (!noSignalOrDB) await plugin.upsert();
+  if (!noSignalOrDB && process.send)
+    process.send({ installPlugin: plugin, tenant: db.getTenantSchema(), force });
 };
 
 module.exports = {
