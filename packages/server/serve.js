@@ -6,7 +6,11 @@
 const runScheduler = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
 const db = require("@saltcorn/data/db");
-const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  init_multi_tenant,
+  create_tenant,
+} = require("@saltcorn/data/db/state");
 
 const path = require("path");
 
@@ -69,8 +73,8 @@ module.exports = async ({
         if (msg === "RestartServer") {
           process.exit(0);
         }
-        if (msg.refresh) {
-          console.log(msg);
+        if (msg.refresh || msg.createTenant) {
+          //console.log(msg);
           Object.entries(workers).forEach(([pid, w]) => {
             if (pid !== worker.process.pid) w.send(msg);
           });
@@ -90,10 +94,11 @@ module.exports = async ({
       addWorker(cluster.fork());
     });
   } else {
-    process.on("message", function (msg) {     
-      if (msg.refresh) {
-        getState()[`refresh_${msg.refresh}`](true);
-      }
+    process.on("message", function (msg) {
+      if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
+
+      if (msg.createTenant)
+        create_tenant(msg.createTenant, loadAllPlugins, "", true);
     });
 
     await runWorker({

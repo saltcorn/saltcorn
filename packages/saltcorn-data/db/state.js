@@ -394,7 +394,7 @@ const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
  * @param ten
  */
 const getTenant = (ten) => {
-  console.log({ ten, tenants });
+  //console.log({ ten, tenants });
   return tenants[ten];
 };
 /**
@@ -450,10 +450,12 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
  * @param newurl
  * @returns {Promise<void>}
  */
-const create_tenant = async (t, plugin_loader, newurl) => {
-  await createTenant(t, newurl);
+const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
+  if (!noSignalOrDB) await createTenant(t, newurl);
   tenants[t] = new State();
   await db.runWithTenant(t, plugin_loader);
+  if (!noSignalOrDB) process.send({ createTenant: t });
+
 };
 /**
  * Restart tenant
