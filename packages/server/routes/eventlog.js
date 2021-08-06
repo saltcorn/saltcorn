@@ -209,7 +209,7 @@ router.post(
       const cevs = getState().getConfig("custom_events", []);
 
       await getState().setConfig("custom_events", [...cevs, form.values]);
-      await getState().refresh();
+      await getState().refresh_config();
 
       res.redirect(`/eventlog/custom`);
     }

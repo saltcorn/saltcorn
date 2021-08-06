@@ -39,9 +39,9 @@ module.exports = async ({
         }
         if (typeof msg === "string" && msg.startsWith("refresh_")) {
           console.log(msg);
-          Object.entries(workers).forEach(([pid, w])=>{
-            w.send(msg)
-          })
+          Object.entries(workers).forEach(([pid, w]) => {
+            if (pid !== worker.process.pid) w.send(msg);
+          });
         }
       });
     };
@@ -55,11 +55,16 @@ module.exports = async ({
       addWorker(cluster.fork());
     });
   } else {
-    process.on('message', function(msg) {
-      console.log('Worker ' + process.pid + ' received message from master.', msg);
-      getState()[msg](true);
+    process.on("message", function (msg) {
+      console.log(
+        "Worker " + process.pid + " received message from master.",
+        msg
+      );
+      if (typeof msg === "string" && msg.startsWith("refresh_")) {
+        getState()[msg](true);
+      }
     });
-  
+
     await runWorker({
       port,
       watchReaper,
