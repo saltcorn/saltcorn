@@ -6,13 +6,16 @@
 const runScheduler = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
 const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
 
 const path = require("path");
 
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
 const cluster = require("cluster");
+const { loadAllPlugins } = require("./load_plugins");
+const { getConfig } = require("@saltcorn/data/models/config");
+const { migrate } = require("@saltcorn/data/migrate");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
@@ -24,6 +27,36 @@ module.exports = async ({
   ...appargs
 } = {}) => {
   if (cluster.isMaster) {
+    let sql_log;
+    try {
+      sql_log = await getConfig("log_sql");
+    } catch (e) {
+      const msg = e.message;
+      if (msg && msg.includes("_sc_config"))
+        console.error(
+          "Database is reachable but not initialised. Please run 'saltcorn reset-schema' or 'saltcorn add-schema'"
+        );
+      else {
+        console.error("Database is not reachable. The error was: ", msg);
+        console.error("Connection parameters tried: ");
+        console.error(db.connectObj);
+      }
+      process.exit(1);
+    }
+    // switch on sql logging
+    if (sql_log) db.set_sql_logging(); // dont override cli flag
+    // migrate database
+    if (!appargs.disableMigrate)
+      await migrate(db.connectObj.default_schema, true);
+    // load all plugins
+    await loadAllPlugins();
+    // get development mode status
+    const development_mode = getState().getConfig("development_mode", false);
+    // switch on sql logging - but it was initiated before???
+    if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+    if (db.is_it_multi_tenant()) {
+      await init_multi_tenant(loadAllPlugins, appargs.disableMigrate);
+    }
     let started = false;
     const workers = {};
     const addWorker = (worker) => {

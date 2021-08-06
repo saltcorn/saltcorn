@@ -16,7 +16,6 @@ const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const flash = require("connect-flash");
 const { loadAllPlugins } = require("./load_plugins");
-const { migrate } = require("@saltcorn/data/migrate");
 const homepage = require("./routes/homepage");
 const errors = require("./errors");
 const {
@@ -43,26 +42,10 @@ const i18n = new I18n({
 // todo console.log app instance info when app starts - avoid to show secrets (password, etc)
 const getApp = async (opts = {}) => {
   const app = express();
-  let sql_log;
-  try {
-    sql_log = await getConfig("log_sql");
-  } catch (e) {
-    const msg = e.message;
-    if (msg && msg.includes("_sc_config"))
-      console.error(
-        "Database is reachable but not initialised. Please run 'saltcorn reset-schema' or 'saltcorn add-schema'"
-      );
-    else {
-      console.error("Database is not reachable. The error was: ", msg);
-      console.error("Connection parameters tried: ");
-      console.error(db.connectObj);
-    }
-    process.exit(1);
-  }
+  let sql_log= await getConfig("log_sql");
+  
   // switch on sql logging
   if (sql_log) db.set_sql_logging(); // dont override cli flag
-  // migrate database
-  if (!opts.disableMigrate) await migrate(db.connectObj.default_schema, true);
   // load all plugins
   await loadAllPlugins();
   // get development mode status
