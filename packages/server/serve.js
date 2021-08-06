@@ -50,8 +50,6 @@ module.exports = async ({
       await migrate(db.connectObj.default_schema, true);
     // load all plugins
     await loadAllPlugins();
-    // get development mode status
-    const development_mode = getState().getConfig("development_mode", false);
     // switch on sql logging - but it was initiated before???
     if (getState().getConfig("log_sql", false)) db.set_sql_logging();
     if (db.is_it_multi_tenant()) {
@@ -62,6 +60,7 @@ module.exports = async ({
     const addWorker = (worker) => {
       workers[worker.process.pid] = worker;
       worker.on("message", function (msg) {
+        //console.log("worker msg", typeof msg, msg);
         if (msg === "Start" && !started) {
           started = true;
           runScheduler({ port, watchReaper, disableScheduler });
@@ -70,7 +69,7 @@ module.exports = async ({
         if (msg === "RestartServer") {
           process.exit(0);
         }
-        if (typeof msg === "string" && msg.startsWith("refresh_")) {
+        if (msg.refresh) {
           console.log(msg);
           Object.entries(workers).forEach(([pid, w]) => {
             if (pid !== worker.process.pid) w.send(msg);
@@ -91,13 +90,9 @@ module.exports = async ({
       addWorker(cluster.fork());
     });
   } else {
-    process.on("message", function (msg) {
-      console.log(
-        "Worker " + process.pid + " received message from master.",
-        msg
-      );
-      if (typeof msg === "string" && msg.startsWith("refresh_")) {
-        getState()[msg](true);
+    process.on("message", function (msg) {     
+      if (msg.refresh) {
+        getState()[`refresh_${msg.refresh}`](true);
       }
     });
 

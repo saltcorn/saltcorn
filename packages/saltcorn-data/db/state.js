@@ -100,7 +100,7 @@ class State {
     this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
-    if (!noSignal) process.send("refresh_config");
+    if (!noSignal) process.send({ refresh: "config" });
   }
 
   /**
@@ -109,7 +109,7 @@ class State {
    */
   async refresh_views(noSignal) {
     this.views = await View.find();
-    if (!noSignal) process.send("refresh_views");
+    if (!noSignal) process.send({ refresh: "views" });
   }
 
   /**
@@ -118,7 +118,7 @@ class State {
    */
   async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
-    if (!noSignal) process.send("refresh_triggers");
+    if (!noSignal) process.send({ refresh: "triggers" });
   }
 
   /**
@@ -128,7 +128,7 @@ class State {
   async refresh_pages(noSignal) {
     const Page = require("../models/page");
     this.pages = await Page.find();
-    if (!noSignal) process.send("refresh_pages");
+    if (!noSignal) process.send({ refresh: "pages" });
   }
 
   /**
@@ -142,7 +142,7 @@ class State {
     for (const f of allfiles) {
       this.files[f.id] = f;
     }
-    if (!noSignal) process.send("refresh_files");
+    if (!noSignal) process.send({ refresh: "files" });
   }
 
   /**
@@ -164,7 +164,7 @@ class State {
       table.fields = allFields.filter((f) => f.table_id === table.id);
     }
     this.tables = allTables;
-    if (!noSignal) process.send("refresh_tables");
+    if (!noSignal) process.send({ refresh: "tables" });
   }
 
   /**
@@ -212,7 +212,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
-      process.send("refresh_config");
+      process.send({ refresh: "config" });
     }
   }
 
@@ -344,7 +344,7 @@ class State {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
     await this.refresh(true);
-    if (!noSignal) process.send("refresh_plugins");
+    if (!noSignal) process.send({ refresh: "plugins" });
   }
 }
 
@@ -393,10 +393,10 @@ const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
  * Get tenant
  * @param ten
  */
-const getTenant = (ten) => { 
-  console.log({ten, tenants});
+const getTenant = (ten) => {
+  console.log({ ten, tenants });
   return tenants[ten];
-}
+};
 /**
  * Remove protocol (http:// or https://) from domain url
  * @param url
