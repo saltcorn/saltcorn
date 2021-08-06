@@ -1,8 +1,13 @@
 const { Command, flags } = require("@oclif/command");
+const si = require("systeminformation");
+
 class ServeCommand extends Command {
   async run() {
     const { flags } = this.parse(ServeCommand);
-    const serveArgs = {};
+    const cpu = await si.cpu();
+    const serveArgs = {
+      defaultNCPUs: cpu.performanceCores || cpu.physicalCores,
+    };
     serveArgs.port = flags.port || 3000;
     if (flags.addschema) {
       try {

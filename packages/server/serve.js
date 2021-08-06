@@ -13,7 +13,6 @@ const path = require("path");
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
 const cluster = require("cluster");
-const numCPUs = require("os").cpus().length;
 
 // helpful https://gist.github.com/jpoehls/2232358
 
@@ -21,6 +20,7 @@ module.exports = async ({
   port = 3000,
   watchReaper,
   disableScheduler,
+  defaultNCPUs,
   ...appargs
 } = {}) => {
   if (cluster.isMaster) {
@@ -47,7 +47,7 @@ module.exports = async ({
     };
     const useNCpus = process.env.SALTCORN_NWORKERS
       ? +process.env.SALTCORN_NWORKERS
-      : numCPUs;
+      : defaultNCPUs;
     for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
     Trigger.emitEvent("Startup");
