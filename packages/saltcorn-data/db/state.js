@@ -100,7 +100,8 @@ class State {
     this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
-    if (!noSignal) process.send({ refresh: "config" });
+    if (!noSignal)
+      process.send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -109,7 +110,8 @@ class State {
    */
   async refresh_views(noSignal) {
     this.views = await View.find();
-    if (!noSignal) process.send({ refresh: "views" });
+    if (!noSignal)
+      process.send({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -118,7 +120,8 @@ class State {
    */
   async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
-    if (!noSignal) process.send({ refresh: "triggers" });
+    if (!noSignal)
+      process.send({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -128,7 +131,8 @@ class State {
   async refresh_pages(noSignal) {
     const Page = require("../models/page");
     this.pages = await Page.find();
-    if (!noSignal) process.send({ refresh: "pages" });
+    if (!noSignal)
+      process.send({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -142,7 +146,8 @@ class State {
     for (const f of allfiles) {
       this.files[f.id] = f;
     }
-    if (!noSignal) process.send({ refresh: "files" });
+    if (!noSignal)
+      process.send({ refresh: "files", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -164,7 +169,8 @@ class State {
       table.fields = allFields.filter((f) => f.table_id === table.id);
     }
     this.tables = allTables;
-    if (!noSignal) process.send({ refresh: "tables" });
+    if (!noSignal)
+      process.send({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -212,7 +218,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
-      process.send({ refresh: "config" });
+      process.send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }
 
@@ -344,7 +350,7 @@ class State {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
     await this.refresh(true);
-    if (!noSignal) process.send({ refresh: "plugins" });
+    if (!noSignal) process.send({ refresh: "plugins" , tenant: db.getTenantSchema()});
   }
 }
 
@@ -455,7 +461,6 @@ const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
   tenants[t] = new State();
   await db.runWithTenant(t, plugin_loader);
   if (!noSignalOrDB) process.send({ createTenant: t });
-
 };
 /**
  * Restart tenant

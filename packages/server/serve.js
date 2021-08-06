@@ -95,6 +95,12 @@ module.exports = async ({
     });
   } else {
     process.on("message", function (msg) {
+      //console.log("worker rec", msg);
+      if (msg.refresh && msg.tenant) {
+        db.runWithTenant(msg.tenant, () =>
+          getState()[`refresh_${msg.refresh}`](true)
+        );
+      }
       if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
 
       if (msg.createTenant)
