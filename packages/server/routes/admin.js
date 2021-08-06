@@ -174,7 +174,7 @@ router.get(
               href: "/admin/send-test-email",
               class: "btn btn-primary",
             },
-              req.__("Send test email")
+            req.__("Send test email")
           ),
         ],
       },
@@ -281,9 +281,9 @@ router.get(
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const is_latest = packagejson.version === latest;
     const git_commit = getGitRevision();
-    const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
+    const can_update =
+      !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
-
 
     send_admin_page({
       res,
@@ -397,6 +397,7 @@ router.post(
       //process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
+      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }

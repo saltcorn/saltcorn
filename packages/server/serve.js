@@ -10,6 +10,7 @@ const {
   getState,
   init_multi_tenant,
   create_tenant,
+  restart_tenant,
 } = require("@saltcorn/data/db/state");
 
 const path = require("path");
@@ -105,6 +106,7 @@ module.exports = async ({
       if (msg.installPlugin) {
         loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
       }
+      if (msg.restart_tenant) restart_tenant(loadAllPlugins);
     };
     process.on("message", dispatchMsg);
 
