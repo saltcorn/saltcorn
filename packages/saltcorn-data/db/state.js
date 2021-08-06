@@ -212,6 +212,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
+      process.send("refresh_config");
     }
   }
 
@@ -392,7 +393,10 @@ const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
  * Get tenant
  * @param ten
  */
-const getTenant = (ten) => tenants[ten];
+const getTenant = (ten) => { 
+  console.log({ten, tenants});
+  return tenants[ten];
+}
 /**
  * Remove protocol (http:// or https://) from domain url
  * @param url
