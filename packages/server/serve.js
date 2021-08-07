@@ -13,7 +13,12 @@ const path = require("path");
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
 
-module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
+module.exports = async ({
+  port = 3000,
+  watchReaper,
+  disableScheduler,
+  ...appargs
+} = {}) => {
   const app = await getApp(appargs);
   // todo add timeout to config
   const timeout = +getState().getConfig("timeout", 120);
@@ -78,7 +83,7 @@ module.exports = async ({ port = 3000, watchReaper, ...appargs } = {}) => {
     else nonGreenlockServer();
   } else nonGreenlockServer();
   // todo add disableScheduler to config
-  setTimeout(() => runScheduler({ port, watchReaper }), 1000);
+  setTimeout(() => runScheduler({ port, watchReaper, disableScheduler }), 1000);
   require("./systemd")({ port });
-  Trigger.emitEvent("Startup")
+  Trigger.emitEvent("Startup");
 };

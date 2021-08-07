@@ -977,6 +977,8 @@ class Table {
       if (!reffield)
         throw new InvalidConfiguration(`Key field ${ref} not found in table ${this.name}`);
       const reftable = reffield.reftable_name;
+      if (!reftable)
+        throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);

@@ -183,6 +183,16 @@ const configuration_workflow = (req) =>
             blurb: req.__("Default search form values when first loaded"),
           });
           await form.fill_fkey_options(true);
+          form.fields.forEach((ff) => {
+            if (ff.reftable_name === "users" && ff.options) {
+              // key to user
+              //console.log(ff);
+              ff.options.push({
+                label: "LoggedIn",
+                value: "Preset:LoggedIn",
+              });
+            }
+          });
           return form;
         },
       },
@@ -324,8 +334,9 @@ const run = async (
     false,
     extraOpts.req
   );
-  readState(stateWithId, fields);
+  readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
+
   const where = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;

@@ -219,6 +219,7 @@ const view_linker = contract(
 );
 
 const action_requires_write = (nm) => {
+  if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
 };

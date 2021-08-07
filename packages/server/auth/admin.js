@@ -19,23 +19,10 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-} = require("../routes/utils");
+const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const {
-  a,
-  div,
-  text,
-  span,
-  code,
-  h5,
-  i,
-  p,
-} = require("@saltcorn/markup/tags");
+const { a, div, text, span, code, h5, i, p } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
@@ -49,7 +36,7 @@ const { send_verification_email } = require("@saltcorn/data/models/email");
 const router = new Router();
 module.exports = router;
 
-const getUserFields = async () => {
+const getUserFields = async (req) => {
   const userTable = await Table.findOne({ name: "users" });
   const userFields = (await userTable.getFields()).filter(
     (f) => !f.calculated && f.name !== "id"
@@ -72,7 +59,13 @@ const getUserFields = async () => {
   };
   await iterForm("signup_form");
   await iterForm("new_user_form");
-
+  for (const f of userFields) {
+    if (f.name === "email") {
+      f.validator = (s) => {
+        if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
+      };
+    }
+  }
   return userFields;
 };
 /**
@@ -94,7 +87,7 @@ const userForm = contract(
     const roles = (await User.get_roles()).filter((r) => r.role !== "public");
     roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
     const can_reset = getState().getConfig("smtp_host", "") !== "";
-    const userFields = await getUserFields();
+    const userFields = await getUserFields(req);
     const form = new Form({
       fields: [roleField, ...userFields],
       action: "/useradmin/save",
@@ -420,14 +413,14 @@ router.get(
                 div(
                   { class: "mt-3 alert alert-danger" },
                   p(
-                      req.__(
-                          "The address you are using to reach Saltcorn does not match the Base URL."
-                      )
+                    req.__(
+                      "The address you are using to reach Saltcorn does not match the Base URL."
+                    )
                   ),
                   p(
-                      req.__(
-                          "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
-                      )
+                    req.__(
+                      "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                    )
                   )
                 ),
             ],
@@ -447,8 +440,11 @@ router.get(
                   ? span({ class: "badge badge-primary" }, req.__("Enabled"))
                   : span({ class: "badge badge-secondary" }, req.__("Disabled"))
               ),
-                // TBD change to button
-              link("/useradmin/ssl/custom", req.__("Edit custom SSL certificates")),
+              // TBD change to button
+              link(
+                "/useradmin/ssl/custom",
+                req.__("Edit custom SSL certificates")
+              ),
             ],
           },
         ],
@@ -541,8 +537,10 @@ router.get(
               // api token for user
               div(
                 user.api_token
-                  ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
-                      code(user.api_token)
+                  ? span(
+                      { class: "mr-1" },
+                      req.__("API token for this user: ")
+                    ) + code(user.api_token)
                   : req.__("No API token issued")
               ),
               // button for reset or generate api token
@@ -555,14 +553,15 @@ router.get(
                 )
               ),
               // button for remove api token
-              user.api_token && div(
+              user.api_token &&
+                div(
                   { class: "mt-4" },
                   post_btn(
-                      `/useradmin/remove-api-token/${user.id}`,
-                      // TBD localization
-                      user.api_token ? req.__("Remove") : req.__("Generate"),
-                      req.csrfToken(),
-                      { req: req, confirm: true }
+                    `/useradmin/remove-api-token/${user.id}`,
+                    // TBD localization
+                    user.api_token ? req.__("Remove") : req.__("Generate"),
+                    req.csrfToken(),
+                    { req: req, confirm: true }
                   )
                 ),
             ],
@@ -580,7 +579,30 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-
+    let form, sub2;
+    if (req.body.id) {
+      const user = await User.findOne({ id: req.body.id });
+      form = await userForm(req, user);
+      sub2 = user.email;
+    } else {
+      form = await userForm(req);
+      sub2 = "New";
+    }
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Users",
+        sub2_page: sub2,
+        contents: {
+          type: "card",
+          title: req.__("Edit user"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+      return;
+    }
     let {
       email,
       password,
@@ -590,7 +612,7 @@ router.post(
       send_pwreset_email,
       _csrf,
       ...rest
-    } = req.body;
+    } = form.values;
     if (id) {
       try {
         await db.update("users", { email, role_id, ...rest }, id);
@@ -608,20 +630,18 @@ router.post(
       });
       // refactored to catch user errors errors and stop processing if any errors
       if (u.error) {
-          req.flash("error", u.error); // todo change to prompt near field like done for views
-          // todo return to create user form
+        req.flash("error", u.error); // todo change to prompt near field like done for views
+        // todo return to create user form
+      } else {
+        const pwflash =
+          rnd_password && !send_pwreset_email
+            ? req.__(` with password %s`, code(password))
+            : "";
+
+        req.flash("success", req.__(`User %s created`, email) + pwflash);
+
+        if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
       }
-      else {
-          const pwflash =
-              rnd_password && !send_pwreset_email
-                  ? req.__(` with password %s`, code(password))
-                  : "";
-
-          req.flash("success", req.__(`User %s created`, email) + pwflash);
-
-          if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
-      }
-
     }
     res.redirect(`/useradmin`);
   })
@@ -653,7 +673,6 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     const result = await send_verification_email(u);
-    console.log(result);
     if (result.error) req.flash("danger", result.error);
     else
       req.flash(
@@ -684,17 +703,17 @@ router.post(
  * Remove api token
  */
 router.post(
-    "/remove-api-token/:id",
-    setTenant,
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const { id } = req.params;
-        const u = await User.findOne({ id });
-        await u.removeAPIToken();
-        req.flash("success", req.__(`API token removed`));
+  "/remove-api-token/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.removeAPIToken();
+    req.flash("success", req.__(`API token removed`));
 
-        res.redirect(`/useradmin/${u.id}`);
-    })
+    res.redirect(`/useradmin/${u.id}`);
+  })
 );
 /**
  * Set random password
