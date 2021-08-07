@@ -70,7 +70,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
 };
 const onMessageFromWorker = (
   masterState,
-  { port, watchReaper, disableScheduler , pid}
+  { port, watchReaper, disableScheduler, pid }
 ) => (msg) => {
   //console.log("worker msg", typeof msg, msg);
   if (msg === "Start" && !masterState.started) {
@@ -97,6 +97,37 @@ module.exports = async ({
   defaultNCPUs,
   ...appargs
 } = {}) => {
+  const letsEncrypt = getConfig("letsencrypt", false);
+  if (port === 80 && letsEncrypt) {
+    const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+    const file_store = db.connectObj.file_store;
+    const Greenlock = require("greenlock");
+    const greenlock = Greenlock.create({
+      packageRoot: __dirname,
+      configDir: path.join(file_store, "greenlock.d"),
+      maintainerEmail: admin_users[0].email,
+    });
+    const certs = await greenlock._find({});
+    console.log("Certificates:", certs);
+
+    if (certs && certs.length > 0) {
+      const app = await getApp(appargs);
+      const timeout = +getState().getConfig("timeout", 120);
+
+      require("@saltcorn/greenlock-express")
+        .init({
+          packageRoot: __dirname,
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+          cluster: false,
+        })
+        .serve(app, ({ secureServer }) => {
+          secureServer.setTimeout(timeout * 1000);
+        });
+      return; // WILL THIS WORK  ???
+    }
+  }
+  // so no greenlock!
   if (cluster.isMaster) {
     await initMaster(appargs);
     const masterState = {
@@ -111,7 +142,8 @@ module.exports = async ({
         onMessageFromWorker(masterState, {
           port,
           watchReaper,
-          disableScheduler,pid: worker.process.pid
+          disableScheduler,
+          pid: worker.process.pid,
         })
       );
     };
@@ -130,28 +162,12 @@ module.exports = async ({
   } else {
     process.on("message", workerDispatchMsg);
 
-    await runWorker({
-      port,
-      watchReaper,
-      disableScheduler,
-      ...appargs,
-    });
-  }
-};
+    const app = await getApp(appargs);
 
-const runWorker = async ({
-  port = 3000,
-  watchReaper,
-  disableScheduler,
-  ...appargs
-} = {}) => {
-  const app = await getApp(appargs);
-  // todo add timeout to config
-  const timeout = +getState().getConfig("timeout", 120);
-  // Server without letsencrypt
-  const nonGreenlockServer = () => {
     const cert = getState().getConfig("custom_ssl_certificate", "");
     const key = getState().getConfig("custom_ssl_private_key", "");
+    const timeout = +getState().getConfig("timeout", 120);
+
     // Server with http on port 80 / https on 443
     // todo  resolve hardcode
     if (port === 80 && cert && key) {
@@ -182,32 +198,6 @@ const runWorker = async ({
         console.log(`Saltcorn listening on http://localhost:${port}/`);
       });
     }
-  };
-  // server with letsencrypt ssl
-  if (port === 80 && getState().getConfig("letsencrypt", false)) {
-    const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
-    const file_store = db.connectObj.file_store;
-    const Greenlock = require("greenlock");
-    const greenlock = Greenlock.create({
-      packageRoot: __dirname,
-      configDir: path.join(file_store, "greenlock.d"),
-      maintainerEmail: admin_users[0].email,
-    });
-    const certs = await greenlock._find({});
-    console.log("Certificates:", certs);
-    if (certs && certs.length > 0)
-      require("@saltcorn/greenlock-express")
-        .init({
-          packageRoot: __dirname,
-          configDir: path.join(file_store, "greenlock.d"),
-          maintainerEmail: admin_users[0].email,
-          cluster: false,
-        })
-        .serve(app, ({ secureServer }) => {
-          secureServer.setTimeout(timeout * 1000);
-        });
-    else nonGreenlockServer();
-  } else nonGreenlockServer();
-  //console.log("Worker started with pid:", process.pid);
-  process.send("Start");
+    process.send("Start");
+  }
 };
