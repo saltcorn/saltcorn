@@ -678,7 +678,7 @@ router.post(
       for (const p of ps) {
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
       }
-      //await getState().refresh();
+      await getState().refresh_plugins();
     }
     if (form.values.config) {
       //config+crashes+nontable triggers

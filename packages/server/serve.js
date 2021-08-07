@@ -70,11 +70,9 @@ module.exports = async ({
           started = true;
           runScheduler({ port, watchReaper, disableScheduler });
           require("./systemd")({ port });
-        }
-        if (msg === "RestartServer") {
+        } else if (msg === "RestartServer") {
           process.exit(0);
-        }
-        if (msg.refresh || msg.createTenant || msg.installPlugin) {
+        } else {
           //console.log(msg);
           Object.entries(workers).forEach(([pid, w]) => {
             if (pid !== worker.process.pid) w.send(msg);
@@ -107,6 +105,7 @@ module.exports = async ({
         loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
       }
       if (msg.restart_tenant) restart_tenant(loadAllPlugins);
+      if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
     };
     process.on("message", dispatchMsg);
 

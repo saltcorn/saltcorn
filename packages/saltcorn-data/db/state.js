@@ -325,9 +325,11 @@ class State {
    * @param name
    * @returns {Promise<void>}
    */
-  async remove_plugin(name) {
+  async remove_plugin(name, noSignal) {
     delete this.plugins[name];
     await this.refresh_plugins();
+    if (!noSignal)
+      process.send({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   /**
