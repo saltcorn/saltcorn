@@ -24,6 +24,72 @@ const { migrate } = require("@saltcorn/data/migrate");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
+const initMaster = async ({ disableMigrate }) => {
+  let sql_log;
+  try {
+    sql_log = await getConfig("log_sql");
+  } catch (e) {
+    const msg = e.message;
+    if (msg && msg.includes("_sc_config"))
+      console.error(
+        "Database is reachable but not initialised. Please run 'saltcorn reset-schema' or 'saltcorn add-schema'"
+      );
+    else {
+      console.error("Database is not reachable. The error was: ", msg);
+      console.error("Connection parameters tried: ");
+      console.error(db.connectObj);
+    }
+    process.exit(1);
+  }
+  // switch on sql logging
+  if (sql_log) db.set_sql_logging(); // dont override cli flag
+  // migrate database
+  if (!disableMigrate) await migrate(db.connectObj.default_schema, true);
+  // load all plugins
+  await loadAllPlugins();
+  // switch on sql logging - but it was initiated before???
+  if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+  if (db.is_it_multi_tenant()) {
+    await init_multi_tenant(loadAllPlugins, disableMigrate);
+  }
+};
+
+const workerDispatchMsg = ({ tenant, ...msg }) => {
+  if (tenant) {
+    db.runWithTenant(tenant, () => workerDispatchMsg(msg));
+    return;
+  }
+  if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
+  if (msg.createTenant)
+    create_tenant(msg.createTenant, loadAllPlugins, "", true);
+  if (msg.installPlugin) {
+    loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
+  }
+  if (msg.restart_tenant) restart_tenant(loadAllPlugins);
+  if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
+};
+const onMessageFromWorker = (
+  masterState,
+  { port, watchReaper, disableScheduler }
+) => (msg) => {
+  //console.log("worker msg", typeof msg, msg);
+  if (msg === "Start" && !masterState.started) {
+    masterState.started = true;
+    runScheduler({ port, watchReaper, disableScheduler });
+    require("./systemd")({ port });
+    return true;
+  } else if (msg === "RestartServer") {
+    process.exit(0);
+    return true;
+  } else if (msg.tenant || msg.createTenant) {
+    ///ie from saltcorn
+    //broadcast
+    Object.entries(masterState.workers).forEach(([pid, w]) => {
+      if (pid !== worker.process.pid) w.send(msg);
+    });
+    return true;
+  }
+};
 module.exports = async ({
   port = 3000,
   watchReaper,
@@ -32,53 +98,22 @@ module.exports = async ({
   ...appargs
 } = {}) => {
   if (cluster.isMaster) {
-    let sql_log;
-    try {
-      sql_log = await getConfig("log_sql");
-    } catch (e) {
-      const msg = e.message;
-      if (msg && msg.includes("_sc_config"))
-        console.error(
-          "Database is reachable but not initialised. Please run 'saltcorn reset-schema' or 'saltcorn add-schema'"
-        );
-      else {
-        console.error("Database is not reachable. The error was: ", msg);
-        console.error("Connection parameters tried: ");
-        console.error(db.connectObj);
-      }
-      process.exit(1);
-    }
-    // switch on sql logging
-    if (sql_log) db.set_sql_logging(); // dont override cli flag
-    // migrate database
-    if (!appargs.disableMigrate)
-      await migrate(db.connectObj.default_schema, true);
-    // load all plugins
-    await loadAllPlugins();
-    // switch on sql logging - but it was initiated before???
-    if (getState().getConfig("log_sql", false)) db.set_sql_logging();
-    if (db.is_it_multi_tenant()) {
-      await init_multi_tenant(loadAllPlugins, appargs.disableMigrate);
-    }
-    let started = false;
-    const workers = {};
+    await initMaster(appargs);
+    const masterState = {
+      started: false,
+      workers: {},
+    };
+
     const addWorker = (worker) => {
-      workers[worker.process.pid] = worker;
-      worker.on("message", function (msg) {
-        //console.log("worker msg", typeof msg, msg);
-        if (msg === "Start" && !started) {
-          started = true;
-          runScheduler({ port, watchReaper, disableScheduler });
-          require("./systemd")({ port });
-        } else if (msg === "RestartServer") {
-          process.exit(0);
-        } else {
-          //console.log(msg);
-          Object.entries(workers).forEach(([pid, w]) => {
-            if (pid !== worker.process.pid) w.send(msg);
-          });
-        }
-      });
+      masterState.workers[worker.process.pid] = worker;
+      worker.on(
+        "message",
+        onMessageFromWorker(masterState, {
+          port,
+          watchReaper,
+          disableScheduler,
+        })
+      );
     };
     const useNCpus = process.env.SALTCORN_NWORKERS
       ? +process.env.SALTCORN_NWORKERS
@@ -89,25 +124,11 @@ module.exports = async ({
 
     cluster.on("exit", (worker, code, signal) => {
       console.log(`worker ${worker.process.pid} died`);
-      delete workers[worker.process.pid];
+      delete masterState.workers[worker.process.pid];
       addWorker(cluster.fork());
     });
   } else {
-    const dispatchMsg = ({ tenant, ...msg }) => {
-      if (tenant) {
-        db.runWithTenant(tenant, () => dispatchMsg(msg));
-        return;
-      }
-      if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
-      if (msg.createTenant)
-        create_tenant(msg.createTenant, loadAllPlugins, "", true);
-      if (msg.installPlugin) {
-        loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
-      }
-      if (msg.restart_tenant) restart_tenant(loadAllPlugins);
-      if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
-    };
-    process.on("message", dispatchMsg);
+    process.on("message", workerDispatchMsg);
 
     await runWorker({
       port,
