@@ -70,7 +70,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
 };
 const onMessageFromWorker = (
   masterState,
-  { port, watchReaper, disableScheduler }
+  { port, watchReaper, disableScheduler , pid}
 ) => (msg) => {
   //console.log("worker msg", typeof msg, msg);
   if (msg === "Start" && !masterState.started) {
@@ -84,8 +84,8 @@ const onMessageFromWorker = (
   } else if (msg.tenant || msg.createTenant) {
     ///ie from saltcorn
     //broadcast
-    Object.entries(masterState.workers).forEach(([pid, w]) => {
-      if (pid !== worker.process.pid) w.send(msg);
+    Object.entries(masterState.workers).forEach(([wpid, w]) => {
+      if (wpid !== pid) w.send(msg);
     });
     return true;
   }
@@ -111,7 +111,7 @@ module.exports = async ({
         onMessageFromWorker(masterState, {
           port,
           watchReaper,
-          disableScheduler,
+          disableScheduler,pid: worker.process.pid
         })
       );
     };
