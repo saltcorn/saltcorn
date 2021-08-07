@@ -472,7 +472,6 @@ router.post(
 const clearAllForm = (req) =>
   new Form({
     action: "/admin/clear-all",
-    labelCols: 0,
     submitLabel: "Delete",
     blurb: req.__(
       "This will delete <strong>EVERYTHING</strong> in the selected categories"
