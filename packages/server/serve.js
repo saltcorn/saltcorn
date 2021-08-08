@@ -107,6 +107,7 @@ module.exports = async ({
   };
 
   const addWorker = (worker) => {
+    console.log("init worker msg with pid",worker.process.pid);
     worker.on(
       "message",
       onMessageFromWorker(masterState, {
@@ -133,7 +134,7 @@ module.exports = async ({
     if (certs && certs.length > 0) {
       const app = await getApp(appargs);
       const timeout = +getState().getConfig("timeout", 120);
-
+      console.log("Greenlock!");
       require("@saltcorn/greenlock-express")
         .init({
           packageRoot: __dirname,
@@ -149,14 +150,17 @@ module.exports = async ({
           }); // todo set timeout
         })
         .master(() => {
-          initMaster(appargs);
-          Object.values(cluster.workers).forEach(addWorker);
+          initMaster(appargs).then(() => {
+            Object.values(cluster.workers).forEach(addWorker);
+          });
         });
 
       return; // WILL THIS WORK  ???
     }
   }
   // No greenlock!
+  console.log("No Greenlock!");
+
   if (cluster.isMaster) {
     await initMaster(appargs);
 
@@ -187,6 +191,8 @@ module.exports = async ({
       // todo timeout to config
       httpServer.setTimeout(timeout * 1000);
       httpsServer.setTimeout(timeout * 1000);
+      console.log("Setting http timeout to", timeout);
+
       httpServer.listen(port, () => {
         console.log("HTTP Server running on port 80");
       });
@@ -202,6 +208,7 @@ module.exports = async ({
       // todo timeout to config
       // todo refer in doc to httpserver doc
       // todo there can be added other parameters for httpserver
+      console.log("Setting http timeout to", timeout);
       httpServer.setTimeout(timeout * 1000);
       httpServer.listen(port, () => {
         console.log(`Saltcorn listening on http://localhost:${port}/`);
