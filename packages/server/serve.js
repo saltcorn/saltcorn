@@ -72,7 +72,7 @@ const onMessageFromWorker = (
   masterState,
   { port, watchReaper, disableScheduler, pid }
 ) => (msg) => {
-  //console.log("worker msg", typeof msg, msg);
+  console.log("worker msg", typeof msg, msg);
   if (msg === "Start" && !masterState.started) {
     masterState.started = true;
     runScheduler({ port, watchReaper, disableScheduler });
@@ -167,7 +167,8 @@ module.exports = async ({
 
             console.log("Setting http timeout to", timeout);
             secureServer.setTimeout(timeout * 1000);
-          }); // todo set timeout
+          });
+          process.send("Start");
         })
         .master(() => {
           initMaster(appargs).then(initMasterListeners);
