@@ -72,7 +72,7 @@ const onMessageFromWorker = (
   masterState,
   { port, watchReaper, disableScheduler, pid }
 ) => (msg) => {
-  console.log("worker msg", typeof msg, msg);
+  //console.log("worker msg", typeof msg, msg);
   if (msg === "Start" && !masterState.started) {
     masterState.started = true;
     runScheduler({ port, watchReaper, disableScheduler });
@@ -109,7 +109,6 @@ module.exports = async ({
   };
 
   const addWorker = (worker) => {
-    console.log("init worker msg with pid", worker.process.pid);
     worker.on(
       "message",
       onMessageFromWorker(masterState, {
@@ -136,14 +135,7 @@ module.exports = async ({
     if (certs && certs.length > 0) {
       const app = await getApp(appargs);
       const timeout = +getState().getConfig("timeout", 120);
-      console.log("Greenlock!");
       const initMasterListeners = () => {
-        console.log(
-          "init workers, n=",
-          Object.values(cluster.workers).length,
-          masterState.listeningTo.size
-        );
-
         Object.entries(cluster.workers).forEach(([id, w]) => {
           if (!masterState.listeningTo.has(id)) {
             addWorker(w);
@@ -164,8 +156,6 @@ module.exports = async ({
         .ready((glx) => {
           glx.serveApp(app, ({ secureServer }) => {
             process.on("message", workerDispatchMsg);
-
-            console.log("Setting http timeout to", timeout);
             secureServer.setTimeout(timeout * 1000);
           });
           process.send("Start");
@@ -178,7 +168,6 @@ module.exports = async ({
     }
   }
   // No greenlock!
-  console.log("No Greenlock!");
 
   if (cluster.isMaster) {
     await initMaster(appargs);
@@ -210,7 +199,6 @@ module.exports = async ({
       // todo timeout to config
       httpServer.setTimeout(timeout * 1000);
       httpsServer.setTimeout(timeout * 1000);
-      console.log("Setting http timeout to", timeout);
 
       httpServer.listen(port, () => {
         console.log("HTTP Server running on port 80");
@@ -227,7 +215,6 @@ module.exports = async ({
       // todo timeout to config
       // todo refer in doc to httpserver doc
       // todo there can be added other parameters for httpserver
-      console.log("Setting http timeout to", timeout);
       httpServer.setTimeout(timeout * 1000);
       httpServer.listen(port, () => {
         console.log(`Saltcorn listening on http://localhost:${port}/`);
