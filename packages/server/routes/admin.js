@@ -174,7 +174,7 @@ router.get(
               href: "/admin/send-test-email",
               class: "btn btn-primary",
             },
-              req.__("Send test email")
+            req.__("Send test email")
           ),
         ],
       },
@@ -281,9 +281,9 @@ router.get(
     const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
     const is_latest = packagejson.version === latest;
     const git_commit = getGitRevision();
-    const can_update = !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
+    const can_update =
+      !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
-
 
     send_admin_page({
       res,
@@ -393,9 +393,11 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      process.exit(0);
+      process.send("RestartServer");
+      //process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
+      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }
@@ -470,7 +472,6 @@ router.post(
 const clearAllForm = (req) =>
   new Form({
     action: "/admin/clear-all",
-    labelCols: 0,
     submitLabel: "Delete",
     blurb: req.__(
       "This will delete <strong>EVERYTHING</strong> in the selected categories"
@@ -677,7 +678,7 @@ router.post(
       for (const p of ps) {
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
       }
-      //await getState().refresh();
+      await getState().refresh_plugins();
     }
     if (form.values.config) {
       //config+crashes+nontable triggers

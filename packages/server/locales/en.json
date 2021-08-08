@@ -751,5 +751,6 @@
 	"User verification failed": "User verification failed",
 	"User verified": "User verified",
 	"Error editing user: %s": "Error editing user: %s",
-	"User must have this role or higher to make API call for action (trigger)": "User must have this role or higher to make API call for action (trigger)"
+	"User must have this role or higher to make API call for action (trigger)": "User must have this role or higher to make API call for action (trigger)",
+	"Restart complete": "Restart complete"
 }

@@ -29,6 +29,8 @@ const {
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 const { structuredClone } = require("../utils");
 
+process.send = process.send || function () {};
+
 /**
  * State class
  */
@@ -81,41 +83,56 @@ class State {
    * Refresh State cache for all Saltcorn main objects
    * @returns {Promise<void>}
    */
-  async refresh() {
-    await this.refresh_views();
-    await this.refresh_triggers();
-    await this.refresh_tables();
-    await this.refresh_files();
-    await this.refresh_pages();
+  async refresh(noSignal) {
+    await this.refresh_views(noSignal);
+    await this.refresh_triggers(noSignal);
+    await this.refresh_tables(noSignal);
+    await this.refresh_files(noSignal);
+    await this.refresh_pages(noSignal);
+    await this.refresh_config(noSignal);
+  }
+  /**
+   * Refresh config
+   * @returns {Promise<void>}
+   */
+  async refresh_config(noSignal) {
     this.configs = await getAllConfigOrDefaults();
-    this.getConfig('custom_events', []).forEach((cev) => {
+    this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
+    if (!noSignal)
+      process.send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh views
    * @returns {Promise<void>}
    */
-  async refresh_views() {
+  async refresh_views(noSignal) {
     this.views = await View.find();
+    if (!noSignal)
+      process.send({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh triggers
    * @returns {Promise<void>}
    */
-  async refresh_triggers() {
+  async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
+    if (!noSignal)
+      process.send({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh pages
    * @returns {Promise<void>}
    */
-  async refresh_pages() {
+  async refresh_pages(noSignal) {
     const Page = require("../models/page");
     this.pages = await Page.find();
+    if (!noSignal)
+      process.send({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -123,19 +140,21 @@ class State {
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
-  async refresh_files() {
+  async refresh_files(noSignal) {
     const allfiles = await File.find();
     this.files = {};
     for (const f of allfiles) {
       this.files[f.id] = f;
     }
+    if (!noSignal)
+      process.send({ refresh: "files", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh tables & fields
    * @returns {Promise<void>}
    */
-  async refresh_tables() {
+  async refresh_tables(noSignal) {
     const allTables = await db.select(
       "_sc_tables",
       {},
@@ -150,6 +169,8 @@ class State {
       table.fields = allFields.filter((f) => f.table_id === table.id);
     }
     this.tables = allTables;
+    if (!noSignal)
+      process.send({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -197,6 +218,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
+      process.send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }
 
@@ -205,9 +227,12 @@ class State {
    * @param key - key of parameter
    * @returns {Promise<void>}
    */
-  async deleteConfig(key) {
-    await deleteConfig(key);
-    delete this.configs[key];
+  async deleteConfig(...keys) {
+    for (const key of keys) {
+      await deleteConfig(key);
+      delete this.configs[key];
+    }
+    process.send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -300,16 +325,18 @@ class State {
    * @param name
    * @returns {Promise<void>}
    */
-  async remove_plugin(name) {
+  async remove_plugin(name, noSignal) {
     delete this.plugins[name];
-    await this.reload_plugins();
+    await this.refresh_plugins();
+    if (!noSignal)
+      process.send({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   /**
    * Reload plugins
    * @returns {Promise<void>}
    */
-  async reload_plugins() {
+  async refresh_plugins(noSignal) {
     this.viewtemplates = {};
     this.types = {};
     this.fields = [];
@@ -327,7 +354,9 @@ class State {
     Object.entries(this.plugins).forEach(([k, v]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
-    await this.refresh();
+    await this.refresh(true);
+    if (!noSignal)
+      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 }
 
@@ -376,7 +405,10 @@ const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
  * Get tenant
  * @param ten
  */
-const getTenant = (ten) => tenants[ten];
+const getTenant = (ten) => {
+  //console.log({ ten, tenants });
+  return tenants[ten];
+};
 /**
  * Remove protocol (http:// or https://) from domain url
  * @param url
@@ -430,10 +462,11 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
  * @param newurl
  * @returns {Promise<void>}
  */
-const create_tenant = async (t, plugin_loader, newurl) => {
-  await createTenant(t, newurl);
+const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
+  if (!noSignalOrDB) await createTenant(t, newurl);
   tenants[t] = new State();
   await db.runWithTenant(t, plugin_loader);
+  if (!noSignalOrDB) process.send({ createTenant: t });
 };
 /**
  * Restart tenant

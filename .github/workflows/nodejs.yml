@@ -54,6 +54,7 @@ jobs:
           CI: true
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_NWORKERS: 4 
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
