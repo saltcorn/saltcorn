@@ -143,7 +143,10 @@ module.exports = async ({
           workers: useNCpus,
         })
         .ready((glx) => {
-          glx.serveApp(app); // todo set timeout
+          glx.serveApp(app, ({ secureServer }) => {
+            console.log("Setting http timeout to", timeout);
+            secureServer.setTimeout(timeout * 1000);
+          }); // todo set timeout
         })
         .master(() => {
           initMaster(appargs);
