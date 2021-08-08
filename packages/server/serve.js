@@ -164,7 +164,7 @@ module.exports = async ({
           initMaster(appargs).then(initMasterListeners);
         });
 
-      return; // WILL THIS WORK  ???
+      return; // none of stuff below will execute
     }
   }
   // No greenlock!
