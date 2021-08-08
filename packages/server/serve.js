@@ -151,6 +151,8 @@ module.exports = async ({
         })
         .master(() => {
           initMaster(appargs).then(() => {
+            console.log("init workers, n=",Object.values(cluster.workers).length);
+
             Object.values(cluster.workers).forEach(addWorker);
           });
         });
