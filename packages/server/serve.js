@@ -90,6 +90,7 @@ const onMessageFromWorker = (
     return true;
   }
 };
+
 module.exports = async ({
   port = 3000,
   watchReaper,
@@ -104,6 +105,7 @@ module.exports = async ({
   const letsEncrypt = getConfig("letsencrypt", false);
   const masterState = {
     started: false,
+    listeningTo: new Set([]),
   };
 
   const addWorker = (worker) => {
@@ -135,6 +137,22 @@ module.exports = async ({
       const app = await getApp(appargs);
       const timeout = +getState().getConfig("timeout", 120);
       console.log("Greenlock!");
+      const initMasterListeners = () => {
+        console.log(
+          "init workers, n=",
+          Object.values(cluster.workers).length,
+          masterState.listeningTo.size
+        );
+
+        Object.entries(cluster.workers).forEach(([id, w]) => {
+          if (!masterState.listeningTo.has(id)) {
+            addWorker(w);
+            masterState.listeningTo.add(id);
+          }
+        });
+        if (masterState.listeningTo.size < useNCpus)
+          setTimeout(initMasterListeners, 250);
+      };
       require("@saltcorn/greenlock-express")
         .init({
           packageRoot: __dirname,
@@ -152,14 +170,7 @@ module.exports = async ({
           }); // todo set timeout
         })
         .master(() => {
-          initMaster(appargs).then(() => {
-            console.log(
-              "init workers, n=",
-              Object.values(cluster.workers).length
-            );
-
-            Object.values(cluster.workers).forEach(addWorker);
-          });
+          initMaster(appargs).then(initMasterListeners);
         });
 
       return; // WILL THIS WORK  ???
