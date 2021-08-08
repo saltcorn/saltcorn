@@ -102,6 +102,22 @@ module.exports = async ({
     : defaultNCPUs;
 
   const letsEncrypt = getConfig("letsencrypt", false);
+  const masterState = {
+    started: false,
+  };
+
+  const addWorker = (worker) => {
+    worker.on(
+      "message",
+      onMessageFromWorker(masterState, {
+        port,
+        watchReaper,
+        disableScheduler,
+        pid: worker.process.pid,
+      })
+    );
+  };
+
   if (port === 80 && letsEncrypt) {
     const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
     const file_store = db.connectObj.file_store;
@@ -123,32 +139,23 @@ module.exports = async ({
           packageRoot: __dirname,
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
-          cluster: false,
+          cluster: true,
+          workers: useNCpus,
         })
-        .serve(app, ({ secureServer }) => {
-          secureServer.setTimeout(timeout * 1000);
+        .ready((glx) => {
+          glx.serveApp(app); // todo set timeout
+        })
+        .master(() => {
+          initMaster(appargs);
+          Object.values(cluster.workers).forEach(addWorker);
         });
+
       return; // WILL THIS WORK  ???
     }
   }
-  // so no greenlock!
+  // No greenlock!
   if (cluster.isMaster) {
     await initMaster(appargs);
-    const masterState = {
-      started: false    
-    };
-
-    const addWorker = (worker) => {
-      worker.on(
-        "message",
-        onMessageFromWorker(masterState, {
-          port,
-          watchReaper,
-          disableScheduler,
-          pid: worker.process.pid,
-        })
-      );
-    };
 
     for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
