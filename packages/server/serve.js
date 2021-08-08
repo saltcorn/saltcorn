@@ -107,7 +107,7 @@ module.exports = async ({
   };
 
   const addWorker = (worker) => {
-    console.log("init worker msg with pid",worker.process.pid);
+    console.log("init worker msg with pid", worker.process.pid);
     worker.on(
       "message",
       onMessageFromWorker(masterState, {
@@ -145,13 +145,18 @@ module.exports = async ({
         })
         .ready((glx) => {
           glx.serveApp(app, ({ secureServer }) => {
+            process.on("message", workerDispatchMsg);
+
             console.log("Setting http timeout to", timeout);
             secureServer.setTimeout(timeout * 1000);
           }); // todo set timeout
         })
         .master(() => {
           initMaster(appargs).then(() => {
-            console.log("init workers, n=",Object.values(cluster.workers).length);
+            console.log(
+              "init workers, n=",
+              Object.values(cluster.workers).length
+            );
 
             Object.values(cluster.workers).forEach(addWorker);
           });
