@@ -84,7 +84,7 @@ const onMessageFromWorker = (
   } else if (msg.tenant || msg.createTenant) {
     ///ie from saltcorn
     //broadcast
-    Object.entries(masterState.workers).forEach(([wpid, w]) => {
+    Object.entries(cluster.workers).forEach(([wpid, w]) => {
       if (wpid !== pid) w.send(msg);
     });
     return true;
@@ -97,6 +97,10 @@ module.exports = async ({
   defaultNCPUs,
   ...appargs
 } = {}) => {
+  const useNCpus = process.env.SALTCORN_NWORKERS
+    ? +process.env.SALTCORN_NWORKERS
+    : defaultNCPUs;
+
   const letsEncrypt = getConfig("letsencrypt", false);
   if (port === 80 && letsEncrypt) {
     const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
@@ -131,12 +135,10 @@ module.exports = async ({
   if (cluster.isMaster) {
     await initMaster(appargs);
     const masterState = {
-      started: false,
-      workers: {},
+      started: false    
     };
 
     const addWorker = (worker) => {
-      masterState.workers[worker.process.pid] = worker;
       worker.on(
         "message",
         onMessageFromWorker(masterState, {
@@ -147,16 +149,13 @@ module.exports = async ({
         })
       );
     };
-    const useNCpus = process.env.SALTCORN_NWORKERS
-      ? +process.env.SALTCORN_NWORKERS
-      : defaultNCPUs;
+
     for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
     Trigger.emitEvent("Startup");
 
     cluster.on("exit", (worker, code, signal) => {
       console.log(`worker ${worker.process.pid} died`);
-      delete masterState.workers[worker.process.pid];
       addWorker(cluster.fork());
     });
   } else {
