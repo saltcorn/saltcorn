@@ -67,7 +67,11 @@ router.get(
             [
               {
                 label: req.__("Language"),
-                key: "name",
+                key: (r) =>
+                  a(
+                    { href: `/site-structure/localizer/edit/${r.locale}` },
+                    r.name
+                  ),
               },
               {
                 label: req.__("Locale"),
@@ -75,16 +79,13 @@ router.get(
               },
               {
                 label: req.__("Default"),
-                key: "is_default", //(r) => (r.is_default ? "Y" : "N"),
+                key: r=>!!r.is_default
+                ? i({
+                    class: "fas fa-check-circle text-success",
+                  })
+                : "",
               },
-              {
-                label: req.__("Edit"),
-                key: (r) =>
-                  a(
-                    { href: `/site-structure/localizer/edit/${r.locale}` },
-                    req.__("Edit")
-                  ),
-              },
+            
             ],
             Object.values(cfgLangs)
           ),
