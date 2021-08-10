@@ -129,14 +129,42 @@ router.get(
     const cfgLangs = getState().getConfig("localizer_languages");
     const form = languageForm(req);
     form.values = cfgLangs[lang];
+    const { is_default } = form.values;
+    const strings = getState()
+      .getStringsForI18n()
+      .map((s) => ({ in_default: s }));
+    console.log({ strings });
     send_infoarch_page({
       res,
       req,
       active_sub: "Languages",
       sub2_page: form.values.name || form.values.locale,
       contents: {
-        type: "card",
-        contents: [renderForm(form, req.csrfToken())],
+        above: [
+          {
+            type: "card",
+            contents: [renderForm(form, req.csrfToken())],
+          },
+          !is_default && {
+            type: "card",
+            title: req.__("Strings"),
+            contents: div(
+              mkTable(
+                [
+                  {
+                    label: req.__("In default language"),
+                    key: "in_default",
+                  },
+                  {
+                    label: req.__("In %s", form.values.name),
+                    key: "in_default",
+                  },
+                ],
+                strings
+              )
+            ),
+          },
+        ],
       },
     });
   })

@@ -388,6 +388,13 @@ class State {
     if (!noSignal)
       process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
+
+  getStringsForI18n() {
+    const strings = [];
+    this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
+    this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
+    return Array.from(new Set(strings));
+  }
 }
 
 /**

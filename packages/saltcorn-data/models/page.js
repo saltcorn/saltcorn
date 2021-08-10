@@ -5,7 +5,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
-const { eachView, traverseSync } = require("./layout");
+const { eachView, traverseSync, getStringsForI18n } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
 const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
@@ -78,7 +78,9 @@ class Page {
     await db.update("_sc_pages", row, id);
     await require("../db/state").getState().refresh_pages();
   }
-
+  getStringsForI18n() {
+    return getStringsForI18n(this.layout);
+  }
   /**
    * Create page
    * @param f

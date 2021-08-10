@@ -263,6 +263,11 @@ class View {
     return await this.viewtemplateObj.authorise_get(arg);
   }
 
+  getStringsForI18n() {
+    if (!!this.viewtemplateObj || !this.viewtemplateObj.getStrings) return [];
+    return this.viewtemplateObj.getStrings(this.configuration);
+  }
+
   /**
    * Run (Execute) View
    * @param query

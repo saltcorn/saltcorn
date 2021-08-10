@@ -46,7 +46,7 @@ router.get(
         settingsCard({
           title: req.__("Site structure"),
           icon: "fas fa-compass",
-          blurb: req.__("Menu, search and tenants"),
+          blurb: req.__("Menu, search, languages and tenants"),
           href: "/site-structure",
         }),
         settingsCard({
