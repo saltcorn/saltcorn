@@ -5,7 +5,12 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
-const { eachView, traverseSync, getStringsForI18n } = require("./layout");
+const {
+  eachView,
+  traverseSync,
+  getStringsForI18n,
+  translateLayout,
+} = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
 const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
@@ -190,6 +195,8 @@ class Page {
         segment.contents = html;
       },
     });
+
+    translateLayout(this.layout);
     return this.layout;
   }
 }

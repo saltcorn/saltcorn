@@ -1,3 +1,5 @@
+const { getState } = require("../db/state");
+
 const traverseSync = (layout, visitors) => {
   const go = (segment) => {
     if (!segment) return;
@@ -80,6 +82,24 @@ const getStringsForI18n = (layout) => {
   return strings;
 };
 
+const translateLayout = (layout) => {
+  const __ = (s) => getState().i18n.__(s);
+
+  traverseSync(layout, {
+    blank(s) {
+      s.contents = __(s.contents);
+    },
+    link(s) {
+      s.text = __(s.text);
+    },
+    card(s) {
+      s.title = __(s.title);
+    },
+    tabs(s) {
+      s.titles = s.titles.map((t) => __(t));
+    },
+  });
+};
 //getViews: is.fun([], is.promise(is.array(is.obj()))),
 //eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
 module.exports = {
@@ -88,4 +108,5 @@ module.exports = {
   traverse,
   traverseSync,
   getStringsForI18n,
+  translateLayout,
 };
