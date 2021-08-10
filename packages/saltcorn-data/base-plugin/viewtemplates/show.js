@@ -10,7 +10,11 @@ const Trigger = require("../../models/trigger");
 
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
-const { eachView, traverse } = require("../../models/layout");
+const {
+  eachView,
+  traverse,
+  getStringsForI18n,
+} = require("../../models/layout");
 
 const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -548,4 +552,7 @@ module.exports = {
   initial_config,
   display_state_form: false,
   routes: { run_action },
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };
