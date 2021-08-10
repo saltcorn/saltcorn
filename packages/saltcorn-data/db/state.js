@@ -109,14 +109,26 @@ class State {
       this.eventTypes[cev.name] = cev;
     });
     const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
-    if(!fs.existsSync(localeDir))
-      await fs.promises.mkdir(localeDir);
-    Object.keys(this.getConfig("localizer_languages", {})).forEach(lang=>{
-
-    })
+    try {
+      //avoid race condition
+      if (!fs.existsSync(localeDir)) await fs.promises.mkdir(localeDir);
+    } catch {}
+    const allStrings = this.getConfig("localizer_strings", {});
+    for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
+      //write json file
+      const strings = allStrings[lang];
+      if (strings)
+        await fs.writeFile(
+          path.join(localeDir, `${lang}.json`),
+          JSON.stringify(strings)
+        );
+    }
     this.localizer = new I18n({
       locales: Object.keys(this.getConfig("localizer_languages", {})),
       directory: localeDir,
+      autoReload: false,
+      updateFiles: false,
+      syncFiles: false,
     });
     if (!noSignal)
       process.send({ refresh: "config", tenant: db.getTenantSchema() });
