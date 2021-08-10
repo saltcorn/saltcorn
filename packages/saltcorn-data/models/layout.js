@@ -82,7 +82,8 @@ const getStringsForI18n = (layout) => {
   return strings;
 };
 
-const translateLayout = (layout) => {
+const translateLayout = (layout, locale) => {
+  getState().i18n.setLocale(locale);
   const __ = (s) => getState().i18n.__(s);
 
   traverseSync(layout, {

@@ -34,11 +34,10 @@ const setLanguage = (req, res, state) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
   }
-  set_custom_http_headers(res);
-  (state || getState()).i18n.setLocale(req.locale)
+  set_custom_http_headers(res, state);
 };
-const set_custom_http_headers = (res) => {
-  const hdrs = getState().getConfig("custom_http_headers");
+const set_custom_http_headers = (res, state) => {
+  const hdrs = (state || getState()).getConfig("custom_http_headers");
   if (!hdrs) return;
   for (const ln of hdrs.split("\n")) {
     const [k, v] = ln.split(":");

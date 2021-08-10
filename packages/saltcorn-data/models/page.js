@@ -196,7 +196,7 @@ class Page {
       },
     });
 
-    translateLayout(this.layout);
+    translateLayout(this.layout, extraArgs.req.locale);
     return this.layout;
   }
 }
