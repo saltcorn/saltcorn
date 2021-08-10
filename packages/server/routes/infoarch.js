@@ -157,7 +157,15 @@ router.get(
                   },
                   {
                     label: req.__("In %s", form.values.name),
-                    key: "in_default",
+                    key: (r) =>
+                      div(
+                        {
+                          "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
+                            r.in_default
+                          )}`,
+                        },
+                        r.in_default
+                      ),
                   },
                 ],
                 strings
@@ -169,6 +177,19 @@ router.get(
     });
   })
 );
+
+router.post(
+  "/localizer/save-string/:lang/:defstring",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang, defstring } = req.params;
+
+    console.log({ lang, defstring, value: req.body.value });
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
 router.post(
   "/localizer/save-lang",
   setTenant,
