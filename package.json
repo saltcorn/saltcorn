@@ -24,7 +24,8 @@
   "nodemonConfig": {
     "verbose": true,
     "ignore": [
-      "plugin_packages/"
+      "plugin_packages/",
+      "packages/saltcorn-data/app-locales/"
     ]
   }
 }
