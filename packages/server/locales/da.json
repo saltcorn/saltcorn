@@ -503,5 +503,13 @@
 	"Create custom event": "Create custom event",
 	"Which events should be logged?": "Which events should be logged?",
 	"Events to log": "Events to log",
-	"Channel": "Channel"
+	"Channel": "Channel",
+	"Description allows you to give more information about the view.": "Description allows you to give more information about the view.",
+	"Show on page": "Show on page",
+	"Requests to render this view directly will instead show the chosen page, if any. The chosen page should embed this view. Use this to decorate the view with additional elements.": "Requests to render this view directly will instead show the chosen page, if any. The chosen page should embed this view. Use this to decorate the view with additional elements.",
+	"Set page title": "Set page title",
+	"Skip this section if you do not want to set the page title": "Skip this section if you do not want to set the page title",
+	"Page title is a formula?": "Page title is a formula?",
+	"Default language": "Default language",
+	"Identity": "Identity"
 }
