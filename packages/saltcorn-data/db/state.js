@@ -63,7 +63,7 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
-    this.localizer = new I18n({
+    this.i18n = new I18n({
       locales: [],
       directory: path.join(__dirname, "..", "app-locales"),
     });
@@ -123,7 +123,7 @@ class State {
           JSON.stringify(strings)
         );
     }
-    this.localizer = new I18n({
+    this.i18n = new I18n({
       locales: Object.keys(this.getConfig("localizer_languages", {})),
       directory: localeDir,
       autoReload: false,
