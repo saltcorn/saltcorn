@@ -450,7 +450,7 @@ const render = (
       }
     },
   });
-  translateLayout(layout, req.locale)
+  translateLayout(layout, req.getLocale())
   const blockDispatch = {
     field({ field_name, fieldview, configuration }) {
       const val = row[field_name];

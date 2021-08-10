@@ -136,6 +136,7 @@ class State {
       syncFiles: false,
     });
   }
+
   /**
    * Refresh views
    * @returns {Promise<void>}
