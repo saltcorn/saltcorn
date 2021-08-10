@@ -142,6 +142,7 @@ const send_infoarch_page = (args) => {
     sub_sections: [
       { text: "Menu", href: "/menu" },
       { text: "Search", href: "/search/config" },
+      { text: "Languages", href: "/site-structure/localizer" },
       ...(tenant_list
         ? [
             { text: "Tenants", href: "/tenant/list" },
