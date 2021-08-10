@@ -83,7 +83,7 @@ const create_table_jsons = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
     const dirpath = path.join(root_dirpath, "tables");
-    await fs.mkdir(dirpath);
+    await fs.mkdir(dirpath, { recursive: true });
     const tables = await Table.find({});
     for (const t of tables) {
       await create_table_json(t, dirpath);

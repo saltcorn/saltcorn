@@ -28,6 +28,9 @@ const {
 } = require("../models/config");
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 const { structuredClone } = require("../utils");
+const { I18n } = require("i18n");
+const path = require("path");
+const fs = require("fs");
 
 process.send = process.send || function () {};
 
@@ -35,7 +38,8 @@ process.send = process.send || function () {};
  * State class
  */
 class State {
-  constructor() {
+  constructor(tenant) {
+    this.tenant = tenant;
     this.views = [];
     this.triggers = [];
     this.viewtemplates = {};
@@ -59,6 +63,10 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
+    this.localizer = new I18n({
+      locales: [],
+      directory: path.join(__dirname, "..", "app-locales"),
+    });
     contract.class(this);
   }
 
@@ -99,6 +107,16 @@ class State {
     this.configs = await getAllConfigOrDefaults();
     this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
+    });
+    const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
+    if(!fs.existsSync(localeDir))
+      await fs.promises.mkdir(localeDir);
+    Object.keys(this.getConfig("localizer_languages", {})).forEach(lang=>{
+
+    })
+    this.localizer = new I18n({
+      locales: Object.keys(this.getConfig("localizer_languages", {})),
+      directory: localeDir,
     });
     if (!noSignal)
       process.send({ refresh: "config", tenant: db.getTenantSchema() });
@@ -379,7 +397,7 @@ State.contract = {
 };
 
 // the state is singleton
-const singleton = new State();
+const singleton = new State("public");
 
 // return current State object
 const getState = contract(
@@ -442,7 +460,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
     try {
-      tenants[domain] = new State();
+      tenants[domain] = new State(domain);
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain, true));
       await db.runWithTenant(domain, plugin_loader);
@@ -464,7 +482,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
  */
 const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
   if (!noSignalOrDB) await createTenant(t, newurl);
-  tenants[t] = new State();
+  tenants[t] = new State(t);
   await db.runWithTenant(t, plugin_loader);
   if (!noSignalOrDB) process.send({ createTenant: t });
 };
@@ -475,7 +493,7 @@ const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
  */
 const restart_tenant = async (plugin_loader) => {
   const ten = db.getTenantSchema();
-  tenants[ten] = new State();
+  tenants[ten] = new State(ten);
   await plugin_loader();
 };
 
