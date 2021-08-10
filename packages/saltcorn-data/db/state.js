@@ -108,6 +108,11 @@ class State {
     this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
+    this.refresh_i18n();
+    if (!noSignal)
+      process.send({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+  async refresh_i18n() {
     const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
     try {
       //avoid race condition
@@ -118,9 +123,9 @@ class State {
       //write json file
       const strings = allStrings[lang];
       if (strings)
-        await fs.writeFile(
+        await fs.promises.writeFile(
           path.join(localeDir, `${lang}.json`),
-          JSON.stringify(strings)
+          JSON.stringify(strings, null, 2)
         );
     }
     this.i18n = new I18n({
@@ -130,10 +135,7 @@ class State {
       updateFiles: false,
       syncFiles: false,
     });
-    if (!noSignal)
-      process.send({ refresh: "config", tenant: db.getTenantSchema() });
   }
-
   /**
    * Refresh views
    * @returns {Promise<void>}
@@ -248,6 +250,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
+      if (key.startsWith("localizer_")) this.refresh_i18n();
       process.send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }

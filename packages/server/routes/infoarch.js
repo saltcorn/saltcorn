@@ -7,7 +7,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { div, a, i } = require("@saltcorn/markup/tags");
+const { div, a, i, text } = require("@saltcorn/markup/tags");
 const { mkTable, renderForm } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const router = new Router();
@@ -131,10 +131,11 @@ router.get(
     const form = languageForm(req);
     form.values = cfgLangs[lang];
     const { is_default } = form.values;
+    const cfgStrings = getState().getConfig("localizer_strings",{});
+    const translation = cfgStrings[lang] || {}
     const strings = getState()
       .getStringsForI18n()
-      .map((s) => ({ in_default: s }));
-    console.log({ strings });
+      .map((s) => ({ in_default: s, translated: translation[s] || s }));
     send_infoarch_page({
       res,
       req,
@@ -165,7 +166,7 @@ router.get(
                             r.in_default
                           )}`,
                         },
-                        r.in_default
+                        r.translated
                       ),
                   },
                 ],
@@ -186,7 +187,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { lang, defstring } = req.params;
 
-    console.log({ lang, defstring, value: req.body.value });
+    const cfgStrings = getState().getConfigCopy("localizer_strings");
+    if(cfgStrings[lang])
+    cfgStrings[lang][defstring] = text(req.body.value)
+    else cfgStrings[lang]={[defstring]: text(req.body.value)}
+    await getState().setConfig("localizer_strings", cfgStrings)
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
