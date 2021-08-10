@@ -24,6 +24,8 @@ router.get(
 const languageForm = (req) =>
   new Form({
     action: "/site-structure/localizer/save-lang",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
     fields: [
       {
         name: "name",
@@ -164,7 +166,7 @@ router.post(
         ...cfgLangs,
         [lang.locale]: lang,
       });
-      res.redirect(`/site-structure/localizer`);
+      res.redirect(`/site-structure/localizer/edit/${lang.locale}`);
     }
   })
 );
