@@ -42,7 +42,7 @@ const languageForm = (req) =>
         name: "is_default",
         label: req.__("Default"),
         sublabel:
-          "This is the default language in which the application is built",
+          "Is this the default language in which the application is built?",
         type: "Bool",
       },
     ],
@@ -131,7 +131,7 @@ router.get(
       res,
       req,
       active_sub: "Languages",
-      sub2_page: "New",
+      sub2_page: form.values.name || form.values.locale,
       contents: {
         type: "card",
         contents: [renderForm(form, req.csrfToken())],
