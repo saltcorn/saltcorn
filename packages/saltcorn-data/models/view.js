@@ -264,7 +264,7 @@ class View {
   }
 
   getStringsForI18n() {
-    if (!!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n) return [];
+    if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n) return [];
     return this.viewtemplateObj.getStringsForI18n(this.configuration);
   }
 

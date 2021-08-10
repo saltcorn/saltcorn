@@ -42,7 +42,7 @@ const languageForm = (req) =>
       },
       {
         name: "is_default",
-        label: req.__("Default"),
+        label: req.__("Default language"),
         sublabel:
           "Is this the default language in which the application is built?",
         type: "Bool",
