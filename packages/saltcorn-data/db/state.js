@@ -397,6 +397,8 @@ class State {
     const strings = [];
     this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
     this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
+    const menu = this.getConfig("menu_items", []);
+    strings.push(...menu.map(({ label }) => label));
     return Array.from(new Set(strings)).filter(removeAllWhiteSpace);
   }
 }
