@@ -13,7 +13,7 @@ const generate_attributes = (typeattrs, validate, table_id) => {
   var res = {};
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a) => {
-    if (a.required || is.bool.generate()) {
+    if (a.type && (a.required || is.bool.generate())) {
       const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
