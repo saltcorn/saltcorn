@@ -253,7 +253,7 @@ const run = async (
   const fields = await table.getFields();
   readState(state, fields);
   const appState = getState();
-  const locale = extraOpts.req.getLocale();
+  const locale = extraArgs.req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
 
   const sview = await View.findOne({ name: show_view });
