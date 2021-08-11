@@ -27,7 +27,11 @@ const {
   getForm,
   parse_view_select,
 } = require("./viewable_fields");
-const { traverse, getStringsForI18n, translateLayout } = require("../../models/layout");
+const {
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
 const configuration_workflow = (req) =>
@@ -344,7 +348,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.contents = await view.run(state, { req, res });
     },
   });
-  translateLayout(form.layout, req.getLocale())
+  translateLayout(form.layout, req.getLocale());
   if (req.xhr) form.xhrSubmit = true;
   setDateLocales(form, req.getLocale());
 };
@@ -545,7 +549,7 @@ module.exports = {
   authorise_post,
   authorise_get: async ({ query, ...rest }) =>
     authorise_post({ body: query, ...rest }),
-    getStringsForI18n({ layout }) {
-      return getStringsForI18n(layout);
-    },
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };
