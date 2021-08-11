@@ -71,11 +71,10 @@ class ReleaseCommand extends Command {
     publish("saltcorn-cli");
 
     // update Dockerfile
+    const dockerfile = fs.readFileSync(`Dockerfile.release`, 'utf8');
     fs.writeFileSync(
       `Dockerfile.release`,
-      fs
-        .readFileSync(`Dockerfile.release`)
-        .replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
+      dockerfile.replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
     );
     //git commit tag and push
     spawnSync("git", ["commit", "-am", "v" + version], {
