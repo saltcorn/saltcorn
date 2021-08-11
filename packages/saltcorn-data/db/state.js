@@ -200,6 +200,25 @@ class State {
     );
     for (const table of allTables) {
       table.fields = allFields.filter((f) => f.table_id === table.id);
+      table.fields.forEach((f) => {
+        if (
+          f.attributes &&
+          f.attributes.localizes_field &&
+          f.attributes.locale
+        ) {
+          const localized = table.fields.find(
+            (lf) => lf.name === f.attributes.localizes_field
+          );
+          if (localized) {
+            if (!localized.attributes) localized.attributes = {};
+
+            if (!localized.attributes.localized_by)
+              localized.attributes.localized_by = {};
+
+            localized.attributes.localized_by[f.attributes.locale] = f.name;
+          }
+        }
+      });
     }
     this.tables = allTables;
     if (!noSignal)
