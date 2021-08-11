@@ -22,6 +22,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group } = require("@saltcorn/markup/helpers");
+const { getState } = require("../db/state");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -60,7 +61,15 @@ const getStrOptions = (v, optsStr) =>
 const string = {
   name: "String",
   sql_name: "text",
-  attributes: ({table}) => {
+  attributes: ({ table }) => {
+    const strFields = table.fields.filter(
+      (f) =>
+        (f.type || {}).name === "String" &&
+        !(f.attributes && f.attributes.localizes_field)
+    );
+    const locales = Object.keys(
+      getState().getConfig("localizer_languages", {})
+    );
     return [
       {
         name: "regexp",
@@ -95,6 +104,24 @@ const string = {
         required: false,
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
+      },
+      {
+        name: "localizes_field",
+        label: "Translation of",
+        sublabel:
+          "This is a translation of a different field in a different language",
+        type: "String",
+        attributes: {
+          options: strFields.map((f) => f.name),
+        },
+      },
+      {
+        name: "locale",
+        label: "Locale",
+        sublabel: "Language locale of translation",
+        input_type: "select",
+        options: locales,
+        showIf: { localizes_field: strFields.map((f) => f.name) },
       },
     ];
   },
