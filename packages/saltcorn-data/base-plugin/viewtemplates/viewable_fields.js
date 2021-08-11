@@ -345,6 +345,13 @@ const get_viewable_fields = contract(
           };
         } else if (column.type === "Field") {
           let f = fields.find((fld) => fld.name === column.field_name);
+          let f_with_val = f;
+          if (f && f.attributes && f.attributes.localized_by) {
+            const locale = req.getLocale();
+            const localized_fld_nm = f.attributes.localized_by[locale];
+            f_with_val =
+              fields.find((fld) => fld.name === localized_fld_nm) || f;
+          }
           const isNum = f && f.type && f.type.name === "Integer";
           return (
             f && {
@@ -363,14 +370,14 @@ const get_viewable_fields = contract(
                     f.type.fieldviews[column.fieldview]
                   ? (row) =>
                       f.type.fieldviews[column.fieldview].run(
-                        row[f.name],
+                        row[f_with_val.name],
                         req,
                         column.configuration
                       )
                   : isShow
                   ? f.type.showAs
-                    ? (row) => f.type.showAs(row[f.name])
-                    : (row) => text(row[f.name])
+                    ? (row) => f.type.showAs(row[f_with_val.name])
+                    : (row) => text(row[f_with_val.name])
                   : f.listKey,
               sortlink:
                 !f.calculated || f.stored

@@ -11,8 +11,7 @@ const { InvalidAdminAction } = require("../utils");
 
 const readKey = (v, field) => {
   if (v === "") return null;
-  if (typeof v === "string" && v.startsWith('Preset:')) 
-    return v
+  if (typeof v === "string" && v.startsWith("Preset:")) return v;
   const { getState } = require("../db/state");
 
   const type = getState().types[field.reftype];
@@ -550,6 +549,17 @@ class Field {
       }
     }
     return f;
+  }
+
+  static getTypeAttributes(typeattribs, table_id) {
+    const Table = require("./table");
+
+    if (!typeattribs) return [];
+    if (typeof typeattribs === "function") {
+      if (!table_id) return typeattribs({});
+      const table = Table.findOne({ id: table_id });
+      return typeattribs({ table });
+    } else return typeattribs;
   }
 }
 

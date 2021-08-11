@@ -116,7 +116,8 @@ const random_field = async (existing_field_names, table) => {
   if (f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
-      f.type.validate_attributes
+      f.type.validate_attributes,
+      table.id
     );
   if (f.is_fkey) {
     if (f.reftable_name === "users") {
