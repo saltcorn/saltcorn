@@ -62,11 +62,13 @@ const string = {
   name: "String",
   sql_name: "text",
   attributes: ({ table }) => {
-    const strFields = table.fields.filter(
-      (f) =>
-        (f.type || {}).name === "String" &&
-        !(f.attributes && f.attributes.localizes_field)
-    );
+    const strFields =
+      table &&
+      table.fields.filter(
+        (f) =>
+          (f.type || {}).name === "String" &&
+          !(f.attributes && f.attributes.localizes_field)
+      );
     const locales = Object.keys(
       getState().getConfig("localizer_languages", {})
     );
@@ -105,24 +107,28 @@ const string = {
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
       },
-      {
-        name: "localizes_field",
-        label: "Translation of",
-        sublabel:
-          "This is a translation of a different field in a different language",
-        type: "String",
-        attributes: {
-          options: strFields.map((f) => f.name),
-        },
-      },
-      {
-        name: "locale",
-        label: "Locale",
-        sublabel: "Language locale of translation",
-        input_type: "select",
-        options: locales,
-        showIf: { localizes_field: strFields.map((f) => f.name) },
-      },
+      ...(table
+        ? [
+            {
+              name: "localizes_field",
+              label: "Translation of",
+              sublabel:
+                "This is a translation of a different field in a different language",
+              type: "String",
+              attributes: {
+                options: strFields.map((f) => f.name),
+              },
+            },
+            {
+              name: "locale",
+              label: "Locale",
+              sublabel: "Language locale of translation",
+              input_type: "select",
+              options: locales,
+              showIf: { localizes_field: strFields.map((f) => f.name) },
+            },
+          ]
+        : []),
     ];
   },
   contract: ({ options }) =>
