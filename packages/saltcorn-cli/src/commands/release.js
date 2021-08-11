@@ -72,9 +72,9 @@ class ReleaseCommand extends Command {
 
     // update Dockerfile
     fs.writeFileSync(
-      `Dockerfile`,
+      `Dockerfile.release`,
       fs
-        .readFileSync(`Dockerfile`)
+        .readFileSync(`Dockerfile.release`)
         .replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
     );
     //git commit tag and push
