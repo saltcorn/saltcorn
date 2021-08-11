@@ -539,5 +539,21 @@
 	"Match regular expression": "Match regular expression",
 	"Error message when regular expression does not match": "Error message when regular expression does not match",
 	"The maximum number of characters in the string": "The maximum number of characters in the string",
-	"The minimum number of characters in the string": "The minimum number of characters in the string"
+	"The minimum number of characters in the string": "The minimum number of characters in the string",
+	"Options": "Options",
+	"Action label is a formula?": "Action label is a formula?",
+	"Action Style": "Action Style",
+	"Button size": "Button size",
+	"User confirmation?": "User confirmation?",
+	"Link Style": "Link Style",
+	"Link size": "Link size",
+	"Where": "Where",
+	"Default order by": "Default order by",
+	"Default descending?": "Default descending?",
+	"Omit header": "Omit header",
+	"Do not display the header": "Do not display the header",
+	"Create database view": "Create database view",
+	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list",
+	"Rows per page": "Rows per page",
+	"List options": "List options"
 }

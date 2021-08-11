@@ -450,13 +450,24 @@ const render = (
       }
     },
   });
-  translateLayout(layout, req.getLocale())
+  const locale = req.getLocale();
+  translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration }) {
-      const val = row[field_name];
       let field = fields.find((fld) => fld.name === field_name);
-
       if (!field) return "";
+
+      let val = row[field_name];
+      if (
+        field &&
+        field.attributes &&
+        field.attributes.localized_by &&
+        field.attributes.localized_by[locale]
+      ) {
+        const localized_fld = field.attributes.localized_by[locale];
+        val = row[localized_fld];
+      }
+
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
