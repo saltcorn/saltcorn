@@ -17,6 +17,7 @@ const {
   readState,
 } = require("../../plugin-helper");
 const { InvalidConfiguration } = require("../../utils");
+const { getState } = require("../../db/state");
 
 const configuration_workflow = (req) =>
   new Workflow({
