@@ -27,7 +27,7 @@ const {
   configTypes,
 } = require("../models/config");
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
-const { structuredClone } = require("../utils");
+const { structuredClone, removeAllWhiteSpace } = require("../utils");
 const { I18n } = require("i18n");
 const path = require("path");
 const fs = require("fs");
@@ -397,7 +397,7 @@ class State {
     const strings = [];
     this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
     this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
-    return Array.from(new Set(strings));
+    return Array.from(new Set(strings)).filter(removeAllWhiteSpace);
   }
 }
 

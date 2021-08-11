@@ -76,36 +76,40 @@ const satisfies = (where) => (obj) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
-const getLines = (filename, lineCount) => new Promise((resolve) => {
-  let stream = fs.createReadStream(filename, {
-    flags: "r",
-    encoding: "utf-8",
-    fd: null,
-    mode: 438, // 0666 in Octal
-    bufferSize: 64 * 1024,
-  });
+const getLines = (filename, lineCount) =>
+  new Promise((resolve) => {
+    let stream = fs.createReadStream(filename, {
+      flags: "r",
+      encoding: "utf-8",
+      fd: null,
+      mode: 438, // 0666 in Octal
+      bufferSize: 64 * 1024,
+    });
 
-  let data = "";
-  let lines = [];
-  stream.on("data", function (moreData) {
-    data += moreData;
-    lines = data.split("\n");
-    // probably that last line is "corrupt" - halfway read - why > not >=
-    if (lines.length > lineCount + 1) {
-      stream.destroy();
-      lines = lines.slice(0, lineCount); // junk as above
-      resolve(lines.join("\n"));
-    }
-  });
+    let data = "";
+    let lines = [];
+    stream.on("data", function (moreData) {
+      data += moreData;
+      lines = data.split("\n");
+      // probably that last line is "corrupt" - halfway read - why > not >=
+      if (lines.length > lineCount + 1) {
+        stream.destroy();
+        lines = lines.slice(0, lineCount); // junk as above
+        resolve(lines.join("\n"));
+      }
+    });
 
-  /*stream.on("error", function () {
+    /*stream.on("error", function () {
     callback("Error");
   });*/
 
-  stream.on("end", function () {
-    resolve(lines.join("\n"));
+    stream.on("end", function () {
+      resolve(lines.join("\n"));
+    });
   });
-});
+
+const removeAllWhiteSpace = (s) =>
+  s.replace(/\s+/g, "").split("&nbsp;").join("").split("<hr>").join("");
 
 module.exports = {
   removeEmptyStrings,
@@ -120,5 +124,6 @@ module.exports = {
   InvalidAdminAction,
   InvalidConfiguration,
   satisfies,
-  getLines
+  getLines,
+  removeAllWhiteSpace,
 };
