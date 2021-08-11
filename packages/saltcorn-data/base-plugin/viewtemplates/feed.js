@@ -17,6 +17,7 @@ const {
   readState,
 } = require("../../plugin-helper");
 const { InvalidConfiguration } = require("../../utils");
+const { getState } = require("../../db/state");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -251,6 +252,9 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   readState(state, fields);
+  const appState = getState();
+  const locale = extraArgs.req.getLocale();
+  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
 
   const sview = await View.findOne({ name: show_view });
   if (!sview)
@@ -299,6 +303,7 @@ const run = async (
     (f) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
+
   if (
     view_to_create &&
     (role <= table.min_role_write ||
@@ -312,7 +317,7 @@ const run = async (
         `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
           state
         )}`,
-        create_view_label || `Add ${pluralize(table.name, 1)}`,
+        __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
     }
@@ -370,4 +375,8 @@ module.exports = {
   run,
   get_state_fields,
   display_state_form: false,
+  getStringsForI18n({ create_view_label }) {
+    if (create_view_label) return [create_view_label];
+    else return [];
+  },
 };

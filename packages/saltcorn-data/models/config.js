@@ -330,6 +330,16 @@ const configTypes = {
     label: "Next weekly event",
     default: null,
   },
+  localizer_languages: {
+    type: "hidden",
+    label: "Localizer languages",
+    default: {},
+  },
+  localizer_strings: {
+    type: "hidden",
+    label: "Localizer strings",
+    default: {},
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

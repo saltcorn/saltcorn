@@ -10,7 +10,12 @@ const Trigger = require("../../models/trigger");
 
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
-const { eachView, traverse } = require("../../models/layout");
+const {
+  eachView,
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} = require("../../models/layout");
 
 const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -445,6 +450,7 @@ const render = (
       }
     },
   });
+  translateLayout(layout, req.getLocale())
   const blockDispatch = {
     field({ field_name, fieldview, configuration }) {
       const val = row[field_name];
@@ -548,4 +554,7 @@ module.exports = {
   initial_config,
   display_state_form: false,
   routes: { run_action },
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };

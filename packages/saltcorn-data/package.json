@@ -25,6 +25,7 @@
     "email-validator": "^2.0.4",
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
+    "i18n": "^0.13.2",
     "latest-version": "^5.1.0",
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.33",

@@ -27,7 +27,10 @@ const {
   configTypes,
 } = require("../models/config");
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
-const { structuredClone } = require("../utils");
+const { structuredClone, removeAllWhiteSpace } = require("../utils");
+const { I18n } = require("i18n");
+const path = require("path");
+const fs = require("fs");
 
 process.send = process.send || function () {};
 
@@ -35,7 +38,8 @@ process.send = process.send || function () {};
  * State class
  */
 class State {
-  constructor() {
+  constructor(tenant) {
+    this.tenant = tenant;
     this.views = [];
     this.triggers = [];
     this.viewtemplates = {};
@@ -59,6 +63,10 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
+    this.i18n = new I18n({
+      locales: [],
+      directory: path.join(__dirname, "..", "app-locales"),
+    });
     contract.class(this);
   }
 
@@ -100,8 +108,33 @@ class State {
     this.getConfig("custom_events", []).forEach((cev) => {
       this.eventTypes[cev.name] = cev;
     });
+    this.refresh_i18n();
     if (!noSignal)
       process.send({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+  async refresh_i18n() {
+    const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
+    try {
+      //avoid race condition
+      if (!fs.existsSync(localeDir)) await fs.promises.mkdir(localeDir);
+    } catch {}
+    const allStrings = this.getConfig("localizer_strings", {});
+    for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
+      //write json file
+      const strings = allStrings[lang];
+      if (strings)
+        await fs.promises.writeFile(
+          path.join(localeDir, `${lang}.json`),
+          JSON.stringify(strings, null, 2)
+        );
+    }
+    this.i18n = new I18n({
+      locales: Object.keys(this.getConfig("localizer_languages", {})),
+      directory: localeDir,
+      autoReload: false,
+      updateFiles: false,
+      syncFiles: false,
+    });
   }
 
   /**
@@ -218,6 +251,7 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
+      if (key.startsWith("localizer_")) this.refresh_i18n();
       process.send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }
@@ -358,6 +392,15 @@ class State {
     if (!noSignal)
       process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
+
+  getStringsForI18n() {
+    const strings = [];
+    this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
+    this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
+    const menu = this.getConfig("menu_items", []);
+    strings.push(...menu.map(({ label }) => label));
+    return Array.from(new Set(strings)).filter(removeAllWhiteSpace);
+  }
 }
 
 /**
@@ -379,7 +422,7 @@ State.contract = {
 };
 
 // the state is singleton
-const singleton = new State();
+const singleton = new State("public");
 
 // return current State object
 const getState = contract(
@@ -442,7 +485,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
   const tenantList = await getAllTenants();
   for (const domain of tenantList) {
     try {
-      tenants[domain] = new State();
+      tenants[domain] = new State(domain);
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain, true));
       await db.runWithTenant(domain, plugin_loader);
@@ -464,7 +507,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
  */
 const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
   if (!noSignalOrDB) await createTenant(t, newurl);
-  tenants[t] = new State();
+  tenants[t] = new State(t);
   await db.runWithTenant(t, plugin_loader);
   if (!noSignalOrDB) process.send({ createTenant: t });
 };
@@ -475,7 +518,7 @@ const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
  */
 const restart_tenant = async (plugin_loader) => {
   const ten = db.getTenantSchema();
-  tenants[ten] = new State();
+  tenants[ten] = new State(ten);
   await plugin_loader();
 };
 
