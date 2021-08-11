@@ -301,6 +301,7 @@ const run = async (
   );
   const fields = await table.getFields();
   const appState = getState();
+  const locale = extraOpts.req.getLocale()
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
