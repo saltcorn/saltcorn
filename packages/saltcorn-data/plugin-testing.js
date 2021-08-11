@@ -3,13 +3,15 @@ const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
+const Field = require("./models/field");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
-const generate_attributes = (attrs, validate) => {
+const generate_attributes = (typeattrs, validate, table_id) => {
   var res = {};
+  const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a) => {
     if (a.required || is.bool.generate()) {
       const contract = a.type.contract || getState().types[a.type].contract;
@@ -17,7 +19,8 @@ const generate_attributes = (attrs, validate) => {
       if (gen) res[a.name] = gen();
     }
   });
-  if (validate && !validate(res)) return generate_attributes(attrs, validate);
+  if (validate && !validate(res))
+    return generate_attributes(attrs, validate, table_id);
   else return res;
 };
 
@@ -87,7 +90,9 @@ const auto_test_viewtemplate = async (vt) => {
         table_id: 2,
         viewname: "newview",
       });
-    const sfs = vt.get_state_fields ? await vt.get_state_fields(1, "newview", cfg) : [];
+    const sfs = vt.get_state_fields
+      ? await vt.get_state_fields(1, "newview", cfg)
+      : [];
     const res = await vt.run(2, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
     if (sfs.some((sf) => sf.name === "id")) {

@@ -100,7 +100,7 @@ class Table {
    * @param where - where condition
    * @returns {Promise<*|Table|null>} table or null
    */
-  static async findOne(where) {
+  static findOne(where) {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
@@ -407,8 +407,7 @@ class Table {
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     await Trigger.runTableTriggers("Update", this, newRow);
-
-}
+  }
 
   /**
    * Try to Update row
@@ -594,7 +593,6 @@ class Table {
    * @returns {Promise<void>}
    */
   async update(new_table_rec) {
-
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
@@ -756,15 +754,15 @@ class Table {
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
 
-    const stats = await fs.promises.stat(filePath)
-    const fileSizeInMegabytes = stats.size / (1024*1024);
-    
+    const stats = await fs.promises.stat(filePath);
+    const fileSizeInMegabytes = stats.size / (1024 * 1024);
+
     await client.query("BEGIN");
 
     const readStream = fs.createReadStream(filePath);
 
     try {
-      if (db.copyFrom && fileSizeInMegabytes>1) {
+      if (db.copyFrom && fileSizeInMegabytes > 1) {
         let theError;
 
         const copyres = await db
@@ -975,7 +973,9 @@ class Table {
     )) {
       const reffield = fields.find((f) => f.name === ref);
       if (!reffield)
-        throw new InvalidConfiguration(`Key field ${ref} not found in table ${this.name}`);
+        throw new InvalidConfiguration(
+          `Key field ${ref} not found in table ${this.name}`
+        );
       const reftable = reffield.reftable_name;
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
@@ -1159,9 +1159,7 @@ Table.contract = {
     ),
     findOne: is.fun(
       is.or(is.obj(), is.str, is.posint),
-      is.promise(
-        is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
-      )
+      is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
     ),
     create: is.fun(is.str, is.promise(is.class("Table"))),
     create_from_csv: is.fun(

@@ -60,42 +60,44 @@ const getStrOptions = (v, optsStr) =>
 const string = {
   name: "String",
   sql_name: "text",
-  attributes: [
-    {
-      name: "regexp",
-      type: "String",
-      required: false,
-      sublabel: "Match regular expression",
-      validator(s) {
-        if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
+  attributes: ({table}) => {
+    return [
+      {
+        name: "regexp",
+        type: "String",
+        required: false,
+        sublabel: "Match regular expression",
+        validator(s) {
+          if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
+        },
       },
-    },
-    {
-      name: "re_invalid_error",
-      type: "String",
-      required: false,
-      sublabel: "Error message when regular expression does not match",
-    },
-    {
-      name: "max_length",
-      type: "Integer",
-      required: false,
-      sublabel: "The maximum number of characters in the string",
-    },
-    {
-      name: "min_length",
-      type: "Integer",
-      required: false,
-      sublabel: "The minimum number of characters in the string",
-    },
-    {
-      name: "options",
-      type: "String",
-      required: false,
-      sublabel:
-        'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
-    },
-  ],
+      {
+        name: "re_invalid_error",
+        type: "String",
+        required: false,
+        sublabel: "Error message when regular expression does not match",
+      },
+      {
+        name: "max_length",
+        type: "Integer",
+        required: false,
+        sublabel: "The maximum number of characters in the string",
+      },
+      {
+        name: "min_length",
+        type: "Integer",
+        required: false,
+        sublabel: "The minimum number of characters in the string",
+      },
+      {
+        name: "options",
+        type: "String",
+        required: false,
+        sublabel:
+          'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
+      },
+    ];
+  },
   contract: ({ options }) =>
     typeof options === "string"
       ? is.one_of(options.split(","))
@@ -239,7 +241,7 @@ const string = {
   },
   presets: {
     IP: ({ req }) => req.ip,
-    SessionID: ({ req }) => req.sessionID || req.cookies['express:sess'],
+    SessionID: ({ req }) => req.sessionID || req.cookies["express:sess"],
   },
   validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
     if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
@@ -583,7 +585,7 @@ const bool = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
-          ...(attrs.disabled && {onclick: "return false;"})
+          ...(attrs.disabled && { onclick: "return false;" }),
         }),
     },
     tristate: {

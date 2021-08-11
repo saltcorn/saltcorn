@@ -128,7 +128,9 @@ const is_plugin_type = is.obj({
       ),
     })
   ),
-  attributes: is.maybe(is.array(is_attribute)),
+  attributes: is.maybe(
+    is.or(is.fun(is.obj(), is.array(is_attribute)), is.array(is_attribute))
+  ),
   readFromFormRecord: is.maybe(is.fun([is.obj(), is.str], is.any)),
   read: is.fun(is.any, is.any),
   readFromDB: is.maybe(is.fun(is.any, is.any)),
@@ -151,13 +153,15 @@ const is_table_query = is.obj({
   where: is.maybe(is.obj()),
   limit: is.maybe(is.positive),
   offset: is.maybe(is.positive),
-  orderBy: is.maybe(is.or(is.str, is.obj({ }))),
+  orderBy: is.maybe(is.or(is.str, is.obj({}))),
   orderDesc: is.maybe(is.bool),
 });
 
 const is_viewtemplate = is.obj({
   name: is.str,
-  get_state_fields: is.maybe(is.fun([is.posint, is.str, is.any], is.promise(fieldlike))),
+  get_state_fields: is.maybe(
+    is.fun([is.posint, is.str, is.any], is.promise(fieldlike))
+  ),
   display_state_form: is.maybe(is.or(is.bool, is.fun(is.any, is.bool))),
   configuration_workflow: is.fun(
     is.obj({ __: is.fun(is.str, is.str) }),
