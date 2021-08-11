@@ -300,7 +300,8 @@ const run = async (
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
   const fields = await table.getFields();
-
+  const appState = getState();
+  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -308,7 +309,7 @@ const run = async (
       if (!field) continue;
       const fieldviews =
         field.type === "Key"
-          ? getState().keyFieldviews
+          ? appState.keyFieldviews
           : field.type.fieldviews || {};
       if (!fieldviews) continue;
       const fv = fieldviews[col.fieldview];
@@ -332,7 +333,8 @@ const run = async (
     fields,
     columns,
     false,
-    extraOpts.req
+    extraOpts.req,
+    __
   );
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
@@ -404,7 +406,7 @@ const run = async (
         `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
           state
         )}`,
-        create_view_label || `Add ${pluralize(table.name, 1)}`,
+        __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
     }
@@ -473,5 +475,20 @@ module.exports = {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
+  },
+  getStringsForI18n({ columns, create_view_label }) {
+    const strings = [];
+    const maybeAdd = (s) => {
+      if (s) strings.push(s);
+    };
+
+    for (const column of columns) {
+      maybeAdd(column.header_label);
+      maybeAdd(column.link_text);
+      maybeAdd(column.view_label);
+      maybeAdd(column.action_label);
+    }
+    maybeAdd(create_view_label);
+    return strings;
   },
 };

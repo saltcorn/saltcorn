@@ -37,9 +37,10 @@ const action_link = (
     action_style,
     action_size,
     action_icon,
-  }
+  },
+  __ = (s) => s
 ) => {
-  const label = action_label || action_name;
+  const label = __(action_label) || action_name;
   if (url.javascript)
     return a(
       {
@@ -92,7 +93,8 @@ const make_link = contract(
       link_url_formula,
       link_target_blank,
     },
-    fields
+    fields,
+    __ = (s) => s
   ) => {
     return {
       label: "",
@@ -143,7 +145,8 @@ const view_linker = contract(
       link_icon = "",
       textStyle = "",
     },
-    fields
+    fields,
+    __ = (s) => s
   ) => {
     const get_label = (def, row) => {
       if (!view_label || view_label.length === 0) return def;
@@ -242,14 +245,14 @@ const get_viewable_fields = contract(
       })
     )
   ),
-  (viewname, table, fields, columns, isShow, req) =>
+  (viewname, table, fields, columns, isShow, req, __) =>
     columns
       .map((column) => {
         const role = req.user ? req.user.role_id : 10;
         const user_id = req.user ? req.user.id : null;
         if (column.type === "Action")
           return {
-            label: column.header_label ? text(column.header_label) : "",
+            label: column.header_label ? text(__(column.header_label)) : "",
             key: (r) => {
               if (action_requires_write(column.action_name)) {
                 const owner_field = table.owner_fieldname_from_fields(fields);
@@ -269,7 +272,7 @@ const get_viewable_fields = contract(
               );
               const label = column.action_label_formula
                 ? get_expression_function(column.action_label, fields)(r)
-                : column.action_label || column.action_name;
+                : __(column.action_label) || column.action_name;
               if (url.javascript)
                 return a(
                   {
@@ -296,12 +299,12 @@ const get_viewable_fields = contract(
           };
         else if (column.type === "ViewLink") {
           if (!column.view) return;
-          const r = view_linker(column, fields);
-          if (column.header_label) r.label = text(column.header_label);
+          const r = view_linker(column, fields, __);
+          if (column.header_label) r.label = text(__(column.header_label));
           return r;
         } else if (column.type === "Link") {
-          const r = make_link(column, fields);
-          if (column.header_label) r.label = text(column.header_label);
+          const r = make_link(column, fields, __);
+          if (column.header_label) r.label = text(__(column.header_label));
           return r;
         } else if (column.type === "JoinField") {
           const keypath = column.join_field.split(".");
@@ -316,7 +319,7 @@ const get_viewable_fields = contract(
 
           return {
             label: column.header_label
-              ? text(column.header_label)
+              ? text(__(column.header_label))
               : text(targetNm),
             key,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
@@ -346,7 +349,7 @@ const get_viewable_fields = contract(
           return (
             f && {
               align: isNum ? "right" : undefined,
-              label: headerLabelForName(column, f, req),
+              label: headerLabelForName(column, f, req, __),
               key:
                 column.fieldview && f.type === "File"
                   ? (row) =>
@@ -389,8 +392,10 @@ const sortlinkForName = (fname, req) => {
       : "true";
   return `javascript:sortby('${text(fname)}', ${desc})`;
 };
-const headerLabelForName = (column, f, req) => {
-  const label = column.header_label ? text(column.header_label) : text(f.label);
+const headerLabelForName = (column, f, req, __) => {
+  const label = column.header_label
+    ? text(__(column.header_label))
+    : text(f.label);
   const { _sortby, _sortdesc } = req.query || {};
   let arrow =
     _sortby !== f.name
