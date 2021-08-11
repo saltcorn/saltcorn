@@ -25,7 +25,8 @@
     "verbose": true,
     "ignore": [
       "plugin_packages/",
-      "packages/saltcorn-data/app-locales/"
+      "packages/saltcorn-data/app-locales/",
+      "packages/server/locales/"
     ]
   }
 }
