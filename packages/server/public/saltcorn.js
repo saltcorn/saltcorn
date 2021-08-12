@@ -522,24 +522,3 @@ function remove_outline(form) {
     .removeClass("btn-outline-primary")
     .addClass("btn-primary");
 }
-
-function activate_blockly() {
-  const workspace = Blockly.inject("blocklyDiv", {
-    media: "../../media/",
-    toolbox: document.getElementById("toolbox"),
-  });
-  const stored = $("#blocklyForm input[name=workspace]").val();
-  if (stored) {
-    const xml = Blockly.Xml.textToDom(stored);
-    Blockly.Xml.domToWorkspace(xml, workspace);
-  }
-  $("#blocklySave").click(() => {
-    const dom = Blockly.Xml.workspaceToDom(workspace);
-    const s = Blockly.Xml.domToText(dom);
-    $("#blocklyForm input[name=workspace]").val(s);
-    const code = Blockly.JavaScript.workspaceToCode(workspace);
-    $("#blocklyForm input[name=js_code]").val(code);
-    console.log(code);
-    $("#blocklyForm").submit();
-  });
-}
