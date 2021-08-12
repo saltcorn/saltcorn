@@ -422,6 +422,11 @@ router.get(
               const workspace = Blockly.inject('blocklyDiv',
                    { media: '../../media/',
                      toolbox: document.getElementById('toolbox')});
+              const stored = $('#blocklyForm input[name=workspace]').val();
+              if(stored) {
+                const xml = Blockly.Xml.textToDom(stored)
+                Blockly.Xml.domToWorkspace(xml, workspace)
+              }
               $('#blocklySave').click(()=>{
                 const dom = Blockly.Xml.workspaceToDom(workspace)
                 const s = Blockly.Xml.domToText(dom)
