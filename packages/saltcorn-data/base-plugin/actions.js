@@ -21,6 +21,9 @@ const { div, code } = require("@saltcorn/markup/tags");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 module.exports = {
+  blocks: {
+    run: async ({ row, configuration: { url, body } }) => {},
+  },
   webhook: {
     configFields: [
       {
