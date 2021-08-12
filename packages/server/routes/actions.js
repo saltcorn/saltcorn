@@ -378,6 +378,8 @@ router.get(
         id: "blocklyForm",
       });
       form.values = trigger.configuration;
+      const events = Trigger.when_options
+      const actions = Object.keys(getState().actions)
       send_events_page({
         res,
         req,
@@ -395,7 +397,7 @@ router.get(
               "Save"
             ),
             renderForm(form, req.csrfToken()),
-            script(domReady("activate_blockly()"))
+            script(domReady(`activate_blockly(${JSON.stringify({events, actions})})`))
           ),
         },
       });

@@ -37,8 +37,8 @@ const blocklyToolbox = () => `
     </block>
     <block type="math_arithmetic"></block>
     <block type="text"></block>
-    <block type="text_print"></block>
     <block type="console"></block>
+    <block type="emit_event"></block>
   </xml>`;
 
 module.exports = { blocklyImportScripts, blocklyToolbox };

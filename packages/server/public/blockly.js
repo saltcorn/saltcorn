@@ -1,4 +1,4 @@
-function activate_blockly() {
+function activate_blockly({ events, actions }) {
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
@@ -22,6 +22,37 @@ function activate_blockly() {
     var code = `console.log(${value_string});\n`;
     return code;
   };
+
+  Blockly.Blocks["emit_event"] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("Emit Event")
+        .appendField(
+          new Blockly.FieldDropdown(events.map((e) => [e, e])),
+          "EVENT"
+        );
+      this.appendValueInput("CHANNEL")
+        .setCheck("String")
+        .appendField("Channel");
+      this.appendValueInput("PAYLOAD").setCheck(null).appendField("Payload");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript['emit_event'] = function(block) {
+    var dropdown_event = block.getFieldValue('EVENT');
+    var value_channel = Blockly.JavaScript.valueToCode(block, 'CHANNEL', Blockly.JavaScript.ORDER_ATOMIC);
+    var value_payload = Blockly.JavaScript.valueToCode(block, 'PAYLOAD', Blockly.JavaScript.ORDER_ATOMIC);
+    // TODO: Assemble JavaScript into code variable.
+    var code = `emitEvent("${dropdown_event}", ${value_channel}, ${value_payload});\n`;
+
+    return code;
+  };
+
   const workspace = Blockly.inject("blocklyDiv", {
     media: "../../media/",
     toolbox: document.getElementById("toolbox"),
