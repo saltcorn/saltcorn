@@ -47,6 +47,10 @@ const blocklyToolbox = () => `
       <block type="text"></block>
     </category>
     <category name="Rows"  colour="20">
+    <block type="empty"></block>
+    <block type="row"></block>
+    <block type="row_get"></block>
+    <block type="row_set"></block>
     
     </category>
     <category name="Lists" categorystyle="list_category">
