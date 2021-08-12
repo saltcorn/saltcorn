@@ -22,6 +22,12 @@ const { div, code } = require("@saltcorn/markup/tags");
 // todo add translation
 module.exports = {
   blocks: {
+    configFields: [
+      {
+        name: "workspace",
+        input_type: "hidden",
+      }
+    ],
     run: async ({ row, configuration: { url, body } }) => {},
   },
   webhook: {

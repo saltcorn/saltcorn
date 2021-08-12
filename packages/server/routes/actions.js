@@ -34,6 +34,7 @@ const {
   span,
   script,
   domReady,
+  button,
   //  tr,
   //  table,
   //  tbody,
@@ -46,6 +47,7 @@ const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
 const User = require("@saltcorn/data/models/user");
+const form = require("@saltcorn/markup/form");
 
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
@@ -371,6 +373,13 @@ router.get(
       res.redirect(`/actions/`);
     } else if (trigger.action === "blocks") {
       const locale = req.getLocale();
+      const form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: action.configFields,
+        noSubmitButton: true,
+        id: "blocklyForm",
+      });
+      form.values = trigger.configuration;
       send_events_page({
         res,
         req,
@@ -391,7 +400,7 @@ router.get(
             script({
               src: `https://unpkg.com/blockly@6.20210701.0/msg/${locale}.js`,
             }),
-            div({ id: "blocklyDiv", style: "height: 480px; width: 600px;" }),
+            div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
             `  <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
             <block type="controls_if"></block>
             <block type="logic_compare"></block>
@@ -403,11 +412,22 @@ router.get(
             <block type="text"></block>
             <block type="text_print"></block>
           </xml>`,
+            button(
+              { class: "btn btn-primary mt-2", id: "blocklySave" },
+              "Save"
+            ),
+            renderForm(form, req.csrfToken()),
             script(
               domReady(`
-          Blockly.inject('blocklyDiv',
-            {media: '../../media/',
-            toolbox: document.getElementById('toolbox')});
+              const workspace = Blockly.inject('blocklyDiv',
+                   { media: '../../media/',
+                     toolbox: document.getElementById('toolbox')});
+              $('#blocklySave').click(()=>{
+                const dom = Blockly.Xml.workspaceToDom(workspace)
+                const s = Blockly.Xml.domToText(dom)
+                $('#blocklyForm input[name=workspace]').val(s);
+                $('#blocklyForm').submit()
+              })
           `)
             )
           ),
