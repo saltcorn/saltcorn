@@ -29,16 +29,41 @@ const blocklyImportScripts = ({locale}) =>
 
 const blocklyToolbox = () => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
-    <block type="controls_if"></block>
-    <block type="logic_compare"></block>
-    <block type="controls_repeat_ext"></block>
-    <block type="math_number">
-    <field name="NUM">123</field>
-    </block>
-    <block type="math_arithmetic"></block>
-    <block type="text"></block>
-    <block type="console"></block>
-    <block type="emit_event"></block>
+    <category name="Control Flow"  categorystyle="loop_category">
+      <block type="controls_if"></block>
+      <block type="controls_repeat_ext"></block>
+      <block type="controls_forEach"></block>
+    </category>
+    <category name="Logic" categorystyle="logic_category">
+      <block type="logic_compare"></block>
+    </category>
+    <category name="Math" categorystyle="math_category">
+      <block type="math_number">
+        <field name="NUM">123</field>
+      </block>
+      <block type="math_arithmetic"></block>
+    </category>
+    <category name="Text" categorystyle="text_category">
+      <block type="text"></block>
+    </category>
+    <category name="Rows"  colour="20">
+    
+    </category>
+    <category name="Lists" categorystyle="list_category">
+    
+    </category>
+    <category name="Actions"  colour="80">
+      <block type="console"></block>
+      <block type="emit_event"></block>
+    </category>
+    
+    <category name="Variables" categorystyle="variable_category">
+    <block type="variables_get"></block>
+    <block type="variables_set"></block>
+    
+    </category>
+    
+  
   </xml>`;
 
 module.exports = { blocklyImportScripts, blocklyToolbox };
