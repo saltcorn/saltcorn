@@ -87,6 +87,7 @@ const onMessageFromWorker = (
     Object.entries(cluster.workers).forEach(([wpid, w]) => {
       if (wpid !== pid) w.send(msg);
     });
+    workerDispatchMsg(msg) //also master
     return true;
   }
 };
