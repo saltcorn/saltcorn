@@ -400,6 +400,10 @@ router.get(
             script({
               src: `https://unpkg.com/blockly@6.20210701.0/msg/${locale}.js`,
             }),
+            script({
+              src:
+                "https://unpkg.com/blockly@6.20210701.0/javascript_compressed.js",
+            }),
             div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
             `  <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
             <block type="controls_if"></block>
@@ -431,6 +435,9 @@ router.get(
                 const dom = Blockly.Xml.workspaceToDom(workspace)
                 const s = Blockly.Xml.domToText(dom)
                 $('#blocklyForm input[name=workspace]').val(s);
+                const code = Blockly.JavaScript.workspaceToCode(workspace);
+                $('#blocklyForm input[name=js_code]').val(code);
+                console.log(code)
                 $('#blocklyForm').submit()
               })
           `)
