@@ -2,7 +2,7 @@ function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
-        .setCheck("String")
+        .setCheck(null)
         .appendField(new Blockly.FieldLabelSerializable("Console"), "STRING");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
@@ -182,7 +182,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: ${dropdown_table}})).tryInsertRow(${value_row});\n`;
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryInsertRow(${value_row});\n`;
     return code;
   };
   Blockly.Blocks["query_table"] = {
@@ -209,7 +209,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: ${dropdown_table}})).getRows(${value_restrict})`;
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).getRows(${value_restrict})`;
 
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
@@ -236,7 +236,7 @@ function activate_blockly({ events, actions, tables }) {
   });
   function myUpdateFunction(event) {
     var code = Blockly.JavaScript.workspaceToCode(workspace);
-    $('#blockly_js_output').html(code);
+    $("#blockly_js_output").html(code);
   }
   workspace.addChangeListener(myUpdateFunction);
 }
