@@ -51,6 +51,7 @@ const blocklyToolbox = () => `
     <block type="row"></block>
     <block type="row_get"></block>
     <block type="row_set"></block>
+    <block type="query_table"></block>
     <block type="insert_table"></block>
     
     </category>
