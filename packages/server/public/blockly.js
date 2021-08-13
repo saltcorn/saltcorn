@@ -1,4 +1,4 @@
-function activate_blockly({ events, actions }) {
+function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
@@ -159,7 +159,25 @@ function activate_blockly({ events, actions }) {
     var code = `${value_row}[${value_key}]=${value_value};\n`;
     return code;
   };
+  Blockly.Blocks["insert_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Insert into");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ROW").setCheck(null).appendField("row");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
 
+  // -------------------
+  // Activate blockly
+  // -------------------
   const workspace = Blockly.inject("blocklyDiv", {
     media: "../../media/",
     toolbox: document.getElementById("toolbox"),

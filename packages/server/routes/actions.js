@@ -391,6 +391,10 @@ router.get(
       form.values = trigger.configuration;
       const events = Trigger.when_options;
       const actions = Object.keys(getState().actions);
+      const tables = (await Table.find({})).map((t) => ({
+        name: t.name,
+        external: t.external,
+      }));
       send_events_page({
         res,
         req,
@@ -410,7 +414,7 @@ router.get(
             renderForm(form, req.csrfToken()),
             script(
               domReady(
-                `activate_blockly(${JSON.stringify({ events, actions })})`
+                `activate_blockly(${JSON.stringify({ events, actions, tables })})`
               )
             )
           ),
