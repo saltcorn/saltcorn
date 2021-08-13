@@ -18,11 +18,12 @@ const {
   mkTable,
   renderForm,
   link,
-//  post_btn,
-//  settingsDropdown,
-//  post_dropdown_item,
+  //  post_btn,
+  //  settingsDropdown,
+  //  post_dropdown_item,
   post_delete_btn,
-//  localeDateTime,
+  localeDateTime,
+  //  localeDateTime,
 } = require("@saltcorn/markup");
 const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
@@ -31,18 +32,24 @@ const {
   code,
   a,
   span,
-//  tr,
-//  table,
-//  tbody,
-//  td,
-//  th,
-//  pre,
+  script,
+  domReady,
+  button,
+  table,
+  tbody,
+  tr,
+  td,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
 const User = require("@saltcorn/data/models/user");
+const form = require("@saltcorn/markup/form");
+const {
+  blocklyImportScripts,
+  blocklyToolbox,
+} = require("../markup/blockly.js");
 
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
@@ -72,24 +79,6 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__("Actions available"),
-            contents: div(
-              actions
-                .map((a) => span({ class: "badge badge-primary" }, a.name))
-                .join("&nbsp;")
-            ),
-          },
-          {
-            type: "card",
-            title: req.__("Event types"),
-            contents: div(
-              Trigger.when_options
-                .map((a) => span({ class: "badge badge-secondary" }, a))
-                .join("&nbsp;")
-            ),
-          },
-          {
-            type: "card",
             title: req.__("Triggers"),
             contents: div(
               mkTable(
@@ -116,8 +105,7 @@ router.get(
                   },
                   {
                     label: req.__("Edit"),
-                    key: (r) =>
-                      link(`/actions/edit/${r.id}`, req.__("Edit")),
+                    key: (r) => link(`/actions/edit/${r.id}`, req.__("Edit")),
                   },
                   {
                     label: req.__("Configure"),
@@ -135,6 +123,31 @@ router.get(
               link("/actions/new", req.__("Add trigger"))
             ),
           },
+          {
+            type: "card",
+            contents: table(
+              tbody(
+                tr(
+                  td({ class: "pr-2" }, req.__("Actions available")),
+                  td(
+                    actions
+                      .map((a) =>
+                        span({ class: "badge badge-primary" }, a.name)
+                      )
+                      .join("&nbsp;")
+                  )
+                ),
+                tr(
+                  td({ class: "pr-2" }, req.__("Event types")),
+                  td(
+                    Trigger.when_options
+                      .map((a) => span({ class: "badge badge-secondary" }, a))
+                      .join("&nbsp;")
+                  )
+                )
+              )
+            ),
+          },
         ],
       },
     });
@@ -147,10 +160,10 @@ router.get(
  * @returns {Promise<Form>}
  */
 const triggerForm = async (req, trigger) => {
-    const roleOptions = (await User.get_roles()).map((r) => ({
-        value: r.id,
-        label: r.role,
-    }));
+  const roleOptions = (await User.get_roles()).map((r) => ({
+    value: r.id,
+    label: r.role,
+  }));
   const actions = await getActions();
   const tables = await Table.find({});
   let id;
@@ -216,7 +229,7 @@ const triggerForm = async (req, trigger) => {
         name: "min_role",
         label: req.__("Minimum role"),
         sublabel: req.__(
-            "User must have this role or higher to make API call for action (trigger)"
+          "User must have this role or higher to make API call for action (trigger)"
         ),
         input_type: "select",
         showIf: { when_trigger: ["API call"] },
@@ -367,6 +380,42 @@ router.get(
     if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
+    } else if (trigger.action === "blocks") {
+      const locale = req.getLocale();
+      const form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: action.configFields,
+        noSubmitButton: true,
+        id: "blocklyForm",
+      });
+      form.values = trigger.configuration;
+      const events = Trigger.when_options;
+      const actions = Object.keys(getState().actions);
+      send_events_page({
+        res,
+        req,
+        active_sub: "Actions",
+        sub2_page: "Configure",
+        contents: {
+          type: "card",
+          title: req.__("Configure trigger"),
+          contents: div(
+            blocklyImportScripts({ locale }),
+            div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
+            blocklyToolbox(),
+            button(
+              { class: "btn btn-primary mt-2", id: "blocklySave" },
+              "Save"
+            ),
+            renderForm(form, req.csrfToken()),
+            script(
+              domReady(
+                `activate_blockly(${JSON.stringify({ events, actions })})`
+              )
+            )
+          ),
+        },
+      });
     } else if (!action.configFields) {
       req.flash("warning", req.__("Action not configurable"));
       res.redirect(`/actions/`);
