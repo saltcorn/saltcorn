@@ -34,18 +34,26 @@ const blocklyToolbox = () => `
       <block type="controls_repeat_ext"></block>
       <block type="controls_forEach"></block>
     </category>
+
     <category name="Logic" categorystyle="logic_category">
       <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_ternary"></block>
+      <block type="logic_boolean"></block>
     </category>
+    
     <category name="Math" categorystyle="math_category">
       <block type="math_number">
         <field name="NUM">123</field>
       </block>
       <block type="math_arithmetic"></block>
     </category>
+    
     <category name="Text" categorystyle="text_category">
       <block type="text"></block>
     </category>
+    
     <category name="Rows"  colour="20">
     <block type="empty"></block>
     <block type="row"></block>
@@ -53,8 +61,8 @@ const blocklyToolbox = () => `
     <block type="row_set"></block>
     <block type="query_table"></block>
     <block type="insert_table"></block>
-    
     </category>
+
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
     <block type="lists_length"></block>
@@ -68,10 +76,8 @@ const blocklyToolbox = () => `
     <category name="Variables" categorystyle="variable_category">
     <block type="variables_get"></block>
     <block type="variables_set"></block>
-    
     </category>
-    
-  
+
   </xml>`;
 
 module.exports = { blocklyImportScripts, blocklyToolbox };
