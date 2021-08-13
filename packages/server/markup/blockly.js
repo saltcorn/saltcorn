@@ -11,16 +11,16 @@ const {
 
 const blocklyImportScripts = ({locale}) =>
   script({
-    src: "https://unpkg.com/blockly@6.20210701.0/blockly_compressed.js",
+    src: "/plugins/pubdeps/base/blockly/6.20210701.0/blockly_compressed.js",
   }) +
   script({
-    src: "https://unpkg.com/blockly@6.20210701.0/blocks_compressed.js",
+    src: "/plugins/pubdeps/base/blockly/6.20210701.0/blocks_compressed.js",
   }) +
   script({
-    src: `https://unpkg.com/blockly@6.20210701.0/msg/${locale}.js`,
+    src: `/plugins/pubdeps/base/blockly/6.20210701.0/msg/${locale}.js`,
   }) +
   script({
-    src: "https://unpkg.com/blockly@6.20210701.0/javascript_compressed.js",
+    src: "/plugins/pubdeps/base/blockly/6.20210701.0/javascript_compressed.js",
   })+
   script({
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
