@@ -234,4 +234,9 @@ function activate_blockly({ events, actions, tables }) {
     $("#blocklyForm input[name=code]").val(code);
     $("#blocklyForm").submit();
   });
+  function myUpdateFunction(event) {
+    var code = Blockly.JavaScript.workspaceToCode(workspace);
+    $('#blockly_js_output').html(code);
+  }
+  workspace.addChangeListener(myUpdateFunction);
 }

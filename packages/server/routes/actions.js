@@ -39,6 +39,7 @@ const {
   tbody,
   tr,
   td,
+  h6,pre
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -403,21 +404,41 @@ router.get(
         contents: {
           type: "card",
           title: req.__("Configure trigger"),
-          contents: div(
-            blocklyImportScripts({ locale }),
-            div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
-            blocklyToolbox(),
-            button(
-              { class: "btn btn-primary mt-2", id: "blocklySave" },
-              "Save"
-            ),
-            renderForm(form, req.csrfToken()),
-            script(
-              domReady(
-                `activate_blockly(${JSON.stringify({ events, actions, tables })})`
-              )
-            )
-          ),
+          contents: {
+            above: [
+              div(
+                blocklyImportScripts({ locale }),
+                div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
+                blocklyToolbox()
+              ),
+              {
+                besides: [
+                  div(
+                    button(
+                      { class: "btn btn-primary mt-2", id: "blocklySave" },
+                      "Save"
+                    ),
+                    renderForm(form, req.csrfToken()),
+                    script(
+                      domReady(
+                        `activate_blockly(${JSON.stringify({
+                          events,
+                          actions,
+                          tables,
+                        })})`
+                      )
+                    )
+                  ),h6( { class: "mt-1" },"JavaScript code:"),
+                  div(
+                    { class: "mt-1" },
+                    
+                    pre(code({ id: "blockly_js_output" }, "code here"))
+                  ),
+                ],
+                widths: [2, 2, 8],
+              },
+            ],
+          },
         },
       });
     } else if (!action.configFields) {
