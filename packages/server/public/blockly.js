@@ -63,7 +63,7 @@ function activate_blockly({ events, actions }) {
 
   Blockly.Blocks["row"] = {
     init: function () {
-      this.appendDummyInput().appendField("Row");
+      this.appendDummyInput().appendField("Current Payload");
       this.setOutput(true, "Row");
       this.setColour(230);
       this.setTooltip("");
@@ -94,55 +94,67 @@ function activate_blockly({ events, actions }) {
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
 
-
-  Blockly.Blocks['row_get'] = {
-    init: function() {
-      this.appendValueInput("ROW")
-          .setCheck("Row");
-      this.appendDummyInput()
-          .appendField(".");
-      this.appendValueInput("KEY")
-          .setCheck("String");
+  Blockly.Blocks["row_get"] = {
+    init: function () {
+      this.appendValueInput("ROW").setCheck("Row");
+      this.appendDummyInput().appendField("[");
+      this.appendValueInput("KEY").setCheck("String");
+      this.appendDummyInput().appendField("]");
       this.setInputsInline(true);
       this.setOutput(true, null);
       this.setColour(230);
-   this.setTooltip("");
-   this.setHelpUrl("");
-    }
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
   };
-  Blockly.JavaScript['row_get'] = function(block) {
-    var value_row = Blockly.JavaScript.valueToCode(block, 'ROW', Blockly.JavaScript.ORDER_ATOMIC);
-    var value_key = Blockly.JavaScript.valueToCode(block, 'KEY', Blockly.JavaScript.ORDER_ATOMIC);
+  Blockly.JavaScript["row_get"] = function (block) {
+    var value_row = Blockly.JavaScript.valueToCode(
+      block,
+      "ROW",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_key = Blockly.JavaScript.valueToCode(
+      block,
+      "KEY",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
     // TODO: Assemble JavaScript into code variable.
     var code = `${value_row}[${value_key}]`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
 
-  Blockly.Blocks['row_set'] = {
-    init: function() {
-      this.appendValueInput("ROW")
-          .setCheck("Row");
-      this.appendDummyInput()
-          .appendField(".");
-      this.appendValueInput("KEY")
-          .setCheck("String");
-      this.appendDummyInput()
-          .appendField("=");
-      this.appendValueInput("VALUE")
-          .setCheck(null);
+  Blockly.Blocks["row_set"] = {
+    init: function () {
+      this.appendValueInput("ROW").setCheck("Row");
+      this.appendDummyInput().appendField("[");
+      this.appendValueInput("KEY").setCheck("String");
+      this.appendDummyInput().appendField("] =");
+      this.appendValueInput("VALUE").setCheck(null);
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-   this.setTooltip("");
-   this.setHelpUrl("");
-    }
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
   };
-  Blockly.JavaScript['row_set'] = function(block) {
-    var value_row = Blockly.JavaScript.valueToCode(block, 'ROW', Blockly.JavaScript.ORDER_ATOMIC);
-    var value_key = Blockly.JavaScript.valueToCode(block, 'KEY', Blockly.JavaScript.ORDER_ATOMIC);
-    var value_value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_ATOMIC);
+  Blockly.JavaScript["row_set"] = function (block) {
+    var value_row = Blockly.JavaScript.valueToCode(
+      block,
+      "ROW",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_key = Blockly.JavaScript.valueToCode(
+      block,
+      "KEY",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_value = Blockly.JavaScript.valueToCode(
+      block,
+      "VALUE",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
     // TODO: Assemble JavaScript into code variable.
     var code = `${value_row}[${value_key}]=${value_value};\n`;
     return code;
