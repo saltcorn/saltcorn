@@ -1,4 +1,7 @@
 function activate_blockly({ events, actions, tables }) {
+
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#qykfhx
+
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
