@@ -35,6 +35,10 @@ const {
   script,
   domReady,
   button,
+  table,
+  tbody,
+  tr,
+  td,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -73,24 +77,6 @@ router.get(
       active_sub: "Actions",
       contents: {
         above: [
-          {
-            type: "card",
-            title: req.__("Actions available"),
-            contents: div(
-              actions
-                .map((a) => span({ class: "badge badge-primary" }, a.name))
-                .join("&nbsp;")
-            ),
-          },
-          {
-            type: "card",
-            title: req.__("Event types"),
-            contents: div(
-              Trigger.when_options
-                .map((a) => span({ class: "badge badge-secondary" }, a))
-                .join("&nbsp;")
-            ),
-          },
           {
             type: "card",
             title: req.__("Triggers"),
@@ -135,6 +121,31 @@ router.get(
                 { hover: true }
               ),
               link("/actions/new", req.__("Add trigger"))
+            ),
+          },
+          {
+            type: "card",
+            contents: table(
+              tbody(
+                tr(
+                  td({ class: "pr-2" }, req.__("Actions available")),
+                  td(
+                    actions
+                      .map((a) =>
+                        span({ class: "badge badge-primary" }, a.name)
+                      )
+                      .join("&nbsp;")
+                  )
+                ),
+                tr(
+                  td({ class: "pr-2" }, req.__("Event types")),
+                  td(
+                    Trigger.when_options
+                      .map((a) => span({ class: "badge badge-secondary" }, a))
+                      .join("&nbsp;")
+                  )
+                )
+              )
             ),
           },
         ],
@@ -378,8 +389,8 @@ router.get(
         id: "blocklyForm",
       });
       form.values = trigger.configuration;
-      const events = Trigger.when_options
-      const actions = Object.keys(getState().actions)
+      const events = Trigger.when_options;
+      const actions = Object.keys(getState().actions);
       send_events_page({
         res,
         req,
@@ -389,7 +400,7 @@ router.get(
           type: "card",
           title: req.__("Configure trigger"),
           contents: div(
-            blocklyImportScripts({locale}),
+            blocklyImportScripts({ locale }),
             div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
             blocklyToolbox(),
             button(
@@ -397,7 +408,11 @@ router.get(
               "Save"
             ),
             renderForm(form, req.csrfToken()),
-            script(domReady(`activate_blockly(${JSON.stringify({events, actions})})`))
+            script(
+              domReady(
+                `activate_blockly(${JSON.stringify({ events, actions })})`
+              )
+            )
           ),
         },
       });
