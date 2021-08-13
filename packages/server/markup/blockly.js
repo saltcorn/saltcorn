@@ -52,6 +52,7 @@ const blocklyToolbox = () => `
     
     <category name="Text" categorystyle="text_category">
       <block type="text"></block>
+      <block type="current_channel"></block>
     </category>
     
     <category name="Rows"  colour="20">

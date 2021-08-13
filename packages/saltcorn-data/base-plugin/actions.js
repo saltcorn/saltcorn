@@ -21,7 +21,14 @@ const { div, code } = require("@saltcorn/markup/tags");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
-const run_code = async ({ row, table, configuration: { code }, user, ...rest }) => {
+const run_code = async ({
+  row,
+  table,
+  channel,
+  configuration: { code },
+  user,
+  ...rest
+}) => {
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
@@ -38,12 +45,13 @@ const run_code = async ({ row, table, configuration: { code }, user, ...rest }) 
     console,
     Actions,
     emitEvent,
+    channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
     ...rest,
   });
   return await f();
-}
+};
 
 module.exports = {
   blocks: {
@@ -55,9 +63,9 @@ module.exports = {
       {
         name: "code",
         input_type: "hidden",
-      }
+      },
     ],
-    run: run_code
+    run: run_code,
   },
   webhook: {
     configFields: [
@@ -295,6 +303,6 @@ module.exports = {
         },
       ];
     },
-    run: run_code
+    run: run_code,
   },
 };

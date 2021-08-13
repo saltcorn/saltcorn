@@ -78,6 +78,21 @@ function activate_blockly({ events, actions, tables }) {
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
 
+  Blockly.Blocks["current_channel"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Current Channel");
+      this.setOutput(true, "String");
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["current_channel"] = function (block) {
+    // TODO: Assemble JavaScript into code variable.
+    var code = "channel";
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
   Blockly.Blocks["empty"] = {
     init: function () {
       this.appendDummyInput().appendField("{ }");
