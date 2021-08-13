@@ -56,6 +56,8 @@ const blocklyToolbox = () => `
     
     </category>
     <category name="Lists" categorystyle="list_category">
+    <block type="lists_create_empty"></block>
+    <block type="lists_length"></block>
     
     </category>
     <category name="Actions"  colour="80">

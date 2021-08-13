@@ -194,7 +194,7 @@ function activate_blockly({ events, actions, tables }) {
       );
       this.appendValueInput("RESTRICT").setCheck("Row").appendField("where");
       this.setInputsInline(false);
-      this.setOutput(true, "List");
+      this.setOutput(true, "LIST");
       this.setColour(230);
       this.setTooltip("");
       this.setHelpUrl("");
