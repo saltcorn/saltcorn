@@ -1,8 +1,8 @@
-function activate_blockly({ events, actions }) {
+function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
-        .setCheck("String")
+        .setCheck(null)
         .appendField(new Blockly.FieldLabelSerializable("Console"), "STRING");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
@@ -159,7 +159,64 @@ function activate_blockly({ events, actions }) {
     var code = `${value_row}[${value_key}]=${value_value};\n`;
     return code;
   };
+  Blockly.Blocks["insert_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Insert into");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ROW").setCheck(null).appendField("row");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["insert_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_row = Blockly.JavaScript.valueToCode(
+      block,
+      "ROW",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryInsertRow(${value_row});\n`;
+    return code;
+  };
+  Blockly.Blocks["query_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Query");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("RESTRICT").setCheck("Row").appendField("where");
+      this.setInputsInline(false);
+      this.setOutput(true, "LIST");
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
 
+  Blockly.JavaScript["query_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_restrict = Blockly.JavaScript.valueToCode(
+      block,
+      "RESTRICT",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).getRows(${value_restrict})`;
+
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
+  // -------------------
+  // Activate blockly
+  // -------------------
   const workspace = Blockly.inject("blocklyDiv", {
     media: "../../media/",
     toolbox: document.getElementById("toolbox"),
@@ -177,4 +234,9 @@ function activate_blockly({ events, actions }) {
     $("#blocklyForm input[name=code]").val(code);
     $("#blocklyForm").submit();
   });
+  function myUpdateFunction(event) {
+    var code = Blockly.JavaScript.workspaceToCode(workspace);
+    $("#blockly_js_output").html(code);
+  }
+  workspace.addChangeListener(myUpdateFunction);
 }

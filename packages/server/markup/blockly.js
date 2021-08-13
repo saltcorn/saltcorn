@@ -51,9 +51,13 @@ const blocklyToolbox = () => `
     <block type="row"></block>
     <block type="row_get"></block>
     <block type="row_set"></block>
+    <block type="query_table"></block>
+    <block type="insert_table"></block>
     
     </category>
     <category name="Lists" categorystyle="list_category">
+    <block type="lists_create_empty"></block>
+    <block type="lists_length"></block>
     
     </category>
     <category name="Actions"  colour="80">
