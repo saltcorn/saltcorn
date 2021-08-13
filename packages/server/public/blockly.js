@@ -209,7 +209,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: ${dropdown_table}})).getRows(${value_restrict});\n`;
+    var code = `await (await Table.findOne({name: ${dropdown_table}})).getRows(${value_restrict})`;
 
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
