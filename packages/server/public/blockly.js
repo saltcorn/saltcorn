@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#qykfhx
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#zsr66a
 
   Blockly.Blocks["console"] = {
     init: function () {
