@@ -1,15 +1,15 @@
 const {
-    div,
-    code,
-    a,
-    span,
-    script,
-    domReady,
-    button,
-  } = require("@saltcorn/markup/tags");
-  const db = require("@saltcorn/data/db");
+  div,
+  code,
+  a,
+  span,
+  script,
+  domReady,
+  button,
+} = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
 
-const blocklyImportScripts = ({locale}) =>
+const blocklyImportScripts = ({ locale }) =>
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/blockly_compressed.js",
   }) +
@@ -21,11 +21,10 @@ const blocklyImportScripts = ({locale}) =>
   }) +
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/javascript_compressed.js",
-  })+
+  }) +
   script({
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
-  })
-
+  });
 
 const blocklyToolbox = () => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
@@ -33,19 +32,29 @@ const blocklyToolbox = () => `
       <block type="controls_if"></block>
       <block type="controls_repeat_ext"></block>
       <block type="controls_forEach"></block>
+      <block type="controls_whileUntil"></block>
     </category>
+
     <category name="Logic" categorystyle="logic_category">
       <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_ternary"></block>
+      <block type="logic_boolean"></block>
     </category>
+    
     <category name="Math" categorystyle="math_category">
       <block type="math_number">
         <field name="NUM">123</field>
       </block>
       <block type="math_arithmetic"></block>
     </category>
+    
     <category name="Text" categorystyle="text_category">
       <block type="text"></block>
+      <block type="current_channel"></block>
     </category>
+    
     <category name="Rows"  colour="20">
     <block type="empty"></block>
     <block type="row"></block>
@@ -53,8 +62,10 @@ const blocklyToolbox = () => `
     <block type="row_set"></block>
     <block type="query_table"></block>
     <block type="insert_table"></block>
-    
+    <block type="update_table"></block>
+    <block type="delete_table"></block>
     </category>
+
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
     <block type="lists_length"></block>
@@ -68,10 +79,8 @@ const blocklyToolbox = () => `
     <category name="Variables" categorystyle="variable_category">
     <block type="variables_get"></block>
     <block type="variables_set"></block>
-    
     </category>
-    
-  
+
   </xml>`;
 
 module.exports = { blocklyImportScripts, blocklyToolbox };

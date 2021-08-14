@@ -1,4 +1,6 @@
 function activate_blockly({ events, actions, tables }) {
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#zsr66a
+
   Blockly.Blocks["console"] = {
     init: function () {
       this.appendValueInput("STRING")
@@ -78,6 +80,21 @@ function activate_blockly({ events, actions, tables }) {
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
 
+  Blockly.Blocks["current_channel"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Current Channel");
+      this.setOutput(true, "String");
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["current_channel"] = function (block) {
+    // TODO: Assemble JavaScript into code variable.
+    var code = "channel";
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
   Blockly.Blocks["empty"] = {
     init: function () {
       this.appendDummyInput().appendField("{ }");
@@ -97,9 +114,11 @@ function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["row_get"] = {
     init: function () {
       this.appendValueInput("ROW").setCheck("Row");
-      this.appendDummyInput().appendField("[");
-      this.appendValueInput("KEY").setCheck("String");
-      this.appendDummyInput().appendField("]");
+      this.appendDummyInput().appendField(".");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
       this.setInputsInline(true);
       this.setOutput(true, null);
       this.setColour(230);
@@ -113,13 +132,9 @@ function activate_blockly({ events, actions, tables }) {
       "ROW",
       Blockly.JavaScript.ORDER_ATOMIC
     );
-    var value_key = Blockly.JavaScript.valueToCode(
-      block,
-      "KEY",
-      Blockly.JavaScript.ORDER_ATOMIC
-    );
+    var text_key = block.getFieldValue("KEY");
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_row}[${value_key}]`;
+    var code = `${value_row}.${text_key}`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -127,9 +142,12 @@ function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["row_set"] = {
     init: function () {
       this.appendValueInput("ROW").setCheck("Row");
-      this.appendDummyInput().appendField("[");
-      this.appendValueInput("KEY").setCheck("String");
-      this.appendDummyInput().appendField("] =");
+      this.appendDummyInput().appendField(".");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
+      this.appendDummyInput().appendField("=");
       this.appendValueInput("VALUE").setCheck(null);
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
@@ -145,18 +163,14 @@ function activate_blockly({ events, actions, tables }) {
       "ROW",
       Blockly.JavaScript.ORDER_ATOMIC
     );
-    var value_key = Blockly.JavaScript.valueToCode(
-      block,
-      "KEY",
-      Blockly.JavaScript.ORDER_ATOMIC
-    );
+    var text_key = block.getFieldValue("KEY");
     var value_value = Blockly.JavaScript.valueToCode(
       block,
       "VALUE",
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_row}[${value_key}]=${value_value};\n`;
+    var code = `${value_row}.${text_key}=${value_value};\n`;
     return code;
   };
   Blockly.Blocks["insert_table"] = {
@@ -182,7 +196,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryInsertRow(${value_row});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).tryInsertRow(${value_row});\n`;
     return code;
   };
   Blockly.Blocks["query_table"] = {
@@ -209,10 +223,70 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).getRows(${value_restrict})`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).getRows(${value_restrict})`;
 
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
+  };
+
+  Blockly.Blocks["delete_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Delete");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ID").setCheck(null).appendField("id");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["delete_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_id = Blockly.JavaScript.valueToCode(
+      block,
+      "ID",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'}).deleteRows({id: ${value_id}});\n`;
+    return code;
+  };
+  Blockly.Blocks["update_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Update");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ID").setCheck(null).appendField("id");
+      this.appendValueInput("ROW").setCheck("Row").appendField("row");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["update_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_id = Blockly.JavaScript.valueToCode(
+      block,
+      "ID",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_row = Blockly.JavaScript.valueToCode(
+      block,
+      "ROW",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'}).tryUpdateRow(${value_row}, ${value_id});\n`;
+    return code;
   };
   // -------------------
   // Activate blockly
