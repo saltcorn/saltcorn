@@ -114,9 +114,11 @@ function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["row_get"] = {
     init: function () {
       this.appendValueInput("ROW").setCheck("Row");
-      this.appendDummyInput().appendField("[");
-      this.appendValueInput("KEY").setCheck("String");
-      this.appendDummyInput().appendField("]");
+      this.appendDummyInput().appendField(".");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
       this.setInputsInline(true);
       this.setOutput(true, null);
       this.setColour(230);
@@ -130,13 +132,9 @@ function activate_blockly({ events, actions, tables }) {
       "ROW",
       Blockly.JavaScript.ORDER_ATOMIC
     );
-    var value_key = Blockly.JavaScript.valueToCode(
-      block,
-      "KEY",
-      Blockly.JavaScript.ORDER_ATOMIC
-    );
+    var text_key = block.getFieldValue("KEY");
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_row}[${value_key}]`;
+    var code = `${value_row}.${text_key}`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -144,9 +142,12 @@ function activate_blockly({ events, actions, tables }) {
   Blockly.Blocks["row_set"] = {
     init: function () {
       this.appendValueInput("ROW").setCheck("Row");
-      this.appendDummyInput().appendField("[");
-      this.appendValueInput("KEY").setCheck("String");
-      this.appendDummyInput().appendField("] =");
+      this.appendDummyInput().appendField(".");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
+      this.appendDummyInput().appendField("=");
       this.appendValueInput("VALUE").setCheck(null);
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
@@ -162,18 +163,14 @@ function activate_blockly({ events, actions, tables }) {
       "ROW",
       Blockly.JavaScript.ORDER_ATOMIC
     );
-    var value_key = Blockly.JavaScript.valueToCode(
-      block,
-      "KEY",
-      Blockly.JavaScript.ORDER_ATOMIC
-    );
+    var text_key = block.getFieldValue("KEY");
     var value_value = Blockly.JavaScript.valueToCode(
       block,
       "VALUE",
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_row}[${value_key}]=${value_value};\n`;
+    var code = `${value_row}.${text_key}=${value_value};\n`;
     return code;
   };
   Blockly.Blocks["insert_table"] = {
