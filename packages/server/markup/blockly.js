@@ -1,15 +1,15 @@
 const {
-    div,
-    code,
-    a,
-    span,
-    script,
-    domReady,
-    button,
-  } = require("@saltcorn/markup/tags");
-  const db = require("@saltcorn/data/db");
+  div,
+  code,
+  a,
+  span,
+  script,
+  domReady,
+  button,
+} = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
 
-const blocklyImportScripts = ({locale}) =>
+const blocklyImportScripts = ({ locale }) =>
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/blockly_compressed.js",
   }) +
@@ -21,11 +21,10 @@ const blocklyImportScripts = ({locale}) =>
   }) +
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/javascript_compressed.js",
-  })+
+  }) +
   script({
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
-  })
-
+  });
 
 const blocklyToolbox = () => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
@@ -33,6 +32,7 @@ const blocklyToolbox = () => `
       <block type="controls_if"></block>
       <block type="controls_repeat_ext"></block>
       <block type="controls_forEach"></block>
+      <block type="controls_whileUntil"></block>
     </category>
 
     <category name="Logic" categorystyle="logic_category">
