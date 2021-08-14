@@ -199,7 +199,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryInsertRow(${value_row});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).tryInsertRow(${value_row});\n`;
     return code;
   };
   Blockly.Blocks["query_table"] = {
@@ -226,7 +226,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).getRows(${value_restrict})`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).getRows(${value_restrict})`;
 
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
@@ -256,7 +256,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).deleteRows({id: ${value_id}});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).deleteRows({id: ${value_id}});\n`;
     return code;
   };
   Blockly.Blocks["update_table"] = {
@@ -288,7 +288,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryUpdateRow(${value_row}, ${value_id});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'}).tryUpdateRow(${value_row}, ${value_id});\n`;
     return code;
   };
   // -------------------
