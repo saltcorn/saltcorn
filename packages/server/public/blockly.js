@@ -231,6 +231,66 @@ function activate_blockly({ events, actions, tables }) {
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
+
+  Blockly.Blocks["delete_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Delete");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ID").setCheck(null).appendField("id");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["delete_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_id = Blockly.JavaScript.valueToCode(
+      block,
+      "ID",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).deleteRows({id: ${value_id}});\n`;
+    return code;
+  };
+  Blockly.Blocks["update_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Update");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("ID").setCheck(null).appendField("id");
+      this.appendValueInput("ROW").setCheck("Row").appendField("row");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["update_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_id = Blockly.JavaScript.valueToCode(
+      block,
+      "ID",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_row = Blockly.JavaScript.valueToCode(
+      block,
+      "ROW",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await (await Table.findOne({name: '${dropdown_table}'})).tryUpdateRow(${value_row}, ${value_id});\n`;
+    return code;
+  };
   // -------------------
   // Activate blockly
   // -------------------
