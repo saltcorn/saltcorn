@@ -56,9 +56,11 @@ const {
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
     const hasConfig = !!v.configFields;
+    const requireRow = !!v.requireRow;
     return {
       name: k,
       hasConfig,
+      requireRow,
     };
   });
 };
@@ -177,6 +179,16 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
+  const allActions = actions.map((t) => t.name);
+  const table_triggers = ["Insert", "Update", "Delete"];
+  const actionsNotRequiringRow = actions
+    .filter((a) => !a.requireRow)
+    .map((t) => t.name);
+  const action_options = {};
+  Trigger.when_options.forEach((t) => {
+    if (table_triggers.includes(t)) action_options[t] = allActions;
+    else action_options[t] = actionsNotRequiringRow;
+  });
   const form = new Form({
     action: form_action,
     fields: [
@@ -184,6 +196,7 @@ const triggerForm = async (req, trigger) => {
         name: "name",
         label: req.__("Name"),
         type: "String",
+        required: true,
         sublabel: req.__("Name of action"),
       },
       {
@@ -199,7 +212,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Table"),
         input_type: "select",
         options: [...tables.map((t) => ({ value: t.id, label: t.name }))],
-        showIf: { when_trigger: ["Insert", "Update", "Delete"] },
+        showIf: { when_trigger: table_triggers },
         sublabel: req.__(
           "The table for which the trigger condition is checked."
         ),
@@ -214,9 +227,11 @@ const triggerForm = async (req, trigger) => {
       {
         name: "action",
         label: req.__("Action"),
-        input_type: "select",
+        type: "String",
         required: true,
-        options: actions.map((t) => ({ value: t.name, label: t.name })),
+        attributes: {
+          calcOptions: ["when_trigger", action_options],
+        },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
 
