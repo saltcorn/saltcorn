@@ -56,9 +56,11 @@ const {
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
     const hasConfig = !!v.configFields;
+    const requireRow = !!v.requireRow;
     return {
       name: k,
       hasConfig,
+      requireRow,
     };
   });
 };
