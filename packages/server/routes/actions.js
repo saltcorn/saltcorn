@@ -39,7 +39,8 @@ const {
   tbody,
   tr,
   td,
-  h6,pre
+  h6,
+  pre,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -186,22 +187,6 @@ const triggerForm = async (req, trigger) => {
         sublabel: req.__("Name of action"),
       },
       {
-        name: "description",
-        label: req.__("Description"),
-        type: "String",
-        sublabel: req.__(
-          "Description allows you to give more information about the action"
-        ),
-      },
-      {
-        name: "action",
-        label: req.__("Action"),
-        input_type: "select",
-        required: true,
-        options: actions.map((t) => ({ value: t.name, label: t.name })),
-        sublabel: req.__("The action to be taken when the trigger fires"),
-      },
-      {
         name: "when_trigger",
         label: req.__("When"),
         input_type: "select",
@@ -225,6 +210,23 @@ const triggerForm = async (req, trigger) => {
         type: "String",
         sublabel: req.__("Leave blank for all channels"),
         showIf: { when_trigger: hasChannel },
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        input_type: "select",
+        required: true,
+        options: actions.map((t) => ({ value: t.name, label: t.name })),
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+
+      {
+        name: "description",
+        label: req.__("Description"),
+        type: "String",
+        sublabel: req.__(
+          "Description allows you to give more information about the action"
+        ),
       },
       {
         name: "min_role",
@@ -428,10 +430,11 @@ router.get(
                         })})`
                       )
                     )
-                  ),h6( { class: "mt-1" },"JavaScript code:"),
+                  ),
+                  h6({ class: "mt-1" }, "JavaScript code:"),
                   div(
                     { class: "mt-1" },
-                    
+
                     pre(code({ id: "blockly_js_output" }, "code here"))
                   ),
                 ],
