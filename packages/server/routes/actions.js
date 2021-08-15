@@ -196,6 +196,7 @@ const triggerForm = async (req, trigger) => {
         name: "name",
         label: req.__("Name"),
         type: "String",
+        required: true,
         sublabel: req.__("Name of action"),
       },
       {
