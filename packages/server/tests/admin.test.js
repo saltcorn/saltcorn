@@ -76,15 +76,9 @@ describe("admin page", () => {
   ]);
   adminPageContains([["/actions", "Actions available"]]);
   adminPageContains([["/eventlog", "Event log"]]);
-  adminPageContains([
-    ["/eventlog/settings", "Which events should be logged?"],
-  ]);
-  adminPageContains([
-    ["/eventlog/custom", "Custom Events"],
-  ]);
-  adminPageContains([
-    ["/eventlog/custom/new", "Has channels?"],
-  ]);
+  adminPageContains([["/eventlog/settings", "Which events should be logged?"]]);
+  adminPageContains([["/eventlog/custom", "Custom Events"]]);
+  adminPageContains([["/eventlog/custom/new", "Has channels?"]]);
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -128,11 +122,11 @@ describe("event log", () => {
       .expect(toInclude("LoginFailed"));
   });
   it("shows an entry in event log", async () => {
-    const evs = await EventLog.find({})
+    const evs = await EventLog.find({});
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/eventlog/"+evs[0].id)
+      .get("/eventlog/" + evs[0].id)
       .set("Cookie", loginCookie)
       .expect(toInclude("table eventlog"));
   });
@@ -369,6 +363,7 @@ describe("actions", () => {
       .set("Cookie", loginCookie)
       .send("action=run_js_code")
       .send("table_id=2")
+      .send("name=mynewaction")
       .send("when_trigger=Insert")
       .expect(toRedirect("/actions/configure/1"));
   });
