@@ -179,6 +179,7 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
+  const allActions = actions.map((t) => t.name);
   const form = new Form({
     action: form_action,
     fields: [
@@ -216,9 +217,11 @@ const triggerForm = async (req, trigger) => {
       {
         name: "action",
         label: req.__("Action"),
-        input_type: "select",
+        type: "String",
         required: true,
-        options: actions.map((t) => ({ value: t.name, label: t.name })),
+        attributes: {
+          options: allActions,
+        },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
 
