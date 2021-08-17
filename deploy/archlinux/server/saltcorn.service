@@ -1,0 +1,16 @@
+[Unit]
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=notify
+WatchdogSec=5
+User=saltcorn
+WorkingDirectory=/home/saltcorn
+ExecStart=/home/saltcorn/.local/bin/saltcorn serve 
+Restart=always
+Environment="NODE_ENV=production"
+
+[Install]
+WantedBy=multi-user.target
