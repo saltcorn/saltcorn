@@ -5,3 +5,4 @@ WORKDIR /opt/saltcorn
 COPY . /opt/saltcorn
 ENV EUID=1
 RUN makepkg -si --noconfirm
+RUN saltcorn --help
