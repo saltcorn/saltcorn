@@ -3,8 +3,8 @@
 pkgname='saltcorn'
 pkgver=0.5.2
 pkgrel=1
-pkgdesc="No-code web application builder"
-arch=('any')
+pkgdesc="Saltcorn: no-code web application builder - cli tool"
+arch=('x86_64')
 url="https://www.npmjs.com/package/$pkgname"
 license=('MIT')
 depends=('nodejs-lts-fermium' 'npm6' 'python' 'python2' 'libsass' 'postgresql' 'git' 'systemd-libs')

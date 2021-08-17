@@ -3,7 +3,7 @@
 pkgname='saltcorn-server'
 pkgver=0.5.2
 pkgrel=1
-pkgdesc="No-code web application builder"
+pkgdesc="Saltcorn: no-code web application builder - full server setup"
 arch=('any')
 url="https://www.npmjs.com/package/$pkgname"
 license=('MIT')
