@@ -9,7 +9,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Print to the server process standard output");
       this.setHelpUrl("");
     },
   };
@@ -40,7 +40,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Emit an event");
       this.setHelpUrl("");
     },
   };
@@ -68,7 +68,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("Current Payload");
       this.setOutput(true, "Row");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("The payload of the triggering event");
       this.setHelpUrl("");
     },
   };
@@ -85,7 +85,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("Current Channel");
       this.setOutput(true, "String");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("The current event channel");
       this.setHelpUrl("");
     },
   };
@@ -100,7 +100,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("{ }");
       this.setOutput(true, "Row");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Empty row");
       this.setHelpUrl("");
     },
   };
@@ -122,7 +122,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setInputsInline(true);
       this.setOutput(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Get a value from a row by key");
       this.setHelpUrl("");
     },
   };
@@ -153,7 +153,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Set a value in a row by key. Overwrite if present");
       this.setHelpUrl("");
     },
   };
@@ -184,7 +184,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Insert a row into a table");
       this.setHelpUrl("");
     },
   };
@@ -210,7 +210,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setInputsInline(false);
       this.setOutput(true, "LIST");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Query a list of rows from a table");
       this.setHelpUrl("");
     },
   };
@@ -240,7 +240,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Delete a row in a table");
       this.setHelpUrl("");
     },
   };
@@ -268,7 +268,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Update a row in a table");
       this.setHelpUrl("");
     },
   };
