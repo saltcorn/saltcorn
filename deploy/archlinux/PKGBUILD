@@ -8,7 +8,7 @@ arch=('any')
 url="https://www.npmjs.com/package/$pkgname"
 license=('MIT')
 depends=('nodejs>=14.0' 'python' 'python2')
-makedepends=('npm') 
+makedepends=('npm' 'make') 
 source=("https://registry.npmjs.org/@saltcorn/cli/-/cli-$pkgver.tgz")
 noextract=("cli-$pkgver.tgz")
 sha256sums=('c0c23f4e7ed5b17b64f4ac67b849e15d081a18037f4ed77adf4ac228c2ae33eb')
