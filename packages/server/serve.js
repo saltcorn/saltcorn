@@ -5,6 +5,7 @@
 
 const runScheduler = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
+const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
 const {
   getState,
@@ -18,7 +19,11 @@ const path = require("path");
 const getApp = require("./app");
 const Trigger = require("@saltcorn/data/models/trigger");
 const cluster = require("cluster");
-const { loadAllPlugins, loadAndSaveNewPlugin } = require("./load_plugins");
+const {
+  loadAllPlugins,
+  loadAndSaveNewPlugin,
+  loadPlugin,
+} = require("./load_plugins");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 
@@ -59,6 +64,11 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     db.runWithTenant(tenant, () => workerDispatchMsg(msg));
     return;
   }
+  if (msg.refresh_plugin_cfg) {
+    Plugin.findOne({ name: msg.refresh_plugin_cfg }).then((plugin) => {
+      if (plugin) loadPlugin(plugin);
+    });
+  }
   if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
   if (msg.createTenant)
     create_tenant(msg.createTenant, loadAllPlugins, "", true);
@@ -87,7 +97,7 @@ const onMessageFromWorker = (
     Object.entries(cluster.workers).forEach(([wpid, w]) => {
       if (wpid !== pid) w.send(msg);
     });
-    workerDispatchMsg(msg) //also master
+    workerDispatchMsg(msg); //also master
     return true;
   }
 };

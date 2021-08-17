@@ -10,6 +10,7 @@ const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { get_expression_function } = require("../../models/expression");
+const { InvalidConfiguration } = require("../../utils");
 
 const {
   initial_config_all_fields,
@@ -333,6 +334,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
       }
       const view_select = parse_view_select(segment.view);
       const view = await View.findOne({ name: view_select.viewname });
+      if (!view)
+        throw new InvalidConfiguration(
+          `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+        );
       let state;
       switch (view_select.type) {
         case "Own":

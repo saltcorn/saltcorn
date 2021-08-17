@@ -311,6 +311,10 @@ const run = async (
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
+      if (!create_view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+        );
       create_link = await create_view.run(state, extraArgs);
     } else {
       create_link = link_view(
