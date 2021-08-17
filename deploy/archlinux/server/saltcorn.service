@@ -8,9 +8,10 @@ Type=notify
 WatchdogSec=5
 User=saltcorn
 WorkingDirectory=/home/saltcorn
-ExecStart=/home/saltcorn/.local/bin/saltcorn serve 
+ExecStart=/usr/bin/saltcorn serve 
 Restart=always
 Environment="NODE_ENV=production"
+Environment="SALTCORN_DISABLE_UPGRADE=true"
 
 [Install]
 WantedBy=multi-user.target
