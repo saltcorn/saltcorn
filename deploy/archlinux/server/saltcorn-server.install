@@ -15,15 +15,15 @@ post_install() {
     sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
     sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 
-    useradd -m saltcorn
-    sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
+    useradd -m --system --home-dir /var/saltcorn saltcorn
+    sudo -iu saltcorn mkdir -p /var/saltcorn/.config/
     sudo -iu saltcorn createdb saltcorn 
     sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
     sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
     pg_pass=$(openssl rand -base64 16)
     session_secret=$(openssl rand -base64 16)
     sudo -iu postgres psql -U postgres -c "ALTER USER saltcorn WITH PASSWORD '${pg_pass}';"
-    cat <<EOF > /home/saltcorn/.config/.saltcorn
+    cat <<EOF > /var/saltcorn/.config/.saltcorn
 {
     "host":"localhost",
     "port":5432,
@@ -34,8 +34,8 @@ post_install() {
     "multi_tenant": false
 }
 EOF
-    chown saltcorn:saltcorn /home/saltcorn/.config/.saltcorn
-    chmod 600 /home/saltcorn/.config/.saltcorn
+    chown saltcorn:saltcorn /var/saltcorn/.config/.saltcorn
+    chmod 600 /var/saltcorn/.config/.saltcorn
     sudo -iu saltcorn saltcorn reset-schema -f
     sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
     systemctl --system daemon-reload
