@@ -1,0 +1,26 @@
+
+# Maintainer: Tom Nielsen <tanielsen@gmail.com>
+pkgname='saltcorn'
+pkgver=0.5.2
+pkgrel=1
+pkgdesc="No-code wen application builder"
+arch=('any')
+url="https://www.npmjs.com/package/$pkgname"
+license=('MIT')
+depends=('nodejs')
+#makedepends=('npm')
+source=("https://registry.npmjs.org/$_pkgname/-/$_pkgname-$pkgver.tgz")
+source=("https://registry.npmjs.org/$pkgname/-/$pkgname-$pkgver.tgz")
+noextract=("$pkgname-$pkgver.tgz")
+
+package() {
+    npm install -g --prefix "${pkgdir}/usr" "${srcdir}/${pkgname}-${pkgver}.tgz"
+
+    # Non-deterministic race in npm gives 777 permissions to random directories.
+    # See https://github.com/npm/cli/issues/1103 for details.
+    find "${pkgdir}/usr" -type d -exec chmod 755 {} +
+
+    # npm gives ownership of ALL FILES to build user
+    # https://bugs.archlinux.org/task/63396
+    chown -R root:root "${pkgdir}"
+}
