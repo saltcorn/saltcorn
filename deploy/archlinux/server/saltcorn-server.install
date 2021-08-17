@@ -1,11 +1,22 @@
 post_install() {
-    echo "Hello from post install"
+    echo "Hello from post_install"
+    if sudo -iu postgres psql -U postgres -c "select 1;";
+    then 
+        echo PG running
+    else
+        echo PG not running
+        if [ ! -f /var/lib/postgres/data/postgresql.conf ]; then
+            sudo -iu postgres initdb -D /var/lib/postgres/data
+        fi
+        systemctl start postgresql.service
+        systemctl enable postgresql.service
+    fi
     sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
-    sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
+    #sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 
-    adduser --disabled-password --gecos "" saltcorn
-    sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
-    sudo -iu saltcorn createdb saltcorn 
+    #adduser --disabled-password --gecos "" saltcorn
+    #sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
+    #sudo -iu saltcorn createdb saltcorn 
 }
 
 op=$1
