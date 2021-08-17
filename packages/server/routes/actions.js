@@ -41,6 +41,7 @@ const {
   td,
   h6,
   pre,
+  hr,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -78,7 +79,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       contents: {
         above: [
           {
@@ -205,7 +206,7 @@ const triggerForm = async (req, trigger) => {
         input_type: "select",
         required: true,
         options: Trigger.when_options.map((t) => ({ value: t, label: t })),
-        sublabel: req.__("Condition under which the trigger will fire"),
+        sublabel: req.__("Event type which runs the trigger"),
       },
       {
         name: "table_id",
@@ -273,7 +274,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       sub2_page: "New",
       contents: {
         type: "card",
@@ -299,7 +300,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       sub2_page: "Edit",
       contents: {
         type: "card",
@@ -324,7 +325,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Edit",
         contents: {
           type: "card",
@@ -364,7 +365,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Edit",
         contents: {
           type: "card",
@@ -416,20 +417,21 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
           title: req.__("Configure trigger"),
           contents: {
-            above: [
+            widths: [8, 4],
+            besides: [
               div(
                 blocklyImportScripts({ locale }),
                 div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
                 blocklyToolbox()
               ),
               {
-                besides: [
+                above: [
                   div(
                     button(
                       { class: "btn btn-primary mt-2", id: "blocklySave" },
@@ -450,10 +452,12 @@ router.get(
                   div(
                     { class: "mt-1" },
 
-                    pre(code({ id: "blockly_js_output" }, "code here"))
+                    pre(
+                      { class: "js-code-display" },
+                      code({ id: "blockly_js_output" }, "code here")
+                    )
                   ),
                 ],
-                widths: [2, 2, 8],
               },
             ],
           },
@@ -480,7 +484,7 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
@@ -515,7 +519,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
@@ -589,7 +593,7 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Test run output",
         contents: {
           type: "card",

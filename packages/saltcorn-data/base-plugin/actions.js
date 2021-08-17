@@ -17,7 +17,7 @@ const {
 const { mockReqRes } = require("../tests/mocks");
 const { get_async_expression_function } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
-
+const { sleep } = require("../utils");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
@@ -45,6 +45,7 @@ const run_code = async ({
     console,
     Actions,
     emitEvent,
+    sleep,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,

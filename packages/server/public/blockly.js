@@ -9,7 +9,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Print to the server process standard output");
       this.setHelpUrl("");
     },
   };
@@ -40,7 +40,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Emit an event");
       this.setHelpUrl("");
     },
   };
@@ -68,7 +68,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("Current Payload");
       this.setOutput(true, "Row");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("The payload of the triggering event");
       this.setHelpUrl("");
     },
   };
@@ -85,7 +85,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("Current Channel");
       this.setOutput(true, "String");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("The current event channel");
       this.setHelpUrl("");
     },
   };
@@ -100,7 +100,7 @@ function activate_blockly({ events, actions, tables }) {
       this.appendDummyInput().appendField("{ }");
       this.setOutput(true, "Row");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Empty row");
       this.setHelpUrl("");
     },
   };
@@ -122,7 +122,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setInputsInline(true);
       this.setOutput(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Get a value from a row by key");
       this.setHelpUrl("");
     },
   };
@@ -153,7 +153,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Set a value in a row by key. Overwrite if present");
       this.setHelpUrl("");
     },
   };
@@ -184,7 +184,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Insert a row into a table");
       this.setHelpUrl("");
     },
   };
@@ -196,7 +196,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'}).tryInsertRow(${value_row});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .tryInsertRow(${value_row});\n`;
     return code;
   };
   Blockly.Blocks["query_table"] = {
@@ -210,7 +210,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setInputsInline(false);
       this.setOutput(true, "LIST");
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Query a list of rows from a table");
       this.setHelpUrl("");
     },
   };
@@ -228,6 +228,34 @@ function activate_blockly({ events, actions, tables }) {
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
+  Blockly.Blocks["query_one_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Query one");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("RESTRICT").setCheck("Row").appendField("where");
+      this.setInputsInline(false);
+      this.setOutput(true, "Row");
+      this.setColour(230);
+      this.setTooltip("Query first matching row from a table");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["query_one_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_restrict = Blockly.JavaScript.valueToCode(
+      block,
+      "RESTRICT",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'}).getRow(${value_restrict})`;
+
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
 
   Blockly.Blocks["delete_table"] = {
     init: function () {
@@ -240,7 +268,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Delete a row in a table");
       this.setHelpUrl("");
     },
   };
@@ -253,7 +281,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'}).deleteRows({id: ${value_id}});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows({id: ${value_id}});\n`;
     return code;
   };
   Blockly.Blocks["update_table"] = {
@@ -268,7 +296,7 @@ function activate_blockly({ events, actions, tables }) {
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(230);
-      this.setTooltip("");
+      this.setTooltip("Update a row in a table");
       this.setHelpUrl("");
     },
   };
@@ -285,18 +313,42 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'}).tryUpdateRow(${value_row}, ${value_id});\n`;
+    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .tryUpdateRow(${value_row}, ${value_id});\n`;
+    return code;
+  };
+
+  Blockly.Blocks["sleep"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Sleep");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldNumber(0, 0),
+        "SLEEP_MS"
+      );
+      this.appendDummyInput().appendField("ms");
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Sleep for some milliseconds");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["sleep"] = function (block) {
+    var number_sleep_ms = block.getFieldValue("SLEEP_MS");
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await sleep(${number_sleep_ms});\n`;
     return code;
   };
   // -------------------
   // Activate blockly
   // -------------------
   const workspace = Blockly.inject("blocklyDiv", {
-    media: "../../media/",
+    media: false,
+    sounds: false,
     toolbox: document.getElementById("toolbox"),
   });
   const stored = $("#blocklyForm input[name=workspace]").val();
-  if (stored) {
+  if (stored && stored !== "undefined") {
     const xml = Blockly.Xml.textToDom(stored);
     Blockly.Xml.domToWorkspace(xml, workspace);
   }

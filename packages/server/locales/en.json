@@ -760,5 +760,6 @@
 	"Menu, search, languages and tenants": "Menu, search, languages and tenants",
 	"This is a translation of a different field in a different language": "This is a translation of a different field in a different language",
 	"Language locale of translation": "Language locale of translation",
-	"Action not configurable": "Action not configurable"
+	"Action not configurable": "Action not configurable",
+	"Event type which runs the trigger": "Event type which runs the trigger"
 }
