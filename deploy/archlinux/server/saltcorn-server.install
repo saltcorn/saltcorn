@@ -11,14 +11,14 @@ post_install() {
         systemctl start postgresql.service
         systemctl enable postgresql.service
     fi
-    sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
+    #sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
     sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 
     useradd -m saltcorn
     sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
     sudo -iu saltcorn createdb saltcorn 
     sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
-    sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
+    #sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
     sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
     echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
 }
