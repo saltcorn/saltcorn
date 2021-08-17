@@ -1,5 +1,6 @@
 post_install() {
     echo "Hello from post_install"
+    setcap 'cap_net_bind_service=+ep' `which node`
     if sudo -iu postgres psql -U postgres -c "select 1;";
     then 
         echo PG running
@@ -42,10 +43,9 @@ EOF
 }
 
 pre_remove() {
-    #stop systemd unit
-    #disable systemd unit
+    systemctl stop saltcorn.service
+    systemctl disable saltcorn.service
    
-    #remove user 
     userdel -r saltcorn
 
     #tell user to remove db user
@@ -54,11 +54,6 @@ pre_remove() {
     sudo -iu saltcorn dropuser saltcorn 
 
 }
-
-#post_remove() {
-    
-    
-#}
 
 op=$1
 shift

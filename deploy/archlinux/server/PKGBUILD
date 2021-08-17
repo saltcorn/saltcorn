@@ -7,7 +7,7 @@ pkgdesc="No-code web application builder"
 arch=('any')
 url="https://www.npmjs.com/package/$pkgname"
 license=('MIT')
-depends=('saltcorn' 'postgresql')
+depends=('saltcorn' 'postgresql' 'libcap')
 install='saltcorn-server.install'
 package() {
     install -Dm644 "$startdir/saltcorn.service" "$pkgdir/usr/lib/systemd/system/saltcorn.service"
