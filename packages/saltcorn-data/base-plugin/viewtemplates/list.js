@@ -29,6 +29,7 @@ const { getState } = require("../../db/state");
 const { get_async_expression_function } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
+const { InvalidConfiguration } = require("../../utils");
 
 const create_db_view = async (context) => {
   const table = await Table.findOne({ id: context.table_id });
@@ -401,6 +402,10 @@ const run = async (
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
+      if (!create_view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+        );
       create_link = await create_view.run(state, extraOpts);
     } else {
       create_link = link_view(
