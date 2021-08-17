@@ -205,7 +205,7 @@ const triggerForm = async (req, trigger) => {
         input_type: "select",
         required: true,
         options: Trigger.when_options.map((t) => ({ value: t, label: t })),
-        sublabel: req.__("Condition under which the trigger will fire"),
+        sublabel: req.__("Event type which runs the trigger"),
       },
       {
         name: "table_id",
