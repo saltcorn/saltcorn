@@ -41,6 +41,7 @@ const {
   td,
   h6,
   pre,
+  hr,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -422,14 +423,15 @@ router.get(
           type: "card",
           title: req.__("Configure trigger"),
           contents: {
-            above: [
+            widths: [8, 4],
+            besides: [
               div(
                 blocklyImportScripts({ locale }),
                 div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
                 blocklyToolbox()
               ),
               {
-                besides: [
+                above: [
                   div(
                     button(
                       { class: "btn btn-primary mt-2", id: "blocklySave" },
@@ -450,10 +452,12 @@ router.get(
                   div(
                     { class: "mt-1" },
 
-                    pre(code({ id: "blockly_js_output" }, "code here"))
+                    pre(
+                      { class: "js-code-display" },
+                      code({ id: "blockly_js_output" }, "code here")
+                    )
                   ),
                 ],
-                widths: [2, 2, 8],
               },
             ],
           },
