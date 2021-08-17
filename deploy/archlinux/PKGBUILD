@@ -1,6 +1,6 @@
 
 # Maintainer: Tom Nielsen <tanielsen@gmail.com>
-pkgname='saltcorn'
+pkgname='saltcorn-server'
 pkgver=0.5.2
 pkgrel=1
 pkgdesc="No-code web application builder"
