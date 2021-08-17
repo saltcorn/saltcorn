@@ -12,11 +12,34 @@ post_install() {
         systemctl enable postgresql.service
     fi
     sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
-    #sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
+    sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 
-    #adduser --disabled-password --gecos "" saltcorn
-    #sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
-    #sudo -iu saltcorn createdb saltcorn 
+    useradd -m saltcorn
+    sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
+    sudo -iu saltcorn createdb saltcorn 
+    sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
+    sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
+    sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
+    echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
+}
+
+pre_remove() {
+    #stop systemd unit
+    #disable systemd unit
+   
+    #remove user 
+    userdel -r saltcorn
+
+    #tell user to remove db user
+    #tell user to remove database
+    sudo -iu saltcorn dropdb saltcorn 
+    sudo -iu saltcorn dropuser saltcorn 
+
+}
+
+post_remove() {
+    
+    
 }
 
 op=$1
