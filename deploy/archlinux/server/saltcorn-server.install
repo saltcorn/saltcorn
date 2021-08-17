@@ -38,6 +38,7 @@ EOF
     chmod 600 /home/saltcorn/.config/.saltcorn
     sudo -iu saltcorn saltcorn reset-schema -f
     sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
+    systemctl --system daemon-reload
     systemctl start saltcorn.service
     systemctl enable saltcorn.service
 }
