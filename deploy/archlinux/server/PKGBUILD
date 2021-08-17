@@ -10,5 +10,5 @@ license=('MIT')
 depends=('saltcorn' 'postgresql')
 install='saltcorn-server.install'
 package() {
-    install -Dm644 saltcorn.service "$pkgdir/usr/lib/systemd/system/saltcorn.service"
+    install -Dm644 "$startdir/saltcorn.service" "$pkgdir/usr/lib/systemd/system/saltcorn.service"
 }
