@@ -1,0 +1,13 @@
+post_install() {
+    echo "Hello from post install"
+    sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
+    sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
+
+    adduser --disabled-password --gecos "" saltcorn
+    sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
+    sudo -iu saltcorn createdb saltcorn 
+}
+
+op=$1
+shift
+$op $*

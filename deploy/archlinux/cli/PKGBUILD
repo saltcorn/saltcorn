@@ -1,17 +1,18 @@
 
 # Maintainer: Tom Nielsen <tanielsen@gmail.com>
-pkgname='saltcorn-server'
+pkgname='saltcorn'
 pkgver=0.5.2
 pkgrel=1
 pkgdesc="No-code web application builder"
 arch=('any')
 url="https://www.npmjs.com/package/$pkgname"
 license=('MIT')
-depends=('nodejs-lts-fermium' 'python' 'python2' 'libsass')
-makedepends=('npm6' 'make' 'gcc') 
+depends=('nodejs-lts-fermium' 'npm6' 'python' 'python2' 'libsass' 'postgresql-libs' 'git' 'systemd-libs')
+makedepends=('make' 'gcc') 
 source=("https://registry.npmjs.org/@saltcorn/cli/-/cli-$pkgver.tgz")
 noextract=("cli-$pkgver.tgz")
 sha256sums=('c0c23f4e7ed5b17b64f4ac67b849e15d081a18037f4ed77adf4ac228c2ae33eb')
+
 package() {
     npm install -g --prefix "${pkgdir}/usr" "${srcdir}/cli-${pkgver}.tgz" --unsafe
 
