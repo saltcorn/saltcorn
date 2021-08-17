@@ -78,7 +78,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       contents: {
         above: [
           {
@@ -273,7 +273,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       sub2_page: "New",
       contents: {
         type: "card",
@@ -299,7 +299,7 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Actions",
+      active_sub: "Triggers",
       sub2_page: "Edit",
       contents: {
         type: "card",
@@ -324,7 +324,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Edit",
         contents: {
           type: "card",
@@ -364,7 +364,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Edit",
         contents: {
           type: "card",
@@ -416,7 +416,7 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
@@ -480,7 +480,7 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
@@ -515,7 +515,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Configure",
         contents: {
           type: "card",
@@ -589,7 +589,7 @@ router.get(
       send_events_page({
         res,
         req,
-        active_sub: "Actions",
+        active_sub: "Triggers",
         sub2_page: "Test run output",
         contents: {
           type: "card",

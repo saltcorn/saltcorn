@@ -175,7 +175,7 @@ const send_events_page = (args) => {
     main_section: "Events",
     main_section_href: "/events",
     sub_sections: [
-      { text: "Actions", href: "/actions" },
+      { text: "Triggers", href: "/actions" },
       { text: "Custom", href: "/eventlog/custom" },
       { text: "Log settings", href: "/eventlog/settings" },
       { text: "Event log", href: "/eventlog" },
