@@ -1,11 +1,10 @@
 post_install() {
-    echo "Hello from post_install"
     setcap 'cap_net_bind_service=+ep' `which node`
     if sudo -iu postgres psql -U postgres -c "select 1;";
     then 
-        echo PG running
+        echo Postgres is already running
     else
-        echo PG not running
+        echo Postgres is not running
         if [ ! -f /var/lib/postgres/data/postgresql.conf ]; then
             sudo -iu postgres initdb -D /var/lib/postgres/data
         fi
