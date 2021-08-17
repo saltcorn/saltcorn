@@ -111,6 +111,9 @@ const getLines = (filename, lineCount) =>
 const removeAllWhiteSpace = (s) =>
   s.replace(/\s+/g, "").split("&nbsp;").join("").split("<hr>").join("");
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -126,4 +129,5 @@ module.exports = {
   satisfies,
   getLines,
   removeAllWhiteSpace,
+  sleep,
 };

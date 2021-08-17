@@ -288,15 +288,39 @@ function activate_blockly({ events, actions, tables }) {
     var code = `await Table.findOne({name: '${dropdown_table}'})\n           .tryUpdateRow(${value_row}, ${value_id});\n`;
     return code;
   };
+
+  Blockly.Blocks["sleep"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Sleep");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldNumber(0, 0),
+        "SLEEP_MS"
+      );
+      this.appendDummyInput().appendField("ms");
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Sleep for some milliseconds");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["sleep"] = function (block) {
+    var number_sleep_ms = block.getFieldValue("SLEEP_MS");
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await sleep(${number_sleep_ms});\n`;
+    return code;
+  };
   // -------------------
   // Activate blockly
   // -------------------
   const workspace = Blockly.inject("blocklyDiv", {
-    media: "../../media/",
+    media: false,
+    sounds: false,
     toolbox: document.getElementById("toolbox"),
   });
   const stored = $("#blocklyForm input[name=workspace]").val();
-  if (stored) {
+  if (stored && stored !== "undefined") {
     const xml = Blockly.Xml.textToDom(stored);
     Blockly.Xml.domToWorkspace(xml, workspace);
   }

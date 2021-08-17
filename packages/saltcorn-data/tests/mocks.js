@@ -4,7 +4,7 @@ const Workflow = require("../models/workflow");
 const db = require("../db");
 const { input } = require("@saltcorn/markup/tags");
 const { json_list_to_external_table } = require("../plugin-helper");
-
+const { sleep } = require("../utils");
 const rick_file = async () => {
   await File.ensure_file_store();
 
@@ -162,9 +162,6 @@ const mockReqRes = {
   res: { redirect() {}, json() {}, send() {}, __: (s) => s },
 };
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 module.exports = {
   rick_file,
   plugin_with_routes,

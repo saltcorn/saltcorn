@@ -74,6 +74,8 @@ const blocklyToolbox = () => `
     <category name="Actions"  colour="80">
       <block type="console"></block>
       <block type="emit_event"></block>
+      <block type="sleep"></block>
+
     </category>
     
     <category name="Variables" categorystyle="variable_category">
