@@ -1,0 +1,17 @@
+[Unit]
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=notify
+WatchdogSec=5
+User=saltcorn
+WorkingDirectory=/var/saltcorn
+ExecStart=/usr/bin/saltcorn serve -p 80
+Restart=always
+Environment="NODE_ENV=production"
+Environment="SALTCORN_DISABLE_UPGRADE=true"
+
+[Install]
+WantedBy=multi-user.target
