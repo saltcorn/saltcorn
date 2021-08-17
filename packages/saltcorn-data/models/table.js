@@ -321,7 +321,7 @@ class Table {
    * @param where
    * @returns {Promise<null|*>}
    */
-  async getRow(where) {
+  async getRow(where = {}) {
     await this.getFields();
     const row = await db.selectMaybeOne(this.name, where);
     if (!row) return null;
@@ -334,7 +334,7 @@ class Table {
    * @param selopts
    * @returns {Promise<*>}
    */
-  async getRows(where, selopts) {
+  async getRows(where = {}, selopts) {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
     return apply_calculated_fields(
@@ -1089,7 +1089,7 @@ Table.contract = {
     delete: is.fun([], is.promise(is.eq(undefined))),
     update: is.fun(is.obj(), is.promise(is.eq(undefined))),
     deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
-    getRow: is.fun(is.obj(), is.promise(is.maybe(is.obj()))),
+    getRow: is.fun(is.maybe(is.obj()), is.promise(is.maybe(is.obj()))),
     getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
     countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
     updateRow: is.fun([is.obj(), is.any], is.promise(is.eq(undefined))),

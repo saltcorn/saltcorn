@@ -61,6 +61,7 @@ const blocklyToolbox = () => `
     <block type="row_get"></block>
     <block type="row_set"></block>
     <block type="query_table"></block>
+    <block type="query_one_table"></block>
     <block type="insert_table"></block>
     <block type="update_table"></block>
     <block type="delete_table"></block>
@@ -69,6 +70,7 @@ const blocklyToolbox = () => `
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
     <block type="lists_length"></block>
+    <block type="lists_getIndex"></block>
     
     </category>
     <category name="Actions"  colour="80">

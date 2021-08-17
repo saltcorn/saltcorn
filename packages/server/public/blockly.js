@@ -228,6 +228,34 @@ function activate_blockly({ events, actions, tables }) {
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
+  Blockly.Blocks["query_one_table"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Query one");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("RESTRICT").setCheck("Row").appendField("where");
+      this.setInputsInline(false);
+      this.setOutput(true, "Row");
+      this.setColour(230);
+      this.setTooltip("Query first matching row from a table");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["query_one_table"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_restrict = Blockly.JavaScript.valueToCode(
+      block,
+      "RESTRICT",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'}).getRow(${value_restrict})`;
+
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
 
   Blockly.Blocks["delete_table"] = {
     init: function () {
