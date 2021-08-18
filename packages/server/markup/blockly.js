@@ -80,6 +80,7 @@ const blocklyToolbox = () => `
       <block type="emit_event"></block>
       <block type="http_request"></block>
       <block type="sleep"></block>
+      <block type="return"></block>
 
     </category>
     
