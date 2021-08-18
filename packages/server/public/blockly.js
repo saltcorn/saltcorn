@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#zsr66a
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#d2o3nd
 
   Blockly.Blocks["console"] = {
     init: function () {
@@ -338,6 +338,49 @@ function activate_blockly({ events, actions, tables }) {
     // TODO: Assemble JavaScript into code variable.
     var code = `await sleep(${number_sleep_ms});\n`;
     return code;
+  };
+
+  Blockly.Blocks["http_request"] = {
+    init: function () {
+      this.appendDummyInput().appendField("HTTP");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown([
+          ["GET", "GET"],
+          ["POST", "POST"],
+          ["PUT", "PUT"],
+          ["DELETE", "DELETE"],
+        ]),
+        "METHOD"
+      );
+      this.appendValueInput("URL").setCheck("String").appendField("URL");
+      this.appendValueInput("BODY").setCheck(null).appendField("Body");
+      this.setOutput(true, null);
+      this.setColour(230);
+      this.setTooltip("HTTP Request");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["http_request"] = function (block) {
+    var dropdown_method = block.getFieldValue("METHOD");
+    var value_url = Blockly.JavaScript.valueToCode(
+      block,
+      "URL",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_body = Blockly.JavaScript.valueToCode(
+      block,
+      "BODY",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await fetchJSON(${value_url}, { method: '${dropdown_method}'${
+      value_body
+        ? `, body: ${value_body}, headers: { "Content-Type": "application/json" }`
+        : ""
+    } })`;
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
   };
   // -------------------
   // Activate blockly

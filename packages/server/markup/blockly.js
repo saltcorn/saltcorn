@@ -78,6 +78,7 @@ const blocklyToolbox = () => `
     <category name="Actions"  colour="80">
       <block type="console"></block>
       <block type="emit_event"></block>
+      <block type="http_request"></block>
       <block type="sleep"></block>
 
     </category>
