@@ -52,6 +52,8 @@ const blocklyToolbox = () => `
     
     <category name="Text" categorystyle="text_category">
       <block type="text"></block>
+      <block type="text_join"></block>
+      <block type="text_append"></block>
       <block type="current_channel"></block>
     </category>
     
@@ -76,7 +78,9 @@ const blocklyToolbox = () => `
     <category name="Actions"  colour="80">
       <block type="console"></block>
       <block type="emit_event"></block>
+      <block type="http_request"></block>
       <block type="sleep"></block>
+      <block type="return"></block>
 
     </category>
     

@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#zsr66a
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#d2o3nd
 
   Blockly.Blocks["console"] = {
     init: function () {
@@ -339,6 +339,87 @@ function activate_blockly({ events, actions, tables }) {
     var code = `await sleep(${number_sleep_ms});\n`;
     return code;
   };
+
+  Blockly.Blocks["http_request"] = {
+    init: function () {
+      this.appendDummyInput().appendField("HTTP");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown([
+          ["GET", "GET"],
+          ["POST", "POST"],
+          ["PUT", "PUT"],
+          ["DELETE", "DELETE"],
+        ]),
+        "METHOD"
+      );
+      this.appendValueInput("URL").setCheck("String").appendField("URL");
+      this.appendValueInput("BODY").setCheck(null).appendField("Body");
+      this.setOutput(true, null);
+      this.setColour(230);
+      this.setTooltip("HTTP Request");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["http_request"] = function (block) {
+    var dropdown_method = block.getFieldValue("METHOD");
+    var value_url = Blockly.JavaScript.valueToCode(
+      block,
+      "URL",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_body = Blockly.JavaScript.valueToCode(
+      block,
+      "BODY",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await fetchJSON(${value_url}, { method: '${dropdown_method}'${
+      value_body
+        ? `, body: ${value_body}, headers: { "Content-Type": "application/json" }`
+        : ""
+    } })`;
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
+
+  Blockly.Blocks["return"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Return");
+      this.appendValueInput("GOTO").setCheck("String").appendField("Go to URL");
+      this.appendDummyInput()
+        .appendField("Reload page")
+        .appendField(new Blockly.FieldCheckbox("FALSE"), "RELOAD");
+      this.appendValueInput("NOTIFY").setCheck("String").appendField("Notify");
+      this.setInputsInline(false);
+      this.setPreviousStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Return, with directions for the page");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["return"] = function (block) {
+    var value_goto = Blockly.JavaScript.valueToCode(
+      block,
+      "GOTO",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var checkbox_reload = block.getFieldValue("RELOAD") == "TRUE";
+    var value_notify = Blockly.JavaScript.valueToCode(
+      block,
+      "NOTIFY",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    let s = "";
+    if (value_goto) s += `goto: ${value_goto},`;
+    if (value_notify) s += `notify: ${value_notify},`;
+    if (checkbox_reload) s += `reload_page: true,`;
+    var code = `return {${s}};\n`;
+    return code;
+  };
+
   // -------------------
   // Activate blockly
   // -------------------

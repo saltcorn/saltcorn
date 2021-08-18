@@ -37,6 +37,7 @@ const run_code = async ({
   });
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
+  const fetchJSON = async (...args) => await (await fetch(...args)).json();
   const f = vm.runInNewContext(`async () => {${code}}`, {
     Table,
     table,
@@ -46,6 +47,7 @@ const run_code = async ({
     Actions,
     emitEvent,
     sleep,
+    fetchJSON,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
@@ -67,6 +69,42 @@ module.exports = {
       },
     ],
     run: run_code,
+  },
+  emit_event: {
+    configFields: () => [
+      {
+        name: "eventType",
+        label: "Event type",
+        required: true,
+        input_type: "select",
+        options: Trigger.when_options,
+      },
+      {
+        name: "channel",
+        label: "Channel",
+        type: "String",
+        fieldview: "textarea",
+      },
+      {
+        name: "payload",
+        label: "Payload JSON",
+        sublabel: "Leave blank to use row from table",
+        type: "String",
+        fieldview: "textarea",
+      },
+    ],
+    run: async ({
+      row,
+      configuration: { eventType, channel, payload },
+      user,
+    }) => {
+      return await Trigger.emitEvent(
+        eventType,
+        channel,
+        user,
+        payload ? JSON.parse(payload) : row
+      );
+    },
   },
   webhook: {
     configFields: [
