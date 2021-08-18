@@ -15,7 +15,10 @@ const {
   transformBootstrapEmail,
 } = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
-const { get_async_expression_function } = require("../models/expression");
+const {
+  get_async_expression_function,
+  recalculate_for_stored,
+} = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
@@ -285,6 +288,24 @@ module.exports = {
       return { reload_page: true };
     },
   },
+  recalculate_stored_fields: {
+    configFields: async ({ table }) => {
+      const tables = await Table.find();
+      return [
+        {
+          name: "table",
+          label: "Table",
+          sublabel: "Table on which to recalculate stored calculated fields",
+          input_type: "select",
+          options: tables.map((t) => t.name),
+        },
+      ];
+    },
+    run: async ({ configuration: { table } }) => {
+      const table_for_recalc = await Table.findOne({ name: table });
+      recalculate_for_stored(table_for_recalc);
+    },
+  },
   insert_any_row: {
     configFields: async ({ table }) => {
       const tables = await Table.find();
@@ -292,7 +313,7 @@ module.exports = {
         {
           name: "table",
           label: "Table",
-          sublabel: "Table", //todo more detailed explanation
+          sublabel: "Table to insert rows in",
           input_type: "select",
           options: tables.map((t) => t.name),
         },
