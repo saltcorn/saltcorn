@@ -68,6 +68,42 @@ module.exports = {
     ],
     run: run_code,
   },
+  emit_event: {
+    configFields: () => [
+      {
+        name: "eventType",
+        label: "Event type",
+        required: true,
+        input_type: "select",
+        options: Trigger.when_options,
+      },
+      {
+        name: "channel",
+        label: "Channel",
+        type: "String",
+        fieldview: "textarea",
+      },
+      {
+        name: "payload",
+        label: "Payload JSON",
+        sublabel: "Leave blank to use row from table",
+        type: "String",
+        fieldview: "textarea",
+      },
+    ],
+    run: async ({
+      row,
+      configuration: { eventType, channel, payload },
+      user,
+    }) => {
+      return await Trigger.emitEvent(
+        eventType,
+        channel,
+        user,
+        payload ? JSON.parse(payload) : row
+      );
+    },
+  },
   webhook: {
     configFields: [
       {
