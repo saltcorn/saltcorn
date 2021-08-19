@@ -523,18 +523,18 @@ function remove_outline(form) {
     .addClass("btn-primary");
 }
 
-function init_room(viewname) {
-  const msginput = document.querySelector("form.room input[name=message]");
-  const room_id = document.querySelector("form.room input[name=room_id]");
+function init_room(viewname, room_id) {
+  const msginput = document.querySelector(
+    `form.room-${room_id} input[name=message]`
+  );
 
-  $("form.room").submit((e) => {
+  $(`form.room-${room_id}`).submit((e) => {
     e.preventDefault();
 
     if (msginput.value) {
-      const data = { message: msginput.value, room_id: room_id.value };
+      const data = { message: msginput.value, room_id };
       view_post(viewname, "submit_msg_ajax", data, (vpres) => {
-        console.log(vpres);
-        if (vpres.append) $(".msglist").append(vpres.append);
+        if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
         msginput.value = "";
       });
     }

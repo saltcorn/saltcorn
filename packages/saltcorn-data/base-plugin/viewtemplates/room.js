@@ -173,7 +173,7 @@ const run = async (
   // 2. insert message form
   return div(
     div(
-      { class: "msglist" },
+      { class: `msglist-${state.id}` },
       msgs.map(
         showMsg(
           msgstring,
@@ -186,12 +186,11 @@ const run = async (
       )
     ),
     form(
-      { class: "room", action: "" },
+      { class: `room-${state.id}`, action: "" },
       input({ autocomplete: "off", name: "message" }),
-      input({ type: "hidden", name: "room_id", value: state.id }),
       button(i({ class: "far fa-paper-plane" }))
     ),
-    script(domReady(`init_room("${viewname}")`))
+    script(domReady(`init_room("${viewname}", ${state.id})`))
   );
 };
 
@@ -272,8 +271,6 @@ module.exports = {
   },
 };
 /*todo:
-
-1. show who sent
 
 2. sockets
 
