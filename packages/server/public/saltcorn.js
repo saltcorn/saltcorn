@@ -532,9 +532,9 @@ function init_room(viewname) {
 
     if (msginput.value) {
       const data = { message: msginput.value, room_id: room_id.value };
-      const vpres = view_post(viewname, "submit_msg_ajax", data, (vpres) => {
+      view_post(viewname, "submit_msg_ajax", data, (vpres) => {
         console.log(vpres);
-        $(".msglist").append(`<div>${msginput.value}</div>`);
+        if (vpres.append) $(".msglist").append(vpres.append);
         msginput.value = "";
       });
     }

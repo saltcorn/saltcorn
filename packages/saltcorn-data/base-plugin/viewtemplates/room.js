@@ -151,10 +151,7 @@ const run = async (
   const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
   // 2. insert message form
   return div(
-    div(
-      { class: "msglist" },
-      msgs.map((msg) => div(msg[msgstring]))
-    ),
+    div({ class: "msglist" }, msgs.map(showMsg(msgstring))),
     form(
       { class: "room", action: "" },
       input({ autocomplete: "off", name: "message" }),
@@ -164,6 +161,9 @@ const run = async (
     script(domReady(`init_room("${viewname}")`))
   );
 };
+
+const showMsg = (msgstring) => (msg) => div(msg[msgstring]);
+
 const submit_msg_ajax = async (
   table_id,
   viewname,
@@ -183,7 +183,7 @@ const submit_msg_ajax = async (
   };
   console.log(row);
   await msgtable.tryInsertRow(row, req.user.id);
-  return { json: { success: "ok" } };
+  return { json: { success: "ok", append: showMsg(msgstring)(row) } };
 };
 module.exports = {
   name: "Room",
