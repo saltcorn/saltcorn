@@ -522,3 +522,15 @@ function remove_outline(form) {
     .removeClass("btn-outline-primary")
     .addClass("btn-primary");
 }
+
+function init_room() {
+  const input = document.querySelector("form.room input");
+
+  $("form.room").submit((e) => {
+    e.preventDefault();
+
+    if (input.value) {
+      console.log(value);
+    }
+  });
+}
