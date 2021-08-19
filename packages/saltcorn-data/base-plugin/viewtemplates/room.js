@@ -146,20 +146,45 @@ const run = async (
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
-
+  const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
+    "."
+  );
   // check we participate
   const parttable = Table.findOne({ name: part_table_name });
-  const partRow = await parttable.getRow({
-    [part_key_to_room]: state.id,
-    [part_user_field]: req.user.id,
+  const parttable_fields = await parttable.getFields();
+  const parttable_userfield_field = parttable_fields.find(
+    (f) => f.name === part_user_field
+  );
+  const userlabel =
+    parttable_userfield_field.attributes.summary_field || "email";
+  const participants = await parttable.getJoinedRows({
+    where: {
+      [part_key_to_room]: state.id,
+    },
+    joinFields: {
+      [userlabel]: { ref: part_user_field, target: userlabel },
+    },
   });
+  const partRow = participants.find((p) => p[part_user_field] === +req.user.id);
   if (!partRow) return "You are not a participant in this room";
 
   const msgtable = Table.findOne({ name: msgtable_name });
   const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
   // 2. insert message form
   return div(
-    div({ class: "msglist" }, msgs.map(showMsg(msgstring))),
+    div(
+      { class: "msglist" },
+      msgs.map(
+        showMsg(
+          msgstring,
+          req,
+          msgsender,
+          userlabel,
+          participants,
+          part_user_field
+        )
+      )
+    ),
     form(
       { class: "room", action: "" },
       input({ autocomplete: "off", name: "message" }),
@@ -170,7 +195,27 @@ const run = async (
   );
 };
 
-const showMsg = (msgstring) => (msg) => div(msg[msgstring]);
+const showMsg = (
+  msgstring,
+  req,
+  msgsender,
+  userlabel,
+  participants,
+  part_user_field
+) => (msg) => {
+  if (participants && msgsender && part_user_field) {
+    const participant = participants.find(
+      (p) => p[part_user_field] === msg[msgsender]
+    );
+    return div(
+      participant ? participant[userlabel] : "?",
+      ": ",
+      msg[msgstring]
+    );
+  } else {
+    return div(req.user[userlabel], ": ", msg[msgstring]);
+  }
+};
 
 const submit_msg_ajax = async (
   table_id,
@@ -184,14 +229,33 @@ const submit_msg_ajax = async (
     "."
   );
   const msgtable = Table.findOne({ name: msgtable_name });
+
+  const [
+    part_table_name,
+    part_key_to_room,
+    part_user_field,
+  ] = participant_field.split(".");
+
+  // check we participate
+  const parttable = Table.findOne({ name: part_table_name });
+  const parttable_fields = await parttable.getFields();
+  const parttable_userfield_field = parttable_fields.find(
+    (f) => f.name === part_user_field
+  );
+  const userlabel =
+    parttable_userfield_field.attributes.summary_field || "email";
   const row = {
     [msgstring]: body.message,
     [msgkey_to_room]: body.room_id,
     [msgsender]: req.user.id,
   };
-  console.log(row);
   await msgtable.tryInsertRow(row, req.user.id);
-  return { json: { success: "ok", append: showMsg(msgstring)(row) } };
+  return {
+    json: {
+      success: "ok",
+      append: showMsg(msgstring, req, null, userlabel)(row),
+    },
+  };
 };
 module.exports = {
   name: "Room",
@@ -209,8 +273,8 @@ module.exports = {
 };
 /*todo:
 
-1. check we participate
-2. sockets
+1. show who sent
 
+2. sockets
 
 */
