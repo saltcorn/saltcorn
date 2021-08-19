@@ -420,6 +420,14 @@ class State {
     strings.push(...menu.map(({ label }) => label));
     return Array.from(new Set(strings)).filter(removeAllWhiteSpace);
   }
+
+  setRoomEmitter(f) {
+    this.roomEmitter = f;
+  }
+
+  emitRoom(...args) {
+    if (this.roomEmitter) this.roomEmitter(...args);
+  }
 }
 
 /**

@@ -26,7 +26,7 @@ const {
 } = require("./load_plugins");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
-
+const socketio = require("socket.io");
 // helpful https://gist.github.com/jpoehls/2232358
 
 const initMaster = async ({ disableMigrate }) => {
@@ -223,6 +223,16 @@ module.exports = async ({
       // server with http only
       const http = require("http");
       const httpServer = http.createServer(app);
+      const io = new socketio.Server(httpServer);
+      getState().setRoomEmitter((room_id, msg) => {
+        io.to(room_id).emit("message", msg);
+      });
+      io.on("connection", (socket) => {
+        socket.on("join_room", (room_id) => {
+          socket.join(room_id);
+        });
+      });
+
       // todo timeout to config
       // todo refer in doc to httpserver doc
       // todo there can be added other parameters for httpserver
