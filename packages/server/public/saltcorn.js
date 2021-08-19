@@ -531,9 +531,12 @@ function init_room(viewname) {
     e.preventDefault();
 
     if (msginput.value) {
-      console.log(msginput.value);
       const data = { message: msginput.value, room_id: room_id.value };
-      view_post(viewname, "submit_msg_ajax", data);
+      const vpres = view_post(viewname, "submit_msg_ajax", data, (vpres) => {
+        console.log(vpres);
+        $(".msglist").append(`<div>${msginput.value}</div>`);
+        msginput.value = "";
+      });
     }
   });
 }

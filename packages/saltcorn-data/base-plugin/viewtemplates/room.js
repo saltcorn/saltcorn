@@ -151,7 +151,10 @@ const run = async (
   const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
   // 2. insert message form
   return div(
-    div(msgs.map((msg) => div(msg[msgstring]))),
+    div(
+      { class: "msglist" },
+      msgs.map((msg) => div(msg[msgstring]))
+    ),
     form(
       { class: "room", action: "" },
       input({ autocomplete: "off", name: "message" }),
