@@ -524,6 +524,12 @@ function remove_outline(form) {
 }
 
 function init_room(viewname, room_id) {
+  const socket = io();
+  socket.emit("join_room", room_id);
+  socket.on("message", (msg) => {
+    $(`.msglist-${room_id}`).append(msg);
+  });
+
   const msginput = document.querySelector(
     `form.room-${room_id} input[name=message]`
   );

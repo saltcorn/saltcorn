@@ -18,8 +18,6 @@ const {
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const {} = require("./viewable_fields");
-const pluralize = require("pluralize");
 const {
   link_view,
   stateToQueryString,
@@ -29,6 +27,7 @@ const {
 } = require("../../plugin-helper");
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
+const db = require("../../db");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -190,7 +189,9 @@ const run = async (
       input({ autocomplete: "off", name: "message" }),
       button(i({ class: "far fa-paper-plane" }))
     ),
-    script(domReady(`init_room("${viewname}", ${state.id})`))
+    script({
+      src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+    }) + script(domReady(`init_room("${viewname}", ${state.id})`))
   );
 };
 
@@ -249,10 +250,11 @@ const submit_msg_ajax = async (
     [msgsender]: req.user.id,
   };
   await msgtable.tryInsertRow(row, req.user.id);
+  const html = showMsg(msgstring, req, null, userlabel)(row);
+  getState().emitRoom(+body.room_id, html);
   return {
     json: {
       success: "ok",
-      append: showMsg(msgstring, req, null, userlabel)(row),
     },
   };
 };
