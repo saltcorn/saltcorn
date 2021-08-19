@@ -111,22 +111,21 @@ const configuration_workflow = (req) =>
     ],
   });
 
-const get_state_fields = async (table_id, viewname, { show_view }) => {
-  const table_fields = await Field.find({ table_id });
-  return table_fields
-    .filter((f) => !f.primary_key)
-    .map((f) => {
-      const sf = new Field(f);
-      sf.required = false;
-      return sf;
-    });
-};
+const get_state_fields = () => [
+  {
+    name: "id",
+    type: "Integer",
+    required: true,
+    primary_key: true,
+  },
+];
+
 const run = async (
   table_id,
   viewname,
   { participant_field, msgstring_field, msgsender_field },
   state,
-  extraArgs
+  { req, res }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -134,19 +133,28 @@ const run = async (
   if (!state.id) return "Need room id";
 
   const appState = getState();
-  const locale = extraArgs.req.getLocale();
+  const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
   if (!participant_field || !msgstring_field || !msgsender_field)
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: must supply Message string, Message sender and Participant fields`
     );
-  // 1. show existing messages
+
   const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(".");
   const [
     part_table_name,
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
+
+  // check we participate
+  const parttable = Table.findOne({ name: part_table_name });
+  const partRow = await parttable.getRow({
+    [part_key_to_room]: state.id,
+    [part_user_field]: req.user.id,
+  });
+  if (!partRow) return "You are not a participant in this room";
+
   const msgtable = Table.findOne({ name: msgtable_name });
   const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
   // 2. insert message form
@@ -199,3 +207,10 @@ module.exports = {
     else return [];
   },
 };
+/*todo:
+
+1. check we participate
+2. sockets
+
+
+*/
