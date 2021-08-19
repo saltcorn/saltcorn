@@ -523,14 +523,17 @@ function remove_outline(form) {
     .addClass("btn-primary");
 }
 
-function init_room() {
-  const input = document.querySelector("form.room input");
+function init_room(viewname) {
+  const msginput = document.querySelector("form.room input[name=message]");
+  const room_id = document.querySelector("form.room input[name=room_id]");
 
   $("form.room").submit((e) => {
     e.preventDefault();
 
-    if (input.value) {
-      console.log(value);
+    if (msginput.value) {
+      console.log(msginput.value);
+      const data = { message: msginput.value, room_id: room_id.value };
+      view_post(viewname, "submit_msg_ajax", data);
     }
   });
 }

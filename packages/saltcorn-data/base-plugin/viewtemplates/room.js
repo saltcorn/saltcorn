@@ -12,6 +12,8 @@ const {
   form,
   input,
   i,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
@@ -128,7 +130,9 @@ const run = async (
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
-  //readState(state, fields);
+  readState(state, fields);
+  if (!state.id) return "Need room id";
+
   const appState = getState();
   const locale = extraArgs.req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
@@ -151,8 +155,10 @@ const run = async (
     form(
       { class: "room", action: "" },
       input({ autocomplete: "off", name: "message" }),
+      input({ type: "hidden", name: "room_id", value: state.id }),
       button(i({ class: "far fa-paper-plane" }))
-    )
+    ),
+    script(domReady(`init_room("${viewname}")`))
   );
 };
 const submit_msg_ajax = async (
@@ -167,7 +173,12 @@ const submit_msg_ajax = async (
     "."
   );
   const msgtable = Table.findOne({ name: msgtable_name });
-  const row = { [msgstring]: body.message, [msgsender]: req.user.id };
+  const row = {
+    [msgstring]: body.message,
+    [msgkey_to_room]: body.room_id,
+    [msgsender]: req.user.id,
+  };
+  console.log(row);
   await msgtable.tryInsertRow(row, req.user.id);
   return { json: { success: "ok" } };
 };
