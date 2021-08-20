@@ -524,7 +524,7 @@ function remove_outline(form) {
 }
 
 function init_room(viewname, room_id) {
-  const socket = io();
+  const socket = io({ transports: ["websocket"] });
   socket.emit("join_room", room_id);
   socket.on("message", (msg) => {
     $(`.msglist-${room_id}`).append(msg);

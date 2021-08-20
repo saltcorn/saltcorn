@@ -27,6 +27,8 @@ const {
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");
+const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+
 // helpful https://gist.github.com/jpoehls/2232358
 
 const initMaster = async ({ disableMigrate }) => {
@@ -57,6 +59,7 @@ const initMaster = async ({ disableMigrate }) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, disableMigrate);
   }
+  setupPrimary();
 };
 
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -238,10 +241,11 @@ module.exports = async ({
   }
 };
 const setupSocket = (...servers) => {
-  const io = new socketio.Server();
+  const io = new socketio.Server({ transports: ["websocket"] });
   for (const server of servers) {
     io.attach(server);
   }
+  io.adapter(createAdapter());
   getState().setRoomEmitter((room_id, msg) => {
     io.to(room_id).emit("message", msg);
   });

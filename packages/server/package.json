@@ -12,6 +12,8 @@
     "greenlock-express": "^4.0.3",
     "@saltcorn/markup": "0.5.3",
     "@saltcorn/sbadmin2": "0.5.3",
+    "@socket.io/cluster-adapter": "^0.1.0",
+    "@socket.io/sticky": "^1.0.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
     "connect-sqlite3": "^0.9.11",
