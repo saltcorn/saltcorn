@@ -9,7 +9,7 @@
     "@saltcorn/base-plugin": "0.5.3",
     "@saltcorn/builder": "0.5.3",
     "@saltcorn/data": "0.5.3",
-    "@saltcorn/greenlock-express": "^4.0.4",
+    "greenlock-express": "^4.0.3",
     "@saltcorn/markup": "0.5.3",
     "@saltcorn/sbadmin2": "0.5.3",
     "connect-flash": "^0.1.1",

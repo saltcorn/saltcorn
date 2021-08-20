@@ -156,7 +156,7 @@ module.exports = async ({
         if (masterState.listeningTo.size < useNCpus)
           setTimeout(initMasterListeners, 250);
       };
-      require("@saltcorn/greenlock-express")
+      require("greenlock-express")
         .init({
           packageRoot: __dirname,
           configDir: path.join(file_store, "greenlock.d"),
@@ -165,10 +165,11 @@ module.exports = async ({
           workers: useNCpus,
         })
         .ready((glx) => {
-          glx.serveApp(app, ({ secureServer }) => {
-            process.on("message", workerDispatchMsg);
-            secureServer.setTimeout(timeout * 1000);
-          });
+          const httpsServer = glx.httpsServer();
+          setupSocket(httpsServer);
+          httpsServer.setTimeout(timeout * 1000);
+          process.on("message", workerDispatchMsg);
+          glx.serveApp(app);
           process.send("Start");
         })
         .master(() => {
@@ -210,7 +211,7 @@ module.exports = async ({
       // todo timeout to config
       httpServer.setTimeout(timeout * 1000);
       httpsServer.setTimeout(timeout * 1000);
-
+      setupSocket(httpServer, httpsServer);
       httpServer.listen(port, () => {
         console.log("HTTP Server running on port 80");
       });
@@ -223,15 +224,7 @@ module.exports = async ({
       // server with http only
       const http = require("http");
       const httpServer = http.createServer(app);
-      const io = new socketio.Server(httpServer);
-      getState().setRoomEmitter((room_id, msg) => {
-        io.to(room_id).emit("message", msg);
-      });
-      io.on("connection", (socket) => {
-        socket.on("join_room", (room_id) => {
-          socket.join(room_id);
-        });
-      });
+      setupSocket(httpServer);
 
       // todo timeout to config
       // todo refer in doc to httpserver doc
@@ -243,4 +236,18 @@ module.exports = async ({
     }
     process.send("Start");
   }
+};
+const setupSocket = (...servers) => {
+  const io = new socketio.Server();
+  for (const server of servers) {
+    io.attach(server);
+  }
+  getState().setRoomEmitter((room_id, msg) => {
+    io.to(room_id).emit("message", msg);
+  });
+  io.on("connection", (socket) => {
+    socket.on("join_room", (room_id) => {
+      socket.join(room_id);
+    });
+  });
 };

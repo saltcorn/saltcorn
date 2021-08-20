@@ -274,9 +274,7 @@ module.exports = {
 };
 /*todo:
 
-1. test on multiple browser windows
 2. auth
 3. multiple workers
-4. https and greenlocks
 
 */
