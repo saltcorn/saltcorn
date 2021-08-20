@@ -1,7 +1,7 @@
 
 # Maintainer: Tom Nielsen <tanielsen@gmail.com>
 pkgname='saltcorn'
-pkgver=0.5.2
+pkgver=0.5.3
 pkgrel=1
 pkgdesc="Saltcorn: no-code web application builder - cli tool"
 arch=('x86_64')
@@ -11,7 +11,7 @@ depends=('nodejs-lts-fermium' 'npm6' 'python' 'python2' 'libsass' 'postgresql-li
 makedepends=('make' 'gcc') 
 source=("https://registry.npmjs.org/@saltcorn/cli/-/cli-$pkgver.tgz")
 noextract=("cli-$pkgver.tgz")
-sha256sums=('c0c23f4e7ed5b17b64f4ac67b849e15d081a18037f4ed77adf4ac228c2ae33eb')
+sha256sums=('acef14bbf4c9f2d955c4fd107568fe0263da4600fb5d32cba92b94e02feae035')
 
 package() {
     npm install -g --prefix "${pkgdir}/usr" "${srcdir}/cli-${pkgver}.tgz" --unsafe
