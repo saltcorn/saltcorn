@@ -266,7 +266,22 @@ module.exports = {
   get_state_fields,
   display_state_form: false,
   routes: { submit_msg_ajax },
+  authorize_join: async ({ participant_field }, room_id, user) => {
+    if (!user) return false;
+    const [
+      part_table_name,
+      part_key_to_room,
+      part_user_field,
+    ] = participant_field.split(".");
 
+    // TODO check we participate
+    const parttable = Table.findOne({ name: part_table_name });
+    const partRow = await parttable.getRow({
+      [part_user_field]: user.id,
+      [part_key_to_room]: room_id,
+    });
+    return !!partRow;
+  },
   getStringsForI18n({ create_view_label }) {
     if (create_view_label) return [create_view_label];
     else return [];
@@ -275,6 +290,5 @@ module.exports = {
 /*todo:
 
 2. auth
-3. multiple workers
 
 */

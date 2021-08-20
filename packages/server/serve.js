@@ -250,7 +250,7 @@ const setupSocket = (...servers) => {
     io.to(room_id).emit("message", msg);
   });
   io.on("connection", (socket) => {
-    socket.on("join_room", (room_id) => {
+    socket.on("join_room", ([viewname, room_id]) => {
       socket.join(room_id);
     });
   });
