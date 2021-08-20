@@ -236,7 +236,7 @@ const submit_msg_ajax = async (
     part_user_field,
   ] = participant_field.split(".");
 
-  // check we participate
+  // TODO check we participate
   const parttable = Table.findOne({ name: part_table_name });
   const parttable_fields = await parttable.getFields();
   const parttable_userfield_field = parttable_fields.find(
@@ -274,6 +274,9 @@ module.exports = {
 };
 /*todo:
 
-2. sockets
+1. test on multiple browser windows
+2. auth
+3. multiple workers
+4. https and greenlocks
 
 */
