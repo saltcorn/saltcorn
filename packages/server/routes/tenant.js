@@ -334,7 +334,7 @@ router.get(
     send_infoarch_page({
       res,
       req,
-      active_sub: "Multitenancy settings",
+      active_sub: "Multitenancy",
       contents: {
         type: "card",
         title: req.__("Multitenancy settings"),

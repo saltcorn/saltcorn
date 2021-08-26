@@ -29,6 +29,7 @@ const { getState } = require("../../db/state");
 const { get_async_expression_function } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
+const { InvalidConfiguration } = require("../../utils");
 
 const create_db_view = async (context) => {
   const table = await Table.findOne({ id: context.table_id });
@@ -300,7 +301,9 @@ const run = async (
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
   const fields = await table.getFields();
-
+  const appState = getState();
+  const locale = extraOpts.req.getLocale();
+  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -308,7 +311,7 @@ const run = async (
       if (!field) continue;
       const fieldviews =
         field.type === "Key"
-          ? getState().keyFieldviews
+          ? appState.keyFieldviews
           : field.type.fieldviews || {};
       if (!fieldviews) continue;
       const fv = fieldviews[col.fieldview];
@@ -332,7 +335,8 @@ const run = async (
     fields,
     columns,
     false,
-    extraOpts.req
+    extraOpts.req,
+    __
   );
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
@@ -398,13 +402,17 @@ const run = async (
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
+      if (!create_view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+        );
       create_link = await create_view.run(state, extraOpts);
     } else {
       create_link = link_view(
         `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
           state
         )}`,
-        create_view_label || `Add ${pluralize(table.name, 1)}`,
+        __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup"
       );
     }
@@ -473,5 +481,20 @@ module.exports = {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
+  },
+  getStringsForI18n({ columns, create_view_label }) {
+    const strings = [];
+    const maybeAdd = (s) => {
+      if (s) strings.push(s);
+    };
+
+    for (const column of columns) {
+      maybeAdd(column.header_label);
+      maybeAdd(column.link_text);
+      maybeAdd(column.view_label);
+      maybeAdd(column.action_label);
+    }
+    maybeAdd(create_view_label);
+    return strings;
   },
 };

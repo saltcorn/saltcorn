@@ -25,8 +25,10 @@ class ReleaseCommand extends Command {
       json.version = version;
       if (json.dependencies || json.devDependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
-          if (json.dependencies && json.dependencies[dpkgnm]) json.dependencies[dpkgnm] = version;
-          if (json.devDependencies && json.devDependencies[dpkgnm]) json.devDependencies[dpkgnm] = version;
+          if (json.dependencies && json.dependencies[dpkgnm])
+            json.dependencies[dpkgnm] = version;
+          if (json.devDependencies && json.devDependencies[dpkgnm])
+            json.devDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
         `packages/${dir}/package.json`,
@@ -67,6 +69,13 @@ class ReleaseCommand extends Command {
       cwd: `packages/saltcorn-cli/`,
     });
     publish("saltcorn-cli");
+
+    // update Dockerfile
+    const dockerfile = fs.readFileSync(`Dockerfile.release`, 'utf8');
+    fs.writeFileSync(
+      `Dockerfile.release`,
+      dockerfile.replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
+    );
     //git commit tag and push
     spawnSync("git", ["commit", "-am", "v" + version], {
       stdio: "inherit",
@@ -80,8 +89,8 @@ class ReleaseCommand extends Command {
     spawnSync("git", ["push"], {
       stdio: "inherit",
     });
-    console.log("Now run:\n")
-    console.log("  rm -rf packages/saltcorn-cli/node_modules\n")
+    console.log("Now run:\n");
+    console.log("  rm -rf packages/saltcorn-cli/node_modules\n");
     this.exit(0);
   }
 }

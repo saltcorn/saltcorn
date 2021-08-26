@@ -188,6 +188,7 @@ describe("Table create", () => {
     );
     await browser.clickNav('form[action="/plugins/install/markdown"] button');
     expect(await browser.content()).toContain("startbootstrap-sb-admin-2");
+    await browser.page.waitFor(1000);
     await browser.clickNav(
       'form[action="/plugins/install/any-bootstrap-theme"] button'
     );

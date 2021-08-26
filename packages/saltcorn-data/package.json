@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -10,11 +10,12 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "@saltcorn/markup": "0.5.2",
+    "@saltcorn/markup": "0.5.3",
     "acorn": "^8.0.3",
     "adm-zip": "^0.5.2",
     "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
+    "blockly": "^6.20210701.0",
     "bootstrap-email": "^1.1.1",
     "connect-pg-simple": "^6.1.0",
     "contractis": "^0.1.0",
@@ -25,6 +26,7 @@
     "email-validator": "^2.0.4",
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
+    "i18n": "^0.13.2",
     "latest-version": "^5.1.0",
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.33",

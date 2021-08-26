@@ -42,7 +42,7 @@ class RunBenchmarkCommand extends Command {
       `${ensure_no_final_slash(baseurl || "http://127.0.0.1")}${pth}`;
     const bench = (url) =>
       wrk({
-        threads: 2,
+        threads: 8,
         connections: 50,
         duration: "10s",
         url: getURL(url),

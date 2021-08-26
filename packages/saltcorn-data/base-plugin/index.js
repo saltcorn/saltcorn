@@ -19,4 +19,7 @@ module.exports = {
   fileviews,
   actions,
   fieldviews,
+  serve_dependencies: {
+    "blockly": require.resolve("blockly/package.json"),
+  },
 };

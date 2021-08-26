@@ -10,7 +10,12 @@ const Trigger = require("../../models/trigger");
 
 const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
-const { eachView, traverse } = require("../../models/layout");
+const {
+  eachView,
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} = require("../../models/layout");
 
 const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -445,12 +450,24 @@ const render = (
       }
     },
   });
+  const locale = req.getLocale();
+  translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration }) {
-      const val = row[field_name];
       let field = fields.find((fld) => fld.name === field_name);
-
       if (!field) return "";
+
+      let val = row[field_name];
+      if (
+        field &&
+        field.attributes &&
+        field.attributes.localized_by &&
+        field.attributes.localized_by[locale]
+      ) {
+        const localized_fld = field.attributes.localized_by[locale];
+        val = row[localized_fld];
+      }
+
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
@@ -548,4 +565,7 @@ module.exports = {
   initial_config,
   display_state_form: false,
   routes: { run_action },
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };

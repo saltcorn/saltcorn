@@ -10,6 +10,7 @@ const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { get_expression_function } = require("../../models/expression");
+const { InvalidConfiguration } = require("../../utils");
 
 const {
   initial_config_all_fields,
@@ -27,7 +28,11 @@ const {
   getForm,
   parse_view_select,
 } = require("./viewable_fields");
-const { traverse } = require("../../models/layout");
+const {
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
 const configuration_workflow = (req) =>
@@ -329,6 +334,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
       }
       const view_select = parse_view_select(segment.view);
       const view = await View.findOne({ name: view_select.viewname });
+      if (!view)
+        throw new InvalidConfiguration(
+          `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+        );
       let state;
       switch (view_select.type) {
         case "Own":
@@ -344,6 +353,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.contents = await view.run(state, { req, res });
     },
   });
+  translateLayout(form.layout, req.getLocale());
   if (req.xhr) form.xhrSubmit = true;
   setDateLocales(form, req.getLocale());
 };
@@ -544,4 +554,7 @@ module.exports = {
   authorise_post,
   authorise_get: async ({ query, ...rest }) =>
     authorise_post({ body: query, ...rest }),
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };

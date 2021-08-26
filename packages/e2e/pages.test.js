@@ -31,6 +31,7 @@ describe("Dotcom and db page page", () => {
     await browser.goto("/auth/logout");
   });
   it("shows db page", async () => {
+    await browser.page.waitFor(1000);
     await browser.goto("/");
     const page = await browser.content();
     expect(page).toContain(">Bye bye<");

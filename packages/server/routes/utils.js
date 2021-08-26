@@ -30,14 +30,14 @@ function isAdmin(req, res, next) {
   }
 }
 
-const setLanguage = (req, res) => {
+const setLanguage = (req, res, state) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
   }
-  set_custom_http_headers(res);
+  set_custom_http_headers(res, state);
 };
-const set_custom_http_headers = (res) => {
-  const hdrs = getState().getConfig("custom_http_headers");
+const set_custom_http_headers = (res, state) => {
+  const hdrs = (state || getState()).getConfig("custom_http_headers");
   if (!hdrs) return;
   for (const ln of hdrs.split("\n")) {
     const [k, v] = ln.split(":");
@@ -52,7 +52,7 @@ const setTenant = (req, res, next) => {
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(other_domain, () => {
-          setLanguage(req, res);
+          setLanguage(req, res, state);
           next();
         });
       }
@@ -67,7 +67,7 @@ const setTenant = (req, res, next) => {
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
         db.runWithTenant(ten, () => {
-          setLanguage(req, res);
+          setLanguage(req, res, state);
           next();
         });
       }

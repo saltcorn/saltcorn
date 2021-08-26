@@ -1,3 +1,5 @@
+const { getState } = require("../db/state");
+
 const traverseSync = (layout, visitors) => {
   const go = (segment) => {
     if (!segment) return;
@@ -60,6 +62,52 @@ const getViews = async (layout) => {
   });
   return views;
 };
+const getStringsForI18n = (layout) => {
+  const strings = [];
+  traverseSync(layout, {
+    blank(s) {
+      if (typeof s === "string") strings.push(s);
+      else if (s.contents) strings.push(s.contents);
+    },
+    link({ text }) {
+      strings.push(text);
+    },
+    card({ title }) {
+      strings.push(title);
+    },
+    tabs({ titles }) {
+      strings.push(...titles);
+    },
+  });
+  return strings;
+};
+
+const translateLayout = (layout, locale) => {
+  const appState = getState()
+  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
+
+  traverseSync(layout, {
+    blank(s) {
+      s.contents = __(s.contents);
+    },
+    link(s) {
+      s.text = __(s.text);
+    },
+    card(s) {
+      s.title = __(s.title);
+    },
+    tabs(s) {
+      s.titles = s.titles.map((t) => __(t));
+    },
+  });
+};
 //getViews: is.fun([], is.promise(is.array(is.obj()))),
 //eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
-module.exports = { eachView, getViews, traverse, traverseSync };
+module.exports = {
+  eachView,
+  getViews,
+  traverse,
+  traverseSync,
+  getStringsForI18n,
+  translateLayout,
+};

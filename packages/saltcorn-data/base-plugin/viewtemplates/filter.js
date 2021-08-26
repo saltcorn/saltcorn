@@ -17,7 +17,11 @@ const renderLayout = require("@saltcorn/markup/layout");
 
 const { readState } = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
-const { eachView } = require("../../models/layout");
+const {
+  eachView,
+  translateLayout,
+  getStringsForI18n,
+} = require("../../models/layout");
 const { InvalidConfiguration } = require("../../utils");
 
 const configuration_workflow = () =>
@@ -137,7 +141,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       );
     else segment.contents = await view.run(state, extra);
   });
-
+  translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
@@ -224,9 +228,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           onClick:
             active || use_value === undefined
               ? `unset_state_field('${field_name}')`
-              : `set_state_field('${field_name}', '${
-                  use_value || ""
-                }')`,
+              : `set_state_field('${field_name}', '${use_value || ""}')`,
         },
         label || value || preset_value
       );
@@ -246,4 +248,7 @@ module.exports = {
   run,
   initial_config,
   display_state_form: false,
+  getStringsForI18n({ layout }) {
+    return getStringsForI18n(layout);
+  },
 };

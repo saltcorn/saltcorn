@@ -35,6 +35,7 @@ const {
   tr,
   script,
   domReady,
+  code,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -511,7 +512,7 @@ router.get(
             label: req.__("Attributes"),
             key: (r) => attribBadges(r),
           },
-          { label: req.__("Variable name"), key: "name" },
+          { label: req.__("Variable name"), key: (t) => code(t.name) },
           ...(table.external
             ? []
             : [

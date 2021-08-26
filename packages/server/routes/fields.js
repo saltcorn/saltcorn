@@ -131,6 +131,7 @@ const translateAttribute = (attr, req) => {
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
   return res;
 };
+
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -231,7 +232,9 @@ const fieldFlow = (req) =>
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
           const type = getState().types[context.type];
-          return type.attributes && type.attributes.length > 0;
+          if(!type) return false;
+          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+          return attrs.length > 0;
         },
         form: async (context) => {
           if (context.type === "File") {
@@ -251,6 +254,8 @@ const fieldFlow = (req) =>
             });
           } else {
             const type = getState().types[context.type];
+          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+
             return new Form({
               validator(vs) {
                 if (type.validate_attributes) {
@@ -258,7 +263,7 @@ const fieldFlow = (req) =>
                   if (!res) return req.__("Invalid attributes");
                 }
               },
-              fields: translateAttributes(type.attributes, req),
+              fields: translateAttributes(attrs, req),
             });
           }
         },

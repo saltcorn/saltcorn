@@ -11,14 +11,15 @@ const getFlashes = (req) =>
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
-const get_extra_menu = (role) => {
+const get_extra_menu = (role, state, req) => {
   const cfg = getState().getConfig("menu_items", []);
-
+  const locale = req.getLocale();
+  const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
   const transform = (items) =>
     items
       .filter((item) => role <= +item.min_role)
       .map((item) => ({
-        label: item.label,
+        label: __(item.label),
         icon: item.icon,
         style: item.style || "",
         link:
@@ -41,7 +42,7 @@ const get_menu = (req) => {
 
   const allow_signup = state.getConfig("allow_signup");
   const login_menu = state.getConfig("login_menu");
-  const extra_menu = get_extra_menu(role);
+  const extra_menu = get_extra_menu(role, state, req);
   const authItems = isAuth
     ? [
         {
