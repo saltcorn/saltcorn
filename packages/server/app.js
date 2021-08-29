@@ -10,8 +10,6 @@ const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const CustomStrategy = require("passport-custom").Strategy;
 const BearerStrategy = require("passport-http-bearer");
-const session = require("express-session");
-const cookieSession = require("cookie-session");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const flash = require("connect-flash");
@@ -22,7 +20,12 @@ const {
   getConfig,
   available_languages,
 } = require("@saltcorn/data/models/config");
-const { setTenant, get_base_url, error_catcher } = require("./routes/utils.js");
+const {
+  setTenant,
+  get_base_url,
+  error_catcher,
+  getSessionStore,
+} = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
@@ -42,8 +45,8 @@ const i18n = new I18n({
 // todo console.log app instance info when app starts - avoid to show secrets (password, etc)
 const getApp = async (opts = {}) => {
   const app = express();
-  let sql_log= await getConfig("log_sql");
-  
+  let sql_log = await getConfig("log_sql");
+
   // switch on sql logging
   if (sql_log) db.set_sql_logging(); // dont override cli flag
   // load all plugins
@@ -85,44 +88,8 @@ const getApp = async (opts = {}) => {
   }
   //
   // todo ability to configure session_secret Age
-  if (getState().getConfig("cookie_sessions", false)) {
-    app.use(
-      cookieSession({
-        keys: [db.connectObj.session_secret || is.str.generate()],
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        sameSite: "strict",
-      })
-    );
-  } else if (db.isSQLite) {
-    // todo database specific
-    var SQLiteStore = require("connect-sqlite3")(session);
-    app.use(
-      session({
-        store: new SQLiteStore({ db: "sessions.sqlite" }),
-        secret: db.connectObj.session_secret || is.str.generate(),
-        resave: false,
-        saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
-      })
-    );
-  } else {
-    // todo database specific
-    const pgSession = require("connect-pg-simple")(session);
+  app.use(getSessionStore());
 
-    app.use(
-      session({
-        store: new pgSession({
-          schemaName: db.connectObj.default_schema,
-          pool: db.pool,
-          tableName: "_sc_session",
-        }),
-        secret: db.connectObj.session_secret || is.str.generate(),
-        resave: false,
-        saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
-      })
-    );
-  }
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());

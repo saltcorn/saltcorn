@@ -236,8 +236,21 @@ const submit_msg_ajax = async (
     part_user_field,
   ] = participant_field.split(".");
 
-  // TODO check we participate
   const parttable = Table.findOne({ name: part_table_name });
+  // check we participate
+
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +body.room_id,
+  });
+
+  if (!partRow)
+    return {
+      json: {
+        error: "Not participating",
+      },
+    };
+
   const parttable_fields = await parttable.getFields();
   const parttable_userfield_field = parttable_fields.find(
     (f) => f.name === part_user_field
@@ -251,7 +264,7 @@ const submit_msg_ajax = async (
   };
   await msgtable.tryInsertRow(row, req.user.id);
   const html = showMsg(msgstring, req, null, userlabel)(row);
-  getState().emitRoom(+body.room_id, html);
+  getState().emitRoom(viewname, +body.room_id, html);
   return {
     json: {
       success: "ok",
@@ -290,5 +303,6 @@ module.exports = {
 /*todo:
 
 2. auth
+3. tenants
 
 */
