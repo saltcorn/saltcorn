@@ -761,5 +761,11 @@
 	"This is a translation of a different field in a different language": "This is a translation of a different field in a different language",
 	"Language locale of translation": "Language locale of translation",
 	"Action not configurable": "Action not configurable",
-	"Event type which runs the trigger": "Event type which runs the trigger"
+	"Event type which runs the trigger": "Event type which runs the trigger",
+	"Message string field": "Message string field",
+	"The field for the message content on the table for messages": "The field for the message content on the table for messages",
+	"Participant field": "Participant field",
+	"The field for the sender user id on the table for messages": "The field for the sender user id on the table for messages",
+	"The field for the participant user id": "The field for the participant user id",
+	"Message sender field": "Message sender field"
 }

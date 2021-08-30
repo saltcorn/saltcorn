@@ -26,6 +26,12 @@ const {
 } = require("./load_plugins");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
+const socketio = require("socket.io");
+const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+const { setTenant, getSessionStore } = require("./routes/utils");
+const passport = require("passport");
+const { authenticate } = require("passport");
+const View = require("@saltcorn/data/models/view");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
@@ -57,6 +63,7 @@ const initMaster = async ({ disableMigrate }) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, disableMigrate);
   }
+  setupPrimary();
 };
 
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -156,7 +163,7 @@ module.exports = async ({
         if (masterState.listeningTo.size < useNCpus)
           setTimeout(initMasterListeners, 250);
       };
-      require("@saltcorn/greenlock-express")
+      require("greenlock-express")
         .init({
           packageRoot: __dirname,
           configDir: path.join(file_store, "greenlock.d"),
@@ -165,10 +172,11 @@ module.exports = async ({
           workers: useNCpus,
         })
         .ready((glx) => {
-          glx.serveApp(app, ({ secureServer }) => {
-            process.on("message", workerDispatchMsg);
-            secureServer.setTimeout(timeout * 1000);
-          });
+          const httpsServer = glx.httpsServer();
+          setupSocket(httpsServer);
+          httpsServer.setTimeout(timeout * 1000);
+          process.on("message", workerDispatchMsg);
+          glx.serveApp(app);
           process.send("Start");
         })
         .master(() => {
@@ -210,7 +218,7 @@ module.exports = async ({
       // todo timeout to config
       httpServer.setTimeout(timeout * 1000);
       httpsServer.setTimeout(timeout * 1000);
-
+      setupSocket(httpServer, httpsServer);
       httpServer.listen(port, () => {
         console.log("HTTP Server running on port 80");
       });
@@ -223,6 +231,8 @@ module.exports = async ({
       // server with http only
       const http = require("http");
       const httpServer = http.createServer(app);
+      setupSocket(httpServer);
+
       // todo timeout to config
       // todo refer in doc to httpserver doc
       // todo there can be added other parameters for httpserver
@@ -233,4 +243,35 @@ module.exports = async ({
     }
     process.send("Start");
   }
+};
+const setupSocket = (...servers) => {
+  // https://socket.io/docs/v4/middlewares/
+  const wrap = (middleware) => (socket, next) =>
+    middleware(socket.request, {}, next);
+
+  const io = new socketio.Server({ transports: ["websocket"] });
+  for (const server of servers) {
+    io.attach(server);
+  }
+
+  io.use(wrap(setTenant));
+  io.use(wrap(getSessionStore()));
+  io.use(wrap(passport.initialize()));
+  io.use(wrap(passport.session()));
+  io.adapter(createAdapter());
+  getState().setRoomEmitter((viewname, room_id, msg) => {
+    io.to(`${viewname}_${room_id}`).emit("message", msg);
+  });
+  io.on("connection", (socket) => {
+    socket.on("join_room", ([viewname, room_id]) => {
+      const view = View.findOne({ name: viewname });
+      if (view.viewtemplateObj.authorize_join) {
+        view.viewtemplateObj
+          .authorize_join(view.configuration, room_id, socket.request.user)
+          .then((authorized) => {
+            if (authorized) socket.join(`${viewname}_${room_id}`);
+          });
+      } else socket.join(`${viewname}_${room_id}`);
+    });
+  });
 };
