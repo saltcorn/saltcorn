@@ -767,5 +767,7 @@
 	"Participant field": "Participant field",
 	"The field for the sender user id on the table for messages": "The field for the sender user id on the table for messages",
 	"The field for the participant user id": "The field for the participant user id",
-	"Message sender field": "Message sender field"
+	"Message sender field": "Message sender field",
+	"Message view or string field": "Message view or string field",
+	"A view to show individual messages, or the field for the message content on the table for messages": "A view to show individual messages, or the field for the message content on the table for messages"
 }

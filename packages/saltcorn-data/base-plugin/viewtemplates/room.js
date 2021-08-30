@@ -194,21 +194,31 @@ const run = async (
 
   const msgtable = Table.findOne({ name: msgtable_name });
   const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
-  // 2. insert message form
-  return div(
-    div(
-      { class: `msglist-${state.id}` },
-      msgs.map(
-        showMsg(
-          msgstring,
-          req,
-          msgsender,
-          userlabel,
-          participants,
-          part_user_field
-        )
+
+  let msglist;
+
+  if (msgstring)
+    msglist = msgs.map(
+      showMsg(
+        msgstring,
+        req,
+        msgsender,
+        userlabel,
+        participants,
+        part_user_field
       )
-    ),
+    );
+  else {
+    const v = await View.findOne({ name: msgview });
+    const vresps = await v.runMany(
+      { [msgkey_to_room]: state.id },
+      { req, res }
+    );
+
+    msglist = vresps.map((r) => r.html).join("");
+  }
+  return div(
+    div({ class: `msglist-${state.id}` }, msglist),
     form(
       { class: `room-${state.id}`, action: "" },
       input({ autocomplete: "off", name: "message" }),
