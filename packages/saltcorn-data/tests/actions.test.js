@@ -168,8 +168,16 @@ describe("Events", () => {
         name: "FooHappened",
         hasChannel: false,
       },
+      {
+        name: "BarWasHere",
+        hasChannel: true,
+      },
     ]);
-    await getState().setConfig("event_log_settings", { FooHappened: true });
+    await getState().setConfig("event_log_settings", {
+      FooHappened: true,
+      BarWasHere: true,
+      BarWasHere_channel: "Baz",
+    });
     await getState().refresh_config();
   });
   it("should emit custom event", async () => {
@@ -178,6 +186,21 @@ describe("Events", () => {
     expect(evs.length).toBe(0);
     await sleep(100);
     const evs1 = await EventLog.find({ event_type: "FooHappened" });
+    expect(evs1.length).toBe(1);
+  });
+  it("should find with user", async () => {
+    const ev = await EventLog.findOne({ event_type: "FooHappened" });
+    const evlog_w_user = await EventLog.findOneWithUser(ev.id);
+    expect(evlog_w_user.event_type).toBe("FooHappened");
+  });
+  it("should emit custom event with channel", async () => {
+    await Trigger.emitEvent("BarWasHere");
+    await Trigger.emitEvent("BarWasHere", "Zap");
+    await Trigger.emitEvent("BarWasHere", "Baz");
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+    expect(evs.length).toBe(0);
+    await sleep(100);
+    const evs1 = await EventLog.find({ event_type: "BarWasHere" });
     expect(evs1.length).toBe(1);
   });
 });
