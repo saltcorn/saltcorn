@@ -10,6 +10,7 @@ const {
   resetActionCounter,
   sleep,
 } = require("./mocks");
+const EventLog = require("../models/eventlog");
 
 afterAll(db.close);
 
@@ -159,6 +160,25 @@ describe("Action", () => {
     await table.insertRow({ author: "NK Jemisin", pages: 901 });
   });
 });
+
+describe("Events", () => {
+  it("should add custom event", async () => {
+    await getState().setConfig("custom_events", [
+      {
+        name: "FooHappened",
+        hasChannel: false,
+      },
+    ]);
+    await getState().setConfig("event_log_settings", { FooHappened: true });
+    await getState().refresh_config();
+  });
+  it("should emit custom event", async () => {
+    await Trigger.emitEvent("FooHappened");
+    const evs = await EventLog.find({ event_type: "FooHappened" });
+    expect(evs.length).toBe(1);
+  });
+});
+
 describe("Scheduler", () => {
   it("should run and tick", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
