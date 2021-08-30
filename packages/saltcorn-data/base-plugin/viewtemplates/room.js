@@ -259,7 +259,12 @@ const submit_msg_ajax = async (
   body,
   { req, res }
 ) => {
-  const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(".");
+  const {
+    msgtable_name,
+    msgkey_to_room,
+    msgstring,
+    msgview,
+  } = parse_msgstring_field(msgstring_field);
   const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
     "."
   );
@@ -297,8 +302,15 @@ const submit_msg_ajax = async (
     [msgkey_to_room]: body.room_id,
     [msgsender]: req.user.id,
   };
-  await msgtable.tryInsertRow(row, req.user.id);
-  const html = showMsg(msgstring, req, null, userlabel)(row);
+  const msgid = await msgtable.tryInsertRow(row, req.user.id);
+
+  console.log({ row, msgid });
+  let html;
+  if (msgstring) html = showMsg(msgstring, req, null, userlabel)(row);
+  else {
+    const v = await View.findOne({ name: msgview });
+    html = await v.run({ id: msgid }, { req, res });
+  }
   getState().emitRoom(viewname, +body.room_id, html);
   return {
     json: {
@@ -337,7 +349,9 @@ module.exports = {
 };
 /*todo:
 
-msg view
+custom form
+msg view in ajax
+order
 try to add date to msg
 find_or_create_dm_room
 insert emits to room
