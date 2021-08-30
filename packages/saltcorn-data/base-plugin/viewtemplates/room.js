@@ -51,7 +51,7 @@ const configuration_workflow = (req) =>
           const msgsender_field_options = [];
           for (const { table, key_field } of child_relations) {
             const fields = await table.getFields();
-            fields.forEach((f) => {
+            for (const f of fields) {
               if (f.reftable_name === "users") {
                 participant_field_options.push(
                   `${table.name}.${key_field.name}.${f.name}`
@@ -59,22 +59,29 @@ const configuration_workflow = (req) =>
                 msgsender_field_options.push(
                   `${table.name}.${key_field.name}.${f.name}`
                 );
+
+                const views = await View.find_possible_links_to_table(table);
+                views.forEach((v) => {
+                  msgstring_field_options.push(
+                    `${table.name}.${key_field.name}:${v.name}`
+                  );
+                });
               }
               if (f.type && f.type.name === "String") {
                 msgstring_field_options.push(
                   `${table.name}.${key_field.name}.${f.name}`
                 );
               }
-            });
+            }
           }
           return new Form({
             fields: [
               {
                 name: "msgstring_field",
-                label: req.__("Message string field"),
+                label: req.__("Message view or string field"),
                 type: "String",
                 sublabel: req.__(
-                  "The field for the message content on the table for messages"
+                  "A view to show individual messages, or the field for the message content on the table for messages"
                 ),
                 required: true,
                 attributes: {
@@ -119,6 +126,19 @@ const get_state_fields = () => [
   },
 ];
 
+const parse_msgstring_field = (msgstring_field) => {
+  if (msgstring_field.includes(":")) {
+    const [pth, msgview] = msgstring_field.split(":");
+    const [msgtable_name, msgkey_to_room] = pth.split(".");
+    return { msgtable_name, msgkey_to_room, msgstring: false, msgview };
+  } else {
+    const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(
+      "."
+    );
+    return { msgtable_name, msgkey_to_room, msgstring, msgview: false };
+  }
+};
+
 const run = async (
   table_id,
   viewname,
@@ -139,7 +159,12 @@ const run = async (
       `View ${viewname} incorrectly configured: must supply Message string, Message sender and Participant fields`
     );
 
-  const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(".");
+  const {
+    msgtable_name,
+    msgkey_to_room,
+    msgstring,
+    msgview,
+  } = parse_msgstring_field(msgstring_field);
   const [
     part_table_name,
     part_key_to_room,
@@ -302,7 +327,9 @@ module.exports = {
 };
 /*todo:
 
-2. auth
-3. tenants
+msg view
+try to add date to msg
+find_or_create_dm_room
+insert emits to room
 
 */
