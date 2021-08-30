@@ -365,8 +365,11 @@ describe("relations", () => {
   it("get parent relations", async () => {
     const table = await Table.findOne({ name: "books" });
     const rels = await table.get_child_relations();
-    expect(rels.child_field_list).toEqual(["patients.favbook"]);
-    expect(rels.child_relations.length).toBe(1);
+    expect(rels.child_field_list).toEqual([
+      "discusses_books.book",
+      "patients.favbook",
+    ]);
+    expect(rels.child_relations.length).toBe(2);
   });
   it("get grandparent relations", async () => {
     const table = await Table.findOne({ name: "readings" });
