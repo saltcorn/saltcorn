@@ -47,8 +47,10 @@ const configuration_workflow = (req) =>
           const { child_relations } = await roomtable.get_child_relations();
           //const msg_table_options = child_relations.map(cr=>cr.table.name)
           const participant_field_options = [];
-          const msgstring_field_options = [];
-          const msgsender_field_options = [];
+          const msg_relation_options = [];
+          const msgsender_field_options = {};
+          const msgview_options = {};
+          const msgform_options = {};
           for (const { table, key_field } of child_relations) {
             const fields = await table.getFields();
             for (const f of fields) {
@@ -56,20 +58,22 @@ const configuration_workflow = (req) =>
                 participant_field_options.push(
                   `${table.name}.${key_field.name}.${f.name}`
                 );
-                msgsender_field_options.push(
-                  `${table.name}.${key_field.name}.${f.name}`
-                );
+
+                msg_relation_options.push(`${table.name}.${key_field.name}`);
+
+                msgsender_field_options[`${table.name}.${key_field.name}`] = [
+                  ...(msgsender_field_options[
+                    `${table.name}.${key_field.name}`
+                  ] || []),
+                  f.name,
+                ];
 
                 const views = await View.find_possible_links_to_table(table);
-                views.forEach((v) => {
-                  msgstring_field_options.push(
-                    `${table.name}.${key_field.name}:${v.name}`
-                  );
-                });
-              }
-              if (f.type && f.type.name === "String") {
-                msgstring_field_options.push(
-                  `${table.name}.${key_field.name}.${f.name}`
+                msgview_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v) => v.name
+                );
+                msgform_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v) => v.name
                 );
               }
             }
@@ -77,15 +81,15 @@ const configuration_workflow = (req) =>
           return new Form({
             fields: [
               {
-                name: "msgstring_field",
-                label: req.__("Message view or string field"),
+                name: "msg_relation",
+                label: req.__("Message relation"),
                 type: "String",
                 sublabel: req.__(
-                  "A view to show individual messages, or the field for the message content on the table for messages"
+                  "The relationship to the table of individual messages"
                 ),
                 required: true,
                 attributes: {
-                  options: msgstring_field_options,
+                  options: msg_relation_options,
                 },
               },
               {
@@ -97,7 +101,27 @@ const configuration_workflow = (req) =>
                 ),
                 required: true,
                 attributes: {
-                  options: msgsender_field_options,
+                  calcOptions: ["msg_relation", msgsender_field_options],
+                },
+              },
+              {
+                name: "msgview",
+                label: req.__("Message show view"),
+                type: "String",
+                sublabel: req.__("The view to show an individual message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgview_options],
+                },
+              },
+              {
+                name: "msgform",
+                label: req.__("New message form view"),
+                type: "String",
+                sublabel: req.__("The view to enter a new message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgform_options],
                 },
               },
               {
