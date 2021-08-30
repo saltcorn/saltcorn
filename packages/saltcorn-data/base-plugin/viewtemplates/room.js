@@ -166,7 +166,7 @@ const parse_msgstring_field = (msgstring_field) => {
 const run = async (
   table_id,
   viewname,
-  { participant_field, msgstring_field, msgsender_field },
+  { participant_field, msg_relation, msgsender_field, msgview, msgform },
   state,
   { req, res }
 ) => {
@@ -178,25 +178,18 @@ const run = async (
   const appState = getState();
   const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (!participant_field || !msgstring_field || !msgsender_field)
+  if (!participant_field || !msgview || !msgform || !msgsender_field)
     throw new InvalidConfiguration(
-      `View ${viewname} incorrectly configured: must supply Message string, Message sender and Participant fields`
+      `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
     );
 
-  const {
-    msgtable_name,
-    msgkey_to_room,
-    msgstring,
-    msgview,
-  } = parse_msgstring_field(msgstring_field);
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const [
     part_table_name,
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
-  const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
-    "."
-  );
+
   // check we participate
   const parttable = Table.findOne({ name: part_table_name });
   const parttable_fields = await parttable.getFields();
@@ -216,31 +209,11 @@ const run = async (
   const partRow = participants.find((p) => p[part_user_field] === +req.user.id);
   if (!partRow) return "You are not a participant in this room";
 
-  const msgtable = Table.findOne({ name: msgtable_name });
-  const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
+  const v = await View.findOne({ name: msgview });
+  const vresps = await v.runMany({ [msgkey_to_room]: state.id }, { req, res });
 
-  let msglist;
+  const msglist = vresps.map((r) => r.html).join("");
 
-  if (msgstring)
-    msglist = msgs.map(
-      showMsg(
-        msgstring,
-        req,
-        msgsender,
-        userlabel,
-        participants,
-        part_user_field
-      )
-    );
-  else {
-    const v = await View.findOne({ name: msgview });
-    const vresps = await v.runMany(
-      { [msgkey_to_room]: state.id },
-      { req, res }
-    );
-
-    msglist = vresps.map((r) => r.html).join("");
-  }
   return div(
     div({ class: `msglist-${state.id}` }, msglist),
     form(
