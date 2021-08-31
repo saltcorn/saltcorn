@@ -318,7 +318,7 @@ module.exports = {
 };
 /*todo:
 
-find_or_create_dm_room
+find_or_create_dm_room -dms only 
 insert row emits to room
 select order fields 
 

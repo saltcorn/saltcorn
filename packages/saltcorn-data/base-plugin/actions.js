@@ -176,7 +176,6 @@ module.exports = {
         )}" where "${part_key_to_room}" = r.id)`,
         [user.id, row.id]
       );
-      console.log(rows);
       if (rows.length > 0) {
         return { goto: `/view/${viewname}?id=${rows[0].id}` };
       } else {
