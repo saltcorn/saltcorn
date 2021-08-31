@@ -28,6 +28,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
+const { getForm, fill_presets } = require("./viewable_fields");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -47,38 +48,49 @@ const configuration_workflow = (req) =>
           const { child_relations } = await roomtable.get_child_relations();
           //const msg_table_options = child_relations.map(cr=>cr.table.name)
           const participant_field_options = [];
-          const msgstring_field_options = [];
-          const msgsender_field_options = [];
+          const msg_relation_options = [];
+          const msgsender_field_options = {};
+          const msgview_options = {};
+          const msgform_options = {};
           for (const { table, key_field } of child_relations) {
             const fields = await table.getFields();
-            fields.forEach((f) => {
+            for (const f of fields) {
               if (f.reftable_name === "users") {
                 participant_field_options.push(
                   `${table.name}.${key_field.name}.${f.name}`
                 );
-                msgsender_field_options.push(
-                  `${table.name}.${key_field.name}.${f.name}`
+
+                msg_relation_options.push(`${table.name}.${key_field.name}`);
+
+                msgsender_field_options[`${table.name}.${key_field.name}`] = [
+                  ...(msgsender_field_options[
+                    `${table.name}.${key_field.name}`
+                  ] || []),
+                  f.name,
+                ];
+
+                const views = await View.find_possible_links_to_table(table);
+                msgview_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v) => v.name
+                );
+                msgform_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v) => v.name
                 );
               }
-              if (f.type && f.type.name === "String") {
-                msgstring_field_options.push(
-                  `${table.name}.${key_field.name}.${f.name}`
-                );
-              }
-            });
+            }
           }
           return new Form({
             fields: [
               {
-                name: "msgstring_field",
-                label: req.__("Message string field"),
+                name: "msg_relation",
+                label: req.__("Message relation"),
                 type: "String",
                 sublabel: req.__(
-                  "The field for the message content on the table for messages"
+                  "The relationship to the table of individual messages"
                 ),
                 required: true,
                 attributes: {
-                  options: msgstring_field_options,
+                  options: msg_relation_options,
                 },
               },
               {
@@ -90,7 +102,27 @@ const configuration_workflow = (req) =>
                 ),
                 required: true,
                 attributes: {
-                  options: msgsender_field_options,
+                  calcOptions: ["msg_relation", msgsender_field_options],
+                },
+              },
+              {
+                name: "msgview",
+                label: req.__("Message show view"),
+                type: "String",
+                sublabel: req.__("The view to show an individual message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgview_options],
+                },
+              },
+              {
+                name: "msgform",
+                label: req.__("New message form view"),
+                type: "String",
+                sublabel: req.__("The view to enter a new message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgform_options],
                 },
               },
               {
@@ -122,7 +154,7 @@ const get_state_fields = () => [
 const run = async (
   table_id,
   viewname,
-  { participant_field, msgstring_field, msgsender_field },
+  { participant_field, msg_relation, msgsender_field, msgview, msgform },
   state,
   { req, res }
 ) => {
@@ -134,20 +166,18 @@ const run = async (
   const appState = getState();
   const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (!participant_field || !msgstring_field || !msgsender_field)
+  if (!participant_field || !msgview || !msgform || !msgsender_field)
     throw new InvalidConfiguration(
-      `View ${viewname} incorrectly configured: must supply Message string, Message sender and Participant fields`
+      `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
     );
 
-  const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(".");
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const [
     part_table_name,
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
-  const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
-    "."
-  );
+
   // check we participate
   const parttable = Table.findOne({ name: part_table_name });
   const parttable_fields = await parttable.getFields();
@@ -167,75 +197,46 @@ const run = async (
   const partRow = participants.find((p) => p[part_user_field] === +req.user.id);
   if (!partRow) return "You are not a participant in this room";
 
+  const v = await View.findOne({ name: msgview });
+  const vresps = await v.runMany(
+    { [msgkey_to_room]: state.id },
+    { req, res, orderBy: "id" }
+  );
+
+  const msglist = vresps.map((r) => r.html).join("");
+  const formview = await View.findOne({ name: msgform });
+  if (!formview)
+    throw new InvalidConfiguration("Message form view does not exist");
+  const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
-  const msgs = await msgtable.getRows({ [msgkey_to_room]: state.id });
-  // 2. insert message form
+
+  const form = await getForm(msgtable, viewname, columns, layout, null, req);
+
+  form.class = `room-${state.id}`;
+  form.hidden("room_id");
+  form.values = { room_id: state.id };
   return div(
-    div(
-      { class: `msglist-${state.id}` },
-      msgs.map(
-        showMsg(
-          msgstring,
-          req,
-          msgsender,
-          userlabel,
-          participants,
-          part_user_field
-        )
-      )
-    ),
-    form(
-      { class: `room-${state.id}`, action: "" },
-      input({ autocomplete: "off", name: "message" }),
-      button(i({ class: "far fa-paper-plane" }))
-    ),
+    div({ class: `msglist-${state.id}` }, msglist),
+    renderForm(form, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
   );
 };
 
-const showMsg = (
-  msgstring,
-  req,
-  msgsender,
-  userlabel,
-  participants,
-  part_user_field
-) => (msg) => {
-  if (participants && msgsender && part_user_field) {
-    const participant = participants.find(
-      (p) => p[part_user_field] === msg[msgsender]
-    );
-    return div(
-      participant ? participant[userlabel] : "?",
-      ": ",
-      msg[msgstring]
-    );
-  } else {
-    return div(req.user[userlabel], ": ", msg[msgstring]);
-  }
-};
-
 const submit_msg_ajax = async (
   table_id,
   viewname,
-  { participant_field, msgstring_field, msgsender_field },
+  { participant_field, msg_relation, msgsender_field, msgview, msgform },
   body,
   { req, res }
 ) => {
-  const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(".");
-  const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
-    "."
-  );
-  const msgtable = Table.findOne({ name: msgtable_name });
-
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const [
     part_table_name,
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
-
   const parttable = Table.findOne({ name: part_table_name });
   // check we participate
 
@@ -251,25 +252,39 @@ const submit_msg_ajax = async (
       },
     };
 
-  const parttable_fields = await parttable.getFields();
-  const parttable_userfield_field = parttable_fields.find(
-    (f) => f.name === part_user_field
-  );
-  const userlabel =
-    parttable_userfield_field.attributes.summary_field || "email";
-  const row = {
-    [msgstring]: body.message,
-    [msgkey_to_room]: body.room_id,
-    [msgsender]: req.user.id,
-  };
-  await msgtable.tryInsertRow(row, req.user.id);
-  const html = showMsg(msgstring, req, null, userlabel)(row);
-  getState().emitRoom(viewname, +body.room_id, html);
-  return {
-    json: {
-      success: "ok",
-    },
-  };
+  const formview = await View.findOne({ name: msgform });
+  if (!formview)
+    throw new InvalidConfiguration("Message form view does not exist");
+  const { columns, layout, fixed } = formview.configuration;
+  const msgtable = Table.findOne({ name: msgtable_name });
+
+  const form = await getForm(msgtable, viewname, columns, layout, null, req);
+  form.validate(req.body);
+  if (!form.hasErrors) {
+    const use_fixed = await fill_presets(msgtable, req, fixed);
+    const row = {
+      ...form.values,
+      ...use_fixed,
+      [msgkey_to_room]: body.room_id,
+      [msgsender_field]: req.user.id,
+    };
+    const msgid = await msgtable.tryInsertRow(row, req.user.id);
+
+    const v = await View.findOne({ name: msgview });
+    const html = await v.run({ id: msgid.success }, { req, res });
+    getState().emitRoom(viewname, +body.room_id, html);
+    return {
+      json: {
+        success: "ok",
+      },
+    };
+  } else {
+    return {
+      json: {
+        error: form.errors,
+      },
+    };
+  }
 };
 module.exports = {
   name: "Room",
@@ -279,6 +294,7 @@ module.exports = {
   get_state_fields,
   display_state_form: false,
   routes: { submit_msg_ajax },
+  noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
     const [
@@ -302,7 +318,8 @@ module.exports = {
 };
 /*todo:
 
-2. auth
-3. tenants
+find_or_create_dm_room -dms only 
+insert row emits to room
+select order fields 
 
 */
