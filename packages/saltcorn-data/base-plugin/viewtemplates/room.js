@@ -28,6 +28,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
+const { getForm } = require("./viewable_fields");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -213,14 +214,18 @@ const run = async (
   const vresps = await v.runMany({ [msgkey_to_room]: state.id }, { req, res });
 
   const msglist = vresps.map((r) => r.html).join("");
+  const formview = await View.findOne({ name: msgform });
+  if (!formview)
+    throw new InvalidConfiguration("Message form view does not exist");
+  const { columns, layout } = formview.configuration;
+  const msgtable = Table.findOne({ name: msgtable_name });
 
+  const form = await getForm(msgtable, viewname, columns, layout, null, req);
+
+  form.class = `room-${state.id}`;
   return div(
     div({ class: `msglist-${state.id}` }, msglist),
-    form(
-      { class: `room-${state.id}`, action: "" },
-      input({ autocomplete: "off", name: "message" }),
-      button(i({ class: "far fa-paper-plane" }))
-    ),
+    renderForm(form, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
