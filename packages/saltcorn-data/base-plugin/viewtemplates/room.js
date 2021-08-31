@@ -28,7 +28,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
-const { getForm } = require("./viewable_fields");
+const { getForm, fill_presets } = require("./viewable_fields");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -255,14 +255,16 @@ const submit_msg_ajax = async (
   const formview = await View.findOne({ name: msgform });
   if (!formview)
     throw new InvalidConfiguration("Message form view does not exist");
-  const { columns, layout } = formview.configuration;
+  const { columns, layout, fixed } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
 
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
   form.validate(req.body);
   if (!form.hasErrors) {
+    const use_fixed = await fill_presets(msgtable, req, fixed);
     const row = {
       ...form.values,
+      ...use_fixed,
       [msgkey_to_room]: body.room_id,
       [msgsender_field]: req.user.id,
     };

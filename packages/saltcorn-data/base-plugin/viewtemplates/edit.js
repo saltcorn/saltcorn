@@ -26,6 +26,7 @@ const {
 const {
   splitUniques,
   getForm,
+  fill_presets,
   parse_view_select,
 } = require("./viewable_fields");
 const {
@@ -398,24 +399,6 @@ const render = async ({
   });
   await transformForm({ form, table, req, row, res });
   return renderForm(form, req.csrfToken());
-};
-
-const fill_presets = async (table, req, fixed) => {
-  const fields = await table.getFields();
-  Object.keys(fixed || {}).forEach((k) => {
-    if (k.startsWith("preset_")) {
-      if (fixed[k]) {
-        const fldnm = k.replace("preset_", "");
-        const fld = fields.find((f) => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
-      }
-      delete fixed[k];
-    } else {
-      const fld = fields.find((f) => f.name === k);
-      if (!fld) delete fixed[k];
-    }
-  });
-  return fixed;
 };
 
 const runPost = async (

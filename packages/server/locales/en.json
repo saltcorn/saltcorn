@@ -769,5 +769,11 @@
 	"The field for the participant user id": "The field for the participant user id",
 	"Message sender field": "Message sender field",
 	"Message view or string field": "Message view or string field",
-	"A view to show individual messages, or the field for the message content on the table for messages": "A view to show individual messages, or the field for the message content on the table for messages"
+	"A view to show individual messages, or the field for the message content on the table for messages": "A view to show individual messages, or the field for the message content on the table for messages",
+	"Message relation": "Message relation",
+	"The relationship to the table of individual messages": "The relationship to the table of individual messages",
+	"Message show view": "Message show view",
+	"The view to show an individual message": "The view to show an individual message",
+	"New message form view": "New message form view",
+	"The view to enter a new message": "The view to enter a new message"
 }
