@@ -198,7 +198,10 @@ const run = async (
   if (!partRow) return "You are not a participant in this room";
 
   const v = await View.findOne({ name: msgview });
-  const vresps = await v.runMany({ [msgkey_to_room]: state.id }, { req, res });
+  const vresps = await v.runMany(
+    { [msgkey_to_room]: state.id },
+    { req, res, orderBy: "id" }
+  );
 
   const msglist = vresps.map((r) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
@@ -312,9 +315,7 @@ module.exports = {
 };
 /*todo:
 
-custom form
-msg view in ajax
-order
+select order fields 
 try to add date to msg
 find_or_create_dm_room
 insert emits to room
