@@ -505,6 +505,25 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
   if (id) form.hidden("id");
   return form;
 };
+
+const fill_presets = async (table, req, fixed) => {
+  const fields = await table.getFields();
+  Object.keys(fixed || {}).forEach((k) => {
+    if (k.startsWith("preset_")) {
+      if (fixed[k]) {
+        const fldnm = k.replace("preset_", "");
+        const fld = fields.find((f) => f.name === fldnm);
+        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+      }
+      delete fixed[k];
+    } else {
+      const fld = fields.find((f) => f.name === k);
+      if (!fld) delete fixed[k];
+    }
+  });
+  return fixed;
+};
+
 module.exports = {
   get_viewable_fields,
   action_url,
@@ -513,4 +532,5 @@ module.exports = {
   parse_view_select,
   splitUniques,
   getForm,
+  fill_presets,
 };

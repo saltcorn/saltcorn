@@ -29,7 +29,7 @@ class Trigger {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration || {};
-    this.min_role = !o.min_role? null : +o.min_role;
+    this.min_role = !o.min_role ? null : +o.min_role;
 
     contract.class(this);
   }
@@ -133,39 +133,41 @@ class Trigger {
 
   // Emit an event: run associated triggers
   static async emitEvent(eventType, channel, userPW = {}, payload) {
-    const { password, ...user } = userPW || {};
-    const { getState } = require("../db/state");
-    const findArgs = { when_trigger: eventType };
+    setTimeout(async () => {
+      const { password, ...user } = userPW || {};
+      const { getState } = require("../db/state");
+      const findArgs = { when_trigger: eventType };
 
-    let table;
-    if (["Insert", "Update", "Delete"].includes(channel)) {
-      const Table = require("./table");
-      table = await Table.findOne({ name: channel });
-      findArgs.table_id = table.id;
-    } else if (channel) findArgs.channel = channel;
+      let table;
+      if (["Insert", "Update", "Delete"].includes(channel)) {
+        const Table = require("./table");
+        table = await Table.findOne({ name: channel });
+        findArgs.table_id = table.id;
+      } else if (channel) findArgs.channel = channel;
 
-    const triggers = await Trigger.find(findArgs);
+      const triggers = await Trigger.find(findArgs);
 
-    for (const trigger of triggers) {
-      const action = getState().actions[trigger.action];
-      action &&
-        action.run &&
-        (await action.run({
-          table,
-          channel,
-          user,
-          configuration: trigger.configuration,
-          row: payload,
-          ...(payload || {}),
-        }));
-    }
-    EventLog.create({
-      event_type: eventType,
-      channel,
-      user_id: (userPW || {}).id || null,
-      payload,
-      occur_at: new Date(),
-    });
+      for (const trigger of triggers) {
+        const action = getState().actions[trigger.action];
+        action &&
+          action.run &&
+          (await action.run({
+            table,
+            channel,
+            user,
+            configuration: trigger.configuration,
+            row: payload,
+            ...(payload || {}),
+          }));
+      }
+      EventLog.create({
+        event_type: eventType,
+        channel,
+        user_id: (userPW || {}).id || null,
+        payload,
+        occur_at: new Date(),
+      });
+    }, 0);
   }
 
   /**

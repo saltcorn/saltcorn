@@ -522,3 +522,20 @@ function remove_outline(form) {
     .removeClass("btn-outline-primary")
     .addClass("btn-primary");
 }
+
+function init_room(viewname, room_id) {
+  const socket = io({ transports: ["websocket"] });
+  socket.emit("join_room", [viewname, room_id]);
+  socket.on("message", (msg) => {
+    $(`.msglist-${room_id}`).append(msg);
+  });
+
+  $(`form.room-${room_id}`).submit((e) => {
+    e.preventDefault();
+    var form_data = $(`form.room-${room_id}`).serialize();
+    view_post(viewname, "submit_msg_ajax", form_data, (vpres) => {
+      if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
+      $(`form.room-${room_id}`).trigger("reset");
+    });
+  });
+}

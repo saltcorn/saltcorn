@@ -155,6 +155,25 @@ module.exports = async () => {
     label: "Date",
     type: "Date",
   });
+  const disc_books = await Table.create("discusses_books", {
+    min_role_read: 4,
+  });
+  await Field.create({
+    table: disc_books,
+    name: "book",
+    label: "book",
+    type: "Key",
+    reftable: table,
+    required: false,
+  });
+  await Field.create({
+    table: disc_books,
+    name: "discussant",
+    label: "discussant",
+    type: "Key",
+    reftable_name: "users",
+    required: false,
+  });
   await db.insert("books", { author: "Herman Melville", pages: 967 });
   await db.insert("books", { author: "Leo Tolstoy", pages: 728 });
   const kirk_id = await db.insert("patients", {
@@ -170,7 +189,7 @@ module.exports = async () => {
     temperature: 37,
     patient_id: kirk_id,
     normalised: true,
-    date: new Date()
+    date: new Date(),
   });
   await db.insert("readings", {
     temperature: 39,

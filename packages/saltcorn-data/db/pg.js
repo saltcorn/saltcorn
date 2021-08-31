@@ -174,11 +174,16 @@ const insert = async (tbl, obj, opts = {}) => {
       valPosList.push(`$${valList.length}`);
     }
   });
-  const sql = `insert into "${schema}"."${sqlsanitize(
-    tbl
-  )}"(${fnameList}) values(${valPosList.join()}) returning ${
-    opts.noid ? "*" : opts.pk_name || "id"
-  }`;
+  const sql =
+    valPosList.length > 0
+      ? `insert into "${schema}"."${sqlsanitize(
+          tbl
+        )}"(${fnameList}) values(${valPosList.join()}) returning ${
+          opts.noid ? "*" : opts.pk_name || "id"
+        }`
+      : `insert into "${schema}"."${sqlsanitize(
+          tbl
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
   sql_log(sql, valList);
   const { rows } = await (opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -201,7 +206,7 @@ const update = async (tbl, obj, id, opts = {}) => {
   var valList = kvs.map(([k, v]) => v);
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
-  valList.push(id === "undefined"? obj[opts.pk_name||"id"]: id);
+  valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;

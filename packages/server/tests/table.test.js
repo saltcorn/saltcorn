@@ -33,9 +33,9 @@ describe("Table Endpoints", () => {
       .post("/table/")
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/5"));
+      .expect(toRedirect("/table/6"));
     await request(app)
-      .get("/table/5")
+      .get("/table/6")
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"));
     await request(app)
@@ -117,12 +117,11 @@ describe("Table Endpoints", () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes);
     const app = await getApp({ disableCsrf: true });
     await request(app)
-    .post(`/table`)
-    .set("Cookie", loginCookie)
-    .send("min_role_read=8&name=exttab&external=on")
-    .expect(toRedirect(`/table/exttab`));
-
-  })
+      .post(`/table`)
+      .set("Cookie", loginCookie)
+      .send("min_role_read=8&name=exttab&external=on")
+      .expect(toRedirect(`/table/exttab`));
+  });
   it("should download csv ", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -150,7 +149,7 @@ Pencil, 0.5,2, t`;
       .set("Cookie", loginCookie)
       .field("name", "expenses")
       .attach("file", Buffer.from(csv, "utf-8"))
-      .expect(toRedirect("/table/6"));
+      .expect(toRedirect("/table/7"));
   });
   it("should upload csv to existing table", async () => {
     const csv = `author,Pages
@@ -224,7 +223,7 @@ Gordon Kane, 217`;
       .get("/table/relationship-diagram")
       .set("Cookie", loginCookie)
       .expect(toInclude("Relationship diagram"));
-  })
+  });
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });

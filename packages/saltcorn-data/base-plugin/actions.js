@@ -21,6 +21,7 @@ const {
 } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
+const db = require("../db");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
@@ -131,6 +132,65 @@ module.exports = {
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
       });
+    },
+  },
+  find_or_create_dm_room: {
+    configFields: async () => {
+      const views = await View.find_all_views_where(
+        ({ viewrow }) => viewrow.viewtemplate === "Room"
+      );
+
+      const view_opts = views.map((v) => v.name);
+      return [
+        {
+          name: "viewname",
+          label: "Room view",
+          sublabel: "Select a view with the Room viewtemplate",
+          input_type: "select",
+          options: view_opts,
+        },
+      ];
+    },
+    run: async ({ row, table, configuration: { viewname }, user }) => {
+      const view = await View.findOne({ name: viewname });
+      const { participant_field } = view.configuration;
+      const [
+        part_table_name,
+        part_key_to_room,
+        part_user_field,
+      ] = participant_field.split(".");
+      const roomtable = Table.findOne({ id: view.table_id });
+      const parttable = Table.findOne({ name: part_table_name });
+
+      //find a room that has both participants
+      // select id from rooms r where uid1 in (select id from participants where...) and
+
+      const { rows } = await db.query(
+        `with my_rooms as (select "${part_key_to_room}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
+          part_table_name
+        )}" where ${part_user_field} = $1)          
+        select * from "${db.getTenantSchema()}"."${db.sqlsanitize(
+          roomtable.name
+        )}" r where r.id in (select "${part_key_to_room}" from my_rooms) and $2 in (select ${part_user_field} from "${db.getTenantSchema()}"."${db.sqlsanitize(
+          part_table_name
+        )}" where "${part_key_to_room}" = r.id)`,
+        [user.id, row.id]
+      );
+      if (rows.length > 0) {
+        return { goto: `/view/${viewname}?id=${rows[0].id}` };
+      } else {
+        //create room
+        const room_id = await roomtable.insertRow({});
+        await parttable.insertRow({
+          [part_user_field]: user.id,
+          [part_key_to_room]: room_id,
+        });
+        await parttable.insertRow({
+          [part_user_field]: row.id,
+          [part_key_to_room]: room_id,
+        });
+        return { goto: `/view/${viewname}?id=${room_id}` };
+      }
     },
   },
   send_email: {

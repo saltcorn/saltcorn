@@ -79,6 +79,7 @@ const auto_test_workflow = async (wf, initialCtx) => {
 };
 
 const auto_test_viewtemplate = async (vt) => {
+  if (vt.noAutoTest) return;
   const wf = vt.configuration_workflow({ __: (s) => s });
   is.class("Workflow")(wf);
   for (let index = 0; index < 10; index++) {

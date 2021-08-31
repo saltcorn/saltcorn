@@ -7,7 +7,8 @@ const {
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
 const { input } = require("@saltcorn/markup/tags");
-
+const session = require("express-session");
+const cookieSession = require("cookie-session");
 function loggedIn(req, res, next) {
   if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
     next();
@@ -105,6 +106,38 @@ const scan_for_page_title = (contents, viewname) => {
 
 const getGitRevision = () => db.connectObj.git_commit;
 
+const getSessionStore = () => {
+  if (getState().getConfig("cookie_sessions", false)) {
+    return cookieSession({
+      keys: [db.connectObj.session_secret || is.str.generate()],
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+  } else if (db.isSQLite) {
+    var SQLiteStore = require("connect-sqlite3")(session);
+    return session({
+      store: new SQLiteStore({ db: "sessions.sqlite" }),
+      secret: db.connectObj.session_secret || is.str.generate(),
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
+    });
+  } else {
+    const pgSession = require("connect-pg-simple")(session);
+    return session({
+      store: new pgSession({
+        schemaName: db.connectObj.default_schema,
+        pool: db.pool,
+        tableName: "_sc_session",
+      }),
+      secret: db.connectObj.session_secret || is.str.generate(),
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+    });
+  }
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -115,4 +148,5 @@ module.exports = {
   error_catcher,
   scan_for_page_title,
   getGitRevision,
+  getSessionStore,
 };

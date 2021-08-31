@@ -26,7 +26,7 @@ describe("plugin helper", () => {
   it("get child views", async () => {
     const books = await Table.findOne({ name: "books" });
     const x = await get_child_views(books, "foobar");
-    expect(x[0].views.map((v) => v.name)).toStrictEqual(["patientlist"]);
+    expect(x[1].views.map((v) => v.name)).toStrictEqual(["patientlist"]);
   });
 });
 
