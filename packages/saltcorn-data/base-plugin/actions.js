@@ -160,6 +160,8 @@ module.exports = {
         part_user_field,
       ] = participant_field.split(".");
       const roomtable = Table.findOne({ id: view.table_id });
+      const parttable = Table.findOne({ name: part_table_name });
+
       //find a room that has both participants
       // select id from rooms r where uid1 in (select id from participants where...) and
 
@@ -176,11 +178,19 @@ module.exports = {
       );
       console.log(rows);
       if (rows.length > 0) {
-        return { redirect_url: `/view/${viewname}?id=${rows[0].id}` };
+        return { goto: `/view/${viewname}?id=${rows[0].id}` };
       } else {
         //create room
-        const room = await roomtable.insertRow({});
-        console.log(room);
+        const room_id = await roomtable.insertRow({});
+        await parttable.insertRow({
+          [part_user_field]: user.id,
+          [part_key_to_room]: room_id,
+        });
+        await parttable.insertRow({
+          [part_user_field]: row.id,
+          [part_key_to_room]: room_id,
+        });
+        return { goto: `/view/${viewname}?id=${room_id}` };
       }
     },
   },
