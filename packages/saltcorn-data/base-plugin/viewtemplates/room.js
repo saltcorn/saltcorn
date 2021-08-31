@@ -294,6 +294,7 @@ module.exports = {
   get_state_fields,
   display_state_form: false,
   routes: { submit_msg_ajax },
+  noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
     const [
@@ -317,9 +318,8 @@ module.exports = {
 };
 /*todo:
 
-select order fields 
-try to add date to msg
 find_or_create_dm_room
-insert emits to room
+insert row emits to room
+select order fields 
 
 */
