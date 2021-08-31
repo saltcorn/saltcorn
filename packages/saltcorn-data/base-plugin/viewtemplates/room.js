@@ -151,19 +151,6 @@ const get_state_fields = () => [
   },
 ];
 
-const parse_msgstring_field = (msgstring_field) => {
-  if (msgstring_field.includes(":")) {
-    const [pth, msgview] = msgstring_field.split(":");
-    const [msgtable_name, msgkey_to_room] = pth.split(".");
-    return { msgtable_name, msgkey_to_room, msgstring: false, msgview };
-  } else {
-    const [msgtable_name, msgkey_to_room, msgstring] = msgstring_field.split(
-      "."
-    );
-    return { msgtable_name, msgkey_to_room, msgstring, msgview: false };
-  }
-};
-
 const run = async (
   table_id,
   viewname,
@@ -223,6 +210,8 @@ const run = async (
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
 
   form.class = `room-${state.id}`;
+  form.hidden("room_id");
+  form.values = { room_id: state.id };
   return div(
     div({ class: `msglist-${state.id}` }, msglist),
     renderForm(form, req.csrfToken()),
@@ -232,52 +221,19 @@ const run = async (
   );
 };
 
-const showMsg = (
-  msgstring,
-  req,
-  msgsender,
-  userlabel,
-  participants,
-  part_user_field
-) => (msg) => {
-  if (participants && msgsender && part_user_field) {
-    const participant = participants.find(
-      (p) => p[part_user_field] === msg[msgsender]
-    );
-    return div(
-      participant ? participant[userlabel] : "?",
-      ": ",
-      msg[msgstring]
-    );
-  } else {
-    return div(req.user[userlabel], ": ", msg[msgstring]);
-  }
-};
-
 const submit_msg_ajax = async (
   table_id,
   viewname,
-  { participant_field, msgstring_field, msgsender_field },
+  { participant_field, msg_relation, msgsender_field, msgview, msgform },
   body,
   { req, res }
 ) => {
-  const {
-    msgtable_name,
-    msgkey_to_room,
-    msgstring,
-    msgview,
-  } = parse_msgstring_field(msgstring_field);
-  const [msgtable_name1, msgkey_to_room1, msgsender] = msgsender_field.split(
-    "."
-  );
-  const msgtable = Table.findOne({ name: msgtable_name });
-
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const [
     part_table_name,
     part_key_to_room,
     part_user_field,
   ] = participant_field.split(".");
-
   const parttable = Table.findOne({ name: part_table_name });
   // check we participate
 
@@ -293,32 +249,37 @@ const submit_msg_ajax = async (
       },
     };
 
-  const parttable_fields = await parttable.getFields();
-  const parttable_userfield_field = parttable_fields.find(
-    (f) => f.name === part_user_field
-  );
-  const userlabel =
-    parttable_userfield_field.attributes.summary_field || "email";
-  const row = {
-    [msgstring]: body.message,
-    [msgkey_to_room]: body.room_id,
-    [msgsender]: req.user.id,
-  };
-  const msgid = await msgtable.tryInsertRow(row, req.user.id);
+  const formview = await View.findOne({ name: msgform });
+  if (!formview)
+    throw new InvalidConfiguration("Message form view does not exist");
+  const { columns, layout } = formview.configuration;
+  const msgtable = Table.findOne({ name: msgtable_name });
 
-  console.log({ row, msgid });
-  let html;
-  if (msgstring) html = showMsg(msgstring, req, null, userlabel)(row);
-  else {
+  const form = await getForm(msgtable, viewname, columns, layout, null, req);
+  form.validate(req.body);
+  if (!form.hasErrors) {
+    const row = {
+      ...form.values,
+      [msgkey_to_room]: body.room_id,
+      [msgsender_field]: req.user.id,
+    };
+    const msgid = await msgtable.tryInsertRow(row, req.user.id);
+
     const v = await View.findOne({ name: msgview });
-    html = await v.run({ id: msgid }, { req, res });
+    const html = await v.run({ id: msgid.success }, { req, res });
+    getState().emitRoom(viewname, +body.room_id, html);
+    return {
+      json: {
+        success: "ok",
+      },
+    };
+  } else {
+    return {
+      json: {
+        error: form.errors,
+      },
+    };
   }
-  getState().emitRoom(viewname, +body.room_id, html);
-  return {
-    json: {
-      success: "ok",
-    },
-  };
 };
 module.exports = {
   name: "Room",

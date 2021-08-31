@@ -530,19 +530,12 @@ function init_room(viewname, room_id) {
     $(`.msglist-${room_id}`).append(msg);
   });
 
-  const msginput = document.querySelector(
-    `form.room-${room_id} input[name=message]`
-  );
-
   $(`form.room-${room_id}`).submit((e) => {
     e.preventDefault();
-
-    if (msginput.value) {
-      const data = { message: msginput.value, room_id };
-      view_post(viewname, "submit_msg_ajax", data, (vpres) => {
-        if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
-        msginput.value = "";
-      });
-    }
+    var form_data = $(`form.room-${room_id}`).serialize();
+    view_post(viewname, "submit_msg_ajax", form_data, (vpres) => {
+      if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
+      $(`form.room-${room_id}`).trigger("reset");
+    });
   });
 }
