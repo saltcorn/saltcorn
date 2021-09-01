@@ -38,7 +38,10 @@ function transform_for_async(expression, statefuns) {
 }
 
 function get_expression_function(expression, fields) {
-  const args = `{${fields.map((f) => f.name).join()}}`;
+  const field_names = fields.map((f) => f.name);
+  const args = field_names.includes("user")
+    ? `{${field_names.join()}}`
+    : `{${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   return vm.runInNewContext(
     `(${args})=>(${expression})`,
@@ -46,7 +49,10 @@ function get_expression_function(expression, fields) {
   );
 }
 function get_async_expression_function(expression, fields, extraContext = {}) {
-  const args = `{${fields.map((f) => f.name).join()}}`;
+  const field_names = fields.map((f) => f.name);
+  const args = field_names.includes("user")
+    ? `{${field_names.join()}}`
+    : `{${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
@@ -55,6 +61,7 @@ function get_async_expression_function(expression, fields, extraContext = {}) {
     ...extraContext,
   });
 }
+
 function apply_calculated_fields(rows, fields) {
   let hasExprs = false;
   let transform = (x) => x;

@@ -406,7 +406,7 @@ const render = (
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       const f = get_expression_function(segment[key], fields);
-      segment[key] = f(row);
+      segment[key] = f(row, req.user);
     }
   };
   const layout = structuredClone(layout0);
