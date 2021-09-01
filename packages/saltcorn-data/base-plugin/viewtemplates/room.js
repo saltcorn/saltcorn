@@ -52,6 +52,9 @@ const configuration_workflow = (req) =>
           const msgsender_field_options = {};
           const msgview_options = {};
           const msgform_options = {};
+          const participant_max_read_options = [];
+          const msg_own_options = [];
+
           for (const { table, key_field } of child_relations) {
             const fields = await table.getFields();
             for (const f of fields) {
@@ -75,6 +78,10 @@ const configuration_workflow = (req) =>
                 );
                 msgform_options[`${table.name}.${key_field.name}`] = views.map(
                   (v) => v.name
+                );
+              } else if (f.reftable_name) {
+                participant_max_read_options.push(
+                  `${table.name}.${key_field.name}.${f.name}`
                 );
               }
             }
@@ -135,6 +142,17 @@ const configuration_workflow = (req) =>
                   options: participant_field_options,
                 },
               },
+              {
+                name: "participant_maxread_field",
+                label: req.__("Participant max read id field"),
+                type: "String",
+                sublabel: req.__(
+                  "The field for the participant's last read message, of type Key to message table"
+                ),
+                attributes: {
+                  options: participant_max_read_options,
+                },
+              },
             ],
           });
         },
@@ -154,7 +172,14 @@ const get_state_fields = () => [
 const run = async (
   table_id,
   viewname,
-  { participant_field, msg_relation, msgsender_field, msgview, msgform },
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  },
   state,
   { req, res }
 ) => {
@@ -209,7 +234,16 @@ const run = async (
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
-
+  if (participant_maxread_field) {
+    const max_read_id = Math.max.apply(
+      Math,
+      vresps.map((r) => r.row.id)
+    );
+    await parttable.updateRow(
+      { [participant_maxread_field]: max_read_id },
+      partRow.id
+    );
+  }
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
 
   form.class = `room-${state.id}`;
@@ -318,7 +352,9 @@ module.exports = {
 };
 /*todo:
 
+read_max_id field
 find_or_create_dm_room -dms only 
+mark own calculated field as true/false
 insert row emits to room
 select order fields 
 
