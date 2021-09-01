@@ -205,21 +205,10 @@ const run = async (
 
   // check we participate
   const parttable = Table.findOne({ name: part_table_name });
-  const parttable_fields = await parttable.getFields();
-  const parttable_userfield_field = parttable_fields.find(
-    (f) => f.name === part_user_field
-  );
-  const userlabel =
-    parttable_userfield_field.attributes.summary_field || "email";
-  const participants = await parttable.getJoinedRows({
-    where: {
-      [part_key_to_room]: state.id,
-    },
-    joinFields: {
-      [userlabel]: { ref: part_user_field, target: userlabel },
-    },
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +state.id,
   });
-  const partRow = participants.find((p) => p[part_user_field] === +req.user.id);
   if (!partRow) return "You are not a participant in this room";
 
   const v = await View.findOne({ name: msgview });
@@ -234,6 +223,7 @@ const run = async (
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
+
   if (participant_maxread_field) {
     const max_read_id = Math.max.apply(
       Math,
@@ -261,7 +251,14 @@ const run = async (
 const submit_msg_ajax = async (
   table_id,
   viewname,
-  { participant_field, msg_relation, msgsender_field, msgview, msgform },
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  },
   body,
   { req, res }
 ) => {
@@ -303,7 +300,12 @@ const submit_msg_ajax = async (
       [msgsender_field]: req.user.id,
     };
     const msgid = await msgtable.tryInsertRow(row, req.user.id);
-
+    if (participant_maxread_field) {
+      await parttable.updateRow(
+        { [participant_maxread_field]: msgid.success },
+        partRow.id
+      );
+    }
     const v = await View.findOne({ name: msgview });
     const html = await v.run({ id: msgid.success }, { req, res });
     getState().emitRoom(viewname, +body.room_id, html);
@@ -352,7 +354,7 @@ module.exports = {
 };
 /*todo:
 
-read_max_id field
+max read id: what about rtc received msgs 
 find_or_create_dm_room -dms only 
 mark own calculated field as true/false
 insert row emits to room
