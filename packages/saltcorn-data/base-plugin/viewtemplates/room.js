@@ -240,7 +240,7 @@ const run = async (
   form.hidden("room_id");
   form.values = { room_id: state.id };
   return div(
-    div({ class: `msglist-${state.id}` }, msglist),
+    div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
     renderForm(form, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
@@ -313,7 +313,7 @@ const submit_msg_ajax = async (
 
     getState().emitRoom(viewname, +body.room_id, {
       append: theirhtml,
-      user_id: req.user.id,
+      not_for_user_id: req.user.id,
     });
     return {
       json: {
