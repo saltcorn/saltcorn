@@ -225,12 +225,17 @@ const run = async (
   const msgtable = Table.findOne({ name: msgtable_name });
 
   if (participant_maxread_field) {
+    const [
+      part_table_name1,
+      part_key_to_room1,
+      part_maxread_field,
+    ] = participant_maxread_field.split(".");
     const max_read_id = Math.max.apply(
       Math,
       vresps.map((r) => r.row.id)
     );
     await parttable.updateRow(
-      { [participant_maxread_field]: max_read_id },
+      { [part_maxread_field]: max_read_id },
       partRow.id
     );
   }
@@ -246,6 +251,54 @@ const run = async (
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
   );
+};
+
+const ack_read = async (
+  table_id,
+  viewname,
+  { participant_field, participant_maxread_field },
+  body,
+  { req, res }
+) => {
+  if (!participant_maxread_field)
+    return {
+      json: {
+        success: "ok",
+      },
+    };
+
+  const [
+    part_table_name,
+    part_key_to_room,
+    part_user_field,
+  ] = participant_field.split(".");
+  const [
+    part_table_name1,
+    part_key_to_room1,
+    part_maxread_field,
+  ] = participant_maxread_field.split(".");
+
+  const parttable = Table.findOne({ name: part_table_name });
+  // check we participate
+
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +body.room_id,
+  });
+
+  if (!partRow)
+    return {
+      json: {
+        error: "Not participating",
+      },
+    };
+
+  await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
+  return {
+    json: {
+      success: "ok",
+    },
+  };
 };
 
 const submit_msg_ajax = async (
@@ -301,8 +354,13 @@ const submit_msg_ajax = async (
     };
     const msgid = await msgtable.tryInsertRow(row, req.user.id);
     if (participant_maxread_field) {
+      const [
+        part_table_name1,
+        part_key_to_room1,
+        part_maxread_field,
+      ] = participant_maxread_field.split(".");
       await parttable.updateRow(
-        { [participant_maxread_field]: msgid.success },
+        { [part_maxread_field]: msgid.success },
         partRow.id
       );
     }
@@ -314,6 +372,7 @@ const submit_msg_ajax = async (
     getState().emitRoom(viewname, +body.room_id, {
       append: theirhtml,
       not_for_user_id: req.user.id,
+      pls_ack_msg_id: msgid.success,
     });
     return {
       json: {
@@ -336,7 +395,7 @@ module.exports = {
   run,
   get_state_fields,
   display_state_form: false,
-  routes: { submit_msg_ajax },
+  routes: { submit_msg_ajax, ack_read },
   noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
@@ -361,10 +420,6 @@ module.exports = {
 };
 /*todo:
 
-own vs theirs - wont work as same html to all
--return html in ajax
--exclude socket msg with user id 
-max read id: what about rtc received msgs 
 find_or_create_dm_room -dms only 
 insert row emits to room
 select order fields -NO
