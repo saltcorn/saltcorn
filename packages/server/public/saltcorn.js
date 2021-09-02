@@ -527,7 +527,7 @@ function init_room(viewname, room_id) {
   const socket = io({ transports: ["websocket"] });
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
-    $(`.msglist-${room_id}`).append(msg);
+    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
   });
 
   $(`form.room-${room_id}`).submit((e) => {

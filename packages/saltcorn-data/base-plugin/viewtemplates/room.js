@@ -307,11 +307,18 @@ const submit_msg_ajax = async (
       );
     }
     const v = await View.findOne({ name: msgview });
-    const html = await v.run({ id: msgid.success }, { req, res });
-    getState().emitRoom(viewname, +body.room_id, html);
+    const myhtml = await v.run({ id: msgid.success }, { req, res });
+    const newreq = { ...req, user: { ...req.user, id: 0 } };
+    const theirhtml = await v.run({ id: msgid.success }, { req: newreq, res });
+
+    getState().emitRoom(viewname, +body.room_id, {
+      append: theirhtml,
+      user_id: req.user.id,
+    });
     return {
       json: {
         success: "ok",
+        append: myhtml,
       },
     };
   } else {
@@ -354,10 +361,12 @@ module.exports = {
 };
 /*todo:
 
+own vs theirs - wont work as same html to all
+-return html in ajax
+-exclude socket msg with user id 
 max read id: what about rtc received msgs 
 find_or_create_dm_room -dms only 
-mark own calculated field as true/false
 insert row emits to room
-select order fields 
+select order fields -NO
 
 */
