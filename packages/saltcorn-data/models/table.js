@@ -475,7 +475,7 @@ class Table {
         _userid,
         _time: new Date(),
       });
-    await Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v });
+    Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v });
     return id;
   }
 
