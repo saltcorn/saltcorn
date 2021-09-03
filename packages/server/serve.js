@@ -249,7 +249,10 @@ const setupSocket = (...servers) => {
   const wrap = (middleware) => (socket, next) =>
     middleware(socket.request, {}, next);
 
-  const io = new socketio.Server({ transports: ["websocket"] });
+  const io = new socketio.Server({
+    transports: ["websocket"],
+    rejectUnauthorized: false,
+  });
   for (const server of servers) {
     io.attach(server);
   }
