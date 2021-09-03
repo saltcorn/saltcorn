@@ -476,7 +476,7 @@ const getState = contract(
   }
 );
 // list of all tenants
-var tenants = {};
+var tenants = { public: singleton };
 // list of tenants with other domains
 const otherdomaintenants = {};
 /**
