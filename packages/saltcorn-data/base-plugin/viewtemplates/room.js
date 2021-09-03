@@ -439,7 +439,10 @@ module.exports = {
 
           const html = await v.run(
             { id: row.id },
-            { req: { user: { id: 0 }, __: (s) => s }, res: {} }
+            {
+              req: { getLocale: () => "en", user: { id: 0 }, __: (s) => s },
+              res: {},
+            }
           );
 
           getState().emitRoom(viewname, row[msgkey_to_room], {

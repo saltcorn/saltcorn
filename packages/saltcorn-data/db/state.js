@@ -148,8 +148,9 @@ class State {
     for (const view of this.views) {
       if (view.viewtemplateObj && view.viewtemplateObj.virtual_triggers) {
         const trs = await view.viewtemplateObj.virtual_triggers(
-          view.name,
           view.table_id,
+          view.name,
+
           view.configuration
         );
         this.virtual_triggers.push(...trs);
