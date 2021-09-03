@@ -398,8 +398,6 @@ module.exports = {
   routes: { submit_msg_ajax, ack_read },
   noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
-    console.log("AUTH JOIN", user);
-    //return true;
     if (!user) return false;
     const [
       part_table_name,
@@ -413,7 +411,6 @@ module.exports = {
       [part_user_field]: user.id,
       [part_key_to_room]: room_id,
     });
-    console.log({ partRow });
     return !!partRow;
   },
   virtual_triggers(

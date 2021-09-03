@@ -524,11 +524,9 @@ function remove_outline(form) {
 }
 
 function init_room(viewname, room_id) {
-  console.log("init room", viewname, room_id);
   const socket = io({ transports: ["websocket"] });
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
-    console.log({ msg });
     if (msg.not_for_user_id) {
       const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
       if (+my_user_id === +msg.not_for_user_id) return;
