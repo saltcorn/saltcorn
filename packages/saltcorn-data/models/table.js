@@ -475,7 +475,10 @@ class Table {
         _userid,
         _time: new Date(),
       });
-    await Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v });
+    setTimeout(
+      () => Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v }),
+      0
+    );
     return id;
   }
 
