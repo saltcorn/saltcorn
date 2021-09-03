@@ -36,6 +36,7 @@ describe("Action", () => {
     });
     expect(getActionCounter()).toBe(0);
     await table.insertRow({ name: "Don Fabrizio" });
+    await sleep(10);
     expect(getActionCounter()).toBe(1);
     const trigger1 = await Trigger.findOne({ id: trigger.id });
     expect(!!trigger1).toBe(true);
@@ -91,8 +92,9 @@ describe("Action", () => {
     });
     await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
     const patients = await Table.findOne({ name: "patients" });
-
+    await sleep(10);
     const rows = await patients.getRows({ name: "TriggeredInsert" });
+
     expect(rows.length).toBe(1);
   });
   it("should run webhook", async () => {
