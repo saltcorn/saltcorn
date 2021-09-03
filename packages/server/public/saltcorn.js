@@ -525,6 +525,9 @@ function remove_outline(form) {
 
 function init_room(viewname, room_id) {
   const socket = io({ transports: ["websocket"] });
+  socket.on("connect_error", (err) => {
+    console.log(`connect_error due to ${err.message}`);
+  });
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
     if (msg.not_for_user_id) {
