@@ -413,9 +413,45 @@ module.exports = {
     });
     return !!partRow;
   },
-  getStringsForI18n({ create_view_label }) {
-    if (create_view_label) return [create_view_label];
-    else return [];
+  virtual_triggers(
+    table_id,
+    viewname,
+    {
+      participant_field,
+      msg_relation,
+      msgsender_field,
+      msgview,
+      msgform,
+      participant_maxread_field,
+    }
+  ) {
+    const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+    const msgtable = Table.findOne({ name: msgtable_name });
+
+    return [
+      {
+        when_trigger: "Insert",
+        table_id: msgtable.id,
+        run: async (row) => {
+          console.log({ row });
+          if (row[msgsender_field]) return; // TODO how else to avoid double emit
+          const v = await View.findOne({ name: msgview });
+
+          const html = await v.run(
+            { id: row.id },
+            { req: { user: { id: 0 }, __: (s) => s }, res: {} }
+          );
+
+          getState().emitRoom(viewname, row[msgkey_to_room], {
+            append: html,
+            pls_ack_msg_id: row.id,
+          });
+        },
+      },
+    ];
+  },
+  getStringsForI18n() {
+    return [];
   },
 };
 /*todo:

@@ -231,7 +231,10 @@ class Trigger {
           ...row,
         });
     }
-    return triggers;
+    const virtual_triggers = getState().virtual_triggers.filter(
+      (tr) => when_trigger === tr.when_trigger && tr.table_id == table.id
+    );
+    return [...triggers, ...virtual_triggers];
   }
 
   /**
@@ -291,9 +294,7 @@ Trigger.contract = {
     ),
     getTableTriggers: is.fun(
       [is.str, is.class("Table")],
-      is.promise(
-        is.array(is.obj({ action: is.str, run: is.fun(is.obj({}), is.any) }))
-      )
+      is.promise(is.array(is.obj({ run: is.fun(is.obj({}), is.any) })))
     ),
   },
 };
