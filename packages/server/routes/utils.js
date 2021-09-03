@@ -72,7 +72,6 @@ const setTenant = (req, res, next) => {
       }
     } else {
       const ten = get_tenant_from_req(req);
-      console.log("setTenant", ten, req.subdomains);
       const state = getTenant(ten);
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
