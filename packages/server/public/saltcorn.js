@@ -527,7 +527,13 @@ function init_room(viewname, room_id) {
   const socket = io({ transports: ["websocket"] });
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
-    $(`.msglist-${room_id}`).append(msg);
+    if (msg.not_for_user_id) {
+      const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
+      if (+my_user_id === +msg.not_for_user_id) return;
+    }
+    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
+    if (msg.pls_ack_msg_id)
+      view_post(viewname, "ack_read", { room_id, id: msg.pls_ack_msg_id });
   });
 
   $(`form.room-${room_id}`).submit((e) => {

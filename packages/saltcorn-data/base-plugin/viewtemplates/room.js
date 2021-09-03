@@ -52,6 +52,9 @@ const configuration_workflow = (req) =>
           const msgsender_field_options = {};
           const msgview_options = {};
           const msgform_options = {};
+          const participant_max_read_options = [];
+          const msg_own_options = [];
+
           for (const { table, key_field } of child_relations) {
             const fields = await table.getFields();
             for (const f of fields) {
@@ -75,6 +78,10 @@ const configuration_workflow = (req) =>
                 );
                 msgform_options[`${table.name}.${key_field.name}`] = views.map(
                   (v) => v.name
+                );
+              } else if (f.reftable_name) {
+                participant_max_read_options.push(
+                  `${table.name}.${key_field.name}.${f.name}`
                 );
               }
             }
@@ -135,6 +142,17 @@ const configuration_workflow = (req) =>
                   options: participant_field_options,
                 },
               },
+              {
+                name: "participant_maxread_field",
+                label: req.__("Participant max read id field"),
+                type: "String",
+                sublabel: req.__(
+                  "The field for the participant's last read message, of type Key to message table"
+                ),
+                attributes: {
+                  options: participant_max_read_options,
+                },
+              },
             ],
           });
         },
@@ -154,7 +172,14 @@ const get_state_fields = () => [
 const run = async (
   table_id,
   viewname,
-  { participant_field, msg_relation, msgsender_field, msgview, msgform },
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  },
   state,
   { req, res }
 ) => {
@@ -180,21 +205,10 @@ const run = async (
 
   // check we participate
   const parttable = Table.findOne({ name: part_table_name });
-  const parttable_fields = await parttable.getFields();
-  const parttable_userfield_field = parttable_fields.find(
-    (f) => f.name === part_user_field
-  );
-  const userlabel =
-    parttable_userfield_field.attributes.summary_field || "email";
-  const participants = await parttable.getJoinedRows({
-    where: {
-      [part_key_to_room]: state.id,
-    },
-    joinFields: {
-      [userlabel]: { ref: part_user_field, target: userlabel },
-    },
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +state.id,
   });
-  const partRow = participants.find((p) => p[part_user_field] === +req.user.id);
   if (!partRow) return "You are not a participant in this room";
 
   const v = await View.findOne({ name: msgview });
@@ -210,13 +224,28 @@ const run = async (
   const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
 
+  if (participant_maxread_field) {
+    const [
+      part_table_name1,
+      part_key_to_room1,
+      part_maxread_field,
+    ] = participant_maxread_field.split(".");
+    const max_read_id = Math.max.apply(
+      Math,
+      vresps.map((r) => r.row.id)
+    );
+    await parttable.updateRow(
+      { [part_maxread_field]: max_read_id },
+      partRow.id
+    );
+  }
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
 
   form.class = `room-${state.id}`;
   form.hidden("room_id");
   form.values = { room_id: state.id };
   return div(
-    div({ class: `msglist-${state.id}` }, msglist),
+    div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
     renderForm(form, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
@@ -224,10 +253,65 @@ const run = async (
   );
 };
 
+const ack_read = async (
+  table_id,
+  viewname,
+  { participant_field, participant_maxread_field },
+  body,
+  { req, res }
+) => {
+  if (!participant_maxread_field)
+    return {
+      json: {
+        success: "ok",
+      },
+    };
+
+  const [
+    part_table_name,
+    part_key_to_room,
+    part_user_field,
+  ] = participant_field.split(".");
+  const [
+    part_table_name1,
+    part_key_to_room1,
+    part_maxread_field,
+  ] = participant_maxread_field.split(".");
+
+  const parttable = Table.findOne({ name: part_table_name });
+  // check we participate
+
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +body.room_id,
+  });
+
+  if (!partRow)
+    return {
+      json: {
+        error: "Not participating",
+      },
+    };
+
+  await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
+  return {
+    json: {
+      success: "ok",
+    },
+  };
+};
+
 const submit_msg_ajax = async (
   table_id,
   viewname,
-  { participant_field, msg_relation, msgsender_field, msgview, msgform },
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  },
   body,
   { req, res }
 ) => {
@@ -269,13 +353,31 @@ const submit_msg_ajax = async (
       [msgsender_field]: req.user.id,
     };
     const msgid = await msgtable.tryInsertRow(row, req.user.id);
-
+    if (participant_maxread_field) {
+      const [
+        part_table_name1,
+        part_key_to_room1,
+        part_maxread_field,
+      ] = participant_maxread_field.split(".");
+      await parttable.updateRow(
+        { [part_maxread_field]: msgid.success },
+        partRow.id
+      );
+    }
     const v = await View.findOne({ name: msgview });
-    const html = await v.run({ id: msgid.success }, { req, res });
-    getState().emitRoom(viewname, +body.room_id, html);
+    const myhtml = await v.run({ id: msgid.success }, { req, res });
+    const newreq = { ...req, user: { ...req.user, id: 0 } };
+    const theirhtml = await v.run({ id: msgid.success }, { req: newreq, res });
+
+    getState().emitRoom(viewname, +body.room_id, {
+      append: theirhtml,
+      not_for_user_id: req.user.id,
+      pls_ack_msg_id: msgid.success,
+    });
     return {
       json: {
         success: "ok",
+        append: myhtml,
       },
     };
   } else {
@@ -293,7 +395,7 @@ module.exports = {
   run,
   get_state_fields,
   display_state_form: false,
-  routes: { submit_msg_ajax },
+  routes: { submit_msg_ajax, ack_read },
   noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
@@ -311,15 +413,54 @@ module.exports = {
     });
     return !!partRow;
   },
-  getStringsForI18n({ create_view_label }) {
-    if (create_view_label) return [create_view_label];
-    else return [];
+  virtual_triggers(
+    table_id,
+    viewname,
+    {
+      participant_field,
+      msg_relation,
+      msgsender_field,
+      msgview,
+      msgform,
+      participant_maxread_field,
+    }
+  ) {
+    const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+    const msgtable = Table.findOne({ name: msgtable_name });
+
+    return [
+      {
+        when_trigger: "Insert",
+        table_id: msgtable.id,
+        run: async (row) => {
+          console.log({ row });
+          if (row[msgsender_field]) return; // TODO how else to avoid double emit
+          const v = await View.findOne({ name: msgview });
+
+          const html = await v.run(
+            { id: row.id },
+            {
+              req: { getLocale: () => "en", user: { id: 0 }, __: (s) => s },
+              res: {},
+            }
+          );
+
+          getState().emitRoom(viewname, row[msgkey_to_room], {
+            append: html,
+            pls_ack_msg_id: row.id,
+          });
+        },
+      },
+    ];
+  },
+  getStringsForI18n() {
+    return [];
   },
 };
 /*todo:
 
 find_or_create_dm_room -dms only 
 insert row emits to room
-select order fields 
+select order fields -NO
 
 */

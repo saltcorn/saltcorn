@@ -775,5 +775,7 @@
 	"Message show view": "Message show view",
 	"The view to show an individual message": "The view to show an individual message",
 	"New message form view": "New message form view",
-	"The view to enter a new message": "The view to enter a new message"
+	"The view to enter a new message": "The view to enter a new message",
+	"Participant max read id field": "Participant max read id field",
+	"The field for the participant's last read message, of type Key to message table": "The field for the participant's last read message, of type Key to message table"
 }

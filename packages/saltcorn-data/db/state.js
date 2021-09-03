@@ -42,6 +42,7 @@ class State {
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
+    this.virtual_triggers = [];
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
@@ -143,6 +144,18 @@ class State {
    */
   async refresh_views(noSignal) {
     this.views = await View.find();
+    this.virtual_triggers = [];
+    for (const view of this.views) {
+      if (view.viewtemplateObj && view.viewtemplateObj.virtual_triggers) {
+        const trs = await view.viewtemplateObj.virtual_triggers(
+          view.table_id,
+          view.name,
+
+          view.configuration
+        );
+        this.virtual_triggers.push(...trs);
+      }
+    }
     if (!noSignal)
       process.send({ refresh: "views", tenant: db.getTenantSchema() });
   }
