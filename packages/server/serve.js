@@ -263,13 +263,22 @@ const setupSocket = (...servers) => {
     io.to(`${viewname}_${room_id}`).emit("message", msg);
   });
   io.on("connection", (socket) => {
+    console.log("connect");
     socket.on("join_room", ([viewname, room_id]) => {
+      console.log("join room", viewname, room_id);
+
       const view = View.findOne({ name: viewname });
+      console.log({ view });
+
       if (view.viewtemplateObj.authorize_join) {
         view.viewtemplateObj
           .authorize_join(view.configuration, room_id, socket.request.user)
           .then((authorized) => {
-            if (authorized) socket.join(`${viewname}_${room_id}`);
+            if (authorized) {
+              console.log("auth to join room", viewname, room_id);
+              socket.join(`${viewname}_${room_id}`);
+              socket.emit("message", { ack_join: true });
+            }
           });
       } else socket.join(`${viewname}_${room_id}`);
     });
