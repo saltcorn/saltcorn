@@ -214,8 +214,9 @@ const run = async (
   const v = await View.findOne({ name: msgview });
   const vresps = await v.runMany(
     { [msgkey_to_room]: state.id },
-    { req, res, orderBy: "id" }
+    { req, res, orderBy: "id", orderDesc: true, limit: 10 }
   );
+  vresps.reverse();
 
   const msglist = vresps.map((r) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
@@ -459,8 +460,8 @@ module.exports = {
 };
 /*todo:
 
+limit to at n most recent posts. 
+fetch older with ajax on demand
 find_or_create_dm_room -dms only 
-insert row emits to room
-select order fields -NO
 
 */
