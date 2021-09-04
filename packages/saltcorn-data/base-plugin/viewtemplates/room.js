@@ -187,7 +187,7 @@ const run = async (
   const fields = await table.getFields();
   readState(state, fields);
   if (!state.id) return "Need room id";
-
+  const limit = 10;
   const appState = getState();
   const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
@@ -214,9 +214,10 @@ const run = async (
   const v = await View.findOne({ name: msgview });
   const vresps = await v.runMany(
     { [msgkey_to_room]: state.id },
-    { req, res, orderBy: "id", orderDesc: true, limit: 10 }
+    { req, res, orderBy: "id", orderDesc: true, limit }
   );
   vresps.reverse();
+  const n_retrieved = vresps.length;
 
   const msglist = vresps.map((r) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
@@ -224,7 +225,10 @@ const run = async (
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name });
-
+  const min_read_id = Math.min.apply(
+    Math,
+    vresps.map((r) => r.row.id)
+  );
   if (participant_maxread_field) {
     const [
       part_table_name1,
@@ -246,6 +250,11 @@ const run = async (
   form.hidden("room_id");
   form.values = { room_id: state.id };
   return div(
+    n_retrieved < limit &&
+      button(
+        { onclick: `room_older('${viewname}',${state.id},${min_read_id})` },
+        req.__("Show older messages")
+      ),
     div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
     renderForm(form, req.csrfToken()),
     script({

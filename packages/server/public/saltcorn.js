@@ -545,3 +545,6 @@ function init_room(viewname, room_id) {
     });
   });
 }
+function room_older(viewname, room_id, lt_msg_id) {
+  console.log("room_older", viewname, room_id, lt_msg_id);
+}
