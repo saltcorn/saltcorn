@@ -168,6 +168,7 @@ const get_state_fields = () => [
     primary_key: true,
   },
 ];
+const limit = 10;
 
 const run = async (
   table_id,
@@ -187,7 +188,6 @@ const run = async (
   const fields = await table.getFields();
   readState(state, fields);
   if (!state.id) return "Need room id";
-  const limit = 10;
   const appState = getState();
   const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
@@ -250,9 +250,13 @@ const run = async (
   form.hidden("room_id");
   form.values = { room_id: state.id };
   return div(
-    n_retrieved < limit &&
+    n_retrieved === limit &&
       button(
-        { onclick: `room_older('${viewname}',${state.id},${min_read_id})` },
+        {
+          class: "btn btn-outline-secondary mb-1 fetch_older",
+          onclick: `room_older('${viewname}',${state.id},this)`,
+          "data-lt-msg-id": min_read_id,
+        },
         req.__("Show older messages")
       ),
     div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
@@ -310,7 +314,69 @@ const ack_read = async (
     },
   };
 };
+const fetch_older_msg = async (
+  table_id,
+  viewname,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  },
+  body,
+  { req, res }
+) => {
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+  const [
+    part_table_name,
+    part_key_to_room,
+    part_user_field,
+  ] = participant_field.split(".");
+  const parttable = Table.findOne({ name: part_table_name });
+  // check we participate
 
+  const partRow = await parttable.getRow({
+    [part_user_field]: req.user ? req.user.id : 0,
+    [part_key_to_room]: +body.room_id,
+  });
+
+  if (!partRow)
+    return {
+      json: {
+        error: "Not participating",
+      },
+    };
+
+  const v = await View.findOne({ name: msgview });
+  const vresps = await v.runMany(
+    { [msgkey_to_room]: +body.room_id },
+    {
+      req,
+      res,
+      orderBy: "id",
+      orderDesc: true,
+      limit,
+      where: { id: { lt: +body.lt_msg_id } },
+    }
+  );
+  vresps.reverse();
+  const n_retrieved = vresps.length;
+  const min_read_id = Math.min.apply(
+    Math,
+    vresps.map((r) => r.row.id)
+  );
+  const msglist = vresps.map((r) => r.html).join("");
+  return {
+    json: {
+      success: "ok",
+      prepend: msglist,
+      remove_fetch_older: n_retrieved < limit,
+      new_fetch_older_lt: min_read_id,
+    },
+  };
+};
 const submit_msg_ajax = async (
   table_id,
   viewname,
@@ -398,6 +464,47 @@ const submit_msg_ajax = async (
     };
   }
 };
+
+const virtual_triggers = (
+  table_id,
+  viewname,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  }
+) => {
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+  const msgtable = Table.findOne({ name: msgtable_name });
+
+  return [
+    {
+      when_trigger: "Insert",
+      table_id: msgtable.id,
+      run: async (row) => {
+        console.log({ row });
+        if (row[msgsender_field]) return; // TODO how else to avoid double emit
+        const v = await View.findOne({ name: msgview });
+
+        const html = await v.run(
+          { id: row.id },
+          {
+            req: { getLocale: () => "en", user: { id: 0 }, __: (s) => s },
+            res: {},
+          }
+        );
+
+        getState().emitRoom(viewname, row[msgkey_to_room], {
+          append: html,
+          pls_ack_msg_id: row.id,
+        });
+      },
+    },
+  ];
+};
 module.exports = {
   name: "Room",
   description: "Real-time space for chat",
@@ -405,7 +512,7 @@ module.exports = {
   run,
   get_state_fields,
   display_state_form: false,
-  routes: { submit_msg_ajax, ack_read },
+  routes: { submit_msg_ajax, ack_read, fetch_older_msg },
   noAutoTest: true,
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
@@ -423,54 +530,13 @@ module.exports = {
     });
     return !!partRow;
   },
-  virtual_triggers(
-    table_id,
-    viewname,
-    {
-      participant_field,
-      msg_relation,
-      msgsender_field,
-      msgview,
-      msgform,
-      participant_maxread_field,
-    }
-  ) {
-    const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-    const msgtable = Table.findOne({ name: msgtable_name });
-
-    return [
-      {
-        when_trigger: "Insert",
-        table_id: msgtable.id,
-        run: async (row) => {
-          console.log({ row });
-          if (row[msgsender_field]) return; // TODO how else to avoid double emit
-          const v = await View.findOne({ name: msgview });
-
-          const html = await v.run(
-            { id: row.id },
-            {
-              req: { getLocale: () => "en", user: { id: 0 }, __: (s) => s },
-              res: {},
-            }
-          );
-
-          getState().emitRoom(viewname, row[msgkey_to_room], {
-            append: html,
-            pls_ack_msg_id: row.id,
-          });
-        },
-      },
-    ];
-  },
+  virtual_triggers,
   getStringsForI18n() {
     return [];
   },
 };
 /*todo:
 
-limit to at n most recent posts. 
-fetch older with ajax on demand
 find_or_create_dm_room -dms only 
 
 */
