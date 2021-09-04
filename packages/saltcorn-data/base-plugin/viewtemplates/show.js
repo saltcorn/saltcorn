@@ -368,6 +368,7 @@ const runMany = async (
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
+  if (extra && extra.where) Object.assign(qstate, extra.where);
 
   const rows = await tbl.getJoinedRows({
     where: qstate,

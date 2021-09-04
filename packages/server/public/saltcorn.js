@@ -545,3 +545,16 @@ function init_room(viewname, room_id) {
     });
   });
 }
+function room_older(viewname, room_id, btn) {
+  view_post(
+    viewname,
+    "fetch_older_msg",
+    { room_id, lt_msg_id: +$(btn).attr("data-lt-msg-id") },
+    (res) => {
+      if (res.prepend) $(`.msglist-${room_id}`).prepend(res.prepend);
+      if (res.new_fetch_older_lt)
+        $(btn).attr("data-lt-msg-id", res.new_fetch_older_lt);
+      if (res.remove_fetch_older) $(btn).remove();
+    }
+  );
+}

@@ -53,7 +53,7 @@ const get_tenant_from_req = (req) => {
     return db.connectObj.default_schema;
   if (!req.subdomains && req.headers.host) {
     const parts = req.headers.host.split(".");
-    if (parts.length === 2) return db.connectObj.default_schema;
+    if (parts.length < 3) return db.connectObj.default_schema;
     else return parts[0];
   }
 };
@@ -72,6 +72,7 @@ const setTenant = (req, res, next) => {
       }
     } else {
       const ten = get_tenant_from_req(req);
+      //console.log("tenant", ten);
       const state = getTenant(ten);
       if (!state) res.status(404).send(req.__("Subdomain not found"));
       else {
