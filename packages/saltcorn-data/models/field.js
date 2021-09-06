@@ -422,23 +422,28 @@ class Field {
     }
 
     const schema = db.getTenantSchemaPrefix();
+    const client = db.isSQLite ? db : await db.getClient();
+    await client.query("BEGIN");
 
-    await db.deleteWhere("_sc_fields", { id: this.id });
+    await db.deleteWhere("_sc_fields", { id: this.id }, { client });
 
     if (!db.isSQLite && (!this.calculated || this.stored)) {
-      await db.query(
+      await client.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
         )}" drop column "${sqlsanitize(this.name)}"`
       );
       if (table.versioned) {
-        await db.query(
+        await client.query(
           `alter table ${schema}"${sqlsanitize(
             table.name
           )}__history" drop column "${sqlsanitize(this.name)}"`
         );
       }
     }
+    await client.query("COMMIT");
+
+    if (!db.isSQLite) await client.release(true);
     await require("../db/state").getState().refresh_tables();
   }
 
