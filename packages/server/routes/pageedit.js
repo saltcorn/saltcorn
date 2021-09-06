@@ -2,6 +2,7 @@ const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
 const { div, a } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
@@ -182,6 +183,7 @@ const pageFlow = (req) =>
           for (const vseg of fixedvs) {
             const v = await View.findOne({ name: vseg.view });
             if (v) {
+              const table = Table.findOne({ id: v.table_id });
               const fs = await v.get_state_fields();
               if (fs.length > 0)
                 fields.push({
@@ -196,6 +198,26 @@ const pageFlow = (req) =>
 
                 await f.fill_fkey_options(true);
                 fields.push(f);
+                if (table.name === "users" && f.primary_key)
+                  fields.push(
+                    new Field({
+                      name: "preset_" + f.name,
+                      label: req.__("Preset %s", f.label),
+                      type: "String",
+                      attributes: { options: ["LoggedIn"] },
+                      parent_field: vseg.name,
+                    })
+                  );
+                if (f.presets) {
+                  fields.push(
+                    new Field({
+                      name: "preset_" + f.name,
+                      label: req.__("Preset %s", f.label),
+                      type: "String",
+                      attributes: { options: Object.keys(f.presets) },
+                    })
+                  );
+                }
               }
             }
           }

@@ -5,6 +5,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
+const Table = require("./table");
 const {
   eachView,
   traverseSync,
@@ -13,7 +14,10 @@ const {
 } = require("./layout");
 const { div } = require("@saltcorn/markup/tags");
 const { remove_from_menu } = require("./config");
-const { action_link } = require("../base-plugin/viewtemplates/viewable_fields");
+const {
+  action_link,
+  fill_presets,
+} = require("../base-plugin/viewtemplates/viewable_fields");
 const {
   InvalidConfiguration,
   satisfies,
@@ -181,8 +185,10 @@ class Page {
         const mystate = view.combine_state_and_default_state(querystate);
         segment.contents = await view.run(mystate, extraArgs);
       } else {
+        const table = Table.findOne({ id: view.table_id });
         const state = this.fixed_states[segment.name];
-        const mystate = view.combine_state_and_default_state(state || {});
+        const filled = await fill_presets(table, extraArgs.req, state);
+        const mystate = view.combine_state_and_default_state(filled || {});
         segment.contents = await view.run(mystate, extraArgs);
       }
     });
