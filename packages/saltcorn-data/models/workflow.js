@@ -95,16 +95,23 @@ class Workflow {
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
 
       form.fields.forEach((fld) => {
-        const ctxValue = step.contextField
-          ? (context[step.contextField] || {})[fld.name]
-          : context[fld.name];
+        const ctxValue =
+          step.contextField && fld.parent_field
+            ? ((context[step.contextField] || {})[fld.parent_field] || {})[
+                fld.name
+              ]
+            : step.contextField
+            ? (context[step.contextField] || {})[fld.name]
+            : context[fld.name];
         if (
           typeof ctxValue !== "undefined" &&
           typeof form.values[fld.name] === "undefined"
         ) {
-          if (fld.type && fld.type.read)
-            form.values[fld.name] = fld.type.read(ctxValue);
-          else form.values[fld.name] = ctxValue;
+          const value =
+            fld.type && fld.type.read ? fld.type.read(ctxValue) : ctxValue;
+          if (fld.parent_field) {
+            form.values[`${fld.parent_field}_${fld.name}`] = value;
+          } else form.values[fld.name] = value;
         }
       });
       if (this.action) form.action = this.action;
@@ -131,7 +138,7 @@ class Workflow {
           action: this.action,
           stepName: step.name,
           mode: options.mode,
-          version_tag: db.connectObj.version_tag
+          version_tag: db.connectObj.version_tag,
         },
         context,
         stepName: step.name,
