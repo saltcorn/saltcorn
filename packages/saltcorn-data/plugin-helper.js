@@ -41,7 +41,6 @@ const link_view = (
   textStyle = ""
 ) => {
   if (popup) {
-    console.log({ textStyle, link_style, link_size });
     return button(
       {
         class: [
