@@ -413,15 +413,17 @@ class Field {
   async delete() {
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
-
+    const TableConstraint = require("./table_constraints");
+    await TableConstraint.delete_field_constraints(table, this);
     if (table.ownership_field_id === this.id) {
       throw new InvalidAdminAction(
         `Cannot delete field ${this.name} as it sets ownership for table ${table.name}`
       );
     }
-    await db.deleteWhere("_sc_fields", { id: this.id });
 
     const schema = db.getTenantSchemaPrefix();
+
+    await db.deleteWhere("_sc_fields", { id: this.id });
 
     if (!db.isSQLite && (!this.calculated || this.stored)) {
       await db.query(

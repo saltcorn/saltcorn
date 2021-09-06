@@ -778,5 +778,6 @@
 	"The view to enter a new message": "The view to enter a new message",
 	"Participant max read id field": "Participant max read id field",
 	"The field for the participant's last read message, of type Key to message table": "The field for the participant's last read message, of type Key to message table",
-	"Show older messages": "Show older messages"
+	"Show older messages": "Show older messages",
+	"New table name": "New table name"
 }
