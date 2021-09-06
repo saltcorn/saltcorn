@@ -137,14 +137,14 @@ const getVersion = async (short) => {
  * @param whereObj - where object
  * @returns {Promise<*>} result of delete execution
  */
-const deleteWhere = async (tbl, whereObj) => {
+const deleteWhere = async (tbl, whereObj, opts = {}) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
 
-  const tq = await pool.query(sql, values);
+  const tq = await (opts.client || pool).query(sql, values);
 
   return tq.rows;
 };

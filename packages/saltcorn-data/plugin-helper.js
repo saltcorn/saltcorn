@@ -43,7 +43,12 @@ const link_view = (
   if (popup) {
     return button(
       {
-        class: "btn btn-secondary btn-sm",
+        class: [
+          textStyle,
+          link_style,
+          link_size,
+          !link_style && "btn btn-link",
+        ],
         onClick: `ajax_modal('${url}')`,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",

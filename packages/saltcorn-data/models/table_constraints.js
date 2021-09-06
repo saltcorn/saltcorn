@@ -51,7 +51,13 @@ class TableConstraint {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     }
   }
-
+  static async delete_field_constraints(table, field) {
+    const tblcs = await TableConstraint.find({ table_id: table.id });
+    for (const c of tblcs) {
+      if (c.configuration.fields && c.configuration.fields.includes(field.name))
+        await c.delete();
+    }
+  }
   static get type_options() {
     return ["Unique"];
   }
