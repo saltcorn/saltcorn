@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#62giwa
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#arpfmx
 
   Blockly.Blocks["console"] = {
     init: function () {
@@ -282,6 +282,35 @@ function activate_blockly({ events, actions, tables }) {
     );
     // TODO: Assemble JavaScript into code variable.
     var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows({id: ${value_id}});\n`;
+    return code;
+  };
+
+  Blockly.Blocks["delete_table_where"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Delete");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("where").setCheck("Row").appendField("where");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Delete by search condition");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["delete_table_where"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_where = Blockly.JavaScript.valueToCode(
+      block,
+      "where",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows(${value_where});\n`;
+
     return code;
   };
   Blockly.Blocks["update_table"] = {

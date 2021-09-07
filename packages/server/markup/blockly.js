@@ -68,6 +68,7 @@ const blocklyToolbox = () => `
     <block type="insert_table"></block>
     <block type="update_table"></block>
     <block type="delete_table"></block>
+    <block type="delete_table_where"></block>
     </category>
 
     <category name="Lists" categorystyle="list_category">
