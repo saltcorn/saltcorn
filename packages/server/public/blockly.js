@@ -473,6 +473,53 @@ function activate_blockly({ events, actions, tables }) {
       : `Actions.${dropdown_name}();\n`;
     return code;
   };
+
+  Blockly.Blocks["unit_row"] = {
+    init: function () {
+      this.appendDummyInput().appendField("{");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
+      this.appendDummyInput().appendField(":");
+      this.appendValueInput("VALUE").setCheck(null);
+      this.appendDummyInput().appendField("}");
+      this.setInputsInline(true);
+      this.setOutput(true, "Row");
+      this.setColour(230);
+      this.setTooltip("A row with a single field");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["unit_row"] = function (block) {
+    var text_key = block.getFieldValue("KEY");
+    var value_value = Blockly.JavaScript.valueToCode(
+      block,
+      "VALUE",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `{${text_key}: ${value_value}}`;
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
+
+  Blockly.Blocks["now"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Now");
+      this.setOutput(true, "Date");
+      this.setColour(230);
+      this.setTooltip("The current time");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["now"] = function (block) {
+    // TODO: Assemble JavaScript into code variable.
+    var code = "new Date()";
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
   // -------------------
   // Activate blockly
   // -------------------

@@ -59,6 +59,7 @@ const blocklyToolbox = () => `
     
     <category name="Rows"  colour="20">
     <block type="empty"></block>
+    <block type="unit_row"></block>
     <block type="row"></block>
     <block type="row_get"></block>
     <block type="row_set"></block>
@@ -89,6 +90,7 @@ const blocklyToolbox = () => `
     <category name="Variables" categorystyle="variable_category">
     <block type="variables_get"></block>
     <block type="variables_set"></block>
+    <block type="now"></block>
     </category>
 
   </xml>`;
