@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#d2o3nd
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#62giwa
 
   Blockly.Blocks["console"] = {
     init: function () {
@@ -419,7 +419,60 @@ function activate_blockly({ events, actions, tables }) {
     var code = `return {${s}};\n`;
     return code;
   };
+  Blockly.Blocks["push_to_list"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Push to list");
+      this.appendValueInput("LIST").setCheck("Array");
+      this.appendDummyInput().appendField("value");
+      this.appendValueInput("NAME").setCheck(null);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Append a value to a list");
+      this.setHelpUrl("");
+    },
+  };
 
+  Blockly.JavaScript["push_to_list"] = function (block) {
+    var value_list = Blockly.JavaScript.valueToCode(
+      block,
+      "LIST",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_name = Blockly.JavaScript.valueToCode(
+      block,
+      "NAME",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `${value_list}.push(${value_name});\n`;
+    return code;
+  };
+
+  Blockly.Blocks["action"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Action");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(actions.map((a) => [a.name, a.name])),
+        "NAME"
+      );
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Run an action");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["action"] = function (block) {
+    var dropdown_name = block.getFieldValue("NAME");
+    // TODO: Assemble JavaScript into code variable.
+    var code = dropdown_name.includes(" ")
+      ? `Actions['${dropdown_name}']();\n`
+      : `Actions.${dropdown_name}();\n`;
+    return code;
+  };
   // -------------------
   // Activate blockly
   // -------------------

@@ -409,7 +409,9 @@ router.get(
       });
       form.values = trigger.configuration;
       const events = Trigger.when_options;
-      const actions = Object.keys(getState().actions);
+      const actions = await Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      });
       const tables = (await Table.find({})).map((t) => ({
         name: t.name,
         external: t.external,

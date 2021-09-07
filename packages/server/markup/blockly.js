@@ -71,12 +71,14 @@ const blocklyToolbox = () => `
 
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
+    <block type="push_to_list"></block>
     <block type="lists_length"></block>
     <block type="lists_getIndex"></block>
     
     </category>
     <category name="Actions"  colour="80">
       <block type="console"></block>
+      <block type="action"></block>
       <block type="emit_event"></block>
       <block type="http_request"></block>
       <block type="sleep"></block>

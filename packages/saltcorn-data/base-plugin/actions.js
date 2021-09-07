@@ -39,9 +39,26 @@ const run_code = async ({
       v.run({ row, table, user, configuration: args, ...rest, ...args });
     };
   });
+  const trigger_actions = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  for (const trigger of trigger_actions) {
+    const state_action = getState().actions[trigger.action];
+    Actions[trigger.name] = (args = {}) => {
+      state_action.run({
+        row,
+        table,
+        configuration: trigger.configuration,
+        user,
+        ...rest,
+        ...args,
+      });
+    };
+  }
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
+  console.log({ Actions });
   const f = vm.runInNewContext(`async () => {${code}}`, {
     Table,
     table,
