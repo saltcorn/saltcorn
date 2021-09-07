@@ -191,7 +191,13 @@ const run = async (
   const appState = getState();
   const locale = req.getLocale();
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (!participant_field || !msgview || !msgform || !msgsender_field)
+  if (
+    !participant_field ||
+    !msgview ||
+    !msgform ||
+    !msgsender_field ||
+    !msg_relation
+  )
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
     );
@@ -477,8 +483,10 @@ const virtual_triggers = (
     participant_maxread_field,
   }
 ) => {
+  if (!msg_relation) return [];
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const msgtable = Table.findOne({ name: msgtable_name });
+  if (!msgsender_field) return [];
 
   return [
     {
