@@ -59,6 +59,7 @@ const blocklyToolbox = () => `
     
     <category name="Rows"  colour="20">
     <block type="empty"></block>
+    <block type="unit_row"></block>
     <block type="row"></block>
     <block type="row_get"></block>
     <block type="row_set"></block>
@@ -67,16 +68,19 @@ const blocklyToolbox = () => `
     <block type="insert_table"></block>
     <block type="update_table"></block>
     <block type="delete_table"></block>
+    <block type="delete_table_where"></block>
     </category>
 
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
+    <block type="push_to_list"></block>
     <block type="lists_length"></block>
     <block type="lists_getIndex"></block>
     
     </category>
     <category name="Actions"  colour="80">
       <block type="console"></block>
+      <block type="action"></block>
       <block type="emit_event"></block>
       <block type="http_request"></block>
       <block type="sleep"></block>
@@ -87,6 +91,7 @@ const blocklyToolbox = () => `
     <category name="Variables" categorystyle="variable_category">
     <block type="variables_get"></block>
     <block type="variables_set"></block>
+    <block type="now"></block>
     </category>
 
   </xml>`;

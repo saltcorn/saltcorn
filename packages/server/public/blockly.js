@@ -1,5 +1,5 @@
 function activate_blockly({ events, actions, tables }) {
-  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#d2o3nd
+  // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#arpfmx
 
   Blockly.Blocks["console"] = {
     init: function () {
@@ -284,6 +284,35 @@ function activate_blockly({ events, actions, tables }) {
     var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows({id: ${value_id}});\n`;
     return code;
   };
+
+  Blockly.Blocks["delete_table_where"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Delete");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(tables.map((t) => [t.name, t.name])),
+        "TABLE"
+      );
+      this.appendValueInput("where").setCheck("Row").appendField("where");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Delete by search condition");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["delete_table_where"] = function (block) {
+    var dropdown_table = block.getFieldValue("TABLE");
+    var value_where = Blockly.JavaScript.valueToCode(
+      block,
+      "where",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows(${value_where});\n`;
+
+    return code;
+  };
   Blockly.Blocks["update_table"] = {
     init: function () {
       this.appendDummyInput().appendField("Update");
@@ -419,7 +448,107 @@ function activate_blockly({ events, actions, tables }) {
     var code = `return {${s}};\n`;
     return code;
   };
+  Blockly.Blocks["push_to_list"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Push to list");
+      this.appendValueInput("LIST").setCheck("Array");
+      this.appendDummyInput().appendField("value");
+      this.appendValueInput("NAME").setCheck(null);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Append a value to a list");
+      this.setHelpUrl("");
+    },
+  };
 
+  Blockly.JavaScript["push_to_list"] = function (block) {
+    var value_list = Blockly.JavaScript.valueToCode(
+      block,
+      "LIST",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    var value_name = Blockly.JavaScript.valueToCode(
+      block,
+      "NAME",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `${value_list}.push(${value_name});\n`;
+    return code;
+  };
+
+  Blockly.Blocks["action"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Action");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldDropdown(actions.map((a) => [a.name, a.name])),
+        "NAME"
+      );
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(230);
+      this.setTooltip("Run an action");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["action"] = function (block) {
+    var dropdown_name = block.getFieldValue("NAME");
+    // TODO: Assemble JavaScript into code variable.
+    var code = dropdown_name.includes(" ")
+      ? `Actions['${dropdown_name}']();\n`
+      : `Actions.${dropdown_name}();\n`;
+    return code;
+  };
+
+  Blockly.Blocks["unit_row"] = {
+    init: function () {
+      this.appendDummyInput().appendField("{");
+      this.appendDummyInput().appendField(
+        new Blockly.FieldTextInput(""),
+        "KEY"
+      );
+      this.appendDummyInput().appendField(":");
+      this.appendValueInput("VALUE").setCheck(null);
+      this.appendDummyInput().appendField("}");
+      this.setInputsInline(true);
+      this.setOutput(true, "Row");
+      this.setColour(230);
+      this.setTooltip("A row with a single field");
+      this.setHelpUrl("");
+    },
+  };
+  Blockly.JavaScript["unit_row"] = function (block) {
+    var text_key = block.getFieldValue("KEY");
+    var value_value = Blockly.JavaScript.valueToCode(
+      block,
+      "VALUE",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
+    // TODO: Assemble JavaScript into code variable.
+    var code = `{${text_key}: ${value_value}}`;
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
+
+  Blockly.Blocks["now"] = {
+    init: function () {
+      this.appendDummyInput().appendField("Now");
+      this.setOutput(true, "Date");
+      this.setColour(230);
+      this.setTooltip("The current time");
+      this.setHelpUrl("");
+    },
+  };
+
+  Blockly.JavaScript["now"] = function (block) {
+    // TODO: Assemble JavaScript into code variable.
+    var code = "new Date()";
+    // TODO: Change ORDER_NONE to the correct strength.
+    return [code, Blockly.JavaScript.ORDER_NONE];
+  };
   // -------------------
   // Activate blockly
   // -------------------
