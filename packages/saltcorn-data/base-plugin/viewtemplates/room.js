@@ -245,10 +245,11 @@ const run = async (
       Math,
       vresps.map((r) => r.row.id)
     );
-    await parttable.updateRow(
-      { [part_maxread_field]: max_read_id },
-      partRow.id
-    );
+    if (vresps.length > 0)
+      await parttable.updateRow(
+        { [part_maxread_field]: max_read_id },
+        partRow.id
+      );
   }
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
 
