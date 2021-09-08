@@ -139,6 +139,8 @@ const getVal = ([k, v]) =>
     ? v.searchTerm
     : typeof (v || {}).in !== "undefined"
     ? [v.in]
+    : k === "or" && Array.isArray(v)
+    ? v.map((vi) => Object.entries(vi).map(getVal)).flat(1)
     : v && v.or && Array.isArray(v.or)
     ? v.or.map((vi) => getVal([k, vi])).flat(1)
     : Array.isArray(v)
@@ -159,7 +161,7 @@ const getVal = ([k, v]) =>
 
 const mkWhere = (whereObj, is_sqlite) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
-  console.log({ wheres });
+  //console.log({ wheres });
   const where =
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")

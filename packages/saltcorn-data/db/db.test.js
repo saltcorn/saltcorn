@@ -115,6 +115,12 @@ describe("mkWhere", () => {
       where: `where "age"=$1 and "id" in (select bar from foo where "baz"=$2) and "name"=$3`,
     });
   });
+  it("should query or", () => {
+    expect(mkWhere({ or: [{ id: 5 }, { x: 7 }] })).toStrictEqual({
+      values: [5, 7],
+      where: 'where "id"=$1 or "x"=$2',
+    });
+  });
 });
 
 describe("where", () => {
