@@ -176,6 +176,7 @@ const run = async (
         const [reltype, rel] = relspec.split(":");
         switch (reltype) {
           case "ChildList":
+          case "OneToOneShow":
             const [vname, reltblnm, relfld] = rel.split(".");
             const tab_name = reltblnm;
             const subview = await View.findOne({ name: vname });
