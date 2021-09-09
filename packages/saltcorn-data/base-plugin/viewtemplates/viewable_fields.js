@@ -125,6 +125,9 @@ const parse_view_select = (s) => {
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+    case "OneToOneShow":
+      const [oviewnm, otbl, ofld] = vrest.split(".");
+      return { type, viewname: oviewnm, table_name: otbl, field_name: ofld };
   }
 };
 

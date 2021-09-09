@@ -196,6 +196,15 @@ const get_link_view_opts = contract(
         });
       }
     }
+    const onetoone_views = await get_onetoone_views(table, viewname);
+    for (const { relation, related_table, views } of onetoone_views) {
+      for (const view of views) {
+        link_view_opts.push({
+          name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
+          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
+        });
+      }
+    }
     return link_view_opts;
   }
 );
@@ -665,6 +674,43 @@ const get_parent_views = contract(
     return parent_views;
   }
 );
+/**
+ * get_onetoone_views Contract
+ * @type {*|(function(...[*]=): *)}
+ */
+const get_onetoone_views = contract(
+  is.fun(
+    [is_tablely, is.str],
+    is.promise(
+      is.array(
+        is.obj({
+          relation: is.class("Field"),
+          related_table: is.class("Table"),
+          views: is.array(is.class("View")),
+        })
+      )
+    )
+  ),
+  async (table, viewname) => {
+    const rels = await Field.find({
+      reftable_name: table.name,
+      is_unique: true,
+    });
+    var child_views = [];
+    for (const relation of rels) {
+      const related_table = await Table.findOne({ id: relation.table_id });
+      const views = await View.find_table_views_where(
+        related_table.id,
+        ({ state_fields, viewrow }) =>
+          viewrow.name !== viewname &&
+          state_fields.some((sf) => sf.name === "id")
+      );
+      child_views.push({ relation, related_table, views });
+    }
+    return child_views;
+  }
+);
+
 /**
  * picked_fields_to_query Contract
  * @type {*|(function(...[*]=): *)}

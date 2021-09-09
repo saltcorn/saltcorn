@@ -339,6 +339,9 @@ const renderRows = async (
             //todo set by pk name of parent tablr
             state = { id: row[view.view_select.field_name] };
             break;
+          case "OneToOneShow":
+            state = { [view.view_select.field_name]: row[pk_name] };
+            break;
         }
         segment.contents = await view.run(state, extra);
       }
