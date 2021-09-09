@@ -176,6 +176,7 @@ const view_linker = contract(
             ),
         };
       case "ChildList":
+      case "OneToOneShow":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
