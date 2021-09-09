@@ -333,6 +333,7 @@ const renderRows = async (
             state = { [pk_name]: row[pk_name] };
             break;
           case "ChildList":
+          case "OneToOneShow":
             state = { [view.view_select.field_name]: row[pk_name] };
             break;
           case "ParentShow":

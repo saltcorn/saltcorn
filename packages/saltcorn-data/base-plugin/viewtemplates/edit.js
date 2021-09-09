@@ -345,6 +345,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
           state = { id: row.id };
           break;
         case "ChildList":
+        case "OneToOneShow":
           state = { [view_select.field_name]: row.id };
           break;
         case "ParentShow":

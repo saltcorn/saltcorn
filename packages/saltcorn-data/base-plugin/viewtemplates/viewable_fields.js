@@ -120,6 +120,7 @@ const parse_view_select = (s) => {
     case "Own":
       return { type, viewname: vrest };
     case "ChildList":
+    case "OneToOneShow":
       const [viewnm, tbl, fld] = vrest.split(".");
       return { type, viewname: viewnm, table_name: tbl, field_name: fld };
     case "ParentShow":
@@ -173,6 +174,7 @@ const view_linker = contract(
             ),
         };
       case "ChildList":
+      case "OneToOneShow":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
