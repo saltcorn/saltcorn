@@ -494,7 +494,6 @@ const virtual_triggers = (
       when_trigger: "Insert",
       table_id: msgtable.id,
       run: async (row) => {
-        console.log({ row });
         if (row[msgsender_field]) return; // TODO how else to avoid double emit
         const v = await View.findOne({ name: msgview });
 
