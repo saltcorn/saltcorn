@@ -184,10 +184,11 @@ module.exports = {
       const { rows } = await db.query(
         `with my_rooms as (select "${part_key_to_room}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
-        )}" where ${part_user_field} = $1)          
+        )}" where "${part_user_field}" = $1)          
         select * from "${db.getTenantSchema()}"."${db.sqlsanitize(
           roomtable.name
-        )}" r where r.id in (select "${part_key_to_room}" from my_rooms) and $2 in (select ${part_user_field} from "${db.getTenantSchema()}"."${db.sqlsanitize(
+        )}" r where r.id in (select "${part_key_to_room}" from my_rooms) 
+        and $2 in (select "${part_user_field}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
         )}" where "${part_key_to_room}" = r.id)`,
         [user.id, row.id]
