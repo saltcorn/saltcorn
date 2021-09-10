@@ -68,6 +68,7 @@ const run_code = async ({
     emitEvent,
     sleep,
     fetchJSON,
+    fetch,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
