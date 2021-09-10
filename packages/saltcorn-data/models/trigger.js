@@ -132,7 +132,7 @@ class Trigger {
   }
 
   // Emit an event: run associated triggers
-  static async emitEvent(eventType, channel, userPW = {}, payload) {
+  static emitEvent(eventType, channel, userPW = {}, payload) {
     setTimeout(async () => {
       const { password, ...user } = userPW || {};
       const { getState } = require("../db/state");
@@ -258,6 +258,7 @@ class Trigger {
       "LoginFailed",
       "Error",
       "Startup",
+      "UserVerified",
       ...Object.keys(getState().eventTypes),
     ];
   }

@@ -177,9 +177,12 @@ const get_link_view_opts = contract(
         label: `${v.name} [${v.viewtemplate} ${table.name}]`,
         name: `Own:${v.name}`,
       }));
+    const link_view_names = new Set();
     const child_views = await get_child_views(table, viewname);
     for (const { relation, related_table, views } of child_views) {
       for (const view of views) {
+        const name = `${view.name}.${related_table.name}.${relation.name}`;
+        link_view_names.add(name);
         link_view_opts.push({
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
@@ -199,10 +202,12 @@ const get_link_view_opts = contract(
     const onetoone_views = await get_onetoone_views(table, viewname);
     for (const { relation, related_table, views } of onetoone_views) {
       for (const view of views) {
-        link_view_opts.push({
-          name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
-          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
-        });
+        const name = `${view.name}.${related_table.name}.${relation.name}`;
+        if (!link_view_names.has(name))
+          link_view_opts.push({
+            name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
+            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
+          });
       }
     }
     return link_view_opts;

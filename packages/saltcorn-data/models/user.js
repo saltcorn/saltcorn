@@ -323,6 +323,9 @@ class User {
     if (elevate_verified)
       upd.role_id = Math.min(elevate_verified, this.role_id);
     await db.update("users", upd, this.id);
+    Object.assign(this, upd);
+    const Trigger = require("./trigger");
+    Trigger.emitEvent("UserVerified", null, this, this);
     return true;
   }
 
