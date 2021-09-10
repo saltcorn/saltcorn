@@ -430,7 +430,7 @@ router.get(
               div(
                 blocklyImportScripts({ locale }),
                 div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
-                blocklyToolbox()
+                blocklyToolbox(actions.length > 0)
               ),
               {
                 above: [

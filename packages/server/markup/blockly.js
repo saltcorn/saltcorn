@@ -26,7 +26,7 @@ const blocklyImportScripts = ({ locale }) =>
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
   });
 
-const blocklyToolbox = () => `
+const blocklyToolbox = (hasActions) => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="Control Flow"  categorystyle="loop_category">
       <block type="controls_if"></block>
@@ -80,7 +80,7 @@ const blocklyToolbox = () => `
     </category>
     <category name="Actions"  colour="80">
       <block type="console"></block>
-      <block type="action"></block>
+      ${hasActions ? `<block type="action"></block>` : ""}
       <block type="emit_event"></block>
       <block type="http_request"></block>
       <block type="sleep"></block>
