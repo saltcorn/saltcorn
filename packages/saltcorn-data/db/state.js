@@ -569,7 +569,10 @@ const process_init_time = new Date();
  */
 const get_process_init_time = () => process_init_time;
 
-const features = { serve_static_dependencies: true };
+const features = {
+  serve_static_dependencies: true,
+  deep_public_plugin_serve: true,
+};
 
 module.exports = {
   getState,
