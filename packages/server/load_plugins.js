@@ -54,7 +54,7 @@ const loadPlugin = async (plugin, force) => {
   const res = await requirePlugin(plugin, force);
   // register plugin
   getState().registerPlugin(
-    plugin.name,
+    res.plugin_module.plugin_name || plugin.name,
     res.plugin_module,
     plugin.configuration,
     res.location
@@ -176,7 +176,12 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
       );
     }
   }
-  getState().registerPlugin(plugin.name, plugin_module, undefined, location);
+  getState().registerPlugin(
+    plugin_module.plugin_name || plugin.name,
+    plugin_module,
+    undefined,
+    location
+  );
   if (plugin_module.onLoad) {
     try {
       await plugin_module.onLoad(plugin.configuration);
@@ -187,7 +192,11 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   if (version) plugin.version = version;
   if (!noSignalOrDB) await plugin.upsert();
   if (!noSignalOrDB && process.send)
-    process.send({ installPlugin: plugin, tenant: db.getTenantSchema(), force });
+    process.send({
+      installPlugin: plugin,
+      tenant: db.getTenantSchema(),
+      force,
+    });
 };
 
 module.exports = {
