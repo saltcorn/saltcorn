@@ -252,8 +252,12 @@ const get_viewable_fields = contract(
       .map((column) => {
         const role = req.user ? req.user.role_id : 10;
         const user_id = req.user ? req.user.id : null;
+        const setWidth = column.col_width
+          ? { width: `${column.col_width}${column.col_width_units}` }
+          : {};
         if (column.type === "Action")
           return {
+            ...setWidth,
             label: column.header_label ? text(__(column.header_label)) : "",
             key: (r) => {
               if (action_requires_write(column.action_name)) {
@@ -303,10 +307,12 @@ const get_viewable_fields = contract(
           if (!column.view) return;
           const r = view_linker(column, fields, __);
           if (column.header_label) r.label = text(__(column.header_label));
+          Object.assign(r, setWidth);
           return r;
         } else if (column.type === "Link") {
           const r = make_link(column, fields, __);
           if (column.header_label) r.label = text(__(column.header_label));
+          Object.assign(r, setWidth);
           return r;
         } else if (column.type === "JoinField") {
           const keypath = column.join_field.split(".");
@@ -320,6 +326,7 @@ const get_viewable_fields = contract(
           }
 
           return {
+            ...setWidth,
             label: column.header_label
               ? text(__(column.header_label))
               : text(targetNm),
@@ -339,6 +346,7 @@ const get_viewable_fields = contract(
           ).toLowerCase();
 
           return {
+            ...setWidth,
             label: column.header_label
               ? text(column.header_label)
               : text(column.stat + " " + table),
@@ -357,6 +365,7 @@ const get_viewable_fields = contract(
           const isNum = f && f.type && f.type.name === "Integer";
           return (
             f && {
+              ...setWidth,
               align: isNum ? "right" : undefined,
               label: headerLabelForName(column, f, req, __),
               key:

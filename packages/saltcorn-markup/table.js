@@ -17,8 +17,12 @@ const {
 const { pagination } = require("./helpers");
 const headerCell = (hdr) =>
   th(
-    !!hdr.align && { style: "text-align:" + hdr.align },
-    !!hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
+    (hdr.align || hdr.width) && {
+      style:
+        (hdr.align ? `text-align: ` + hdr.align : "") +
+        (hdr.width ? `width: ` + hdr.width : ""),
+    },
+    hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
   );
 
 const mkTable = contract(
@@ -50,6 +54,7 @@ const mkTable = contract(
           class: [
             "table table-sm",
             opts.class,
+            hdrs.some((h) => h.width) && "table-layout-fixed",
             (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
               "table-hover",
           ],

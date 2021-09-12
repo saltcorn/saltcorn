@@ -322,7 +322,9 @@ const run = async (
           state
         )}`,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
-        create_view_display === "Popup"
+        create_view_display === "Popup",
+        create_view_display === "Popup" && "btn btn-secondary",
+        create_view_display === "Popup" && "btn-sm"
       );
     }
   }

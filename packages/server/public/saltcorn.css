@@ -284,3 +284,6 @@ button.btnstylesel {
 .ml-m1 {
   margin-left: -1rem;
 }
+table.table-layout-fixed {
+  table-layout: fixed;
+}
