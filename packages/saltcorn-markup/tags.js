@@ -68,6 +68,8 @@ module.exports = {
   script: mkTag("script", true),
   style: mkTag("style"),
   p: mkTag("p"),
+  colgroup: mkTag("colgroup"),
+  col: mkTag("col", true),
   table: mkTag("table"),
   img: mkTag("img"),
   thead: mkTag("thead"),

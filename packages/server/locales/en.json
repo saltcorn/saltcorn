@@ -781,5 +781,7 @@
 	"Show older messages": "Show older messages",
 	"New table name": "New table name",
 	"Password Repeat": "Password Repeat",
-	"Remember me": "Remember me"
+	"Remember me": "Remember me",
+	"Column width": "Column width",
+	"Column width units": "Column width units"
 }

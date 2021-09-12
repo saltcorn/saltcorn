@@ -606,6 +606,20 @@ const field_picker_fields = contract(
         label: __("Header label"),
         type: "String",
       },
+      {
+        name: "col_width",
+        label: __("Column width"),
+        type: "Integer",
+      },
+      {
+        name: "col_width_units",
+        label: __("Column width units"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["px", "%", "vw", "em", "rem"],
+        },
+      },
     ];
   }
 );
