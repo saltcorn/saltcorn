@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-set -x
+set -xe
+
 VERSION=`jq -r .version packages/saltcorn-data/package.json`
 echo $VERSION
+
 docker build -t saltcorn/saltcorn:latest -f Dockerfile.release .
 docker push saltcorn/saltcorn:latest
 docker build -t saltcorn/saltcorn:$VERSION -f Dockerfile.release .
