@@ -41,6 +41,7 @@ const {
   td,
   h6,
   pre,
+  text,
   hr,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
@@ -557,11 +558,17 @@ router.get(
     const output = [];
     const fakeConsole = {
       log(...s) {
-        output.push(div(code(s.join(" "))));
+        console.log(...s);
+        output.push(div(code(pre(text(s.join(" "))))));
       },
       error(...s) {
         output.push(
-          div(code({ style: "color:red;font-weight:bold;" }, s.join(" ")))
+          div(
+            code(
+              { style: "color:red;font-weight:bold;" },
+              pre(text(s.join(" ")))
+            )
+          )
         );
       },
     };
