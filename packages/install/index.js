@@ -161,7 +161,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   ]);
   await asyncSudo([
     "bash",
-    `echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/${user}/.bashrc`,
+    "-c"`echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/${user}/.bashrc`,
   ]);
 };
 
