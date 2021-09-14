@@ -160,10 +160,8 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "--unsafe",
   ]);
   await asyncSudo([
-    "echo",
-    "'export PATH=/home/saltcorn/.local/bin:$PATH'",
-    ">>",
-    `/home/${user}/.bashrc`,
+    "bash",
+    `echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/${user}/.bashrc`,
   ]);
 };
 
