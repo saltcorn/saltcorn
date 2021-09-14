@@ -156,7 +156,7 @@ const extract = contract(
     return new Promise(function (resolve, reject) {
       var zip = new Zip(fnm);
       zip.extractAllToAsync(dir, true, function (err) {
-        if (err) reject(new Error("Error opening zip filr: " + err));
+        if (err) reject(new Error("Error opening zip file: " + err));
         else resolve();
       });
     });
