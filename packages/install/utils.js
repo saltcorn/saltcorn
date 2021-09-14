@@ -4,6 +4,7 @@ const { spawnSync } = require("child_process");
 const os = require("os");
 
 const asyncSudo = (args) => {
+  console.log(args);
   return new Promise(function (resolve, reject) {
     var child = sudo(args, { cachePassword: true });
     //var child = sudo(['ls'], {cachePassword: true})
