@@ -1,6 +1,6 @@
 const sudo = require("sudo");
 const { is } = require("contractis");
-const { spawnSync } = require("child_process");
+const { execSync } = require("child_process");
 const os = require("os");
 
 const asyncSudo = (args) => {
@@ -22,8 +22,7 @@ const asyncSudo = (args) => {
 
 const asyncSudoUser = (user, args) => {
   if (os.userInfo().username === user) {
-    const [arg0, ...rest] = args;
-    spawnSync(arg0, rest, {
+    execSync(args.join(" "), {
       stdio: "inherit",
     });
   } else return asyncSudo(["sudo", "-iu", user, ...args]);
