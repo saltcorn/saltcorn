@@ -123,6 +123,7 @@ const askPort = async (mode) => {
   return +port ? +port : 80;
 };
 const go = async () => {
+  const osInfo = await si.osInfo();
   // for me (only if not root) or create saltcorn user
   const user = await askUser();
 
@@ -132,17 +133,26 @@ const go = async () => {
   const mode = await askDevServer(db);
 
   const port = await askPort(mode);
+
   // install system pkg
+
   // global saltcorn install
+
   // if sqlite, save cfg & exit
+
   // if pg, is it already installed?
+
   // set up pg db
+
   //systemd unit?
+
   // port?
+
   // if 80, setcap
+
   //save cfg
 
-  console.log({ yes, configFilePath, user, db, mode, port });
+  console.log({ yes, configFilePath, user, db, mode, port, osInfo });
 };
 
 go();
