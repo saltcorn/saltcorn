@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const { cli } = require("cli-ux");
 const path = require("path");
 const fs = require("fs");
