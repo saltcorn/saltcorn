@@ -41,8 +41,10 @@ const get_paths = (user) => {
 const write_connection_config = async (connobj, user) => {
   const { configFilePath, configFileDir } = get_paths(user);
   console.log({ configFilePath });
-  fs.promises.mkdir(configFileDir, { recursive: true });
-  fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
+  await asyncSudo(["mkdir", "-p", configFileDir]);
+  await asyncSudo(["chown", `${user}:${user}`, configFileDir]);
+  fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), { mode: 0o600 });
+  await asyncSudo(["mv", "/tmp/.saltcorn", configFilePath]);
   await asyncSudo(["chown", `${user}:${user}`, configFilePath]);
 };
 
