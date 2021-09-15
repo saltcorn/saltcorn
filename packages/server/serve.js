@@ -120,7 +120,7 @@ module.exports = async ({
     ? +process.env.SALTCORN_NWORKERS
     : defaultNCPUs;
 
-  const letsEncrypt = getConfig("letsencrypt", false);
+  const letsEncrypt = await getConfig("letsencrypt", false);
   const masterState = {
     started: false,
     listeningTo: new Set([]),
