@@ -141,7 +141,7 @@ const askPort = async (mode) => {
 };
 
 const installSystemPackages = async (osInfo, user, db, mode, port) => {
-  const distro_code = `${osInfo.distro} ${osInfo}`;
+  const distro_code = `${osInfo.distro} ${osInfo.codename}`;
   let python;
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
