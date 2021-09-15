@@ -317,4 +317,7 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "daemon-reload"]);
   await asyncSudo(["systemctl", "start", "saltcorn"]);
   await asyncSudo(["systemctl", "enable", "saltcorn"]);
-})();
+})().catch((e) => {
+  console.error(e.message || e);
+  process.exit(1);
+});
