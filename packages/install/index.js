@@ -141,15 +141,28 @@ const askPort = async (mode) => {
 };
 
 const installSystemPackages = async (osInfo, user, db, mode, port) => {
+  const distro_code = `${osInfo.distro} ${osInfo}`;
+  let python;
+  switch (distro_code) {
+    case "Ubuntu Bionic Beaver":
+      python = "python3";
+      break;
+
+    default:
+      python = "python-is-python3";
+
+      break;
+  }
   const packages = [
     "libpq-dev",
     "build-essential",
-    "python-is-python3",
+    python,
     "git",
     "libsystemd-dev",
   ];
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
+
   await asyncSudo(["apt", "install", "-y", ...packages]);
 };
 
