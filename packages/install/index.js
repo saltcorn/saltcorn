@@ -39,7 +39,7 @@ const get_paths = (user) => {
 };
 
 const write_connection_config = async (connobj, user) => {
-  const { configFilePath } = get_paths(user);
+  const { configFilePath, configFileDir } = get_paths(user);
   console.log({ configFilePath });
   fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
