@@ -40,7 +40,6 @@ const get_paths = (user) => {
 
 const write_connection_config = async (connobj, user) => {
   const { configFilePath, configFileDir } = get_paths(user);
-  console.log({ configFilePath });
   await asyncSudo(["mkdir", "-p", configFileDir]);
   await asyncSudo(["chown", `${user}:${user}`, configFileDir]);
   fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), { mode: 0o600 });
@@ -231,8 +230,8 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
   const mode = await askDevServer(db);
 
   const port = await askPort(mode);
-
-  console.log({ yes, user, db, mode, port, osInfo });
+  if (process.argv.includes("-v"))
+    console.log({ yes, user, db, mode, port, osInfo });
 
   // install system pkg
   await installSystemPackages(osInfo, user, db, mode, port);
