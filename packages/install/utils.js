@@ -29,7 +29,7 @@ const asyncSudoUser = (user, args) => {
 };
 
 const asyncSudoPostgres = (args) => {
-  return asyncSudoUser(["postgres", ...args]);
+  return asyncSudoUser("postgres", args);
 };
 
 const gen_password = () => {
