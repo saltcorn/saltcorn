@@ -1,0 +1,30 @@
+{
+  "name": "saltcorn-install",
+  "description": "Install Saltcorn",
+  "homepage": "https://saltcorn.com",
+  "version": "0.1.2",
+  "author": "Tom Nielsen @glutamate",
+  "bugs": "https://github.com/saltcorn/saltcorn/issues",
+  "dependencies": {
+    "cli-ux": "^5.6.3",
+    "contractis": "^0.1.0",
+    "dateformat": "^3.0.3",
+    "env-paths": "^2.2.0",
+    "inquirer": "^7.3.3",
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^2.6.2",
+    "sudo": "^1.0.3",
+    "systeminformation": "^5.8.9",
+    "tcp-port-used": "^1.0.2",
+    "wrk": "^1.2.1"
+  },
+  "bin": {
+    "saltcorn-install": "./index.js"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  }
+}
