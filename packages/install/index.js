@@ -141,15 +141,30 @@ const askPort = async (mode) => {
 };
 
 const installSystemPackages = async (osInfo, user, db, mode, port) => {
+  const distro_code = `${osInfo.distro} ${osInfo.codename}`;
+  let python;
+  switch (distro_code) {
+    case "Ubuntu Bionic Beaver":
+    case "Debian GNU/Linux buster":
+    case "Debian GNU/Linux stretch":
+      python = "python3";
+      break;
+
+    default:
+      python = "python-is-python3";
+
+      break;
+  }
   const packages = [
     "libpq-dev",
     "build-essential",
-    "python-is-python3",
+    python,
     "git",
     "libsystemd-dev",
   ];
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
+
   await asyncSudo(["apt", "install", "-y", ...packages]);
 };
 
@@ -162,13 +177,10 @@ sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsa
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  */
   if (user === "saltcorn")
-    await asyncSudo([
-      "adduser",
-      "--disabled-password",
-      "--gecos",
-      '""',
-      "saltcorn",
-    ]);
+    await asyncSudo(
+      ["adduser", "--disabled-password", "--gecos", '""', "saltcorn"],
+      true
+    );
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir]);
@@ -320,4 +332,7 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "daemon-reload"]);
   await asyncSudo(["systemctl", "start", "saltcorn"]);
   await asyncSudo(["systemctl", "enable", "saltcorn"]);
-})();
+})().catch((e) => {
+  console.error(e.message || e);
+  process.exit(1);
+});
