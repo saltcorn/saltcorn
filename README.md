@@ -25,7 +25,31 @@ You can run a local instance for quick test by running the following command
 
 and then point your browser to http://localhost:3000
 
-## Install from packages
+## Quick install server on Debian/Ubuntu
+
+This has been tested on Debian 9, 10 and 11 and Ubuntu 18.04, 20.04 and 21.04. All you need is to run these
+three lines on the command line shell, as root or as a user with sudo access:
+
+```
+wget -qO - https://deb.nodesource.com/setup_14.x | sudo bash -
+sudo apt-get install -qqy nodejs
+npx saltcorn-install -y
+```
+
+The first two lines will install Node.js 14. The last line will call the Saltcorn install script
+accepting all the defaults, Which installs PostgreSQL and sets up Saltcorn as a service
+listening on port 80.
+
+If you want a different port or a different database backend, or not install as a service, You
+can omit the final `-y` to get an interactive installation:
+
+```
+wget -qO - https://deb.nodesource.com/setup_14.x | sudo bash -
+sudo apt-get install -qqy nodejs
+npx saltcorn-install
+```
+
+## Install from NPM packages
 
 Instructions have been tested on Ubuntu 20.04 on a 1GB VM.
 
@@ -68,7 +92,7 @@ then run
 
 NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in paticular the last section.
 
-Skip this section if you ran `saltcorn setup`
+Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
 1. Install PostgreSQL: `sudo apt install postgresql postgresql-client`
 2. Either,
@@ -107,44 +131,6 @@ Skip this section if you ran `saltcorn setup`
 
 ### Server install
 
-#### nginx install and setup
-
-Install nginx: `sudo apt install nginx`
-
-create a file `/etc/nginx/sites-available/domain.com`, replacing `domain.com` with your domain, with these contents:
-
-```
-server {
-    listen 80;
-    server_name domain.com www.domain.com;
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-link this file to the `sites-enabled` directory:
-
-`sudo ln -s /etc/nginx/sites-available/domain.com /etc/nginx/sites-enabled/domain.com`
-
-reload nginx:
-
-`sudo service nginx reload`
-
-now run saltcorn:
-
-`sudo -u saltcorn saltcorn serve`
-
-or
-
-`saltcorn serve` if you didn't created a new user.
-
-Check whether you can access your new site in the browser.
-
 #### Install saltcorn as a service
 
 Installing saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
@@ -158,11 +144,13 @@ Documentation=https://saltcorn.com
 After=network.target
 
 [Service]
-Type=simple
+Type=notify
+WatchdogSec=5
 User=saltcorn
 WorkingDirectory=/home/saltcorn
-ExecStart=/usr/bin/saltcorn serve
+ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
 Restart=always
+Environment="NODE_ENV=production"
 
 [Install]
 WantedBy=multi-user.target
@@ -255,11 +243,11 @@ in `saltcorn/packages/saltcorn-builder/` run:
 
 `npm istall -g jsdoc`
 
-then 
+then
 
 `jsdoc -c deploy/jsdoc.conf.json`
 
-JSDocs will then be available in `docs/`. 
+JSDocs will then be available in `docs/`.
 
 To deploy these to https://saltcorn.github.io/jsdocs/:
 
