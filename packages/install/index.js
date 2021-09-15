@@ -146,6 +146,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port) => {
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
     case "Debian GNU/Linux buster":
+    case "Debian GNU/Linux stretch":
       python = "python3";
       break;
 
