@@ -6,7 +6,12 @@ const tcpPortUsed = require("tcp-port-used");
 const envPaths = require("env-paths");
 const si = require("systeminformation");
 const os = require("os");
-const { asyncSudo, asyncSudoUser, gen_password } = require("./utils");
+const {
+  asyncSudo,
+  asyncSudoUser,
+  asyncSudoPostgres,
+  gen_password,
+} = require("./utils");
 
 //https://github.com/sindresorhus/is-root/blob/main/index.js
 const isRoot = process.getuid && process.getuid() === 0;
