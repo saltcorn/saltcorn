@@ -1,8 +1,8 @@
 {
-  "name": "@saltcorn/install",
+  "name": "saltcorn-install",
   "description": "Install Saltcorn",
   "homepage": "https://saltcorn.com",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Tom Nielsen @glutamate",
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
@@ -17,6 +17,9 @@
     "systeminformation": "^5.8.9",
     "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
+  },
+  "bin": {
+    "saltcorn-install": "./index.js"
   },
   "license": "MIT",
   "main": "index.js",
