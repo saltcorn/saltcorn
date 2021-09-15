@@ -15,6 +15,7 @@ const asyncSudo = (args) => {
       console.error(data.toString());
     });
     child.on("exit", function (data) {
+      console.log({ data });
       resolve();
     });
   });
