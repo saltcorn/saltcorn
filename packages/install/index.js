@@ -162,13 +162,10 @@ sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsa
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  */
   if (user === "saltcorn")
-    await asyncSudo([
-      "adduser",
-      "--disabled-password",
-      "--gecos",
-      '""',
-      "saltcorn",
-    ]);
+    await asyncSudo(
+      ["adduser", "--disabled-password", "--gecos", '""', "saltcorn"],
+      true
+    );
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir]);

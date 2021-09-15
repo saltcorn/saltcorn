@@ -3,7 +3,7 @@ const { is } = require("contractis");
 const { execSync } = require("child_process");
 const os = require("os");
 
-const asyncSudo = (args) => {
+const asyncSudo = (args, allowFail) => {
   console.log(">", args.join(" "));
   return new Promise(function (resolve, reject) {
     var child = sudo(args, { cachePassword: true });
@@ -15,8 +15,8 @@ const asyncSudo = (args) => {
       console.error(data.toString());
     });
     child.on("exit", function (data) {
-      console.log({ data });
-      resolve();
+      if (data !== 0 && !allowFail) reject(data);
+      else resolve();
     });
   });
 };
