@@ -160,7 +160,6 @@ const installSystemPackages = async (osInfo, user, db, mode, port) => {
     "git",
     "libsystemd-dev",
   ];
-  console.log({ python, distro_code, packages });
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 
