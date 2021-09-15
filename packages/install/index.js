@@ -295,21 +295,21 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
   fs.writeFileSync(
     "/tmp/saltcorn.service",
     `[Unit]
-  Description=saltcorn
-  Documentation=https://saltcorn.com
-  After=network.target
-  
-  [Service]
-  Type=notify
-  WatchdogSec=5
-  User=${user}
-  WorkingDirectory=/home/${user}
-  ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
-  Restart=always
-  Environment="NODE_ENV=production"
-  
-  [Install]
-  WantedBy=multi-user.target`
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=notify
+WatchdogSec=5
+User=${user}
+WorkingDirectory=/home/${user}
+ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
+Restart=always
+Environment="NODE_ENV=production"
+
+[Install]
+WantedBy=multi-user.target`
   );
   await asyncSudo([
     "mv",
