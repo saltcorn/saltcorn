@@ -6,6 +6,11 @@ class LocalizePluginCommand extends Command {
     const Plugin = require("@saltcorn/data/models/plugin");
     const { args } = this.parse(LocalizePluginCommand);
     const plugin = await Plugin.findOne({ name: args.plugin });
+    if (!plugin || plugin.source === "local") {
+      console.error("Localisable plugin not found");
+      this.exit(1);
+    }
+
     plugin.name = plugin.source === "npm" ? plugin.location : args.plugin;
     plugin.source = "local";
     plugin.location = args.path;
