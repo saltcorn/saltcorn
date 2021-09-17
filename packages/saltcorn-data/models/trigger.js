@@ -39,13 +39,19 @@ class Trigger {
    * @returns {{when_trigger, configuration: any, name, description, action}}
    */
   get toJson() {
+    let table_name = this.table_name;
+    if (!table_name && this.table_id) {
+      const Table = require("./table");
+      const table = Table.find(+this.table_id);
+      table_name = table.name;
+    }
     return {
       name: this.name,
       description: this.description,
       action: this.action,
       when_trigger: this.when_trigger,
       configuration: this.configuration,
-      table_id: this.table_id,
+      table_name,
       channel: this.channel,
       min_role: this.min_role,
     };
@@ -116,6 +122,11 @@ class Trigger {
   static async create(f) {
     const trigger = new Trigger(f);
     const { id, table_name, ...rest } = trigger;
+    if (table_name && !rest.table_id) {
+      const Table = require("./table");
+      const table = Table.find(table_name);
+      rest.table_id = table.id;
+    }
     const fid = await db.insert("_sc_triggers", rest);
     trigger.id = fid;
     await require("../db/state").getState().refresh_triggers();
