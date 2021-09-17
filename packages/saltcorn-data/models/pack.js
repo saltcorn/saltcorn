@@ -10,6 +10,7 @@ const { contract, is } = require("contractis");
 const Page = require("./page");
 const { is_pack, is_plugin } = require("../contracts");
 const TableConstraint = require("./table_constraints");
+const { tr } = require("@saltcorn/markup/tags");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -21,7 +22,7 @@ const table_pack = contract(pack_fun, async (name) => {
     delete o.table_id;
     return o;
   };
-  const triggers = await Trigger.find({ table_id: table.id });
+  //const triggers = await Trigger.find({ table_id: table.id });
   const constraints = await TableConstraint.find({ table_id: table.id });
 
   return {
@@ -30,7 +31,7 @@ const table_pack = contract(pack_fun, async (name) => {
     min_role_write: table.min_role_write,
     versioned: table.versioned,
     fields: fields.map((f) => strip_ids(f.toJson)),
-    triggers: triggers.map((tr) => tr.toJson),
+    //triggers: triggers.map((tr) => tr.toJson),
     constraints: constraints.map((c) => c.toJson),
     ownership_field_name: table.owner_fieldname_from_fields(fields),
   };
@@ -226,7 +227,7 @@ const install_pack = contract(
         }
       }
       for (const trigger of tableSpec.triggers || [])
-        await Trigger.create({ table, ...trigger });
+        await Trigger.create({ table, ...trigger }); //legacy, not in new packs
       for (const constraint of tableSpec.constraints || [])
         await TableConstraint.create({ table, ...constraint });
       if (tableSpec.ownership_field_name) {
@@ -258,6 +259,10 @@ const install_pack = contract(
           min_role: viewSpec.min_role || 10,
         });
     }
+    for (const triggerSpec of pack.triggers || []) {
+      await Trigger.create(triggerSpec);
+    }
+
     for (const pageFullSpec of pack.pages || []) {
       const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
       await Page.create(pageSpec);

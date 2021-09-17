@@ -26,6 +26,7 @@ const {
 const { is_plugin } = require("../contracts");
 
 const { asyncMap } = require("../utils");
+const Trigger = require("./trigger");
 
 const create_pack = contract(
   is.fun(is.str, is.promise(is.undefined)),
@@ -46,7 +47,8 @@ const create_pack = contract(
       await Page.find({}),
       async (v) => await page_pack(v.name)
     );
-    var pack = { tables, views, plugins, pages };
+    const triggers = (await Trigger.find({})).map((tr) => tr.toJson);
+    var pack = { tables, views, plugins, pages, triggers };
 
     await fs.writeFile(path.join(dirpath, "pack.json"), JSON.stringify(pack));
   }
