@@ -259,7 +259,7 @@ const install_pack = contract(
           min_role: viewSpec.min_role || 10,
         });
     }
-    for (const triggerSpec of pack.triggers) {
+    for (const triggerSpec of pack.triggers || []) {
       await Trigger.create(triggerSpec);
     }
 
