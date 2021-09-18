@@ -103,6 +103,10 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         if (kpath.length === 3) {
           const [jtNm, jFieldNm, lblField] = kpath;
           const jtable = await Table.findOne({ name: jtNm });
+          if (!jtable)
+            throw new InvalidConfiguration(
+              `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+            );
           const jfields = await jtable.getFields();
           const jfield = jfields.find((f) => f.name === lblField);
           if (jfield)
