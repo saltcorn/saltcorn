@@ -46,6 +46,7 @@ class State {
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
+    this.stashed_fieldviews = {};
     this.files = {};
     this.pages = [];
     this.fields = [];
@@ -355,6 +356,9 @@ class State {
       if (type) {
         if (type.fieldviews) type.fieldviews[k] = v;
         else type.fieldviews = { [k]: v };
+      } else {
+        if(!this.stashed_fieldviews[v.type]) this.stashed_fieldviews[v.type]={};
+        this.stashed_fieldviews[v.type][k] = v
       }
     });
     const layout = withCfg("layout");
@@ -383,7 +387,7 @@ class State {
    * @param t
    */
   addType(t) {
-    this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews } };
+    this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews, ...(this.stashed_fieldviews[t.name]||{}) } };
   }
 
   /**
@@ -405,6 +409,7 @@ class State {
   async refresh_plugins(noSignal) {
     this.viewtemplates = {};
     this.types = {};
+    this.stashed_fieldviews = {};
     this.fields = [];
     this.fileviews = {};
     this.actions = {};
