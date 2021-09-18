@@ -357,8 +357,9 @@ class State {
         if (type.fieldviews) type.fieldviews[k] = v;
         else type.fieldviews = { [k]: v };
       } else {
-        if(!this.stashed_fieldviews[v.type]) this.stashed_fieldviews[v.type]={};
-        this.stashed_fieldviews[v.type][k] = v
+        if (!this.stashed_fieldviews[v.type])
+          this.stashed_fieldviews[v.type] = {};
+        this.stashed_fieldviews[v.type][k] = v;
       }
     });
     const layout = withCfg("layout");
@@ -387,7 +388,13 @@ class State {
    * @param t
    */
   addType(t) {
-    this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews, ...(this.stashed_fieldviews[t.name]||{}) } };
+    this.types[t.name] = {
+      ...t,
+      fieldviews: {
+        ...t.fieldviews,
+        ...(this.stashed_fieldviews[t.name] || {}),
+      },
+    };
   }
 
   /**
