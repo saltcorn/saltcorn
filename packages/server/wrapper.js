@@ -245,6 +245,11 @@ module.exports = (version_tag) =>
         const renderToHtml = layout.renderBody
           ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
           : defaultRenderToHtml;
+        res.header(
+          "Cache-Control",
+          "private, no-cache, no-store, must-revalidate"
+        );
+
         res.set("Page-Title", encodeURIComponent(title));
         res.send(
           html.length === 1
@@ -256,6 +261,7 @@ module.exports = (version_tag) =>
       const currentUrl = req.originalUrl.split("?")[0];
 
       const pageHeaders = typeof opts === "string" ? [] : opts.headers;
+
       res.send(
         layout.wrap({
           title,

@@ -891,7 +891,7 @@ const stateFieldsToWhere = contract(
         if (kpath.length === 3) {
           const [jtNm, jFieldNm, lblField] = kpath;
           qstate.id = [
-            ...(qstate.id || []),
+            ...(qstate.id ? [qstate.id] : []),
             {
               // where id in (select jFieldNm from jtnm where lblField=v)
               inSelect: {
