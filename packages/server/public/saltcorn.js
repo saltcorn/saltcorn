@@ -106,28 +106,70 @@ function reindex(element, oldix, newix) {
   );
 }
 
+function get_form_subset_record(e) {
+  const rec = {};
+  e.find("input[name],select[name]").each(function () {
+    rec[$(this).attr("name")] = $(this).val();
+  });
+  return rec;
+}
+
+function apply_form_subset_record(e, vals) {
+  e.find("input[name],select[name]").each(function () {
+    var name = $(this).attr("name");
+    if (vals[name]) $(this).val(vals[name]);
+  });
+}
+
+function reindex_form_record(vals, oldix, newix) {
+  const rec = {};
+  Object.keys(vals).forEach((k) => {
+    const newkey = k.split("_" + oldix).join("_" + newix);
+    rec[newkey] = vals[k];
+  });
+  return rec;
+}
+
 function rep_up(e) {
   var myrep = $(e).closest(".form-repeat");
+  var theform = $(e).closest("form");
   var ix = myrep.index();
   var parent = myrep.parent();
   if (ix > 0) {
     var swap_with = parent.children(".form-repeat").eq(ix - 1);
+    var vals1 = reindex_form_record(get_form_subset_record(myrep), ix, ix - 1);
+    var vals2 = reindex_form_record(
+      get_form_subset_record(swap_with),
+      ix - 1,
+      ix
+    );
     reindex(myrep, ix, ix - 1);
     reindex(swap_with, ix - 1, ix);
     $(myrep).swapWith(swap_with);
+    apply_form_subset_record(theform, vals2);
+    apply_form_subset_record(theform, vals1);
   }
 }
 
 function rep_down(e) {
   var myrep = $(e).closest(".form-repeat");
+  var theform = $(e).closest("form");
   var ix = myrep.index();
   var parent = myrep.parent();
   var nchildren = parent.children(".form-repeat").length;
   if (ix < nchildren - 1) {
     var swap_with = parent.children(".form-repeat").eq(ix + 1);
+    var vals1 = reindex_form_record(get_form_subset_record(myrep), ix, ix + 1);
+    var vals2 = reindex_form_record(
+      get_form_subset_record(swap_with),
+      ix + 1,
+      ix
+    );
     reindex(myrep, ix, ix + 1);
     reindex(swap_with, ix + 1, ix);
     $(myrep).swapWith(swap_with);
+    apply_form_subset_record(theform, vals2);
+    apply_form_subset_record(theform, vals1);
   }
 }
 function initialize_page() {
