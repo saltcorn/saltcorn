@@ -261,7 +261,10 @@ Sitemap: ${base}sitemap.xml
   await File.ensure_file_store();
   // 404 handling
   app.get("*", function (req, res) {
-    res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
+    var fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
+    res
+      .status(404)
+      .sendWrap(req.__("Not found"), h1(req.__("Page not found"), fullUrl));
   });
   return app;
 };
