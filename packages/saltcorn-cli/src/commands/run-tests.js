@@ -16,6 +16,10 @@ class RunTestsCommand extends Command {
     return res;
   }
   async e2etest(env) {
+    const fixtures = require("@saltcorn/data/db/fixtures");
+    const reset = require("@saltcorn/data/db/reset_schema");
+    await reset();
+    await fixtures();
     const server = spawn(
       "packages/saltcorn-cli/bin/saltcorn",
       ["serve", "-p", "2987"],
