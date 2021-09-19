@@ -41,7 +41,11 @@ class Browser {
       this.page.waitForNavigation(),
       this.page.goto(this.baseURL + url),
     ]);
-    expect(response.status()).toBe(200);
+    const status = response.status();
+    if (status !== 200) {
+      console.log(await this.page.content());
+    }
+    expect(status).toBe(200);
   }
   async clickNav(sel, dontCheck) {
     const prevpage = await this.page.content();
