@@ -16,6 +16,11 @@ class RunTestsCommand extends Command {
     return res;
   }
   async e2etest(env) {
+    spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
+      stdio: "inherit",
+      env,
+    });
+
     const server = spawn(
       "packages/saltcorn-cli/bin/saltcorn",
       ["serve", "-p", "2987"],
