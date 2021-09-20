@@ -180,11 +180,10 @@ class Table {
    * Get owner column name
    * @returns {Promise<string|null|*>}
    */
-  async owner_fieldname() {
+  owner_fieldname() {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
-    const fields = await this.getFields();
-    return this.owner_fieldname_from_fields(fields);
+    return this.owner_fieldname_from_fields(this.fields);
   }
 
   /**
@@ -193,14 +192,13 @@ class Table {
    * @param row - table row
    * @returns {Promise<string|null|*|boolean>}
    */
-  async is_owner(user, row) {
+  is_owner(user, row) {
     if (!user) return false;
     if (this.ownership_formula) {
-      const fields = await this.getFields();
-      const f = get_expression_function(this.ownership_formula, fields);
+      const f = get_expression_function(this.ownership_formula, this.fields);
       return f(row, user);
     }
-    const field_name = await this.owner_fieldname();
+    const field_name = this.owner_fieldname();
     return field_name && row[field_name] === user.id;
   }
 
