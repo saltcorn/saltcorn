@@ -87,6 +87,7 @@ class Table {
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
     this.ownership_field_id = o.ownership_field_id;
+    this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
     this.external = false;
     this.description = o.description;
@@ -218,6 +219,7 @@ class Table {
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
+      ownership_formula: options.ownership_formula,
       description: options.description || "",
     };
     // insert table defintion into _sc_tables

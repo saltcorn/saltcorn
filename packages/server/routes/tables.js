@@ -806,6 +806,9 @@ router.post(
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
       if (!rest.versioned) rest.versioned = false;
+      if (rest.ownership_field_id === "_formula")
+        rest.ownership_field_id = null;
+      else rest.ownership_formula = null;
       await table.update(rest);
       if (!old_versioned && rest.versioned)
         req.flash(
