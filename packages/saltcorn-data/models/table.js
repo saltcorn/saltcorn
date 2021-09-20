@@ -10,6 +10,7 @@ const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
   recalculate_for_stored,
+  get_expression_function,
 } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
@@ -194,6 +195,11 @@ class Table {
    */
   async is_owner(user, row) {
     if (!user) return false;
+    if (this.ownership_formula) {
+      const fields = await this.getFields();
+      const f = get_expression_function(this.ownership_formula, fields);
+      return f(row, user);
+    }
     const field_name = await this.owner_fieldname();
     return field_name && row[field_name] === user.id;
   }
