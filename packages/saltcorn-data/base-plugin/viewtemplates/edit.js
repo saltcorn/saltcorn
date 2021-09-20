@@ -522,6 +522,9 @@ const authorise_post = async ({ body, table_id, req }) => {
     const field_name = await table.owner_fieldname();
     return field_name && `${body[field_name]}` === `${user_id}`;
   }
+  if (table.ownership_formula && user_id) {
+    return await table.is_owner(req.user, body);
+  }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
 };
