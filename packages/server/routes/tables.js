@@ -719,6 +719,8 @@ router.get(
         )
     );
     // add table form
+    if (table.ownership_formula && !table.ownership_field_id)
+      table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
