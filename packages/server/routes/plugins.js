@@ -41,6 +41,7 @@ const {
   td,
   p,
   strong,
+  text,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
@@ -792,6 +793,14 @@ router.post(
     const { name } = req.params;
 
     const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    if (!plugin) {
+      req.flash(
+        "error",
+        req.__(`Plugin %s not found`, text(decodeURIComponent(name)))
+      );
+      res.redirect(`/plugins`);
+      return;
+    }
     delete plugin.id;
     await load_plugins.loadAndSaveNewPlugin(plugin);
     const plugin_module = getState().plugins[name];
