@@ -882,6 +882,42 @@ describe("Table with row ownership", () => {
     await persons.delete();
   });
 });
+describe("Table with row ownership", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwnedFml");
+    const name = await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    const age = await Field.create({
+      table: persons,
+      name: "age",
+      type: "String",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_formula: "user.id===owner" });
+    if (!db.isSQLite) {
+      await age.update({ type: "Integer" });
+      await name.update({ name: "lastname" });
+      await persons.insertRow({ lastname: "Joe", age: 12 });
+      await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+      const row = await persons.getRow({ age: 12 });
+      expect(row.lastname).toBe("Joe");
+      expect(row.age).toBe(12);
+      const is_owner = await persons.is_owner({ id: 6 }, row);
+      expect(is_owner).toBe(false);
+      const row1 = await persons.getRow({ age: 13 });
+      const is_owner1 = await persons.is_owner({ id: 1 }, row1);
+      expect(is_owner1).toBe(true);
+    }
+    await persons.delete();
+  });
+});
 describe("Table with UUID pks", () => {
   if (!db.isSQLite) {
     it("should select uuid", async () => {
