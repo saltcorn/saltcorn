@@ -26,11 +26,11 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 
-const restore_backup = (csrf, inner) =>
+const restore_backup = (csrf, inner, action = `/admin/restore`) =>
   form(
     {
       method: "post",
-      action: `/admin/restore`,
+      action,
       encType: "multipart/form-data",
     },
     input({ type: "hidden", name: "_csrf", value: csrf }),

@@ -177,7 +177,8 @@ const restore_files = contract(
         //set location
         file.location = newPath;
         //insert in db
-        await db.insert("_sc_files", file);
+        const { user_id, ...file_row } = file;
+        await db.insert("_sc_files", file_row);
       }
     }
   }
