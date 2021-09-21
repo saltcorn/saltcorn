@@ -5,6 +5,24 @@ const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
 const validator = require("email-validator");
 
+const safeUserFields = (o) => {
+  const {
+    email,
+    password,
+    language,
+    _attributes,
+    api_token,
+    verification_token,
+    verified_on,
+    disabled,
+    id,
+    reset_password_token,
+    reset_password_expiry,
+    role_id,
+    ...rest
+  } = o;
+  return rest;
+};
 /**
  * User
  */
@@ -33,22 +51,7 @@ class User {
         : o.reset_password_expiry || null;
     this.role_id = o.role_id ? +o.role_id : 8;
 
-    const {
-      email,
-      password,
-      language,
-      _attributes,
-      api_token,
-      verification_token,
-      verified_on,
-      disabled,
-      id,
-      reset_password_token,
-      reset_password_expiry,
-      role_id,
-      ...rest
-    } = o;
-    Object.assign(this, rest);
+    Object.assign(this, safeUserFields(o));
 
     contract.class(this);
   }
@@ -149,13 +152,15 @@ class User {
    * @returns {{role_id: number, language, id, email, tenant: *}}
    */
   get session_object() {
-    return {
+    const so = {
       email: this.email,
       id: this.id,
       role_id: this.role_id,
       language: this.language,
       tenant: db.getTenantSchema(),
     };
+    Object.assign(so, safeUserFields(this));
+    return so;
   }
 
   /**
