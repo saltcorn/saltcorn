@@ -4,6 +4,8 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
+const File = require("@saltcorn/data/models/file");
+
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const {
   setTenant,
@@ -26,6 +28,7 @@ const {
   form,
   select,
   option,
+  i,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -37,6 +40,11 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { restore_backup } = require("../markup/admin.js");
+const { restore } = require("@saltcorn/data/models/backup");
+const load_plugins = require("../load_plugins");
+const fs = require("fs");
+
 const router = new Router();
 module.exports = router;
 
@@ -216,7 +224,11 @@ router.get(
       verification_token: token,
     });
     if (result.error) req.flash("danger", result.error);
-    else if (result) req.flash("success", req.__("Email verified"));
+    else if (result) {
+      req.flash("success", req.__("Email verified"));
+      const u = await User.findOne({ email });
+      if (u) u.relogin(req);
+    }
     res.redirect("/");
   })
 );
@@ -320,7 +332,36 @@ router.get(
       form.blurb = req.__(
         "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
       );
-      res.sendAuthWrap(req.__(`Create first user`), form, {});
+      const restore = restore_backup(
+        req.csrfToken(),
+        [i({ class: "fas fa-upload mr-2 mt-2" }), req.__("Restore a backup")],
+        `/auth/create_from_restore`
+      );
+      res.sendAuthWrap(req.__(`Create first user`), form, {}, restore);
+    } else {
+      req.flash("danger", req.__("Users already present"));
+      res.redirect("/auth/login");
+    }
+  })
+);
+
+router.post(
+  "/create_from_restore",
+  setTenant,
+  error_catcher(async (req, res) => {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      const newPath = File.get_new_path();
+      await req.files.file.mv(newPath);
+      const err = await restore(
+        newPath,
+        (p) => load_plugins.loadAndSaveNewPlugin(p),
+        true
+      );
+      if (err) req.flash("error", err);
+      else req.flash("success", req.__("Successfully restored backup"));
+      fs.unlink(newPath, function () {});
+      res.redirect(`/auth/login`);
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
@@ -1103,6 +1144,7 @@ router.all(
       const user = await User.findOne({ id: req.user.id });
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
+      user.relogin(req);
     }
     if (wfres.verified === false) {
       req.flash("danger", req.__("User verification failed"));
