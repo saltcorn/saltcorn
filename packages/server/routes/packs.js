@@ -267,6 +267,11 @@ router.post(
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
+    if (!pack) {
+      req.flash("error", req.__(`Pack %s not found`, text(name)));
+      res.redirect(`/plugins`);
+      return;
+    }
     await uninstall_pack(pack.pack, name);
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
