@@ -17,6 +17,8 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const EventLog = require("@saltcorn/data/models/eventlog");
 
+jest.setTimeout(30000);
+
 beforeAll(async () => {
   await resetToFixtures();
   const mv = async (fnm) => {
