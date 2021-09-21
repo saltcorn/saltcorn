@@ -1103,6 +1103,7 @@ router.all(
       const user = await User.findOne({ id: req.user.id });
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
+      user.relogin(req);
     }
     if (wfres.verified === false) {
       req.flash("danger", req.__("User verification failed"));
