@@ -216,7 +216,11 @@ router.get(
       verification_token: token,
     });
     if (result.error) req.flash("danger", result.error);
-    else if (result) req.flash("success", req.__("Email verified"));
+    else if (result) {
+      req.flash("success", req.__("Email verified"));
+      const u = await User.findOne({ email });
+      if (u) u.relogin(req);
+    }
     res.redirect("/");
   })
 );
