@@ -119,3 +119,4 @@ infosec_scan_tmp/
 
 docs/
 package-lock.json
+.vagrant/
