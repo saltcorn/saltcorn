@@ -344,6 +344,13 @@ const renderRows = async (
         segment.contents = await view.run(state, extra);
       }
     });
+    const user_id = extra.req.user ? extra.req.user.id : null;
+
+    const is_owner =
+      table.ownership_formula && user_id
+        ? await table.is_owner(extra.req.user, row)
+        : owner_field && user_id && row[owner_field] === user_id;
+
     return render(
       row,
       fields,
@@ -352,7 +359,7 @@ const renderRows = async (
       table,
       role,
       extra.req,
-      owner_field
+      is_owner
     );
   });
 };
@@ -393,18 +400,7 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
-const render = (
-  row,
-  fields,
-  layout0,
-  viewname,
-  table,
-  role,
-  req,
-  owner_field
-) => {
-  const user_id = req.user ? req.user.id : null;
-  const is_owner = owner_field && user_id && row[owner_field] === user_id;
+const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       const f = get_expression_function(segment[key], fields);

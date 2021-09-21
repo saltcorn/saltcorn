@@ -10,6 +10,7 @@ const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
   recalculate_for_stored,
+  get_expression_function,
 } = require("./expression");
 const { contract, is } = require("contractis");
 const { is_table_query } = require("../contracts");
@@ -87,6 +88,7 @@ class Table {
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
     this.ownership_field_id = o.ownership_field_id;
+    this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
     this.external = false;
     this.description = o.description;
@@ -178,11 +180,10 @@ class Table {
    * Get owner column name
    * @returns {Promise<string|null|*>}
    */
-  async owner_fieldname() {
+  owner_fieldname() {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
-    const fields = await this.getFields();
-    return this.owner_fieldname_from_fields(fields);
+    return this.owner_fieldname_from_fields(this.fields);
   }
 
   /**
@@ -191,9 +192,13 @@ class Table {
    * @param row - table row
    * @returns {Promise<string|null|*|boolean>}
    */
-  async is_owner(user, row) {
+  is_owner(user, row) {
     if (!user) return false;
-    const field_name = await this.owner_fieldname();
+    if (this.ownership_formula) {
+      const f = get_expression_function(this.ownership_formula, this.fields);
+      return f(row, user);
+    }
+    const field_name = this.owner_fieldname();
     return field_name && row[field_name] === user.id;
   }
 
@@ -218,6 +223,7 @@ class Table {
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
+      ownership_formula: options.ownership_formula,
       description: options.description || "",
     };
     // insert table defintion into _sc_tables
@@ -990,10 +996,18 @@ class Table {
         const throughTable = await Table.findOne({
           name: reffield.reftable_name,
         });
+        if (!throughTable)
+          throw new InvalidConfiguration(
+            `Join-through table ${reffield.reftable_name} not found`
+          );
         const throughTableFields = await throughTable.getFields();
         const throughRefField = throughTableFields.find(
           (f) => f.name === through
         );
+        if (!throughRefField)
+          throw new InvalidConfiguration(
+            `Reference field field ${through} not found in table ${throughTable.name}`
+          );
         const finalTable = throughRefField.reftable_name;
         const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
           through

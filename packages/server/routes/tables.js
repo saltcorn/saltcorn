@@ -70,7 +70,7 @@ const tableForm = async (table, req) => {
     submitButtonClass: "btn-outline-primary",
     onChange: "remove_outline(this)",
     fields: [
-      ...(userFields.length > 0 && !table.external
+      ...(!table.external
         ? [
             {
               label: req.__("Ownership field"),
@@ -79,7 +79,22 @@ const tableForm = async (table, req) => {
                 "The user referred to in this field will be the owner of the row"
               ),
               input_type: "select",
-              options: [{ value: "", label: req.__("None") }, ...userFields],
+              options: [
+                { value: "", label: req.__("None") },
+                ...userFields,
+                { value: "_formula", label: req.__("Formula") },
+              ],
+            },
+            {
+              name: "ownership_formula",
+              label: req.__("Ownership formula"),
+              type: "String",
+              sublabel:
+                req.__("User is treated as owner if true. In scope: ") +
+                ["user", ...fields.map((f) => f.name)]
+                  .map((fn) => code(fn))
+                  .join(", "),
+              showIf: { ownership_field_id: "_formula" },
             },
           ]
         : []),
@@ -704,6 +719,8 @@ router.get(
         )
     );
     // add table form
+    if (table.ownership_formula && !table.ownership_field_id)
+      table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
@@ -791,6 +808,9 @@ router.post(
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
       if (!rest.versioned) rest.versioned = false;
+      if (rest.ownership_field_id === "_formula")
+        rest.ownership_field_id = null;
+      else rest.ownership_formula = null;
       await table.update(rest);
       if (!old_versioned && rest.versioned)
         req.flash(

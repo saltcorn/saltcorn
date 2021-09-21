@@ -261,11 +261,7 @@ const get_viewable_fields = contract(
             label: column.header_label ? text(__(column.header_label)) : "",
             key: (r) => {
               if (action_requires_write(column.action_name)) {
-                const owner_field = table.owner_fieldname_from_fields(fields);
-                if (
-                  table.min_role_write < role &&
-                  (!owner_field || r[owner_field] !== user_id)
-                )
+                if (table.min_role_write < role && !table.is_owner(req.user, r))
                   return "";
               }
               const url = action_url(

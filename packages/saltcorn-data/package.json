@@ -30,7 +30,7 @@
     "latest-version": "^5.1.0",
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.33",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "2.6.2",
     "nodemailer": "^6.4.17",
     "pg": "^8.2.1",
     "pg-copy-streams": "^5.1.1",
