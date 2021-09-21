@@ -1000,6 +1000,10 @@ class Table {
         const throughRefField = throughTableFields.find(
           (f) => f.name === through
         );
+        if (!throughRefField)
+          throw new InvalidConfiguration(
+            `Reference field field ${through} not found in table ${throughTable.name}`
+          );
         const finalTable = throughRefField.reftable_name;
         const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
           through
