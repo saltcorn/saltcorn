@@ -996,6 +996,10 @@ class Table {
         const throughTable = await Table.findOne({
           name: reffield.reftable_name,
         });
+        if (!throughTable)
+          throw new InvalidConfiguration(
+            `Join-through table ${reffield.reftable_name} not found`
+          );
         const throughTableFields = await throughTable.getFields();
         const throughRefField = throughTableFields.find(
           (f) => f.name === through

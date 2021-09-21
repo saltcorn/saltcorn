@@ -236,6 +236,11 @@ router.post(
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
+    if (!pack) {
+      req.flash("error", req.__(`Pack %s not found`, text(name)));
+      res.redirect(`/plugins`);
+      return;
+    }
     const can_install = await can_install_pack(pack.pack);
 
     if (can_install.error) {
