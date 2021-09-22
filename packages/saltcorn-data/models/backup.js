@@ -193,7 +193,7 @@ const restore_file_users = contract(
   is.fun(is.obj({}), is.promise(is.undefined)),
   async (file_users) => {
     for (const [id, user_id] of Object.entries(file_users)) {
-      await db.update("_sc_files", { user_id }, id);
+      if (user_id) await db.update("_sc_files", { user_id }, id);
     }
   }
 );
@@ -212,7 +212,7 @@ const restore_tables = contract(
       if (existsSync(fnm_json)) {
         const res = await table.import_json_file(
           fnm_json,
-          table.name === "users"
+          table.name === "users" && !restore_first_user
         );
         if (res.error) err = (err || "") + res.error;
       } else if (existsSync(fnm_csv)) {
