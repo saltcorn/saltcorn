@@ -167,9 +167,10 @@ const extract = contract(
   }
 );
 const restore_files = contract(
-  is.fun(is.str, is.promise(is.undefined)),
+  is.fun(is.str, is.promise(is.obj({}))),
   async (dirpath) => {
     const fnm = path.join(dirpath, "files.csv");
+    const file_users = {};
     if (existsSync(fnm)) {
       const file_rows = await csvtojson().fromFile(fnm);
       for (const file of file_rows) {
@@ -180,8 +181,19 @@ const restore_files = contract(
         file.location = newPath;
         //insert in db
         const { user_id, ...file_row } = file;
-        await db.insert("_sc_files", file_row);
+        const id = await db.insert("_sc_files", file_row);
+        file_users[id] = user_id;
       }
+    }
+    return file_users;
+  }
+);
+
+const restore_file_users = contract(
+  is.fun(is.obj({}), is.promise(is.undefined)),
+  async (file_users) => {
+    for (const [id, user_id] of Object.entries(file_users)) {
+      await db.update("_sc_files", { user_id }, id);
     }
   }
 );
@@ -262,13 +274,14 @@ const restore = contract(
     await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
     // files
-    await restore_files(dir.path);
+    const file_users = await restore_files(dir.path);
 
     //table csvs
     const tabres = await restore_tables(dir.path, restore_first_user);
     if (tabres) err = (err || "") + tabres;
     //config
     await restore_config(dir.path);
+    await restore_file_users(file_users);
 
     await dir.cleanup();
     return err;
