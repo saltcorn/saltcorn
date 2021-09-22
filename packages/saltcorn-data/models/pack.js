@@ -11,6 +11,7 @@ const Page = require("./page");
 const { is_pack, is_plugin } = require("../contracts");
 const TableConstraint = require("./table_constraints");
 const { tr } = require("@saltcorn/markup/tags");
+const Role = require("./role");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -201,6 +202,9 @@ const install_pack = contract(
         const p = new Plugin(plugin);
         await loadAndSaveNewPlugin(p);
       }
+    }
+    for (const role of pack.roles || []) {
+      await Role.create(role);
     }
     for (const tableSpec of pack.tables) {
       if (tableSpec.name !== "users") {

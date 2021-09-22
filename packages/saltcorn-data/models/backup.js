@@ -6,6 +6,7 @@ const View = require("./view");
 const File = require("./file");
 const Plugin = require("./plugin");
 const User = require("./user");
+const Role = require("./role");
 const Page = require("./page");
 const Zip = require("adm-zip");
 const tmp = require("tmp-promise");
@@ -48,7 +49,8 @@ const create_pack = contract(
       async (v) => await page_pack(v.name)
     );
     const triggers = (await Trigger.find({})).map((tr) => tr.toJson);
-    var pack = { tables, views, plugins, pages, triggers };
+    const roles = await Role.find({});
+    var pack = { tables, views, plugins, pages, triggers, roles };
 
     await fs.writeFile(path.join(dirpath, "pack.json"), JSON.stringify(pack));
   }
