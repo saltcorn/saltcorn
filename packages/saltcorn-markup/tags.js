@@ -1,5 +1,7 @@
 const xss = require("xss");
 const escape = require("escape-html");
+const htmlTags = require("html-tags");
+const voidHtmlTags = new Set(require("html-tags/void"));
 
 const ppClasses = (cs) =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
@@ -48,60 +50,15 @@ xss.whiteList.kbd = [];
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
 
-const nbsp = "&nbsp;";
-/* he following is a complete list of the void elements in HTML:
+const allTags = Object.fromEntries(
+  htmlTags.map((tag) => [tag, mkTag(tag, voidHtmlTags.has(tag))])
+);
 
-area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr
-*/
 module.exports = {
-  a: mkTag("a"),
-  div: mkTag("div"),
-  span: mkTag("span"),
-  label: mkTag("label"),
-  option: mkTag("option"),
-  select: mkTag("select"),
-  button: mkTag("button"),
-  textarea: mkTag("textarea"),
-  form: mkTag("form"),
-  script: mkTag("script"),
-  style: mkTag("style"),
-  p: mkTag("p"),
-  colgroup: mkTag("colgroup"),
-  col: mkTag("col", true),
-  table: mkTag("table"),
-  img: mkTag("img", true),
-  thead: mkTag("thead"),
-  tbody: mkTag("tbody"),
-  small: mkTag("small"),
-  pre: mkTag("pre"),
-  code: mkTag("code"),
-  time: mkTag("time"),
-  header: mkTag("header"),
-  footer: mkTag("footer"),
-  section: mkTag("section"),
-  strong: mkTag("strong"),
-  tr: mkTag("tr"),
-  th: mkTag("th"),
-  td: mkTag("td"),
-  ul: mkTag("ul"),
-  ol: mkTag("ol"),
-  li: mkTag("li"),
-  h1: mkTag("h1"),
-  h2: mkTag("h2"),
-  h3: mkTag("h3"),
-  h4: mkTag("h4"),
-  h5: mkTag("h5"),
-  h6: mkTag("h6"),
-  b: mkTag("b"),
-  nav: mkTag("nav"),
-  i: mkTag("i"),
-  hr: mkTag("hr", true),
-  br: mkTag("br", true),
-  link: mkTag("link", true),
-  input: mkTag("input", true),
+  ...allTags,
   domReady,
   text,
   text_attr,
-  nbsp,
+  nbsp: "&nbsp;",
   mkTag,
 };
