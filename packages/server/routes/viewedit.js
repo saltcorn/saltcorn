@@ -144,6 +144,14 @@ router.get(
               },
               {
                 label: "",
+                key: (r) =>
+                  link(
+                    `/viewedit/config/${encodeURIComponent(r.name)}`,
+                    req.__("Configure")
+                  ),
+              },
+              {
+                label: "",
                 key: (r) => view_dropdown(r, req),
               },
             ],
@@ -205,12 +213,12 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
-          label: req.__("Description"),
-          name: "description",
-          type: "String",
-          sublabel: req.__(
-              "Description allows you to give more information about the view."
-          ),
+        label: req.__("Description"),
+        name: "description",
+        type: "String",
+        sublabel: req.__(
+          "Description allows you to give more information about the view."
+        ),
       }),
       new Field({
         label: req.__("Template"),
@@ -382,17 +390,18 @@ router.post(
         form.hasErrors = true;
         sendForm(form);
       } else {
-          const existing_view = await View.findOne({ name: result.success.name });
-          if(typeof existing_view!=="undefined")
-              if(req.body.id!=existing_view.id){  // may be need !== but doesnt work
-              form.errors.name = req.__("A view with this name already exists");
-              form.hasErrors = true;
-              sendForm(form);
-              return;
+        const existing_view = await View.findOne({ name: result.success.name });
+        if (typeof existing_view !== "undefined")
+          if (req.body.id != existing_view.id) {
+            // may be need !== but doesnt work
+            form.errors.name = req.__("A view with this name already exists");
+            form.hasErrors = true;
+            sendForm(form);
+            return;
           }
 
-          const v = result.success;
-          if (v.table_name) {
+        const v = result.success;
+        if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
           if (table && table.id) v.table_id = table.id;
           else if (table && table.external) v.exttable_name = v.table_name;
