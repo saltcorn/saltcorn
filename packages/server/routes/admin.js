@@ -684,11 +684,10 @@ router.post(
       //config+crashes+nontable triggers
       await db.deleteWhere("_sc_triggers");
       await db.deleteWhere("_sc_errors");
-      await db.deleteWhere("_sc_config");
+      await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
     }
     if (form.values.users) {
-      await db.deleteWhere("_sc_config");
       const users1 = await Table.findOne({ name: "users" });
       const userfields1 = await users1.getFields();
 
