@@ -115,6 +115,46 @@ describe("mkWhere", () => {
       where: `where "age"=$1 and "id" in (select bar from foo where "baz"=$2) and "name"=$3`,
     });
   });
+  it("should query or", () => {
+    expect(mkWhere({ or: [{ id: 5 }, { x: 7 }] })).toStrictEqual({
+      values: [5, 7],
+      where: 'where "id"=$1 or "x"=$2',
+    });
+    expect(mkWhere({ or: [{ id: 5 }, { x: { gt: 7 } }] })).toStrictEqual({
+      values: [5, 7],
+      where: 'where "id"=$1 or "x">$2',
+    });
+    expect(mkWhere({ or: [{ id: 5 }, { x: 7, y: 8 }] })).toStrictEqual({
+      values: [5, 7, 8],
+      where: 'where "id"=$1 or "x"=$2 and "y"=$3',
+    });
+    expect(mkWhere({ not: { id: 5 } })).toStrictEqual({
+      values: [5],
+      where: 'where not ("id"=$1)',
+    });
+    expect(mkWhere({ not: { id: 5, y: 1 } })).toStrictEqual({
+      values: [5, 1],
+      where: 'where not ("id"=$1 and "y"=$2)',
+    });
+    expect(mkWhere({ not: { y: { in: [1, 2, 3] } } })).toStrictEqual({
+      values: [[1, 2, 3]],
+      where: 'where not ("y" = ANY ($1))',
+    });
+    expect(mkWhere({ y: { in: [1, 2, 3] } })).toStrictEqual({
+      values: [[1, 2, 3]],
+      where: 'where "y" = ANY ($1)',
+    });
+    /*
+    TODO
+    expect(mkWhere([{ id: 5 }, { x: 7 }])).toStrictEqual({
+      values: [5, 7],
+      where: 'where "id"=$1 and "x"=$2',
+    });
+    expect(mkWhere([{ or: [{ id: 5 }, { x: 7 }] }, { z: 9 }])).toStrictEqual({
+      values: [5, 7, 9],
+      where: 'where ("id"=$1 or "x"=$2) and "z"=$3',
+    });*/
+  });
 });
 
 describe("where", () => {

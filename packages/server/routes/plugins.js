@@ -688,7 +688,8 @@ router.get(
       "available_plugins",
       "available_plugins_fetched_at",
       "available_packs",
-      "available_packs_fetched_at"
+      "available_packs_fetched_at",
+      "latest_npm_version"
     );
     req.flash("success", req.__(`Store refreshed`));
 
