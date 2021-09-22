@@ -67,9 +67,9 @@ const subSelectWhere = (is_sqlite, i) => (k, v) => {
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, i)).join(" and ")
       : "";
-  return `${quote(sqlsanitizeAllowDots(k))} in (select ${v.inSelect.field} from ${
-    v.inSelect.table
-  } ${where})`;
+  return `${quote(sqlsanitizeAllowDots(k))} in (select ${
+    v.inSelect.field
+  } from ${v.inSelect.table} ${where})`;
 };
 const subSelectVals = (v) => {
   const whereObj = v.inSelect.where;
@@ -81,6 +81,14 @@ const subSelectVals = (v) => {
   return xs;
 };
 const quote = (s) => (s.includes(".") || s.includes('"') ? s : `"${s}"`);
+const whereOr = (is_sqlite, i) => (ors) =>
+  ors
+    .map((vi) =>
+      Object.entries(vi)
+        .map((kv) => whereClause(is_sqlite, i)(kv))
+        .join(" and ")
+    )
+    .join(" or ");
 
 const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
@@ -89,6 +97,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `${quote(sqlsanitizeAllowDots(k))} = ${
         is_sqlite ? "" : "ANY"
       } (${placeHolder(is_sqlite, i())})`
+    : k === "or" && Array.isArray(v)
+    ? whereOr(is_sqlite, i)(v)
     : v && v.or && Array.isArray(v.or)
     ? v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
     : Array.isArray(v)
@@ -149,6 +159,7 @@ const getVal = ([k, v]) =>
 
 const mkWhere = (whereObj, is_sqlite) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
+  console.log({ wheres });
   const where =
     whereObj && wheres.length > 0
       ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")
