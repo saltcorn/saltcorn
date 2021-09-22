@@ -179,7 +179,7 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   getState().registerPlugin(
     plugin_module.plugin_name || plugin.name,
     plugin_module,
-    undefined,
+    plugin.configuration,
     location
   );
   if (plugin_module.onLoad) {
