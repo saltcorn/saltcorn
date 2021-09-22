@@ -44,6 +44,23 @@ describe("tags", () => {
 
     expect(div({ class: [undefined, null, false] }, 5)).toBe("<div>5</div>");
   });
+  it("style", () => {
+    expect(div({ style: "color:red;border:1px solid black" }, 5)).toBe(
+      '<div style="color:red;border:1px solid black">5</div>'
+    );
+    expect(div({ style: ["color:red", "border:1px solid black"] }, 5)).toBe(
+      '<div style="color:red;border:1px solid black">5</div>'
+    );
+    expect(
+      div(
+        { style: ["color:red", false, undefined, "border:1px solid black"] },
+        5
+      )
+    ).toBe('<div style="color:red;border:1px solid black">5</div>');
+    expect(div({ style: { color: "red", border: "1px solid black" } }, 5)).toBe(
+      '<div style="color:red;border:1px solid black">5</div>'
+    );
+  });
 
   it("escaping", () => {
     expect(text("foo")).toBe("foo");

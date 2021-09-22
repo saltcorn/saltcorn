@@ -9,6 +9,22 @@ const ppClass = (c) => {
   const clss = ppClasses(c);
   return clss ? `class="${clss}"` : "";
 };
+const ppStyles = (cs) =>
+  typeof cs === "string"
+    ? cs
+    : !cs
+    ? ""
+    : Array.isArray(cs)
+    ? cs.filter((c) => c).join(";")
+    : typeof cs === "object"
+    ? Object.entries(cs)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(";")
+    : "";
+const ppStyle = (c) => {
+  const clss = ppStyles(c);
+  return clss ? `style="${clss}"` : "";
+};
 const ppAttrib = ([k, v]) =>
   typeof v === "boolean"
     ? v
@@ -18,6 +34,8 @@ const ppAttrib = ([k, v]) =>
     ? ""
     : k === "class"
     ? ppClass(v)
+    : k === "style"
+    ? ppStyle(v)
     : `${k}="${v}"`;
 const mkTag = (tnm, voidTag) => (...args) => {
   var body = "";
