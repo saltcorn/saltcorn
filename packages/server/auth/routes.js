@@ -169,11 +169,10 @@ router.get(
   })
 );
 
-router.get("/logout", setTenant, (req, res) => {
+router.get("/logout", setTenant, (req, res, next) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {
-      // TBD unresolved function next
       if (err) return next(err);
       req.logout();
       res.redirect("/auth/login");

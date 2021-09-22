@@ -697,6 +697,15 @@ router.post(
       }
       await db.deleteWhere("users");
       if (db.reset_sequence) await db.reset_sequence("users");
+      req.logout();
+      if (req.session.destroy)
+        req.session.destroy((err) => {
+          req.logout();
+        });
+      else {
+        req.logout();
+        req.session = null;
+      }
       res.redirect(`/auth/create_first_user`);
     } else {
       req.flash(
