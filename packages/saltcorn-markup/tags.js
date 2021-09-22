@@ -1,11 +1,29 @@
 const xss = require("xss");
 const escape = require("escape-html");
+const htmlTags = require("html-tags");
+const voidHtmlTags = new Set(require("html-tags/void"));
 
 const ppClasses = (cs) =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
 const ppClass = (c) => {
   const clss = ppClasses(c);
   return clss ? `class="${clss}"` : "";
+};
+const ppStyles = (cs) =>
+  typeof cs === "string"
+    ? cs
+    : !cs
+    ? ""
+    : Array.isArray(cs)
+    ? cs.filter((c) => c).join(";")
+    : typeof cs === "object"
+    ? Object.entries(cs)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(";")
+    : "";
+const ppStyle = (c) => {
+  const clss = ppStyles(c);
+  return clss ? `style="${clss}"` : "";
 };
 const ppAttrib = ([k, v]) =>
   typeof v === "boolean"
@@ -16,8 +34,10 @@ const ppAttrib = ([k, v]) =>
     ? ""
     : k === "class"
     ? ppClass(v)
+    : k === "style"
+    ? ppStyle(v)
     : `${k}="${v}"`;
-const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
+const mkTag = (tnm, voidTag) => (...args) => {
   var body = "";
   var attribs = " ";
 
@@ -36,13 +56,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   };
   args.forEach(argIter);
   if (attribs === " ") attribs = "";
-  return body.length > 0 || forceStandAloneClosingTag
-    ? `<${tnm}${attribs}>${body}</${tnm}>`
-    : `<${tnm}${attribs} />`;
-};
-const input = (kvs) => {
-  const attribs = Object.entries(kvs).map(ppAttrib).join(" ");
-  return `<input ${attribs}>`;
+  return voidTag ? `<${tnm}${attribs}>` : `<${tnm}${attribs}>${body}</${tnm}>`;
 };
 
 //https://stackoverflow.com/a/59220393
@@ -54,55 +68,15 @@ xss.whiteList.kbd = [];
 const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
 
-const nbsp = "&nbsp;";
+const allTags = Object.fromEntries(
+  htmlTags.map((tag) => [tag, mkTag(tag, voidHtmlTags.has(tag))])
+);
+
 module.exports = {
-  a: mkTag("a"),
-  div: mkTag("div", true),
-  span: mkTag("span"),
-  label: mkTag("label"),
-  option: mkTag("option"),
-  select: mkTag("select"),
-  button: mkTag("button"),
-  textarea: mkTag("textarea", true),
-  form: mkTag("form"),
-  script: mkTag("script", true),
-  style: mkTag("style"),
-  p: mkTag("p"),
-  colgroup: mkTag("colgroup"),
-  col: mkTag("col", true),
-  table: mkTag("table"),
-  img: mkTag("img"),
-  thead: mkTag("thead"),
-  tbody: mkTag("tbody"),
-  small: mkTag("small", true),
-  pre: mkTag("pre"),
-  code: mkTag("code"),
-  time: mkTag("time"),
-  header: mkTag("header"),
-  footer: mkTag("footer"),
-  section: mkTag("section"),
-  strong: mkTag("strong"),
-  tr: mkTag("tr"),
-  th: mkTag("th"),
-  td: mkTag("td"),
-  ul: mkTag("ul"),
-  ol: mkTag("ol"),
-  li: mkTag("li"),
-  h1: mkTag("h1"),
-  h2: mkTag("h2"),
-  h3: mkTag("h3"),
-  h4: mkTag("h4"),
-  h5: mkTag("h5"),
-  h6: mkTag("h6"),
-  b: mkTag("b"),
-  nav: mkTag("nav"),
-  i: mkTag("i", true),
-  hr: mkTag("hr"),
-  link: mkTag("link"),
+  ...allTags,
   domReady,
-  input,
   text,
   text_attr,
-  nbsp,
+  nbsp: "&nbsp;",
   mkTag,
 };
