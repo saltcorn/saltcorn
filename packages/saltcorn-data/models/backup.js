@@ -212,7 +212,7 @@ const restore_tables = contract(
       if (existsSync(fnm_json)) {
         const res = await table.import_json_file(
           fnm_json,
-          table.name === "users"
+          table.name === "users" && !restore_first_user
         );
         if (res.error) err = (err || "") + res.error;
       } else if (existsSync(fnm_csv)) {
