@@ -17,7 +17,7 @@ const ppAttrib = ([k, v]) =>
     : k === "class"
     ? ppClass(v)
     : `${k}="${v}"`;
-const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
+const mkTag = (tnm, voidTag) => (...args) => {
   var body = "";
   var attribs = " ";
 
@@ -36,13 +36,7 @@ const mkTag = (tnm, forceStandAloneClosingTag) => (...args) => {
   };
   args.forEach(argIter);
   if (attribs === " ") attribs = "";
-  return body.length > 0 || forceStandAloneClosingTag
-    ? `<${tnm}${attribs}>${body}</${tnm}>`
-    : `<${tnm}${attribs} />`;
-};
-const input = (kvs) => {
-  const attribs = Object.entries(kvs).map(ppAttrib).join(" ");
-  return `<input ${attribs}>`;
+  return voidTag ? `<${tnm}${attribs}>` : `<${tnm}${attribs}>${body}</${tnm}>`;
 };
 
 //https://stackoverflow.com/a/59220393
@@ -55,26 +49,30 @@ const text = (t) => (t === 0 ? "0" : xss(t));
 const text_attr = (t) => (t === 0 ? "0" : escape(t));
 
 const nbsp = "&nbsp;";
+/* he following is a complete list of the void elements in HTML:
+
+area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr
+*/
 module.exports = {
   a: mkTag("a"),
-  div: mkTag("div", true),
+  div: mkTag("div"),
   span: mkTag("span"),
   label: mkTag("label"),
   option: mkTag("option"),
   select: mkTag("select"),
   button: mkTag("button"),
-  textarea: mkTag("textarea", true),
+  textarea: mkTag("textarea"),
   form: mkTag("form"),
-  script: mkTag("script", true),
+  script: mkTag("script"),
   style: mkTag("style"),
   p: mkTag("p"),
   colgroup: mkTag("colgroup"),
   col: mkTag("col", true),
   table: mkTag("table"),
-  img: mkTag("img"),
+  img: mkTag("img", true),
   thead: mkTag("thead"),
   tbody: mkTag("tbody"),
-  small: mkTag("small", true),
+  small: mkTag("small"),
   pre: mkTag("pre"),
   code: mkTag("code"),
   time: mkTag("time"),
@@ -96,11 +94,12 @@ module.exports = {
   h6: mkTag("h6"),
   b: mkTag("b"),
   nav: mkTag("nav"),
-  i: mkTag("i", true),
-  hr: mkTag("hr"),
-  link: mkTag("link"),
+  i: mkTag("i"),
+  hr: mkTag("hr", true),
+  br: mkTag("br", true),
+  link: mkTag("link", true),
+  input: mkTag("input", true),
   domReady,
-  input,
   text,
   text_attr,
   nbsp,
