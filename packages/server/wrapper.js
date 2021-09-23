@@ -21,6 +21,7 @@ const get_extra_menu = (role, state, req) => {
       .map((item) => ({
         label: __(item.label),
         icon: item.icon,
+        location: item.location,
         style: item.style || "",
         link:
           item.type === "Link"

@@ -69,7 +69,9 @@ const rightNavBar = (currentUrl, sections) =>
       { class: "navbar-nav ml-auto my-2 my-lg-0" },
 
       innerSections(sections).map((s) =>
-        s.subitems
+        s.location === "Mobile Bottom"
+          ? ""
+          : s.subitems
           ? navSubitems(s)
           : s.link
           ? li(
@@ -116,12 +118,7 @@ const leftNavBar = ({ name, logo }) => [
   ),
 ];
 
-const navbar = (
-  brand,
-  sections,
-  currentUrl,
-  opts = { fixedTop: true}
-) =>
+const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
       class: `navbar navbar-expand-lg ${opts.class || ""} ${
