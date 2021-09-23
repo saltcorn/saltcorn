@@ -12,6 +12,7 @@ const {
   nav,
   script,
   domReady,
+  footer,
   i,
 } = require("./tags");
 
@@ -75,7 +76,9 @@ const rightNavBar = (currentUrl, sections) =>
           ? navSubitems(s)
           : s.link
           ? li(
-              { class: ["nav-item", active(currentUrl, s) && "active"] },
+              {
+                class: ["nav-item", active(currentUrl, s) && "active"],
+              },
               a(
                 {
                   class: ["nav-link js-scroll-trigger", s.style || ""],
@@ -87,6 +90,33 @@ const rightNavBar = (currentUrl, sections) =>
             )
           : ""
       )
+    )
+  );
+
+const mobileBottomNavBar = (currentUrl, sections) =>
+  footer(
+    {
+      class:
+        "footer mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none",
+    },
+    innerSections(sections).map((s) =>
+      s.location !== "Mobile Bottom"
+        ? ""
+        : //: s.subitems
+        //? navSubitems(s)
+        s.link
+        ? div(
+            { class: ["nav-item", active(currentUrl, s) && "active"] },
+            a(
+              {
+                class: ["nav-link js-scroll-trigger", s.style || ""],
+                href: text(s.link),
+              },
+              s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
+              text(s.label)
+            )
+          )
+        : ""
     )
   );
 
@@ -249,4 +279,5 @@ module.exports = {
   headersInHead,
   headersInBody,
   cardHeaderTabs,
+  mobileBottomNavBar,
 };
