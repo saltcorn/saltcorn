@@ -57,6 +57,7 @@ class State {
     this.plugins = {};
     this.plugin_cfgs = {};
     this.plugin_locations = {};
+    this.plugin_module_names = {};
     this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
@@ -309,10 +310,11 @@ class State {
    * @param cfg
    * @param location
    */
-  registerPlugin(name, plugin, cfg, location) {
+  registerPlugin(name, plugin, cfg, location, modname) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
     this.plugin_locations[plugin.plugin_name || name] = location;
+    if (modname) this.plugin_module_names[modname] = name;
 
     const withCfg = (key, def) =>
       plugin.configuration_workflow

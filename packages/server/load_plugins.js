@@ -57,7 +57,8 @@ const loadPlugin = async (plugin, force) => {
     res.plugin_module.plugin_name || plugin.name,
     res.plugin_module,
     plugin.configuration,
-    res.location
+    res.location,
+    res.name
   );
   if (res.plugin_module.onLoad) {
     try {
@@ -180,7 +181,8 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
     plugin_module.plugin_name || plugin.name,
     plugin_module,
     plugin.configuration,
-    location
+    location,
+    plugin.name
   );
   if (plugin_module.onLoad) {
     try {

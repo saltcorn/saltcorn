@@ -134,6 +134,7 @@ const local_has_theme = (name) => {
  */
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
+
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
@@ -149,7 +150,6 @@ const get_store_items = async () => {
     has_theme: plugin.has_theme,
     has_auth: plugin.has_auth,
   }));
-
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
@@ -176,7 +176,16 @@ const get_store_items = async () => {
 };
 
 const cfg_link = (req, row) => {
-  const plugin = getState().plugins[row.name];
+  let plugin = getState().plugins[row.name];
+  let linknm = row.name;
+  if (!plugin) {
+    const othernm = getState().plugin_module_names[row.name];
+
+    if (othernm) {
+      linknm = othernm;
+      plugin = getState().plugins[othernm];
+    }
+  }
   if (!plugin) return "";
   if (plugin.configuration_workflow)
     return a(
@@ -462,7 +471,10 @@ router.get(
       res.redirect("/plugins");
       return;
     }
-    const module = getState().plugins[plugin.name];
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
@@ -480,7 +492,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
-    const module = getState().plugins[plugin.name];
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(req.body);
