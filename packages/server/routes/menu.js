@@ -124,8 +124,9 @@ const menuForm = async (req) => {
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
         type: "String",
-        fieldview: "radio_group",
+        //fieldview: "radio_group",
         required: true,
+        //default: "Standard",
         attributes: {
           inline: true,
           options: "Standard, Mobile Bottom",

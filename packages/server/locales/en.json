@@ -786,5 +786,6 @@
 	"Column width units": "Column width units",
 	"Ownership formula": "Ownership formula",
 	"User is treated as owner if true. In scope: ": "User is treated as owner if true. In scope: ",
-	"Not all themes support all locations": "Not all themes support all locations"
+	"Not all themes support all locations": "Not all themes support all locations",
+	"Default language": "Default language"
 }
