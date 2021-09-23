@@ -127,6 +127,7 @@ const menuForm = async (req) => {
         fieldview: "radio_group",
         required: true,
         attributes: {
+          inline: true,
           options: "Standard, Mobile Bottom",
         },
       },

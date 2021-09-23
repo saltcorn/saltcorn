@@ -237,12 +237,20 @@ const string = {
     },
     radio_group: {
       isEdit: true,
+      configFields: [
+        {
+          type: "Bool",
+          name: "inline",
+          label: "Inline",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options
           ? radio_group({
               class: cls,
               name: text_attr(nm),
               disabled: attrs.disabled,
+              inline: attrs.inline,
               options: attrs.options.split(",").map((o) => o.trim()),
               value: v,
             })
