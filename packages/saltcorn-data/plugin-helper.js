@@ -616,7 +616,9 @@ const field_picker_fields = contract(
         label: __("Column width units"),
         type: "String",
         required: true,
+        fieldview: "radio_group",
         attributes: {
+          inline: true,
           options: ["px", "%", "vw", "em", "rem"],
         },
       },
