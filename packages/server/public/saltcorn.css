@@ -292,7 +292,7 @@ footer.bs-mobile-nav-footer {
   position: fixed;
   bottom: 0;
   width: 100%;
-  z-index: 900;
+  z-index: 2000;
 }
 
 .opacity-50 {
