@@ -109,13 +109,13 @@ const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
         //? navSubitems(s)
         s.link
         ? div(
-            { class: ["nav-item", active(currentUrl, s) && "active"] },
+            { class: ["mt-2 text-center", active(currentUrl, s) && "active"] },
             a(
               {
-                class: ["nav-link js-scroll-trigger", s.style || "", clsLink],
+                class: [s.style || "", clsLink],
                 href: text(s.link),
               },
-              s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
+              s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
               br(),
               small(text(s.label))
             )
