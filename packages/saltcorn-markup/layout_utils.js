@@ -14,6 +14,8 @@ const {
   domReady,
   footer,
   i,
+  small,
+  br,
 } = require("./tags");
 
 const labelToId = (item) => text(item.replace(" ", ""));
@@ -93,7 +95,7 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
-const mobileBottomNavBar = (currentUrl, sections, cls = "") =>
+const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
   footer(
     {
       class:
@@ -110,11 +112,12 @@ const mobileBottomNavBar = (currentUrl, sections, cls = "") =>
             { class: ["nav-item", active(currentUrl, s) && "active"] },
             a(
               {
-                class: ["nav-link js-scroll-trigger", s.style || ""],
+                class: ["nav-link js-scroll-trigger", s.style || "", clsLink],
                 href: text(s.link),
               },
               s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
-              text(s.label)
+              br(),
+              small(text(s.label))
             )
           )
         : ""
