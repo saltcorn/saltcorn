@@ -109,7 +109,12 @@ const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
         //? navSubitems(s)
         s.link
         ? div(
-            { class: ["mt-2 text-center", active(currentUrl, s) && "active"] },
+            {
+              class: [
+                "mt-2 text-center",
+                active(currentUrl, s) ? "active" : "opacity-50",
+              ],
+            },
             a(
               {
                 class: [s.style || "", clsLink],
