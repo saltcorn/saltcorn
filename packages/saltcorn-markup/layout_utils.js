@@ -93,11 +93,12 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
-const mobileBottomNavBar = (currentUrl, sections) =>
+const mobileBottomNavBar = (currentUrl, sections, cls = "") =>
   footer(
     {
       class:
-        "footer mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none",
+        "bs-mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none " +
+        cls,
     },
     innerSections(sections).map((s) =>
       s.location !== "Mobile Bottom"
