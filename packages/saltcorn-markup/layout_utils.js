@@ -12,7 +12,10 @@ const {
   nav,
   script,
   domReady,
+  footer,
   i,
+  small,
+  br,
 } = require("./tags");
 
 const labelToId = (item) => text(item.replace(" ", ""));
@@ -69,11 +72,15 @@ const rightNavBar = (currentUrl, sections) =>
       { class: "navbar-nav ml-auto my-2 my-lg-0" },
 
       innerSections(sections).map((s) =>
-        s.subitems
+        s.location === "Mobile Bottom"
+          ? ""
+          : s.subitems
           ? navSubitems(s)
           : s.link
           ? li(
-              { class: ["nav-item", active(currentUrl, s) && "active"] },
+              {
+                class: ["nav-item", active(currentUrl, s) && "active"],
+              },
               a(
                 {
                   class: ["nav-link js-scroll-trigger", s.style || ""],
@@ -87,6 +94,45 @@ const rightNavBar = (currentUrl, sections) =>
       )
     )
   );
+
+const hasMobileItems = (sections) =>
+  innerSections(sections).some((s) => s.location === "Mobile Bottom");
+
+const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
+  hasMobileItems(sections)
+    ? footer(
+        {
+          class:
+            "bs-mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none " +
+            cls,
+        },
+        innerSections(sections).map((s) =>
+          s.location !== "Mobile Bottom"
+            ? ""
+            : //: s.subitems
+            //? navSubitems(s)
+            s.link
+            ? div(
+                {
+                  class: [
+                    "mt-2 text-center",
+                    active(currentUrl, s) ? "active" : "opacity-50",
+                  ],
+                },
+                a(
+                  {
+                    class: [s.style || "", clsLink],
+                    href: text(s.link),
+                  },
+                  s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
+                  br(),
+                  small(text(s.label))
+                )
+              )
+            : ""
+        )
+      )
+    : "";
 
 const leftNavBar = ({ name, logo }) => [
   a(
@@ -116,12 +162,7 @@ const leftNavBar = ({ name, logo }) => [
   ),
 ];
 
-const navbar = (
-  brand,
-  sections,
-  currentUrl,
-  opts = { fixedTop: true}
-) =>
+const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
       class: `navbar navbar-expand-lg ${opts.class || ""} ${
@@ -252,4 +293,5 @@ module.exports = {
   headersInHead,
   headersInBody,
   cardHeaderTabs,
+  mobileBottomNavBar,
 };

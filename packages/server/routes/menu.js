@@ -118,6 +118,20 @@ const menuForm = async (req) => {
           ],
         },
       },
+      {
+        name: "location",
+        label: req.__("Location"),
+        sublabel: req.__("Not all themes support all locations"),
+        class: "item-menu",
+        type: "String",
+        //fieldview: "radio_group",
+        required: true,
+        //default: "Standard",
+        attributes: {
+          inline: true,
+          options: "Standard, Mobile Bottom",
+        },
+      },
     ],
   });
 };

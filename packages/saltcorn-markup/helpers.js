@@ -38,30 +38,32 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
     .join("");
 };
 
-const radio_group = ({ name, options, value, form_name, ...rest }) =>
-  (options || [])
-    .filter((o) => (typeof o === "string" ? o : o.value))
-    .map((o, ix) => {
-      const myvalue = typeof o === "string" ? o : o.value;
-      const id = `input${text_attr(name)}${ix}`;
-      return div(
-        { class: "form-check" },
-        input({
-          class: ["form-check-input", rest.class],
-          type: "radio",
-          name,
-          "data-fieldname": form_name,
-          id,
-          value: text_attr(myvalue),
-          checked: myvalue === value,
-        }),
-        label(
-          { class: "form-check-label", for: id },
-          typeof o === "string" ? o : o.label
-        )
-      );
-    })
-    .join("");
+const radio_group = ({ name, options, value, inline, form_name, ...rest }) =>
+  div(
+    (options || [])
+      .filter((o) => (typeof o === "string" ? o : o.value))
+      .map((o, ix) => {
+        const myvalue = typeof o === "string" ? o : o.value;
+        const id = `input${text_attr(name)}${ix}`;
+        return div(
+          { class: ["form-check", inline && "form-check-inline"] },
+          input({
+            class: ["form-check-input", rest.class],
+            type: "radio",
+            name,
+            "data-fieldname": form_name,
+            id,
+            value: text_attr(myvalue),
+            checked: myvalue === value,
+          }),
+          label(
+            { class: "form-check-label", for: id },
+            typeof o === "string" ? o : o.label
+          )
+        );
+      })
+      .join("")
+  );
 
 const pagination = ({
   current_page,

@@ -287,3 +287,14 @@ button.btnstylesel {
 table.table-layout-fixed {
   table-layout: fixed;
 }
+
+footer.bs-mobile-nav-footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 900;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
