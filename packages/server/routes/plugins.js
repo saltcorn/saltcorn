@@ -150,8 +150,6 @@ const get_store_items = async () => {
     has_theme: plugin.has_theme,
     has_auth: plugin.has_auth,
   }));
-  console.log(installed_plugins);
-  console.log(getState().plugins);
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
@@ -178,7 +176,6 @@ const get_store_items = async () => {
 };
 
 const cfg_link = (req, row) => {
-  console.log(row);
   let plugin = getState().plugins[row.name];
   let linknm = row.name;
   if (!plugin) {
