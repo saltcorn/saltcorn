@@ -95,39 +95,44 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
+const hasMobileItems = (sections) =>
+  innerSections(sections).some((s) => s.location === "Mobile Bottom");
+
 const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
-  footer(
-    {
-      class:
-        "bs-mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none " +
-        cls,
-    },
-    innerSections(sections).map((s) =>
-      s.location !== "Mobile Bottom"
-        ? ""
-        : //: s.subitems
-        //? navSubitems(s)
-        s.link
-        ? div(
-            {
-              class: [
-                "mt-2 text-center",
-                active(currentUrl, s) ? "active" : "opacity-50",
-              ],
-            },
-            a(
-              {
-                class: [s.style || "", clsLink],
-                href: text(s.link),
-              },
-              s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
-              br(),
-              small(text(s.label))
-            )
-          )
-        : ""
-    )
-  );
+  hasMobileItems(sections)
+    ? footer(
+        {
+          class:
+            "bs-mobile-nav-footer d-flex justify-content-around d-sm-flex d-md-none " +
+            cls,
+        },
+        innerSections(sections).map((s) =>
+          s.location !== "Mobile Bottom"
+            ? ""
+            : //: s.subitems
+            //? navSubitems(s)
+            s.link
+            ? div(
+                {
+                  class: [
+                    "mt-2 text-center",
+                    active(currentUrl, s) ? "active" : "opacity-50",
+                  ],
+                },
+                a(
+                  {
+                    class: [s.style || "", clsLink],
+                    href: text(s.link),
+                  },
+                  s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
+                  br(),
+                  small(text(s.label))
+                )
+              )
+            : ""
+        )
+      )
+    : "";
 
 const leftNavBar = ({ name, logo }) => [
   a(
