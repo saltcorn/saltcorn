@@ -23,7 +23,7 @@ function jsexprToWhere(expression) {
       ecmaVersion: 2020,
       locations: false,
     });
-    console.log(ast);
+    //console.log(ast);
     const compile = (node) =>
       ({
         BinaryExpression() {
