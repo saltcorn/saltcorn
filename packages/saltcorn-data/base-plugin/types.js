@@ -251,7 +251,9 @@ const string = {
               name: text_attr(nm),
               disabled: attrs.disabled,
               inline: attrs.inline,
-              options: attrs.options.split(",").map((o) => o.trim()),
+              options: Array.isArray(attrs.options)
+                ? attrs.options
+                : attrs.options.split(",").map((o) => o.trim()),
               value: v,
             })
           : i("None available"),
