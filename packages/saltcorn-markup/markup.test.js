@@ -61,6 +61,9 @@ describe("tags", () => {
     expect(div({ style: { color: "red", border: "1px solid black" } }, 5)).toBe(
       '<div style="color:red;border:1px solid black">5</div>'
     );
+    expect(
+      div({ style: { marginRight: "1px", border: "1px solid black" } }, 5)
+    ).toBe('<div style="margin-right:1px;border:1px solid black">5</div>');
     expect(hr({ style: { color: "red" } }, 5)).toBe('<hr style="color:red">');
   });
 
