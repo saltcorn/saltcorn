@@ -147,7 +147,7 @@ class Field {
    * @param force_allow_none
    * @returns {Promise<void>}
    */
-  async fill_fkey_options(force_allow_none = false) {
+  async fill_fkey_options(force_allow_none = false, where) {
     if (
       this.is_fkey &&
       (this.type !== "File" ||
@@ -178,7 +178,7 @@ class Field {
    * @param req
    * @returns {Promise<[{label: string, value: string}, {jsvalue: boolean, label, value: string}, {jsvalue: boolean, label, value: string}]|[{label: string, value: string}, ...*]|*[]>}
    */
-  async distinct_values(req) {
+  async distinct_values(req, where) {
     const __ = req && req.__ ? req.__ : (s) => s;
     if (
       this.type.name === "String" &&
@@ -193,7 +193,7 @@ class Field {
       ];
     }
     if (this.is_fkey) {
-      await this.fill_fkey_options();
+      await this.fill_fkey_options(false, where);
       return this.options || [];
     }
     if (this.type.name === "Bool") {
