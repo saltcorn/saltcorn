@@ -23,6 +23,7 @@ const {
   getStringsForI18n,
 } = require("../../models/layout");
 const { InvalidConfiguration } = require("../../utils");
+const { jsexprToWhere } = require("../../models/expression");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -97,7 +98,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       } else if (field)
         distinct_values[col.field_name] = await field.distinct_values(
           extra.req,
-          col.where
+          jsexprToWhere(col.where)
         );
       else if (col.field_name.includes(".")) {
         const kpath = col.field_name.split(".");
@@ -113,7 +114,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           if (jfield)
             distinct_values[col.field_name] = await jfield.distinct_values(
               extra.req,
-              col.where
+              jsexprToWhere(col.where)
             );
         }
       }
