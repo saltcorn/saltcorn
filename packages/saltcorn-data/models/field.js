@@ -8,6 +8,7 @@ const { contract, is } = require("contractis");
 const { recalculate_for_stored, jsexprToWhere } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const { InvalidAdminAction } = require("../utils");
+const { mkWhere } = require("../db");
 
 const readKey = (v, field) => {
   if (v === "") return null;
@@ -155,9 +156,7 @@ class Field {
     ) {
       const rows = await db.select(
         this.reftable_name,
-        this.type === "File"
-          ? this.attributes.select_file_where
-          : jsexprToWhere(where)
+        this.type === "File" ? this.attributes.select_file_where : where
       );
 
       const summary_field =
