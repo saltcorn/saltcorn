@@ -206,10 +206,18 @@ class Field {
       ];
     }
     await this.fill_table();
+    let whereS = "";
+    let values = [];
+    if (where) {
+      const whereValues = mkWhere(where);
+      whereS = whereValues.where;
+      values = whereValues.values;
+    }
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
         this.table.sql_name
-      } order by "${db.sqlsanitize(this.name)}"`
+      } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
+      values
     );
     const dbOpts = rows.map((r) => ({
       label: `${r[this.name]}`,
