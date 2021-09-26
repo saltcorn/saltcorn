@@ -78,7 +78,6 @@ const SettingsPanel = () => {
       window.removeEventListener("keydown", handleUserKeyPress);
     };
   }, [handleUserKeyPress]);
-  console.log({ selected });
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
   const deleteChildren = () => {
