@@ -233,11 +233,26 @@ to also watch a local module
 
 `nodemon --watch ../saltcorn-kanban/ packages/saltcorn-cli/bin/saltcorn serve`
 
+### React build builder
+
+```
+cd packages/saltcorn-builder
+npm install
+npm install styled-components@4.4.1
+npm run build
+```
+
 ### React rebuild on save
 
 in `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run builddev`
+
+but this is not a production build, so run
+
+`npm run build`
+
+when done
 
 ### Build jsdocs
 
