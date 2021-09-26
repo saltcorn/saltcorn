@@ -3,6 +3,10 @@ const escape = require("escape-html");
 const htmlTags = require("html-tags");
 const voidHtmlTags = new Set(require("html-tags/void"));
 
+//https://stackoverflow.com/a/54246501
+const camelToCssCase = (str) =>
+  str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+
 const ppClasses = (cs) =>
   typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
 const ppClass = (c) => {
@@ -18,7 +22,7 @@ const ppStyles = (cs) =>
     ? cs.filter((c) => c).join(";")
     : typeof cs === "object"
     ? Object.entries(cs)
-        .map(([k, v]) => `${k}:${v}`)
+        .map(([k, v]) => `${camelToCssCase(k)}:${v}`)
         .join(";")
     : "";
 const ppStyle = (c) => {

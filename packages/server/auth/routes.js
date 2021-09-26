@@ -64,7 +64,10 @@ const loginForm = (req, isCreating) => {
       new Field({
         label: req.__("E-mail"),
         name: "email",
-        input_type: "text",
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
         sublabel: user_sublabel || undefined,
         validator: (s) => s.length < 128,
       }),
@@ -90,7 +93,10 @@ const forgotForm = (req) =>
       new Field({
         label: req.__("E-mail"),
         name: "email",
-        input_type: "text",
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
         validator: (s) => s.length < 128,
       }),
     ],
@@ -452,6 +458,9 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
         name: "email",
         label: req.__("Email"),
         type: "String",
+        attributes: {
+          input_type: "email",
+        },
         required: true,
       })
     );
@@ -1008,7 +1017,15 @@ const setEmailForm = (req) =>
     action: "/auth/set-email",
     blurb: req.__("Please enter your email address"),
     fields: [
-      { name: "email", label: req.__("Email"), type: "String", required: true },
+      {
+        name: "email",
+        label: req.__("Email"),
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
+        required: true,
+      },
     ],
   });
 /**

@@ -174,6 +174,12 @@ const string = {
           label: "Placeholder",
           type: "String",
         },
+        {
+          name: "input_type",
+          label: "Input type",
+          input_type: "select",
+          options: ["text", "email", "url", "tel", "password"],
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
@@ -210,7 +216,7 @@ const string = {
               option({ value: "" }, "")
             )
           : input({
-              type: "text",
+              type: attrs.input_type || "text",
               disabled: attrs.disabled,
               class: ["form-control", cls],
               placeholder: attrs.placeholder,
