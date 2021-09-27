@@ -15,6 +15,68 @@ function jsexprToSQL(expression) {
   if (!expression) return expression;
   return expression.replace(/===/g, "=").replace(/==/g, "=").replace(/"/g, "'");
 }
+
+function jsexprToWhere(expression) {
+  if (!expression) return {};
+  try {
+    const ast = acorn.parseExpressionAt(expression, 0, {
+      ecmaVersion: 2020,
+      locations: false,
+    });
+    //console.log(ast);
+    const compile = (node) =>
+      ({
+        BinaryExpression() {
+          return {
+            "=="({ left, right }) {
+              return { [compile(left)]: compile(right) };
+            },
+            "==="({ left, right }) {
+              return { [compile(left)]: compile(right) };
+            },
+            "!="({ left, right }) {
+              return { not: { [compile(left)]: compile(right) } };
+            },
+            "!=="({ left, right }) {
+              return { not: { [compile(left)]: compile(right) } };
+            },
+          }[node.operator](node);
+        },
+        UnaryExpression() {
+          return {
+            "!"({ argument }) {
+              return { not: compile(argument) };
+            },
+          }[node.operator](node);
+        },
+        LogicalExpression() {
+          return {
+            "&&"({ left, right }) {
+              const l = compile(left);
+              const r = compile(right);
+              Object.assign(l, r);
+              return l;
+            },
+            "||"({ left, right }) {
+              return { or: [compile(left), compile(right)] };
+            },
+          }[node.operator](node);
+        },
+        Identifier({ name }) {
+          return name;
+        },
+        Literal({ value }) {
+          return value;
+        },
+      }[node.type](node));
+    return compile(ast);
+  } catch {
+    throw new Error(
+      `Expression "${expression}" is too complicated, I do not understand`
+    );
+  }
+}
+
 function transform_for_async(expression, statefuns) {
   var isAsync = false;
   const ast = acorn.parseExpressionAt(expression, 0, {
@@ -150,4 +212,5 @@ module.exports = {
   transform_for_async,
   apply_calculated_fields_stored,
   jsexprToSQL,
+  jsexprToWhere,
 };

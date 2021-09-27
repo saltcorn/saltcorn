@@ -219,6 +219,11 @@ describe("Field.distinct_values", () => {
       { label: "6", value: 6 },
       { label: "11", value: 11 },
     ]);
+    const red_dvs = await fc.distinct_values(null, { colour: "Red" });
+    expect(red_dvs).toEqual([
+      { label: "", value: "" },
+      { label: "6", value: 6 },
+    ]);
   });
   it("gives fkey values", async () => {
     const fc = await Field.findOne({ name: "favbook" });
@@ -227,6 +232,11 @@ describe("Field.distinct_values", () => {
       { label: "", value: "" },
       { label: "Herman Melville", value: 1 },
       { label: "Leo Tolstoy", value: 2 },
+    ]);
+    const longdvs = await fc.distinct_values(null, { pages: 967 });
+    expect(longdvs).toEqual([
+      { label: "", value: "" },
+      { label: "Herman Melville", value: 1 },
     ]);
   });
   it("gives string values", async () => {

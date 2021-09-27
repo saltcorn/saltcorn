@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { Fragment, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -8,6 +8,7 @@ import {
   BlockSetting,
   MinRoleSetting,
   fetchViewPreview,
+  ConfigForm,
 } from "./utils";
 
 export const View = ({ name, view, state }) => {
@@ -51,20 +52,25 @@ export const View = ({ name, view, state }) => {
 };
 
 export const ViewSettings = () => {
+  const node = useNode((node) => ({
+    name: node.data.props.name,
+    view: node.data.props.view,
+    state: node.data.props.state,
+    configuration: node.data.props.configuration, // fixed states
+    node_id: node.id,
+  }));
+
   const {
     actions: { setProp },
     name,
     view,
     state,
     node_id,
-  } = useNode((node) => ({
-    name: node.data.props.name,
-    view: node.data.props.view,
-    state: node.data.props.state,
-    node_id: node.id,
-  }));
+    configuration,
+  } = node;
   const options = useContext(optionsCtx);
   const views = options.views;
+  const fixed_state_fields = options.fixed_state_fields[view];
   const { setPreviews } = useContext(previewCtx);
   const refetchPreview = fetchViewPreview({
     options,
@@ -72,7 +78,7 @@ export const ViewSettings = () => {
     setPreviews,
     node_id,
   });
-  //console.log(options)
+  console.log(configuration);
   return (
     <div>
       <div>
@@ -93,17 +99,32 @@ export const ViewSettings = () => {
         </select>
       </div>
       {options.mode === "page" && (
-        <div>
-          <label>State</label>
-          <select
-            value={state}
-            className="form-control"
-            onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
-          >
-            <option value="shared">Shared</option>
-            <option value="fixed">Fixed</option>
-          </select>
-        </div>
+        <Fragment>
+          <div>
+            <label>State</label>
+            <select
+              value={state}
+              className="form-control"
+              onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
+            >
+              <option value="shared">Shared</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+          {state === "fixed" &&
+            fixed_state_fields &&
+            fixed_state_fields.length > 0 && (
+              <Fragment>
+                <h6>View state fields</h6>
+                <ConfigForm
+                  fields={fixed_state_fields}
+                  configuration={configuration || {}}
+                  setProp={setProp}
+                  node={node}
+                />{" "}
+              </Fragment>
+            )}
+        </Fragment>
       )}
     </div>
   );

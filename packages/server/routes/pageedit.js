@@ -11,7 +11,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const Trigger = require("@saltcorn/data/models/trigger");
-const { getViews } = require("@saltcorn/data/models/layout");
+const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -154,6 +154,39 @@ const pageFlow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
+          const fixed_state_fields = {};
+          for (const view of views) {
+            fixed_state_fields[view.name] = [];
+            const table = Table.findOne({ id: view.table_id });
+            const fs = await view.get_state_fields();
+            for (const frec of fs) {
+              const f = new Field(frec);
+              f.required = false;
+              if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+
+              await f.fill_fkey_options(true);
+              fixed_state_fields[view.name].push(f);
+              if (table.name === "users" && f.primary_key)
+                fixed_state_fields[view.name].push(
+                  new Field({
+                    name: "preset_" + f.name,
+                    label: req.__("Preset %s", f.label),
+                    type: "String",
+                    attributes: { options: ["LoggedIn"] },
+                  })
+                );
+              if (f.presets) {
+                fixed_state_fields[view.name].push(
+                  new Field({
+                    name: "preset_" + f.name,
+                    label: req.__("Preset %s", f.label),
+                    type: "String",
+                    attributes: { options: Object.keys(f.presets) },
+                  })
+                );
+              }
+            }
+          }
           return {
             views,
             images,
@@ -164,67 +197,8 @@ const pageFlow = (req) =>
             page_id: context.id,
             mode: "page",
             roles,
+            fixed_state_fields,
           };
-        },
-      },
-      {
-        name: req.__("Fixed states"),
-        contextField: "fixed_states",
-        onlyWhen: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          return vs.filter((v) => v.state === "fixed").length > 0;
-        },
-        form: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          const fixedvs = vs.filter((vseg) => vseg.state === "fixed");
-          const fields = [];
-          for (const vseg of fixedvs) {
-            const v = await View.findOne({ name: vseg.view });
-            if (v) {
-              const table = Table.findOne({ id: v.table_id });
-              const fs = await v.get_state_fields();
-              if (fs.length > 0)
-                fields.push({
-                  label: req.__(`Fixed state for %s view`, v.name),
-                  input_type: "section_header",
-                });
-              for (const frec of fs) {
-                const f = new Field(frec);
-                f.required = false;
-                if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-                f.parent_field = vseg.name;
-
-                await f.fill_fkey_options(true);
-                fields.push(f);
-                if (table.name === "users" && f.primary_key)
-                  fields.push(
-                    new Field({
-                      name: "preset_" + f.name,
-                      label: req.__("Preset %s", f.label),
-                      type: "String",
-                      attributes: { options: ["LoggedIn"] },
-                      parent_field: vseg.name,
-                    })
-                  );
-                if (f.presets) {
-                  fields.push(
-                    new Field({
-                      name: "preset_" + f.name,
-                      label: req.__("Preset %s", f.label),
-                      type: "String",
-                      attributes: { options: Object.keys(f.presets) },
-                    })
-                  );
-                }
-              }
-            }
-          }
-          return new Form({
-            blurb: req.__("Set fixed states for views"),
-            fields,
-          });
         },
       },
     ],
@@ -375,6 +349,15 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
+      // set fixed states in page directly for legacy builds
+      traverseSync(page.layout, {
+        view(s) {
+          if (s.state === "fixed" && !s.configuration) {
+            const fs = page.fixed_states[s.name];
+            if (fs) s.configuration = fs;
+          }
+        },
+      });
       const wf = pageFlow(req);
       const wfres = await wf.run(page, req);
       respondWorkflow(page, wf, wfres, req, res);

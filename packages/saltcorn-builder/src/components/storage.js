@@ -107,6 +107,7 @@ export const layoutToNodes = (layout, query, actions) => {
           view={segment.view}
           name={segment.name}
           state={segment.state}
+          configuration={segment.configuration || {}}
         />
       );
     } else if (segment.type === "action") {
@@ -357,6 +358,7 @@ export const craftToSaltcorn = (nodes) => {
         name:
           node.props.name === "not_assigned" ? rand_ident() : node.props.name,
         state: node.props.state,
+        configuration: node.props.configuration,
       };
     }
 

@@ -8,6 +8,7 @@ const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
 const { sqlsanitize } = require("../db/internal.js");
 const { InvalidAdminAction } = require("../utils");
+const { mkWhere } = require("../db");
 
 const readKey = (v, field) => {
   if (v === "") return null;
@@ -147,7 +148,7 @@ class Field {
    * @param force_allow_none
    * @returns {Promise<void>}
    */
-  async fill_fkey_options(force_allow_none = false) {
+  async fill_fkey_options(force_allow_none = false, where) {
     if (
       this.is_fkey &&
       (this.type !== "File" ||
@@ -155,7 +156,7 @@ class Field {
     ) {
       const rows = await db.select(
         this.reftable_name,
-        this.type === "File" ? this.attributes.select_file_where : undefined
+        this.type === "File" ? this.attributes.select_file_where : where
       );
 
       const summary_field =
@@ -178,7 +179,7 @@ class Field {
    * @param req
    * @returns {Promise<[{label: string, value: string}, {jsvalue: boolean, label, value: string}, {jsvalue: boolean, label, value: string}]|[{label: string, value: string}, ...*]|*[]>}
    */
-  async distinct_values(req) {
+  async distinct_values(req, where) {
     const __ = req && req.__ ? req.__ : (s) => s;
     if (
       this.type.name === "String" &&
@@ -193,7 +194,7 @@ class Field {
       ];
     }
     if (this.is_fkey) {
-      await this.fill_fkey_options();
+      await this.fill_fkey_options(false, where);
       return this.options || [];
     }
     if (this.type.name === "Bool") {
@@ -204,10 +205,18 @@ class Field {
       ];
     }
     await this.fill_table();
+    let whereS = "";
+    let values = [];
+    if (where) {
+      const whereValues = mkWhere(where);
+      whereS = whereValues.where;
+      values = whereValues.values;
+    }
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
         this.table.sql_name
-      } order by "${db.sqlsanitize(this.name)}"`
+      } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
+      values
     );
     const dbOpts = rows.map((r) => ({
       label: `${r[this.name]}`,

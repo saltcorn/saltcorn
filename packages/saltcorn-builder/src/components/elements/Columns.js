@@ -85,7 +85,6 @@ export const ColumnsSettings = () => {
           {ntimes(ncols, (ix) => (
             <Fragment key={ix}>
               <tr>
-                {" "}
                 <th colSpan="4">Column {ix + 1}</th>
               </tr>
               <tr>
@@ -127,7 +126,7 @@ export const ColumnsSettings = () => {
                 </td>
               </tr>
             </Fragment>
-          ))}{" "}
+          ))}
         </tbody>
       </table>
     </div>
