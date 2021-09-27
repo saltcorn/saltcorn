@@ -154,6 +154,39 @@ const pageFlow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
+          const fixed_state_fields = {};
+          for (const view of views) {
+            fixed_state_fields[view.name] = [];
+            const table = Table.findOne({ id: view.table_id });
+            const fs = await view.get_state_fields();
+            for (const frec of fs) {
+              const f = new Field(frec);
+              f.required = false;
+              if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+
+              await f.fill_fkey_options(true);
+              fixed_state_fields[view.name].push(f);
+              if (table.name === "users" && f.primary_key)
+                fixed_state_fields[view.name].push(
+                  new Field({
+                    name: "preset_" + f.name,
+                    label: req.__("Preset %s", f.label),
+                    type: "String",
+                    attributes: { options: ["LoggedIn"] },
+                  })
+                );
+              if (f.presets) {
+                fixed_state_fields[view.name].push(
+                  new Field({
+                    name: "preset_" + f.name,
+                    label: req.__("Preset %s", f.label),
+                    type: "String",
+                    attributes: { options: Object.keys(f.presets) },
+                  })
+                );
+              }
+            }
+          }
           return {
             views,
             images,
@@ -164,6 +197,7 @@ const pageFlow = (req) =>
             page_id: context.id,
             mode: "page",
             roles,
+            fixed_state_fields,
           };
         },
       },
@@ -221,6 +255,7 @@ const pageFlow = (req) =>
               }
             }
           }
+          console.log(fields);
           return new Form({
             blurb: req.__("Set fixed states for views"),
             fields,
