@@ -352,7 +352,6 @@ export const ConfigField = ({
     configuration ? configuration[field.name] : props[field.name],
     field.default
   );
-  console.log(field.input_type || field.type.name || field.type);
   if (field.input_type === "fromtype") field.input_type = null;
   if (field.type && field.type.name === "String" && field.attributes.options) {
     field.input_type = "select";
