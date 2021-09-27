@@ -201,67 +201,6 @@ const pageFlow = (req) =>
           };
         },
       },
-      {
-        name: req.__("Fixed states"),
-        contextField: "fixed_states",
-        onlyWhen: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          return vs.filter((v) => v.state === "fixed").length > 0;
-        },
-        form: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          const fixedvs = vs.filter((vseg) => vseg.state === "fixed");
-          const fields = [];
-          for (const vseg of fixedvs) {
-            const v = await View.findOne({ name: vseg.view });
-            if (v) {
-              const table = Table.findOne({ id: v.table_id });
-              const fs = await v.get_state_fields();
-              if (fs.length > 0)
-                fields.push({
-                  label: req.__(`Fixed state for %s view`, v.name),
-                  input_type: "section_header",
-                });
-              for (const frec of fs) {
-                const f = new Field(frec);
-                f.required = false;
-                if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-                f.parent_field = vseg.name;
-
-                await f.fill_fkey_options(true);
-                fields.push(f);
-                if (table.name === "users" && f.primary_key)
-                  fields.push(
-                    new Field({
-                      name: "preset_" + f.name,
-                      label: req.__("Preset %s", f.label),
-                      type: "String",
-                      attributes: { options: ["LoggedIn"] },
-                      parent_field: vseg.name,
-                    })
-                  );
-                if (f.presets) {
-                  fields.push(
-                    new Field({
-                      name: "preset_" + f.name,
-                      label: req.__("Preset %s", f.label),
-                      type: "String",
-                      attributes: { options: Object.keys(f.presets) },
-                    })
-                  );
-                }
-              }
-            }
-          }
-          console.log(fields);
-          return new Form({
-            blurb: req.__("Set fixed states for views"),
-            fields,
-          });
-        },
-      },
     ],
   });
 
