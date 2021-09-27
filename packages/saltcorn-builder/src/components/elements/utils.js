@@ -358,7 +358,7 @@ export const ConfigField = ({
     field.options = field.attributes.options;
     if (!field.required) field.options.unshift("");
   }
-  return {
+  const dispatch = {
     String: () => (
       <input
         type="text"
@@ -471,7 +471,9 @@ export const ConfigField = ({
         />
       </Fragment>
     ),
-  }[field.input_type || field.type.name || field.type]();
+  };
+  const f = dispatch[field.input_type || field.type.name || field.type];
+  return f && f();
 };
 
 export const SettingsFromFields = (fields) => () => {
