@@ -59,9 +59,25 @@ const SettingsPanel = () => {
       selected,
     };
   });
+
   const deleteThis = () => {
     actions.delete(selected.id);
   };
+  const handleUserKeyPress = ({ keyCode, target }) => {
+    if (
+      (keyCode === 8 || keyCode === 46) &&
+      target.tagName.toLowerCase() === "body" &&
+      selected
+    ) {
+      deleteThis();
+    }
+  };
+  useEffect(() => {
+    window.addEventListener("keydown", handleUserKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleUserKeyPress);
+    };
+  }, [handleUserKeyPress]);
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
   const deleteChildren = () => {

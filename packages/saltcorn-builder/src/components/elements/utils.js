@@ -341,8 +341,10 @@ export const ConfigField = ({
 }) => {
   const myOnChange = (v) => {
     setProp((prop) => {
-      if (configuration) prop.configuration[field.name] = v;
-      else prop[field.name] = v;
+      if (configuration) {
+        if (!prop.configuration) prop.configuration = {};
+        prop.configuration[field.name] = v;
+      } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v);
   };
@@ -350,12 +352,18 @@ export const ConfigField = ({
     configuration ? configuration[field.name] : props[field.name],
     field.default
   );
-  return {
+  if (field.input_type === "fromtype") field.input_type = null;
+  if (field.type && field.type.name === "String" && field.attributes.options) {
+    field.input_type = "select";
+    field.options = field.attributes.options;
+    if (!field.required) field.options.unshift("");
+  }
+  const dispatch = {
     String: () => (
       <input
         type="text"
         className="form-control"
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -364,7 +372,7 @@ export const ConfigField = ({
         type="number"
         className="form-control"
         step={1}
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -372,7 +380,7 @@ export const ConfigField = ({
       <input
         type="number"
         className="form-control"
-        value={value}
+        value={value || ""}
         step={0.01}
         onChange={(e) => myOnChange(e.target.value)}
       />
@@ -408,7 +416,7 @@ export const ConfigField = ({
     select: () => (
       <select
         className="form-control"
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (
@@ -463,7 +471,9 @@ export const ConfigField = ({
         />
       </Fragment>
     ),
-  }[field.input_type || field.type.name || field.type]();
+  };
+  const f = dispatch[field.input_type || field.type.name || field.type];
+  return f ? f() : null;
 };
 
 export const SettingsFromFields = (fields) => () => {
