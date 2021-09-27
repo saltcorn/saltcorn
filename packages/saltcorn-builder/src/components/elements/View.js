@@ -56,7 +56,7 @@ export const ViewSettings = () => {
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
-    configuration: node.data.props.configuration, // fixed stats
+    configuration: node.data.props.configuration, // fixed states
     node_id: node.id,
   }));
 
@@ -78,7 +78,7 @@ export const ViewSettings = () => {
     setPreviews,
     node_id,
   });
-  console.log(fixed_state_fields);
+  console.log(configuration);
   return (
     <div>
       <div>
@@ -114,12 +114,15 @@ export const ViewSettings = () => {
           {state === "fixed" &&
             fixed_state_fields &&
             fixed_state_fields.length > 0 && (
-              <ConfigForm
-                fields={fixed_state_fields}
-                configuration={configuration || {}}
-                setProp={setProp}
-                node={node}
-              />
+              <Fragment>
+                <h6>View state fields</h6>
+                <ConfigForm
+                  fields={fixed_state_fields}
+                  configuration={configuration || {}}
+                  setProp={setProp}
+                  node={node}
+                />{" "}
+              </Fragment>
             )}
         </Fragment>
       )}

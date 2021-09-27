@@ -363,7 +363,7 @@ export const ConfigField = ({
       <input
         type="text"
         className="form-control"
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -372,7 +372,7 @@ export const ConfigField = ({
         type="number"
         className="form-control"
         step={1}
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       />
     ),
@@ -380,7 +380,7 @@ export const ConfigField = ({
       <input
         type="number"
         className="form-control"
-        value={value}
+        value={value || ""}
         step={0.01}
         onChange={(e) => myOnChange(e.target.value)}
       />
@@ -416,7 +416,7 @@ export const ConfigField = ({
     select: () => (
       <select
         className="form-control"
-        value={value}
+        value={value || ""}
         onChange={(e) => myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (

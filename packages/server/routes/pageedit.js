@@ -11,7 +11,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const Trigger = require("@saltcorn/data/models/trigger");
-const { getViews } = require("@saltcorn/data/models/layout");
+const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
@@ -410,6 +410,15 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
+      // set fixed states in page directly for legacy builds
+      traverseSync(page.layout, {
+        view(s) {
+          if (s.state === "fixed" && !s.configuration) {
+            const fs = page.fixed_states[s.name];
+            if (fs) s.configuration = fs;
+          }
+        },
+      });
       const wf = pageFlow(req);
       const wfres = await wf.run(page, req);
       respondWorkflow(page, wf, wfres, req, res);
