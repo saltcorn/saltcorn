@@ -78,7 +78,6 @@ export const ViewSettings = () => {
     setPreviews,
     node_id,
   });
-  console.log(configuration);
   return (
     <div>
       <div>
