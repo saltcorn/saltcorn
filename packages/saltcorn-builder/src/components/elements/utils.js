@@ -473,7 +473,7 @@ export const ConfigField = ({
     ),
   };
   const f = dispatch[field.input_type || field.type.name || field.type];
-  return f && f();
+  return f ? f() : null;
 };
 
 export const SettingsFromFields = (fields) => () => {
