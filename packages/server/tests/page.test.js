@@ -5,7 +5,8 @@ const {
   getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
-  toInclude,succeedJsonWith,
+  toInclude,
+  succeedJsonWith,
   toSucceed,
   toNotInclude,
   resetToFixtures,
@@ -58,19 +59,9 @@ describe("page create", () => {
         "contextEnc=%257B%2522name%2522%253A%2522whales%2522%252C%2522title%2522%253A%2522Whales%2522%252C%2522description%2522%253A%2522about%2520whales%2522%252C%2522min_role%2522%253A%252210%2522%257D&stepName=Layout&columns=%255B%255D&layout=%257B%2522above%2522%253A%255B%257B%2522type%2522%253A%2522blank%2522%252C%2522contents%2522%253A%2522Hello%2520world%2522%252C%2522block%2522%253Afalse%252C%2522textStyle%2522%253A%2522%2522%257D%252C%257B%2522type%2522%253A%2522view%2522%252C%2522view%2522%253A%2522authorlist%2522%252C%2522name%2522%253A%2522d51d4b%2522%252C%2522state%2522%253A%2522fixed%2522%257D%255D%257D"
       )
       .set("Cookie", loginCookie)
-      .expect(toInclude(">Fixed states<"));
-  });
-  it("fills fixed states", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await request(app)
-      .post("/pageedit/edit")
-      .send(
-        "d51d4b__fts=&d51d4b_author=Melville&d51d4b__sortby=undefined&d51d4b__page=undefined&stepName=Fixed+states&contextEnc=%257B%2522name%2522%253A%2522whales%2522%252C%2522title%2522%253A%2522Whales%2522%252C%2522description%2522%253A%2522about%2520whales%2522%252C%2522min_role%2522%253A%252210%2522%252C%2522columns%2522%253A%255B%255D%252C%2522layout%2522%253A%257B%2522above%2522%253A%255B%257B%2522type%2522%253A%2522blank%2522%252C%2522contents%2522%253A%2522Hello%2520world%2522%252C%2522block%2522%253Afalse%252C%2522textStyle%2522%253A%2522%2522%257D%252C%257B%2522type%2522%253A%2522view%2522%252C%2522view%2522%253A%2522authorlist%2522%252C%2522name%2522%253A%2522d51d4b%2522%252C%2522state%2522%253A%2522fixed%2522%257D%255D%257D%257D"
-      )
-      .set("Cookie", loginCookie)
       .expect(toRedirect("/pageedit"));
   });
+
   it("shows page", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -120,10 +111,10 @@ describe("page action", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/page/pagewithaction/action/56f3ac")
-      .set('X-Requested-With', 'xmlhttprequest')
-      .expect(succeedJsonWith(r=>r==="ok"));
-      expect(console.log).toHaveBeenCalled();
-      console.log = oldConsoleLog;
+      .set("X-Requested-With", "xmlhttprequest")
+      .expect(succeedJsonWith((r) => r === "ok"));
+    expect(console.log).toHaveBeenCalled();
+    console.log = oldConsoleLog;
   });
 });
 
