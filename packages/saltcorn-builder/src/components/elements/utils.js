@@ -341,8 +341,10 @@ export const ConfigField = ({
 }) => {
   const myOnChange = (v) => {
     setProp((prop) => {
-      if (configuration) prop.configuration[field.name] = v;
-      else prop[field.name] = v;
+      if (configuration) {
+        if (!prop.configuration) prop.configuration = {};
+        prop.configuration[field.name] = v;
+      } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v);
   };
@@ -350,6 +352,13 @@ export const ConfigField = ({
     configuration ? configuration[field.name] : props[field.name],
     field.default
   );
+  console.log(field.input_type || field.type.name || field.type);
+  if (field.input_type === "fromtype") field.input_type = null;
+  if (field.type && field.type.name === "String" && field.attributes.options) {
+    field.input_type = "select";
+    field.options = field.attributes.options;
+    if (!field.required) field.options.unshift("");
+  }
   return {
     String: () => (
       <input
