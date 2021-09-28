@@ -86,11 +86,26 @@ const SettingsPanel = () => {
       actions.delete(child);
     });
   };
+  const recursivelyCloneToElems = (nodeId, ix) => {
+    const {
+      data: { type, props, nodes },
+    } = query.node(nodeId).get();
+    const children = (nodes || []).map(recursivelyCloneToElems);
+    return React.createElement(
+      type,
+      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
+      children
+    );
+  };
   const duplicate = () => {
     const {
-      data: { type, props },
+      data: { parent },
     } = query.node(selected.id).get();
-    actions.add(query.createNode(React.createElement(type, props)), "ROOT");
+    const elem = recursivelyCloneToElems(selected.id);
+    actions.addNodeTree(
+      query.parseReactElement(elem).toNodeTree(),
+      parent || "ROOT"
+    );
   };
   return (
     <div className="settings-panel card mt-2">
@@ -117,7 +132,7 @@ const SettingsPanel = () => {
 
             <button
               title="Duplicate"
-              className="btn btn-secondary mt-2"
+              className="btn btn-secondary ml-2 mt-2"
               onClick={duplicate}
             >
               <FontAwesomeIcon icon={faCopy} />
