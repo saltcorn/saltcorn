@@ -31,7 +31,7 @@ import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
 import { Layers } from "saltcorn-craft-layers-noeye";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faUndo, faRedo } from "@fortawesome/free-solid-svg-icons";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -183,6 +183,36 @@ const ViewPageLink = () => {
     ""
   );
 };
+const HistoryPanel = () => {
+  const { canUndo, canRedo, actions } = useEditor((state, query) => ({
+    canUndo: query.history.canUndo(),
+    canRedo: query.history.canRedo(),
+  }));
+
+  return (
+    <div className="mt-2">
+      {canUndo && (
+        <button
+          className="btn btn-sm btn-secondary mr-2"
+          title="Undo"
+          onClick={() => actions.history.undo()}
+        >
+          <FontAwesomeIcon icon={faUndo} />
+        </button>
+      )}
+      {canRedo && (
+        <button
+          className="btn btn-sm btn-secondary"
+          title="Redo"
+          onClick={() => actions.history.redo()}
+        >
+          <FontAwesomeIcon icon={faRedo} />
+        </button>
+      )}
+    </div>
+  );
+};
+
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   useEffect(() => {
@@ -267,6 +297,7 @@ const Builder = ({ options, layout, mode }) => {
                 <SaveButton />
                 <NextButton layout={layout} />
                 <ViewPageLink />
+                <HistoryPanel />
                 <SettingsPanel />
               </div>
             </div>
