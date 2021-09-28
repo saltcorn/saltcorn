@@ -43,13 +43,17 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
       }),
     },
     hdr.input_type === "section_header"
-      ? div({ class: `col-sm-12` }, h5(text(hdr.label)), hdr.sublabel && p(i(hdr.sublabel)) )
+      ? div(
+          { class: `col-sm-12` },
+          h5(text(hdr.label)),
+          hdr.sublabel && p(i(hdr.sublabel))
+        )
       : [
           div(
             { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
             label(
               {
-                for: `input${text_attr(hdr.form_name)}`,                
+                for: `input${text_attr(hdr.form_name)}`,
               },
               text(hdr.label)
             )
@@ -109,9 +113,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
         v[hdr.form_name]
-      )}</textarea>`;
+      }</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
         hdr.input_type = "select";
