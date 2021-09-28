@@ -25,7 +25,7 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
     >
       <div className="input-group-prepend">
         <button className="btn btn-outline-secondary" disabled>
-          <i class="fas fa-search"></i>
+          <i className="fas fa-search"></i>
         </button>
       </div>
       <input

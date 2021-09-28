@@ -89,7 +89,7 @@ export const DropDownFilterSettings = () => {
           <td>
             <BlockSetting block={block} setProp={setProp} />
           </td>
-        </tr>{" "}
+        </tr>
         <tr>
           <td></td>
           <td>
