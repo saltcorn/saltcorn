@@ -121,7 +121,7 @@ export const ViewSettings = () => {
                   configuration={configuration || {}}
                   setProp={setProp}
                   node={node}
-                />{" "}
+                />
               </Fragment>
             )}
         </Fragment>

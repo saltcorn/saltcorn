@@ -147,7 +147,6 @@ export const ToggleFilterSettings = () => {
             <label>Button size</label>
           </td>
           <td>
-            {" "}
             <select
               className="form-control"
               value={size}
@@ -167,7 +166,6 @@ export const ToggleFilterSettings = () => {
             <label>Button style</label>
           </td>
           <td>
-            {" "}
             <select
               className="form-control"
               value={style}

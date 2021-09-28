@@ -614,7 +614,7 @@ export const ContainerSettings = () => {
           <tr>
             <td colSpan="2">
               <label>
-                Set text color{" "}
+                Set text color
                 <input
                   name="setTextColor"
                   type="checkbox"
@@ -622,10 +622,10 @@ export const ContainerSettings = () => {
                   onChange={(e) =>
                     setProp((prop) => (prop.setTextColor = e.target.checked))
                   }
-                />{" "}
+                />
               </label>
             </td>
-          </tr>{" "}
+          </tr>
           {setTextColor && (
             <tr>
               <td>
