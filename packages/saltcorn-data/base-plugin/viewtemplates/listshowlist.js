@@ -146,7 +146,7 @@ const run = async (
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
-      onRowSelect: (v) => `select_id(${v.id})`,
+      onRowSelect: (v) => `select_id('${v.id}')`,
     });
   }
 
