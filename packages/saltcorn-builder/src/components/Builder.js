@@ -29,7 +29,7 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
-import { Layers } from "@craftjs/layers";
+import { Layers } from "saltcorn-craft-layers-noeye";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
 const { Provider } = optionsCtx;
