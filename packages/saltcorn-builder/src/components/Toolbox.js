@@ -20,7 +20,12 @@ import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
 import optionsCtx from "./context";
-import { BoundingBox, Diagram3Fill, SegmentedNav, TextareaT } from "react-bootstrap-icons";
+import {
+  BoundingBox,
+  Diagram3Fill,
+  SegmentedNav,
+  TextareaT,
+} from "react-bootstrap-icons";
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
@@ -32,6 +37,7 @@ const WrapElem = ({
   text,
   fontSize,
   title,
+  innerClass,
   bold,
   label,
   disable,
@@ -39,11 +45,14 @@ const WrapElem = ({
   <div
     className={`${
       disable ? "text-muted" : ""
-    } wrap-builder-elem d-flex align-items-center justify-content-center`}
+    }  d-inline-flex wrap-builder-elem align-items-center justify-content-center`}
     title={title}
     ref={disable ? undefined : (ref) => connectors.create(ref, children)}
   >
-    <div className="inner" style={fontSize ? { fontSize } : {}}>
+    <div
+      className={`inner ${innerClass || ""}`}
+      style={fontSize ? { fontSize } : {}}
+    >
       {(text && (bold ? <strong>{text}</strong> : text)) ||
         (icons &&
           icons.map((ic, ix) => <i key={ix} className={`${ic}`}></i>)) ||
@@ -67,6 +76,7 @@ const TextElem = ({ connectors }) => (
 const ColumnsElem = ({ connectors }) => (
   <WrapElem
     connectors={connectors}
+    innerClass="mt-m1px"
     icon="fas fa-columns"
     title="Split into columns"
     label="Columns"
@@ -215,7 +225,7 @@ const ToggleFilterElem = ({ connectors, fields }) => (
 const JoinFieldElem = ({ connectors, options }) => (
   <WrapElem
     connectors={connectors}
-    icon={<Diagram3Fill className="mb-2 h5"/>}
+    icon={<Diagram3Fill className="mb-2 h5" />}
     title="Join field"
     label="Join"
     disable={options.parent_field_list.length === 0}
@@ -299,29 +309,45 @@ export const ToolboxShow = () => {
   } = options;
   return (
     <Fragment>
-      <TextElem connectors={connectors} />
-      <ColumnsElem connectors={connectors} />
-      <FieldElem
-        connectors={connectors}
-        fields={fields}
-        field_view_options={field_view_options}
-      />
-      <LineBreakElem connectors={connectors} />
-      <JoinFieldElem connectors={connectors} options={options} />
-      <ViewLinkElem connectors={connectors} options={options} />
-      <ActionElem connectors={connectors} options={options} />
-      <LinkElem connectors={connectors} />
-      <AggregationElem
-        connectors={connectors}
-        child_field_list={child_field_list}
-        agg_field_opts={agg_field_opts}
-      />
-      <ViewElem connectors={connectors} views={views} />
-      <ContainerElem connectors={connectors} />
-      <CardElem connectors={connectors} />
-      <TabsElem connectors={connectors} />
-      <ImageElem connectors={connectors} images={images} />
-      <HTMLElem connectors={connectors} />
+      <div className="toolbar-row">
+        <TextElem connectors={connectors} />
+        <ColumnsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <FieldElem
+          connectors={connectors}
+          fields={fields}
+          field_view_options={field_view_options}
+        />
+        <LineBreakElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <JoinFieldElem connectors={connectors} options={options} />
+        <ViewLinkElem connectors={connectors} options={options} />
+      </div>
+      <div className="toolbar-row">
+        <ActionElem connectors={connectors} options={options} />
+        <LinkElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <AggregationElem
+          connectors={connectors}
+          child_field_list={child_field_list}
+          agg_field_opts={agg_field_opts}
+        />
+        <ViewElem connectors={connectors} views={views} />
+      </div>
+      <div className="toolbar-row">
+        <ContainerElem connectors={connectors} />
+        <CardElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <TabsElem connectors={connectors} />
+        <ImageElem connectors={connectors} images={images} />
+      </div>
+      <div className="toolbar-row">
+        <HTMLElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -332,19 +358,30 @@ export const ToolboxFilter = () => {
   const { fields, views } = options;
   return (
     <Fragment>
-      <TextElem connectors={connectors} />
-      <ColumnsElem connectors={connectors} />
-
-      <LineBreakElem connectors={connectors} />
-      <DropDownFilterElem connectors={connectors} fields={fields} />
-      <ToggleFilterElem connectors={connectors} fields={fields} />
-      <SearchElem connectors={connectors} />
-      <ActionElem connectors={connectors} options={options} />
-      <ContainerElem connectors={connectors} />
-      <CardElem connectors={connectors} />
-      <TabsElem connectors={connectors} />
-      <ViewElem connectors={connectors} views={views} />
-      <HTMLElem connectors={connectors} />
+      <div className="toolbar-row">
+        <TextElem connectors={connectors} />
+        <ColumnsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <LineBreakElem connectors={connectors} />
+        <DropDownFilterElem connectors={connectors} fields={fields} />
+      </div>
+      <div className="toolbar-row">
+        <ToggleFilterElem connectors={connectors} fields={fields} />
+        <SearchElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <ActionElem connectors={connectors} options={options} />
+        <ContainerElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <CardElem connectors={connectors} />
+        <TabsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <ViewElem connectors={connectors} views={views} />
+        <HTMLElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -355,22 +392,34 @@ export const ToolboxEdit = () => {
   const { fields, field_view_options, images, views } = options;
   return (
     <Fragment>
-      <TextElem connectors={connectors} />
-      <ColumnsElem connectors={connectors} />
-      <FieldElem
-        connectors={connectors}
-        fields={fields}
-        field_view_options={field_view_options}
-      />
-      <LineBreakElem connectors={connectors} />
-      <ActionElem connectors={connectors} options={options} />
-      <ContainerElem connectors={connectors} />
-      <CardElem connectors={connectors} />
-      <TabsElem connectors={connectors} />
-      <LinkElem connectors={connectors} />
-      <ImageElem connectors={connectors} images={images} />
-      <HTMLElem connectors={connectors} />
-      <ViewElem connectors={connectors} views={views} />
+      <div className="toolbar-row">
+        <TextElem connectors={connectors} />
+        <ColumnsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <FieldElem
+          connectors={connectors}
+          fields={fields}
+          field_view_options={field_view_options}
+        />
+        <LineBreakElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <ActionElem connectors={connectors} options={options} />
+        <ContainerElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <CardElem connectors={connectors} />
+        <TabsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <LinkElem connectors={connectors} />
+        <ImageElem connectors={connectors} images={images} />
+      </div>
+      <div className="toolbar-row">
+        <HTMLElem connectors={connectors} />
+        <ViewElem connectors={connectors} views={views} />
+      </div>
     </Fragment>
   );
 };
@@ -381,18 +430,30 @@ export const ToolboxPage = () => {
   const { views, images } = options;
   return (
     <Fragment>
-      <TextElem connectors={connectors} />
-      <ColumnsElem connectors={connectors} />
-      <LineBreakElem connectors={connectors} />
-      <HTMLElem connectors={connectors} />
-      <CardElem connectors={connectors} />
-      <ImageElem connectors={connectors} images={images} />
-      <LinkElem connectors={connectors} />
-      <ViewElem connectors={connectors} views={views} />
-      <SearchElem connectors={connectors} />
-      <ActionElem connectors={connectors} options={options} />
-      <ContainerElem connectors={connectors} />
-      <TabsElem connectors={connectors} />
+      <div className="toolbar-row">
+        <TextElem connectors={connectors} />
+        <ColumnsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <LineBreakElem connectors={connectors} />
+        <HTMLElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <CardElem connectors={connectors} />
+        <ImageElem connectors={connectors} images={images} />{" "}
+      </div>
+      <div className="toolbar-row">
+        <LinkElem connectors={connectors} />
+        <ViewElem connectors={connectors} views={views} />
+      </div>
+      <div className="toolbar-row">
+        <SearchElem connectors={connectors} />
+        <ActionElem connectors={connectors} options={options} />
+      </div>
+      <div className="toolbar-row">
+        <ContainerElem connectors={connectors} />
+        <TabsElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
