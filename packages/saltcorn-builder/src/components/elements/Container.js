@@ -255,8 +255,8 @@ export const ContainerSettings = () => {
                     })
                   }
                 />
-                <div class="input-group-append w-50 d-inline">
-                  <span class="input-group-text">px</span>
+                <div className="input-group-append w-50 d-inline">
+                  <span className="input-group-text">px</span>
                 </div>
               </div>
             </td>
@@ -614,7 +614,7 @@ export const ContainerSettings = () => {
           <tr>
             <td colSpan="2">
               <label>
-                Set text color{" "}
+                Set text color
                 <input
                   name="setTextColor"
                   type="checkbox"
@@ -622,10 +622,10 @@ export const ContainerSettings = () => {
                   onChange={(e) =>
                     setProp((prop) => (prop.setTextColor = e.target.checked))
                   }
-                />{" "}
+                />
               </label>
             </td>
-          </tr>{" "}
+          </tr>
           {setTextColor && (
             <tr>
               <td>

@@ -82,16 +82,27 @@ div.builder-embed-view {
       rgba(0, 0, 0, 0) 100%
     );
 }
+div.toolbox-card {
+  width: 8.2rem;
+  margin-bottom: 1rem;
+  overflow-x: scroll;
+}
 div.wrap-builder-elem {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-top: 1px solid #bcbcbc;
+  width: 50%;
+  height: 4rem;
   position: relative;
 }
-
 div.wrap-builder-elem:nth-child(1) {
+  border-right: 1px solid #bcbcbc;
+}
+div.toolbar-row {
+  border-top: 1px solid #bcbcbc;
+}
+
+div.toolbar-row:nth-child(1) {
   border-top: none;
 }
+
 div.wrap-builder-elem label {
   position: absolute;
   bottom: -1px;
@@ -116,7 +127,7 @@ input[type="color"].form-control {
 
 #builder-main-canvas {
   height: calc(100vh - 70px);
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 #builder-main-canvas .is-text a {
@@ -283,6 +294,9 @@ button.btnstylesel {
 
 .ml-m1 {
   margin-left: -1rem;
+}
+.mt-m1px {
+  margin-top: -1px;
 }
 table.table-layout-fixed {
   table-layout: fixed;

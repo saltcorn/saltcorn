@@ -160,7 +160,7 @@ export const FieldSettings = () => {
             <TextStyleRow textStyle={textStyle} setProp={setProp} />
           )}
         </tbody>
-      </table>{" "}
+      </table>
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}

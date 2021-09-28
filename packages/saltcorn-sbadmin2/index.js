@@ -228,7 +228,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   </head>
   <body ${bodyAttr}>
     ${rest}
-    <script src="/static_assets/${db.connectObj.version_tag}/jquery-3.4.1.min.js"></script>
+    <script src="/static_assets/${
+      db.connectObj.version_tag
+    }/jquery-3.4.1.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/jquery-easing/jquery.easing.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
@@ -293,7 +295,7 @@ const wrap = ({
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-          <div id="page-inner-content" class="container-fluid">
+          <div id="page-inner-content" class="container-fluid px-2">
             <div id="alerts-area">
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
             </div>
@@ -316,7 +318,9 @@ const exportRenderBody = ({ title, body, alerts, role }) =>
 module.exports = {
   sc_plugin_api_version: 1,
   serve_dependencies: {
-    "startbootstrap-sb-admin-2": require.resolve("startbootstrap-sb-admin-2/package.json"),
+    "startbootstrap-sb-admin-2": require.resolve(
+      "startbootstrap-sb-admin-2/package.json"
+    ),
   },
   layout: {
     wrap,

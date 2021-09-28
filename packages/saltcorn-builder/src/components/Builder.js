@@ -29,12 +29,13 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
-import { Layers } from "@craftjs/layers";
-
+import { Layers } from "saltcorn-craft-layers-noeye";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy, faUndo, faRedo } from "@fortawesome/free-solid-svg-icons";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
-  const { actions, selected } = useEditor((state, query) => {
+  const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
 
@@ -85,8 +86,29 @@ const SettingsPanel = () => {
       actions.delete(child);
     });
   };
+  const recursivelyCloneToElems = (nodeId, ix) => {
+    const {
+      data: { type, props, nodes },
+    } = query.node(nodeId).get();
+    const children = (nodes || []).map(recursivelyCloneToElems);
+    return React.createElement(
+      type,
+      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
+      children
+    );
+  };
+  const duplicate = () => {
+    const {
+      data: { parent },
+    } = query.node(selected.id).get();
+    const elem = recursivelyCloneToElems(selected.id);
+    actions.addNodeTree(
+      query.parseReactElement(elem).toNodeTree(),
+      parent || "ROOT"
+    );
+  };
   return (
-    <div className="settings-panel card mt-2">
+    <div className="settings-panel card mt-1">
       <div className="card-header">
         {selected && selected.displayName
           ? `Settings: ${selected.displayName}`
@@ -107,6 +129,14 @@ const SettingsPanel = () => {
                 Delete contents
               </button>
             )}
+
+            <button
+              title="Duplicate"
+              className="btn btn-secondary ml-2 mt-2"
+              onClick={duplicate}
+            >
+              <FontAwesomeIcon icon={faCopy} />
+            </button>
           </Fragment>
         ) : (
           "No element selected"
@@ -146,17 +176,43 @@ const ViewPageLink = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
   return options.page_id ? (
-    <a
-      target="_blank"
-      className="d-block mt-2"
-      href={`/page/${options.page_name}`}
-    >
+    <a target="_blank" className="ml-3" href={`/page/${options.page_name}`}>
       View page
     </a>
   ) : (
     ""
   );
 };
+const HistoryPanel = () => {
+  const { canUndo, canRedo, actions } = useEditor((state, query) => ({
+    canUndo: query.history.canUndo(),
+    canRedo: query.history.canRedo(),
+  }));
+
+  return (
+    <div className="mt-2">
+      {canUndo && (
+        <button
+          className="btn btn-sm btn-secondary mr-2"
+          title="Undo"
+          onClick={() => actions.history.undo()}
+        >
+          <FontAwesomeIcon icon={faUndo} />
+        </button>
+      )}
+      {canRedo && (
+        <button
+          className="btn btn-sm btn-secondary"
+          title="Redo"
+          onClick={() => actions.history.redo()}
+        >
+          <FontAwesomeIcon icon={faRedo} />
+        </button>
+      )}
+    </div>
+  );
+};
+
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   useEffect(() => {
@@ -187,15 +243,23 @@ const Builder = ({ options, layout, mode }) => {
     <Editor>
       <Provider value={options}>
         <PreviewCtx.Provider value={{ previews, setPreviews }}>
-          <div className="row">
+          <div className="row" style={{ marginTop: "-5px" }}>
             <div className="col-sm-auto">
-              <div className="card">
+              <div className="card toolbox-card">
                 {{
                   show: <ToolboxShow />,
                   edit: <ToolboxEdit />,
                   page: <ToolboxPage />,
                   filter: <ToolboxFilter />,
                 }[mode] || <div>Missing mode</div>}
+              </div>
+              <div className="card toolbox-card">
+                <div className="card-header">Layers</div>
+                {showLayers && (
+                  <div className="card-body p-0 builder-layers">
+                    <Layers expandRootOnLoad={true} />
+                  </div>
+                )}
               </div>
             </div>
             <div id="builder-main-canvas" className="col">
@@ -230,28 +294,11 @@ const Builder = ({ options, layout, mode }) => {
             </div>
             <div className="col-sm-auto builder-sidebar">
               <div style={{ width: "16rem" }}>
-                <div className="card">
-                  <div className="card-header">
-                    Layers
-                    <div className="float-right">
-                      <input
-                        type="checkbox"
-                        checked={showLayers}
-                        onChange={(e) => setShowLayers(e.target.checked)}
-                      />
-                    </div>
-                  </div>
-                  {showLayers && (
-                    <div className="card-body p-0 builder-layers">
-                      <Layers expandRootOnLoad={true} />
-                    </div>
-                  )}
-                </div>
-                <SettingsPanel />
-                <br />
                 <SaveButton />
                 <NextButton layout={layout} />
                 <ViewPageLink />
+                <HistoryPanel />
+                <SettingsPanel />
               </div>
             </div>
           </div>

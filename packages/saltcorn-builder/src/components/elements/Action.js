@@ -141,7 +141,6 @@ export const ActionSettings = () => {
             <label>Action size</label>
           </td>
           <td>
-            {" "}
             <select
               className="form-control"
               value={action_size}
@@ -171,7 +170,8 @@ export const ActionSettings = () => {
               isMulti={false}
             />
           </td>
-        </tr><MinRoleSettingRow minRole={minRole} setProp={setProp} />
+        </tr>
+        <MinRoleSettingRow minRole={minRole} setProp={setProp} />
       </table>
       {options.mode === "show" ? (
         <div className="form-check">
@@ -188,7 +188,7 @@ export const ActionSettings = () => {
         </div>
       ) : null}
       <BlockSetting block={block} setProp={setProp} />
-      
+
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}

@@ -425,13 +425,14 @@ export const ConfigField = ({
       </select>
     ),
     btn_select: () => (
-      <div class="btn-group w-100" role="group">
+      <div className="btn-group w-100" role="group">
         {field.options.map((o, ix) => (
           <button
+            key={ix}
             title={o.title || o.value}
             type="button"
             style={{ width: `${Math.floor(100 / field.options.length)}%` }}
-            class={`btn btn-sm btn-${
+            className={`btn btn-sm btn-${
               value !== o.value ? "outline-" : ""
             }secondary ${field.btnClass || ""}`}
             onClick={() => myOnChange(o.value)}

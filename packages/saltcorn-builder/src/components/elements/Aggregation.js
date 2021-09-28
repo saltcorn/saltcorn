@@ -118,7 +118,6 @@ export const AggregationSettings = () => {
             <label>Where</label>
           </td>
           <td>
-            {" "}
             <input
               type="text"
               className="form-control"
