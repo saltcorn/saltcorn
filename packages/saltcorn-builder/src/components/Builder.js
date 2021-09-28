@@ -217,7 +217,7 @@ const Builder = ({ options, layout, mode }) => {
     <Editor>
       <Provider value={options}>
         <PreviewCtx.Provider value={{ previews, setPreviews }}>
-          <div className="row">
+          <div className="row" style={{ marginTop: "-5px" }}>
             <div className="col-sm-auto">
               <div className="card toolbox-card">
                 {{
