@@ -108,7 +108,7 @@ const SettingsPanel = () => {
     );
   };
   return (
-    <div className="settings-panel card">
+    <div className="settings-panel card mt-1">
       <div className="card-header">
         {selected && selected.displayName
           ? `Settings: ${selected.displayName}`
@@ -176,11 +176,7 @@ const ViewPageLink = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
   return options.page_id ? (
-    <a
-      target="_blank"
-      className="d-block mt-2"
-      href={`/page/${options.page_name}`}
-    >
+    <a target="_blank" className="ml-3" href={`/page/${options.page_name}`}>
       View page
     </a>
   ) : (
@@ -271,7 +267,6 @@ const Builder = ({ options, layout, mode }) => {
                 <SaveButton />
                 <NextButton layout={layout} />
                 <ViewPageLink />
-                <br />
                 <SettingsPanel />
               </div>
             </div>
