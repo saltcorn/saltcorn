@@ -108,7 +108,7 @@ const SettingsPanel = () => {
     );
   };
   return (
-    <div className="settings-panel card mt-2">
+    <div className="settings-panel card">
       <div className="card-header">
         {selected && selected.displayName
           ? `Settings: ${selected.displayName}`
@@ -219,13 +219,21 @@ const Builder = ({ options, layout, mode }) => {
         <PreviewCtx.Provider value={{ previews, setPreviews }}>
           <div className="row">
             <div className="col-sm-auto">
-              <div className="card">
+              <div className="card toolbox-card">
                 {{
                   show: <ToolboxShow />,
                   edit: <ToolboxEdit />,
                   page: <ToolboxPage />,
                   filter: <ToolboxFilter />,
                 }[mode] || <div>Missing mode</div>}
+              </div>
+              <div className="card">
+                <div className="card-header">Layers</div>
+                {showLayers && (
+                  <div className="card-body p-0 builder-layers">
+                    <Layers expandRootOnLoad={true} />
+                  </div>
+                )}
               </div>
             </div>
             <div id="builder-main-canvas" className="col">
@@ -260,23 +268,6 @@ const Builder = ({ options, layout, mode }) => {
             </div>
             <div className="col-sm-auto builder-sidebar">
               <div style={{ width: "16rem" }}>
-                <div className="card">
-                  <div className="card-header">
-                    Layers
-                    <div className="float-right">
-                      <input
-                        type="checkbox"
-                        checked={showLayers}
-                        onChange={(e) => setShowLayers(e.target.checked)}
-                      />
-                    </div>
-                  </div>
-                  {showLayers && (
-                    <div className="card-body p-0 builder-layers">
-                      <Layers expandRootOnLoad={true} />
-                    </div>
-                  )}
-                </div>
                 <SettingsPanel />
                 <br />
                 <SaveButton />

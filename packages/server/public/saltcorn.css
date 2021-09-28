@@ -82,9 +82,13 @@ div.builder-embed-view {
       rgba(0, 0, 0, 0) 100%
     );
 }
+div.toolbox-card {
+  width: 8.2rem;
+  margin-bottom: 1rem;
+}
 div.wrap-builder-elem {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 50%;
+  height: 4rem;
   position: relative;
 }
 div.wrap-builder-elem:nth-child(1) {
