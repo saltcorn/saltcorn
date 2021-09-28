@@ -79,6 +79,10 @@ export const ViewSettings = () => {
     setPreviews,
     node_id,
   });
+  const setAProp = (key) => (e) => {
+    const target_value = e.target && e.target.value;
+    setProp((prop) => (prop[key] = target_value));
+  };
   return (
     <div>
       <div>
@@ -105,7 +109,7 @@ export const ViewSettings = () => {
             <select
               value={state}
               className="form-control"
-              onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
+              onChange={setAProp("state")}
             >
               <option value="shared">Shared</option>
               <option value="fixed">Fixed</option>
