@@ -227,7 +227,7 @@ const Builder = ({ options, layout, mode }) => {
                   filter: <ToolboxFilter />,
                 }[mode] || <div>Missing mode</div>}
               </div>
-              <div className="card">
+              <div className="card toolbox-card">
                 <div className="card-header">Layers</div>
                 {showLayers && (
                   <div className="card-body p-0 builder-layers">
