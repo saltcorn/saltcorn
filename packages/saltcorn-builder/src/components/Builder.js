@@ -30,11 +30,12 @@ import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
 import { Layers } from "@craftjs/layers";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
-  const { actions, selected } = useEditor((state, query) => {
+  const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
 
@@ -85,6 +86,12 @@ const SettingsPanel = () => {
       actions.delete(child);
     });
   };
+  const duplicate = () => {
+    const {
+      data: { type, props },
+    } = query.node(selected.id).get();
+    actions.add(query.createNode(React.createElement(type, props)), "ROOT");
+  };
   return (
     <div className="settings-panel card mt-2">
       <div className="card-header">
@@ -107,6 +114,14 @@ const SettingsPanel = () => {
                 Delete contents
               </button>
             )}
+
+            <button
+              title="Duplicate"
+              className="btn btn-secondary mt-2"
+              onClick={duplicate}
+            >
+              <FontAwesomeIcon icon={faCopy} />
+            </button>
           </Fragment>
         ) : (
           "No element selected"
