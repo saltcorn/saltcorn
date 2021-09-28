@@ -127,7 +127,7 @@ input[type="color"].form-control {
 
 #builder-main-canvas {
   height: calc(100vh - 70px);
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 #builder-main-canvas .is-text a {

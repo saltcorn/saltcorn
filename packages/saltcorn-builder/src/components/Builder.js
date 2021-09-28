@@ -268,11 +268,11 @@ const Builder = ({ options, layout, mode }) => {
             </div>
             <div className="col-sm-auto builder-sidebar">
               <div style={{ width: "16rem" }}>
-                <SettingsPanel />
-                <br />
                 <SaveButton />
                 <NextButton layout={layout} />
                 <ViewPageLink />
+                <br />
+                <SettingsPanel />
               </div>
             </div>
           </div>
