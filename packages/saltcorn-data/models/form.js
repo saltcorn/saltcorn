@@ -61,17 +61,21 @@ class Form {
     return r;
   }
   get errorSummary() {
-    let strs=[];
-    Object.entries(this.errors).forEach(([k,v])=>{
-      strs.push(`${k}: ${v}`)
-    })
-    return strs.join("; ")
+    let strs = [];
+    Object.entries(this.errors).forEach(([k, v]) => {
+      strs.push(`${k}: ${v}`);
+    });
+    return strs.join("; ");
   }
   validate(v) {
     this.hasErrors = false;
     this.errors = {};
     this.fields.forEach((f) => {
       if (f.disabled || f.calculated) return;
+      if (f.fieldview && f.type && f.type.fieldviews) {
+        const fv = f.type.fieldviews[f.fieldview];
+        if (fv && !fv.isEdit) return;
+      }
       const valres = f.validate(v);
       if (valres.error) {
         this.errors[f.name] = valres.error;
