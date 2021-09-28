@@ -255,8 +255,8 @@ export const ContainerSettings = () => {
                     })
                   }
                 />
-                <div class="input-group-append w-50 d-inline">
-                  <span class="input-group-text">px</span>
+                <div className="input-group-append w-50 d-inline">
+                  <span className="input-group-text">px</span>
                 </div>
               </div>
             </td>
