@@ -37,10 +37,19 @@ const action_link = (
     action_style,
     action_size,
     action_icon,
+    action_bgcol,
+    action_bordercol,
+    action_textcol,
   },
   __ = (s) => s
 ) => {
   const label = __(action_label) || action_name;
+  let style =
+    action_style === "btn-custom-color"
+      ? `background-color: ${action_bgcol || "#000000"};border-color: ${
+          action_bordercol || "#000000"
+        }; color: ${action_textcol || "#000000"}`
+      : null;
   if (url.javascript)
     return a(
       {
@@ -49,6 +58,7 @@ const action_link = (
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+        style,
       },
       action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
       label
@@ -58,6 +68,7 @@ const action_link = (
       confirm,
       req,
       icon: action_icon,
+      style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
     });
 };
@@ -145,6 +156,9 @@ const view_linker = contract(
       link_size = "",
       link_icon = "",
       textStyle = "",
+      link_bgcol,
+      link_bordercol,
+      link_textcol,
     },
     fields,
     __ = (s) => s
@@ -170,7 +184,10 @@ const view_linker = contract(
               link_style,
               link_size,
               link_icon,
-              textStyle
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
             ),
         };
       case "ChildList":
@@ -186,7 +203,10 @@ const view_linker = contract(
               link_style,
               link_size,
               link_icon,
-              textStyle
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
             ),
         };
       case "ParentShow":
@@ -212,7 +232,10 @@ const view_linker = contract(
                   link_style,
                   link_size,
                   link_icon,
-                  textStyle
+                  textStyle,
+                  link_bgcol,
+                  link_bordercol,
+                  link_textcol
                 )
               : "";
           },

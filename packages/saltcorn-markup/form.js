@@ -141,9 +141,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
-      )}" name="${name}" id="input${text_attr(name)}" ${
+      )}" name="${name}" id="input${text_attr(name)}"${
         v && isdef(v[hdr.form_name])
-          ? `value="${text_attr(v[hdr.form_name])}"`
+          ? ` value="${text_attr(v[hdr.form_name])}"`
           : ""
       }>`;
       const inner = hdr.postText
@@ -298,7 +298,16 @@ const renderFormLayout = (form) => {
       action_size,
       action_icon,
       configuration,
+      action_bgcol,
+      action_bordercol,
+      action_textcol,
     }) {
+      let style =
+        action_style === "btn-custom-color"
+          ? `background-color: ${action_bgcol || "#000000"};border-color: ${
+              action_bordercol || "#000000"
+            }; color: ${action_textcol || "#000000"}`
+          : null;
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
 
@@ -310,6 +319,7 @@ const renderFormLayout = (form) => {
               action_style !== "btn-link" &&
                 `btn ${action_style || "btn-primary"} ${action_size || ""}`,
             ],
+            style,
           },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           action_label || action_name
@@ -320,7 +330,9 @@ const renderFormLayout = (form) => {
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }">${action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""}${text(
+        }"${style ? ` style="${style}"` : ""}>${
+          action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""
+        }${text(
           action_label || form.submitLabel || action_name || "Save"
         )}</button>`;
 
@@ -387,11 +399,11 @@ const renderForm = (form, csrfToken0) => {
 const mkFormWithLayout = (form, csrfToken) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}" ${
+  const top = `<form action="${form.action}"${
     form.onChange ? ` onchange="${form.onChange}"` : ""
-  }class="form-namespace ${form.class || ""}" method="${
+  } class="form-namespace ${form.class || ""}" method="${
     form.methodGET ? "get" : "post"
-  }" ${hasFile ? 'encType="multipart/form-data"' : ""}>`;
+  }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -440,8 +452,8 @@ const mkForm = (form, csrfToken, errors = {}) => {
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
     form.class || ""
-  }" method="${form.methodGET ? "get" : "post"}" ${
-    hasFile ? 'encType="multipart/form-data"' : ""
+  }" method="${form.methodGET ? "get" : "post"}"${
+    hasFile ? ' encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);
   const flds = form.fields

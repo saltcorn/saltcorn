@@ -14,6 +14,7 @@ const post_btn = (
     btnClass = "btn-primary",
     onClick,
     small,
+    style,
     ajax,
     reload_on_done,
     reload_delay,
@@ -43,9 +44,9 @@ const post_btn = (
       : confirm
       ? `onclick="return confirm('${req.__("Are you sure?")}')"`
       : ""
-  } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}">${
-    icon ? `<i class="${icon}"></i>&nbsp;` : ""
-  }${s}</button></form>`;
+  } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
+    style ? ` style="${style}"` : ""
+  }>${icon ? `<i class="${icon}"></i>&nbsp;` : ""}${s}</button></form>`;
 /**
  * UI Form for Delete Item confirmation
  * @param href - href

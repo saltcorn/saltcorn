@@ -6,6 +6,8 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode } from "@craftjs/core";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
+import faIcons from "./faicons";
 
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
@@ -17,7 +19,12 @@ export const BlockSetting = ({ block, setProp }) => (
       name="block"
       type="checkbox"
       checked={block}
-      onChange={(e) => setProp((prop) => (prop.block = e.target.checked))}
+      onChange={(e) => {
+        if (e.target) {
+          const target_value = e.target.checked;
+          setProp((prop) => (prop.block = target_value));
+        }
+      }}
     />
     <label className="form-check-label">Block display</label>
   </div>
@@ -36,9 +43,12 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             type="text"
             className="form-control text-to-display"
             value={node[nodekey]}
-            onChange={(e) =>
-              setProp((prop) => (prop[nodekey] = e.target.value))
-            }
+            onChange={(e) => {
+              if (e.target) {
+                const target_value = e.target.value;
+                setProp((prop) => (prop[nodekey] = target_value));
+              }
+            }}
           />
         ) : (
           children
@@ -50,7 +60,7 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             }`}
             title="Calculated formula"
             type="button"
-            onClick={(e) =>
+            onClick={() =>
               setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
             }
           >
@@ -73,7 +83,12 @@ export const MinRoleSetting = ({ minRole, setProp }) => {
       <label>Minimum Role</label>
       <select
         value={minRole}
-        onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
+        onChange={(e) => (e) => {
+          if (e.target) {
+            const target_value = e.target.value;
+            setProp((prop) => (prop.minRole = target_value));
+          }
+        }}
       >
         {options.roles.map((r) => (
           <option key={r.id} value={r.id}>
@@ -95,7 +110,12 @@ export const MinRoleSettingRow = ({ minRole, setProp }) => {
         <select
           value={minRole}
           className="form-control"
-          onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
+          onChange={(e) => {
+            if (e.target) {
+              const target_value = e.target.value;
+              setProp((prop) => (prop.minRole = target_value));
+            }
+          }}
         >
           {options.roles.map((r) => (
             <option key={r.id} value={r.id}>
@@ -112,7 +132,12 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
     <select
       value={textStyle}
       className="form-control"
-      onChange={(e) => setProp((prop) => (prop.textStyle = e.target.value))}
+      onChange={(e) => {
+        if (e.target) {
+          const target_value = e.target.value;
+          setProp((prop) => (prop.textStyle = target_value));
+        }
+      }}
     >
       <option value="">Normal</option>
       <option value="h1">Heading 1</option>
@@ -322,7 +347,9 @@ export const ConfigForm = ({
             setProp={setProp}
             onChange={onChange}
           />
-          {f.sublabel ? <i>{f.sublabel}</i> : null}
+          {f.sublabel ? (
+            <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
+          ) : null}
         </div>
       );
     })}
@@ -364,7 +391,7 @@ export const ConfigField = ({
         type="text"
         className="form-control"
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Integer: () => (
@@ -373,7 +400,7 @@ export const ConfigField = ({
         className="form-control"
         step={1}
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Float: () => (
@@ -382,7 +409,7 @@ export const ConfigField = ({
         className="form-control"
         value={value || ""}
         step={0.01}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Color: () => (
@@ -390,7 +417,7 @@ export const ConfigField = ({
         type="color"
         value={value}
         className="form-control"
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Bool: () => (
@@ -399,7 +426,7 @@ export const ConfigField = ({
           type="checkbox"
           className="form-check-input"
           checked={value}
-          onChange={(e) => myOnChange(e.target.checked)}
+          onChange={(e) => e.target && myOnChange(e.target.checked)}
         />
         <label className="form-check-label">{field.label}</label>
       </div>
@@ -410,14 +437,23 @@ export const ConfigField = ({
         type="text"
         className="form-control"
         value={value}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
+      />
+    ),
+    code: () => (
+      <textarea
+        rows="6"
+        type="text"
+        className="form-control"
+        value={value}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     select: () => (
       <select
         className="form-control"
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (
           <option key={ix}>{o}</option>
@@ -462,13 +498,15 @@ export const ConfigField = ({
           )}
           className="w-50 form-control-sm d-inline dimunit"
           vert={true}
-          onChange={(e) =>
+          onChange={(e) => {
+            if (!e.target) return;
+            const target_value = e.target.value;
             setProp((prop) => {
               if (configuration)
-                prop.configuration[field.name + "Unit"] = e.target.value;
-              else prop[field.name + "Unit"] = e.target.value;
-            })
-          }
+                prop.configuration[field.name + "Unit"] = target_value;
+              else prop[field.name + "Unit"] = target_value;
+            });
+          }}
         />
       </Fragment>
     ),
@@ -573,3 +611,129 @@ export class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+export const ButtonOrLinkSettingsRows = ({
+  setProp,
+  btnClass = null,
+  keyPrefix = "",
+  values,
+  linkFirst = false,
+}) => {
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
+  const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
+  return [
+    <tr key="btnstyle">
+      <td>
+        <label>Style</label>
+      </td>
+      <td>
+        <select
+          className="form-control"
+          value={values[keyPrefix + "style"]}
+          onChange={setAProp(keyPrefix + "style")}
+        >
+          {linkFirst ? (
+            <option value={addBtnClass("btn-link")}>Link</option>
+          ) : null}
+          <option value={addBtnClass("btn-primary")}>Primary button</option>
+          <option value={addBtnClass("btn-secondary")}>Secondary button</option>
+          <option value={addBtnClass("btn-success")}>Success button</option>
+          <option value={addBtnClass("btn-danger")}>Danger button</option>
+          <option value={addBtnClass("btn-outline-primary")}>
+            Primary outline button
+          </option>
+          <option value={addBtnClass("btn-outline-secondary")}>
+            Secondary outline button
+          </option>
+          <option value={addBtnClass("btn-custom-color")}>
+            Button custom color
+          </option>
+          {!linkFirst ? (
+            <option value={addBtnClass("btn-link")}>Link</option>
+          ) : null}
+        </select>
+      </td>
+    </tr>,
+    <tr key="btnsz">
+      <td>
+        <label>Action size</label>
+      </td>
+      <td>
+        <select
+          className="form-control"
+          value={values[keyPrefix + "size"]}
+          onChange={setAProp(keyPrefix + "size")}
+        >
+          <option value="">Standard</option>
+          <option value="btn-lg">Large</option>
+          <option value="btn-sm">Small</option>
+          <option value="btn-block">Block</option>
+          <option value="btn-block btn-lg">Large block</option>
+        </select>
+      </td>
+    </tr>,
+    <tr key="btnicon">
+      <td>
+        <label>Icon</label>
+      </td>
+      <td>
+        <FontIconPicker
+          value={values[keyPrefix + "icon"]}
+          onChange={(value) =>
+            setProp((prop) => (prop[keyPrefix + "icon"] = value))
+          }
+          isMulti={false}
+          icons={faIcons}
+        />
+      </td>
+    </tr>,
+    ...(values[keyPrefix + "style"] === addBtnClass("btn-custom-color")
+      ? [
+          <tr key="btnbgcol">
+            <td>
+              <label>Background</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "bgcol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "bgcol")}
+              />
+            </td>
+          </tr>,
+          <tr key="btnbdcol">
+            <td>
+              <label>Border</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "bordercol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "bordercol")}
+              />
+            </td>
+          </tr>,
+          <tr key="btntxtcol">
+            <td>
+              <label>Text</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "textcol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "textcol")}
+              />
+            </td>
+          </tr>,
+        ]
+      : []),
+  ];
+};

@@ -54,7 +54,10 @@ const mkTag = (tnm, voidTag) => (...args) => {
       if (Array.isArray(arg)) {
         arg.forEach(argIter);
       } else {
-        attribs += Object.entries(arg).map(ppAttrib).join(" ");
+        attribs += Object.entries(arg)
+          .map(ppAttrib)
+          .filter((s) => s)
+          .join(" ");
       }
     } else body += arg;
   };

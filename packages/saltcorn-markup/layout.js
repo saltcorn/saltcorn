@@ -214,6 +214,14 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       );
     }
     if (segment.type === "link") {
+      let style =
+        segment.link_style === "btn btn-custom-color"
+          ? `background-color: ${
+              segment.link_bgcol || "#000000"
+            };border-color: ${segment.link_bordercol || "#000000"}; color: ${
+              segment.link_textcol || "#000000"
+            }`
+          : null;
       return wrap(
         segment,
         isTop,
@@ -224,6 +232,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
+            style,
           },
           segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
           segment.text

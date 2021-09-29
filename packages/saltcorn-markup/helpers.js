@@ -31,8 +31,8 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
     .map((o) => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
-      return `<option value="${text_attr(value)}" ${
-        isSelected(value) ? "selected" : ""
+      return `<option value="${text_attr(value)}"${
+        isSelected(value) ? " selected" : ""
       }>${text(label)}</option>`;
     })
     .join("");

@@ -80,8 +80,10 @@ export const ViewSettings = () => {
     node_id,
   });
   const setAProp = (key) => (e) => {
-    const target_value = e.target && e.target.value;
-    setProp((prop) => (prop[key] = target_value));
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
   };
   return (
     <div>
