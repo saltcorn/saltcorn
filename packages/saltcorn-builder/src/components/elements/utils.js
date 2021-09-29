@@ -345,14 +345,15 @@ export const ConfigForm = ({
             setProp={setProp}
             onChange={onChange}
           />
-          {f.sublabel ? <i>{f.sublabel}</i> : null}
+          {f.sublabel ? (
+            <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
+          ) : null}
         </div>
       );
     })}
     <br />
   </div>
 );
-
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
 export const ConfigField = ({
@@ -428,6 +429,15 @@ export const ConfigField = ({
       </div>
     ),
     textarea: () => (
+      <textarea
+        rows="6"
+        type="text"
+        className="form-control"
+        value={value}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
+      />
+    ),
+    code: () => (
       <textarea
         rows="6"
         type="text"
