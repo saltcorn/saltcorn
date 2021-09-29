@@ -98,6 +98,7 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
           icon={segment.icon}
+          font={segment.font || ""}
         />
       );
     } else if (segment.type === "view") {
@@ -144,6 +145,7 @@ export const layoutToNodes = (layout, query, actions) => {
           gradStartColor={segment.gradStartColor}
           gradEndColor={segment.gradEndColor}
           gradDirection={segment.gradDirection}
+          rotate={segment.rotate || 0}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
           overflow={segment.overflow}
@@ -318,6 +320,7 @@ export const craftToSaltcorn = (nodes) => {
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
+          rotate: node.props.rotate,
         };
       else return get_nodes(node);
     }
@@ -331,6 +334,7 @@ export const craftToSaltcorn = (nodes) => {
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
         icon: node.props.icon,
+        font: node.props.font,
       };
     }
 

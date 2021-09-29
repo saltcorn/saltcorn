@@ -6,6 +6,7 @@ import {
   TextStyleSetting,
   OrFormula,
   ErrorBoundary,
+  TextStyleRow,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -44,7 +45,7 @@ const ckConfig = {
 function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-export const Text = ({ text, block, isFormula, textStyle, icon }) => {
+export const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -66,6 +67,7 @@ export const Text = ({ text, block, isFormula, textStyle, icon }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
+      style={font ? { fontFamily: font } : {}}
     >
       {icon ? <i className={`${icon} mr-1`}></i> : ""}
       {isFormula.text ? (
@@ -106,6 +108,7 @@ export const TextSettings = () => {
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
     icon: node.data.props.icon,
+    font: node.data.props.font,
   }));
   const {
     actions: { setProp },
@@ -115,8 +118,15 @@ export const TextSettings = () => {
     isFormula,
     labelFor,
     icon,
+    font,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <div>
       {mode === "show" && (
@@ -132,35 +142,35 @@ export const TextSettings = () => {
           <label className="form-check-label">Formula?</label>
         </div>
       )}
-      <label>Text to display:</label>
+      <label>Text to display</label>
       {mode === "show" && isFormula.text ? (
         <input
           type="text"
           className="text-to-display form-control"
           value={text}
-          onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
+          onChange={setAProp("text")}
         />
       ) : (
         <ErrorBoundary>
-          <CKEditor
-            data={text}
-            onChange={(e) =>
-              setProp((props) => (props.text = e.editor.getData()))
-            }
-            config={ckConfig}
-            type="inline"
-          />
+          <div className="border">
+            <CKEditor
+              data={text}
+              onChange={(e) => {
+                if (e.editor) {
+                  const text = e.editor.getData();
+                  setProp((props) => (props.text = text));
+                }
+              }}
+              config={ckConfig}
+              type="inline"
+            />
+          </div>
         </ErrorBoundary>
       )}
       {mode === "edit" && (
         <Fragment>
           <label>Label for Field</label>
-          <select
-            value={labelFor}
-            onChange={(e) => {
-              setProp((prop) => (prop.labelFor = e.target.value));
-            }}
-          >
+          <select value={labelFor} onChange={setAProp("labelFor")}>
             <option value={""}></option>
             {fields.map((f, ix) => (
               <option key={ix} value={f.name}>
@@ -170,16 +180,39 @@ export const TextSettings = () => {
           </select>
         </Fragment>
       )}
-      <br />
-      <label>Icon</label>
-      <FontIconPicker
-        value={icon}
-        icons={faIcons}
-        onChange={(value) => setProp((prop) => (prop.icon = value))}
-        isMulti={false}
-      />
+      <table className="w-100 mt-2">
+        <tbody>
+          <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          <tr>
+            <td>
+              <label>Icon</label>
+            </td>
+            <td>
+              <FontIconPicker
+                className="w-100"
+                value={icon}
+                icons={faIcons}
+                onChange={(value) => setProp((prop) => (prop.icon = value))}
+                isMulti={false}
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Font</label>
+            </td>
+            <td>
+              <input
+                type="text"
+                className="form-control"
+                value={font}
+                onChange={setAProp("font")}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
       <BlockSetting block={block} setProp={setProp} />
-      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
   );
 };
@@ -191,6 +224,7 @@ Text.craft = {
     isFormula: {},
     textStyle: "",
     labelFor: "",
+    font: "",
   },
   displayName: "Text",
   related: {

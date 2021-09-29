@@ -45,25 +45,26 @@ const makeSegments = (body, alerts) => {
     return body;
   } else return { above: [...alertsSegments, body] };
 };
-const applyTextStyle = (textStyle, inner, isBlock) => {
-  switch (textStyle) {
+const applyTextStyle = (segment, inner) => {
+  let style = segment.font ? { fontFamily: segment.font } : {};
+  switch (segment.textStyle) {
     case "h1":
-      return h1(inner);
+      return h1(style, inner);
     case "h2":
-      return h2(inner);
+      return h2(style, inner);
     case "h3":
-      return h3(inner);
+      return h3(style, inner);
     case "h4":
-      return h4(inner);
+      return h4(style, inner);
     case "h5":
-      return h5(inner);
+      return h5(style, inner);
     case "h6":
-      return h6(inner);
+      return h6(style, inner);
     default:
-      return isBlock
-        ? div({ class: textStyle || "" }, inner)
-        : textStyle
-        ? span({ class: textStyle || "" }, inner)
+      return segment.block
+        ? div({ class: segment.textStyle || "", style }, inner)
+        : segment.textStyle || segment.font
+        ? span({ class: segment.textStyle || "", style }, inner)
         : inner;
   }
 };
@@ -158,9 +159,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         ? iconTag +
             label(
               { for: `input${text(segment.labelFor)}` },
-              applyTextStyle(segment.textStyle, inner, segment.block)
+              applyTextStyle(segment, inner)
             )
-        : iconTag + applyTextStyle(segment.textStyle, inner, segment.block);
+        : iconTag + applyTextStyle(segment, inner);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
@@ -305,6 +306,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         gradDirection,
         fullPageWidth,
         overflow,
+        rotate,
       } = segment;
       if (hide) return "";
       if (
@@ -387,7 +389,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                     gradDirection || 0
                   }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
-            } ${setTextColor ? `color: ${textColor};` : ""}`,
+            } ${setTextColor ? `color: ${textColor};` : ""}${
+              rotate ? `transform: rotate(${rotate}deg);` : ""
+            }`,
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": `showIfFormulaInputs(e, '${showIfFormulaInputs}')`,
