@@ -17,7 +17,12 @@ export const BlockSetting = ({ block, setProp }) => (
       name="block"
       type="checkbox"
       checked={block}
-      onChange={(e) => setProp((prop) => (prop.block = e.target.checked))}
+      onChange={(e) => {
+        if (e.target) {
+          const target_value = e.target.checked;
+          setProp((prop) => (prop.block = target_value));
+        }
+      }}
     />
     <label className="form-check-label">Block display</label>
   </div>
@@ -36,9 +41,12 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             type="text"
             className="form-control text-to-display"
             value={node[nodekey]}
-            onChange={(e) =>
-              setProp((prop) => (prop[nodekey] = e.target.value))
-            }
+            onChange={(e) => {
+              if (e.target) {
+                const target_value = e.target.value;
+                setProp((prop) => (prop[nodekey] = target_value));
+              }
+            }}
           />
         ) : (
           children
@@ -50,7 +58,7 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             }`}
             title="Calculated formula"
             type="button"
-            onClick={(e) =>
+            onClick={() =>
               setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
             }
           >
@@ -73,7 +81,12 @@ export const MinRoleSetting = ({ minRole, setProp }) => {
       <label>Minimum Role</label>
       <select
         value={minRole}
-        onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
+        onChange={(e) => (e) => {
+          if (e.target) {
+            const target_value = e.target.value;
+            setProp((prop) => (prop.minRole = target_value));
+          }
+        }}
       >
         {options.roles.map((r) => (
           <option key={r.id} value={r.id}>
@@ -95,7 +108,12 @@ export const MinRoleSettingRow = ({ minRole, setProp }) => {
         <select
           value={minRole}
           className="form-control"
-          onChange={(e) => setProp((prop) => (prop.minRole = e.target.value))}
+          onChange={(e) => {
+            if (e.target) {
+              const target_value = e.target.value;
+              setProp((prop) => (prop.minRole = target_value));
+            }
+          }}
         >
           {options.roles.map((r) => (
             <option key={r.id} value={r.id}>
@@ -112,7 +130,12 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
     <select
       value={textStyle}
       className="form-control"
-      onChange={(e) => setProp((prop) => (prop.textStyle = e.target.value))}
+      onChange={(e) => {
+        if (e.target) {
+          const target_value = e.target.value;
+          setProp((prop) => (prop.textStyle = target_value));
+        }
+      }}
     >
       <option value="">Normal</option>
       <option value="h1">Heading 1</option>
@@ -364,7 +387,7 @@ export const ConfigField = ({
         type="text"
         className="form-control"
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Integer: () => (
@@ -373,7 +396,7 @@ export const ConfigField = ({
         className="form-control"
         step={1}
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Float: () => (
@@ -382,7 +405,7 @@ export const ConfigField = ({
         className="form-control"
         value={value || ""}
         step={0.01}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Color: () => (
@@ -390,7 +413,7 @@ export const ConfigField = ({
         type="color"
         value={value}
         className="form-control"
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     Bool: () => (
@@ -399,7 +422,7 @@ export const ConfigField = ({
           type="checkbox"
           className="form-check-input"
           checked={value}
-          onChange={(e) => myOnChange(e.target.checked)}
+          onChange={(e) => e.target && myOnChange(e.target.checked)}
         />
         <label className="form-check-label">{field.label}</label>
       </div>
@@ -410,14 +433,14 @@ export const ConfigField = ({
         type="text"
         className="form-control"
         value={value}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
     select: () => (
       <select
         className="form-control"
         value={value || ""}
-        onChange={(e) => myOnChange(e.target.value)}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
       >
         {field.options.map((o, ix) => (
           <option key={ix}>{o}</option>
@@ -462,13 +485,15 @@ export const ConfigField = ({
           )}
           className="w-50 form-control-sm d-inline dimunit"
           vert={true}
-          onChange={(e) =>
+          onChange={(e) => {
+            if (!e.target) return;
+            const target_value = e.target.value;
             setProp((prop) => {
               if (configuration)
-                prop.configuration[field.name + "Unit"] = e.target.value;
-              else prop[field.name + "Unit"] = e.target.value;
-            })
-          }
+                prop.configuration[field.name + "Unit"] = target_value;
+              else prop[field.name + "Unit"] = target_value;
+            });
+          }}
         />
       </Fragment>
     ),
