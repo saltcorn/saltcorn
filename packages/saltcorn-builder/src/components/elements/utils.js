@@ -6,6 +6,8 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode } from "@craftjs/core";
+import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
+import faIcons from "./faicons";
 
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
@@ -609,3 +611,83 @@ export class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+export const ButtonOrLinkSettingsRows = ({
+  setProp,
+  btnClass = null,
+  keyPrefix = "",
+  values,
+  linkFirst = false,
+}) => {
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
+  const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
+  return [
+    <tr key="btnstyle">
+      <td>
+        <label>Style</label>
+      </td>
+      <td>
+        <select
+          className="form-control"
+          value={values[keyPrefix + "style"]}
+          onChange={setAProp(keyPrefix + "style")}
+        >
+          {linkFirst ? (
+            <option value={addBtnClass("btn-link")}>Link</option>
+          ) : null}
+          <option value={addBtnClass("btn-primary")}>Primary button</option>
+          <option value={addBtnClass("btn-secondary")}>Secondary button</option>
+          <option value={addBtnClass("btn-success")}>Success button</option>
+          <option value={addBtnClass("btn-danger")}>Danger button</option>
+          <option value={addBtnClass("btn-outline-primary")}>
+            Primary outline button
+          </option>
+          <option value={addBtnClass("btn-outline-secondary")}>
+            Secondary outline button
+          </option>
+          {!linkFirst ? (
+            <option value={addBtnClass("btn-link")}>Link</option>
+          ) : null}
+        </select>
+      </td>
+    </tr>,
+    <tr key="btnsz">
+      <td>
+        <label>Action size</label>
+      </td>
+      <td>
+        <select
+          className="form-control"
+          value={values[keyPrefix + "size"]}
+          onChange={setAProp(keyPrefix + "size")}
+        >
+          <option value="">Standard</option>
+          <option value="btn-lg">Large</option>
+          <option value="btn-sm">Small</option>
+          <option value="btn-block">Block</option>
+          <option value="btn-block btn-lg">Large block</option>
+        </select>
+      </td>
+    </tr>,
+    <tr key="btnicon">
+      <td>
+        <label>Icon</label>
+      </td>
+      <td>
+        <FontIconPicker
+          value={values[keyPrefix + "icon"]}
+          onChange={(value) =>
+            setProp((prop) => (prop[keyPrefix + "icon"] = value))
+          }
+          isMulti={false}
+          icons={faIcons}
+        />
+      </td>
+    </tr>,
+  ];
+};

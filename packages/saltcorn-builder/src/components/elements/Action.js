@@ -1,7 +1,6 @@
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import faIcons from "./faicons";
 import {
   blockProps,
   BlockSetting,
@@ -9,8 +8,8 @@ import {
   OrFormula,
   ConfigForm,
   setInitialConfig,
+  ButtonOrLinkSettingsRows,
 } from "./utils";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 
 export const Action = ({
   name,
@@ -59,119 +58,64 @@ export const ActionSettings = () => {
     confirm,
     configuration,
     action_label,
-    action_style,
-    action_size,
-    action_icon,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
-  console.log({ action_icon });
   return (
     <div>
       <table className="w-100">
-        <tr>
-          <td>
-            <label>Action</label>
-          </td>
-          <td>
-            <select
-              value={name}
-              className="form-control"
-              onChange={(e) => {
-                setProp((prop) => (prop.name = e.target.value));
-                setInitialConfig(
-                  setProp,
-                  e.target.value,
-                  getCfgFields(e.target.value)
-                );
-              }}
-            >
-              {options.actions.map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td colSpan="2">
-            <label>Label (leave blank for default)</label>
-            <OrFormula nodekey="action_label" {...{ setProp, isFormula, node }}>
-              <input
-                type="text"
+        <tbody>
+          <tr>
+            <td>
+              <label>Action</label>
+            </td>
+            <td>
+              <select
+                value={name}
                 className="form-control"
-                value={action_label}
-                onChange={(e) =>
-                  setProp((prop) => (prop.action_label = e.target.value))
-                }
-              />
-            </OrFormula>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Action style</label>
-          </td>
-          <td>
-            <select
-              className="form-control"
-              value={action_style}
-              onChange={(e) =>
-                setProp((prop) => (prop.action_style = e.target.value))
-              }
-            >
-              <option value="btn-primary">Primary button</option>
-              <option value="btn-secondary">Secondary button</option>
-              <option value="btn-success">Success button</option>
-              <option value="btn-danger">Danger button</option>
-              <option value="btn-outline-primary">
-                Primary outline button
-              </option>
-              <option value="btn-outline-secondary">
-                Secondary outline button
-              </option>
-              <option value="btn-link">Link</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Action size</label>
-          </td>
-          <td>
-            <select
-              className="form-control"
-              value={action_size}
-              onChange={(e) =>
-                setProp((prop) => (prop.action_size = e.target.value))
-              }
-            >
-              <option value="">Standard</option>
-              <option value="btn-lg">Large</option>
-              <option value="btn-sm">Small</option>
-              <option value="btn-block">Block</option>
-              <option value="btn-block btn-lg">Large block</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Icon</label>
-          </td>
-          <td>
-            <FontIconPicker
-              value={action_icon}
-              icons={faIcons}
-              onChange={(value) =>
-                setProp((prop) => (prop.action_icon = value))
-              }
-              isMulti={false}
-            />
-          </td>
-        </tr>
-        <MinRoleSettingRow minRole={minRole} setProp={setProp} />
+                onChange={(e) => {
+                  setProp((prop) => (prop.name = e.target.value));
+                  setInitialConfig(
+                    setProp,
+                    e.target.value,
+                    getCfgFields(e.target.value)
+                  );
+                }}
+              >
+                {options.actions.map((f, ix) => (
+                  <option key={ix} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2">
+              <label>Label (leave blank for default)</label>
+              <OrFormula
+                nodekey="action_label"
+                {...{ setProp, isFormula, node }}
+              >
+                <input
+                  type="text"
+                  className="form-control"
+                  value={action_label}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.action_label = e.target.value))
+                  }
+                />
+              </OrFormula>
+            </td>
+          </tr>
+          <ButtonOrLinkSettingsRows
+            setProp={setProp}
+            keyPrefix="action_"
+            values={node}
+          />
+          <MinRoleSettingRow minRole={minRole} setProp={setProp} />
+        </tbody>
       </table>
       {options.mode === "show" ? (
         <div className="form-check">
