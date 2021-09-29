@@ -141,9 +141,9 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
-      )}" name="${name}" id="input${text_attr(name)}" ${
+      )}" name="${name}" id="input${text_attr(name)}"${
         v && isdef(v[hdr.form_name])
-          ? `value="${text_attr(v[hdr.form_name])}"`
+          ? ` value="${text_attr(v[hdr.form_name])}"`
           : ""
       }>`;
       const inner = hdr.postText
@@ -452,8 +452,8 @@ const mkForm = (form, csrfToken, errors = {}) => {
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
     form.class || ""
-  }" method="${form.methodGET ? "get" : "post"}" ${
-    hasFile ? 'encType="multipart/form-data"' : ""
+  }" method="${form.methodGET ? "get" : "post"}"${
+    hasFile ? ' encType="multipart/form-data"' : ""
   }>`;
   //console.log(form.fields);
   const flds = form.fields
