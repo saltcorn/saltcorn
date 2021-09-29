@@ -72,6 +72,7 @@ describe("tags", () => {
     expect(hr({ style: { color: "red" } }, 5)).toBe('<hr style="color:red">');
     expect(hr({ style: {} })).toBe("<hr>");
     expect(hr({ style: null })).toBe("<hr>");
+    expect(div({ class: "foo", style: null })).toBe('<div class="foo"></div>');
   });
 
   it("escaping", () => {
