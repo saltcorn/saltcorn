@@ -236,6 +236,12 @@ export const ContainerSettings = () => {
       ></div>
     ),
   });
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <Accordion>
       <table className="w-100" accordiontitle="Placement">
@@ -254,11 +260,7 @@ export const ContainerSettings = () => {
                   className="form-control w-50"
                   min="0"
                   max="20"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.borderWidth = e.target.value;
-                    })
-                  }
+                  onChange={setAProp("borderWidth")}
                 />
                 <div className="input-group-append w-50 d-inline">
                   <span className="input-group-text">px</span>
@@ -313,11 +315,7 @@ export const ContainerSettings = () => {
                 type="color"
                 value={borderColor}
                 className="form-control-sm w-50 mr-2"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.borderColor = e.target.value;
-                  })
-                }
+                onChange={setAProp("borderColor")}
               />
               <small>{borderColor}</small>
             </td>
@@ -500,11 +498,7 @@ export const ContainerSettings = () => {
                       type="color"
                       value={gradStartColor}
                       className="form-control-sm w-50"
-                      onChange={(e) =>
-                        setProp((prop) => {
-                          prop.gradStartColor = e.target.value;
-                        })
-                      }
+                      onChange={setAProp("gradStartColor")}
                     />
                   </OrFormula>
                 </td>
@@ -520,11 +514,7 @@ export const ContainerSettings = () => {
                       type="color"
                       value={gradEndColor}
                       className="form-control-sm w-50"
-                      onChange={(e) =>
-                        setProp((prop) => {
-                          prop.gradEndColor = e.target.value;
-                        })
-                      }
+                      onChange={setAProp("gradEndColor")}
                     />
                   </OrFormula>
                 </td>
@@ -542,11 +532,7 @@ export const ContainerSettings = () => {
                       max="360"
                       value={gradDirection}
                       className="form-control-sm w-50"
-                      onChange={(e) =>
-                        setProp((prop) => {
-                          prop.gradDirection = e.target.value;
-                        })
-                      }
+                      onChange={setAProp("gradDirection")}
                     />
                   </OrFormula>
                 </td>
@@ -563,9 +549,7 @@ export const ContainerSettings = () => {
                   <select
                     value={bgFileId}
                     className="form-control-sm w-100"
-                    onChange={(e) =>
-                      setProp((prop) => (prop.bgFileId = e.target.value))
-                    }
+                    onChange={setAProp("bgFileId")}
                   >
                     {options.images.map((f, ix) => (
                       <option key={ix} value={f.id}>
@@ -584,11 +568,7 @@ export const ContainerSettings = () => {
                   <select
                     value={imageSize}
                     className="form-control-sm"
-                    onChange={(e) =>
-                      setProp((prop) => {
-                        prop.imageSize = e.target.value;
-                      })
-                    }
+                    onChange={setAProp("imageSize")}
                   >
                     <option>contain</option>
                     <option>cover</option>
@@ -606,11 +586,7 @@ export const ContainerSettings = () => {
                     type="color"
                     value={bgColor}
                     className="form-control-sm w-50"
-                    onChange={(e) =>
-                      setProp((prop) => {
-                        prop.bgColor = e.target.value;
-                      })
-                    }
+                    onChange={setAProp("bgColor")}
                   />
                 </OrFormula>
               </td>
@@ -641,11 +617,7 @@ export const ContainerSettings = () => {
                   type="color"
                   value={textColor}
                   className="form-control-sm"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.textColor = e.target.value;
-                    })
-                  }
+                  onChange={setAProp("textColor")}
                 />
               </td>
             </tr>
@@ -664,9 +636,7 @@ export const ContainerSettings = () => {
                   type="text"
                   className="form-control text-to-display"
                   value={showIfFormula}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.showIfFormula = e.target.value))
-                  }
+                  onChange={setAProp("showIfFormula")}
                 />
                 <div style={{ marginTop: "-5px" }}>
                   <small className="text-muted text-monospace">FORMULA</small>
@@ -727,11 +697,7 @@ export const ContainerSettings = () => {
               <select
                 value={minScreenWidth}
                 className="form-control"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.minScreenWidth = e.target.value;
-                  })
-                }
+                onChange={setAProp("minScreenWidth")}
               >
                 <option value="">all</option>
                 <option value="sm">small</option>
@@ -749,11 +715,7 @@ export const ContainerSettings = () => {
               <select
                 value={maxScreenWidth}
                 className="form-control"
-                onChange={(e) =>
-                  setProp((prop) => {
-                    prop.maxScreenWidth = e.target.value;
-                  })
-                }
+                onChange={setAProp("maxScreenWidth")}
               >
                 <option value="">all</option>
                 <option value="md">small</option>
@@ -771,7 +733,7 @@ export const ContainerSettings = () => {
             type="text"
             className="form-control"
             value={url}
-            onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
+            onChange={setAProp("url")}
           />
         </OrFormula>
 
@@ -779,11 +741,7 @@ export const ContainerSettings = () => {
         <select
           value={hoverColor}
           className="form-control"
-          onChange={(e) =>
-            setProp((prop) => {
-              prop.hoverColor = e.target.value;
-            })
-          }
+          onChange={setAProp("hoverColor")}
         >
           <option value="">None</option>
           <option value="gray">gray</option>
@@ -802,9 +760,7 @@ export const ContainerSettings = () => {
             type="text"
             className="form-control text-to-display"
             value={customClass}
-            onChange={(e) =>
-              setProp((prop) => (prop.customClass = e.target.value))
-            }
+            onChange={setAProp("customClass")}
           />
         </OrFormula>
         <div>
@@ -815,7 +771,7 @@ export const ContainerSettings = () => {
           type="text"
           className="text-to-display form-control"
           value={customCSS}
-          onChange={(e) => setProp((prop) => (prop.customCSS = e.target.value))}
+          onChange={setAProp("customCSS")}
         ></textarea>
       </div>
     </Accordion>
