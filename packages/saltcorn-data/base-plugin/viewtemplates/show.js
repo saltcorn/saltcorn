@@ -62,11 +62,13 @@ const configuration_workflow = (req) =>
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
           );
-          const stateActions = getState().actions;
+          const stateActions = Object.entries(getState().actions).filter(
+            ([k, v]) => !v.disableInBuilder
+          );
           const actions = [
             "Delete",
             ...boolfields.map((f) => `Toggle ${f.name}`),
-            ...Object.keys(stateActions),
+            ...stateActions.map(([k, v]) => k),
           ];
           const triggers = await Trigger.find({
             when_trigger: { or: ["API call", "Never"] },
@@ -83,7 +85,7 @@ const configuration_workflow = (req) =>
             }
           }
           const actionConfigForms = {};
-          for (const [name, action] of Object.entries(stateActions)) {
+          for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,

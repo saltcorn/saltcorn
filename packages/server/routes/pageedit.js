@@ -139,7 +139,7 @@ const pageFlow = (req) =>
           const roles = await User.get_roles();
           const stateActions = getState().actions;
           const actions = Object.entries(stateActions)
-            .filter(([k, v]) => !v.requireRow)
+            .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
             .map(([k, v]) => k);
           const triggers = await Trigger.find({
             when_trigger: { or: ["API call", "Never"] },
