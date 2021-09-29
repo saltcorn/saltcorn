@@ -932,6 +932,7 @@ const initial_config_all_fields = contract(
     var cfg = { columns: [] };
     var aboves = [null];
     fields.forEach((f) => {
+      if (!f.type) return;
       const flabel = {
         above: [
           null,
