@@ -53,8 +53,10 @@ export const ToggleFilterSettings = () => {
   const preset_options = field.preset_options;
   const isBool = field && field.type.name === "Bool";
   const setAProp = (key) => (e) => {
-    const target_value = e.target && e.target.value;
-    setProp((prop) => (prop[key] = target_value));
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
   };
   return (
     <table className="w-100">

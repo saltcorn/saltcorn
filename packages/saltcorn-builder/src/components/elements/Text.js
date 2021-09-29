@@ -118,6 +118,12 @@ export const TextSettings = () => {
     icon,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <div>
       {mode === "show" && (
@@ -139,16 +145,19 @@ export const TextSettings = () => {
           type="text"
           className="text-to-display form-control"
           value={text}
-          onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
+          onChange={setAProp("text")}
         />
       ) : (
         <ErrorBoundary>
           <div className="border">
             <CKEditor
               data={text}
-              onChange={(e) =>
-                setProp((props) => (props.text = e.editor.getData()))
-              }
+              onChange={(e) => {
+                if (e.editor) {
+                  const text = e.editor.getData();
+                  setProp((props) => (props.text = text));
+                }
+              }}
               config={ckConfig}
               type="inline"
             />
@@ -158,12 +167,7 @@ export const TextSettings = () => {
       {mode === "edit" && (
         <Fragment>
           <label>Label for Field</label>
-          <select
-            value={labelFor}
-            onChange={(e) => {
-              setProp((prop) => (prop.labelFor = e.target.value));
-            }}
-          >
+          <select value={labelFor} onChange={setAProp("labelFor")}>
             <option value={""}></option>
             {fields.map((f, ix) => (
               <option key={ix} value={f.name}>
