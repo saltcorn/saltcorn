@@ -31,7 +31,12 @@ import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
 import { Layers } from "saltcorn-craft-layers-noeye";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faUndo, faRedo } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCopy,
+  faUndo,
+  faRedo,
+  faTrashAlt,
+} from "@fortawesome/free-solid-svg-icons";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -109,34 +114,44 @@ const SettingsPanel = () => {
   };
   return (
     <div className="settings-panel card mt-1">
-      <div className="card-header">
-        {selected && selected.displayName
-          ? `Settings: ${selected.displayName}`
-          : "Settings"}
+      <div className="card-header px-2 py-1">
+        {selected && selected.displayName ? (
+          <Fragment>
+            <b>{selected.displayName}</b> settings
+          </Fragment>
+        ) : (
+          "Settings"
+        )}
       </div>
       <div className="card-body p-2">
         {selected ? (
           <Fragment>
-            {}
-            {selected.settings && React.createElement(selected.settings)}
             {selected.isDeletable && (
-              <button className="btn btn-danger mt-2" onClick={deleteThis}>
+              <button className="btn btn-sm btn-danger" onClick={deleteThis}>
+                <FontAwesomeIcon icon={faTrashAlt} className="mr-1" />
                 Delete
               </button>
             )}
-            {hasChildren && !selected.isDeletable && (
-              <button className="btn btn-danger mt-2" onClick={deleteChildren}>
+            {hasChildren && !selected.isDeletable ? (
+              <button
+                className="btn btn-sm btn-danger"
+                onClick={deleteChildren}
+              >
+                <FontAwesomeIcon icon={faTrashAlt} className="mr-1" />
                 Delete contents
               </button>
+            ) : (
+              <button
+                title="Duplicate element with its children"
+                className="btn btn-sm btn-secondary ml-2"
+                onClick={duplicate}
+              >
+                <FontAwesomeIcon icon={faCopy} className="mr-1" />
+                Clone
+              </button>
             )}
-
-            <button
-              title="Duplicate"
-              className="btn btn-secondary ml-2 mt-2"
-              onClick={duplicate}
-            >
-              <FontAwesomeIcon icon={faCopy} />
-            </button>
+            <hr className="my-2" />
+            {selected.settings && React.createElement(selected.settings)}
           </Fragment>
         ) : (
           "No element selected"
