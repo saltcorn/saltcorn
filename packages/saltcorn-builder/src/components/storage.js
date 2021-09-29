@@ -98,6 +98,7 @@ export const layoutToNodes = (layout, query, actions) => {
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
           icon={segment.icon}
+          font={segment.font || ""}
         />
       );
     } else if (segment.type === "view") {
@@ -331,6 +332,7 @@ export const craftToSaltcorn = (nodes) => {
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
         icon: node.props.icon,
+        font: node.props.font,
       };
     }
 

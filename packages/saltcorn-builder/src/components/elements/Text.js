@@ -45,7 +45,7 @@ const ckConfig = {
 function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-export const Text = ({ text, block, isFormula, textStyle, icon }) => {
+export const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -67,6 +67,7 @@ export const Text = ({ text, block, isFormula, textStyle, icon }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
+      style={font ? { fontFamily: font } : {}}
     >
       {icon ? <i className={`${icon} mr-1`}></i> : ""}
       {isFormula.text ? (
@@ -107,6 +108,7 @@ export const TextSettings = () => {
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
     icon: node.data.props.icon,
+    font: node.data.props.font,
   }));
   const {
     actions: { setProp },
@@ -116,6 +118,7 @@ export const TextSettings = () => {
     isFormula,
     labelFor,
     icon,
+    font,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -194,6 +197,19 @@ export const TextSettings = () => {
               />
             </td>
           </tr>
+          <tr>
+            <td>
+              <label>Font</label>
+            </td>
+            <td>
+              <input
+                type="text"
+                className="form-control"
+                value={font}
+                onChange={setAProp("font")}
+              />
+            </td>
+          </tr>
         </tbody>
       </table>
       <BlockSetting block={block} setProp={setProp} />
@@ -208,6 +224,7 @@ Text.craft = {
     isFormula: {},
     textStyle: "",
     labelFor: "",
+    font: "",
   },
   displayName: "Text",
   related: {
