@@ -70,6 +70,7 @@ export const Container = ({
   gradStartColor,
   gradEndColor,
   gradDirection,
+  rotate,
 }) => {
   const {
     selected,
@@ -131,6 +132,11 @@ export const Container = ({
               width: `${width}${widthUnit || "px"}`,
             }
           : {}),
+        ...(rotate
+          ? {
+              transform: `rotate(${rotate}deg)`,
+            }
+          : {}),
       }}
     >
       <div className="canvas">{children}</div>
@@ -178,23 +184,12 @@ export const ContainerSettings = () => {
     gradEndColor: node.data.props.gradEndColor,
     gradDirection: node.data.props.gradDirection,
     overflow: node.data.props.overflow,
+    rotate: node.data.props.rotate,
   }));
   const {
     actions: { setProp },
     borderWidth,
-    borderStyle,
-    borderDirection,
-    borderRadius,
-    borderRadiusUnit,
     borderColor,
-    minHeight,
-    height,
-    width,
-    minHeightUnit,
-    heightUnit,
-    widthUnit,
-    vAlign,
-    hAlign,
     bgFileId,
     imageSize,
     bgType,
@@ -409,6 +404,15 @@ export const ContainerSettings = () => {
       </table>
       <table className="w-100" accordiontitle="Contents">
         <tbody>
+          <SettingsRow
+            field={{
+              name: "rotate",
+              label: "Rotate °",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
           <SettingsSectionHeaderRow title="Align" />
           <SettingsRow
             field={{
@@ -786,6 +790,7 @@ Container.craft = {
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
+    rotate: 0,
     isFormula: {},
     bgType: "None",
     block: true,

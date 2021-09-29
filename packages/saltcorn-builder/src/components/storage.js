@@ -145,6 +145,7 @@ export const layoutToNodes = (layout, query, actions) => {
           gradStartColor={segment.gradStartColor}
           gradEndColor={segment.gradEndColor}
           gradDirection={segment.gradDirection}
+          rotate={segment.rotate || 0}
           customClass={segment.customClass}
           customCSS={segment.customCSS}
           overflow={segment.overflow}
@@ -319,6 +320,7 @@ export const craftToSaltcorn = (nodes) => {
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
+          rotate: node.props.rotate,
         };
       else return get_nodes(node);
     }

@@ -306,6 +306,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         gradDirection,
         fullPageWidth,
         overflow,
+        rotate,
       } = segment;
       if (hide) return "";
       if (
@@ -388,7 +389,9 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                     gradDirection || 0
                   }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
-            } ${setTextColor ? `color: ${textColor};` : ""}`,
+            } ${setTextColor ? `color: ${textColor};` : ""}${
+              rotate ? `transform: rotate(${rotate}deg);` : ""
+            }`,
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": `showIfFormulaInputs(e, '${showIfFormulaInputs}')`,
