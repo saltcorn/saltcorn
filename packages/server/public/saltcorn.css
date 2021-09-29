@@ -312,3 +312,12 @@ footer.bs-mobile-nav-footer {
 .opacity-50 {
   opacity: 0.5;
 }
+
+div.settings-panel div.rfip {
+  margin: 0px;
+  width: 100%;
+}
+
+div.settings-panel div.rfipbtn {
+  width: 100%;
+}

@@ -6,6 +6,7 @@ import {
   TextStyleSetting,
   OrFormula,
   ErrorBoundary,
+  TextStyleRow,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -132,7 +133,7 @@ export const TextSettings = () => {
           <label className="form-check-label">Formula?</label>
         </div>
       )}
-      <label>Text to display:</label>
+      <label>Text to display</label>
       {mode === "show" && isFormula.text ? (
         <input
           type="text"
@@ -142,14 +143,16 @@ export const TextSettings = () => {
         />
       ) : (
         <ErrorBoundary>
-          <CKEditor
-            data={text}
-            onChange={(e) =>
-              setProp((props) => (props.text = e.editor.getData()))
-            }
-            config={ckConfig}
-            type="inline"
-          />
+          <div className="border">
+            <CKEditor
+              data={text}
+              onChange={(e) =>
+                setProp((props) => (props.text = e.editor.getData()))
+              }
+              config={ckConfig}
+              type="inline"
+            />
+          </div>
         </ErrorBoundary>
       )}
       {mode === "edit" && (
@@ -170,15 +173,25 @@ export const TextSettings = () => {
           </select>
         </Fragment>
       )}
-      <br />
-      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
-      <label>Icon</label>
-      <FontIconPicker
-        value={icon}
-        icons={faIcons}
-        onChange={(value) => setProp((prop) => (prop.icon = value))}
-        isMulti={false}
-      />
+      <table className="w-100 mt-2">
+        <tbody>
+          <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          <tr>
+            <td>
+              <label>Icon</label>
+            </td>
+            <td>
+              <FontIconPicker
+                className="w-100"
+                value={icon}
+                icons={faIcons}
+                onChange={(value) => setProp((prop) => (prop.icon = value))}
+                isMulti={false}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
       <BlockSetting block={block} setProp={setProp} />
     </div>
   );
