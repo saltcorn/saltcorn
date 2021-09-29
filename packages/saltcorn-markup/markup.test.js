@@ -70,6 +70,8 @@ describe("tags", () => {
       div({ style: { marginRight: "1px", borderTopLeftRadius: "3px" } }, 5)
     ).toBe('<div style="margin-right:1px;border-top-left-radius:3px">5</div>');
     expect(hr({ style: { color: "red" } }, 5)).toBe('<hr style="color:red">');
+    expect(hr({ style: {} })).toBe("<hr>");
+    expect(hr({ style: null })).toBe("<hr>");
   });
 
   it("escaping", () => {
