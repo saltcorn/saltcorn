@@ -171,6 +171,7 @@ export const TextSettings = () => {
         </Fragment>
       )}
       <br />
+      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
       <label>Icon</label>
       <FontIconPicker
         value={icon}
@@ -179,7 +180,6 @@ export const TextSettings = () => {
         isMulti={false}
       />
       <BlockSetting block={block} setProp={setProp} />
-      <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
   );
 };
