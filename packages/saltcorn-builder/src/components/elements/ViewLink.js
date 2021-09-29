@@ -20,6 +20,9 @@ export const ViewLink = ({
   inModal,
   label,
   textStyle,
+  link_bgcol,
+  link_bordercol,
+  link_textcol,
 }) => {
   const {
     selected,
@@ -34,6 +37,15 @@ export const ViewLink = ({
       } ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        link_style === "btn btn-custom-color"
+          ? {
+              backgroundColor: link_bgcol || "#000000",
+              borderColor: link_bordercol || "#000000",
+              color: link_textcol || "#000000",
+            }
+          : {}
+      }
     >
       {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
       {displabel}
@@ -53,6 +65,9 @@ export const ViewLinkSettings = () => {
     link_size: node.data.props.link_size,
     link_icon: node.data.props.link_icon,
     textStyle: node.data.props.textStyle,
+    link_bgcol: node.data.props.link_bgcol,
+    link_bordercol: node.data.props.link_bordercol,
+    link_textcol: node.data.props.link_textcol,
   }));
   const {
     actions: { setProp },
@@ -151,6 +166,9 @@ ViewLink.craft = {
       "link_style",
       "link_icon",
       "link_size",
+      "link_bgcol",
+      "link_bordercol",
+      "link_textcol",
     ],
   },
 };

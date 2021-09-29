@@ -17,6 +17,9 @@ export const Link = ({
   link_style,
   link_size,
   link_icon,
+  link_bgcol,
+  link_bordercol,
+  link_textcol,
 }) => {
   const {
     selected,
@@ -29,6 +32,15 @@ export const Link = ({
       } ${isFormula.text ? "text-monospace" : ""} ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        link_style === "btn btn-custom-color"
+          ? {
+              backgroundColor: link_bgcol || "#000000",
+              borderColor: link_bordercol || "#000000",
+              color: link_textcol || "#000000",
+            }
+          : {}
+      }
     >
       {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
       {isFormula.text ? `=${text}` : text}
@@ -49,6 +61,9 @@ export const LinkSettings = () => {
     link_style: node.data.props.link_style,
     link_size: node.data.props.link_size,
     link_icon: node.data.props.link_icon,
+    link_bgcol: node.data.props.link_bgcol,
+    link_bordercol: node.data.props.link_bordercol,
+    link_textcol: node.data.props.link_textcol,
   }));
   const {
     actions: { setProp },
@@ -60,9 +75,6 @@ export const LinkSettings = () => {
     nofollow,
     target_blank,
     link_src,
-    link_style,
-    link_size,
-    link_icon,
   } = node;
   const options = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -237,6 +249,9 @@ Link.craft = {
       "link_size",
       "link_icon",
       "link_style",
+      "link_bgcol",
+      "link_bordercol",
+      "link_textcol",
     ],
   },
 };
