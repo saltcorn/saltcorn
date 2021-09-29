@@ -650,6 +650,9 @@ export const ButtonOrLinkSettingsRows = ({
           <option value={addBtnClass("btn-outline-secondary")}>
             Secondary outline button
           </option>
+          <option value={addBtnClass("btn-custom-color")}>
+            Button custom color
+          </option>
           {!linkFirst ? (
             <option value={addBtnClass("btn-link")}>Link</option>
           ) : null}
@@ -689,5 +692,48 @@ export const ButtonOrLinkSettingsRows = ({
         />
       </td>
     </tr>,
+    ...(values[keyPrefix + "style"] === addBtnClass("btn-custom-color")
+      ? [
+          <tr key="btnbgcol">
+            <td>
+              <label>Background</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "bgcol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "bgcol")}
+              />
+            </td>
+          </tr>,
+          <tr key="btnbdcol">
+            <td>
+              <label>Border</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "bordercol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "bordercol")}
+              />
+            </td>
+          </tr>,
+          <tr key="btntxtcol">
+            <td>
+              <label>Text</label>
+            </td>
+            <td>
+              <input
+                type="color"
+                value={values[keyPrefix + "textcol"]}
+                className="form-control-sm w-50"
+                onChange={setAProp(keyPrefix + "textcol")}
+              />
+            </td>
+          </tr>,
+        ]
+      : []),
   ];
 };

@@ -18,16 +18,33 @@ export const Action = ({
   action_style,
   action_icon,
   action_size,
+  action_bgcol,
+  action_bordercol,
+  action_textcol,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  console.log({
+    action_bgcol,
+    action_bordercol,
+    action_textcol,
+  });
   const btn = (
     <button
       className={`btn ${action_style || "btn-primary"} ${action_size || ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        action_style === "btn-custom-color"
+          ? {
+              backgroundColor: action_bgcol || "#000000",
+              borderColor: action_bordercol || "#000000",
+              color: action_textcol || "#000000",
+            }
+          : {}
+      }
     >
       {action_icon ? <i className={`${action_icon} mr-1`}></i> : ""}
       {action_label || name}
@@ -48,6 +65,9 @@ export const ActionSettings = () => {
     action_style: node.data.props.action_style,
     action_size: node.data.props.action_size,
     action_icon: node.data.props.action_icon,
+    action_bgcol: node.data.props.action_bgcol,
+    action_bordercol: node.data.props.action_bordercol,
+    action_textcol: node.data.props.action_textcol,
   }));
   const {
     actions: { setProp },
