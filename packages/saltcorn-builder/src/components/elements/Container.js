@@ -34,6 +34,11 @@ import {
 } from "react-bootstrap-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 export const Container = ({
   children,
   borderWidth,
@@ -84,7 +89,7 @@ export const Container = ({
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
         [`border${
-          borderDirection ? `-${borderDirection}` : ""
+          borderDirection ? `${capitalizeFirstLetter(borderDirection)}` : ""
         }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId

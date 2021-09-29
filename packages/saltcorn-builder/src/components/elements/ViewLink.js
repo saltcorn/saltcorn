@@ -62,9 +62,6 @@ export const ViewLinkSettings = () => {
     label,
     isFormula,
     inModal,
-    link_style,
-    link_icon,
-    link_size,
     textStyle,
   } = node;
   const options = useContext(optionsCtx);
@@ -75,7 +72,6 @@ export const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>View to link to</label>
-
               <select
                 value={name}
                 className="form-control"
@@ -94,7 +90,6 @@ export const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>Label (leave blank for default)</label>
-
               <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
                 <input
                   type="text"
