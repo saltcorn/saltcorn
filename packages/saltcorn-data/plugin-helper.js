@@ -38,8 +38,17 @@ const link_view = (
   link_style = "",
   link_size = "",
   link_icon = "",
-  textStyle = ""
+  textStyle = "",
+  link_bgcol,
+  link_bordercol,
+  link_textcol
 ) => {
+  let style =
+    link_style === "btn btn-custom-color"
+      ? `background-color: ${link_bgcol || "#000000"};border-color: ${
+          link_bordercol || "#000000"
+        }; color: ${link_textcol || "#000000"}`
+      : null;
   if (popup) {
     return button(
       {
@@ -50,6 +59,7 @@ const link_view = (
           !link_style && "btn btn-link",
         ],
         onClick: `ajax_modal('${url}')`,
+        style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       label
@@ -59,6 +69,7 @@ const link_view = (
       {
         href: url,
         class: [textStyle, link_style, link_size],
+        style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       text(label)
