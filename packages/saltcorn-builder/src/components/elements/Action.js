@@ -26,11 +26,7 @@ export const Action = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  console.log({
-    action_bgcol,
-    action_bordercol,
-    action_textcol,
-  });
+
   const btn = (
     <button
       className={`btn ${action_style || "btn-primary"} ${action_size || ""}`}
