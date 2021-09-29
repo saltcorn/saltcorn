@@ -298,7 +298,16 @@ const renderFormLayout = (form) => {
       action_size,
       action_icon,
       configuration,
+      action_bgcol,
+      action_bordercol,
+      action_textcol,
     }) {
+      let style =
+        action_style === "btn-custom-color"
+          ? `background-color: ${action_bgcol || "#000000"};border-color: ${
+              action_bordercol || "#000000"
+            }; color: ${action_textcol || "#000000"}`
+          : null;
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
 
@@ -310,6 +319,7 @@ const renderFormLayout = (form) => {
               action_style !== "btn-link" &&
                 `btn ${action_style || "btn-primary"} ${action_size || ""}`,
             ],
+            style,
           },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           action_label || action_name
@@ -320,7 +330,9 @@ const renderFormLayout = (form) => {
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }">${action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""}${text(
+        }"${style ? ` style="${style}"` : ""}>${
+          action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""
+        }${text(
           action_label || form.submitLabel || action_name || "Save"
         )}</button>`;
 
