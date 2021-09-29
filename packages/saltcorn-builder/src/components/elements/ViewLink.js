@@ -7,9 +7,8 @@ import {
   MinRoleSettingRow,
   OrFormula,
   TextStyleSetting,
+  ButtonOrLinkSettingsRows,
 } from "./utils";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 
 export const ViewLink = ({
   name,
@@ -71,74 +70,52 @@ export const ViewLinkSettings = () => {
   const options = useContext(optionsCtx);
   return (
     <div>
-      <div>
-        <label>View to link to</label>
-        <select
-          value={name}
-          className="form-control"
-          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
-        >
-          {options.link_view_opts.map((f, ix) => (
-            <option key={ix} value={f.name}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Label (leave blank for default)</label>
-        <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
-          <input
-            type="text"
-            className="viewlink-label form-control"
-            value={label}
-            onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
+      <table className="w-100">
+        <tbody>
+          <tr>
+            <td colSpan="2">
+              <label>View to link to</label>
+
+              <select
+                value={name}
+                className="form-control"
+                onChange={(e) =>
+                  setProp((prop) => (prop.name = e.target.value))
+                }
+              >
+                {options.link_view_opts.map((f, ix) => (
+                  <option key={ix} value={f.name}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2">
+              <label>Label (leave blank for default)</label>
+
+              <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
+                <input
+                  type="text"
+                  className="viewlink-label form-control"
+                  value={label}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.label = e.target.value))
+                  }
+                />
+              </OrFormula>
+            </td>
+          </tr>
+          <ButtonOrLinkSettingsRows
+            setProp={setProp}
+            keyPrefix="link_"
+            btnClass="btn"
+            values={node}
+            linkFirst={true}
           />
-        </OrFormula>
-      </div>
-      <div>
-        <label>Link style</label>
-        <select
-          className="form-control"
-          value={link_style}
-          onChange={(e) =>
-            setProp((prop) => (prop.link_style = e.target.value))
-          }
-        >
-          <option value="">Link</option>
-          <option value="btn btn-primary">Primary button</option>
-          <option value="btn btn-secondary">Secondary button</option>
-          <option value="btn btn-success">Success button</option>
-          <option value="btn btn-danger">Danger button</option>
-          <option value="btn btn-outline-primary">
-            Primary outline button
-          </option>
-          <option value="btn btn-outline-secondary">
-            Secondary outline button
-          </option>
-        </select>
-      </div>
-      <div>
-        <label>Link size</label>
-        <select
-          className="form-control"
-          value={link_size}
-          onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
-        >
-          <option value="">Standard</option>
-          <option value="btn-lg">Large</option>
-          <option value="btn-sm">Small</option>
-          <option value="btn-block">Block</option>
-          <option value="btn-block btn-lg">Large block</option>
-        </select>
-      </div>
-      <label className="mr-2">Icon</label>
-      <FontIconPicker
-        value={link_icon}
-        icons={faIcons}
-        onChange={(value) => setProp((prop) => (prop.link_icon = value))}
-        isMulti={false}
-      />
+        </tbody>
+      </table>
       <div className="form-check">
         <input
           className="form-check-input"

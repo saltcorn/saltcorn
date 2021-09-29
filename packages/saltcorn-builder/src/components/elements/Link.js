@@ -8,8 +8,6 @@ import {
   ButtonOrLinkSettingsRows,
 } from "./utils";
 import optionsCtx from "../context";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 
 export const Link = ({
   text,
@@ -67,6 +65,12 @@ export const LinkSettings = () => {
     link_icon,
   } = node;
   const options = useContext(optionsCtx);
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <div>
       <table className="w-100">
@@ -81,9 +85,7 @@ export const LinkSettings = () => {
                   type="text"
                   className="form-control text-to-display"
                   value={text}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.text = e.target.value))
-                  }
+                  onChange={setAProp("text")}
                 />
               </OrFormula>
             </td>
@@ -123,9 +125,7 @@ export const LinkSettings = () => {
                     type="text"
                     className="form-control "
                     value={url}
-                    onChange={(e) =>
-                      setProp((prop) => (prop.url = e.target.value))
-                    }
+                    onChange={setAProp("url")}
                   />
                 </OrFormula>
               </td>
@@ -140,11 +140,7 @@ export const LinkSettings = () => {
                 <select
                   value={url}
                   className="form-control"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.url = e.target.value;
-                    })
-                  }
+                  onChange={setAProp("url")}
                 >
                   <option></option>
                   {(options.pages || []).map((p) => (
@@ -163,11 +159,7 @@ export const LinkSettings = () => {
                 <select
                   value={url}
                   className="form-control"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.url = e.target.value;
-                    })
-                  }
+                  onChange={setAProp("url")}
                 >
                   <option></option>
                   {(options.views || []).map((p) => (
