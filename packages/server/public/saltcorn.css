@@ -85,7 +85,6 @@ div.builder-embed-view {
 div.toolbox-card {
   width: 8.2rem;
   margin-bottom: 1rem;
-  overflow-x: scroll;
 }
 div.wrap-builder-elem {
   width: 50%;
@@ -329,4 +328,8 @@ div.settings-panel div.rfipbtn {
 
 div.componets-and-library-accordion {
   min-height: 45vh;
+}
+
+.builder-library .dropdown {
+  overflow: visible;
 }

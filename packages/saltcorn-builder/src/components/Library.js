@@ -93,37 +93,48 @@ export const Library = () => {
     };
   });
   const options = useContext(optionsCtx);
-
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [icon, setIcon] = useState();
   const [recent, setRecent] = useState([]);
 
   const addSelected = () => {
-    if (!adding) setAdding(true);
-    else {
-      const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
-      const data = { layout, icon, name: newName };
-      fetch(`/library/savefrombuilder`, {
-        method: "POST", // or 'PUT'
-        headers: {
-          "Content-Type": "application/json",
-          "CSRF-Token": options.csrfToken,
-        },
-        body: JSON.stringify(data),
-      });
-      setAdding(false);
-      setIcon();
-      setNewName("");
-      setRecent([...recent, data]);
-    }
+    const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
+    const data = { layout, icon, name: newName };
+    fetch(`/library/savefrombuilder`, {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+      },
+      body: JSON.stringify(data),
+    });
+    setAdding(false);
+    setIcon();
+    setNewName("");
+    setRecent([...recent, data]);
   };
 
   const elemRows = twoByTwos([...(options.library || []), ...recent]);
   return (
     <div className="builder-library">
-      {adding && selected ? (
-        <Fragment>
+      <div className="dropdown">
+        <button
+          className="btn btn-sm btn-secondary dropdown-toggle mt-2"
+          type="button"
+          id="dropdownMenuButton"
+          aria-haspopup="true"
+          aria-expanded="false"
+          disabled={!selected}
+          onClick={() => setAdding(!adding)}
+        >
+          <FontAwesomeIcon icon={faPlus} className="mr-1" />
+          Add
+        </button>
+        <div
+          className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
+          aria-labelledby="dropdownMenuButton"
+        >
           <label>Name</label>
           <input
             type="text"
@@ -131,6 +142,7 @@ export const Library = () => {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
+          <br />
           <label>Icon</label>
           <FontIconPicker
             className="w-100"
@@ -139,24 +151,18 @@ export const Library = () => {
             onChange={setIcon}
             isMulti={false}
           />
-        </Fragment>
-      ) : null}
-      <button
-        className={`btn btn-sm btn-${!adding ? "outline-" : ""}primary mt-2`}
-        onClick={addSelected}
-        disabled={!selected}
-      >
-        <FontAwesomeIcon icon={faPlus} className="mr-1" />
-        Add
-      </button>
-      {adding && (
-        <button
-          className={`btn btn-sm btn-outline-secondary ml-2 mt-2`}
-          onClick={() => setAdding(false)}
-        >
-          <FontAwesomeIcon icon={faTimes} className="mr-1" />
-        </button>
-      )}
+          <button className={`btn btn-primary mt-3`} onClick={addSelected}>
+            <FontAwesomeIcon icon={faPlus} className="mr-1" />
+            Add
+          </button>
+          <button
+            className={`btn btn-outline-secondary ml-2 mt-3`}
+            onClick={() => setAdding(false)}
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+      </div>
       <div className="card mt-2">
         {elemRows.map((els, ix) => (
           <div className="toolbar-row" key={ix}>
