@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./elements/faicons";
+import { craftToSaltcorn } from "./storage";
 export const Library = () => {
   const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
@@ -26,9 +27,10 @@ export const Library = () => {
   const [icon, setIcon] = useState();
 
   const addSelected = () => {
-    console.log("add");
     if (!adding) setAdding(true);
     else {
+      const data = craftToSaltcorn(JSON.parse(query.serialize()));
+      console.log(data);
       setAdding(false);
       setIcon();
       setNewName("");
@@ -36,7 +38,7 @@ export const Library = () => {
   };
   return (
     <div className="builder-library">
-      {adding ? (
+      {adding && selected ? (
         <Fragment>
           <label>Name</label>
           <input
