@@ -29,7 +29,7 @@ import {
 
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
 
-const WrapElem = ({
+export const WrapElem = ({
   children,
   connectors,
   icon,

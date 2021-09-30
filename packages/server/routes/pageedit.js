@@ -27,6 +27,7 @@ const {
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { editRoleForm, wizardCardTitle } = require("../markup/forms.js");
+const Library = require("@saltcorn/data/models/library");
 
 const router = new Router();
 module.exports = router;
@@ -154,6 +155,7 @@ const pageFlow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
+          const library = await Library.find({});
           const fixed_state_fields = {};
           for (const view of views) {
             fixed_state_fields[view.name] = [];
@@ -192,6 +194,7 @@ const pageFlow = (req) =>
             images,
             pages,
             actions,
+            library,
             actionConfigForms,
             page_name: context.name,
             page_id: context.id,
