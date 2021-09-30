@@ -24,6 +24,7 @@ const {
 } = require("../../models/layout");
 const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
+const Library = require("../../models/library");
 
 const configuration_workflow = () =>
   new Workflow({
@@ -64,11 +65,14 @@ const configuration_workflow = () =>
             const presets = field.presets;
             field.preset_options = presets ? Object.keys(presets) : [];
           }
+          const library = await Library.find({});
+
           return {
             fields,
             roles,
             actions,
             views,
+            library,
             mode: "filter",
           };
         },
