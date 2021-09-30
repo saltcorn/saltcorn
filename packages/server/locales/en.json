@@ -787,5 +787,8 @@
 	"Ownership formula": "Ownership formula",
 	"User is treated as owner if true. In scope: ": "User is treated as owner if true. In scope: ",
 	"Not all themes support all locations": "Not all themes support all locations",
-	"Default language": "Default language"
+	"Default language": "Default language",
+	"Library": "Library",
+	"Library item %s deleted": "Library item %s deleted",
+	"Library: component assemblies that can be used in the builder": "Library: component assemblies that can be used in the builder"
 }

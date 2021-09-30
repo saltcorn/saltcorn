@@ -75,6 +75,7 @@ describe("admin page", () => {
   adminPageContains([
     ["/menu", "jquery-menu-editor"],
     ["/search/config", "Search configuration"],
+    ["/library/list", "component assemblies"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
   adminPageContains([["/eventlog", "Event log"]]);
