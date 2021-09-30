@@ -38,6 +38,7 @@ import {
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
+import { Library } from "./Library";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -275,7 +276,9 @@ const Builder = ({ options, layout, mode }) => {
                         filter: <ToolboxFilter />,
                       }[mode] || <div>Missing mode</div>}
                     </div>
-                    <div accordiontitle="Library"></div>
+                    <div accordiontitle="Library">
+                      <Library />
+                    </div>
                   </Accordion>
                 </div>
                 <div className="card toolbox-card">
