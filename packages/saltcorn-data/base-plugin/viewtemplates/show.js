@@ -130,7 +130,9 @@ const configuration_workflow = (req) =>
           const views = link_view_opts;
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
-          const library = await Library.find({});
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("show")
+          );
           return {
             tableName: table.name,
             fields,

@@ -94,8 +94,9 @@ const configuration_workflow = (req) =>
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
           }
-          const library = await Library.find({});
-
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("edit")
+          );
           return {
             tableName: table.name,
             fields,
