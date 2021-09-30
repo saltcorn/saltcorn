@@ -79,6 +79,9 @@ export const Library = () => {
         <FontAwesomeIcon icon={faPlus} className="mr-1" />
         Add
       </button>
+      {(options.library || []).map((lib) => (
+        <div key={lib.name}>{lib.name}</div>
+      ))}
     </div>
   );
 };
