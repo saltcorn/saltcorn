@@ -263,12 +263,9 @@ const Builder = ({ options, layout, mode }) => {
           <PreviewCtx.Provider value={{ previews, setPreviews }}>
             <div className="row" style={{ marginTop: "-5px" }}>
               <div className="col-sm-auto">
-                <div className="componets-and-library-accordion">
+                <div className="componets-and-library-accordion toolbox-card">
                   <Accordion>
-                    <div
-                      className="card toolbox-card"
-                      accordiontitle="Components"
-                    >
+                    <div className="card " accordiontitle="Components">
                       {{
                         show: <ToolboxShow />,
                         edit: <ToolboxEdit />,
