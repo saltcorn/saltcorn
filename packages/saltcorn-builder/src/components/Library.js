@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./elements/faicons";
-import { craftToSaltcorn } from "./storage";
+import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 
@@ -40,9 +40,7 @@ export const InitNewElement = ({ nodekeys }) => {
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
-  const options = useContext(optionsCtx);
   const onNodesChange = (arg, arg1) => {
-    console.log("onNodesChange", arg, arg1);
     const nodes = arg.getSerializedNodes();
     const newNodeIds = [];
     Object.keys(nodes).forEach((id) => {
@@ -51,12 +49,17 @@ export const InitNewElement = ({ nodekeys }) => {
       }
     });
     nodekeys.current = Object.keys(nodes);
-    console.log({ nodes, newNodeIds, nodekeys: nodekeys.current });
     if (newNodeIds.length === 1) {
       const id = newNodeIds[0];
       const node = nodes[id];
-      console.log("new node", node);
       if (node.displayName === "LibraryElem") {
+        const layout = node.props.layout;
+        layoutToNodes(
+          layout.layout ? layout.layout : layout,
+          query,
+          actions,
+          node.parent
+        );
         setTimeout(() => {
           actions.delete(id);
         }, 0);
@@ -85,19 +88,8 @@ export const InitNewElement = ({ nodekeys }) => {
 
 export const Library = () => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
-    const currentNodeId = state.events.selected;
-    let selected;
-
-    if (currentNodeId) {
-      selected = {
-        id: currentNodeId,
-
-        isDeletable: query.node(currentNodeId).isDeletable(),
-      };
-    }
-
     return {
-      selected,
+      selected: state.events.selected,
     };
   });
   const options = useContext(optionsCtx);

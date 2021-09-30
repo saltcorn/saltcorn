@@ -56,7 +56,7 @@ const allElements = [
   ToggleFilter,
 ];
 
-export const layoutToNodes = (layout, query, actions) => {
+export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
@@ -237,7 +237,7 @@ export const layoutToNodes = (layout, query, actions) => {
   }
   //const node1 = query.createNode(toTag(layout));
   //actions.add(node1, );
-  go(layout, "ROOT");
+  go(layout, parent);
 };
 
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
