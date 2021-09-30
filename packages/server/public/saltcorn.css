@@ -321,3 +321,7 @@ div.settings-panel div.rfip {
 div.settings-panel div.rfipbtn {
   width: 100%;
 }
+
+div.componets-and-library-accordion {
+  min-height: 45vh;
+}

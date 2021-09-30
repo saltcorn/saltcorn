@@ -37,7 +37,7 @@ import {
   faRedo,
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { ErrorBoundary } from "./elements/utils";
+import { Accordion, ErrorBoundary } from "./elements/utils";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -262,13 +262,21 @@ const Builder = ({ options, layout, mode }) => {
           <PreviewCtx.Provider value={{ previews, setPreviews }}>
             <div className="row" style={{ marginTop: "-5px" }}>
               <div className="col-sm-auto">
-                <div className="card toolbox-card">
-                  {{
-                    show: <ToolboxShow />,
-                    edit: <ToolboxEdit />,
-                    page: <ToolboxPage />,
-                    filter: <ToolboxFilter />,
-                  }[mode] || <div>Missing mode</div>}
+                <div className="componets-and-library-accordion">
+                  <Accordion>
+                    <div
+                      className="card toolbox-card"
+                      accordiontitle="Components"
+                    >
+                      {{
+                        show: <ToolboxShow />,
+                        edit: <ToolboxEdit />,
+                        page: <ToolboxPage />,
+                        filter: <ToolboxFilter />,
+                      }[mode] || <div>Missing mode</div>}
+                    </div>
+                    <div accordiontitle="Library"></div>
+                  </Accordion>
                 </div>
                 <div className="card toolbox-card">
                   <div className="card-header">Layers</div>
