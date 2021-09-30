@@ -242,7 +242,7 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
 
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
-export const craftToSaltcorn = (nodes) => {
+export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   const get_nodes = (node) => {
@@ -406,7 +406,7 @@ export const craftToSaltcorn = (nodes) => {
       };
     }
   };
-  const layout = go(nodes["ROOT"]) || { type: "blank", contents: "" };
+  const layout = go(nodes[startFrom]) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
   console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/

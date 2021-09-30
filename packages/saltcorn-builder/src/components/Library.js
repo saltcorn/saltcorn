@@ -102,7 +102,7 @@ export const Library = () => {
   const addSelected = () => {
     if (!adding) setAdding(true);
     else {
-      const layout = craftToSaltcorn(JSON.parse(query.serialize()));
+      const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
       const data = { layout, icon, name: newName };
       fetch(`/library/savefrombuilder`, {
         method: "POST", // or 'PUT'
