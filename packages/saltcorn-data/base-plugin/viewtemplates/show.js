@@ -47,6 +47,7 @@ const {
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
+const Library = require("../../models/library");
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -129,6 +130,9 @@ const configuration_workflow = (req) =>
           const views = link_view_opts;
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("show")
+          );
           return {
             tableName: table.name,
             fields,
@@ -143,6 +147,7 @@ const configuration_workflow = (req) =>
             agg_field_opts,
             roles,
             views,
+            library,
             pages,
             handlesTextStyle,
             mode: "show",

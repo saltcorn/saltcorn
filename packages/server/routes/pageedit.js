@@ -155,7 +155,9 @@ const pageFlow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(action);
             }
           }
-          const library = await Library.find({});
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("page")
+          );
           const fixed_state_fields = {};
           for (const view of views) {
             fixed_state_fields[view.name] = [];

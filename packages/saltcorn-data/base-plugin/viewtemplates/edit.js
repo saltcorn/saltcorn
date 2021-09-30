@@ -11,6 +11,7 @@ const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { get_expression_function } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
+const Library = require("../../models/library");
 
 const {
   initial_config_all_fields,
@@ -93,6 +94,9 @@ const configuration_workflow = (req) =>
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
           }
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("edit")
+          );
           return {
             tableName: table.name,
             fields,
@@ -103,6 +107,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            library,
             views,
             mode: "edit",
           };
