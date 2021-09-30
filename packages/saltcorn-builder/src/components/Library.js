@@ -36,7 +36,54 @@ LibraryElem.craft = {
   displayName: "LibraryElem",
 };
 
-export const Library = ({ nodekeys }) => {
+export const InitNewElement = ({ nodekeys }) => {
+  const { actions, query, connectors } = useEditor((state, query) => {
+    return {};
+  });
+  const options = useContext(optionsCtx);
+  const onNodesChange = (arg, arg1) => {
+    console.log("onNodesChange", arg, arg1);
+    const nodes = arg.getSerializedNodes();
+    const newNodeIds = [];
+    Object.keys(nodes).forEach((id) => {
+      if (!nodekeys.current.includes(id)) {
+        newNodeIds.push(id);
+      }
+    });
+    nodekeys.current = Object.keys(nodes);
+    console.log({ nodes, newNodeIds, nodekeys: nodekeys.current });
+    if (newNodeIds.length === 1) {
+      const id = newNodeIds[0];
+      const node = nodes[id];
+      console.log("new node", node);
+      if (node.displayName === "LibraryElem") {
+        setTimeout(() => {
+          actions.delete(id);
+        }, 0);
+      } else {
+        actions.selectNode(id);
+      }
+    }
+  };
+  useEffect(() => {
+    const nodes = query.getSerializedNodes();
+    nodekeys.current = Object.keys(nodes);
+    actions.setOptions((options) => {
+      const oldf = options.onNodesChange(
+        (options.onNodesChange = oldf
+          ? (q) => {
+              oldf(q);
+              onNodesChange(q);
+            }
+          : onNodesChange)
+      );
+    });
+  }, []);
+
+  return [];
+};
+
+export const Library = () => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
@@ -59,43 +106,6 @@ export const Library = ({ nodekeys }) => {
   const [newName, setNewName] = useState("");
   const [icon, setIcon] = useState();
   const [recent, setRecent] = useState([]);
-
-  const onNodesChange = (arg, arg1) => {
-    console.log("onNodesChange", arg, arg1);
-    const nodes = arg.getSerializedNodes();
-    const newNodeIds = [];
-    Object.keys(nodes).forEach((id) => {
-      if (!nodekeys.current.includes(id)) {
-        newNodeIds.push(id);
-      }
-    });
-    nodekeys.current = Object.keys(nodes);
-    console.log({ nodes, newNodeIds, nodekeys: nodekeys.current });
-    if (newNodeIds.length === 1) {
-      const id = newNodeIds[0];
-      const node = nodes[id];
-      console.log("new node", node);
-      if (node.displayName === "LibraryElem") {
-        setTimeout(() => {
-          actions.delete(id);
-        }, 0);
-      }
-    }
-  };
-  useEffect(() => {
-    const nodes = query.getSerializedNodes();
-    nodekeys.current = Object.keys(nodes);
-    actions.setOptions((options) => {
-      const oldf = options.onNodesChange(
-        (options.onNodesChange = oldf
-          ? (q) => {
-              oldf(q);
-              onNodesChange(q);
-            }
-          : onNodesChange)
-      );
-    });
-  }, []);
 
   const addSelected = () => {
     if (!adding) setAdding(true);

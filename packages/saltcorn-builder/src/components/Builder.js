@@ -44,7 +44,7 @@ import {
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
-import { Library } from "./Library";
+import { InitNewElement, Library } from "./Library";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -271,6 +271,7 @@ const Builder = ({ options, layout, mode }) => {
             <div className="row" style={{ marginTop: "-5px" }}>
               <div className="col-sm-auto">
                 <div className="componets-and-library-accordion toolbox-card">
+                  <InitNewElement nodekeys={nodekeys} />
                   <Accordion>
                     <div className="card " accordiontitle="Components">
                       {{
@@ -281,7 +282,7 @@ const Builder = ({ options, layout, mode }) => {
                       }[mode] || <div>Missing mode</div>}
                     </div>
                     <div accordiontitle="Library">
-                      <Library nodekeys={nodekeys} />
+                      <Library />
                     </div>
                   </Accordion>
                 </div>
