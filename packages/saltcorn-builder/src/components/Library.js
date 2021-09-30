@@ -5,6 +5,8 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./elements/faicons";
 import { craftToSaltcorn } from "./storage";
+import optionsCtx from "./context";
+
 export const Library = () => {
   const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
@@ -22,18 +24,30 @@ export const Library = () => {
       selected,
     };
   });
+  const options = useContext(optionsCtx);
+
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [icon, setIcon] = useState();
+  const [recent, setRecent] = useState([]);
 
   const addSelected = () => {
     if (!adding) setAdding(true);
     else {
-      const data = craftToSaltcorn(JSON.parse(query.serialize()));
-      console.log(data);
+      const layout = craftToSaltcorn(JSON.parse(query.serialize()));
+      const data = { layout, icon, name: newName };
+      fetch(`/library/savefrombuilder`, {
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+        },
+        body: JSON.stringify(data),
+      });
       setAdding(false);
       setIcon();
       setNewName("");
+      setRecent([...recent, data]);
     }
   };
   return (
