@@ -30,7 +30,9 @@ class Library {
 
   suitableFor(what) {
     let notPage, notShow, notEdit, notFilter;
-    traverseSync(this.layout, {
+    if (!this.layout) return false;
+    const layout = this.layout.layout ? this.layout.layout : this.layout;
+    traverseSync(layout, {
       search_bar() {
         //eg: search - only page and filter
         notShow = true;
