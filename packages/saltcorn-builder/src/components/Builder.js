@@ -1,4 +1,10 @@
-import React, { useEffect, useContext, useState, Fragment } from "react";
+import React, {
+  useEffect,
+  useContext,
+  useState,
+  Fragment,
+  useRef,
+} from "react";
 import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
@@ -255,6 +261,7 @@ const NextButton = ({ layout }) => {
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
+  const nodekeys = useRef([]);
 
   return (
     <ErrorBoundary>
@@ -274,7 +281,7 @@ const Builder = ({ options, layout, mode }) => {
                       }[mode] || <div>Missing mode</div>}
                     </div>
                     <div accordiontitle="Library">
-                      <Library />
+                      <Library nodekeys={nodekeys} />
                     </div>
                   </Accordion>
                 </div>

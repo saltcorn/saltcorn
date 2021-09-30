@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState, Fragment } from "react";
-import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
+import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -14,7 +14,29 @@ const twoByTwos = (xs) => {
   return [[x, y], ...twoByTwos(rest)];
 };
 
-export const Library = () => {
+export const LibraryElem = ({ name, layout }) => {
+  const {
+    selected,
+    connectors: { connect, drag },
+  } = useNode((node) => ({ selected: node.events.selected }));
+  return (
+    <Fragment>
+      <span
+        className={selected ? "selected-node" : ""}
+        ref={(dom) => connect(drag(dom))}
+      >
+        LibElem
+      </span>
+      <br />
+    </Fragment>
+  );
+};
+
+LibraryElem.craft = {
+  displayName: "LibraryElem",
+};
+
+export const Library = ({ nodekeys }) => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
@@ -38,6 +60,43 @@ export const Library = () => {
   const [icon, setIcon] = useState();
   const [recent, setRecent] = useState([]);
 
+  const onNodesChange = (arg, arg1) => {
+    console.log("onNodesChange", arg, arg1);
+    const nodes = arg.getSerializedNodes();
+    const newNodeIds = [];
+    Object.keys(nodes).forEach((id) => {
+      if (!nodekeys.current.includes(id)) {
+        newNodeIds.push(id);
+      }
+    });
+    nodekeys.current = Object.keys(nodes);
+    console.log({ nodes, newNodeIds, nodekeys: nodekeys.current });
+    if (newNodeIds.length === 1) {
+      const id = newNodeIds[0];
+      const node = nodes[id];
+      console.log("new node", node);
+      if (node.displayName === "LibraryElem") {
+        setTimeout(() => {
+          actions.delete(id);
+        }, 0);
+      }
+    }
+  };
+  useEffect(() => {
+    const nodes = query.getSerializedNodes();
+    nodekeys.current = Object.keys(nodes);
+    actions.setOptions((options) => {
+      const oldf = options.onNodesChange(
+        (options.onNodesChange = oldf
+          ? (q) => {
+              oldf(q);
+              onNodesChange(q);
+            }
+          : onNodesChange)
+      );
+    });
+  }, []);
+
   const addSelected = () => {
     if (!adding) setAdding(true);
     else {
@@ -58,7 +117,7 @@ export const Library = () => {
     }
   };
 
-  const elemRows = twoByTwos(options.library || []);
+  const elemRows = twoByTwos([...(options.library || []), ...recent]);
   return (
     <div className="builder-library">
       {adding && selected ? (
@@ -105,7 +164,9 @@ export const Library = () => {
                 connectors={connectors}
                 icon={l.icon}
                 label={l.name}
-              ></WrapElem>
+              >
+                <LibraryElem name={l.name} layout={l.layout}></LibraryElem>
+              </WrapElem>
             ))}
           </div>
         ))}
