@@ -31,7 +31,8 @@ export const ImageSettings = () => {
     url: node.data.props.url,
     filepath: node.data.props.filepath,
     srctype: node.data.props.srctype,
-    alt: node.data.props.fieldview,
+    alt: node.data.props.alt,
+    uploadedFiles: node.data.props.uploadedFiles,
     block: node.data.props.block,
     isFormula: node.data.props.isFormula,
   }));
@@ -45,6 +46,7 @@ export const ImageSettings = () => {
     block,
     isFormula,
     filepath,
+    uploadedFiles,
   } = node;
   const options = useContext(optionsCtx);
   const handleUpload = (e) => {
@@ -68,11 +70,21 @@ export const ImageSettings = () => {
           setProp((prop) => {
             prop.fileid = result.success.id;
             prop.srctype = "File";
+            prop.uploadedFiles = [
+              ...prop.uploadedFiles,
+              { id: result.success.id, filename: result.success.filename },
+            ];
           });
         })
         .catch((error) => {
           console.error("Error:", error);
         });
+    }
+  };
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
     }
   };
   return (
@@ -93,9 +105,7 @@ export const ImageSettings = () => {
             <select
               value={srctype}
               className="form-control"
-              onChange={(e) =>
-                setProp((prop) => (prop.srctype = e.target.value))
-              }
+              onChange={setAProp("srctype")}
             >
               <option>File</option>
               <option>URL</option>
@@ -113,13 +123,16 @@ export const ImageSettings = () => {
               <select
                 value={fileid}
                 className="form-control"
-                onChange={(e) =>
-                  setProp((prop) => (prop.fileid = e.target.value))
-                }
+                onChange={setAProp("fileid")}
               >
                 {options.images.map((f, ix) => (
                   <option key={ix} value={f.id}>
                     {f.filename}
+                  </option>
+                ))}
+                {(uploadedFiles || []).map((uf, ix) => (
+                  <option key={ix} value={uf.id}>
+                    {uf.filename}
                   </option>
                 ))}
               </select>
@@ -137,9 +150,7 @@ export const ImageSettings = () => {
                   type="text"
                   className="form-control"
                   value={url}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.url = e.target.value))
-                  }
+                  onChange={setAProp("url")}
                 />
               </OrFormula>
             </td>
@@ -169,9 +180,7 @@ export const ImageSettings = () => {
               <select
                 value={field}
                 className="form-control"
-                onChange={(e) =>
-                  setProp((prop) => (prop.field = e.target.value))
-                }
+                onChange={setAProp("field")}
               >
                 {options.fields
                   .filter(
@@ -199,9 +208,7 @@ export const ImageSettings = () => {
                   type="text"
                   className="form-control"
                   value={alt}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.alt = e.target.value))
-                  }
+                  onChange={setAProp("alt")}
                 />
               </OrFormula>
             </td>
@@ -225,6 +232,7 @@ Image.craft = {
     alt: "",
     block: false,
     isFormula: {},
+    uploadedFiles: [],
     srctype: "File",
   },
   related: {
