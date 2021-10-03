@@ -12,7 +12,7 @@
   "dependencies": {
     "@saltcorn/markup": "0.5.6-rc.0",
     "acorn": "^8.0.3",
-    "adm-zip": "0.5.5",
+    "adm-zip": "0.5.6",
     "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
     "blockly": "^6.20210701.0",
