@@ -29,6 +29,7 @@ export const ImageSettings = () => {
     fileid: node.data.props.fileid,
     field: node.data.props.field,
     url: node.data.props.url,
+    filepath: node.data.props.filepath,
     srctype: node.data.props.srctype,
     alt: node.data.props.fieldview,
     block: node.data.props.block,
@@ -43,8 +44,37 @@ export const ImageSettings = () => {
     alt,
     block,
     isFormula,
+    filepath,
   } = node;
   const options = useContext(optionsCtx);
+  const handleUpload = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const formData = new FormData();
+
+      formData.append("file", e.target.files[0]);
+      formData.append("min_role_read", options.min_role_read || 1);
+
+      fetch("/files/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "CSRF-Token": options.csrfToken,
+        },
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          console.log("Success:", result);
+          setProp((prop) => {
+            prop.fileid = result.success.id;
+            prop.srctype = "File";
+          });
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+  };
   return (
     <table>
       <tbody>
@@ -69,6 +99,7 @@ export const ImageSettings = () => {
             >
               <option>File</option>
               <option>URL</option>
+              <option>Upload</option>
               {options.mode === "show" && <option>Field</option>}
             </select>
           </td>
@@ -114,6 +145,21 @@ export const ImageSettings = () => {
             </td>
           </tr>
         )}
+        {srctype === "Upload" && (
+          <tr>
+            <td>
+              <label>File</label>
+            </td>
+            <td>
+              <input
+                type="file"
+                className="form-control"
+                value={filepath}
+                onChange={handleUpload}
+              />
+            </td>
+          </tr>
+        )}
         {srctype === "Field" && (
           <tr>
             <td>
@@ -142,26 +188,32 @@ export const ImageSettings = () => {
             </td>
           </tr>
         )}
-        <tr>
-          <td>
-            <label>Alt text</label>
-          </td>
-          <td>
-            <OrFormula nodekey="alt" {...{ setProp, isFormula, node }}>
-              <input
-                type="text"
-                className="form-control"
-                value={alt}
-                onChange={(e) => setProp((prop) => (prop.alt = e.target.value))}
-              />
-            </OrFormula>
-          </td>
-        </tr>
-        <tr>
-          <td colSpan="2">
-            <BlockSetting block={block} setProp={setProp} />
-          </td>
-        </tr>
+        {srctype !== "Upload" && (
+          <tr>
+            <td>
+              <label>Alt text</label>
+            </td>
+            <td>
+              <OrFormula nodekey="alt" {...{ setProp, isFormula, node }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={alt}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.alt = e.target.value))
+                  }
+                />
+              </OrFormula>
+            </td>
+          </tr>
+        )}
+        {srctype !== "Upload" && (
+          <tr>
+            <td colSpan="2">
+              <BlockSetting block={block} setProp={setProp} />
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );
