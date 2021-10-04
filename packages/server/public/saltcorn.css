@@ -138,6 +138,13 @@ input[type="color"].form-control {
   border: 1px dashed blue !important;
 }
 
+#builder-main-canvas div.root-canvas:empty:before {
+  font-size: 26px;
+  opacity: 0.5;
+  margin-left: 10px;
+  content: "Drag-and-drop components here";
+}
+
 #builder-main-canvas .image-widget {
   min-width: 15px;
   min-height: 15px;

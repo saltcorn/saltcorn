@@ -295,7 +295,10 @@ const Builder = ({ options, layout, mode }) => {
                   )}
                 </div>
               </div>
-              <div id="builder-main-canvas" className="col">
+              <div
+                id="builder-main-canvas"
+                className={`col builder-mode-${options.mode}`}
+              >
                 <div>
                   <Frame
                     resolver={{
