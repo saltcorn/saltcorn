@@ -238,6 +238,8 @@ const HistoryPanel = () => {
 
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
+  const options = useContext(optionsCtx);
+
   useEffect(() => {
     layoutToNodes(layout, query, actions);
   }, []);
@@ -253,7 +255,7 @@ const NextButton = ({ layout }) => {
   };
   return (
     <button className="btn btn-primary builder-save" onClick={onClick}>
-      Next &raquo;
+      {options.next_button_label || "Next"} &raquo;
     </button>
   );
 };

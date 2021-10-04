@@ -186,6 +186,7 @@ const pageBuilderData = async (req, context) => {
     mode: "page",
     roles,
     fixed_state_fields,
+    next_button_label: "Done",
   };
 };
 
