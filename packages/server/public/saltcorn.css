@@ -91,7 +91,7 @@ div.wrap-builder-elem {
   height: 4rem;
   position: relative;
 }
-div.wrap-builder-elem:nth-child(1) {
+div.toolbox-card div.wrap-builder-elem:nth-child(1) {
   border-right: 1px solid #bcbcbc;
 }
 div.toolbar-row {
