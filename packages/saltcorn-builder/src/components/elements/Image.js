@@ -66,7 +66,6 @@ export const ImageSettings = () => {
       })
         .then((response) => response.json())
         .then((result) => {
-          console.log("Success:", result);
           setProp((prop) => {
             prop.fileid = result.success.id;
             prop.srctype = "File";
