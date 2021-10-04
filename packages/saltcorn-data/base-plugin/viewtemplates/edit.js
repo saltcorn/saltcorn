@@ -97,6 +97,8 @@ const configuration_workflow = (req) =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("edit")
           );
+          const myviewrow = await View.findOne({ name: context.viewname });
+
           return {
             tableName: table.name,
             fields,
@@ -107,6 +109,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            min_role: myviewrow.min_role,
             library,
             views,
             mode: "edit",

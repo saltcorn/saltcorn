@@ -197,6 +197,7 @@ const pageFlow = (req) =>
             pages,
             actions,
             library,
+            min_role: context.min_role,
             actionConfigForms,
             page_name: context.name,
             page_id: context.id,

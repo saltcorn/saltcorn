@@ -54,7 +54,7 @@ export const ImageSettings = () => {
       const formData = new FormData();
 
       formData.append("file", e.target.files[0]);
-      formData.append("min_role_read", options.min_role_read || 1);
+      formData.append("min_role_read", options.min_role || 1);
 
       fetch("/files/upload", {
         method: "POST",
