@@ -791,5 +791,6 @@
 	"Library": "Library",
 	"Library item %s deleted": "Library item %s deleted",
 	"Library: component assemblies that can be used in the builder": "Library: component assemblies that can be used in the builder",
-	"Edit properties": "Edit properties"
+	"Edit properties": "Edit properties",
+	"Images and other files for download": "Images and other files for download"
 }
