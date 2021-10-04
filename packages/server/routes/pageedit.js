@@ -53,9 +53,9 @@ const page_dropdown = (page, req) =>
     a(
       {
         class: "dropdown-item",
-        href: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+        href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}`,
       },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit properties")
     ),
     post_dropdown_item(
       `/pageedit/add-to-menu/${page.id}`,
@@ -114,7 +114,6 @@ const pagePropertiesForm = async (req) => {
       },
     ],
   });
-  form.hidden("id");
   return form;
 };
 
@@ -321,6 +320,7 @@ router.get(
     } else {
       // set fixed states in page directly for legacy builds
       const form = await pagePropertiesForm(req);
+      form.hidden("id");
       form.values = page;
       res.sendWrap(
         req.__(`Page attributes`),
@@ -348,18 +348,21 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await pagePropertiesForm(req);
+    form.hidden("id");
     form.validate(req.body);
     if (form.hasErrors) {
     } else {
       const { id, columns, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
-      if (!pageRow.fixed_states) pageRow.fixed_states = {};
+
       if (id) {
         await Page.update(id, pageRow);
         res.redirect(`/pageedit/`);
       } else {
+        if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        if (!pageRow.layout) pageRow.layout = {};
         await Page.create(pageRow);
-        res.redirect(`/pageedit/edit/${pagerow.name}`);
+        res.redirect(`/pageedit/edit/${pageRow.name}`);
       }
     }
   })
@@ -405,10 +408,18 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (req.body.id && req.body.layout) {
-      await Page.update(+req.body.id, { layout: req.body.layout });
+    const { pagename } = req.params;
 
-      req.flash("success", req.__(`Page %s saved`, pageRow.name));
+    const page = await Page.findOne({ name: pagename });
+    if (!page) {
+      req.flash("error", req.__(`Page %s not found`, pagename));
+      res.redirect(`/pageedit`);
+    } else if (req.body.layout) {
+      await Page.update(page.id, {
+        layout: decodeURIComponent(req.body.layout),
+      });
+
+      req.flash("success", req.__(`Page %s saved`, pagename));
       res.redirect(`/pageedit`);
     } else {
       req.flash("error", req.__(`Error processing page`));
