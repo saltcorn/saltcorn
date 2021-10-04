@@ -133,6 +133,7 @@ const configuration_workflow = (req) =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("show")
           );
+          const myviewrow = await View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
             fields,
@@ -145,6 +146,7 @@ const configuration_workflow = (req) =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
+            min_role: (myviewrow || {}).min_role,
             roles,
             views,
             library,

@@ -790,5 +790,6 @@
 	"Default language": "Default language",
 	"Library": "Library",
 	"Library item %s deleted": "Library item %s deleted",
-	"Library: component assemblies that can be used in the builder": "Library: component assemblies that can be used in the builder"
+	"Library: component assemblies that can be used in the builder": "Library: component assemblies that can be used in the builder",
+	"Edit properties": "Edit properties"
 }

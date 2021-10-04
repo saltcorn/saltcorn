@@ -91,7 +91,7 @@ div.wrap-builder-elem {
   height: 4rem;
   position: relative;
 }
-div.wrap-builder-elem:nth-child(1) {
+div.toolbox-card div.wrap-builder-elem:nth-child(1) {
   border-right: 1px solid #bcbcbc;
 }
 div.toolbar-row {
@@ -136,6 +136,13 @@ input[type="color"].form-control {
 
 #builder-main-canvas .selected-node {
   border: 1px dashed blue !important;
+}
+
+#builder-main-canvas div.root-canvas:empty:before {
+  font-size: 26px;
+  opacity: 0.5;
+  margin-left: 10px;
+  content: "Drag-and-drop components here";
 }
 
 #builder-main-canvas .image-widget {
