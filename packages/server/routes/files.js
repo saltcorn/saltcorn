@@ -54,7 +54,10 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__("Files") }],
+          crumbs: [
+            { text: req.__("Settings"), href: "/settings" },
+            { text: req.__("Files") },
+          ],
         },
         {
           type: "card",
