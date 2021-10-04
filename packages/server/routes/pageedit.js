@@ -351,12 +351,16 @@ router.post(
     form.hidden("id");
     form.validate(req.body);
     if (form.hasErrors) {
+      res.sendWrap(
+        req.__(`Page attributes`),
+        wrap(renderForm(form, req.csrfToken()), false, req)
+      );
     } else {
       const { id, columns, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
 
       if (id) {
-        await Page.update(id, pageRow);
+        await Page.update(+id, pageRow);
         res.redirect(`/pageedit/`);
       } else {
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
