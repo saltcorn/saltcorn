@@ -165,6 +165,12 @@ describe("Library", () => {
     await Library.create({ name: "Foos", icon: "fa-cog", layout: {} });
     const libs = await Library.find({});
     expect(libs.length).toBe(1);
+    const suitable = libs[0].suitableFor("page");
+    expect(suitable).toBe(true);
+    const lib = await Library.findOne({ name: "Foos" });
+    expect(lib.icon).toBe("fa-cog");
+    await lib.update({ icon: "fa-bar" });
+    await lib.delete();
   });
 });
 
