@@ -80,7 +80,6 @@ const get_menu = (req) => {
     { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
     { link: "/viewedit", icon: "far fa-eye", label: req.__("Views") },
     { link: "/pageedit", icon: "far fa-file", label: req.__("Pages") },
-    { link: "/files", icon: "far fa-images", label: req.__("Files") },
     {
       label: req.__("Settings"),
       icon: "fas fa-wrench",
@@ -102,11 +101,10 @@ const get_menu = (req) => {
           icon: "fas fa-compass",
           label: req.__("Site structure"),
         },
-
+        { link: "/files", icon: "far fa-images", label: req.__("Files") },
         {
           link: "/events",
           altlinks: ["/actions", "/crashlog"],
-
           icon: "fas fa-calendar-check",
           label: req.__("Events"),
         },
