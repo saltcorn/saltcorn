@@ -109,7 +109,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
-            min_role: myviewrow.min_role,
+            min_role: (myviewrow || {}).min_role,
             library,
             views,
             mode: "edit",

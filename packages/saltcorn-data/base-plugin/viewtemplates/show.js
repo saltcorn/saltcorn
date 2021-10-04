@@ -146,7 +146,7 @@ const configuration_workflow = (req) =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
-            min_role: myviewrow.min_role,
+            min_role: (myviewrow || {}).min_role,
             roles,
             views,
             library,
