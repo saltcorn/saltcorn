@@ -13,6 +13,7 @@ const File = require("@saltcorn/data/models/file");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
+const db = require("@saltcorn/data/db");
 
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -75,140 +76,119 @@ const page_dropdown = (page, req) =>
       page.name
     ),
   ]);
-const pageFlow = (req) =>
-  new Workflow({
-    action: "/pageedit/edit/",
-    onDone: async (context) => {
-      const { id, columns, ...pageRow } = context;
-      pageRow.min_role = +pageRow.min_role;
-      if (!pageRow.fixed_states) pageRow.fixed_states = {};
-      if (id) {
-        await Page.update(id, pageRow);
-      } else await Page.create(pageRow);
-      return {
-        redirect: `/pageedit`,
-        flash: ["success", req.__(`Page %s saved`, pageRow.name)],
-      };
-    },
-    steps: [
-      {
-        name: req.__("Identity"),
-        form: async (context) => {
-          const roles = await User.get_roles();
 
-          return new Form({
-            fields: [
-              new Field({
-                label: req.__("Name"),
-                name: "name",
-                required: true,
-                validator(s) {
-                  if (s.length < 1) return req.__("Missing name");
-                },
-                sublabel: req.__("A short name that will be in your URL"),
-                type: "String",
-              }),
-              new Field({
-                label: req.__("Title"),
-                name: "title",
-                sublabel: req.__("Page title"),
-                input_type: "text",
-              }),
-              new Field({
-                label: req.__("Description"),
-                name: "description",
-                sublabel: req.__("A longer description"),
-                input_type: "text",
-              }),
-              {
-                name: "min_role",
-                label: req.__("Minimum role"),
-                sublabel: req.__("Role required to access page"),
-                input_type: "select",
-                options: roles.map((r) => ({ value: r.id, label: r.role })),
-              },
-            ],
-          });
-        },
-      },
-      {
-        name: req.__("Layout"),
-        builder: async (context) => {
-          const views = await View.find();
-          const pages = await Page.find();
-          const images = await File.find({ mime_super: "image" });
-          const roles = await User.get_roles();
-          const stateActions = getState().actions;
-          const actions = Object.entries(stateActions)
-            .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
-            .map(([k, v]) => k);
-          const triggers = await Trigger.find({
-            when_trigger: { or: ["API call", "Never"] },
-          });
-          triggers.forEach((tr) => {
-            actions.push(tr.name);
-          });
-          const actionConfigForms = {};
-          for (const name of actions) {
-            const action = stateActions[name];
-            if (action && action.configFields) {
-              actionConfigForms[name] = await getActionConfigFields(action);
-            }
-          }
-          const library = (await Library.find({})).filter((l) =>
-            l.suitableFor("page")
-          );
-          const fixed_state_fields = {};
-          for (const view of views) {
-            fixed_state_fields[view.name] = [];
-            const table = Table.findOne({ id: view.table_id });
-            const fs = await view.get_state_fields();
-            for (const frec of fs) {
-              const f = new Field(frec);
-              f.required = false;
-              if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+const pagePropertiesForm = async (req) => {
+  const roles = await User.get_roles();
 
-              await f.fill_fkey_options(true);
-              fixed_state_fields[view.name].push(f);
-              if (table.name === "users" && f.primary_key)
-                fixed_state_fields[view.name].push(
-                  new Field({
-                    name: "preset_" + f.name,
-                    label: req.__("Preset %s", f.label),
-                    type: "String",
-                    attributes: { options: ["LoggedIn"] },
-                  })
-                );
-              if (f.presets) {
-                fixed_state_fields[view.name].push(
-                  new Field({
-                    name: "preset_" + f.name,
-                    label: req.__("Preset %s", f.label),
-                    type: "String",
-                    attributes: { options: Object.keys(f.presets) },
-                  })
-                );
-              }
-            }
-          }
-          return {
-            views,
-            images,
-            pages,
-            actions,
-            library,
-            min_role: context.min_role,
-            actionConfigForms,
-            page_name: context.name,
-            page_id: context.id,
-            mode: "page",
-            roles,
-            fixed_state_fields,
-          };
+  const form = new Form({
+    action: "/pageedit/edit-properties",
+    fields: [
+      new Field({
+        label: req.__("Name"),
+        name: "name",
+        required: true,
+        validator(s) {
+          if (s.length < 1) return req.__("Missing name");
         },
+        sublabel: req.__("A short name that will be in your URL"),
+        type: "String",
+      }),
+      new Field({
+        label: req.__("Title"),
+        name: "title",
+        sublabel: req.__("Page title"),
+        input_type: "text",
+      }),
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__("A longer description"),
+        input_type: "text",
+      }),
+      {
+        name: "min_role",
+        label: req.__("Minimum role"),
+        sublabel: req.__("Role required to access page"),
+        input_type: "select",
+        options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
     ],
   });
+  form.hidden("id");
+  return form;
+};
+
+const pageBuilderData = async (req, context) => {
+  const views = await View.find();
+  const pages = await Page.find();
+  const images = await File.find({ mime_super: "image" });
+  const roles = await User.get_roles();
+  const stateActions = getState().actions;
+  const actions = Object.entries(stateActions)
+    .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+    .map(([k, v]) => k);
+  const triggers = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
+  const actionConfigForms = {};
+  for (const name of actions) {
+    const action = stateActions[name];
+    if (action && action.configFields) {
+      actionConfigForms[name] = await getActionConfigFields(action);
+    }
+  }
+  const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
+  const fixed_state_fields = {};
+  for (const view of views) {
+    fixed_state_fields[view.name] = [];
+    const table = Table.findOne({ id: view.table_id });
+    const fs = await view.get_state_fields();
+    for (const frec of fs) {
+      const f = new Field(frec);
+      f.required = false;
+      if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+
+      await f.fill_fkey_options(true);
+      fixed_state_fields[view.name].push(f);
+      if (table.name === "users" && f.primary_key)
+        fixed_state_fields[view.name].push(
+          new Field({
+            name: "preset_" + f.name,
+            label: req.__("Preset %s", f.label),
+            type: "String",
+            attributes: { options: ["LoggedIn"] },
+          })
+        );
+      if (f.presets) {
+        fixed_state_fields[view.name].push(
+          new Field({
+            name: "preset_" + f.name,
+            label: req.__("Preset %s", f.label),
+            type: "String",
+            attributes: { options: Object.keys(f.presets) },
+          })
+        );
+      }
+    }
+  }
+  return {
+    views,
+    images,
+    pages,
+    actions,
+    library,
+    min_role: context.min_role,
+    actionConfigForms,
+    page_name: context.name,
+    page_id: context.id,
+    mode: "page",
+    roles,
+    fixed_state_fields,
+  };
+};
 
 const getPageList = (rows, roles, req) => {
   return div(
@@ -309,40 +289,81 @@ router.get(
     });
   })
 );
+const wrap = (contents, noCard, req, page) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [
+        { text: req.__("Pages"), href: "/pageedit" },
+        page
+          ? { href: `/pageedit/edit/${page.name}`, text: page.name }
+          : { text: req.__("New") },
+      ],
+    },
+    {
+      type: noCard ? "container" : "card",
+      title: page ? page.name : req.__("New"),
+      contents,
+    },
+  ],
+});
 
-const respondWorkflow = (page, wf, wfres, req, res) => {
-  const wrap = (contents, noCard) => ({
-    above: [
-      {
-        type: "breadcrumbs",
-        crumbs: [
-          { text: req.__("Pages"), href: "/pageedit" },
-          page
-            ? { href: `/pageedit/edit/${page.name}`, text: page.name }
-            : { text: req.__("New") },
-          { workflow: wf, step: wfres },
-        ],
-      },
-      {
-        type: noCard ? "container" : "card",
-        title: wizardCardTitle(page ? page.name : req.__("New"), wf, wfres),
-        contents,
-      },
-    ],
-  });
-  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
-  if (wfres.renderForm)
+router.get(
+  "/edit-properties/:pagename",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { pagename } = req.params;
+    const page = await Page.findOne({ name: pagename });
+    if (!page) {
+      req.flash("error", req.__(`Page %s not found`, pagename));
+      res.redirect(`/pageedit`);
+    } else {
+      // set fixed states in page directly for legacy builds
+      const form = await pagePropertiesForm(req);
+      form.values = page;
+      res.sendWrap(
+        req.__(`Page attributes`),
+        wrap(renderForm(form, req.csrfToken()), false, req, page)
+      );
+    }
+  })
+);
+router.get(
+  "/new",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await pagePropertiesForm(req);
     res.sendWrap(
       req.__(`Page attributes`),
-      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+      wrap(renderForm(form, req.csrfToken()), false, req)
     );
-  else if (wfres.renderBuilder)
-    res.sendWrap(
-      req.__(`Page configuration`),
-      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
-    );
-  else res.redirect(wfres.redirect);
-};
+  })
+);
+
+router.post(
+  "/edit-properties",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await pagePropertiesForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+    } else {
+      const { id, columns, ...pageRow } = form.values;
+      pageRow.min_role = +pageRow.min_role;
+      if (!pageRow.fixed_states) pageRow.fixed_states = {};
+      if (id) {
+        await Page.update(id, pageRow);
+        res.redirect(`/pageedit/`);
+      } else {
+        await Page.create(pageRow);
+        res.redirect(`/pageedit/edit/${pagerow.name}`);
+      }
+    }
+  })
+);
 
 router.get(
   "/edit/:pagename",
@@ -364,35 +385,35 @@ router.get(
           }
         },
       });
-      const wf = pageFlow(req);
-      const wfres = await wf.run(page, req);
-      respondWorkflow(page, wf, wfres, req, res);
+      const options = await pageBuilderData(req, page);
+      const builderData = {
+        options,
+        context: page,
+        layout: page.layout,
+        mode: "page",
+        version_tag: db.connectObj.version_tag,
+      };
+      res.sendWrap(
+        req.__(`Page configuration`),
+        wrap(renderBuilder(builderData, req.csrfToken()), true, req, page)
+      );
     }
   })
 );
-
-router.get(
-  "/new",
-  setTenant,
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const wf = pageFlow(req);
-    const wfres = await wf.run({}, req);
-    respondWorkflow(null, wf, wfres, req, res);
-  })
-);
-
 router.post(
-  "/edit",
+  "/edit/:pagename",
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wf = pageFlow(req);
-    const wfres = await wf.run(req.body, req);
-    const page =
-      wfres.context && (await Page.findOne({ name: wfres.context.name }));
+    if (req.body.id && req.body.layout) {
+      await Page.update(+req.body.id, { layout: req.body.layout });
 
-    respondWorkflow(page, wf, wfres, req, res);
+      req.flash("success", req.__(`Page %s saved`, pageRow.name));
+      res.redirect(`/pageedit`);
+    } else {
+      req.flash("error", req.__(`Error processing page`));
+      res.redirect(`/pageedit`);
+    }
   })
 );
 
