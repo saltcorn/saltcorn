@@ -41,6 +41,14 @@ module.exports = (
         ? `/static_assets/${version_tag}/fonticonpicker.react.css`
         : "/fonticonpicker.react.css",
     }),
+    link({
+      rel: "stylesheet",
+      type: "text/css",
+      media: "screen",
+      href: version_tag
+        ? `/static_assets/${version_tag}/saltcorn-builder.css`
+        : "/saltcorn-builder.css",
+    }),
     div({ id: "saltcorn-builder" }),
     form(
       { action, method: "post", id: "scbuildform" },

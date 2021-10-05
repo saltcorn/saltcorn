@@ -20,97 +20,12 @@ pre.js-code-display {
   margin: 5em 0;
 }
 
-.canvas {
-  min-height: 30px;
-  border: 1px dashed #111111;
-}
-span.is-html-block {
-  min-height: 30px;
-  min-width: 50px;
-  display: inline-block;
-  border: 1px dotted #111111;
-}
-div.settings-panel {
-  min-height: 150px;
-}
-
-span.is-builder-link {
-  color: blue;
-  text-decoration: underline;
-}
-
-div.card.builder {
-  border: 1px solid #111111;
-}
-
-table.toolbox td {
-  border: 1px solid black;
-  width: 70px;
-  height: 70px;
-  text-align: center;
-}
-table.toolbox {
-  table-layout: fixed;
-}
 button.store-install {
   width: auto;
 }
 
 span.badge.plugin-store {
   margin-right: 0.25rem !important;
-}
-
-div.builder-embed-view {
-  width: 100%;
-  height: 100px;
-  border: 1px solid black;
-  margin: 2px;
-  background: linear-gradient(
-      to top left,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) calc(50% - 0.8px),
-      rgba(0, 0, 0, 0.5) 50%,
-      rgba(0, 0, 0, 0) calc(50% + 0.8px),
-      rgba(0, 0, 0, 0) 100%
-    ),
-    linear-gradient(
-      to top right,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) calc(50% - 0.8px),
-      rgba(0, 0, 0, 0.5) 50%,
-      rgba(0, 0, 0, 0) calc(50% + 0.8px),
-      rgba(0, 0, 0, 0) 100%
-    );
-}
-div.toolbox-card {
-  width: 8.2rem;
-  margin-bottom: 1rem;
-}
-div.wrap-builder-elem {
-  width: 50%;
-  height: 4rem;
-  position: relative;
-}
-div.toolbox-card div.wrap-builder-elem:nth-child(1) {
-  border-right: 1px solid #bcbcbc;
-}
-div.toolbar-row {
-  border-top: 1px solid #bcbcbc;
-}
-
-div.toolbar-row:nth-child(1) {
-  border-top: none;
-}
-
-div.wrap-builder-elem label {
-  position: absolute;
-  bottom: -1px;
-  text-transform: uppercase;
-  font-size: x-small;
-}
-
-.builder-sidebar h5 {
-  text-decoration: underline;
 }
 
 div.color-type-show {
@@ -124,35 +39,6 @@ input[type="color"].form-control {
   max-width: 80px;
 }
 
-#builder-main-canvas {
-  height: calc(100vh - 70px);
-  overflow-y: auto;
-}
-
-#builder-main-canvas .is-text a {
-  pointer-events: none;
-  text-decoration: underline;
-}
-
-#builder-main-canvas .selected-node {
-  border: 1px dashed blue !important;
-}
-
-#builder-main-canvas div.root-canvas:empty:before {
-  font-size: 26px;
-  opacity: 0.5;
-  margin-left: 10px;
-  content: "Drag-and-drop components here";
-}
-
-#builder-main-canvas .image-widget {
-  min-width: 15px;
-  min-height: 15px;
-}
-.builder-sidebar .builder-layers {
-  max-height: 50vh;
-  overflow-y: scroll;
-}
 button.btn.activate-formula.btn-outline-secondary:hover {
   background-color: unset;
 }
@@ -289,15 +175,6 @@ input.dimunit {
   border-right: none;
 }
 
-div.settings-panel input[type="number"] {
-  border-width: 1px;
-}
-
-button.btnstylesel {
-  padding-left: 5px;
-  padding-right: 2px;
-}
-
 .ml-m1 {
   margin-left: -1rem;
 }
@@ -317,26 +194,4 @@ footer.bs-mobile-nav-footer {
 
 .opacity-50 {
   opacity: 0.5;
-}
-
-div.settings-panel div.rfip {
-  margin: 0px;
-  width: 100%;
-}
-
-div.builder-library div.rfip {
-  margin: 0px;
-  width: 100%;
-}
-
-div.settings-panel div.rfipbtn {
-  width: 100%;
-}
-
-div.componets-and-library-accordion {
-  min-height: 45vh;
-}
-
-.builder-library .dropdown {
-  overflow: visible;
 }
