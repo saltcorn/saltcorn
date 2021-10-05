@@ -143,3 +143,118 @@ div.componets-and-library-accordion {
 .builder-library .dropdown {
   overflow: visible;
 }
+.boxmodel-container {
+  display: inline-flex;
+  flex-direction: column;
+  flex-flow: column wrap;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 12px;
+  position: relative;
+}
+.boxmodel-container .boxmodel-info {
+  font-size: 10px;
+  font-family: Verdana;
+  font-style: normal;
+  text-align: left;
+  line-height: 14px;
+  margin: 2px 0 0 0;
+  padding: 0px;
+  margin-top: 2px;
+}
+.boxmodel-container div:not(.flex-row) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-content: space-between;
+  padding: 0;
+  margin: 0;
+}
+.boxmodel-container span.boxmodel-text {
+  font-size: 8.5px;
+  font-family: Verdana, Geneva, sans-serif;
+  display: inline-block;
+  user-select: none;
+}
+.boxmodel-container span.boxmodel-text.boxmodel-header {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  color: #777;
+}
+.boxmodel-container .boxmodel-margin {
+  background: #ffffff;
+  border: 1px dashed #aaa;
+  position: relative;
+}
+.boxmodel-container .boxmodel-border {
+  background: #ddd;
+  border: 2px solid #aaa;
+  position: relative;
+}
+.boxmodel-container .boxmodel-padding {
+  background: #eee;
+  border: 1px dashed #aaa;
+  position: relative;
+}
+.boxmodel-container .boxmodel-content {
+  background: #fff;
+  height: 30px;
+  margin: 0;
+  border: 1px solid #aaa;
+  position: relative;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 10px;
+}
+.boxmodel-container .flex-row {
+  text-align: center;
+}
+.boxmodel-container .boxmodel-input-direction-top,
+.boxmodel-container .boxmodel-input-direction-bottom {
+  display: block;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+}
+.boxmodel-container .boxmodel-input-direction-right,
+.boxmodel-container .boxmodel-input-direction-left {
+  position: relative;
+}
+.boxmodel-container input,
+.boxmodel-container input:focus,
+.boxmodel-container input:active {
+  background: transparent;
+  color: black;
+  font-size: 9px;
+  font-family: Verdana, Geneva, sans-serif;
+  box-shadow: none;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+  margin: 0px;
+  padding: 1px;
+  text-align: center;
+}
+
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-margin {
+  background: #f9cc9d;
+  border: 1px dashed #222;
+}
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-border {
+  background: #ffeebc;
+  border: 1px solid #000;
+}
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-padding {
+  background: #c3deb7;
+  border: 1px dashed #808080;
+}
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-content {
+  background: #a0c5e8;
+  border: 1px solid #808080;
+}
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-text {
+  color: black;
+}
+.boxmodel-chrome-skin .boxmodel-container .boxmodel-text.boxmodel-header {
+  color: black;
+}
