@@ -340,7 +340,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       let flexStyles = "";
-      Object.keys(style).forEach((k) => {
+      Object.keys(style || {}).forEach((k) => {
         flexStyles += `${k}:${style[k]};`;
       });
       return wrap(
