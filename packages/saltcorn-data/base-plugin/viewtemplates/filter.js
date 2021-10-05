@@ -174,7 +174,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
-        distinct_values[field_name].map(({ label, value, jsvalue }) =>
+        (distinct_values[field_name] || []).map(({ label, value, jsvalue }) =>
           option(
             {
               value,
