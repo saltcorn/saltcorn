@@ -42,7 +42,7 @@ class Trigger {
     let table_name = this.table_name;
     if (!table_name && this.table_id) {
       const Table = require("./table");
-      const table = Table.find(+this.table_id);
+      const table = Table.findOne(+this.table_id);
       table_name = table.name;
     }
     return {
