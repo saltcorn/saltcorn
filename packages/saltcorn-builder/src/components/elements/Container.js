@@ -35,6 +35,7 @@ import {
 } from "react-bootstrap-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
+import { BoxModelEditor } from "./BoxModelEditor";
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -244,6 +245,16 @@ export const ContainerSettings = () => {
   };
   return (
     <Accordion>
+      <div accordiontitle="Box" className="w-100 text-center">
+        <BoxModelEditor setProp={setProp} node={node} />
+        <table className="w-100">
+          <tbody>
+            <tr>
+              <td colSpan="2"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <table className="w-100" accordiontitle="Placement">
         <tbody>
           <SettingsSectionHeaderRow title="Border" />
