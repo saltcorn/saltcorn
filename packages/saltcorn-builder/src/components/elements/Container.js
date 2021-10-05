@@ -188,6 +188,10 @@ export const ContainerSettings = () => {
     flex_grow: node.data.props.flex_grow,
     flex_shrink: node.data.props.flex_shrink,
     flex_direction: node.data.props.flex_direction,
+    flex_wrap: node.data.props.flex_wrap,
+    justify_content: node.data.props.justify_content,
+    align_items: node.data.props.align_items,
+    align_content: node.data.props.align_content,
   }));
   const {
     actions: { setProp },
@@ -643,7 +647,7 @@ export const ContainerSettings = () => {
           )}
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Flex">
+      <table className="w-100" accordiontitle="Flex properties">
         <tbody>
           <SettingsSectionHeaderRow title="Flex item" />
           <SettingsRow
@@ -665,6 +669,82 @@ export const ContainerSettings = () => {
                   label: "Direction",
                   type: "select",
                   options: ["row", "row-reverse", "column", "column-reverse"],
+                }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{
+                  name: "flex_wrap",
+                  label: "Wrap",
+                  type: "select",
+                  options: ["nowrap", "wrap", "wrap-reverse"],
+                }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{
+                  name: "justify_content",
+                  label: "Justify content",
+                  type: "select",
+                  options: [
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "space-between",
+                    "space-around",
+                    "space-evenly",
+                    "start",
+                    "end",
+                    "left",
+                    "right",
+                  ],
+                }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{
+                  name: "align_items",
+                  label: "Align items",
+                  type: "select",
+                  options: [
+                    "stretch",
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "baseline",
+                    "first baseline",
+                    "last baseline",
+                    "start",
+                    "end",
+                    "self-start",
+                    "self-end",
+                  ],
+                }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{
+                  name: "align_content",
+                  label: "Align content",
+                  type: "select",
+                  options: [
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "space-between",
+                    "space-around",
+                    "space-evenly",
+                    "stretch",
+                    "start",
+                    "end",
+                    "baseline",
+                    "first baseline",
+                    "last baseline",
+                  ],
                 }}
                 node={node}
                 setProp={setProp}
