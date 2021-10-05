@@ -185,6 +185,9 @@ export const ContainerSettings = () => {
     overflow: node.data.props.overflow,
     rotate: node.data.props.rotate,
     display: node.data.props.display,
+    flex_grow: node.data.props.flex_grow,
+    flex_shrink: node.data.props.flex_shrink,
+    flex_direction: node.data.props.flex_direction,
   }));
   const {
     actions: { setProp },
@@ -347,7 +350,7 @@ export const ContainerSettings = () => {
                 "inline-block",
                 "none",
                 "flex",
-                "flex-inline",
+                "inline-flex",
               ],
             }}
             node={node}
@@ -637,6 +640,36 @@ export const ContainerSettings = () => {
                 />
               </td>
             </tr>
+          )}
+        </tbody>
+      </table>
+      <table className="w-100" accordiontitle="Flex">
+        <tbody>
+          <SettingsSectionHeaderRow title="Flex item" />
+          <SettingsRow
+            field={{ name: "flex_grow", label: "Grow", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "flex_shrink", label: "shrink", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+          {display && display.includes("flex") && (
+            <Fragment>
+              <SettingsSectionHeaderRow title="Flex container" />
+              <SettingsRow
+                field={{
+                  name: "flex_direction",
+                  label: "Direction",
+                  type: "select",
+                  options: ["row", "row-reverse", "column", "column-reverse"],
+                }}
+                node={node}
+                setProp={setProp}
+              />
+            </Fragment>
           )}
         </tbody>
       </table>
