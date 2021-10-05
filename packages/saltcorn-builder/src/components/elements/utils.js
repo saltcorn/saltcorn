@@ -309,6 +309,19 @@ export const parseStyles = (styles) =>
       }),
       {}
     );
+
+export const reactifyStyles = (styles) => {
+  const toCamel = (s) => {
+    return s.replace(/([-][a-z])/gi, ($1) => {
+      return $1.toUpperCase().replace("-", "");
+    });
+  };
+  const reactified = {};
+  Object.keys(styles).forEach((k) => {
+    reactified[toCamel(k)] = styles[k];
+  });
+  return reactified;
+};
 const isCheckbox = (f) =>
   f && f.type && (f.type === "Bool" || f.type.name === "Bool");
 export const setInitialConfig = (setProp, fieldview, fields) => {
@@ -365,18 +378,26 @@ export const ConfigField = ({
   setProp,
   onChange,
   props,
+  isStyle,
 }) => {
   const myOnChange = (v) => {
     setProp((prop) => {
       if (configuration) {
         if (!prop.configuration) prop.configuration = {};
         prop.configuration[field.name] = v;
+      } else if (isStyle) {
+        if (!prop.style) prop.style = {};
+        prop.style[field.name] = v;
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v);
   };
   const value = or_if_undef(
-    configuration ? configuration[field.name] : props[field.name],
+    configuration
+      ? configuration[field.name]
+      : isStyle
+      ? props.style[field.name]
+      : props[field.name],
     field.default
   );
   if (field.input_type === "fromtype") field.input_type = null;
@@ -546,7 +567,7 @@ export const SettingsSectionHeaderRow = ({ title }) => (
   </tr>
 );
 
-export const SettingsRow = ({ field, node, setProp, onChange }) => {
+export const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -568,6 +589,7 @@ export const SettingsRow = ({ field, node, setProp, onChange }) => {
       props={node}
       setProp={setProp}
       onChange={onChange}
+      isStyle={isStyle}
     />
   );
   return (

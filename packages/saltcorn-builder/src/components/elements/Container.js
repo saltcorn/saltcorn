@@ -10,6 +10,7 @@ import {
   SelectUnits,
   SettingsSectionHeaderRow,
   SettingsRow,
+  reactifyStyles,
 } from "./utils";
 import {
   BorderOuter,
@@ -38,11 +39,6 @@ import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
-const toCamel = (s) => {
-  return s.replace(/([_][a-z])/gi, ($1) => {
-    return $1.toUpperCase().replace("_", "");
-  });
-};
 
 export const Container = ({
   children,
@@ -76,24 +72,13 @@ export const Container = ({
   gradEndColor,
   gradDirection,
   rotate,
-  ...rest
+  style,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  const flexStyles = {};
-  [
-    "flex_grow",
-    "flex_shrink",
-    "flex_direction",
-    "flex_wrap",
-    "justify_content",
-    "align_items",
-    "align_content",
-  ].forEach((style) => {
-    if (rest[style]) flexStyles[toCamel(style)] = rest[style];
-  });
+
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -104,7 +89,7 @@ export const Container = ({
       } ${selected ? "selected-node" : ""}`}
       style={{
         ...parseStyles(customCSS || ""),
-        ...flexStyles,
+        ...reactifyStyles(style),
         display,
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
@@ -204,13 +189,7 @@ export const ContainerSettings = () => {
     overflow: node.data.props.overflow,
     rotate: node.data.props.rotate,
     display: node.data.props.display,
-    flex_grow: node.data.props.flex_grow,
-    flex_shrink: node.data.props.flex_shrink,
-    flex_direction: node.data.props.flex_direction,
-    flex_wrap: node.data.props.flex_wrap,
-    justify_content: node.data.props.justify_content,
-    align_items: node.data.props.align_items,
-    align_content: node.data.props.align_content,
+    style: node.data.props.style,
   }));
   const {
     actions: { setProp },
@@ -670,12 +649,12 @@ export const ContainerSettings = () => {
         <tbody>
           <SettingsSectionHeaderRow title="Flex item" />
           <SettingsRow
-            field={{ name: "flex_grow", label: "Grow", type: "Float" }}
+            field={{ name: "flex-grow", label: "Grow", type: "Float" }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "flex_shrink", label: "shrink", type: "Float" }}
+            field={{ name: "flex-shrink", label: "shrink", type: "Float" }}
             node={node}
             setProp={setProp}
           />
@@ -684,27 +663,29 @@ export const ContainerSettings = () => {
               <SettingsSectionHeaderRow title="Flex container" />
               <SettingsRow
                 field={{
-                  name: "flex_direction",
+                  name: "flex-direction",
                   label: "Direction",
                   type: "select",
                   options: ["row", "row-reverse", "column", "column-reverse"],
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={true}
               />
               <SettingsRow
                 field={{
-                  name: "flex_wrap",
+                  name: "flex-wrap",
                   label: "Wrap",
                   type: "select",
                   options: ["nowrap", "wrap", "wrap-reverse"],
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={true}
               />
               <SettingsRow
                 field={{
-                  name: "justify_content",
+                  name: "justify-content",
                   label: "Justify content",
                   type: "select",
                   options: [
@@ -722,10 +703,11 @@ export const ContainerSettings = () => {
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={true}
               />
               <SettingsRow
                 field={{
-                  name: "align_items",
+                  name: "align-items",
                   label: "Align items",
                   type: "select",
                   options: [
@@ -744,10 +726,11 @@ export const ContainerSettings = () => {
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={true}
               />
               <SettingsRow
                 field={{
-                  name: "align_content",
+                  name: "align-content",
                   label: "Align content",
                   type: "select",
                   options: [
@@ -767,6 +750,7 @@ export const ContainerSettings = () => {
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={true}
               />
             </Fragment>
           )}
@@ -953,6 +937,7 @@ Container.craft = {
     minScreenWidth: "",
     display: "block",
     show_for_owner: false,
+    style: {},
   },
   rules: {
     canDrag: () => true,

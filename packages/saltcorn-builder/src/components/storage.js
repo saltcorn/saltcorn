@@ -174,16 +174,10 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
               ? false
               : segment.fullPageWidth
           }
-          flex_grow={segment.flex_grow}
-          flex_shrink={segment.flex_shrink}
-          flex_direction={segment.flex_direction}
-          flex_wrap={segment.flex_wrap}
-          justify_content={segment.justify_content}
-          align_items={segment.align_items}
-          align_content={segment.align_content}
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
+          style={segment.style || {}}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
@@ -335,13 +329,7 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
           rotate: node.props.rotate,
-          flex_grow: node.props.flex_grow,
-          flex_shrink: node.props.flex_shrink,
-          flex_direction: node.props.flex_direction,
-          flex_wrap: node.props.flex_wrap,
-          justify_content: node.props.justify_content,
-          align_items: node.props.align_items,
-          align_content: node.props.align_content,
+          style: node.props.style,
         };
       else return get_nodes(node);
     }

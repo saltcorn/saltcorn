@@ -308,7 +308,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         fullPageWidth,
         overflow,
         rotate,
-        ...rest
+        style,
       } = segment;
       if (hide) return "";
       if (
@@ -340,17 +340,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
       let flexStyles = "";
-      [
-        "flex_grow",
-        "flex_shrink",
-        "flex_direction",
-        "flex_wrap",
-        "justify_content",
-        "align_items",
-        "align_content",
-      ].forEach((style) => {
-        if (rest[style])
-          flexStyles += `${style.replace("_", "-")}:${rest[style]};`;
+      Object.keys(style).forEach((k) => {
+        flexStyles += `${k}:${style[k]};`;
       });
       return wrap(
         segment,
