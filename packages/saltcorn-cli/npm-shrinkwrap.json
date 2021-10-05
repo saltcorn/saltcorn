@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/cli",
-  "version": "0.5.6",
+  "version": "0.6.0-alpha.0",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
@@ -910,27 +910,27 @@
       }
     },
     "@saltcorn/base-plugin": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.5.6.tgz",
-      "integrity": "sha512-nNf42jP/3BKRAqhkU2yLs3XTh/10uR68wJPUxbEIeK064bP4RrQq0pIP5lWzGZM8pllJ17vIxFD8Azst+rXw6Q==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-y794FefzMlauiXjVoLX+avKmZKDIudtRQL88WoCM9sYiJxD29AM0ntPemifCJrkSYwI+aqcAX5Ijf3K3GAqi6A==",
       "requires": {
-        "@saltcorn/data": "0.5.6"
+        "@saltcorn/data": "0.6.0-alpha.0"
       }
     },
     "@saltcorn/builder": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.5.6.tgz",
-      "integrity": "sha512-XFemLNp9WevyiYwSTwVhjsACIvnfWWt5bKzZy79Ps8t42ZIGDNpxJ3oybmyPRZ79Nmp8+fp72tfjGixagRxkkw==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-nRxA7TVJge4FCS3ddQvQZG8hCFprrR8JXaX8Dp3cz4dyBEKFQxse2xAU53Qwmhq7dk34/aamwUIINe95znCTLg==",
       "requires": {
         "styled-components": "^4.4.1"
       }
     },
     "@saltcorn/data": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.5.6.tgz",
-      "integrity": "sha512-wvp8f7R/aeLW8ofOM2PVrKLv+9qsxf/mHLCuWAQpa8jQAMtVPZKRFezYWXcVlO/h4+LC352Fybkt7KvT6kNf1A==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-4UqWvE1NwDDcNP7VoOnJNPL4pL1D5Xztxg+8gUc2TfdqjiE8vN3YuK0rUUib2+U3Q/ZW79FGIcSVua/pCIIuaw==",
       "requires": {
-        "@saltcorn/markup": "0.5.6",
+        "@saltcorn/markup": "0.6.0-alpha.0",
         "acorn": "^8.0.3",
         "adm-zip": "0.5.5",
         "astring": "^1.4.3",
@@ -961,9 +961,9 @@
       }
     },
     "@saltcorn/markup": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.5.6.tgz",
-      "integrity": "sha512-5CYwWq5cX56lZDMjvl0BYh2rXPFIo+iY+ldlUwFJg2UTn4HAgDAYma0DpmBgJyc0to6nNmV+HgfpkmTO1eemnw==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-jOfoZoUGEGLX3OdeJDAe/P/I3DN7MyDcQYAYqJRB1ouTbanU1OqKdutwIQg6iju3XYjl7rQ7RdW19zEiStmV4Q==",
       "requires": {
         "contractis": "^0.1.0",
         "escape-html": "^1.0.3",
@@ -972,25 +972,25 @@
       }
     },
     "@saltcorn/sbadmin2": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.5.6.tgz",
-      "integrity": "sha512-M1aviTlsde+FJpD5YEEHHPG8AWktZhvCgRBll8WwRLTNqrVylubvDqIzmmb3cwOzsh+gSycArEBAwj0qb4XO6A==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-w1CHjpiVUNguL7LtODvlu8jfcOnqd1Cg5FnovJ5j1ZQlRjooozrSt9wcTyL2KD97ZKkx/6eHvMxeRxJgqCO4Lw==",
       "requires": {
-        "@saltcorn/data": "0.5.6",
-        "@saltcorn/markup": "0.5.6",
+        "@saltcorn/data": "0.6.0-alpha.0",
+        "@saltcorn/markup": "0.6.0-alpha.0",
         "startbootstrap-sb-admin-2": "^4.1.4"
       }
     },
     "@saltcorn/server": {
-      "version": "0.5.6",
-      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.5.6.tgz",
-      "integrity": "sha512-1ANQcP2WjksaliPIQwVV+DQp0TYVlvJqJlRy5ryLQAlpc0l2GD6tpUq24vR7UGyRlbZ+Ml36R2fxfRa04AmEUA==",
+      "version": "0.6.0-alpha.0",
+      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.6.0-alpha.0.tgz",
+      "integrity": "sha512-+0bXIOB8aZRSk2uvR/tgSBQyB8D9ZmZ7joWtrbDmg6he1nM+PuU0e+MGmm0rvyhBEIMyFQGhvKOyYmBqbOA5Bg==",
       "requires": {
-        "@saltcorn/base-plugin": "0.5.6",
-        "@saltcorn/builder": "0.5.6",
-        "@saltcorn/data": "0.5.6",
-        "@saltcorn/markup": "0.5.6",
-        "@saltcorn/sbadmin2": "0.5.6",
+        "@saltcorn/base-plugin": "0.6.0-alpha.0",
+        "@saltcorn/builder": "0.6.0-alpha.0",
+        "@saltcorn/data": "0.6.0-alpha.0",
+        "@saltcorn/markup": "0.6.0-alpha.0",
+        "@saltcorn/sbadmin2": "0.6.0-alpha.0",
         "@socket.io/cluster-adapter": "^0.1.0",
         "@socket.io/sticky": "^1.0.1",
         "connect-flash": "^0.1.1",
@@ -4689,11 +4689,6 @@
       "resolved": "https://registry.npmjs.org/nan/-/nan-2.15.0.tgz",
       "integrity": "sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ=="
     },
-    "nanocolors": {
-      "version": "0.2.12",
-      "resolved": "https://registry.npmjs.org/nanocolors/-/nanocolors-0.2.12.tgz",
-      "integrity": "sha512-SFNdALvzW+rVlzqexid6epYdt8H9Zol7xDoQarioEFcFN0JHo4CYNztAxmtfgGTVRCmFlEOqqhBpoFGKqSAMug=="
-    },
     "natural-orderby": {
       "version": "2.0.3",
       "resolved": "https://registry.npmjs.org/natural-orderby/-/natural-orderby-2.0.3.tgz",
@@ -5339,6 +5334,11 @@
         "split2": "^3.1.1"
       }
     },
+    "picocolors": {
+      "version": "0.2.1",
+      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-0.2.1.tgz",
+      "integrity": "sha512-cMlDqaLEqfSaW8Z7N5Jw+lyIW869EzT73/F5lhtY9cLGoVxSXznfgfXMO0Z5K0o0Q2TkTXq+0KFsdnSe3jDViA=="
+    },
     "picomatch": {
       "version": "2.2.2",
       "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-2.2.2.tgz",
@@ -5387,11 +5387,11 @@
       "integrity": "sha512-2qHaIQr2VLRFoxe2nASzsV6ef4yOOH+Fi9FBOVH6cqeSgUnoyySPZkxzLuzd+RYOQTRpROA0ztTMqxROKSb/nA=="
     },
     "postcss": {
-      "version": "7.0.38",
-      "resolved": "https://registry.npmjs.org/postcss/-/postcss-7.0.38.tgz",
-      "integrity": "sha512-wNrSHWjHDQJR/IZL5IKGxRtFgrYNaAA/UrkW2WqbtZO6uxSLMxMN+s2iqUMwnAWm3fMROlDYZB41dr0Mt7vBwQ==",
+      "version": "7.0.39",
+      "resolved": "https://registry.npmjs.org/postcss/-/postcss-7.0.39.tgz",
+      "integrity": "sha512-yioayjNbHn6z1/Bywyb2Y4s3yvDAeXGOyxqD+LnVOinq6Mdmd++SW2wUNVzavyyHxd6+DxzWGIuosg6P1Rj8uA==",
       "requires": {
-        "nanocolors": "^0.2.2",
+        "picocolors": "^0.2.1",
         "source-map": "^0.6.1"
       }
     },
