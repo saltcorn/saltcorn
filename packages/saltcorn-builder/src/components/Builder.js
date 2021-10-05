@@ -275,7 +275,7 @@ const Builder = ({ options, layout, mode }) => {
                 <div className="componets-and-library-accordion toolbox-card">
                   <InitNewElement nodekeys={nodekeys} />
                   <Accordion>
-                    <div className="card " accordiontitle="Components">
+                    <div className="card mt-1" accordiontitle="Components">
                       {{
                         show: <ToolboxShow />,
                         edit: <ToolboxEdit />,
