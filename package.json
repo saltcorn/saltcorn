@@ -23,6 +23,7 @@
   ],
   "nodemonConfig": {
     "verbose": true,
+    "ext": "js,json,css",
     "ignore": [
       "plugin_packages/",
       "git_plugins/",
