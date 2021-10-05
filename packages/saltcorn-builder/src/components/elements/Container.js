@@ -38,6 +38,11 @@ import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+const toCamel = (s) => {
+  return s.replace(/([_][a-z])/gi, ($1) => {
+    return $1.toUpperCase().replace("_", "");
+  });
+};
 
 export const Container = ({
   children,
@@ -71,11 +76,24 @@ export const Container = ({
   gradEndColor,
   gradDirection,
   rotate,
+  ...rest
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const flexStyles = {};
+  [
+    "flex_grow",
+    "flex_shrink",
+    "flex_direction",
+    "flex_wrap",
+    "justify_content",
+    "align_items",
+    "align_content",
+  ].forEach((style) => {
+    flexStyles[toCamel(style)] = rest[style];
+  });
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -86,6 +104,7 @@ export const Container = ({
       } ${selected ? "selected-node" : ""}`}
       style={{
         ...parseStyles(customCSS || ""),
+        ...flexStyles,
         display,
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
