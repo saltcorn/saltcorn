@@ -56,6 +56,7 @@ const SettingsPanel = () => {
       selected = {
         id: currentNodeId,
         name: state.nodes[currentNodeId].data.name,
+        parent: state.nodes[currentNodeId].data.parent,
         displayName:
           state.nodes[currentNodeId].data &&
           state.nodes[currentNodeId].data.displayName,
@@ -77,13 +78,54 @@ const SettingsPanel = () => {
   const deleteThis = () => {
     actions.delete(selected.id);
   };
-  const handleUserKeyPress = ({ keyCode, target }) => {
-    if (
-      (keyCode === 8 || keyCode === 46) &&
-      target.tagName.toLowerCase() === "body" &&
-      selected
-    ) {
-      deleteThis();
+  const otherSibling = (offset) => {
+    const siblings = query.node(selected.parent).childNodes();
+    const sibIx = siblings.findIndex((sib) => sib === selected.id);
+    return siblings[sibIx + offset];
+  };
+  const handleUserKeyPress = (event) => {
+    const { keyCode, target } = event;
+    if (target.tagName.toLowerCase() === "body" && selected) {
+      //8 backsp, 46 del
+      if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
+        deleteChildren();
+      }
+      if (keyCode === 8) {
+        //backspace
+        const prevSib = otherSibling(-1);
+        const parent = selected.parent;
+        deleteThis();
+        if (prevSib) actions.selectNode(prevSib);
+        else actions.selectNode(parent);
+      }
+      if (keyCode === 46) {
+        //del
+        const nextSib = otherSibling(1);
+        deleteThis();
+        if (nextSib) actions.selectNode(nextSib);
+      }
+      if (keyCode === 37 && selected.parent)
+        //left
+        actions.selectNode(selected.parent);
+
+      if (keyCode === 39) {
+        //right
+        if (selected.children && selected.children.length > 0) {
+          actions.selectNode(selected.children[0]);
+        }
+      }
+      if (keyCode === 38 && selected.parent) {
+        //up
+        const prevSib = otherSibling(-1);
+        if (prevSib) actions.selectNode(prevSib);
+        event.preventDefault();
+      }
+      if (keyCode === 40 && selected.parent) {
+        //down
+        const nextSib = otherSibling(1);
+        if (nextSib) actions.selectNode(nextSib);
+        event.preventDefault();
+      }
     }
   };
   useEffect(() => {
