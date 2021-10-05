@@ -654,7 +654,7 @@ export const ContainerSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "flex-shrink", label: "shrink", type: "Float" }}
+            field={{ name: "flex-shrink", label: "Shrink", type: "Float" }}
             node={node}
             setProp={setProp}
           />
