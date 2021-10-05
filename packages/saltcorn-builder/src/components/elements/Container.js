@@ -54,7 +54,7 @@ export const Container = ({
   bgFileId,
   imageSize,
   bgType,
-  block,
+  display,
   bgColor,
   setTextColor,
   textColor,
@@ -86,13 +86,13 @@ export const Container = ({
       } ${selected ? "selected-node" : ""}`}
       style={{
         ...parseStyles(customCSS || ""),
+        display,
         padding: padding.map((p) => p + "px").join(" "),
         margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
         [`border${
           borderDirection ? `${capitalizeFirstLetter(borderDirection)}` : ""
         }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
-        ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
@@ -165,7 +165,6 @@ export const ContainerSettings = () => {
     imageSize: node.data.props.imageSize,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
-    block: node.data.props.block,
     fullPageWidth: node.data.props.fullPageWidth,
     showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
@@ -185,6 +184,7 @@ export const ContainerSettings = () => {
     gradDirection: node.data.props.gradDirection,
     overflow: node.data.props.overflow,
     rotate: node.data.props.rotate,
+    display: node.data.props.display,
   }));
   const {
     actions: { setProp },
@@ -193,7 +193,7 @@ export const ContainerSettings = () => {
     bgFileId,
     imageSize,
     bgType,
-    block,
+    display,
     bgColor,
     setTextColor,
     textColor,
@@ -336,11 +336,23 @@ export const ContainerSettings = () => {
             node={node}
             setProp={setProp}
           />
-          <tr>
-            <td colSpan="2">
-              <BlockSetting block={block} setProp={setProp} />
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "display",
+              label: "Display",
+              type: "select",
+              options: [
+                "block",
+                "inline",
+                "inline-block",
+                "none",
+                "flex",
+                "flex-inline",
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
           <tr>
             <td colSpan="2">
               <div className="form-check">
@@ -793,7 +805,6 @@ Container.craft = {
     rotate: 0,
     isFormula: {},
     bgType: "None",
-    block: true,
     fullPageWidth: false,
     bgColor: "#ffffff",
     borderColor: "#000000",
@@ -808,6 +819,7 @@ Container.craft = {
     margin: [0, 0, 0, 0],
     padding: [0, 0, 0, 0],
     minScreenWidth: "",
+    display: "block",
     show_for_owner: false,
   },
   rules: {

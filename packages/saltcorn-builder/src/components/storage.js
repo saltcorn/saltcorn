@@ -161,7 +161,14 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
-          block={typeof segment.block === "undefined" ? true : segment.block}
+          display={
+            segment.display ||
+            (segment.block === true
+              ? "block"
+              : segment.block === false
+              ? "inline-block"
+              : "block")
+          }
           fullPageWidth={
             typeof segment.fullPageWidth === "undefined"
               ? false
@@ -303,7 +310,7 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           margin: node.props.margin,
           padding: node.props.padding,
           overflow: node.props.overflow,
-          block: node.props.block || false,
+          display: node.props.display,
           fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,

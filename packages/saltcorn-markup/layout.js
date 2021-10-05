@@ -282,6 +282,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         vAlign,
         hAlign,
         block,
+        display,
         imageSize,
         borderWidth,
         borderStyle,
@@ -323,7 +324,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               unit || segment[segKey + "Unit"] || "px"
             };`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
-      const baseDisplayClass = block === false ? "inline-block" : "block";
+      const baseDisplayClass =
+        block === false ? "inline-block" : display ? display : "block";
       let displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
         : baseDisplayClass === "block"
