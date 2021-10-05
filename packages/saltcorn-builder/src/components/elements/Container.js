@@ -92,7 +92,7 @@ export const Container = ({
     "align_items",
     "align_content",
   ].forEach((style) => {
-    flexStyles[toCamel(style)] = rest[style];
+    if (rest[style]) flexStyles[toCamel(style)] = rest[style];
   });
   return (
     <div

@@ -308,6 +308,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         fullPageWidth,
         overflow,
         rotate,
+        ...rest
       } = segment;
       if (hide) return "";
       if (
@@ -338,6 +339,19 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         !segment[what] || allZero(segment[what])
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
+      let flexStyles = "";
+      [
+        "flex_grow",
+        "flex_shrink",
+        "flex_direction",
+        "flex_wrap",
+        "justify_content",
+        "align_items",
+        "align_content",
+      ].forEach((style) => {
+        if (rest[style])
+          flexStyles += `${style.replace("_", "-")}:${rest[style]};`;
+      });
       return wrap(
         segment,
         isTop,
@@ -359,7 +373,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
 
-            style: `${ppCustomCSS(customCSS || "")}${sizeProp(
+            style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"
             )}${sizeProp("height", "height")}${sizeProp(
