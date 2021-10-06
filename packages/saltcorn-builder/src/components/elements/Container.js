@@ -79,7 +79,7 @@ export const Container = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-
+  //console.log("container style", style);
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -92,8 +92,8 @@ export const Container = ({
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style),
         display,
-        padding: padding.map((p) => p + "px").join(" "),
-        margin: margin.map((p) => p + "px").join(" "),
+        //padding: padding.map((p) => p + "px").join(" "),
+        //margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
         [`border${
           borderDirection ? `${capitalizeFirstLetter(borderDirection)}` : ""
@@ -245,7 +245,7 @@ export const ContainerSettings = () => {
   };
   return (
     <Accordion>
-      <div accordiontitle="Box" className="w-100 text-center">
+      <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
         <table className="w-100">
           <tbody>

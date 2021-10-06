@@ -499,38 +499,52 @@ export const ConfigField = ({
         ))}
       </div>
     ),
-    DimUnits: () => (
-      <Fragment>
-        <input
-          type="number"
-          value={value}
-          step="1"
-          min="0"
-          max="9999"
-          className="w-50 form-control-sm d-inline dimunit"
-          onChange={(e) => myOnChange(e.target.value)}
-        />
-        <SelectUnits
-          value={or_if_undef(
-            configuration
-              ? configuration[field.name + "Unit"]
-              : props[field.name + "Unit"],
-            "px"
-          )}
-          className="w-50 form-control-sm d-inline dimunit"
-          vert={true}
-          onChange={(e) => {
-            if (!e.target) return;
-            const target_value = e.target.value;
-            setProp((prop) => {
-              if (configuration)
-                prop.configuration[field.name + "Unit"] = target_value;
-              else prop[field.name + "Unit"] = target_value;
-            });
-          }}
-        />
-      </Fragment>
-    ),
+    DimUnits: () => {
+      let styleVal, styleDim;
+      if (isStyle && value && typeof value === "string") {
+        const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
+        if (matches) {
+          styleVal = matches[1];
+          styleDim = matches[2];
+        }
+      }
+      return (
+        <Fragment>
+          <input
+            type="number"
+            value={isStyle ? styleVal : value}
+            step="1"
+            min="0"
+            max="9999"
+            className="w-50 form-control-sm d-inline dimunit"
+            onChange={(e) => myOnChange(`${e.target.value}${styleDim || "px"}`)}
+          />
+          <SelectUnits
+            value={or_if_undef(
+              configuration
+                ? configuration[field.name + "Unit"]
+                : isStyle
+                ? styleDim
+                : props[field.name + "Unit"],
+              "px"
+            )}
+            className="w-50 form-control-sm d-inline dimunit"
+            vert={true}
+            onChange={(e) => {
+              if (!e.target) return;
+              const target_value = e.target.value;
+              setProp((prop) => {
+                if (configuration)
+                  prop.configuration[field.name + "Unit"] = target_value;
+                else if (isStyle) {
+                  prop.style[field.name] = `${styleVal || 0}${target_value}`;
+                } else prop[field.name + "Unit"] = target_value;
+              });
+            }}
+          />
+        </Fragment>
+      );
+    },
   };
   const f = dispatch[field.input_type || field.type.name || field.type];
   return f ? f() : null;
