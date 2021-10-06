@@ -143,6 +143,12 @@ div.componets-and-library-accordion {
 .builder-library .dropdown {
   overflow: visible;
 }
+
+/* 
+Contains code from https://github.com/tpaksu/boxmodel
+Copyright (c) 2017 Taha Paksu
+*/
+
 .boxmodel-container {
   display: inline-flex;
   flex-direction: column;
@@ -236,6 +242,9 @@ div.componets-and-library-accordion {
   text-align: center;
 }
 
+.boxmodel-container input.rotate {
+  transform: rotate(90deg);
+}
 .boxmodel-chrome-skin .boxmodel-container .boxmodel-margin {
   background: #f9cc9d;
   border: 1px dashed #222;

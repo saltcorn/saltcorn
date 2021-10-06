@@ -2,7 +2,6 @@ import React, { useContext, Fragment, useState } from "react";
 import { SettingsRow } from "./utils";
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
-
 Copyright (c) 2017 Taha Paksu
 */
 export const BoxModelEditor = ({ setProp, node }) => {
@@ -18,6 +17,8 @@ export const BoxModelEditor = ({ setProp, node }) => {
     setSelectedDirection(d);
   };
   //console.log(node.style);
+  const style = node.style;
+  console.log(style);
   return (
     <Fragment>
       <div className="w-100 text-center">
@@ -30,23 +31,32 @@ export const BoxModelEditor = ({ setProp, node }) => {
               >
                 Margin
               </span>
-              <span className="boxmodel-input-container boxmodel-input-direction-left">
+              <span
+                className="boxmodel-input-container boxmodel-input-direction-left"
+                onClick={() => setCatAndDir("margin", "left")}
+              >
                 <input
                   disabled
                   type="text"
                   autoComplete="off"
                   name="boxmodel-ex-1_left_margin"
                   size="3"
+                  className="rotate"
+                  value={style["margin-left"] || style["margin"] || ""}
                 />
               </span>
               <div className="flex-row">
-                <span className="boxmodel-input-container boxmodel-input-direction-top">
+                <span
+                  className="boxmodel-input-container boxmodel-input-direction-top"
+                  onClick={() => setCatAndDir("margin", "top")}
+                >
                   <input
                     disabled
                     type="text"
                     autoComplete="off"
                     name="boxmodel-ex-1_top_margin"
                     size="3"
+                    value={style["margin-top"] || style["margin"] || ""}
                   />
                 </span>
                 <div className="boxmodel-border">
@@ -56,22 +66,30 @@ export const BoxModelEditor = ({ setProp, node }) => {
                   >
                     Border
                   </span>
-                  <span className="boxmodel-input-container boxmodel-input-direction-left">
+                  <span
+                    className="boxmodel-input-container boxmodel-input-direction-left"
+                    onClick={() => setCatAndDir("border", "left")}
+                  >
                     <input
                       disabled
                       type="text"
                       autoComplete="off"
                       name="boxmodel-ex-1_left_border"
+                      value={style["border-left"] || style["border"] || ""}
                       size="3"
                     />
                   </span>
                   <div className="flex-row">
-                    <span className="boxmodel-input-container boxmodel-input-direction-top">
+                    <span
+                      className="boxmodel-input-container boxmodel-input-direction-top"
+                      onClick={() => setCatAndDir("border", "top")}
+                    >
                       <input
                         disabled
                         type="text"
                         autoComplete="off"
                         name="boxmodel-ex-1_top_border"
+                        value={style["border-top"] || style["border"] || ""}
                         size="3"
                       />
                     </span>
