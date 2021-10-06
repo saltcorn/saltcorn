@@ -27,7 +27,7 @@ export const BoxModelEditor = ({ setProp, node }) => {
             <div className="boxmodel-margin">
               <span
                 className="boxmodel-text boxmodel-header"
-                onClick={() => setSelectedCategory("margin")}
+                onClick={() => setCatAndDir("margin", null)}
               >
                 Margin
               </span>
@@ -35,15 +35,9 @@ export const BoxModelEditor = ({ setProp, node }) => {
                 className="boxmodel-input-container boxmodel-input-direction-left"
                 onClick={() => setCatAndDir("margin", "left")}
               >
-                <input
-                  disabled
-                  type="text"
-                  autoComplete="off"
-                  name="boxmodel-ex-1_left_margin"
-                  size="3"
-                  className="rotate"
-                  value={style["margin-left"] || style["margin"] || ""}
-                />
+                <div className="rotate dim-display">
+                  {style["margin-left"] || style["margin"] || ""}
+                </div>
               </span>
               <div className="flex-row">
                 <span
