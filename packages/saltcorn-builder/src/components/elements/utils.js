@@ -279,13 +279,14 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
   });
 };
 
-export const SelectUnits = ({ vert, ...props }) => (
+export const SelectUnits = ({ vert, autoable, ...props }) => (
   <select {...props}>
     <option>px</option>
     <option>%</option>
     <option>{vert ? "vh" : "vw"}</option>
     <option>em</option>
     <option>rem</option>
+    {autoable && <option>auto</option>}
   </select>
 );
 
@@ -501,7 +502,10 @@ export const ConfigField = ({
     ),
     DimUnits: () => {
       let styleVal, styleDim;
-      if (isStyle && value && typeof value === "string") {
+      if (isStyle && value === "auto") {
+        styleVal = "";
+        styleDim = "auto";
+      } else if (isStyle && value && typeof value === "string") {
         const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
@@ -517,6 +521,7 @@ export const ConfigField = ({
             min="0"
             max="9999"
             className="w-50 form-control-sm d-inline dimunit"
+            disabled={field.autoable && styleDim === "auto"}
             onChange={(e) =>
               myOnChange(
                 isStyle
@@ -534,16 +539,24 @@ export const ConfigField = ({
                 : props[field.name + "Unit"],
               "px"
             )}
+            autoable={field.autoable}
             className="w-50 form-control-sm d-inline dimunit"
             vert={true}
             onChange={(e) => {
               if (!e.target) return;
               const target_value = e.target.value;
               setProp((prop) => {
+                const myStyleVal =
+                  target_value === "auto" && field.autoable && isStyle
+                    ? ""
+                    : styleVal;
                 if (configuration)
                   prop.configuration[field.name + "Unit"] = target_value;
                 else if (isStyle) {
-                  prop.style[field.name] = `${styleVal || 0}${target_value}`;
+                  prop.style[field.name] = `${or_if_undef(
+                    myStyleVal,
+                    0
+                  )}${target_value}`;
                 } else prop[field.name + "Unit"] = target_value;
               });
             }}

@@ -219,10 +219,12 @@ export const BoxModelEditor = ({ setProp, node }) => {
                   name: selectedProperty,
                   label: selectedProperty,
                   type: "DimUnits",
+                  autoable: selectedCategory === "margin",
                 }}
                 node={node}
                 setProp={setProp}
                 isStyle={true}
+                autoable={selectedCategory}
               />
             )}
           {selectedCategory === "size" && (
