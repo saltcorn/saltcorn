@@ -18,7 +18,6 @@ export const BoxModelEditor = ({ setProp, node }) => {
   };
   //console.log(node.style);
   const style = node.style;
-  console.log(node);
   return (
     <Fragment>
       <div className="w-100 text-center">
