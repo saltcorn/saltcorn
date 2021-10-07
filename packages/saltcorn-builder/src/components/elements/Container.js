@@ -44,8 +44,6 @@ function capitalizeFirstLetter(string) {
 
 export const Container = ({
   children,
-  borderWidth,
-  borderStyle,
   minHeight,
   height,
   width,
@@ -66,10 +64,6 @@ export const Container = ({
   margin,
   padding,
   minScreenWidth,
-  borderRadius,
-  borderRadiusUnit,
-  borderDirection,
-  borderColor,
   gradStartColor,
   gradEndColor,
   gradDirection,
@@ -144,12 +138,6 @@ export const Container = ({
 
 export const ContainerSettings = () => {
   const node = useNode((node) => ({
-    borderWidth: node.data.props.borderWidth,
-    borderStyle: node.data.props.borderStyle,
-    borderRadius: node.data.props.borderRadius,
-    borderRadiusUnit: node.data.props.borderRadiusUnit,
-    borderDirection: node.data.props.borderDirection,
-    borderColor: node.data.props.borderColor,
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
@@ -187,8 +175,6 @@ export const ContainerSettings = () => {
   }));
   const {
     actions: { setProp },
-    borderWidth,
-    borderColor,
     bgFileId,
     imageSize,
     bgType,

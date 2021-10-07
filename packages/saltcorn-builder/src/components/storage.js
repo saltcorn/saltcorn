@@ -136,12 +136,6 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         <Element
           key={ix}
           canvas
-          borderWidth={segment.borderWidth}
-          borderStyle={segment.borderStyle}
-          borderRadius={segment.borderRadius}
-          borderDirection={segment.borderDirection}
-          borderColor={segment.borderColor}
-          borderRadiusUnit={segment.borderRadiusUnit}
           gradStartColor={segment.gradStartColor}
           gradEndColor={segment.gradEndColor}
           gradDirection={segment.gradDirection}
@@ -290,12 +284,6 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         return {
           contents: get_nodes(node),
           type: "container",
-          borderWidth: node.props.borderWidth,
-          borderStyle: node.props.borderStyle,
-          borderColor: node.props.borderColor,
-          borderRadius: node.props.borderRadius,
-          borderDirection: node.props.borderDirection,
-          borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
           minHeight: node.props.minHeight,
