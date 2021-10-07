@@ -10,6 +10,8 @@ import {
   SelectUnits,
   SettingsSectionHeaderRow,
   SettingsRow,
+  reactifyStyles,
+  bstyleopt,
 } from "./utils";
 import {
   BorderOuter,
@@ -34,6 +36,7 @@ import {
 } from "react-bootstrap-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
+import { BoxModelEditor } from "./BoxModelEditor";
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -41,8 +44,6 @@ function capitalizeFirstLetter(string) {
 
 export const Container = ({
   children,
-  borderWidth,
-  borderStyle,
   minHeight,
   height,
   width,
@@ -54,7 +55,7 @@ export const Container = ({
   bgFileId,
   imageSize,
   bgType,
-  block,
+  display,
   bgColor,
   setTextColor,
   textColor,
@@ -63,36 +64,32 @@ export const Container = ({
   margin,
   padding,
   minScreenWidth,
-  borderRadius,
-  borderRadiusUnit,
-  borderDirection,
-  borderColor,
   gradStartColor,
   gradEndColor,
   gradDirection,
   rotate,
+  style,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  //console.log("container style", style);
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={`${customClass || ""} text-${hAlign} ${
+      className={`${customClass || ""} canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
       } ${selected ? "selected-node" : ""}`}
       style={{
         ...parseStyles(customCSS || ""),
-        padding: padding.map((p) => p + "px").join(" "),
-        margin: margin.map((p) => p + "px").join(" "),
+        ...reactifyStyles(style),
+        display,
+        //padding: padding.map((p) => p + "px").join(" "),
+        //margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        [`border${
-          borderDirection ? `${capitalizeFirstLetter(borderDirection)}` : ""
-        }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
-        ...(block === false ? { display: "inline-block" } : {}),
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
@@ -122,11 +119,6 @@ export const Container = ({
               height: `${height}${heightUnit || "px"}`,
             }
           : {}),
-        ...(typeof borderRadius !== "undefined"
-          ? {
-              borderRadius: `${borderRadius}${borderRadiusUnit || "px"}`,
-            }
-          : {}),
         ...(typeof width !== "undefined"
           ? {
               width: `${width}${widthUnit || "px"}`,
@@ -139,19 +131,13 @@ export const Container = ({
           : {}),
       }}
     >
-      <div className="canvas">{children}</div>
+      {children}
     </div>
   );
 };
 
 export const ContainerSettings = () => {
   const node = useNode((node) => ({
-    borderWidth: node.data.props.borderWidth,
-    borderStyle: node.data.props.borderStyle,
-    borderRadius: node.data.props.borderRadius,
-    borderRadiusUnit: node.data.props.borderRadiusUnit,
-    borderDirection: node.data.props.borderDirection,
-    borderColor: node.data.props.borderColor,
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
@@ -165,7 +151,6 @@ export const ContainerSettings = () => {
     imageSize: node.data.props.imageSize,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
-    block: node.data.props.block,
     fullPageWidth: node.data.props.fullPageWidth,
     showIfFormula: node.data.props.showIfFormula,
     setTextColor: node.data.props.setTextColor,
@@ -185,15 +170,15 @@ export const ContainerSettings = () => {
     gradDirection: node.data.props.gradDirection,
     overflow: node.data.props.overflow,
     rotate: node.data.props.rotate,
+    display: node.data.props.display,
+    style: node.data.props.style,
   }));
   const {
     actions: { setProp },
-    borderWidth,
-    borderColor,
     bgFileId,
     imageSize,
     bgType,
-    block,
+    display,
     bgColor,
     setTextColor,
     textColor,
@@ -217,20 +202,7 @@ export const ContainerSettings = () => {
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
-  const bstyleopt = (style) => ({
-    value: style,
-    title: style,
-    label: (
-      <div
-        style={{
-          borderLeftStyle: style,
-          borderTopStyle: style,
-          height: "15px",
-          width: "6px",
-        }}
-      ></div>
-    ),
-  });
+
   const setAProp = (key) => (e) => {
     if (e.target) {
       const target_value = e.target.value;
@@ -239,108 +211,58 @@ export const ContainerSettings = () => {
   };
   return (
     <Accordion>
-      <table className="w-100" accordiontitle="Placement">
+      <div accordiontitle="Box" className="w-100">
+        <BoxModelEditor setProp={setProp} node={node} />
+        <table className="w-100">
+          <tbody>
+            <tr>
+              <td colSpan="2"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <table className="w-100" accordiontitle="Display">
         <tbody>
-          <SettingsSectionHeaderRow title="Border" />
-          <tr>
-            <td>
-              <label>Width</label>
-            </td>
-            <td>
-              <div className="input-group input-group-sm w-100">
-                <input
-                  type="number"
-                  value={borderWidth}
-                  step="1"
-                  className="form-control w-50"
-                  min="0"
-                  max="20"
-                  onChange={setAProp("borderWidth")}
-                />
-                <div className="input-group-append w-50 d-inline">
-                  <span className="input-group-text">px</span>
-                </div>
-              </div>
-            </td>
-          </tr>
           <SettingsRow
             field={{
-              name: "borderStyle",
-              label: "Style",
-              type: "btn_select",
-              btnClass: "btnstylesel",
+              name: "display",
+              label: "Display",
+              type: "select",
               options: [
-                "solid",
-                "dotted",
-                "dashed",
-                "double",
-                "groove",
-                "ridge",
-                "inset",
-                "outset",
-              ].map(bstyleopt),
-            }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{
-              name: "borderDirection",
-              label: "Direction",
-              type: "btn_select",
-              btnClass: "btnstylesel",
-              options: [
-                { value: "", title: "None", label: <BorderAll /> },
-                { value: "top", title: "Top", label: <BorderTop /> },
-                { value: "bottom", title: "Bottom", label: <BorderBottom /> },
-                { value: "left", title: "Left", label: <BorderLeft /> },
-                { value: "right", title: "Right", label: <BorderRight /> },
+                "block",
+                "inline",
+                "inline-block",
+                "none",
+                "flex",
+                "inline-flex",
               ],
             }}
             node={node}
             setProp={setProp}
           />
-
-          <tr>
-            <td>
-              <label>Color</label>
-            </td>
-            <td>
-              <input
-                type="color"
-                value={borderColor}
-                className="form-control-sm w-50 mr-2"
-                onChange={setAProp("borderColor")}
-              />
-              <small>{borderColor}</small>
-            </td>
-          </tr>
           <SettingsRow
-            field={{ name: "borderRadius", label: "Radius", type: "DimUnits" }}
+            field={{
+              name: "overflow",
+              label: "Overflow",
+              type: "btn_select",
+              options: [
+                { value: "visible", title: "Visible", label: <EyeFill /> },
+                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
+                {
+                  value: "scroll",
+                  title: "Scroll",
+                  label: <FontAwesomeIcon icon={faScroll} />,
+                },
+                {
+                  value: "auto",
+                  title: "Auto",
+                  label: <FontAwesomeIcon icon={faRobot} />,
+                },
+              ],
+            }}
             node={node}
             setProp={setProp}
           />
-          <SettingsSectionHeaderRow title="Size" />
-          <SettingsRow
-            field={{ name: "minHeight", label: "Min height", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{ name: "height", label: "Height", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{ name: "width", label: "Widths", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <tr>
-            <td colSpan="2">
-              <BlockSetting block={block} setProp={setProp} />
-            </td>
-          </tr>
           <tr>
             <td colSpan="2">
               <div className="form-check">
@@ -359,47 +281,6 @@ export const ContainerSettings = () => {
               </div>
             </td>
           </tr>
-        </tbody>
-      </table>
-      <table className="w-100" accordiontitle="Spacing">
-        <tbody>
-          <tr>
-            <th></th>
-            <th>Margin</th>
-            <th>Padding</th>
-          </tr>
-          {["Top", "Right", "Bottom", "Left"].map((direction, ix) => (
-            <tr key={ix}>
-              <td>{direction}</td>
-              <td>
-                <input
-                  type="number"
-                  value={margin[ix]}
-                  step="1"
-                  className="form-control-sm w-100"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.margin[ix] = e.target.value;
-                    })
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  value={padding[ix]}
-                  step="1"
-                  className="form-control-sm w-100"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.padding[ix] = e.target.value;
-                    })
-                  }
-                />
-              </td>
-              <td>px</td>
-            </tr>
-          ))}
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Contents">
@@ -438,29 +319,6 @@ export const ContainerSettings = () => {
                 { value: "center", title: "Center", label: <AlignCenter /> },
                 { value: "right", title: "Right", label: <AlignEnd /> },
                 { value: "justify", title: "Justify", label: <Justify /> },
-              ],
-            }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{
-              name: "overflow",
-              label: "Overflow",
-              type: "btn_select",
-              options: [
-                { value: "visible", title: "Visible", label: <EyeFill /> },
-                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
-                {
-                  value: "scroll",
-                  title: "Scroll",
-                  label: <FontAwesomeIcon icon={faScroll} />,
-                },
-                {
-                  value: "auto",
-                  title: "Auto",
-                  label: <FontAwesomeIcon icon={faRobot} />,
-                },
               ],
             }}
             node={node}
@@ -628,6 +486,117 @@ export const ContainerSettings = () => {
           )}
         </tbody>
       </table>
+      <table className="w-100" accordiontitle="Flex properties">
+        <tbody>
+          <SettingsSectionHeaderRow title="Flex item" />
+          <SettingsRow
+            field={{ name: "flex-grow", label: "Grow", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "flex-shrink", label: "Shrink", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+          {display && display.includes("flex") && (
+            <Fragment>
+              <SettingsSectionHeaderRow title="Flex container" />
+              <SettingsRow
+                field={{
+                  name: "flex-direction",
+                  label: "Direction",
+                  type: "select",
+                  options: ["row", "row-reverse", "column", "column-reverse"],
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "flex-wrap",
+                  label: "Wrap",
+                  type: "select",
+                  options: ["nowrap", "wrap", "wrap-reverse"],
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "justify-content",
+                  label: "Justify content",
+                  type: "select",
+                  options: [
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "space-between",
+                    "space-around",
+                    "space-evenly",
+                    "start",
+                    "end",
+                    "left",
+                    "right",
+                  ],
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "align-items",
+                  label: "Align items",
+                  type: "select",
+                  options: [
+                    "stretch",
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "baseline",
+                    "first baseline",
+                    "last baseline",
+                    "start",
+                    "end",
+                    "self-start",
+                    "self-end",
+                  ],
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "align-content",
+                  label: "Align content",
+                  type: "select",
+                  options: [
+                    "flex-start",
+                    "flex-end",
+                    "center",
+                    "space-between",
+                    "space-around",
+                    "space-evenly",
+                    "stretch",
+                    "start",
+                    "end",
+                    "baseline",
+                    "first baseline",
+                    "last baseline",
+                  ],
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+            </Fragment>
+          )}
+        </tbody>
+      </table>
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
           {["show", "edit"].includes(options.mode) && (
@@ -784,8 +753,6 @@ export const ContainerSettings = () => {
 Container.craft = {
   displayName: "Container",
   props: {
-    borderWidth: 0,
-    borderStyle: "solid",
     minHeight: 0,
     vAlign: "top",
     hAlign: "left",
@@ -793,7 +760,6 @@ Container.craft = {
     rotate: 0,
     isFormula: {},
     bgType: "None",
-    block: true,
     fullPageWidth: false,
     bgColor: "#ffffff",
     borderColor: "#000000",
@@ -808,7 +774,9 @@ Container.craft = {
     margin: [0, 0, 0, 0],
     padding: [0, 0, 0, 0],
     minScreenWidth: "",
+    display: "block",
     show_for_owner: false,
+    style: {},
   },
   rules: {
     canDrag: () => true,

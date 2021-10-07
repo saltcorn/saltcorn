@@ -279,13 +279,14 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
   });
 };
 
-export const SelectUnits = ({ vert, ...props }) => (
+export const SelectUnits = ({ vert, autoable, ...props }) => (
   <select {...props}>
     <option>px</option>
     <option>%</option>
     <option>{vert ? "vh" : "vw"}</option>
     <option>em</option>
     <option>rem</option>
+    {autoable && <option>auto</option>}
   </select>
 );
 
@@ -309,6 +310,19 @@ export const parseStyles = (styles) =>
       }),
       {}
     );
+
+export const reactifyStyles = (styles) => {
+  const toCamel = (s) => {
+    return s.replace(/([-][a-z])/gi, ($1) => {
+      return $1.toUpperCase().replace("-", "");
+    });
+  };
+  const reactified = {};
+  Object.keys(styles).forEach((k) => {
+    reactified[toCamel(k)] = styles[k];
+  });
+  return reactified;
+};
 const isCheckbox = (f) =>
   f && f.type && (f.type === "Bool" || f.type.name === "Bool");
 export const setInitialConfig = (setProp, fieldview, fields) => {
@@ -320,6 +334,24 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
       });
   });
 };
+
+const ColorInput = ({ value, onChange }) =>
+  value ? (
+    <input
+      type="color"
+      value={value}
+      className="form-control"
+      onChange={(e) => e.target && onChange(e.target.value)}
+    />
+  ) : (
+    <button
+      className="btn btn-sm btn-outline-secondary"
+      onClick={() => onChange("#000000")}
+    >
+      <small>Set color</small>
+    </button>
+  );
+
 export const ConfigForm = ({
   fields,
   configuration,
@@ -365,18 +397,26 @@ export const ConfigField = ({
   setProp,
   onChange,
   props,
+  isStyle,
 }) => {
   const myOnChange = (v) => {
     setProp((prop) => {
       if (configuration) {
         if (!prop.configuration) prop.configuration = {};
         prop.configuration[field.name] = v;
+      } else if (isStyle) {
+        if (!prop.style) prop.style = {};
+        prop.style[field.name] = v;
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v);
   };
   const value = or_if_undef(
-    configuration ? configuration[field.name] : props[field.name],
+    configuration
+      ? configuration[field.name]
+      : isStyle
+      ? props.style[field.name]
+      : props[field.name],
     field.default
   );
   if (field.input_type === "fromtype") field.input_type = null;
@@ -412,14 +452,7 @@ export const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    Color: () => (
-      <input
-        type="color"
-        value={value}
-        className="form-control"
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    Color: () => <ColorInput value={value} onChange={(c) => myOnChange(c)} />,
     Bool: () => (
       <div className="form-check">
         <input
@@ -478,38 +511,74 @@ export const ConfigField = ({
         ))}
       </div>
     ),
-    DimUnits: () => (
-      <Fragment>
-        <input
-          type="number"
-          value={value}
-          step="1"
-          min="0"
-          max="9999"
-          className="w-50 form-control-sm d-inline dimunit"
-          onChange={(e) => myOnChange(e.target.value)}
-        />
-        <SelectUnits
-          value={or_if_undef(
-            configuration
-              ? configuration[field.name + "Unit"]
-              : props[field.name + "Unit"],
-            "px"
+    DimUnits: () => {
+      let styleVal, styleDim;
+      if (isStyle && value === "auto") {
+        styleVal = "";
+        styleDim = "auto";
+      } else if (isStyle && value && typeof value === "string") {
+        const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
+        if (matches) {
+          styleVal = matches[1];
+          styleDim = matches[2];
+        }
+      }
+      return (
+        <Fragment>
+          {styleDim !== "auto" && (
+            <input
+              type="number"
+              value={(isStyle ? styleVal : value) || ""}
+              step="1"
+              min="0"
+              max="9999"
+              className="w-50 form-control-sm d-inline dimunit"
+              disabled={field.autoable && styleDim === "auto"}
+              onChange={(e) =>
+                myOnChange(
+                  isStyle
+                    ? `${e.target.value}${styleDim || "px"}`
+                    : e.target.value
+                )
+              }
+            />
           )}
-          className="w-50 form-control-sm d-inline dimunit"
-          vert={true}
-          onChange={(e) => {
-            if (!e.target) return;
-            const target_value = e.target.value;
-            setProp((prop) => {
-              if (configuration)
-                prop.configuration[field.name + "Unit"] = target_value;
-              else prop[field.name + "Unit"] = target_value;
-            });
-          }}
-        />
-      </Fragment>
-    ),
+          <SelectUnits
+            value={or_if_undef(
+              configuration
+                ? configuration[field.name + "Unit"]
+                : isStyle
+                ? styleDim
+                : props[field.name + "Unit"],
+              "px"
+            )}
+            autoable={field.autoable}
+            className={`w-${
+              styleDim === "auto" ? 100 : 50
+            } form-control-sm d-inline dimunit`}
+            vert={true}
+            onChange={(e) => {
+              if (!e.target) return;
+              const target_value = e.target.value;
+              setProp((prop) => {
+                const myStyleVal =
+                  target_value === "auto" && field.autoable && isStyle
+                    ? ""
+                    : styleVal;
+                if (configuration)
+                  prop.configuration[field.name + "Unit"] = target_value;
+                else if (isStyle) {
+                  prop.style[field.name] = `${or_if_undef(
+                    myStyleVal,
+                    0
+                  )}${target_value}`;
+                } else prop[field.name + "Unit"] = target_value;
+              });
+            }}
+          />
+        </Fragment>
+      );
+    },
   };
   const f = dispatch[field.input_type || field.type.name || field.type];
   return f ? f() : null;
@@ -546,7 +615,7 @@ export const SettingsSectionHeaderRow = ({ title }) => (
   </tr>
 );
 
-export const SettingsRow = ({ field, node, setProp, onChange }) => {
+export const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -568,6 +637,7 @@ export const SettingsRow = ({ field, node, setProp, onChange }) => {
       props={node}
       setProp={setProp}
       onChange={onChange}
+      isStyle={isStyle}
     />
   );
   return (
@@ -737,3 +807,17 @@ export const ButtonOrLinkSettingsRows = ({
       : []),
   ];
 };
+export const bstyleopt = (style) => ({
+  value: style,
+  title: style,
+  label: (
+    <div
+      style={{
+        borderLeftStyle: style,
+        borderTopStyle: style,
+        height: "15px",
+        width: "6px",
+      }}
+    ></div>
+  ),
+});

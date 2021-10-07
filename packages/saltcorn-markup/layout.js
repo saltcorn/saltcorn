@@ -282,6 +282,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         vAlign,
         hAlign,
         block,
+        display,
         imageSize,
         borderWidth,
         borderStyle,
@@ -307,6 +308,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         fullPageWidth,
         overflow,
         rotate,
+        style,
       } = segment;
       if (hide) return "";
       if (
@@ -323,7 +325,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               unit || segment[segKey + "Unit"] || "px"
             };`;
       const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
-      const baseDisplayClass = block === false ? "inline-block" : "block";
+      const baseDisplayClass =
+        block === false ? "inline-block" : display ? display : "block";
       let displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
         : baseDisplayClass === "block"
@@ -336,6 +339,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         !segment[what] || allZero(segment[what])
           ? ""
           : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
+      let flexStyles = "";
+      Object.keys(style || {}).forEach((k) => {
+        flexStyles += `${k}:${style[k]};`;
+      });
       return wrap(
         segment,
         isTop,
@@ -357,7 +364,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
 
-            style: `${ppCustomCSS(customCSS || "")}${sizeProp(
+            style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"
             )}${sizeProp("height", "height")}${sizeProp(

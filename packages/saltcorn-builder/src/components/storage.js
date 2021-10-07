@@ -136,12 +136,6 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         <Element
           key={ix}
           canvas
-          borderWidth={segment.borderWidth}
-          borderStyle={segment.borderStyle}
-          borderRadius={segment.borderRadius}
-          borderDirection={segment.borderDirection}
-          borderColor={segment.borderColor}
-          borderRadiusUnit={segment.borderRadiusUnit}
           gradStartColor={segment.gradStartColor}
           gradEndColor={segment.gradEndColor}
           gradDirection={segment.gradDirection}
@@ -161,7 +155,14 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
-          block={typeof segment.block === "undefined" ? true : segment.block}
+          display={
+            segment.display ||
+            (segment.block === true
+              ? "block"
+              : segment.block === false
+              ? "inline-block"
+              : "block")
+          }
           fullPageWidth={
             typeof segment.fullPageWidth === "undefined"
               ? false
@@ -170,6 +171,7 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
           bgType={segment.bgType || "None"}
+          style={segment.style || {}}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
@@ -282,12 +284,6 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         return {
           contents: get_nodes(node),
           type: "container",
-          borderWidth: node.props.borderWidth,
-          borderStyle: node.props.borderStyle,
-          borderColor: node.props.borderColor,
-          borderRadius: node.props.borderRadius,
-          borderDirection: node.props.borderDirection,
-          borderRadiusUnit: node.props.borderRadiusUnit,
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
           minHeight: node.props.minHeight,
@@ -303,7 +299,7 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           margin: node.props.margin,
           padding: node.props.padding,
           overflow: node.props.overflow,
-          block: node.props.block || false,
+          display: node.props.display,
           fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
@@ -321,6 +317,7 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
           rotate: node.props.rotate,
+          style: node.props.style,
         };
       else return get_nodes(node);
     }
