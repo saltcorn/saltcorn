@@ -95,7 +95,7 @@ div.wrap-builder-elem label {
 }
 
 #builder-main-canvas .selected-node {
-  border: 1px dashed blue !important;
+  border: 1px dashed blue;
 }
 
 #builder-main-canvas div.root-canvas:empty:before {

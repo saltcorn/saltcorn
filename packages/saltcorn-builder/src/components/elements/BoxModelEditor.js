@@ -346,7 +346,20 @@ export const BoxModelEditor = ({ setProp, node }) => {
           )}
           {!selectedProperty && (
             <tr>
-              <td colSpan={2}>Click above to select a property to adjust </td>
+              <td colSpan={2}>
+                <div>Click above to select a property to adjust.</div>
+                <div>
+                  <small>
+                    Click a label (margin, border, padding) to adjust all edges.
+                  </small>
+                </div>
+                <div>
+                  <small>Click an edge to adjust that edge.</small>
+                </div>
+                <div>
+                  <small>Click center to adjust height and width</small>
+                </div>
+              </td>
             </tr>
           )}
         </tbody>
