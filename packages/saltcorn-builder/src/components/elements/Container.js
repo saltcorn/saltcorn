@@ -78,7 +78,7 @@ export const Container = ({
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={`${customClass || ""} text-${hAlign} ${
+      className={`${customClass || ""} canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
@@ -131,7 +131,7 @@ export const Container = ({
           : {}),
       }}
     >
-      <div className="canvas">{children}</div>
+      {children}
     </div>
   );
 };
