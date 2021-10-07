@@ -514,22 +514,24 @@ export const ConfigField = ({
       }
       return (
         <Fragment>
-          <input
-            type="number"
-            value={(isStyle ? styleVal : value) || ""}
-            step="1"
-            min="0"
-            max="9999"
-            className="w-50 form-control-sm d-inline dimunit"
-            disabled={field.autoable && styleDim === "auto"}
-            onChange={(e) =>
-              myOnChange(
-                isStyle
-                  ? `${e.target.value}${styleDim || "px"}`
-                  : e.target.value
-              )
-            }
-          />
+          {styleDim !== "auto" && (
+            <input
+              type="number"
+              value={(isStyle ? styleVal : value) || ""}
+              step="1"
+              min="0"
+              max="9999"
+              className="w-50 form-control-sm d-inline dimunit"
+              disabled={field.autoable && styleDim === "auto"}
+              onChange={(e) =>
+                myOnChange(
+                  isStyle
+                    ? `${e.target.value}${styleDim || "px"}`
+                    : e.target.value
+                )
+              }
+            />
+          )}
           <SelectUnits
             value={or_if_undef(
               configuration
@@ -540,7 +542,9 @@ export const ConfigField = ({
               "px"
             )}
             autoable={field.autoable}
-            className="w-50 form-control-sm d-inline dimunit"
+            className={`w-${
+              styleDim === "auto" ? 100 : 50
+            } form-control-sm d-inline dimunit`}
             vert={true}
             onChange={(e) => {
               if (!e.target) return;
