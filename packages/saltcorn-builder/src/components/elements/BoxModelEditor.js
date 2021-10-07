@@ -247,7 +247,6 @@ export const BoxModelEditor = ({ setProp, node }) => {
                 node={node}
                 setProp={setProp}
                 isStyle={true}
-                autoable={selectedCategory}
               />
             )}
           {selectedCategory === "size" && (
@@ -285,7 +284,6 @@ export const BoxModelEditor = ({ setProp, node }) => {
                 node={node}
                 setProp={setProp}
                 isStyle={true}
-                autoable={selectedCategory}
               />
               <SettingsRow
                 field={{
@@ -311,13 +309,39 @@ export const BoxModelEditor = ({ setProp, node }) => {
               <SettingsRow
                 field={{
                   name: selectedProperty + "-color",
-                  label: "Color",
+                  label: "color",
                   type: "Color",
                 }}
                 node={node}
                 isStyle={true}
                 setProp={setProp}
               />
+              {!selectedDirection && (
+                <SettingsRow
+                  field={{
+                    name: selectedProperty + "-radius",
+                    label: "radius",
+                    type: "DimUnits",
+                  }}
+                  node={node}
+                  setProp={setProp}
+                  isStyle={true}
+                />
+              )}
+              {selectedDirection &&
+                radiusCornerDirections[selectedDirection].map((corner, ix) => (
+                  <SettingsRow
+                    key={ix}
+                    field={{
+                      name: `border-${corner}-radius`,
+                      label: corner.replace("-", " ") + " radius",
+                      type: "DimUnits",
+                    }}
+                    node={node}
+                    setProp={setProp}
+                    isStyle={true}
+                  />
+                ))}
             </Fragment>
           )}
           {!selectedProperty && (
@@ -329,4 +353,10 @@ export const BoxModelEditor = ({ setProp, node }) => {
       </table>
     </Fragment>
   );
+};
+const radiusCornerDirections = {
+  left: ["bottom-left", "top-left"],
+  right: ["bottom-right", "top-right"],
+  top: ["top-left", "top-right"],
+  bottom: ["bottom-left", "bottom-right"],
 };
