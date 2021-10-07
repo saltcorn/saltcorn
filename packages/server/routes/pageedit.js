@@ -360,7 +360,7 @@ router.post(
       const { id, columns, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
 
-      if (id) {
+      if (+id) {
         await Page.update(+id, pageRow);
         res.redirect(`/pageedit/`);
       } else {
