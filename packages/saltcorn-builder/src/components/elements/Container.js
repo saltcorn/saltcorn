@@ -240,6 +240,29 @@ export const ContainerSettings = () => {
             node={node}
             setProp={setProp}
           />
+          <SettingsRow
+            field={{
+              name: "overflow",
+              label: "Overflow",
+              type: "btn_select",
+              options: [
+                { value: "visible", title: "Visible", label: <EyeFill /> },
+                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
+                {
+                  value: "scroll",
+                  title: "Scroll",
+                  label: <FontAwesomeIcon icon={faScroll} />,
+                },
+                {
+                  value: "auto",
+                  title: "Auto",
+                  label: <FontAwesomeIcon icon={faRobot} />,
+                },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
           <tr>
             <td colSpan="2">
               <div className="form-check">
@@ -296,29 +319,6 @@ export const ContainerSettings = () => {
                 { value: "center", title: "Center", label: <AlignCenter /> },
                 { value: "right", title: "Right", label: <AlignEnd /> },
                 { value: "justify", title: "Justify", label: <Justify /> },
-              ],
-            }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{
-              name: "overflow",
-              label: "Overflow",
-              type: "btn_select",
-              options: [
-                { value: "visible", title: "Visible", label: <EyeFill /> },
-                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
-                {
-                  value: "scroll",
-                  title: "Scroll",
-                  label: <FontAwesomeIcon icon={faScroll} />,
-                },
-                {
-                  value: "auto",
-                  title: "Auto",
-                  label: <FontAwesomeIcon icon={faRobot} />,
-                },
               ],
             }}
             node={node}

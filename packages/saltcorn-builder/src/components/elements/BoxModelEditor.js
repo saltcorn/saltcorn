@@ -252,19 +252,19 @@ export const BoxModelEditor = ({ setProp, node }) => {
           {selectedCategory === "size" && (
             <Fragment>
               <SettingsRow
-                field={{ name: "width", label: "Width", type: "DimUnits" }}
+                field={{ name: "width", label: "width", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
               />
               <SettingsRow
-                field={{ name: "height", label: "Height", type: "DimUnits" }}
+                field={{ name: "height", label: "height", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
               />
               <SettingsRow
                 field={{
                   name: "minHeight",
-                  label: "Min height",
+                  label: "min height",
                   type: "DimUnits",
                 }}
                 node={node}
