@@ -517,7 +517,13 @@ export const ConfigField = ({
             min="0"
             max="9999"
             className="w-50 form-control-sm d-inline dimunit"
-            onChange={(e) => myOnChange(`${e.target.value}${styleDim || "px"}`)}
+            onChange={(e) =>
+              myOnChange(
+                isStyle
+                  ? `${e.target.value}${styleDim || "px"}`
+                  : e.target.value
+              )
+            }
           />
           <SelectUnits
             value={or_if_undef(

@@ -18,7 +18,7 @@ export const BoxModelEditor = ({ setProp, node }) => {
   };
   //console.log(node.style);
   const style = node.style;
-  console.log(style);
+  console.log(node);
   return (
     <Fragment>
       <div className="w-100 text-center">
@@ -56,7 +56,7 @@ export const BoxModelEditor = ({ setProp, node }) => {
                 <div className="boxmodel-border">
                   <span
                     className="boxmodel-text boxmodel-header"
-                    onClick={() => setSelectedCategory("border")}
+                    onClick={() => setCatAndDir("border", null)}
                   >
                     Border
                   </span>
@@ -64,14 +64,9 @@ export const BoxModelEditor = ({ setProp, node }) => {
                     className="boxmodel-input-container boxmodel-input-direction-left"
                     onClick={() => setCatAndDir("border", "left")}
                   >
-                    <input
-                      disabled
-                      type="text"
-                      autoComplete="off"
-                      name="boxmodel-ex-1_left_border"
-                      value={style["border-left"] || style["border"] || ""}
-                      size="3"
-                    />
+                    <div className="rotate dim-display">
+                      {style["border-left"] || style["border"] || ""}
+                    </div>
                   </span>
                   <div className="flex-row">
                     <span
@@ -90,37 +85,49 @@ export const BoxModelEditor = ({ setProp, node }) => {
                     <div className="boxmodel-padding">
                       <span
                         className="boxmodel-text boxmodel-header"
-                        onClick={() => setSelectedCategory("padding")}
+                        onClick={() => setCatAndDir("padding", null)}
                       >
                         Padding
                       </span>
-                      <span className="boxmodel-input-container boxmodel-input-direction-left">
-                        <input
-                          disabled
-                          type="text"
-                          autoComplete="off"
-                          name="boxmodel-ex-1_left_padding"
-                          size="3"
-                          className=""
-                        />
+                      <span
+                        className="boxmodel-input-container boxmodel-input-direction-left"
+                        onClick={() => setCatAndDir("padding", "left")}
+                      >
+                        <div className="rotate dim-display-padding">
+                          {style["padding-left"] || style["padding"] || ""}
+                        </div>
                       </span>
                       <div className="flex-row">
-                        <span className="boxmodel-input-container boxmodel-input-direction-top">
+                        <span
+                          className="boxmodel-input-container boxmodel-input-direction-top"
+                          onClick={() => setCatAndDir("padding", "top")}
+                        >
                           <input
                             disabled
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_top_padding"
+                            value={
+                              style["padding-top"] || style["padding"] || ""
+                            }
                             size="3"
                           />
                         </span>
-                        <div className="boxmodel-content">
+                        <div
+                          className="boxmodel-content"
+                          onClick={() => setSelectedCategory("size")}
+                        >
                           <input
                             disabled
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_width"
                             size="3"
+                            value={
+                              node.width
+                                ? `${node.width}${node.widthUnits || "px"}`
+                                : ""
+                            }
                           />
                           x
                           <input
@@ -129,6 +136,11 @@ export const BoxModelEditor = ({ setProp, node }) => {
                             autoComplete="off"
                             name="boxmodel-ex-1_height"
                             size="3"
+                            value={
+                              node.height
+                                ? `${node.height}${node.heightUnits || "px"}`
+                                : ""
+                            }
                           />
                         </div>
                         <span className="boxmodel-input-container boxmodel-input-direction-bottom">
@@ -200,17 +212,41 @@ export const BoxModelEditor = ({ setProp, node }) => {
             <td width="45%"></td>
             <td></td>
           </tr>
-          {selectedProperty && (
-            <SettingsRow
-              field={{
-                name: selectedProperty,
-                label: selectedProperty,
-                type: "DimUnits",
-              }}
-              node={node}
-              setProp={setProp}
-              isStyle={true}
-            />
+          {selectedProperty &&
+            ["margin", "padding"].includes(selectedCategory) && (
+              <SettingsRow
+                field={{
+                  name: selectedProperty,
+                  label: selectedProperty,
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+            )}
+          {selectedCategory === "size" && (
+            <Fragment>
+              <SettingsRow
+                field={{
+                  name: "minHeight",
+                  label: "Min height",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{ name: "height", label: "Height", type: "DimUnits" }}
+                node={node}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{ name: "width", label: "Width", type: "DimUnits" }}
+                node={node}
+                setProp={setProp}
+              />
+            </Fragment>
           )}
           {!selectedProperty && (
             <tr>

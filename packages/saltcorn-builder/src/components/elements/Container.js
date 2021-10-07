@@ -348,7 +348,7 @@ export const ContainerSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "width", label: "Widths", type: "DimUnits" }}
+            field={{ name: "width", label: "Width", type: "DimUnits" }}
             node={node}
             setProp={setProp}
           />

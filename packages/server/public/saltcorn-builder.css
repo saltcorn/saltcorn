@@ -257,6 +257,21 @@ Copyright (c) 2017 Taha Paksu
   height: 40px;
 }
 
+.boxmodel-container .dim-display-padding {
+  background: transparent;
+  color: black;
+  font-size: 9px;
+  font-family: Verdana, Geneva, sans-serif;
+  box-shadow: none;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+  margin: 0px;
+  padding: 1px;
+  text-align: center;
+  width: 23px;
+  height: 30px;
+}
 .boxmodel-container .rotate {
   transform: rotate(90deg);
 }
