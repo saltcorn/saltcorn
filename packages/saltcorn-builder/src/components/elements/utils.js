@@ -796,3 +796,17 @@ export const ButtonOrLinkSettingsRows = ({
       : []),
   ];
 };
+export const bstyleopt = (style) => ({
+  value: style,
+  title: style,
+  label: (
+    <div
+      style={{
+        borderLeftStyle: style,
+        borderTopStyle: style,
+        height: "15px",
+        width: "6px",
+      }}
+    ></div>
+  ),
+});

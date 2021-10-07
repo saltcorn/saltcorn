@@ -1,5 +1,5 @@
 import React, { useContext, Fragment, useState } from "react";
-import { SettingsRow } from "./utils";
+import { SettingsRow, SettingsSectionHeaderRow, bstyleopt } from "./utils";
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
 Copyright (c) 2017 Taha Paksu
@@ -65,7 +65,9 @@ export const BoxModelEditor = ({ setProp, node }) => {
                     onClick={() => setCatAndDir("border", "left")}
                   >
                     <div className="rotate dim-display">
-                      {style["border-left"] || style["border"] || ""}
+                      {style["border-left-width"] ||
+                        style["border-width"] ||
+                        ""}
                     </div>
                   </span>
                   <div className="flex-row">
@@ -78,7 +80,11 @@ export const BoxModelEditor = ({ setProp, node }) => {
                         type="text"
                         autoComplete="off"
                         name="boxmodel-ex-1_top_border"
-                        value={style["border-top"] || style["border"] || ""}
+                        value={
+                          style["border-top-width"] ||
+                          style["border-width"] ||
+                          ""
+                        }
                         size="3"
                       />
                     </span>
@@ -178,7 +184,11 @@ export const BoxModelEditor = ({ setProp, node }) => {
                         autoComplete="off"
                         name="boxmodel-ex-1_bottom_border"
                         size="3"
-                        value={style["border-bottom"] || style["border"] || ""}
+                        value={
+                          style["border-bottom-width"] ||
+                          style["border-width"] ||
+                          ""
+                        }
                       />
                     </span>
                   </div>
@@ -187,7 +197,9 @@ export const BoxModelEditor = ({ setProp, node }) => {
                     onClick={() => setCatAndDir("border", "right")}
                   >
                     <div className="rotate dim-display">
-                      {style["border-right"] || style["border"] || ""}
+                      {style["border-right-width"] ||
+                        style["border-width"] ||
+                        ""}
                     </div>
                   </span>
                 </div>
@@ -241,11 +253,7 @@ export const BoxModelEditor = ({ setProp, node }) => {
           {selectedCategory === "size" && (
             <Fragment>
               <SettingsRow
-                field={{
-                  name: "minHeight",
-                  label: "Min height",
-                  type: "DimUnits",
-                }}
+                field={{ name: "width", label: "Width", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
               />
@@ -255,8 +263,59 @@ export const BoxModelEditor = ({ setProp, node }) => {
                 setProp={setProp}
               />
               <SettingsRow
-                field={{ name: "width", label: "Width", type: "DimUnits" }}
+                field={{
+                  name: "minHeight",
+                  label: "Min height",
+                  type: "DimUnits",
+                }}
                 node={node}
+                setProp={setProp}
+              />
+            </Fragment>
+          )}
+          {selectedCategory === "border" && (
+            <Fragment>
+              <SettingsSectionHeaderRow title={selectedProperty} />
+              <SettingsRow
+                field={{
+                  name: selectedProperty + "-width",
+                  label: "width",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+                autoable={selectedCategory}
+              />
+              <SettingsRow
+                field={{
+                  name: selectedProperty + "-style",
+                  label: "style",
+                  type: "btn_select",
+                  btnClass: "btnstylesel",
+                  options: [
+                    "solid",
+                    "dotted",
+                    "dashed",
+                    "double",
+                    "groove",
+                    "ridge",
+                    "inset",
+                    "outset",
+                  ].map(bstyleopt),
+                }}
+                node={node}
+                isStyle={true}
+                setProp={setProp}
+              />
+              <SettingsRow
+                field={{
+                  name: selectedProperty + "-color",
+                  label: "Color",
+                  type: "Color",
+                }}
+                node={node}
+                isStyle={true}
                 setProp={setProp}
               />
             </Fragment>

@@ -11,6 +11,7 @@ import {
   SettingsSectionHeaderRow,
   SettingsRow,
   reactifyStyles,
+  bstyleopt,
 } from "./utils";
 import {
   BorderOuter,
@@ -95,9 +96,6 @@ export const Container = ({
         //padding: padding.map((p) => p + "px").join(" "),
         //margin: margin.map((p) => p + "px").join(" "),
         minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
-        [`border${
-          borderDirection ? `${capitalizeFirstLetter(borderDirection)}` : ""
-        }`]: `${borderWidth}px ${borderStyle} ${borderColor || "black"}`,
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
@@ -125,11 +123,6 @@ export const Container = ({
         ...(typeof height !== "undefined"
           ? {
               height: `${height}${heightUnit || "px"}`,
-            }
-          : {}),
-        ...(typeof borderRadius !== "undefined"
-          ? {
-              borderRadius: `${borderRadius}${borderRadiusUnit || "px"}`,
             }
           : {}),
         ...(typeof width !== "undefined"
@@ -223,20 +216,7 @@ export const ContainerSettings = () => {
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
-  const bstyleopt = (style) => ({
-    value: style,
-    title: style,
-    label: (
-      <div
-        style={{
-          borderLeftStyle: style,
-          borderTopStyle: style,
-          height: "15px",
-          width: "6px",
-        }}
-      ></div>
-    ),
-  });
+
   const setAProp = (key) => (e) => {
     if (e.target) {
       const target_value = e.target.value;
