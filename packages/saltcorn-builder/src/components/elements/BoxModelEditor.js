@@ -143,64 +143,75 @@ export const BoxModelEditor = ({ setProp, node }) => {
                             }
                           />
                         </div>
-                        <span className="boxmodel-input-container boxmodel-input-direction-bottom">
+                        <span
+                          className="boxmodel-input-container boxmodel-input-direction-bottom"
+                          onClick={() => setCatAndDir("padding", "bottom")}
+                        >
                           <input
                             disabled
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_bottom_padding"
                             size="3"
+                            value={
+                              style["padding-bottom"] || style["padding"] || ""
+                            }
                           />
                         </span>
                       </div>
-                      <span className="boxmodel-input-container boxmodel-input-direction-right">
-                        <input
-                          disabled
-                          type="text"
-                          autoComplete="off"
-                          name="boxmodel-ex-1_right_padding"
-                          size="3"
-                        />
+                      <span
+                        className="boxmodel-input-container boxmodel-input-direction-right"
+                        onClick={() => setCatAndDir("padding", "right")}
+                      >
+                        <div className="rotate dim-display-padding">
+                          {style["padding-right"] || style["padding"] || ""}
+                        </div>
                       </span>
                     </div>
-                    <span className="boxmodel-input-container boxmodel-input-direction-bottom">
+                    <span
+                      className="boxmodel-input-container boxmodel-input-direction-bottom"
+                      onClick={() => setCatAndDir("border", "bottom")}
+                    >
                       <input
                         disabled
                         type="text"
                         autoComplete="off"
                         name="boxmodel-ex-1_bottom_border"
                         size="3"
+                        value={style["border-bottom"] || style["border"] || ""}
                       />
                     </span>
                   </div>
-                  <span className="boxmodel-input-container boxmodel-input-direction-right">
-                    <input
-                      disabled
-                      type="text"
-                      autoComplete="off"
-                      name="boxmodel-ex-1_right_border"
-                      size="3"
-                    />
+                  <span
+                    className="boxmodel-input-container boxmodel-input-direction-right"
+                    onClick={() => setCatAndDir("border", "right")}
+                  >
+                    <div className="rotate dim-display">
+                      {style["border-right"] || style["border"] || ""}
+                    </div>
                   </span>
                 </div>
-                <span className="boxmodel-input-container boxmodel-input-direction-bottom">
+                <span
+                  className="boxmodel-input-container boxmodel-input-direction-bottom"
+                  onClick={() => setCatAndDir("margin", "bottom")}
+                >
                   <input
                     disabled
                     type="text"
                     autoComplete="off"
                     name="boxmodel-ex-1_bottom_margin"
                     size="3"
+                    value={style["margin-bottom"] || style["margin"] || ""}
                   />
                 </span>
               </div>
-              <span className="boxmodel-input-container boxmodel-input-direction-right">
-                <input
-                  disabled
-                  type="text"
-                  autoComplete="off"
-                  name="boxmodel-ex-1_right_margin"
-                  size="3"
-                />
+              <span
+                className="boxmodel-input-container boxmodel-input-direction-right"
+                onClick={() => setCatAndDir("margin", "right")}
+              >
+                <div className="rotate dim-display">
+                  {style["margin-right"] || style["margin"] || ""}
+                </div>
               </span>
             </div>
           </div>
