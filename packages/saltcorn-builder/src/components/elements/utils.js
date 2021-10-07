@@ -334,6 +334,24 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
       });
   });
 };
+
+const ColorInput = ({ value, onChange }) =>
+  value ? (
+    <input
+      type="color"
+      value={value}
+      className="form-control"
+      onChange={(e) => e.target && onChange(e.target.value)}
+    />
+  ) : (
+    <button
+      className="btn btn-sm btn-outline-secondary"
+      onClick={() => onChange("#000000")}
+    >
+      <small>Set color</small>
+    </button>
+  );
+
 export const ConfigForm = ({
   fields,
   configuration,
@@ -434,14 +452,7 @@ export const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    Color: () => (
-      <input
-        type="color"
-        value={value}
-        className="form-control"
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    Color: () => <ColorInput value={value} onChange={(c) => myOnChange(c)} />,
     Bool: () => (
       <div className="form-check">
         <input

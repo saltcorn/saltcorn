@@ -221,103 +221,8 @@ export const ContainerSettings = () => {
           </tbody>
         </table>
       </div>
-      <table className="w-100" accordiontitle="Placement">
+      <table className="w-100" accordiontitle="Display">
         <tbody>
-          <SettingsSectionHeaderRow title="Border" />
-          <tr>
-            <td>
-              <label>Width</label>
-            </td>
-            <td>
-              <div className="input-group input-group-sm w-100">
-                <input
-                  type="number"
-                  value={borderWidth}
-                  step="1"
-                  className="form-control w-50"
-                  min="0"
-                  max="20"
-                  onChange={setAProp("borderWidth")}
-                />
-                <div className="input-group-append w-50 d-inline">
-                  <span className="input-group-text">px</span>
-                </div>
-              </div>
-            </td>
-          </tr>
-          <SettingsRow
-            field={{
-              name: "borderStyle",
-              label: "Style",
-              type: "btn_select",
-              btnClass: "btnstylesel",
-              options: [
-                "solid",
-                "dotted",
-                "dashed",
-                "double",
-                "groove",
-                "ridge",
-                "inset",
-                "outset",
-              ].map(bstyleopt),
-            }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{
-              name: "borderDirection",
-              label: "Direction",
-              type: "btn_select",
-              btnClass: "btnstylesel",
-              options: [
-                { value: "", title: "None", label: <BorderAll /> },
-                { value: "top", title: "Top", label: <BorderTop /> },
-                { value: "bottom", title: "Bottom", label: <BorderBottom /> },
-                { value: "left", title: "Left", label: <BorderLeft /> },
-                { value: "right", title: "Right", label: <BorderRight /> },
-              ],
-            }}
-            node={node}
-            setProp={setProp}
-          />
-
-          <tr>
-            <td>
-              <label>Color</label>
-            </td>
-            <td>
-              <input
-                type="color"
-                value={borderColor}
-                className="form-control-sm w-50 mr-2"
-                onChange={setAProp("borderColor")}
-              />
-              <small>{borderColor}</small>
-            </td>
-          </tr>
-          <SettingsRow
-            field={{ name: "borderRadius", label: "Radius", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsSectionHeaderRow title="Size" />
-          <SettingsRow
-            field={{ name: "minHeight", label: "Min height", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{ name: "height", label: "Height", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
-          <SettingsRow
-            field={{ name: "width", label: "Width", type: "DimUnits" }}
-            node={node}
-            setProp={setProp}
-          />
           <SettingsRow
             field={{
               name: "display",
@@ -353,47 +258,6 @@ export const ContainerSettings = () => {
               </div>
             </td>
           </tr>
-        </tbody>
-      </table>
-      <table className="w-100" accordiontitle="Spacing">
-        <tbody>
-          <tr>
-            <th></th>
-            <th>Margin</th>
-            <th>Padding</th>
-          </tr>
-          {["Top", "Right", "Bottom", "Left"].map((direction, ix) => (
-            <tr key={ix}>
-              <td>{direction}</td>
-              <td>
-                <input
-                  type="number"
-                  value={margin[ix]}
-                  step="1"
-                  className="form-control-sm w-100"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.margin[ix] = e.target.value;
-                    })
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  value={padding[ix]}
-                  step="1"
-                  className="form-control-sm w-100"
-                  onChange={(e) =>
-                    setProp((prop) => {
-                      prop.padding[ix] = e.target.value;
-                    })
-                  }
-                />
-              </td>
-              <td>px</td>
-            </tr>
-          ))}
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Contents">
@@ -889,8 +753,6 @@ export const ContainerSettings = () => {
 Container.craft = {
   displayName: "Container",
   props: {
-    borderWidth: 0,
-    borderStyle: "solid",
     minHeight: 0,
     vAlign: "top",
     hAlign: "left",
