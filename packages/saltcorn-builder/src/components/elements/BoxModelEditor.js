@@ -196,6 +196,10 @@ export const BoxModelEditor = ({ setProp, node }) => {
       </div>
       <table className="w-100 mt-2">
         <tbody>
+          <tr>
+            <td width="45%"></td>
+            <td></td>
+          </tr>
           {selectedProperty && (
             <SettingsRow
               field={{

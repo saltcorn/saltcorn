@@ -512,7 +512,7 @@ export const ConfigField = ({
         <Fragment>
           <input
             type="number"
-            value={isStyle ? styleVal : value}
+            value={(isStyle ? styleVal : value) || ""}
             step="1"
             min="0"
             max="9999"
