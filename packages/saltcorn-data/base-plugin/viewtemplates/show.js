@@ -321,7 +321,7 @@ const renderRows = async (
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
-      this.check_viewtemplate();
+      view.check_viewtemplate();
       if (view.viewtemplateObj.renderRows && view.view_select.type === "Own") {
         segment.contents = (
           await view.viewtemplateObj.renderRows(

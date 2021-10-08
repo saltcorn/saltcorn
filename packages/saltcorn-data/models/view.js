@@ -287,7 +287,7 @@ class View {
   }
   check_viewtemplate() {
     if (!this.viewtemplateObj)
-      throw new Error(
+      throw new InvalidConfiguration(
         `Cannot find viewtemplate ${this.viewtemplate} in view ${this.name}`
       );
   }
