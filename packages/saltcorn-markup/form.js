@@ -104,7 +104,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
       )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
-        v[hdr.form_name]
+        v[hdr.form_name] || ""
       )}</textarea>`;
     case "code":
       return `<textarea mode="${
@@ -114,7 +114,7 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
       )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
-        v[hdr.form_name]
+        v[hdr.form_name] || ""
       }</textarea>`;
     case "file":
       if (hdr.attributes && hdr.attributes.select_file_where) {
