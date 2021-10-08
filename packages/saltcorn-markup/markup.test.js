@@ -1,4 +1,14 @@
-const { a, input, div, ul, text, text_attr, i, hr } = require("./tags");
+const {
+  a,
+  input,
+  div,
+  ul,
+  text,
+  text_attr,
+  i,
+  hr,
+  genericElement,
+} = require("./tags");
 
 describe("tags", () => {
   it("renders", () => {
@@ -25,6 +35,9 @@ describe("tags", () => {
     expect(Array.isArray({})).toBe(false);
     expect(i({ class: "fas fa-plus-square" })).toBe(
       '<i class="fas fa-plus-square"></i>'
+    );
+    expect(genericElement("div", { class: "foo" }, "Hello")).toBe(
+      '<div class="foo">Hello</div>'
     );
   });
 
