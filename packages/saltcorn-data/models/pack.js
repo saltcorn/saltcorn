@@ -12,6 +12,7 @@ const { is_pack, is_plugin } = require("../contracts");
 const TableConstraint = require("./table_constraints");
 const { tr } = require("@saltcorn/markup/tags");
 const Role = require("./role");
+const Library = require("./library");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -205,6 +206,9 @@ const install_pack = contract(
     }
     for (const role of pack.roles || []) {
       await Role.create(role);
+    }
+    for (const lib of pack.library || []) {
+      await Library.create(lib);
     }
     for (const tableSpec of pack.tables) {
       if (tableSpec.name !== "users") {
