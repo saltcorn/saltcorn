@@ -23,6 +23,9 @@ const {
   uninstall_pack,
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
+const Library = require("@saltcorn/data/models/library");
+const Trigger = require("@saltcorn/data/models/trigger");
+const Role = require("@saltcorn/data/models/role");
 
 const router = new Router();
 module.exports = router;
@@ -56,9 +59,35 @@ router.get(
       name: `page.${t.name}`,
       type: "Bool",
     }));
+    const libs = await Library.find({});
+    const libFields = libs.map((l) => ({
+      label: `${l.name} library item`,
+      name: `library.${l.name}`,
+      type: "Bool",
+    }));
+    const trigs = await Trigger.find({});
+    const trigFields = trigs.map((l) => ({
+      label: `${l.name} trigger`,
+      name: `trigger.${l.name}`,
+      type: "Bool",
+    }));
+    const roles = await Role.find({ not: { id: { in: [1, 8, 10] } } });
+    const roleFields = roles.map((l) => ({
+      label: `${l.role} role`,
+      name: `role.${l.role}`,
+      type: "Bool",
+    }));
     const form = new Form({
       action: "/packs/create",
-      fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields],
+      fields: [
+        ...tableFields,
+        ...viewFields,
+        ...pluginFields,
+        ...pageFields,
+        ...trigFields,
+        ...roleFields,
+        ...libFields,
+      ],
     });
     res.sendWrap(req.__(`Create Pack`), {
       above: [
