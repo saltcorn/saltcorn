@@ -509,6 +509,12 @@ const clearAllForm = (req) =>
       },
       {
         type: "Bool",
+        name: "eventlog",
+        label: req.__("Event log"),
+        default: true,
+      },
+      {
+        type: "Bool",
         name: "library",
         label: req.__("Library"),
         default: true,
@@ -697,6 +703,9 @@ router.post(
     }
     if (form.values.library) {
       await db.deleteWhere("_sc_library");
+    }
+    if (form.values.eventlog) {
+      await db.deleteWhere("_sc_event_log");
     }
     if (form.values.config) {
       //config+crashes
