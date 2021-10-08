@@ -271,17 +271,20 @@ const field_picker_fields = contract(
     });
     const actionConfigFields = [];
     for (const [name, action] of Object.entries(stateActions)) {
+      if (!stateActionKeys.includes(name)) continue;
       const cfgFields = await getActionConfigFields(action, table);
 
       for (const field of cfgFields) {
-        actionConfigFields.push({
+        const cfgFld = {
           ...field,
           showIf: {
             action_name: name,
             type: "Action",
             ...(field.showIf || {}),
           },
-        });
+        };
+        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld);
       }
     }
     const fldOptions = fields.map((f) => f.name);
