@@ -90,7 +90,7 @@ export const Container = ({
         display,
         //padding: padding.map((p) => p + "px").join(" "),
         //margin: margin.map((p) => p + "px").join(" "),
-        minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
+        minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,

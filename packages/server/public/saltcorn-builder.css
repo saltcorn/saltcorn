@@ -1,5 +1,7 @@
+.canvas:empty {
+  min-height: 20px;
+}
 .canvas {
-  min-height: 30px;
   border: 1px dashed #111111;
 }
 span.is-html-block {
