@@ -60,6 +60,7 @@ const getUserFields = async (req) => {
   await iterForm("signup_form");
   await iterForm("new_user_form");
   for (const f of userFields) {
+    await f.fill_fkey_options();
     if (f.name === "email") {
       f.validator = (s) => {
         if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
