@@ -503,6 +503,18 @@ const clearAllForm = (req) =>
       },
       {
         type: "Bool",
+        name: "triggers",
+        label: req.__("Triggers"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "library",
+        label: req.__("Library"),
+        default: true,
+      },
+      {
+        type: "Bool",
         name: "users",
         label: req.__("Users"),
         default: true,
@@ -513,7 +525,6 @@ const clearAllForm = (req) =>
         label: req.__("Configuration"),
         default: true,
       },
-      ,
       {
         type: "Bool",
         name: "plugins",
@@ -680,9 +691,15 @@ router.post(
       }
       await getState().refresh_plugins();
     }
-    if (form.values.config) {
-      //config+crashes+nontable triggers
+    if (form.values.triggers) {
       await db.deleteWhere("_sc_triggers");
+      await getState().refresh_triggers();
+    }
+    if (form.values.library) {
+      await db.deleteWhere("_sc_library");
+    }
+    if (form.values.config) {
+      //config+crashes
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
