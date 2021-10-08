@@ -77,7 +77,7 @@ class View {
    * @returns {Promise<*|*[]>}
    */
   async get_state_fields() {
-    if (this.viewtemplateObj.get_state_fields) {
+    if (this.viewtemplateObj && this.viewtemplateObj.get_state_fields) {
       return await this.viewtemplateObj.get_state_fields(
         this.table_id,
         this.name,
@@ -264,7 +264,8 @@ class View {
   }
 
   getStringsForI18n() {
-    if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n) return [];
+    if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n)
+      return [];
     return this.viewtemplateObj.getStringsForI18n(this.configuration);
   }
 
@@ -275,17 +276,29 @@ class View {
    * @returns {Promise<*>}
    */
   async run(query, extraArgs) {
-    return await this.viewtemplateObj.run(
-      this.exttable_name || this.table_id,
-      this.name,
-      this.configuration,
-      removeEmptyStrings(query),
-      extraArgs
-    );
+    this.check_viewtemplate();
+    try {
+      return await this.viewtemplateObj.run(
+        this.exttable_name || this.table_id,
+        this.name,
+        this.configuration,
+        removeEmptyStrings(query),
+        extraArgs
+      );
+    } catch (error) {
+      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate): ${error.message}`;
+      throw error;
+    }
   }
-
+  check_viewtemplate() {
+    if (!this.viewtemplateObj)
+      throw new InvalidConfiguration(
+        `Cannot find viewtemplate ${this.viewtemplate} in view ${this.name}`
+      );
+  }
   async run_possibly_on_page(query, req, res) {
     const view = this;
+    this.check_viewtemplate();
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
@@ -305,38 +318,44 @@ class View {
   }
 
   async runMany(query, extraArgs) {
-    if (this.viewtemplateObj.runMany)
-      return await this.viewtemplateObj.runMany(
-        this.table_id,
-        this.name,
-        this.configuration,
-        query,
-        extraArgs
-      );
-    if (this.viewtemplateObj.renderRows) {
-      const Table = require("./table");
-      const { stateFieldsToWhere } = require("../plugin-helper");
+    this.check_viewtemplate();
+    try {
+      if (this.viewtemplateObj.runMany)
+        return await this.viewtemplateObj.runMany(
+          this.table_id,
+          this.name,
+          this.configuration,
+          query,
+          extraArgs
+        );
+      if (this.viewtemplateObj.renderRows) {
+        const Table = require("./table");
+        const { stateFieldsToWhere } = require("../plugin-helper");
 
-      const tbl = await Table.findOne({ id: this.table_id });
-      const fields = await tbl.getFields();
-      const qstate = await stateFieldsToWhere({ fields, state: query });
-      const rows = await tbl.getRows(qstate);
-      const rendered = await this.viewtemplateObj.renderRows(
-        tbl,
-        this.name,
-        this.configuration,
-        extraArgs,
-        rows
-      );
+        const tbl = await Table.findOne({ id: this.table_id });
+        const fields = await tbl.getFields();
+        const qstate = await stateFieldsToWhere({ fields, state: query });
+        const rows = await tbl.getRows(qstate);
+        const rendered = await this.viewtemplateObj.renderRows(
+          tbl,
+          this.name,
+          this.configuration,
+          extraArgs,
+          rows
+        );
 
-      return rendered.map((html, ix) => ({ html, row: rows[ix] }));
+        return rendered.map((html, ix) => ({ html, row: rows[ix] }));
+      }
+    } catch (error) {
+      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate): ${error.message}`;
+      throw error;
     }
-
     throw new InvalidConfiguration(
       `runMany on view ${this.name}: viewtemplate ${this.viewtemplate} does not have renderRows or runMany methods`
     );
   }
   async runPost(query, body, extraArgs) {
+    this.check_viewtemplate();
     return await this.viewtemplateObj.runPost(
       this.table_id,
       this.name,
@@ -348,6 +367,7 @@ class View {
   }
 
   async runRoute(route, body, res, extraArgs) {
+    this.check_viewtemplate();
     const result = await this.viewtemplateObj.routes[route](
       this.table_id,
       this.name,
@@ -362,6 +382,7 @@ class View {
 
   combine_state_and_default_state(req_query) {
     var state = { ...req_query };
+    this.check_viewtemplate();
     const defstate = this.viewtemplateObj.default_state_form
       ? this.viewtemplateObj.default_state_form(this.configuration)
       : {};
@@ -374,6 +395,7 @@ class View {
     return state;
   }
   async get_state_form(query, req) {
+    this.check_viewtemplate();
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
     const display_state_form =
       typeof vt_display_state_form === "function"
@@ -406,6 +428,7 @@ class View {
   }
 
   async get_config_flow(req) {
+    this.check_viewtemplate();
     const configFlow = this.viewtemplateObj.configuration_workflow(req);
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     const oldOnDone = configFlow.onDone || ((c) => c);

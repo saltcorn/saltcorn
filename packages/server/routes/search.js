@@ -18,7 +18,8 @@ const searchConfigForm = (tables, views, req) => {
   var tbls_noviews = [];
   for (const t of tables) {
     var ok_views = views.filter(
-      (v) => v.table_id === t.id && v.viewtemplateObj.runMany
+      (v) =>
+        v.table_id === t.id && v.viewtemplateObj && v.viewtemplateObj.runMany
     );
     if (ok_views.length === 0) tbls_noviews.push(t.name);
     else
