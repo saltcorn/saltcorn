@@ -255,11 +255,13 @@ const field_picker_fields = contract(
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
 
     const stateActions = getState().actions;
-
+    const stateActionKeys = Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow && !v.disableInList)
+      .map(([k, v]) => k);
     const actions = [
       "Delete",
       ...boolfields.map((f) => `Toggle ${f.name}`),
-      ...Object.keys(stateActions),
+      ...stateActionKeys,
     ];
     const triggers = await Trigger.find({
       when_trigger: { or: ["API call", "Never"] },
