@@ -80,6 +80,7 @@ const run_code = async ({
 module.exports = {
   blocks: {
     disableInBuilder: true,
+    disableInList: true,
     configFields: [
       {
         name: "workspace",

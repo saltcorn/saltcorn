@@ -255,11 +255,13 @@ const field_picker_fields = contract(
     const boolfields = fields.filter((f) => f.type && f.type.name === "Bool");
 
     const stateActions = getState().actions;
-
+    const stateActionKeys = Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow && !v.disableInList)
+      .map(([k, v]) => k);
     const actions = [
       "Delete",
       ...boolfields.map((f) => `Toggle ${f.name}`),
-      ...Object.keys(stateActions),
+      ...stateActionKeys,
     ];
     const triggers = await Trigger.find({
       when_trigger: { or: ["API call", "Never"] },
@@ -269,17 +271,20 @@ const field_picker_fields = contract(
     });
     const actionConfigFields = [];
     for (const [name, action] of Object.entries(stateActions)) {
+      if (!stateActionKeys.includes(name)) continue;
       const cfgFields = await getActionConfigFields(action, table);
 
       for (const field of cfgFields) {
-        actionConfigFields.push({
+        const cfgFld = {
           ...field,
           showIf: {
             action_name: name,
             type: "Action",
             ...(field.showIf || {}),
           },
-        });
+        };
+        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld);
       }
     }
     const fldOptions = fields.map((f) => f.name);
