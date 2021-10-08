@@ -76,15 +76,16 @@ export const Container = ({
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   //console.log("container style", style);
-  return (
-    <div
-      ref={(dom) => connect(drag(dom))}
-      className={`${customClass || ""} canvas text-${hAlign} ${
+  return React.createElement(
+    htmlElement,
+    {
+      ref: (dom) => connect(drag(dom)),
+      className: `${customClass || ""} canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
-      } ${selected ? "selected-node" : ""}`}
-      style={{
+      } ${selected ? "selected-node" : ""}`,
+      style: {
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style),
         display,
@@ -130,10 +131,9 @@ export const Container = ({
               transform: `rotate(${rotate}deg)`,
             }
           : {}),
-      }}
-    >
-      {children}
-    </div>
+      },
+    },
+    children
   );
 };
 
