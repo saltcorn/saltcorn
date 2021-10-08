@@ -17,6 +17,7 @@ const {
   button,
   li,
   i,
+  genericElement,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
@@ -309,6 +310,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         overflow,
         rotate,
         style,
+        htmlElement,
       } = segment;
       if (hide) return "";
       if (
@@ -347,7 +349,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         segment,
         isTop,
         ix,
-        div(
+        genericElement(
+          htmlElement || "div",
           {
             class: [
               customClass || false,

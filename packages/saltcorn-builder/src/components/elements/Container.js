@@ -69,6 +69,7 @@ export const Container = ({
   gradDirection,
   rotate,
   style,
+  htmlElement,
 }) => {
   const {
     selected,
@@ -149,6 +150,7 @@ export const ContainerSettings = () => {
     isFormula: node.data.props.isFormula,
     bgFileId: node.data.props.bgFileId,
     imageSize: node.data.props.imageSize,
+    htmlElement: node.data.props.htmlElement,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     fullPageWidth: node.data.props.fullPageWidth,
@@ -199,6 +201,7 @@ export const ContainerSettings = () => {
     gradDirection,
     fullPageWidth,
     overflow,
+    htmlElement,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -235,6 +238,24 @@ export const ContainerSettings = () => {
                 "none",
                 "flex",
                 "inline-flex",
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "htmlElement",
+              label: "HTML element",
+              type: "select",
+              options: [
+                "div",
+                "span",
+                "header",
+                "nav",
+                "main",
+                "aside",
+                "footer",
               ],
             }}
             node={node}
@@ -777,6 +798,7 @@ Container.craft = {
     display: "block",
     show_for_owner: false,
     style: {},
+    htmlElement: "div",
   },
   rules: {
     canDrag: () => true,
