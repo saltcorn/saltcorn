@@ -36,6 +36,6 @@ router.post(
     const { key } = req.params;
     await getState().deleteConfig(key);
     req.flash("success", req.__(`Configuration key %s deleted`, key));
-    res.redirect(`/config/`);
+    res.redirect(`/admin`);
   })
 );
