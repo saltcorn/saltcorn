@@ -721,6 +721,7 @@ router.post(
         if (f.name !== "email" && f.name !== "id") await f.delete();
       }
       await db.deleteWhere("users");
+      await db.deleteWhere("_sc_roles");
       if (db.reset_sequence) await db.reset_sequence("users");
       req.logout();
       if (req.session.destroy)
