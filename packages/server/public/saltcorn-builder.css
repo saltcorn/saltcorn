@@ -299,3 +299,26 @@ Copyright (c) 2017 Taha Paksu
 .boxmodel-chrome-skin .boxmodel-container .boxmodel-text.boxmodel-header {
   color: black;
 }
+
+.selected-indicator {
+  position: fixed;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  height: 30px;
+  margin-top: -29px;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.selected-indicator .dispname {
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+body {
+  overflow-y: scroll;
+  max-height: 100vh;
+}

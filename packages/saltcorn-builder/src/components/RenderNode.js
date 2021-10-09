@@ -53,7 +53,7 @@ export const RenderNode = ({ render }) => {
 
   const scroll = useCallback(() => {
     const { current: currentDOM } = currentRef;
-
+    console.log(`scroll`);
     if (!currentDOM) return;
     const { top, left } = getPos(dom);
     currentDOM.style.top = top;
@@ -64,11 +64,13 @@ export const RenderNode = ({ render }) => {
     document
       .querySelector("#builder-main-canvas")
       .addEventListener("scroll", scroll);
+    document.body.addEventListener("scroll", scroll);
 
     return () => {
       document
         .querySelector("#builder-main-canvas")
         .removeEventListener("scroll", scroll);
+      document.body.removeEventListener("scroll", scroll);
     };
   }, [scroll]);
 
@@ -78,14 +80,14 @@ export const RenderNode = ({ render }) => {
         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
-              className="px-2 py-2 text-white bg-primary fixed flex items-center"
+              className="selected-indicator px-2 py-2 text-white bg-primary"
               style={{
                 left: getPos(dom).left,
                 top: getPos(dom).top,
                 zIndex: 9999,
               }}
             >
-              <h2 className="flex-1 mr-4">{name}</h2>
+              <h6 className="dispname mr-4">{name}</h6>
             </div>,
             document.querySelector("#builder-main-canvas")
           )
