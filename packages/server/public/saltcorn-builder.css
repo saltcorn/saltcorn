@@ -1,9 +1,7 @@
 .canvas:empty {
   min-height: 20px;
 }
-.canvas {
-  border: 1px dashed #111111;
-}
+
 span.is-html-block {
   min-height: 30px;
   min-width: 50px;
@@ -110,6 +108,9 @@ div.wrap-builder-elem label {
   pointer-events: none;
   display: block;
 }
+
+.canvas {
+  border: 1px dashed #111111;
 }
 
 #builder-main-canvas div.root-canvas:empty:before {
@@ -321,12 +322,9 @@ Copyright (c) 2017 Taha Paksu
   margin-top: -29px;
   font-size: 12px;
   line-height: 12px;
+  background-color: #2680eb;
 }
 
-.selected-node-border {
-  position: fixed;
-  border: 1px dashed blue;
-}
 .selected-indicator .dispname {
   -webkit-box-flex: 1;
   flex: 1 1 0%;

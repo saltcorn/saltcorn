@@ -2,7 +2,14 @@ import { useNode, useEditor } from "@craftjs/core";
 //import { ROOT_NODE } from "@craftjs/utils";
 import React, { useEffect, useRef, useCallback, Fragment } from "react";
 import ReactDOM from "react-dom";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCopy,
+  faUndo,
+  faRedo,
+  faTrashAlt,
+  faArrowUp,
+} from "@fortawesome/free-solid-svg-icons";
 /* 
 Contains code copied from craft.js landing page example
 Copyright (c) 2020 Previnash Wong Sze Chuan
@@ -33,13 +40,6 @@ export const RenderNode = ({ render }) => {
   }));
 
   const currentRef = useRef();
-
-  useEffect(() => {
-    if (dom) {
-      if (isActive || isHover) dom.classList.add("component-selected");
-      else dom.classList.remove("component-selected");
-    }
-  }, [dom, isActive, isHover]);
 
   const getPos = useCallback((dom) => {
     const { top, left, bottom, height, width, right } = dom
@@ -78,60 +78,70 @@ export const RenderNode = ({ render }) => {
       document.removeEventListener("scroll", scroll);
     };
   }, [scroll]);
-
+  const recursivelyCloneToElems = (nodeId, ix) => {
+    const {
+      data: { type, props, nodes },
+    } = query.node(nodeId).get();
+    const children = (nodes || []).map(recursivelyCloneToElems);
+    return React.createElement(
+      type,
+      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
+      children
+    );
+  };
+  const duplicate = () => {
+    const {
+      data: { parent },
+    } = query.node(id).get();
+    const elem = recursivelyCloneToElems(id);
+    actions.addNodeTree(
+      query.parseReactElement(elem).toNodeTree(),
+      parent || "ROOT"
+    );
+  };
   return (
     <>
       {isActive
         ? ReactDOM.createPortal(
-            <Fragment>
-              <div
-                ref={currentRef}
-                className="selected-indicator px-2 py-2 text-white bg-primary"
-                style={{
-                  left: getPos(dom).left,
-                  top: getPos(dom).top,
-                  zIndex: 9999,
+            <div
+              ref={currentRef}
+              className="selected-indicator px-1 py-1 text-white "
+              style={{
+                left: getPos(dom).left,
+                top: getPos(dom).top,
+                zIndex: 9999,
+              }}
+            >
+              <div className="dispname mr-3">{name}</div>
+              <FontAwesomeIcon
+                icon={faArrowUp}
+                className="mr-2"
+                onClick={() => {
+                  actions.selectNode(parent);
                 }}
-              >
-                <h6 className="dispname mr-4">{name}</h6>
-              </div>
-              <div
-                className="selected-node-border"
-                style={{
-                  left: getPos(dom).left,
-                  top: getPos(dom).top,
-                  height: getPos(dom).height,
-                  width: 0,
-                }}
-              ></div>
-              <div
-                className="selected-node-border"
-                style={{
-                  left: getPos(dom).left,
-                  top: getPos(dom).top,
-                  height: 0,
-                  width: getPos(dom).width,
-                }}
-              ></div>
-              <div
-                className="selected-node-border"
-                style={{
-                  left: getPos(dom).left + getPos(dom).width,
-                  top: getPos(dom).top,
-                  height: getPos(dom).height,
-                  width: 0,
-                }}
-              ></div>
-              <div
-                className="selected-node-border"
-                style={{
-                  left: getPos(dom).left,
-                  top: getPos(dom).top + getPos(dom).height,
-                  height: 0,
-                  width: getPos(dom).width,
-                }}
-              ></div>
-            </Fragment>,
+              />
+
+              {deletable
+                ? [
+                    <FontAwesomeIcon
+                      key={1}
+                      icon={faCopy}
+                      onClick={duplicate}
+                      className="mr-2"
+                    />,
+                    <FontAwesomeIcon
+                      key={2}
+                      icon={faTrashAlt}
+                      className="mr-2"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        actions.delete(id);
+                        setTimeout(() => actions.selectNode(parent), 0);
+                      }}
+                    />,
+                  ]
+                : null}
+            </div>,
             document.querySelector("#builder-main-canvas")
           )
         : null}
