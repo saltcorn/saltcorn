@@ -251,6 +251,8 @@ export const ContainerSettings = () => {
               options: [
                 "div",
                 "span",
+                "article",
+                "section",
                 "header",
                 "nav",
                 "main",
