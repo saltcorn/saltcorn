@@ -8,6 +8,7 @@ const Table = require("../models/table");
 const View = require("../models/view");
 const User = require("../models/user");
 const { setConfig, getConfig } = require("../models/config");
+const Trigger = require("../models/trigger");
 afterAll(db.close);
 
 beforeAll(async () => {
@@ -21,6 +22,14 @@ describe("Backup and restore", () => {
     const sn1 = await getConfig("site_name");
     expect(sn1).toBe("backups rule!");
     await Table.create("myblanktable");
+    await Trigger.create({
+      name: "footrig",
+      table_id: 1,
+      when_trigger: "Insert",
+      action: "run_js_code",
+      configuration: { code: "console.log('new user')" },
+    });
+
     const fnm = await create_backup();
     const t1 = await Table.findOne({ name: "books" });
     const t1c = await t1.countRows();
@@ -54,6 +63,8 @@ describe("Backup and restore", () => {
     const staff = await User.findOne({ email: "staff@foo.com" });
     expect(!!staff).toBe(true);
     expect(typeof staff.password).toBe("string");
+    const trig = await Trigger.findOne({ name: "footrig" });
+    expect(!!trig).toBe(true);
 
     expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
   });

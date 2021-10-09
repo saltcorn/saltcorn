@@ -124,7 +124,7 @@ class Trigger {
     const { id, table_name, ...rest } = trigger;
     if (table_name && !rest.table_id) {
       const Table = require("./table");
-      const table = Table.find(table_name);
+      const table = Table.findOne(table_name);
       rest.table_id = table.id;
     }
     const fid = await db.insert("_sc_triggers", rest);
