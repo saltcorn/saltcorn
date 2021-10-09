@@ -96,10 +96,6 @@ div.wrap-builder-elem label {
   text-decoration: underline;
 }
 
-#builder-main-canvas .selected-node {
-  border: 1px dashed blue;
-}
-
 #builder-main-canvas div.root-canvas:empty:before {
   font-size: 26px;
   opacity: 0.5;
@@ -311,6 +307,10 @@ Copyright (c) 2017 Taha Paksu
   line-height: 12px;
 }
 
+.selected-node-border {
+  position: fixed;
+  border: 1px dashed blue;
+}
 .selected-indicator .dispname {
   -webkit-box-flex: 1;
   flex: 1 1 0%;

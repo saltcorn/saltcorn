@@ -1,6 +1,6 @@
 import { useNode, useEditor } from "@craftjs/core";
 //import { ROOT_NODE } from "@craftjs/utils";
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, Fragment } from "react";
 import ReactDOM from "react-dom";
 
 /* 
@@ -42,12 +42,18 @@ export const RenderNode = ({ render }) => {
   }, [dom, isActive, isHover]);
 
   const getPos = useCallback((dom) => {
-    const { top, left, bottom } = dom
+    const { top, left, bottom, height, width, right } = dom
       ? dom.getBoundingClientRect()
-      : { top: 0, left: 0, bottom: 0 };
+      : { top: 0, left: 0, bottom: 0, right: 0, height: 0, width: 0 };
     return {
       top: `${top > 0 ? top : bottom}px`,
       left: `${left}px`,
+      topn: top,
+      leftn: left,
+      height,
+      width,
+      right,
+      bottom,
     };
   }, []);
 
@@ -75,19 +81,57 @@ export const RenderNode = ({ render }) => {
 
   return (
     <>
-      {isHover || isActive
+      {isActive
         ? ReactDOM.createPortal(
-            <div
-              ref={currentRef}
-              className="selected-indicator px-2 py-2 text-white bg-primary"
-              style={{
-                left: getPos(dom).left,
-                top: getPos(dom).top,
-                zIndex: 9999,
-              }}
-            >
-              <h6 className="dispname mr-4">{name}</h6>
-            </div>,
+            <Fragment>
+              <div
+                ref={currentRef}
+                className="selected-indicator px-2 py-2 text-white bg-primary"
+                style={{
+                  left: getPos(dom).left,
+                  top: getPos(dom).top,
+                  zIndex: 9999,
+                }}
+              >
+                <h6 className="dispname mr-4">{name}</h6>
+              </div>
+              <div
+                className="selected-node-border"
+                style={{
+                  left: getPos(dom).left,
+                  top: getPos(dom).top,
+                  height: getPos(dom).height,
+                  width: 0,
+                }}
+              ></div>
+              <div
+                className="selected-node-border"
+                style={{
+                  left: getPos(dom).left,
+                  top: getPos(dom).top,
+                  height: 0,
+                  width: getPos(dom).width,
+                }}
+              ></div>
+              <div
+                className="selected-node-border"
+                style={{
+                  left: getPos(dom).left + getPos(dom).width,
+                  top: getPos(dom).top,
+                  height: getPos(dom).height,
+                  width: 0,
+                }}
+              ></div>
+              <div
+                className="selected-node-border"
+                style={{
+                  left: getPos(dom).left,
+                  top: getPos(dom).top + getPos(dom).height,
+                  height: 0,
+                  width: getPos(dom).width,
+                }}
+              ></div>
+            </Fragment>,
             document.querySelector("#builder-main-canvas")
           )
         : null}
