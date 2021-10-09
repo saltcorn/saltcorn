@@ -18,7 +18,10 @@ class Library {
       layout: lib.layout,
     });
   }
-
+  get toJson() {
+    const { id, ...rest } = this;
+    return rest;
+  }
   static async find(where, selectopts) {
     const us = await db.select("_sc_library", where, selectopts);
     return us.map((u) => new Library(u));

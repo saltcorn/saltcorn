@@ -93,18 +93,24 @@ const get_menu = (req) => {
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
+          altlinks: ["/roleadmin"],
           label: req.__("Users and security"),
         },
         {
           link: "/site-structure",
-          altlinks: ["/menu", "/search/config", "/tenant/list"],
+          altlinks: [
+            "/menu",
+            "/search/config",
+            "/library/list",
+            "/tenant/list",
+          ],
           icon: "fas fa-compass",
           label: req.__("Site structure"),
         },
         { link: "/files", icon: "far fa-images", label: req.__("Files") },
         {
           link: "/events",
-          altlinks: ["/actions", "/crashlog"],
+          altlinks: ["/actions", "/eventlog", "/crashlog"],
           icon: "fas fa-calendar-check",
           label: req.__("Events"),
         },
