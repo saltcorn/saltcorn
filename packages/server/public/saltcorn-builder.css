@@ -96,6 +96,22 @@ div.wrap-builder-elem label {
   text-decoration: underline;
 }
 
+#builder-main-canvas .selected-node {
+  position: relative;
+}
+#builder-main-canvas .selected-node::after {
+  content: " ";
+  border: 1px dashed #2680eb;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  display: block;
+}
+}
+
 #builder-main-canvas div.root-canvas:empty:before {
   font-size: 26px;
   opacity: 0.5;
