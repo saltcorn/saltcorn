@@ -17,6 +17,9 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  role_pack,
+  library_pack,
+  trigger_pack,
   install_pack,
   fetch_pack_by_name,
   can_install_pack,
@@ -114,7 +117,15 @@ router.post(
   setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    var pack = { tables: [], views: [], plugins: [], pages: [] };
+    var pack = {
+      tables: [],
+      views: [],
+      plugins: [],
+      pages: [],
+      roles: [],
+      library: [],
+      triggers: [],
+    };
     for (const k of Object.keys(req.body)) {
       const [type, name] = k.split(".");
       switch (type) {
@@ -129,6 +140,15 @@ router.post(
           break;
         case "page":
           pack.pages.push(await page_pack(name));
+          break;
+        case "library":
+          pack.library.push(await library_pack(name));
+          break;
+        case "role":
+          pack.roles.push(await role_pack(name));
+          break;
+        case "trigger":
+          pack.triggers.push(await trigger_pack(name));
           break;
 
         default:

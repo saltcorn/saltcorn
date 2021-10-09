@@ -81,7 +81,17 @@ const page_pack = contract(pack_fun, async (name) => {
     root_page_for_roles,
   };
 });
-
+const library_pack = contract(pack_fun, async (name) => {
+  const lib = await Library.findOne({ name });
+  return lib.toJson;
+});
+const trigger_pack = contract(pack_fun, async (name) => {
+  const trig = await Trigger.findOne({ name });
+  return trig.toJson;
+});
+const role_pack = contract(pack_fun, async (role) => {
+  return await Role.findOne({ role });
+});
 const can_install_pack = contract(
   is.fun(
     is_pack,
@@ -355,6 +365,9 @@ module.exports = {
   view_pack,
   plugin_pack,
   page_pack,
+  role_pack,
+  library_pack,
+  trigger_pack,
   install_pack,
   fetch_available_packs,
   fetch_pack_by_name,
