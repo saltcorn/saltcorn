@@ -255,6 +255,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
               segment.url && "with-link",
             ],
             onclick: segment.url ? `location.href='${segment.url}'` : false,
+            style: segment.style,
           },
           segment.title &&
             div(

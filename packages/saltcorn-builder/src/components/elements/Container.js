@@ -216,13 +216,6 @@ export const ContainerSettings = () => {
     <Accordion>
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
-        <table className="w-100">
-          <tbody>
-            <tr>
-              <td colSpan="2"></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
       <table className="w-100" accordiontitle="Display">
         <tbody>
