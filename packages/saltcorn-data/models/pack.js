@@ -12,6 +12,7 @@ const { is_pack, is_plugin } = require("../contracts");
 const TableConstraint = require("./table_constraints");
 const { tr } = require("@saltcorn/markup/tags");
 const Role = require("./role");
+const Library = require("./library");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -80,7 +81,17 @@ const page_pack = contract(pack_fun, async (name) => {
     root_page_for_roles,
   };
 });
-
+const library_pack = contract(pack_fun, async (name) => {
+  const lib = await Library.findOne({ name });
+  return lib.toJson;
+});
+const trigger_pack = contract(pack_fun, async (name) => {
+  const trig = await Trigger.findOne({ name });
+  return trig.toJson;
+});
+const role_pack = contract(pack_fun, async (role) => {
+  return await Role.findOne({ role });
+});
 const can_install_pack = contract(
   is.fun(
     is_pack,
@@ -205,6 +216,9 @@ const install_pack = contract(
     }
     for (const role of pack.roles || []) {
       await Role.create(role);
+    }
+    for (const lib of pack.library || []) {
+      await Library.create(lib);
     }
     for (const tableSpec of pack.tables) {
       if (tableSpec.name !== "users") {
@@ -351,6 +365,9 @@ module.exports = {
   view_pack,
   plugin_pack,
   page_pack,
+  role_pack,
+  library_pack,
+  trigger_pack,
   install_pack,
   fetch_available_packs,
   fetch_pack_by_name,
