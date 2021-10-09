@@ -53,7 +53,6 @@ export const RenderNode = ({ render }) => {
 
   const scroll = useCallback(() => {
     const { current: currentDOM } = currentRef;
-    console.log(`scroll`);
     if (!currentDOM) return;
     const { top, left } = getPos(dom);
     currentDOM.style.top = top;
@@ -62,15 +61,15 @@ export const RenderNode = ({ render }) => {
 
   useEffect(() => {
     document
-      .querySelector("#builder-main-canvas")
+      .getElementById("builder-main-canvas")
       .addEventListener("scroll", scroll);
-    document.body.addEventListener("scroll", scroll);
+    document.addEventListener("scroll", scroll);
 
     return () => {
       document
-        .querySelector("#builder-main-canvas")
+        .getElementById("builder-main-canvas")
         .removeEventListener("scroll", scroll);
-      document.body.removeEventListener("scroll", scroll);
+      document.removeEventListener("scroll", scroll);
     };
   }, [scroll]);
 
