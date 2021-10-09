@@ -45,6 +45,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
+import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -308,85 +309,83 @@ const Builder = ({ options, layout, mode }) => {
   const nodekeys = useRef([]);
 
   return (
-    <ErrorBoundary>
-      <Editor>
-        <Provider value={options}>
-          <PreviewCtx.Provider value={{ previews, setPreviews }}>
-            <div className="row" style={{ marginTop: "-5px" }}>
-              <div className="col-sm-auto">
-                <div className="componets-and-library-accordion toolbox-card">
-                  <InitNewElement nodekeys={nodekeys} />
-                  <Accordion>
-                    <div className="card mt-1" accordiontitle="Components">
-                      {{
-                        show: <ToolboxShow />,
-                        edit: <ToolboxEdit />,
-                        page: <ToolboxPage />,
-                        filter: <ToolboxFilter />,
-                      }[mode] || <div>Missing mode</div>}
-                    </div>
-                    <div accordiontitle="Library">
-                      <Library />
-                    </div>
-                  </Accordion>
-                </div>
-                <div className="card toolbox-card">
-                  <div className="card-header">Layers</div>
-                  {showLayers && (
-                    <div className="card-body p-0 builder-layers">
-                      <Layers expandRootOnLoad={true} />
-                    </div>
-                  )}
-                </div>
+    <Editor onRender={RenderNode}>
+      <Provider value={options}>
+        <PreviewCtx.Provider value={{ previews, setPreviews }}>
+          <div className="row" style={{ marginTop: "-5px" }}>
+            <div className="col-sm-auto">
+              <div className="componets-and-library-accordion toolbox-card">
+                <InitNewElement nodekeys={nodekeys} />
+                <Accordion>
+                  <div className="card mt-1" accordiontitle="Components">
+                    {{
+                      show: <ToolboxShow />,
+                      edit: <ToolboxEdit />,
+                      page: <ToolboxPage />,
+                      filter: <ToolboxFilter />,
+                    }[mode] || <div>Missing mode</div>}
+                  </div>
+                  <div accordiontitle="Library">
+                    <Library />
+                  </div>
+                </Accordion>
               </div>
-              <div
-                id="builder-main-canvas"
-                className={`col builder-mode-${options.mode}`}
-              >
-                <div>
-                  <Frame
-                    resolver={{
-                      Text,
-                      Empty,
-                      Columns,
-                      JoinField,
-                      Field,
-                      ViewLink,
-                      Action,
-                      HTMLCode,
-                      LineBreak,
-                      Aggregation,
-                      Card,
-                      Image,
-                      Link,
-                      View,
-                      SearchBar,
-                      Container,
-                      Column,
-                      DropDownFilter,
-                      Tabs,
-                      ToggleFilter,
-                    }}
-                  >
-                    <Element canvas is={Column}></Element>
-                  </Frame>
-                </div>
-              </div>
-              <div className="col-sm-auto builder-sidebar">
-                <div style={{ width: "16rem" }}>
-                  <SaveButton />
-                  <NextButton layout={layout} />
-                  <ViewPageLink />
-                  <HistoryPanel />
-                  <SettingsPanel />
-                </div>
+              <div className="card toolbox-card">
+                <div className="card-header">Layers</div>
+                {showLayers && (
+                  <div className="card-body p-0 builder-layers">
+                    <Layers expandRootOnLoad={true} />
+                  </div>
+                )}
               </div>
             </div>
-          </PreviewCtx.Provider>
-        </Provider>
-        <div className="d-none preview-scratchpad"></div>
-      </Editor>
-    </ErrorBoundary>
+            <div
+              id="builder-main-canvas"
+              className={`col builder-mode-${options.mode}`}
+            >
+              <div>
+                <Frame
+                  resolver={{
+                    Text,
+                    Empty,
+                    Columns,
+                    JoinField,
+                    Field,
+                    ViewLink,
+                    Action,
+                    HTMLCode,
+                    LineBreak,
+                    Aggregation,
+                    Card,
+                    Image,
+                    Link,
+                    View,
+                    SearchBar,
+                    Container,
+                    Column,
+                    DropDownFilter,
+                    Tabs,
+                    ToggleFilter,
+                  }}
+                >
+                  <Element canvas is={Column}></Element>
+                </Frame>
+              </div>
+            </div>
+            <div className="col-sm-auto builder-sidebar">
+              <div style={{ width: "16rem" }}>
+                <SaveButton />
+                <NextButton layout={layout} />
+                <ViewPageLink />
+                <HistoryPanel />
+                <SettingsPanel />
+              </div>
+            </div>
+          </div>
+        </PreviewCtx.Provider>
+      </Provider>
+      <div className="d-none preview-scratchpad"></div>
+    </Editor>
   );
 };
 
