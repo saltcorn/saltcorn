@@ -110,7 +110,7 @@ div.wrap-builder-elem label {
 }
 
 .canvas {
-  border: 1px dashed #111111;
+  outline: 1px dashed #808080;
 }
 
 #builder-main-canvas div.root-canvas:empty:before {
@@ -322,9 +322,14 @@ Copyright (c) 2017 Taha Paksu
   margin-top: -29px;
   font-size: 12px;
   line-height: 12px;
-  background-color: #2680eb;
 }
 
+.selected-indicator.activeind {
+  background-color: #026beb;
+}
+.selected-indicator.hoverind {
+  background-color: #4e9eff;
+}
 .selected-indicator .dispname {
   -webkit-box-flex: 1;
   flex: 1 1 0%;

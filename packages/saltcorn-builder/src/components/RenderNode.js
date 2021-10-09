@@ -101,11 +101,13 @@ export const RenderNode = ({ render }) => {
   };
   return (
     <>
-      {isActive
+      {isActive || isHover
         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
-              className="selected-indicator px-1 py-1 text-white "
+              className={`selected-indicator ${
+                isActive ? "activeind" : "hoverind"
+              } px-1 py-1 text-white`}
               style={{
                 left: getPos(dom).left,
                 top: getPos(dom).top,
@@ -113,15 +115,16 @@ export const RenderNode = ({ render }) => {
               }}
             >
               <div className="dispname mr-3">{name}</div>
-              <FontAwesomeIcon
-                icon={faArrowUp}
-                className="mr-2"
-                onClick={() => {
-                  actions.selectNode(parent);
-                }}
-              />
-
-              {deletable
+              {isActive ? (
+                <FontAwesomeIcon
+                  icon={faArrowUp}
+                  className="mr-2"
+                  onClick={() => {
+                    actions.selectNode(parent);
+                  }}
+                />
+              ) : null}
+              {deletable && isActive
                 ? [
                     <FontAwesomeIcon
                       key={1}
