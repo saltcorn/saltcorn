@@ -97,6 +97,11 @@ div.wrap-builder-elem label {
 #builder-main-canvas .selected-node {
   position: relative;
 }
+
+#builder-main-canvas .selected-node.is-text {
+  min-height: 1rem;
+  min-width: 15px;
+}
 #builder-main-canvas .selected-node::after {
   content: " ";
   border: 1px dashed #2680eb;
