@@ -113,6 +113,10 @@ const SettingsPanel = () => {
         //right
         if (selected.children && selected.children.length > 0) {
           actions.selectNode(selected.children[0]);
+        } else if (selected.displayName === "Columns") {
+          const node = query.node(selected.id).get();
+          const child = node?.data?.linkedNodes?.Col0;
+          if (child) actions.selectNode(child);
         }
       }
       if (keyCode === 38 && selected.parent) {

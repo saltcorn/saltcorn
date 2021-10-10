@@ -101,7 +101,7 @@ export const RenderNode = ({ render }) => {
   };
   return (
     <>
-      {(isActive || isHover) && name !== "Column"
+      {(isActive || isHover) && id !== "ROOT"
         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
