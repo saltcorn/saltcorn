@@ -231,16 +231,22 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
+  console.log(hdr, name);
   if (hdr.disabled) attributes.disabled = true;
   if (hdr.fieldviewObj) {
     fieldview = hdr.fieldviewObj;
-  } else if (hdr.fieldview && hdr.type.fieldviews[hdr.fieldview])
+  } else if (hdr.fieldview && hdr.type && hdr.type.fieldviews[hdr.fieldview])
     fieldview = hdr.type.fieldviews[hdr.fieldview];
-  else {
+  else if (hdr.type && hdr.type.fieldviews) {
     //first isedit fieldview
     fieldview = Object.entries(hdr.type.fieldviews).find(
       ([nm, fv]) => fv.isEdit
     )[1];
+  }
+  if (!fieldview) {
+    if (!hdr.type)
+      throw new Error(`Unknown type ${hdr.typename} in field ${name}`);
+    else throw new Error(`Cannot find fieldview for field ${name}`);
   }
   if (fieldview.isEdit)
     return fieldview.run(
