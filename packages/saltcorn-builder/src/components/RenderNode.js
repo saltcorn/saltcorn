@@ -101,7 +101,7 @@ export const RenderNode = ({ render }) => {
   };
   return (
     <>
-      {isActive || isHover
+      {(isActive || isHover) && name !== "Column"
         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
@@ -115,7 +115,7 @@ export const RenderNode = ({ render }) => {
               }}
             >
               <div className="dispname mr-3">{name}</div>
-              {isActive ? (
+              {isActive && parent && parent !== "ROOT" ? (
                 <FontAwesomeIcon
                   icon={faArrowUp}
                   className="mr-2"
