@@ -232,8 +232,11 @@ const fieldFlow = (req) =>
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
           const type = getState().types[context.type];
-          if(!type) return false;
-          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+          if (!type) return false;
+          const attrs = Field.getTypeAttributes(
+            type.attributes,
+            context.table_id
+          );
           return attrs.length > 0;
         },
         form: async (context) => {
@@ -254,7 +257,10 @@ const fieldFlow = (req) =>
             });
           } else {
             const type = getState().types[context.type];
-          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+            const attrs = Field.getTypeAttributes(
+              type.attributes,
+              context.table_id
+            );
 
             return new Form({
               validator(vs) {
@@ -373,7 +379,17 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const field = await Field.findOne({ id });
+    if (!field) {
+      req.flash("danger", req.__(`Field not found`));
+      res.redirect(`/table`);
+      return;
+    }
     const table = await Table.findOne({ id: field.table_id });
+    if (!field.type) {
+      req.flash("danger", req.__(`Type %s not found`, field.typename));
+      res.redirect(`/table/${field.table_id}`);
+      return;
+    }
     const wf = fieldFlow(req);
     const wfres = await wf.run(
       {
