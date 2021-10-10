@@ -100,8 +100,7 @@ describe("Table create", () => {
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Action button");
-    await browser.page.click("div.is-text");
-    await browser.page.click("div.is-text");
+    await browser.page.click("div.is-text .d-inline");
     await browser.page.waitForSelector("div.cke_editable");
     await browser.erase_input("div.cke_editable", 15);
     await browser.page.waitForSelector("div.cke_editable");
@@ -156,8 +155,7 @@ describe("Table create", () => {
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain("Join field");
-    await browser.page.click("div.is-text");
-    await browser.page.click("div.is-text");
+    await browser.page.click("div.is-text .d-inline");
     await browser.page.waitForSelector("div.cke_editable");
     await browser.page.waitFor(100);
     await browser.erase_input("div.cke_editable", 15);
