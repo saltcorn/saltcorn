@@ -229,7 +229,7 @@ const SaveButton = () => {
   };
   return options.page_id || options.view_id ? (
     <button
-      className="btn btn-outline-secondary mr-2 builder-save-ajax"
+      className="btn btn-sm btn-outline-secondary mr-2 builder-save-ajax"
       onClick={onClick}
     >
       Save
@@ -242,8 +242,8 @@ const ViewPageLink = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
   return options.page_id ? (
-    <a target="_blank" className="ml-3" href={`/page/${options.page_name}`}>
-      View page
+    <a target="_blank" className="d-block" href={`/page/${options.page_name}`}>
+      View page in new tab &raquo;
     </a>
   ) : (
     ""
@@ -256,10 +256,10 @@ const HistoryPanel = () => {
   }));
 
   return (
-    <div className="mt-2">
+    <Fragment>
       {canUndo && (
         <button
-          className="btn btn-sm btn-secondary mr-2"
+          className="btn btn-sm btn-secondary ml-2 mr-2"
           title="Undo"
           onClick={() => actions.history.undo()}
         >
@@ -275,7 +275,7 @@ const HistoryPanel = () => {
           <FontAwesomeIcon icon={faRedo} />
         </button>
       )}
-    </div>
+    </Fragment>
   );
 };
 
@@ -297,7 +297,7 @@ const NextButton = ({ layout }) => {
     document.getElementById("scbuildform").submit();
   };
   return (
-    <button className="btn btn-primary builder-save" onClick={onClick}>
+    <button className="btn btn-sm btn-primary builder-save" onClick={onClick}>
       {options.next_button_label || "Next"} &raquo;
     </button>
   );
@@ -377,8 +377,8 @@ const Builder = ({ options, layout, mode }) => {
                 <div style={{ width: "16rem" }}>
                   <SaveButton />
                   <NextButton layout={layout} />
-                  <ViewPageLink />
                   <HistoryPanel />
+                  <ViewPageLink />
                   <SettingsPanel />
                 </div>
               </div>
