@@ -107,7 +107,7 @@ export const RenderNode = ({ render }) => {
               ref={currentRef}
               className={`selected-indicator ${
                 isActive ? "activeind" : "hoverind"
-              } px-1 py-1 text-white`}
+              } px-1 text-white`}
               style={{
                 left: getPos(dom).left,
                 top: getPos(dom).top,
