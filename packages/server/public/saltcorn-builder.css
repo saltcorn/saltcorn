@@ -1,7 +1,7 @@
-.canvas {
-  min-height: 30px;
-  border: 1px dashed #111111;
+.canvas:empty {
+  min-height: 20px;
 }
+
 span.is-html-block {
   min-height: 30px;
   min-width: 50px;
@@ -95,7 +95,27 @@ div.wrap-builder-elem label {
 }
 
 #builder-main-canvas .selected-node {
-  border: 1px dashed blue;
+  position: relative;
+}
+
+#builder-main-canvas .selected-node.is-text {
+  min-height: 1rem;
+  min-width: 15px;
+}
+#builder-main-canvas .selected-node::after {
+  content: " ";
+  border: 1px dashed #2680eb;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  display: block;
+}
+
+.canvas {
+  outline: 1px dashed #808080;
 }
 
 #builder-main-canvas div.root-canvas:empty:before {
@@ -296,4 +316,28 @@ Copyright (c) 2017 Taha Paksu
 }
 .boxmodel-chrome-skin .boxmodel-container .boxmodel-text.boxmodel-header {
   color: black;
+}
+
+.selected-indicator {
+  position: fixed;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  height: 30px;
+  margin-top: -29px;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.selected-indicator.activeind {
+  background-color: #026beb;
+}
+.selected-indicator.hoverind {
+  background-color: #4e9eff;
+}
+.selected-indicator .dispname {
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
+  font-size: 12px;
+  line-height: 12px;
 }

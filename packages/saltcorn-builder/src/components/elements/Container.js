@@ -69,27 +69,29 @@ export const Container = ({
   gradDirection,
   rotate,
   style,
+  htmlElement,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   //console.log("container style", style);
-  return (
-    <div
-      ref={(dom) => connect(drag(dom))}
-      className={`${customClass || ""} canvas text-${hAlign} ${
+  return React.createElement(
+    htmlElement,
+    {
+      ref: (dom) => connect(drag(dom)),
+      className: `${customClass || ""} canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
-      } ${selected ? "selected-node" : ""}`}
-      style={{
+      } ${selected ? "selected-node" : ""}`,
+      style: {
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style),
         display,
         //padding: padding.map((p) => p + "px").join(" "),
         //margin: margin.map((p) => p + "px").join(" "),
-        minHeight: `${Math.max(minHeight, 15)}${minHeightUnit || "px"}`,
+        minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
@@ -129,10 +131,9 @@ export const Container = ({
               transform: `rotate(${rotate}deg)`,
             }
           : {}),
-      }}
-    >
-      {children}
-    </div>
+      },
+    },
+    children
   );
 };
 
@@ -149,6 +150,7 @@ export const ContainerSettings = () => {
     isFormula: node.data.props.isFormula,
     bgFileId: node.data.props.bgFileId,
     imageSize: node.data.props.imageSize,
+    htmlElement: node.data.props.htmlElement,
     vAlign: node.data.props.vAlign,
     hAlign: node.data.props.hAlign,
     fullPageWidth: node.data.props.fullPageWidth,
@@ -199,6 +201,7 @@ export const ContainerSettings = () => {
     gradDirection,
     fullPageWidth,
     overflow,
+    htmlElement,
   } = node;
   const options = useContext(optionsCtx);
   const ownership = !!options.ownership;
@@ -213,13 +216,6 @@ export const ContainerSettings = () => {
     <Accordion>
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
-        <table className="w-100">
-          <tbody>
-            <tr>
-              <td colSpan="2"></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
       <table className="w-100" accordiontitle="Display">
         <tbody>
@@ -235,6 +231,26 @@ export const ContainerSettings = () => {
                 "none",
                 "flex",
                 "inline-flex",
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "htmlElement",
+              label: "HTML element",
+              type: "select",
+              options: [
+                "div",
+                "span",
+                "article",
+                "section",
+                "header",
+                "nav",
+                "main",
+                "aside",
+                "footer",
               ],
             }}
             node={node}
@@ -777,6 +793,7 @@ Container.craft = {
     display: "block",
     show_for_owner: false,
     style: {},
+    htmlElement: "div",
   },
   rules: {
     canDrag: () => true,

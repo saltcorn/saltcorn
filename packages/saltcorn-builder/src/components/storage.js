@@ -155,6 +155,7 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           widthUnit={segment.widthUnit || "px"}
           vAlign={segment.vAlign}
           hAlign={segment.hAlign}
+          htmlElement={segment.htmlElement || "div"}
           display={
             segment.display ||
             (segment.block === true
@@ -296,6 +297,7 @@ export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           widthUnit: node.props.widthUnit,
           vAlign: node.props.vAlign,
           hAlign: node.props.hAlign,
+          htmlElement: node.props.htmlElement,
           margin: node.props.margin,
           padding: node.props.padding,
           overflow: node.props.overflow,

@@ -45,6 +45,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
+import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
 
 const SettingsPanel = () => {
@@ -309,7 +310,7 @@ const Builder = ({ options, layout, mode }) => {
 
   return (
     <ErrorBoundary>
-      <Editor>
+      <Editor onRender={RenderNode}>
         <Provider value={options}>
           <PreviewCtx.Provider value={{ previews, setPreviews }}>
             <div className="row" style={{ marginTop: "-5px" }}>
