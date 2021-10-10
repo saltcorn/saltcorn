@@ -118,6 +118,10 @@ div.wrap-builder-elem label {
   outline: 1px dashed #808080;
 }
 
+#builder-main-canvas div.root-canvas {
+  margin-top: 1px;
+}
+
 #builder-main-canvas div.root-canvas:empty:before {
   font-size: 26px;
   opacity: 0.5;
@@ -158,6 +162,7 @@ div.settings-panel div.rfipbtn {
 
 div.componets-and-library-accordion {
   min-height: 45vh;
+  margin-top: -0.25rem;
 }
 
 .builder-library .dropdown {
