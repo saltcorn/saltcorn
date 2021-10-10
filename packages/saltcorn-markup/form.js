@@ -231,7 +231,6 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
-  console.log(hdr, name);
   if (hdr.disabled) attributes.disabled = true;
   if (hdr.fieldviewObj) {
     fieldview = hdr.fieldviewObj;
