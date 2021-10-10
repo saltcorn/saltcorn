@@ -793,5 +793,6 @@
 	"Library: component assemblies that can be used in the builder": "Library: component assemblies that can be used in the builder",
 	"Edit properties": "Edit properties",
 	"Images and other files for download": "Images and other files for download",
-	"Disable LetsEncrypt HTTPS": "Disable LetsEncrypt HTTPS"
+	"Disable LetsEncrypt HTTPS": "Disable LetsEncrypt HTTPS",
+	"Type %s not found": "Type %s not found"
 }

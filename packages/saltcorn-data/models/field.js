@@ -46,6 +46,7 @@ class Field {
     const { getState } = require("../db/state");
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
+    if (!this.type) this.typename = o.type;
     this.options = o.options;
     this.required = o.required ? true : false;
     this.is_unique = o.is_unique ? true : false;

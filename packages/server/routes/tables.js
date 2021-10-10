@@ -517,7 +517,10 @@ router.get(
               r.type === "Key"
                 ? `Key to ` +
                   a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
-                : (r.type && r.type.name) || r.type,
+                : (r.type && r.type.name) ||
+                  r.type ||
+                  r.typename +
+                    span({ class: "badge badge-danger ml-1" }, "Unknown type"),
           },
           {
             label: "",
