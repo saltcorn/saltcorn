@@ -230,7 +230,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     ${rest}
     <script src="/static_assets/${
       db.connectObj.version_tag
-    }/jquery-3.4.1.min.js"></script>
+    }/jquery-3.6.0.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/jquery-easing/jquery.easing.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>

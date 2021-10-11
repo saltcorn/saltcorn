@@ -328,17 +328,19 @@ Copyright (c) 2017 Taha Paksu
   display: flex;
   -webkit-box-align: center;
   align-items: center;
-  height: 30px;
-  margin-top: -29px;
+  height: 24px;
+  margin-top: -23px;
   font-size: 12px;
   line-height: 12px;
+  padding-bottom: 1px;
+  padding-top: 1px;
 }
 
 .selected-indicator.activeind {
-  background-color: #026beb;
+  background-color: rgb(38, 128, 235);
 }
 .selected-indicator.hoverind {
-  background-color: #4e9eff;
+  background-color: #5f9eec;
 }
 .selected-indicator .dispname {
   -webkit-box-flex: 1;
