@@ -59,7 +59,11 @@ router.post(
       });
       if (col) {
         try {
-          const result = await run_action_column({ col, req });
+          const result = await run_action_column({
+            col,
+            referrer: req.get("Referrer"),
+            req,
+          });
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
           res.status(400).json({ error: e.message || e });

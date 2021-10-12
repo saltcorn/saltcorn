@@ -552,7 +552,13 @@ const run_action = async (
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   try {
-    const result = await run_action_column({ col, req, table, row });
+    const result = await run_action_column({
+      col,
+      req,
+      table,
+      row,
+      referrer: req.get("Referrer"),
+    });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
     return { json: { error: e.message || e } };
