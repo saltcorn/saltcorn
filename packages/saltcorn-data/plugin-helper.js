@@ -1194,6 +1194,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
   return await state_action.run({
     configuration,
     user: req.user,
+    req,
     ...rest,
   });
 };
