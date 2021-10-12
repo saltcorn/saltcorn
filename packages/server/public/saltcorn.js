@@ -396,6 +396,16 @@ function notifyAlert(note) {
 </div>`);
 }
 
+function ajax_done(res) {
+  if (res.notify) notifyAlert(res.notify);
+  if (res.error) notifyAlert({ type: "danger", text: res.error });
+  if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
+  if (res.goto) {
+    if (res.target === "_blank") window.open(res.goto, "_blank").focus();
+    else window.location.href = res.goto;
+  }
+}
+
 function view_post(viewname, route, data, onDone) {
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
@@ -410,10 +420,7 @@ function view_post(viewname, route, data, onDone) {
     data: typeof data === "string" ? data : JSON.stringify(data),
   }).done(function (res) {
     if (onDone) onDone(res);
-    if (res.notify) notifyAlert(res.notify);
-    if (res.error) notifyAlert({ type: "danger", text: res.error });
-    if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
-    if (res.goto) window.location.href = res.goto;
+    ajax_done(res);
   });
 }
 var logged_errors = [];
