@@ -17,7 +17,7 @@ describe("blog pack", () => {
     expect(await browser.content()).toContain("Add Post");
     await browser.goto("/view/EditPost");
     await browser.page.type("#inputtitle", "My First Post");
-    await browser.page.waitFor(1000);
+    await browser.page.waitForTimeout(1000);
     await browser.slowly_type("#cke_inputexcerpt", "A wonderful post");
     await browser.slowly_type("#cke_inputbody", "Lorem ipsum");
     await browser.clickNav("button[type=submit]");
@@ -36,7 +36,7 @@ describe("blog pack", () => {
     expect(await browser.content()).toContain("Add Comment");
     await browser.goto("/view/EditComment?post=1");
     await browser.page.type("#inputname", "Donald Trump");
-    await browser.page.waitFor(1000);
+    await browser.page.waitForTimeout(1000);
     await browser.slowly_type("#cke_inputcomment", "I'm a fraud");
     await browser.clickNav("button[type=submit]");
     await browser.goto("/");
@@ -110,13 +110,13 @@ describe("todo packs", () => {
     expect(await browser.content()).toContain("Clean bathroom");
 
     await browser.page.select('select[name="ddfilterdone"]', "on");
-    await browser.page.waitFor(250);
+    await browser.page.waitForTimeout(250);
     //await browser.page.waitForNavigation();
     expect(await browser.content()).toContain("Take out trash");
     expect(await browser.content()).not.toContain("Clean bathroom");
 
     await browser.page.select('select[name="ddfilterdone"]', "off");
-    await browser.page.waitFor(250);
+    await browser.page.waitForTimeout(250);
 
     expect(await browser.content()).not.toContain("Take out trash");
     expect(await browser.content()).toContain("Clean bathroom");

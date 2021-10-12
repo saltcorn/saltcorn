@@ -69,26 +69,26 @@ class Browser {
   // https://stackoverflow.com/a/52633235
   async erase_input(selector, nchars) {
     await this.page.click(selector);
-    await this.page.waitFor(50);
+    await this.page.waitForTimeout(50);
     const inputValue = await this.page.$eval(selector, (el) => el.value);
     for (let i = 0; i < (nchars || inputValue.length); i++) {
-      await this.page.waitFor(10);
+      await this.page.waitForTimeout(10);
       await this.page.keyboard.press("ArrowRight");
     }
     for (let j = 0; j < (nchars || inputValue.length); j++) {
-      await this.page.waitFor(10);
+      await this.page.waitForTimeout(10);
       await this.page.keyboard.press("Backspace");
     }
-    await this.page.waitFor(20);
+    await this.page.waitForTimeout(20);
   }
   async slowly_type(selector, text, noclick) {
     if (!noclick) await this.page.click(selector);
-    await this.page.waitFor(50);
+    await this.page.waitForTimeout(50);
     for (let i = 0; i < text.length; i++) {
-      await this.page.waitFor(20);
+      await this.page.waitForTimeout(20);
       await this.page.keyboard.press(text[i]);
     }
-    await this.page.waitFor(50);
+    await this.page.waitForTimeout(50);
   }
   async getInnerText(sel) {
     const element = await this.page.$(sel);
