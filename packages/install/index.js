@@ -162,6 +162,8 @@ const installSystemPackages = async (osInfo, user, db, mode, port) => {
     "git",
     "libsystemd-dev",
   ];
+  if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
+  if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 
