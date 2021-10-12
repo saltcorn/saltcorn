@@ -507,7 +507,7 @@ function ajax_post_json(url, data, args = {}) {
     data: JSON.stringify(data),
     contentType: "application/json;charset=UTF-8",
     ...args,
-  });
+  }).done(ajax_done);
 }
 function ajax_post(url, args) {
   $.ajax(url, {
