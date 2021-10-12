@@ -63,7 +63,7 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).toContain(">Useless<");
     await browser.clickNav("tr:nth-child(4) button");
-    await browser.page.waitFor(1000);
+    await browser.page.waitForTimeout(1000);
     expect(await browser.content()).toContain("Persons table");
     expect(await browser.content()).not.toContain(">Useless<");
     expect(await browser.content()).toContain("Field Useless deleted");
@@ -104,7 +104,7 @@ describe("Table create", () => {
     await browser.page.waitForSelector("div.cke_editable");
     await browser.erase_input("div.cke_editable", 15);
     await browser.page.waitForSelector("div.cke_editable");
-    await browser.page.waitFor(100);
+    await browser.page.waitForTimeout(100);
 
     await browser.slowly_type("div.cke_editable", "MyOwnInput", true);
     await browser.clickNav("button.btn-primary.builder-save");
@@ -157,10 +157,10 @@ describe("Table create", () => {
     expect(await browser.content()).toContain("Join field");
     await browser.page.click("div.is-text");
     await browser.page.waitForSelector("div.cke_editable");
-    await browser.page.waitFor(100);
+    await browser.page.waitForTimeout(100);
     await browser.erase_input("div.cke_editable", 15);
     await browser.slowly_type("div.cke_editable", "MyOtherInput", true);
-    await browser.page.waitFor(100);
+    await browser.page.waitForTimeout(100);
     await browser.clickNav("button.btn-primary.builder-save");
     await browser.clickNav("button[type=submit]");
 
@@ -188,7 +188,7 @@ describe("Table create", () => {
     );
     await browser.clickNav('form[action="/plugins/install/markdown"] button');
     expect(await browser.content()).toContain("startbootstrap-sb-admin-2");
-    await browser.page.waitFor(1000);
+    await browser.page.waitForTimeout(1000);
     await browser.clickNav(
       'form[action="/plugins/install/any-bootstrap-theme"] button'
     );
