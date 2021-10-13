@@ -19,7 +19,7 @@
     "dateformat": "^3.0.3",
     "inquirer": "^7.3.3",
     "js-yaml": "^4.1.0",
-    "node-fetch": "2.6.2",
+    "node-fetch": "2.6.4",
     "sudo": "^1.0.3",
     "systeminformation": "^5.9.7",
     "tcp-port-used": "^1.0.2",
