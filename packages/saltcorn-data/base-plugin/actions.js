@@ -224,7 +224,10 @@ module.exports = {
       const view_opts = views.map((v) => v.name);
       const fields = await table.getFields();
       const field_opts = fields
-        .filter((f) => f.type.name === "String" || f.reftable_name === "users")
+        .filter(
+          (f) =>
+            (f.type && f.type.name === "String") || f.reftable_name === "users"
+        )
         .map((f) => f.name);
       return [
         {
