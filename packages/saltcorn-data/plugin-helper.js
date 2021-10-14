@@ -159,7 +159,9 @@ const calcfldViewConfig = contract(
     for (const f of fields) {
       fieldViewConfigForms[f.name] = {};
       const fieldviews =
-        f.type === "Key" ? getState().keyFieldviews : f.type.fieldviews || {};
+        f.type === "Key"
+          ? getState().keyFieldviews
+          : (f.type && f.type.fieldviews) || {};
       for (const [nm, fv] of Object.entries(fieldviews)) {
         if (fv.configFields)
           fieldViewConfigForms[f.name][nm] = await applyAsync(

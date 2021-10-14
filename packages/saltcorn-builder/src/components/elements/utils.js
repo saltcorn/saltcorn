@@ -32,7 +32,22 @@ export const BlockSetting = ({ block, setProp }) => (
 
 export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = useContext(optionsCtx);
-
+  const switchIsFml = () => {
+    const isFmlAfter = !isFormula[nodekey];
+    setProp((prop) => {
+      prop.isFormula[nodekey] = isFmlAfter;
+      if (isFmlAfter && prop[nodekey] && prop[nodekey][0] !== '"') {
+        prop[nodekey] = `"${prop[nodekey]}"`;
+      } else if (
+        !isFmlAfter &&
+        typeof prop[nodekey] === "string" &&
+        prop[nodekey][0] === '"' &&
+        prop[nodekey][prop[nodekey].length - 1] === '"'
+      ) {
+        prop[nodekey] = prop[nodekey].substring(1, prop[nodekey].length - 1);
+      }
+    });
+  };
   return mode !== "show" ? (
     children
   ) : (
@@ -60,9 +75,7 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             }`}
             title="Calculated formula"
             type="button"
-            onClick={() =>
-              setProp((prop) => (prop.isFormula[nodekey] = !isFormula[nodekey]))
-            }
+            onClick={switchIsFml}
           >
             <i className="fas fa-calculator"></i>
           </button>
@@ -426,14 +439,38 @@ export const ConfigField = ({
     if (!field.required) field.options.unshift("");
   }
   const dispatch = {
-    String: () => (
-      <input
-        type="text"
-        className="form-control"
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    String() {
+      if (field.attributes?.options) {
+        const options =
+          typeof field.attributes.options === "string"
+            ? field.attributes.options.split(",").map((s) => s.trim())
+            : field.attributes.options;
+        return (
+          <select
+            className="form-control"
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+          >
+            {options.map((o, ix) => (
+              <option
+                key={ix}
+                value={typeof o === "string" ? o : o.value || o.name}
+              >
+                {typeof o === "string" ? o : o.label}
+              </option>
+            ))}
+          </select>
+        );
+      } else
+        return (
+          <input
+            type="text"
+            className="form-control"
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+          />
+        );
+    },
     Integer: () => (
       <input
         type="number"

@@ -131,7 +131,6 @@ const ImageElem = ({ connectors, images }) => (
     icon="fas fa-image"
     title="Image"
     label="Image"
-    disable={images.length === 0}
   >
     <Image fileid={images.length > 0 ? images[0].id : 0} />
   </WrapElem>
