@@ -184,7 +184,7 @@ export const ImageSettings = () => {
                 {options.fields
                   .filter(
                     (f) =>
-                      f.type.name === "String" ||
+                      (f.type && f.type.name === "String") ||
                       f.reftable_name === "_sc_files"
                   )
                   .map((f, ix) => (
