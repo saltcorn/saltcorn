@@ -33,7 +33,7 @@
     "live-plugin-manager": "^0.16.0",
     "moment": "^2.27.0",
     "node-fetch": "2.6.2",
-    "passport": "^0.4.1",
+    "passport": "^0.5.0",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.2.1",
