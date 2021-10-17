@@ -61,13 +61,14 @@ const getApp = async (opts = {}) => {
   app.use(helmet());
   app.use(
     express.json({
+      limit: "5mb",
       verify: (req, res, buf) => {
         req.rawBody = buf;
       },
     })
   );
   // extenetede url encoding in use
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
   // add fileupload feature
   // todo ability to configure filetmp dir - add new config / env parameter
