@@ -842,6 +842,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = await Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     if (t.name === "users") {
       req.flash("error", req.__(`Cannot delete users table`));
       res.redirect(`/table`);
