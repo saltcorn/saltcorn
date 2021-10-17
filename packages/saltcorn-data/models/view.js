@@ -286,7 +286,7 @@ class View {
         extraArgs
       );
     } catch (error) {
-      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate): ${error.message}`;
+      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
   }
@@ -347,7 +347,7 @@ class View {
         return rendered.map((html, ix) => ({ html, row: rows[ix] }));
       }
     } catch (error) {
-      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate): ${error.message}`;
+      error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
     throw new InvalidConfiguration(
