@@ -80,15 +80,18 @@ const subSelectVals = (v) => {
     .filter((v) => v !== null);
   return xs;
 };
+const wrapParens = (s) => (s ? `(${s})` : s);
 const quote = (s) => (s.includes(".") || s.includes('"') ? s : `"${s}"`);
 const whereOr = (is_sqlite, i) => (ors) =>
-  ors
-    .map((vi) =>
-      Object.entries(vi)
-        .map((kv) => whereClause(is_sqlite, i)(kv))
-        .join(" and ")
-    )
-    .join(" or ");
+  wrapParens(
+    ors
+      .map((vi) =>
+        Object.entries(vi)
+          .map((kv) => whereClause(is_sqlite, i)(kv))
+          .join(" and ")
+      )
+      .join(" or ")
+  );
 
 const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
@@ -104,7 +107,9 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         .map((kv) => whereClause(is_sqlite, i)(kv))
         .join(" and ")})`
     : v && v.or && Array.isArray(v.or)
-    ? v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
+    ? wrapParens(
+        v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
+      )
     : Array.isArray(v)
     ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
