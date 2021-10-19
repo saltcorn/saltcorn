@@ -32,7 +32,9 @@ const { I18n } = require("i18n");
 const path = require("path");
 const fs = require("fs");
 
-process.send = process.send || function () {};
+const process_send = (v) => {
+  if (process.send) process.send(v);
+};
 
 /**
  * State class
@@ -113,7 +115,7 @@ class State {
     });
     this.refresh_i18n();
     if (!noSignal)
-      process.send({ refresh: "config", tenant: db.getTenantSchema() });
+      process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
   async refresh_i18n() {
     const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
@@ -159,7 +161,7 @@ class State {
       }
     }
     if (!noSignal)
-      process.send({ refresh: "views", tenant: db.getTenantSchema() });
+      process_send({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -169,7 +171,7 @@ class State {
   async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
     if (!noSignal)
-      process.send({ refresh: "triggers", tenant: db.getTenantSchema() });
+      process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -180,7 +182,7 @@ class State {
     const Page = require("../models/page");
     this.pages = await Page.find();
     if (!noSignal)
-      process.send({ refresh: "pages", tenant: db.getTenantSchema() });
+      process_send({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -195,7 +197,7 @@ class State {
       this.files[f.id] = f;
     }
     if (!noSignal)
-      process.send({ refresh: "files", tenant: db.getTenantSchema() });
+      process_send({ refresh: "files", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -237,7 +239,7 @@ class State {
     }
     this.tables = allTables;
     if (!noSignal)
-      process.send({ refresh: "tables", tenant: db.getTenantSchema() });
+      process_send({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -286,7 +288,7 @@ class State {
       await setConfig(key, value);
       this.configs[key] = { value };
       if (key.startsWith("localizer_")) this.refresh_i18n();
-      process.send({ refresh: "config", tenant: db.getTenantSchema() });
+      process_send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }
 
@@ -300,7 +302,7 @@ class State {
       await deleteConfig(key);
       delete this.configs[key];
     }
-    process.send({ refresh: "config", tenant: db.getTenantSchema() });
+    process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -408,7 +410,7 @@ class State {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal)
-      process.send({ removePlugin: name, tenant: db.getTenantSchema() });
+      process_send({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   /**
@@ -436,7 +438,7 @@ class State {
     });
     await this.refresh(true);
     if (!noSignal)
-      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
+      process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
   getStringsForI18n() {
@@ -565,7 +567,7 @@ const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
   if (!noSignalOrDB) await createTenant(t, newurl);
   tenants[t] = new State(t);
   await db.runWithTenant(t, plugin_loader);
-  if (!noSignalOrDB) process.send({ createTenant: t });
+  if (!noSignalOrDB) process_send({ createTenant: t });
 };
 /**
  * Restart tenant

@@ -35,7 +35,7 @@ const View = require("@saltcorn/data/models/view");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
-const initMaster = async ({ disableMigrate }) => {
+const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -63,7 +63,7 @@ const initMaster = async ({ disableMigrate }) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, disableMigrate);
   }
-  setupPrimary();
+  if (useClusterAdaptor) setupPrimary();
 };
 
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -177,7 +177,7 @@ module.exports = async ({
           httpsServer.setTimeout(timeout * 1000);
           process.on("message", workerDispatchMsg);
           glx.serveApp(app);
-          process.send("Start");
+          process.send && process.send("Start");
         })
         .master(() => {
           initMaster(appargs).then(initMasterListeners);
@@ -189,60 +189,67 @@ module.exports = async ({
   // No greenlock!
 
   if (cluster.isMaster) {
-    await initMaster(appargs);
+    const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
+    await initMaster(appargs, forkAnyWorkers);
 
-    for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+    if (forkAnyWorkers) {
+      for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
-    Trigger.emitEvent("Startup");
-
-    cluster.on("exit", (worker, code, signal) => {
-      console.log(`worker ${worker.process.pid} died`);
-      addWorker(cluster.fork());
-    });
-  } else {
-    process.on("message", workerDispatchMsg);
-
-    const app = await getApp(appargs);
-
-    const cert = getState().getConfig("custom_ssl_certificate", "");
-    const key = getState().getConfig("custom_ssl_private_key", "");
-    const timeout = +getState().getConfig("timeout", 120);
-
-    // Server with http on port 80 / https on 443
-    // todo  resolve hardcode
-    if (port === 80 && cert && key) {
-      const https = require("https");
-      const http = require("http");
-      const httpServer = http.createServer(app);
-      const httpsServer = https.createServer({ key, cert }, app);
-      // todo timeout to config
-      httpServer.setTimeout(timeout * 1000);
-      httpsServer.setTimeout(timeout * 1000);
-      setupSocket(httpServer, httpsServer);
-      httpServer.listen(port, () => {
-        console.log("HTTP Server running on port 80");
-      });
-
-      // todo port to config
-      httpsServer.listen(443, () => {
-        console.log("HTTPS Server running on port 443");
+      cluster.on("exit", (worker, code, signal) => {
+        console.log(`worker ${worker.process.pid} died`);
+        addWorker(cluster.fork());
       });
     } else {
-      // server with http only
-      const http = require("http");
-      const httpServer = http.createServer(app);
-      setupSocket(httpServer);
-
-      // todo timeout to config
-      // todo refer in doc to httpserver doc
-      // todo there can be added other parameters for httpserver
-      httpServer.setTimeout(timeout * 1000);
-      httpServer.listen(port, () => {
-        console.log(`Saltcorn listening on http://localhost:${port}/`);
-      });
+      await nonGreenlockWorkerSetup(appargs, port);
     }
-    process.send("Start");
+    Trigger.emitEvent("Startup");
+  } else {
+    await nonGreenlockWorkerSetup(appargs, port);
   }
+};
+
+const nonGreenlockWorkerSetup = async (appargs, port) => {
+  process.send && process.on("message", workerDispatchMsg);
+
+  const app = await getApp(appargs);
+
+  const cert = getState().getConfig("custom_ssl_certificate", "");
+  const key = getState().getConfig("custom_ssl_private_key", "");
+  const timeout = +getState().getConfig("timeout", 120);
+  // Server with http on port 80 / https on 443
+  // todo  resolve hardcode
+  if (port === 80 && cert && key) {
+    const https = require("https");
+    const http = require("http");
+    const httpServer = http.createServer(app);
+    const httpsServer = https.createServer({ key, cert }, app);
+    // todo timeout to config
+    httpServer.setTimeout(timeout * 1000);
+    httpsServer.setTimeout(timeout * 1000);
+    setupSocket(httpServer, httpsServer);
+    httpServer.listen(port, () => {
+      console.log("HTTP Server running on port 80");
+    });
+
+    // todo port to config
+    httpsServer.listen(443, () => {
+      console.log("HTTPS Server running on port 443");
+    });
+  } else {
+    // server with http only
+    const http = require("http");
+    const httpServer = http.createServer(app);
+    setupSocket(httpServer);
+
+    // todo timeout to config
+    // todo refer in doc to httpserver doc
+    // todo there can be added other parameters for httpserver
+    httpServer.setTimeout(timeout * 1000);
+    httpServer.listen(port, () => {
+      console.log(`Saltcorn listening on http://localhost:${port}/`);
+    });
+  }
+  process.send && process.send("Start");
 };
 const setupSocket = (...servers) => {
   // https://socket.io/docs/v4/middlewares/
@@ -258,7 +265,7 @@ const setupSocket = (...servers) => {
   io.use(wrap(getSessionStore()));
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.session()));
-  io.adapter(createAdapter());
+  if (process.send) io.adapter(createAdapter());
   getState().setRoomEmitter((viewname, room_id, msg) => {
     io.to(`${viewname}_${room_id}`).emit("message", msg);
   });
