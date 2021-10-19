@@ -92,7 +92,7 @@ describe("mkWhere", () => {
     });
     expect(mkWhere({ id: { or: [{ gt: 10 }, { lt: 5 }] } })).toStrictEqual({
       values: [10, 5],
-      where: 'where "id">$1 or "id"<$2',
+      where: 'where ("id">$1 or "id"<$2)',
     });
   });
   it("should query subselect", () => {
@@ -118,15 +118,15 @@ describe("mkWhere", () => {
   it("should query or", () => {
     expect(mkWhere({ or: [{ id: 5 }, { x: 7 }] })).toStrictEqual({
       values: [5, 7],
-      where: 'where "id"=$1 or "x"=$2',
+      where: 'where ("id"=$1 or "x"=$2)',
     });
     expect(mkWhere({ or: [{ id: 5 }, { x: { gt: 7 } }] })).toStrictEqual({
       values: [5, 7],
-      where: 'where "id"=$1 or "x">$2',
+      where: 'where ("id"=$1 or "x">$2)',
     });
     expect(mkWhere({ or: [{ id: 5 }, { x: 7, y: 8 }] })).toStrictEqual({
       values: [5, 7, 8],
-      where: 'where "id"=$1 or "x"=$2 and "y"=$3',
+      where: 'where ("id"=$1 or "x"=$2 and "y"=$3)',
     });
     expect(mkWhere({ not: { id: 5 } })).toStrictEqual({
       values: [5],
