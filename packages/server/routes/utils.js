@@ -9,6 +9,8 @@ const { get_base_url } = require("@saltcorn/data/models/config");
 const { input } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
+const is = require("contractis/is");
+
 function loggedIn(req, res, next) {
   if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
     next();
