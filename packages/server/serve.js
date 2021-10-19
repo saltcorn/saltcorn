@@ -35,7 +35,7 @@ const View = require("@saltcorn/data/models/view");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
-const initMaster = async ({ disableMigrate }) => {
+const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -63,7 +63,7 @@ const initMaster = async ({ disableMigrate }) => {
   if (db.is_it_multi_tenant()) {
     await init_multi_tenant(loadAllPlugins, disableMigrate);
   }
-  setupPrimary();
+  if (useClusterAdaptor) setupPrimary();
 };
 
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -189,18 +189,18 @@ module.exports = async ({
   // No greenlock!
 
   if (cluster.isMaster) {
-    await initMaster(appargs);
+    await initMaster(appargs, useNCpus > 1);
 
-    //if (useNCpus > 1) {
-    for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+    if (useNCpus > 1) {
+      for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
-    cluster.on("exit", (worker, code, signal) => {
-      console.log(`worker ${worker.process.pid} died`);
-      addWorker(cluster.fork());
-    });
-    //} else {
-    //  await nonGreenlockWorkerSetup(appargs, port);
-    //}
+      cluster.on("exit", (worker, code, signal) => {
+        console.log(`worker ${worker.process.pid} died`);
+        addWorker(cluster.fork());
+      });
+    } else {
+      await nonGreenlockWorkerSetup(appargs, port);
+    }
     Trigger.emitEvent("Startup");
   } else {
     await nonGreenlockWorkerSetup(appargs, port);
@@ -264,7 +264,7 @@ const setupSocket = (...servers) => {
   io.use(wrap(getSessionStore()));
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.session()));
-  io.adapter(createAdapter());
+  if (process.send) io.adapter(createAdapter());
   getState().setRoomEmitter((viewname, room_id, msg) => {
     io.to(`${viewname}_${room_id}`).emit("message", msg);
   });
