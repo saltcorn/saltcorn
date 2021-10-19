@@ -189,9 +189,11 @@ module.exports = async ({
   // No greenlock!
 
   if (cluster.isMaster) {
-    await initMaster(appargs, useNCpus > 1);
+    const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
 
-    if (useNCpus > 1) {
+    await initMaster(appargs, forkAnyWorkers);
+
+    if (forkAnyWorkers) {
       for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
 
       cluster.on("exit", (worker, code, signal) => {
