@@ -190,7 +190,6 @@ module.exports = async ({
 
   if (cluster.isMaster) {
     const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-    console.log({ forkAnyWorkers, useNCpus, platform: process.platform });
     await initMaster(appargs, forkAnyWorkers);
 
     if (forkAnyWorkers) {
