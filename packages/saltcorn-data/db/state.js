@@ -32,7 +32,9 @@ const { I18n } = require("i18n");
 const path = require("path");
 const fs = require("fs");
 
-const process_send = process.send || function () {};
+const process_send = (v) => {
+  if (process.send) process.send(v);
+};
 
 /**
  * State class
