@@ -112,6 +112,12 @@ const getApp = async (opts = {}) => {
     )
   );
 
+  if (process.env.SALTCORN_SERVE_ADDITIONAL_DIR)
+    app.use(
+      express.static(process.env.SALTCORN_SERVE_ADDITIONAL_DIR, {
+        maxAge: development_mode ? 0 : 1000 * 60 * 15,
+      })
+    );
   let version_tag = db.connectObj.version_tag;
 
   app.use(
