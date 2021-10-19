@@ -393,11 +393,12 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      process.send("RestartServer");
-      //process.exit(0);
+      if (process.send) process.send("RestartServer");
+      else process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
-      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      process.send &&
+        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }

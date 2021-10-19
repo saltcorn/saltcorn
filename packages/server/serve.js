@@ -177,7 +177,7 @@ module.exports = async ({
           httpsServer.setTimeout(timeout * 1000);
           process.on("message", workerDispatchMsg);
           glx.serveApp(app);
-          process.send("Start");
+          process.send && process.send("Start");
         })
         .master(() => {
           initMaster(appargs).then(initMasterListeners);
@@ -241,7 +241,7 @@ module.exports = async ({
         console.log(`Saltcorn listening on http://localhost:${port}/`);
       });
     }
-    process.send("Start");
+    process.send && process.send("Start");
   }
 };
 const setupSocket = (...servers) => {
