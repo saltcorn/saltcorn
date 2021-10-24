@@ -195,3 +195,7 @@ footer.bs-mobile-nav-footer {
 .opacity-50 {
   opacity: 0.5;
 }
+
+.welcome-page-entity-list div.table-responsive {
+  max-height: max(40vh, 300px);
+}
