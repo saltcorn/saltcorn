@@ -66,7 +66,20 @@ const viewCard = (views, req) => ({
   title: link("/viewedit", req.__("Views")),
   class: "welcome-page-entity-list",
   bodyClass: "py-0  pr-0",
-  contents: viewTable(views, req),
+  contents:
+    views.length > 0
+      ? viewTable(views, req)
+      : div(
+          { class: "mt-2 pr-2" },
+          p(req.__("No views")),
+          p(
+            i(
+              req.__(
+                "Views display data from tables. Views can be embedded in pages, or displayed on their own."
+              )
+            )
+          )
+        ),
   footer: div(
     a(
       { href: `/viewedit/new`, class: "btn btn-primary" },
@@ -94,7 +107,14 @@ const pageCard = (pages, req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
   class: "welcome-page-entity-list",
-  contents: pageTable(pages, req),
+  contents:
+    pages.length > 0
+      ? pageTable(pages, req)
+      : div(
+          { class: "mt-2 pr-2" },
+          p(req.__("No pages")),
+          p(i(req.__("Pages ")))
+        ),
   bodyClass: "py-0 pr-0",
   footer: div(
     a(
