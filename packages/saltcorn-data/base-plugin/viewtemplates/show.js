@@ -220,9 +220,22 @@ const run = async (
     where: qstate,
     joinFields,
     aggregations,
-    limit: 2,
+    limit: 5,
   });
-  if (rows.length !== 1) return extra.req.__("No row selected");
+  if (rows.length > 1)
+    rows.sort((a, b) => {
+      let diff = 0;
+      Object.keys(state).forEach((key) => {
+        if (a[key] && b[key]) {
+          if (typeof a[key] === "string" && typeof b[key] === "string") {
+            diff += a[key].length - b[key].length;
+          }
+        }
+      });
+      return diff;
+    });
+
+  if (rows.length == 0) return extra.req.__("No row selected");
   if (tbl.name === "users") {
     const base = get_base_url(extra.req);
     fields.push(
@@ -241,7 +254,7 @@ const run = async (
   await set_join_fieldviews({ layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, rows)
+    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]])
   )[0];
   let page_title_preamble = "";
   if (page_title) {
