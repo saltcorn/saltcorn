@@ -27,20 +27,19 @@ const tableCard = (tables, req) => ({
   type: "card",
   class: "welcome-page-entity-list",
   title: link("/table", req.__("Tables")),
-  contents: div(
-    tableTable(tables, req),
-    div(
-      a(
-        { href: `/table/new`, class: "btn btn-primary" },
-        req.__("Create a table")
-      ),
-      a(
-        {
-          href: `/table/create-from-csv`,
-          class: "btn btn-secondary ml-2",
-        },
-        req.__("Create table with CSV upload")
-      )
+  contents: tableTable(tables, req),
+  bodyClass: "py-0 pr-0",
+  footer: div(
+    a(
+      { href: `/table/new`, class: "btn btn-primary" },
+      req.__("Create a table")
+    ),
+    a(
+      {
+        href: `/table/create-from-csv`,
+        class: "btn btn-secondary ml-2",
+      },
+      req.__("Create table with CSV upload")
     )
   ),
 });
@@ -66,15 +65,14 @@ const viewCard = (views, req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
   class: "welcome-page-entity-list",
-  contents: [
-    viewTable(views, req),
-    div(
-      a(
-        { href: `/viewedit/new`, class: "btn btn-primary" },
-        req.__("Create a view")
-      )
-    ),
-  ],
+  bodyClass: "py-0  pr-0",
+  contents: viewTable(views, req),
+  footer: div(
+    a(
+      { href: `/viewedit/new`, class: "btn btn-primary" },
+      req.__("Create a view")
+    )
+  ),
 });
 const pageTable = (pages, req) =>
   mkTable(
@@ -96,15 +94,14 @@ const pageCard = (pages, req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
   class: "welcome-page-entity-list",
-  contents: [
-    pageTable(pages, req),
-    div(
-      a(
-        { href: `/pageedit/new`, class: "btn btn-primary" },
-        req.__("Create a page")
-      )
-    ),
-  ],
+  contents: pageTable(pages, req),
+  bodyClass: "py-0 pr-0",
+  footer: div(
+    a(
+      { href: `/pageedit/new`, class: "btn btn-primary" },
+      req.__("Create a page")
+    )
+  ),
 });
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();

@@ -268,7 +268,13 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 : segment.title
             ),
           div(
-            { class: ["card-body", segment.noPadding && "p-0"] },
+            {
+              class: [
+                "card-body",
+                segment.bodyClass,
+                segment.noPadding && "p-0",
+              ],
+            },
             go(segment.contents)
           ),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
