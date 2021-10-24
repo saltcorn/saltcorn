@@ -77,7 +77,6 @@ Vagrant.configure("2") do |config|
     sudo -iu postgres createdb saltcorn 
     sudo -iu postgres createdb saltcorn_test
     sudo -iu postgres psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'foobar';"
-    npm install -g lerna
     sudo -iu vagrant mkdir -p /home/vagrant/.config/
 
     cat <<EOF > /home/vagrant/.config/.saltcorn
@@ -95,7 +94,7 @@ EOF
     chmod 600 /home/vagrant/.config/.saltcorn
     echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
     echo '127.0.0.1 otherexample.com' | sudo tee -a /etc/hosts
-    npm install -g @saltcorn/cli
+    npm install -g @saltcorn/cli --unsafe
     sudo -iu vagrant saltcorn run-tests
 
   SHELL
