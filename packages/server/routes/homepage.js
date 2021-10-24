@@ -115,10 +115,6 @@ const welcome_page = async (req) => {
   return {
     above: [
       {
-        type: "pageHeader",
-        title: req.__("Quick Start"),
-      },
-      {
         besides: [
           pageCard(pages, req),
           viewCard(views, req),
