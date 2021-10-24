@@ -6,7 +6,6 @@ const {
 const { dump } = require("js-yaml");
 const packagejson = require("../../package.json");
 
-
 const print_it = (results, json) => {
   if (json) console.log(JSON.stringify(results, null, 2));
   else console.log(dump(results, { lineWidth: process.stdout.columns }));
@@ -33,7 +32,14 @@ class InfoCommand extends Command {
       res.configuration = conn;
       res.connectionError = e.message;
     }
-
+    res.environmentVariables = {};
+    const envVars = "DATABASE_URL SQLITE_FILEPATH PGDATABASE PGUSER PGHOST PGPORT PGPASSWORD PGDATABASE SALTCORN_SESSION_SECRET SALTCORN_MULTI_TENANTSALTCORN_FILE_STORE SALTCORN_DEFAULT_SCHEMA SALTCORN_FIXED_CONFIGURATION SALTCORN_INHERIT_CONFIGURATION SALTCORN_SERVE_ADDITIONAL_DIR SALTCORN_NWORKERS SALTCORN_DISABLE_UPGRADE".split(
+      " "
+    );
+    envVars.forEach((v) => {
+      if (process.env[v]) res.environmentVariables[v] = process.env[v];
+      else res.environmentVariables[v] = "";
+    });
     print_it(res, flags.json);
     this.exit(0);
   }

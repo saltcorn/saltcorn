@@ -313,7 +313,7 @@ function set_state_fields(kvs) {
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
-  pjax_to(newhref);
+  pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
 }
 function unset_state_field(key) {
   pjax_to(removeQueryStringParameter(window.location.href, key));
