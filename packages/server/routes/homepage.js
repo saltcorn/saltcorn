@@ -110,11 +110,7 @@ const pageCard = (pages, req) => ({
   contents:
     pages.length > 0
       ? pageTable(pages, req)
-      : div(
-          { class: "mt-2 pr-2" },
-          p(req.__("No pages")),
-          p(i(req.__("Pages ")))
-        ),
+      : div({ class: "mt-2 pr-2" }, p(req.__("No pages"))),
   bodyClass: "py-0 pr-0",
   footer: div(
     a(

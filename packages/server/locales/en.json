@@ -794,5 +794,8 @@
 	"Edit properties": "Edit properties",
 	"Images and other files for download": "Images and other files for download",
 	"Disable LetsEncrypt HTTPS": "Disable LetsEncrypt HTTPS",
-	"Type %s not found": "Type %s not found"
+	"Type %s not found": "Type %s not found",
+	"No pages": "No pages",
+	"No views": "No views",
+	"Views display data from tables. Views can be embedded in pages, or displayed on their own.": "Views display data from tables. Views can be embedded in pages, or displayed on their own."
 }
