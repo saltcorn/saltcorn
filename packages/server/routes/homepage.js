@@ -47,10 +47,9 @@ const tableCard = (tables, req) => ({
 const viewTable = (views, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Run"),
-        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
+        label: req.__("Name"),
+        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),
@@ -90,10 +89,9 @@ const viewCard = (views, req) => ({
 const pageTable = (pages, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Run"),
-        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, req.__("Run")),
+        label: req.__("Name"),
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),

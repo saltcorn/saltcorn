@@ -199,3 +199,7 @@ footer.bs-mobile-nav-footer {
 .welcome-page-entity-list div.table-responsive {
   max-height: max(40vh, 300px);
 }
+
+.welcome-page-entity-list {
+  min-height: 35vh;
+}
