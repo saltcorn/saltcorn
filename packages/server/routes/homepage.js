@@ -30,16 +30,13 @@ const tableCard = (tables, req) => ({
   contents: tableTable(tables, req),
   bodyClass: "py-0 pr-0",
   footer: div(
-    a(
-      { href: `/table/new`, class: "btn btn-primary" },
-      req.__("Create a table")
-    ),
+    a({ href: `/table/new`, class: "btn btn-primary" }, req.__("Create table")),
     a(
       {
         href: `/table/create-from-csv`,
         class: "btn btn-secondary ml-2",
       },
-      req.__("Create table with CSV upload")
+      req.__("CSV upload")
     )
   ),
 });
@@ -82,7 +79,7 @@ const viewCard = (views, req) => ({
   footer: div(
     a(
       { href: `/viewedit/new`, class: "btn btn-primary" },
-      req.__("Create a view")
+      req.__("Create view")
     )
   ),
 });
@@ -113,7 +110,7 @@ const pageCard = (pages, req) => ({
   footer: div(
     a(
       { href: `/pageedit/new`, class: "btn btn-primary" },
-      req.__("Create a page")
+      req.__("Create page")
     )
   ),
 });
