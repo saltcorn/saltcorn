@@ -8,7 +8,8 @@ class Browser {
     const b = new Browser();
     b.browser = await puppeteer.launch({
       headless: true, //o || process.env.CI==='true',
-      executablePath: "/usr/bin/google-chrome",
+      executablePath:
+        process.env.PUPPETEER_CHROMIUM_BIN || "/usr/bin/chromium-browser",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
       dumpio: true,
       defaultViewport: {
