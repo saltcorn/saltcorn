@@ -55,6 +55,7 @@ jobs:
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
           SALTCORN_NWORKERS: 1
+          PUPPETEER_CHROMIUM_BIN: "/usr/bin/google-chrome"
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
