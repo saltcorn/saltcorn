@@ -70,8 +70,10 @@ Vagrant.configure("2") do |config|
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
+
+    set -e
     wget -qO - https://deb.nodesource.com/setup_14.x | bash -
-    apt-get install -qqy nodejs libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban git libcap2-bin unattended-upgrades libsystemd-dev chromium-browser
+    apt-get install -qqy nodejs libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban git libcap2-bin unattended-upgrades libsystemd-dev chromium-browser python3-pip python3-pytest
     sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
 
     sudo -iu postgres createdb saltcorn 
@@ -95,11 +97,11 @@ EOF
     echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
     echo '127.0.0.1 otherexample.com' | sudo tee -a /etc/hosts
     npm install -g lerna
-    sudo -iu vagrant pip3 install requests pytest
+    sudo -iu vagrant pip3 install requests
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && lerna bootstrap --no-ci"
     sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests"
-    sudo -iu vagrant bash -c "cd saltcorn && pytest"
+    sudo -iu vagrant bash -c "cd saltcorn && pytest-3 infosec-scan/"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
   SHELL
