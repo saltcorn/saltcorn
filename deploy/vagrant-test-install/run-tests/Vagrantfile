@@ -95,10 +95,13 @@ EOF
     echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
     echo '127.0.0.1 otherexample.com' | sudo tee -a /etc/hosts
     npm install -g lerna
+    sudo -iu vagrant pip3 install requests pytest
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && lerna bootstrap --no-ci"
     sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests"
-
+    sudo -iu vagrant bash -c "cd saltcorn && pytest"
+    sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
+    sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
   SHELL
 end
 
