@@ -797,10 +797,8 @@
 	"Type %s not found": "Type %s not found",
 	"No pages": "No pages",
 	"No views": "No views",
-	"Views display data from tables. Views can be embedded in pages, or displayed on their own.": "Views display data from tables. Views can be embedded in pages, or displayed on their own.",
 	"CSV upload": "CSV upload",
-	"Pages are the web pages of your application. They have static content, and by embedding views, dynamic content": "Pages are the web pages of your application. They have static content, and by embedding views, dynamic content",
-	"Tables organise structured data by rows and fields": "Tables organise structured data by rows and fields",
-	"Pages are the web pages of your application. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application. They have static content, and by embedding views, dynamic content.",
-	"Tables organise structured data by fields and rows.": "Tables organise structured data by fields and rows."
+	"Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content.",
+	"Views display data from tables. A view is a view template applied to a table, with configuration.": "Views display data from tables. A view is a view template applied to a table, with configuration.",
+	"Tables organise data by fields and rows.": "Tables organise data by fields and rows."
 }

@@ -31,7 +31,7 @@ const tableCard = (tables, req) => ({
     (tables.length <= 1
       ? p(
           { class: "mt-2 pr-2" },
-          i(req.__("Tables organise structured data by fields and rows."))
+          i(req.__("Tables organise data by fields and rows."))
         )
       : "") + tableTable(tables, req),
   bodyClass: "py-0 pr-0",
@@ -74,7 +74,7 @@ const viewCard = (views, req) => ({
           { class: "mt-2 pr-2" },
           i(
             req.__(
-              "Views display data from tables. Views can be embedded in pages, or displayed on their own."
+              "Views display data from tables. A view is a view template applied to a table, with configuration."
             )
           )
         )
@@ -113,7 +113,7 @@ const pageCard = (pages, req) => ({
           { class: "mt-2 pr-2" },
           i(
             req.__(
-              "Pages are the web pages of your application. They have static content, and by embedding views, dynamic content."
+              "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content."
             )
           )
         )
