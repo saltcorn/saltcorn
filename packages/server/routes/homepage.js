@@ -27,7 +27,13 @@ const tableCard = (tables, req) => ({
   type: "card",
   class: "welcome-page-entity-list",
   title: link("/table", req.__("Tables")),
-  contents: tableTable(tables, req),
+  contents:
+    (tables.length <= 1
+      ? p(
+          { class: "mt-2 pr-2" },
+          i(req.__("Tables organise structured data by fields and rows."))
+        )
+      : "") + tableTable(tables, req),
   bodyClass: "py-0 pr-0",
   footer: div(
     a({ href: `/table/new`, class: "btn btn-primary" }, req.__("Create table")),
@@ -63,19 +69,18 @@ const viewCard = (views, req) => ({
   class: "welcome-page-entity-list",
   bodyClass: "py-0  pr-0",
   contents:
-    views.length > 0
-      ? viewTable(views, req)
-      : div(
+    (views.length <= 1
+      ? p(
           { class: "mt-2 pr-2" },
-          p(req.__("No views")),
-          p(
-            i(
-              req.__(
-                "Views display data from tables. Views can be embedded in pages, or displayed on their own."
-              )
+          i(
+            req.__(
+              "Views display data from tables. Views can be embedded in pages, or displayed on their own."
             )
           )
-        ),
+        )
+      : "") +
+    (views.length > 0 ? viewTable(views, req) : p(req.__("No views"))),
+
   footer: div(
     a(
       { href: `/viewedit/new`, class: "btn btn-primary" },
@@ -103,9 +108,19 @@ const pageCard = (pages, req) => ({
   title: link("/pageedit", req.__("Pages")),
   class: "welcome-page-entity-list",
   contents:
-    pages.length > 0
+    (pages.length <= 1
+      ? p(
+          { class: "mt-2 pr-2" },
+          i(
+            req.__(
+              "Pages are the web pages of your application. They have static content, and by embedding views, dynamic content."
+            )
+          )
+        )
+      : "") +
+    (pages.length > 0
       ? pageTable(pages, req)
-      : div({ class: "mt-2 pr-2" }, p(req.__("No pages"))),
+      : div({ class: "mt-2 pr-2" }, p(req.__("No pages")))),
   bodyClass: "py-0 pr-0",
   footer: div(
     a(
