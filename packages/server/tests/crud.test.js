@@ -96,8 +96,7 @@ describe("homepage", () => {
     await request(app)
       .get("/")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Quick Start"))
-      .expect(toInclude("Four different ways to get started"));
+      .expect(toInclude("Pages are the web pages"));
   });
   it("shows no-view quick start", async () => {
     await Table.create("mytable");
@@ -107,8 +106,8 @@ describe("homepage", () => {
     await request(app)
       .get("/")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Quick Start"))
-      .expect(toInclude("You have no views!"));
+      .expect(toInclude("Pages are the web pages"))
+      .expect(toInclude("No views"));
   });
   it("shows with-view quick start", async () => {
     const table = await Table.findOne({ name: "mytable" });
@@ -126,8 +125,8 @@ describe("homepage", () => {
     await request(app)
       .get("/")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Quick Start"))
-      .expect(toNotInclude("You have no views!"));
+      .expect(toInclude("Pages are the web pages"))
+      .expect(toNotInclude("No views"));
   });
   it("resets", async () => {
     await resetToFixtures();

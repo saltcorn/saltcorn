@@ -794,5 +794,11 @@
 	"Edit properties": "Edit properties",
 	"Images and other files for download": "Images and other files for download",
 	"Disable LetsEncrypt HTTPS": "Disable LetsEncrypt HTTPS",
-	"Type %s not found": "Type %s not found"
+	"Type %s not found": "Type %s not found",
+	"No pages": "No pages",
+	"No views": "No views",
+	"CSV upload": "CSV upload",
+	"Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content.",
+	"Views display data from tables. A view is a view template applied to a table, with configuration.": "Views display data from tables. A view is a view template applied to a table, with configuration.",
+	"Tables organise data by fields and rows.": "Tables organise data by fields and rows."
 }

@@ -23,13 +23,36 @@ const tableTable = (tables, req) =>
     tables
   );
 
+const tableCard = (tables, req) => ({
+  type: "card",
+  class: "welcome-page-entity-list",
+  title: link("/table", req.__("Tables")),
+  contents:
+    (tables.length <= 1
+      ? p(
+          { class: "mt-2 pr-2" },
+          i(req.__("Tables organise data by fields and rows."))
+        )
+      : "") + tableTable(tables, req),
+  bodyClass: "py-0 pr-0",
+  footer: div(
+    a({ href: `/table/new`, class: "btn btn-primary" }, req.__("Create table")),
+    a(
+      {
+        href: `/table/create-from-csv`,
+        class: "btn btn-secondary ml-2",
+      },
+      req.__("CSV upload")
+    )
+  ),
+});
+
 const viewTable = (views, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Run"),
-        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
+        label: req.__("Name"),
+        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),
@@ -40,13 +63,37 @@ const viewTable = (views, req) =>
     views
   );
 
+const viewCard = (views, req) => ({
+  type: "card",
+  title: link("/viewedit", req.__("Views")),
+  class: "welcome-page-entity-list",
+  bodyClass: "py-0  pr-0",
+  contents:
+    (views.length <= 1
+      ? p(
+          { class: "mt-2 pr-2" },
+          i(
+            req.__(
+              "Views display data from tables. A view is a view template applied to a table, with configuration."
+            )
+          )
+        )
+      : "") +
+    (views.length > 0 ? viewTable(views, req) : p(req.__("No views"))),
+
+  footer: div(
+    a(
+      { href: `/viewedit/new`, class: "btn btn-primary" },
+      req.__("Create view")
+    )
+  ),
+});
 const pageTable = (pages, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Run"),
-        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, req.__("Run")),
+        label: req.__("Name"),
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),
@@ -56,71 +103,48 @@ const pageTable = (pages, req) =>
     ],
     pages
   );
-
+const pageCard = (pages, req) => ({
+  type: "card",
+  title: link("/pageedit", req.__("Pages")),
+  class: "welcome-page-entity-list",
+  contents:
+    (pages.length <= 1
+      ? p(
+          { class: "mt-2 pr-2" },
+          i(
+            req.__(
+              "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content."
+            )
+          )
+        )
+      : "") +
+    (pages.length > 0
+      ? pageTable(pages, req)
+      : div({ class: "mt-2 pr-2" }, p(req.__("No pages")))),
+  bodyClass: "py-0 pr-0",
+  footer: div(
+    a(
+      { href: `/pageedit/new`, class: "btn btn-primary" },
+      req.__("Create page")
+    )
+  ),
+});
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
     ...packs_available.slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
+  const tables = await Table.find({}, { orderBy: "name" });
+  const views = await View.find({});
+  const pages = await Page.find({});
   return {
     above: [
       {
-        type: "pageHeader",
-        title: req.__("Quick Start"),
-        blurb: req.__("Four different ways to get started using Saltcorn"),
-      },
-      {
         besides: [
-          {
-            type: "card",
-            title: req.__("Build"),
-            contents: div(
-              p(req.__("Start by creating the tables to hold your data")),
-              a(
-                { href: `/table/new`, class: "btn btn-primary" },
-                req.__("Create a table »")
-              ),
-              p(
-                req.__(
-                  "When you have created the tables, you can create views so users can interact with the data."
-                )
-              ),
-              p(req.__("You can also start by creating a page.")),
-              a(
-                { href: `/pageedit/new`, class: "btn btn-primary" },
-                req.__("Create a page »")
-              )
-            ),
-          },
-          {
-            type: "card",
-            title: req.__("Upload"),
-            contents: div(
-              p(
-                req.__(
-                  "You can skip creating a table by hand by uploading a CSV file from a spreadsheet."
-                )
-              ),
-              a(
-                {
-                  href: `/table/create-from-csv`,
-                  class: "btn btn-secondary",
-                },
-                req.__("Create table with CSV upload")
-              ),
-              p(
-                req.__(
-                  "If you have a backup from a previous Saltcorn instance, you can also restore it."
-                )
-              ),
-              restore_backup(req.csrfToken(), [
-                i({ class: "fas fa-upload" }),
-                "&nbsp;",
-                req.__("Restore"),
-              ])
-            ),
-          },
+          pageCard(pages, req),
+          viewCard(views, req),
+          tableCard(tables, req),
         ],
       },
       {
@@ -217,103 +241,8 @@ const no_views_logged_in = async (req, res) => {
           " " +
           a({ href: "/admin/system" }, req.__("Upgrade here"))
       );
-    const tables = await Table.find({}, { orderBy: "name" });
-    const views = await View.find({});
-    const pages = await Page.find({});
-    if (tables.length <= 1) {
-      //users
-      res.sendWrap(req.__("Hello"), await welcome_page(req));
-    } else if (views.length === 0) {
-      res.sendWrap("Hello", {
-        above: [
-          {
-            type: "pageHeader",
-            title: req.__("Quick Start"),
-          },
-          {
-            type: "card",
-            title: link("/table", req.__("Tables")),
-            contents: div(
-              tableTable(tables, req),
-              div(
-                a(
-                  { href: `/table/new`, class: "btn btn-primary" },
-                  req.__("Create a table")
-                ),
-                a(
-                  {
-                    href: `/table/create-from-csv`,
-                    class: "btn btn-secondary mx-3",
-                  },
-                  req.__("Create table from CSV upload")
-                )
-              )
-            ),
-          },
-          {
-            type: "card",
-            title: link("/viewedit", req.__("Views")),
-            contents: [
-              div(req.__("You have no views!")),
-              div(
-                a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create a view »")
-                )
-              ),
-            ],
-          },
-        ],
-      });
-    } else {
-      res.sendWrap(req.__("Hello"), {
-        above: [
-          {
-            type: "pageHeader",
-            title: req.__("Quick Start"),
-          },
-          {
-            type: "card",
-            title: link("/table", req.__("Tables")),
-            contents: div(
-              tableTable(tables, req),
-              div(
-                a(
-                  { href: `/table/new`, class: "btn btn-primary" },
-                  req.__("Create a table")
-                )
-              )
-            ),
-          },
-          {
-            type: "card",
-            title: link("/viewedit", req.__("Views")),
-            contents: [
-              viewTable(views, req),
-              div(
-                a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create a view")
-                )
-              ),
-            ],
-          },
-          {
-            type: "card",
-            title: link("/pageedit", req.__("Pages")),
-            contents: [
-              pageTable(pages, req),
-              div(
-                a(
-                  { href: `/pageedit/new`, class: "btn btn-primary" },
-                  req.__("Create a page")
-                )
-              ),
-            ],
-          },
-        ],
-      });
-    }
+
+    res.sendWrap(req.__("Hello"), await welcome_page(req));
   }
 };
 
