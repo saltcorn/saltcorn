@@ -59,11 +59,17 @@ class RunTestsCommand extends Command {
     await reset();
     await fixtures();
     await db.close();
-    const covargs = flags.coverage ? ["--", "--coverage"] : [];
+    let jestParams = ["--"];
+    if (flags.coverage) {
+      jestParams.push("--coverage");
+    }
+    if (flags.testFilter) {
+      jestParams.push("-t", flags.testFilter);
+    }
     if (args.package === "core") {
       await this.do_test(
         "npm",
-        ["run", "test", ...covargs],
+        ["run", "test", ...jestParams],
         env,
         flags.forever
       );
@@ -73,16 +79,21 @@ class RunTestsCommand extends Command {
       const cwd = "packages/" + args.package;
       await this.do_test(
         "npm",
-        ["run", "test", ...covargs],
+        ["run", "test", ...jestParams],
         env,
         flags.forever,
         cwd
       );
     } else {
+      if (flags.testFilter > 0) {
+        throw new Error(
+          "No package name given. To use the -t parameter please specify a package or core."
+        );
+      }
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(
         lerna,
-        ["run", "test", ...covargs],
+        ["run", "test", ...jestParams],
         env,
         flags.forever
       );
@@ -100,6 +111,10 @@ RunTestsCommand.description = `Run test suites`;
 
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
+  testFilter: flags.string({
+    char: "t",
+    description: "Filter by test suite name or test description.",
+  }),
   forever: flags.boolean({
     char: "f",
     description: "Run forever till failure",
