@@ -12,6 +12,7 @@ const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { fileUploadForm } = require("../markup/forms");
 
 const tableTable = (tables, req) =>
   mkTable(
@@ -134,19 +135,22 @@ const pageCard = (pages, req) => ({
 
 const filesTab = async (req) => {
   const files = await File.find({}, { orderBy: "filename" });
-  return files.length == 0
-    ? p(req.__("No files"))
-    : mkTable(
-        [
-          {
-            label: req.__("Filename"),
-            key: (r) => link(`/files/serve/${r.id}`, r.filename),
-          },
-          { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-          { label: req.__("Media type"), key: (r) => r.mimetype },
-        ],
-        files
-      );
+  return div(
+    files.length == 0
+      ? p(req.__("No files"))
+      : mkTable(
+          [
+            {
+              label: req.__("Filename"),
+              key: (r) => link(`/files/serve/${r.id}`, r.filename),
+            },
+            { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+            { label: req.__("Media type"), key: (r) => r.mimetype },
+          ],
+          files
+        ),
+    fileUploadForm(req)
+  );
 };
 
 const actionsTab = async (req) => {
