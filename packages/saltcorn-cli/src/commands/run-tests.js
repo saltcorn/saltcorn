@@ -4,15 +4,13 @@ const { spawnSync, spawn } = require("child_process");
 const { sleep } = require("../common");
 
 class RunTestsCommand extends Command {
-  async do_test(cmd, args, env, forever, cwd, keepalive) {
+  async do_test(cmd, args, env, cwd, keepalive) {
     const res = spawnSync(cmd, args, {
       stdio: "inherit",
       env,
       cwd,
     });
-    if (forever && res.status === 0)
-      await this.do_test(cmd, args, env, forever, cwd);
-    else if (res.status !== 0 && !keepalive) this.exit(res.status);
+    if (res.status !== 0 && !keepalive) this.exit(res.status);
     return res;
   }
   async e2etest(env) {
@@ -34,15 +32,27 @@ class RunTestsCommand extends Command {
       "npm",
       ["run", "gotest"],
       env,
-      false,
       "packages/e2e",
       true
     );
     server.kill();
     if (res.status !== 0) this.exit(res.status);
   }
+  validateCall(args, flags) {
+    if (!args.package && flags.testFilter) {
+      throw new Error(
+        "No package name given. To use -t please specify a package or use core."
+      );
+    }
+    if (flags.watch && flags.watchAll) {
+      throw new Error(
+        "Ether use 'watch' or 'watchAll' but not both at the same time."
+      );
+    }
+  }
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
+    this.validateCall(args, flags);
     var env;
     const db = require("@saltcorn/data/db");
 
@@ -66,12 +76,17 @@ class RunTestsCommand extends Command {
     if (flags.testFilter) {
       jestParams.push("-t", flags.testFilter);
     }
+    if (flags.watch) {
+      jestParams.push("--watch");
+    }
+    if (flags.watchAll) {
+      jestParams.push("--watchAll");
+    }
     if (args.package === "core") {
       await this.do_test(
         "npm",
         ["run", "test", ...jestParams],
         env,
-        flags.forever
       );
     } else if (args.package === "e2e") {
       await this.e2etest(env);
@@ -81,21 +96,14 @@ class RunTestsCommand extends Command {
         "npm",
         ["run", "test", ...jestParams],
         env,
-        flags.forever,
-        cwd
+        cwd,
       );
     } else {
-      if (flags.testFilter) {
-        throw new Error(
-          "No package name given. To use -t please specify a package or use core."
-        );
-      }
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(
         lerna,
         ["run", "test", ...jestParams],
         env,
-        flags.forever
       );
       await this.e2etest(env);
     }
@@ -115,10 +123,14 @@ RunTestsCommand.flags = {
     char: "t",
     description: "Filter tests by suite or test name",
   }),
-  forever: flags.boolean({
-    char: "f",
-    description: "Run forever till failure",
+  watch: flags.boolean({
+    string: "watch",
+    description: "Watch files for changes and rerun tests related to changed files."
   }),
+  watchAll: flags.boolean({
+    string: "watchAll",
+    description: "Watch files for changes and rerun all tests."
+  })
 };
 
 module.exports = RunTestsCommand;
