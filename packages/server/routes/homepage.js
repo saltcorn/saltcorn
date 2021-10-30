@@ -10,6 +10,7 @@ const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
+const Trigger = require("@saltcorn/data/models/trigger");
 
 const tableTable = (tables, req) =>
   mkTable(
@@ -129,6 +130,42 @@ const pageCard = (pages, req) => ({
     )
   ),
 });
+
+const actionsTab = async (req) => {
+  const triggers = await Trigger.findAllWithTableName();
+
+  return div(
+    triggers.length <= 1 &&
+      p(
+        { class: "mt-2 pr-2" },
+        i(req.__("Triggers run actions in response to events"))
+      ),
+    triggers.length == 0
+      ? p(req.__("No triggers"))
+      : mkTable(
+          [
+            { label: req.__("Name"), key: "name" },
+            { label: req.__("Action"), key: "action" },
+            {
+              label: req.__("Table or Channel"),
+              key: (r) => r.table_name || r.channel,
+            },
+            {
+              label: req.__("When"),
+              key: (a) =>
+                a.when_trigger === "API call"
+                  ? `API: ${base_url}api/action/${a.name}`
+                  : a.when_trigger,
+            },
+          ],
+          triggers
+        ),
+    a(
+      { href: "/actions/new", class: "btn btn-secondary btn-smj" },
+      req.__("Add trigger")
+    )
+  );
+};
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
@@ -138,6 +175,7 @@ const welcome_page = async (req) => {
   const tables = await Table.find({}, { orderBy: "name" });
   const views = await View.find({});
   const pages = await Page.find({});
+
   return {
     above: [
       {
@@ -151,69 +189,76 @@ const welcome_page = async (req) => {
         besides: [
           {
             type: "card",
-            title: req.__("Install pack"),
-            contents: [
-              p(
-                req.__(
-                  "Instead of building, get up and running in no time with packs"
+            //title: req.__("Install pack"),
+            tabContents: {
+              Packs: div(
+                p(
+                  req.__(
+                    "Instead of building, get up and running in no time with packs"
+                  )
+                ),
+                p(
+                  { class: "font-italic" },
+                  req.__(
+                    "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+                  )
+                ),
+                mkTable(
+                  [
+                    { label: req.__("Name"), key: "name" },
+                    {
+                      label: req.__("Description"),
+                      key: "description",
+                    },
+                  ],
+                  packlist,
+                  { noHeader: true }
+                ),
+                a(
+                  { href: `/plugins?set=packs`, class: "btn btn-primary" },
+                  req.__("Go to pack store »")
                 )
               ),
-              p(
-                { class: "font-italic" },
-                req.__(
-                  "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-                )
-              ),
-              mkTable(
-                [
-                  { label: req.__("Name"), key: "name" },
-                  {
-                    label: req.__("Description"),
-                    key: "description",
-                  },
-                ],
-                packlist,
-                { noHeader: true }
-              ),
-              a(
-                { href: `/plugins?set=packs`, class: "btn btn-primary" },
-                req.__("Go to pack store »")
-              ),
-            ],
+              Actions: await actionsTab(req),
+              Files: "Foo",
+            },
           },
           {
             type: "card",
-            title: req.__("Learn"),
-            contents: [
-              p(req.__("Confused?")),
-              p(
-                req.__(
-                  "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
-                )
-              ),
-              a(
-                {
-                  href: `https://wiki.saltcorn.com/`,
-                  class: "btn btn-primary",
-                },
-                req.__("Go to Wiki »")
-              ),
-              p(req.__("The YouTube channel has some video tutorials")),
-              a(
-                {
-                  href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
-                  class: "btn btn-secondary",
-                },
-                req.__("Go to YouTube »")
-              ),
-              div(
-                { class: "mt-3" },
+            //title: req.__("Learn"),
+            tabContents: {
+              Help: div(
+                p(req.__("Confused?")),
+                p(
+                  req.__(
+                    "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+                  )
+                ),
                 a(
-                  { href: `https://blog.saltcorn.com/` },
-                  req.__("What's new? Read the blog »")
+                  {
+                    href: `https://wiki.saltcorn.com/`,
+                    class: "btn btn-primary",
+                  },
+                  req.__("Go to Wiki »")
+                ),
+                p(req.__("The YouTube channel has some video tutorials")),
+                a(
+                  {
+                    href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+                    class: "btn btn-secondary",
+                  },
+                  req.__("Go to YouTube »")
+                ),
+                div(
+                  { class: "mt-3" },
+                  a(
+                    { href: `https://blog.saltcorn.com/` },
+                    req.__("What's new? Read the blog »")
+                  )
                 )
               ),
-            ],
+              Users: div(),
+            },
           },
         ],
       },
