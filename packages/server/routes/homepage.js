@@ -265,7 +265,7 @@ const welcome_page = async (req) => {
                   req.__("Go to pack store »")
                 )
               ),
-              Actions: await actionsTab(req),
+              Triggers: await actionsTab(req),
               Files: await filesTab(req),
             },
           },
