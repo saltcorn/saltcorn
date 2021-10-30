@@ -267,16 +267,60 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                   )
                 : segment.title
             ),
-          div(
-            {
-              class: [
-                "card-body",
-                segment.bodyClass,
-                segment.noPadding && "p-0",
-              ],
-            },
-            go(segment.contents)
-          ),
+          segment.tabContents &&
+            div(
+              { class: "card-header" },
+              ul(
+                { class: "nav nav-tabs card-header-tabs" },
+                Object.keys(segment.tabContents).map((title, ix) =>
+                  li(
+                    { class: "nav-item" },
+                    a(
+                      {
+                        class: ["nav-link", ix === 0 && "active"],
+                        href: `#tab-${title}`,
+                        "data-toggle": "tab",
+                        role: "tab",
+                      },
+                      title
+                    )
+                  )
+                )
+              )
+            ) +
+              div(
+                {
+                  class: [
+                    "card-body",
+                    segment.bodyClass,
+                    segment.noPadding && "p-0",
+                  ],
+                },
+                div(
+                  { class: "tab-content", id: "myTabContent" },
+                  Object.entries(segment.tabContents).map(
+                    ([title, contents], ix) =>
+                      div(
+                        {
+                          class: ["tab-pane", ix == 0 && "show active"],
+                          id: `tab-${title}`,
+                        },
+                        contents
+                      )
+                  )
+                )
+              ),
+          segment.contents &&
+            div(
+              {
+                class: [
+                  "card-body",
+                  segment.bodyClass,
+                  segment.noPadding && "p-0",
+                ],
+              },
+              go(segment.contents)
+            ),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
