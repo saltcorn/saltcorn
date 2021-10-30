@@ -116,7 +116,7 @@ const pageCard = (pages, req) => ({
           { class: "mt-2 pr-2" },
           i(
             req.__(
-              "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content."
+              "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content."
             )
           )
         )
@@ -152,7 +152,31 @@ const filesTab = async (req) => {
     fileUploadForm(req)
   );
 };
+const usersTab = async (req) => {
+  const users = await User.find({}, { orderBy: "id" });
+  const roles = await User.get_roles();
+  var roleMap = {};
+  roles.forEach((r) => {
+    roleMap[r.id] = r.role;
+  });
+  return div(
+    mkTable(
+      [
+        {
+          label: req.__("Email"),
+          key: (r) => link(`/useradmin/${r.id}`, r.email),
+        },
 
+        { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+      ],
+      users
+    ),
+    a(
+      { href: `/useradmin/new`, class: "btn btn-secondary" },
+      req.__("Create user")
+    )
+  );
+};
 const actionsTab = async (req) => {
   const triggers = await Trigger.findAllWithTableName();
 
@@ -160,7 +184,7 @@ const actionsTab = async (req) => {
     triggers.length <= 1 &&
       p(
         { class: "mt-2 pr-2" },
-        i(req.__("Triggers run actions in response to events"))
+        i(req.__("Triggers run actions in response to events."))
       ),
     triggers.length == 0
       ? p(req.__("No triggers"))
@@ -279,7 +303,7 @@ const welcome_page = async (req) => {
                   )
                 )
               ),
-              Users: div(),
+              Users: await usersTab(req),
             },
           },
         ],
