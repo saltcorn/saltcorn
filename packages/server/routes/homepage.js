@@ -2,6 +2,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
 const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
@@ -131,6 +132,23 @@ const pageCard = (pages, req) => ({
   ),
 });
 
+const filesTab = async (req) => {
+  const files = await File.find({}, { orderBy: "filename" });
+  return files.length == 0
+    ? p(req.__("No files"))
+    : mkTable(
+        [
+          {
+            label: req.__("Filename"),
+            key: (r) => link(`/files/serve/${r.id}`, r.filename),
+          },
+          { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+          { label: req.__("Media type"), key: (r) => r.mimetype },
+        ],
+        files
+      );
+};
+
 const actionsTab = async (req) => {
   const triggers = await Trigger.findAllWithTableName();
 
@@ -220,7 +238,7 @@ const welcome_page = async (req) => {
                 )
               ),
               Actions: await actionsTab(req),
-              Files: "Foo",
+              Files: await filesTab(req),
             },
           },
           {
