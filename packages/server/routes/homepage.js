@@ -2,6 +2,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
 const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
@@ -10,6 +11,8 @@ const { fetch_available_packs } = require("@saltcorn/data/models/pack");
 const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
+const Trigger = require("@saltcorn/data/models/trigger");
+const { fileUploadForm } = require("../markup/forms");
 
 const tableTable = (tables, req) =>
   mkTable(
@@ -113,7 +116,7 @@ const pageCard = (pages, req) => ({
           { class: "mt-2 pr-2" },
           i(
             req.__(
-              "Pages are the web pages of your application built with drag-and-drop builder. They have static content, and by embedding views, dynamic content."
+              "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content."
             )
           )
         )
@@ -129,6 +132,86 @@ const pageCard = (pages, req) => ({
     )
   ),
 });
+
+const filesTab = async (req) => {
+  const files = await File.find({}, { orderBy: "filename" });
+  return div(
+    files.length == 0
+      ? p(req.__("No files"))
+      : mkTable(
+          [
+            {
+              label: req.__("Filename"),
+              key: (r) => link(`/files/serve/${r.id}`, r.filename),
+            },
+            { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+            { label: req.__("Media type"), key: (r) => r.mimetype },
+          ],
+          files
+        ),
+    fileUploadForm(req)
+  );
+};
+const usersTab = async (req) => {
+  const users = await User.find({}, { orderBy: "id" });
+  const roles = await User.get_roles();
+  var roleMap = {};
+  roles.forEach((r) => {
+    roleMap[r.id] = r.role;
+  });
+  return div(
+    mkTable(
+      [
+        {
+          label: req.__("Email"),
+          key: (r) => link(`/useradmin/${r.id}`, r.email),
+        },
+
+        { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+      ],
+      users
+    ),
+    a(
+      { href: `/useradmin/new`, class: "btn btn-secondary" },
+      req.__("Create user")
+    )
+  );
+};
+const actionsTab = async (req) => {
+  const triggers = await Trigger.findAllWithTableName();
+
+  return div(
+    triggers.length <= 1 &&
+      p(
+        { class: "mt-2 pr-2" },
+        i(req.__("Triggers run actions in response to events."))
+      ),
+    triggers.length == 0
+      ? p(req.__("No triggers"))
+      : mkTable(
+          [
+            { label: req.__("Name"), key: "name" },
+            { label: req.__("Action"), key: "action" },
+            {
+              label: req.__("Table or Channel"),
+              key: (r) => r.table_name || r.channel,
+            },
+            {
+              label: req.__("When"),
+              key: (a) =>
+                a.when_trigger === "API call"
+                  ? `API: ${base_url}api/action/${a.name}`
+                  : a.when_trigger,
+            },
+          ],
+          triggers
+        ),
+    a(
+      { href: "/actions/new", class: "btn btn-secondary btn-smj" },
+      req.__("Add trigger")
+    )
+  );
+};
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
@@ -138,6 +221,7 @@ const welcome_page = async (req) => {
   const tables = await Table.find({}, { orderBy: "name" });
   const views = await View.find({});
   const pages = await Page.find({});
+
   return {
     above: [
       {
@@ -151,69 +235,76 @@ const welcome_page = async (req) => {
         besides: [
           {
             type: "card",
-            title: req.__("Install pack"),
-            contents: [
-              p(
-                req.__(
-                  "Instead of building, get up and running in no time with packs"
+            //title: req.__("Install pack"),
+            tabContents: {
+              Packs: div(
+                p(
+                  req.__(
+                    "Instead of building, get up and running in no time with packs"
+                  )
+                ),
+                p(
+                  { class: "font-italic" },
+                  req.__(
+                    "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+                  )
+                ),
+                mkTable(
+                  [
+                    { label: req.__("Name"), key: "name" },
+                    {
+                      label: req.__("Description"),
+                      key: "description",
+                    },
+                  ],
+                  packlist,
+                  { noHeader: true }
+                ),
+                a(
+                  { href: `/plugins?set=packs`, class: "btn btn-primary" },
+                  req.__("Go to pack store »")
                 )
               ),
-              p(
-                { class: "font-italic" },
-                req.__(
-                  "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-                )
-              ),
-              mkTable(
-                [
-                  { label: req.__("Name"), key: "name" },
-                  {
-                    label: req.__("Description"),
-                    key: "description",
-                  },
-                ],
-                packlist,
-                { noHeader: true }
-              ),
-              a(
-                { href: `/plugins?set=packs`, class: "btn btn-primary" },
-                req.__("Go to pack store »")
-              ),
-            ],
+              Triggers: await actionsTab(req),
+              Files: await filesTab(req),
+            },
           },
           {
             type: "card",
-            title: req.__("Learn"),
-            contents: [
-              p(req.__("Confused?")),
-              p(
-                req.__(
-                  "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
-                )
-              ),
-              a(
-                {
-                  href: `https://wiki.saltcorn.com/`,
-                  class: "btn btn-primary",
-                },
-                req.__("Go to Wiki »")
-              ),
-              p(req.__("The YouTube channel has some video tutorials")),
-              a(
-                {
-                  href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
-                  class: "btn btn-secondary",
-                },
-                req.__("Go to YouTube »")
-              ),
-              div(
-                { class: "mt-3" },
+            //title: req.__("Learn"),
+            tabContents: {
+              Help: div(
+                p(req.__("Confused?")),
+                p(
+                  req.__(
+                    "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+                  )
+                ),
                 a(
-                  { href: `https://blog.saltcorn.com/` },
-                  req.__("What's new? Read the blog »")
+                  {
+                    href: `https://wiki.saltcorn.com/`,
+                    class: "btn btn-primary",
+                  },
+                  req.__("Go to Wiki »")
+                ),
+                p(req.__("The YouTube channel has some video tutorials")),
+                a(
+                  {
+                    href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+                    class: "btn btn-secondary",
+                  },
+                  req.__("Go to YouTube »")
+                ),
+                div(
+                  { class: "mt-3" },
+                  a(
+                    { href: `https://blog.saltcorn.com/` },
+                    req.__("What's new? Read the blog »")
+                  )
                 )
               ),
-            ],
+              Users: await usersTab(req),
+            },
           },
         ],
       },

@@ -3,6 +3,8 @@ const {
   select,
   option,
   text,
+  label,
+  input,
   div,
   i,
   h5,
@@ -30,7 +32,25 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
     )
   );
 
-const wizardCardTitle = (wizardTitle, wf, wfres) => 
-  `${wizardTitle}: ${wfres.stepName}`
+const fileUploadForm = (req) =>
+  form(
+    {
+      action: "/files/upload",
+      method: "post",
+      encType: "multipart/form-data",
+    },
+    csrfField(req),
+    label(req.__("Upload file ")),
+    input({
+      name: "file",
+      class: "form-control-file",
+      type: "file",
+      onchange: "form.submit()",
+      multiple: true,
+    })
+  );
 
-module.exports = { editRoleForm, wizardCardTitle };
+const wizardCardTitle = (wizardTitle, wf, wfres) =>
+  `${wizardTitle}: ${wfres.stepName}`;
+
+module.exports = { editRoleForm, wizardCardTitle, fileUploadForm };

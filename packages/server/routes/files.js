@@ -29,7 +29,7 @@ const {
   label,
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("./utils");
-const { editRoleForm } = require("../markup/forms.js");
+const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
 
 const router = new Router();
@@ -96,22 +96,7 @@ router.get(
               rows,
               { hover: true }
             ),
-            form(
-              {
-                action: "/files/upload",
-                method: "post",
-                encType: "multipart/form-data",
-              },
-              csrfField(req),
-              label(req.__("Upload file ")),
-              input({
-                name: "file",
-                class: "form-control-file",
-                type: "file",
-                onchange: "form.submit()",
-                multiple: true,
-              })
-            ),
+            fileUploadForm(req),
           ],
         },
       ],
