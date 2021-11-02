@@ -16,7 +16,7 @@ export const SearchBar = ({ has_dropdown, children, show_badges }) => {
       className={`input-group  ${selected ? "selected-node" : ""}`}
       ref={(dom) => {
         if (dom && dom.getBoundingClientRect) {
-          console.log(dom.getBoundingClientRect());
+          //console.log(dom.getBoundingClientRect());
           const elwidth = dom.getBoundingClientRect().width;
           if (elwidth !== dropWidth) setDropWidth(elwidth);
         }
