@@ -768,7 +768,7 @@ export const ButtonOrLinkSettingsRows = ({
     </tr>,
     <tr key="btnsz">
       <td>
-        <label>Action size</label>
+        <label>Size</label>
       </td>
       <td>
         <select
