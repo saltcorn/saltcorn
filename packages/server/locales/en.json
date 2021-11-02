@@ -803,5 +803,8 @@
 	"Tables organise data by fields and rows.": "Tables organise data by fields and rows.",
 	"Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.",
 	"Triggers run actions in response to events.": "Triggers run actions in response to events.",
-	"No files": "No files"
+	"No files": "No files",
+	"Cookie duration (hours)": "Cookie duration (hours)",
+	"Set to 0 for expration at the end of browser session": "Set to 0 for expration at the end of browser session",
+	"Cookie duration (hours) when remember ticked": "Cookie duration (hours) when remember ticked"
 }
