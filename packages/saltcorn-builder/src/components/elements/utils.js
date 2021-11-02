@@ -8,22 +8,10 @@ import {
 import { useNode } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
-let fas;
-import("@fortawesome/free-solid-svg-icons").then((m) => (fas = m));
-let far;
-import("@fortawesome/free-regular-svg-icons").then((m) => (far = m));
 
-function camelCase(s) {
-  return s.replace(/(\-\w)/g, function (k) {
-    return k[1].toUpperCase();
-  });
-}
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
-  const [collectionName, iconName] = icon.split(" ");
-  const collection = { fas, far }[collectionName];
-  const theIcon = collection[camelCase(iconName)];
-  return <FontAwesomeIcon icon={theIcon} className={className} />;
+  return <i className={`${icon} ${className || ""}`}></i>;
 };
 
 export const blockProps = (is_block) =>
