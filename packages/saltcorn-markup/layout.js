@@ -20,7 +20,7 @@ const {
   genericElement,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
-const { search_bar_form } = require("./helpers");
+const { search_bar_form, search_bar } = require("./helpers");
 
 const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
 
@@ -481,7 +481,8 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return "<br />";
     }
     if (segment.type === "search_bar") {
-      return search_bar_form();
+      //console.log(segment);
+      return `<form action="/search" method="get">${search_bar("q")}</form>`;
     }
     if (segment.above) {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");

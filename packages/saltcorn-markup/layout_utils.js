@@ -35,7 +35,7 @@ const innerSections = (sections) => {
   return items;
 };
 
-const navSubitems = ({ label, subitems, icon }) =>
+const navSubitems = ({ label, subitems, icon, isUser }) =>
   li(
     { class: "nav-item dropdown" },
     a(
@@ -53,7 +53,7 @@ const navSubitems = ({ label, subitems, icon }) =>
     ),
     div(
       {
-        class: "dropdown-menu",
+        class: ["dropdown-menu", isUser && "dropdown-menu-right"],
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
       subitems.map((si) =>

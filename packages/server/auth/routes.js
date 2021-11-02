@@ -792,10 +792,13 @@ router.post(
     userLimiter.resetKey(userIdKey(req.body));
     if (req.session.cookie)
       if (req.body.remember) {
-        // TBD create config parameter
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
+        const setDur = +getState().getConfig("cookie_duration_remember", 0);
+        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
+        else req.session.cookie.expires = false;
       } else {
-        req.session.cookie.expires = false; // Cookie expires at end of session
+        const setDur = +getState().getConfig("cookie_duration", 0);
+        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
+        else req.session.cookie.expires = false;
       }
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
