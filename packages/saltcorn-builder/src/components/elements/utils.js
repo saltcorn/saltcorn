@@ -9,6 +9,11 @@ import { useNode } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 
+export const DynamicFontAwesomeIcon = ({ icon, className }) => {
+  if (!icon) return null;
+  return <i className={`${icon} ${className || ""}`}></i>;
+};
+
 export const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
 
@@ -768,7 +773,7 @@ export const ButtonOrLinkSettingsRows = ({
     </tr>,
     <tr key="btnsz">
       <td>
-        <label>Action size</label>
+        <label>Size</label>
       </td>
       <td>
         <select

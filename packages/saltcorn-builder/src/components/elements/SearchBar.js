@@ -4,7 +4,7 @@ import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 
-export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
+export const SearchBar = ({ has_dropdown, children, show_badges }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -16,7 +16,7 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
       className={`input-group  ${selected ? "selected-node" : ""}`}
       ref={(dom) => {
         if (dom && dom.getBoundingClientRect) {
-          console.log(dom.getBoundingClientRect());
+          //console.log(dom.getBoundingClientRect());
           const elwidth = dom.getBoundingClientRect().width;
           if (elwidth !== dropWidth) setDropWidth(elwidth);
         }
@@ -55,9 +55,7 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
               }`}
               style={{ width: dropWidth, left: 0 }}
             >
-              <Element canvas id={`search_drop`} is={Column}>
-                {contents}
-              </Element>
+              <div className="canvas">{children}</div>
             </div>
           </Fragment>
         )}
@@ -108,7 +106,7 @@ SearchBar.craft = {
   displayName: "SearchBar",
   props: {
     has_dropdown: false,
-    contents: [],
+    show_badges: false,
   },
   related: {
     settings: SearchBarSettings,

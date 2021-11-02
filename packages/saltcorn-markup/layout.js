@@ -481,8 +481,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return "<br />";
     }
     if (segment.type === "search_bar") {
-      //console.log(segment);
-      return `<form action="/search" method="get">${search_bar("q")}</form>`;
+      return `<form action="/search" method="get">${search_bar("q", "", {
+        has_dropdown: segment.has_dropdown,
+        contents: go(segment.contents),
+      })}</form>`;
     }
     if (segment.above) {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
