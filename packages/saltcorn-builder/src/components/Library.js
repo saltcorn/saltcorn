@@ -63,7 +63,7 @@ export const InitNewElement = ({ nodekeys }) => {
         setTimeout(() => {
           actions.delete(id);
         }, 0);
-      } else {
+      } else if (node.displayName !== "Column") {
         actions.selectNode(id);
       }
     }
