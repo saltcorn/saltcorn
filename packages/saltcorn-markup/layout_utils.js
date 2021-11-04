@@ -165,7 +165,7 @@ const leftNavBar = ({ name, logo }) => [
 const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
-      class: `navbar navbar-expand-lg ${opts.class || ""} ${
+      class: `navbar navbar-expand-md ${opts.class || ""} ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav",
