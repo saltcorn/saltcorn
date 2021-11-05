@@ -29,10 +29,11 @@ const run_code = async ({
   row,
   table,
   channel,
-  configuration: { code },
+  configuration: { code, run_where },
   user,
   ...rest
 }) => {
+  if (run_where === "Client page") return { eval_js: code };
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
@@ -443,6 +444,12 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
           sublabel: div("Variables in scope: ", vars),
+        },
+        {
+          name: "run_where",
+          label: "Run where",
+          input_type: "select",
+          options: ["Server", "Client page"],
         },
       ];
     },

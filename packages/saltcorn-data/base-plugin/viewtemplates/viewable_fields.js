@@ -137,6 +137,8 @@ const parse_view_select = (s) => {
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+    case "Independent":
+      return { type, viewname: vrest };
   }
 };
 
@@ -180,6 +182,24 @@ const view_linker = contract(
             link_view(
               `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
               get_label(vnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
+            ),
+        };
+      case "Independent":
+        const ivnm = vrest;
+        return {
+          label: ivnm,
+          key: (r) =>
+            link_view(
+              `/view/${encodeURIComponent(ivnm)}`,
+              get_label(ivnm, r),
               in_modal,
               link_style,
               link_size,

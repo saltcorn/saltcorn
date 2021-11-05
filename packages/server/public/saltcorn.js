@@ -399,6 +399,7 @@ function notifyAlert(note) {
 function ajax_done(res) {
   if (res.notify) notifyAlert(res.notify);
   if (res.error) notifyAlert({ type: "danger", text: res.error });
+  if (res.eval_js) eval(res.eval_js);
   if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
   if (res.download) {
     const dataurl = `data:${
