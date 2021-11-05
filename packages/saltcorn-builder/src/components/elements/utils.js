@@ -571,9 +571,6 @@ export const ConfigField = ({
             <input
               type="number"
               value={(isStyle ? styleVal : value) || ""}
-              step="1"
-              min="0"
-              max="9999"
               className="w-50 form-control-sm d-inline dimunit"
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
