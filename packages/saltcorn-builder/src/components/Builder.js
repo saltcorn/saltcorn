@@ -162,6 +162,7 @@ const SettingsPanel = () => {
       data: { parent },
     } = query.node(selected.id).get();
     const elem = recursivelyCloneToElems(selected.id);
+    console.log(elem);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
       parent || "ROOT"
@@ -310,13 +311,16 @@ const NextButton = ({ layout }) => {
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
 
   return (
     <ErrorBoundary>
       <Editor onRender={RenderNode}>
         <Provider value={options}>
-          <PreviewCtx.Provider value={{ previews, setPreviews }}>
+          <PreviewCtx.Provider
+            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
+          >
             <div className="row" style={{ marginTop: "-5px" }}>
               <div className="col-sm-auto">
                 <div className="componets-and-library-accordion toolbox-card">
