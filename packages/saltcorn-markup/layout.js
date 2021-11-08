@@ -437,8 +437,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             } ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
-                    imageSize || "contain"
-                  }; background-repeat: no-repeat;`
+                    imageSize === "repeat" ? "auto" : imageSize || "contain"
+                  }; background-repeat: ${
+                    imageSize === "repeat" ? "repeat" : "no-repeat"
+                  };`
                 : ""
             } ${
               renderBg && bgType === "Color"

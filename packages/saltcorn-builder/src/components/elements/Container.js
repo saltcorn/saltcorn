@@ -95,8 +95,10 @@ export const Container = ({
         ...(bgType === "Image" && bgFileId && +bgFileId
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
-              backgroundSize: imageSize || "contain",
-              backgroundRepeat: "no-repeat",
+              backgroundSize:
+                imageSize === "repeat" ? undefined : imageSize || "contain",
+              backgroundRepeat:
+                imageSize === "repeat" ? imageSize : "no-repeat",
             }
           : {}),
         ...(bgType === "Color"
@@ -450,6 +452,7 @@ export const ContainerSettings = () => {
                   >
                     <option>contain</option>
                     <option>cover</option>
+                    <option>repeat</option>
                   </select>
                 </td>
               </tr>
