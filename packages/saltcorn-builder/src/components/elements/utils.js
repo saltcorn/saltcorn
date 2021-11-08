@@ -5,7 +5,7 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { useNode } from "@craftjs/core";
+import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 
@@ -860,3 +860,28 @@ export const bstyleopt = (style) => ({
     ></div>
   ),
 });
+export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
+  const { data } = query.node(nodeId).get();
+  const { type, props, nodes } = data;
+  const children = (nodes || []).map(recursivelyCloneToElems(query));
+  console.log({ type, data });
+  if (data.isCanvas)
+    return React.createElement(
+      Element,
+      {
+        ...props,
+        canvas: true,
+        is: type,
+        ...(typeof ix !== "undefined" ? { key: ix } : {}),
+      },
+      children
+    );
+  return React.createElement(
+    type,
+    {
+      ...props,
+      ...(typeof ix !== "undefined" ? { key: ix } : {}),
+    },
+    children
+  );
+};

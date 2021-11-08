@@ -43,7 +43,11 @@ import {
   faRedo,
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { Accordion, ErrorBoundary } from "./elements/utils";
+import {
+  Accordion,
+  ErrorBoundary,
+  recursivelyCloneToElems,
+} from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
@@ -146,24 +150,13 @@ const SettingsPanel = () => {
       actions.delete(child);
     });
   };
-  const recursivelyCloneToElems = (nodeId, ix) => {
-    const {
-      data: { type, props, nodes },
-    } = query.node(nodeId).get();
-    const children = (nodes || []).map(recursivelyCloneToElems);
-    return React.createElement(
-      type,
-      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
-      children
-    );
-  };
   const duplicate = () => {
     const {
       data: { parent },
     } = query.node(selected.id).get();
     const siblings = query.node(selected.parent).childNodes();
     const sibIx = siblings.findIndex((sib) => sib === selected.id);
-    const elem = recursivelyCloneToElems(selected.id);
+    const elem = recursivelyCloneToElems(query)(selected.id);
     //console.log(elem);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),

@@ -11,6 +11,7 @@ import {
   faArrowUp,
   faArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { recursivelyCloneToElems } from "./elements/utils";
 /* 
 Contains code copied from craft.js landing page example
 Copyright (c) 2020 Previnash Wong Sze Chuan
@@ -79,24 +80,14 @@ export const RenderNode = ({ render }) => {
       document.removeEventListener("scroll", scroll);
     };
   }, [scroll]);
-  const recursivelyCloneToElems = (nodeId, ix) => {
-    const {
-      data: { type, props, nodes },
-    } = query.node(nodeId).get();
-    const children = (nodes || []).map(recursivelyCloneToElems);
-    return React.createElement(
-      type,
-      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
-      children
-    );
-  };
+
   const duplicate = () => {
     const {
       data: { parent },
     } = query.node(id).get();
     const siblings = query.node(parent).childNodes();
     const sibIx = siblings.findIndex((sib) => sib === id);
-    const elem = recursivelyCloneToElems(id);
+    const elem = recursivelyCloneToElems(query)(id);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
       parent || "ROOT",
