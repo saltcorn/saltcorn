@@ -6,11 +6,7 @@ export const Empty = ({}) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  return (
-    <Fragment>
-      <span ref={(dom) => connect(drag(dom))}></span>
-    </Fragment>
-  );
+  return null;
 };
 Empty.craft = {
   displayName: "Empty",

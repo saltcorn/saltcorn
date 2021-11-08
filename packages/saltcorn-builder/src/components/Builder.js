@@ -43,7 +43,11 @@ import {
   faRedo,
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { Accordion, ErrorBoundary } from "./elements/utils";
+import {
+  Accordion,
+  ErrorBoundary,
+  recursivelyCloneToElems,
+} from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
@@ -146,25 +150,18 @@ const SettingsPanel = () => {
       actions.delete(child);
     });
   };
-  const recursivelyCloneToElems = (nodeId, ix) => {
-    const {
-      data: { type, props, nodes },
-    } = query.node(nodeId).get();
-    const children = (nodes || []).map(recursivelyCloneToElems);
-    return React.createElement(
-      type,
-      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
-      children
-    );
-  };
   const duplicate = () => {
     const {
       data: { parent },
     } = query.node(selected.id).get();
-    const elem = recursivelyCloneToElems(selected.id);
+    const siblings = query.node(selected.parent).childNodes();
+    const sibIx = siblings.findIndex((sib) => sib === selected.id);
+    const elem = recursivelyCloneToElems(query)(selected.id);
+    //console.log(elem);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
-      parent || "ROOT"
+      parent || "ROOT",
+      sibIx + 1
     );
   };
   return (
@@ -310,15 +307,18 @@ const NextButton = ({ layout }) => {
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
 
   return (
     <ErrorBoundary>
       <Editor onRender={RenderNode}>
         <Provider value={options}>
-          <PreviewCtx.Provider value={{ previews, setPreviews }}>
+          <PreviewCtx.Provider
+            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
+          >
             <div className="row" style={{ marginTop: "-5px" }}>
-              <div className="col-sm-auto">
+              <div className="col-sm-auto left-builder-col">
                 <div className="componets-and-library-accordion toolbox-card">
                   <InitNewElement nodekeys={nodekeys} />
                   <Accordion>
@@ -335,7 +335,7 @@ const Builder = ({ options, layout, mode }) => {
                     </div>
                   </Accordion>
                 </div>
-                <div className="card toolbox-card">
+                <div className="card toolbox-card pr-0">
                   <div className="card-header">Layers</div>
                   {showLayers && (
                     <div className="card-body p-0 builder-layers">

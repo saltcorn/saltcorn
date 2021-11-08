@@ -5,9 +5,10 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { useNode } from "@craftjs/core";
+import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
+import { Columns, ntimes } from "./Columns";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -571,9 +572,6 @@ export const ConfigField = ({
             <input
               type="number"
               value={(isStyle ? styleVal : value) || ""}
-              step="1"
-              min="0"
-              max="9999"
               className="w-50 form-control-sm d-inline dimunit"
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
@@ -863,3 +861,37 @@ export const bstyleopt = (style) => ({
     ></div>
   ),
 });
+export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
+  const { data } = query.node(nodeId).get();
+  const { type, props, nodes } = data;
+  const children = (nodes || []).map(recursivelyCloneToElems(query));
+  if (data.displayName === "Columns") {
+    const cols = ntimes(data.props.ncols, (ix) =>
+      recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
+    );
+    return React.createElement(Columns, {
+      ...props,
+      ...(typeof ix !== "undefined" ? { key: ix } : {}),
+      contents: cols,
+    });
+  }
+  if (data.isCanvas)
+    return React.createElement(
+      Element,
+      {
+        ...props,
+        canvas: true,
+        is: type,
+        ...(typeof ix !== "undefined" ? { key: ix } : {}),
+      },
+      children
+    );
+  return React.createElement(
+    type,
+    {
+      ...props,
+      ...(typeof ix !== "undefined" ? { key: ix } : {}),
+    },
+    children
+  );
+};
