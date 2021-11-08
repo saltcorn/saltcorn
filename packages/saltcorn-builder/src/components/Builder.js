@@ -161,11 +161,14 @@ const SettingsPanel = () => {
     const {
       data: { parent },
     } = query.node(selected.id).get();
+    const siblings = query.node(selected.parent).childNodes();
+    const sibIx = siblings.findIndex((sib) => sib === selected.id);
     const elem = recursivelyCloneToElems(selected.id);
-    console.log(elem);
+    //console.log(elem);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
-      parent || "ROOT"
+      parent || "ROOT",
+      sibIx + 1
     );
   };
   return (

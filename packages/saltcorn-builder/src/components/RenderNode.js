@@ -94,10 +94,13 @@ export const RenderNode = ({ render }) => {
     const {
       data: { parent },
     } = query.node(id).get();
+    const siblings = query.node(parent).childNodes();
+    const sibIx = siblings.findIndex((sib) => sib === id);
     const elem = recursivelyCloneToElems(id);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
-      parent || "ROOT"
+      parent || "ROOT",
+      sibIx + 1
     );
   };
   return (
