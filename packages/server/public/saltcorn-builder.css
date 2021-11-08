@@ -54,7 +54,8 @@ div.builder-embed-view {
     );
 }
 div.toolbox-card {
-  width: 8.2rem;
+  width: 9.2rem;
+  padding-right: 1rem;
   margin-bottom: 1rem;
 }
 div.wrap-builder-elem {
@@ -133,10 +134,7 @@ div.wrap-builder-elem label {
   min-width: 15px;
   min-height: 15px;
 }
-.builder-sidebar .builder-layers {
-  max-height: 50vh;
-  overflow-y: scroll;
-}
+
 div.settings-panel input[type="number"] {
   border-width: 1px;
 }
@@ -160,9 +158,18 @@ div.settings-panel div.rfipbtn {
   width: 100%;
 }
 
+.left-builder-col {
+  padding-right: 0px;
+}
+
 div.componets-and-library-accordion {
   min-height: 45vh;
   margin-top: -0.25rem;
+}
+
+.builder-layers {
+  max-height: calc(45vh - 50px);
+  overflow-y: scroll;
 }
 
 .builder-library .dropdown {

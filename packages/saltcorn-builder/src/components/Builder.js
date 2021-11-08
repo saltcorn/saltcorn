@@ -325,7 +325,7 @@ const Builder = ({ options, layout, mode }) => {
             value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
           >
             <div className="row" style={{ marginTop: "-5px" }}>
-              <div className="col-sm-auto">
+              <div className="col-sm-auto left-builder-col">
                 <div className="componets-and-library-accordion toolbox-card">
                   <InitNewElement nodekeys={nodekeys} />
                   <Accordion>
@@ -342,7 +342,7 @@ const Builder = ({ options, layout, mode }) => {
                     </div>
                   </Accordion>
                 </div>
-                <div className="card toolbox-card">
+                <div className="card toolbox-card pr-0">
                   <div className="card-header">Layers</div>
                   {showLayers && (
                     <div className="card-body p-0 builder-layers">
