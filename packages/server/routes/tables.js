@@ -718,6 +718,12 @@ router.get(
               req,
               true
             ),
+            post_dropdown_item(
+              `/table/forget-table/${table.id}`,
+              '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+              req,
+              true
+            ),
           ])
         )
     );
@@ -855,6 +861,36 @@ router.post(
     try {
       await t.delete();
       req.flash("success", req.__(`Table %s deleted`, t.name));
+      res.redirect(`/table`);
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect(`/table`);
+    }
+  })
+);
+router.post(
+  "/forget-table/:id",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const t = await Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
+    try {
+      await t.delete(true);
+      req.flash(
+        "success",
+        req.__(`Table %s forgotten. You can now discover it.`, t.name)
+      );
       res.redirect(`/table`);
     } catch (err) {
       req.flash("error", err.message);
