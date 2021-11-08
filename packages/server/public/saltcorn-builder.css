@@ -121,6 +121,7 @@ div.wrap-builder-elem label {
 
 #builder-main-canvas div.root-canvas {
   margin-top: 1px;
+  padding: 2px;
 }
 
 #builder-main-canvas div.root-canvas:empty:before {
