@@ -203,3 +203,6 @@ footer.bs-mobile-nav-footer {
 .welcome-page-entity-list {
   min-height: 35vh;
 }
+.btn-builder-move {
+  color: white;
+}
