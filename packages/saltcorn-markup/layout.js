@@ -157,12 +157,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
-        ? iconTag +
-            label(
-              { for: `input${text(segment.labelFor)}` },
-              applyTextStyle(segment, inner)
-            )
-        : iconTag + applyTextStyle(segment, inner);
+        ? label(
+            { for: `input${text(segment.labelFor)}` },
+            applyTextStyle(segment, iconTag + inner)
+          )
+        : applyTextStyle(segment, iconTag + inner);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
