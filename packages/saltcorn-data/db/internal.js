@@ -227,7 +227,7 @@ const getVal = ([k, v]) =>
  * @returns {object}
  */
 const mkWhere = (whereObj, is_sqlite) => {
-  const wheres = whereObj ? object.entries(whereObj) : [];
+  const wheres = whereObj ? Object.entries(whereObj) : [];
   //console.log({ wheres });
   const where =
     whereObj && wheres.length > 0
