@@ -7,6 +7,8 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
+import previewCtx from "../preview_context";
+
 import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 
 export /**
@@ -56,7 +58,6 @@ const ImageSettings = () => {
     filepath: node.data.props.filepath,
     srctype: node.data.props.srctype,
     alt: node.data.props.alt,
-    uploadedFiles: node.data.props.uploadedFiles,
     block: node.data.props.block,
     isFormula: node.data.props.isFormula,
   }));
@@ -70,9 +71,10 @@ const ImageSettings = () => {
     block,
     isFormula,
     filepath,
-    uploadedFiles,
   } = node;
   const options = useContext(optionsCtx);
+  const { uploadedFiles, setUploadedFiles } = useContext(previewCtx);
+
   const handleUpload = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const formData = new FormData();
@@ -90,13 +92,13 @@ const ImageSettings = () => {
       })
         .then((response) => response.json())
         .then((result) => {
+          setUploadedFiles((upFls) => [
+            ...upFls,
+            { id: result.success.id, filename: result.success.filename },
+          ]);
           setProp((prop) => {
             prop.fileid = result.success.id;
             prop.srctype = "File";
-            prop.uploadedFiles = [
-              ...prop.uploadedFiles,
-              { id: result.success.id, filename: result.success.filename },
-            ];
           });
         })
         .catch((error) => {
@@ -258,7 +260,6 @@ Image.craft = {
     alt: "",
     block: false,
     isFormula: {},
-    uploadedFiles: [],
     srctype: "File",
   },
   related: {

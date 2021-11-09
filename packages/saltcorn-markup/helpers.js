@@ -211,18 +211,10 @@ const search_bar = (
 </div>`;
 };
 
-/**
- * @returns {string}
- */
-const search_bar_form = () => `<form action="/search" method="get">
-${search_bar("q")}
-</form>`;
-
 module.exports = {
   isdef,
   select_options,
   search_bar,
-  search_bar_form,
   pagination,
   radio_group,
 };

@@ -12,6 +12,7 @@ import {
   TextStyleSetting,
   OrFormula,
   ButtonOrLinkSettingsRows,
+  DynamicFontAwesomeIcon,
 } from "./utils";
 import optionsCtx from "../context";
 
@@ -65,7 +66,7 @@ const Link = ({
           : {}
       }
     >
-      {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
+      <DynamicFontAwesomeIcon icon={link_icon} className="mr-1" />
       {isFormula.text ? `=${text}` : text}
     </span>
   );

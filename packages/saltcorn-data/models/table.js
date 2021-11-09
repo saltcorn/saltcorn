@@ -255,16 +255,17 @@ class Table {
    * Drop current table
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(only_forget = false) {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
-      await client.query(
-        `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
-      );
+      if (!only_forget)
+        await client.query(
+          `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
+        );
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
         [this.id]

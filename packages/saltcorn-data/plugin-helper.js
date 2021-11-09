@@ -242,6 +242,15 @@ const get_link_view_opts = contract(
           });
       }
     }
+    const independent_views = await View.find_all_views_where(
+      ({ state_fields }) => !state_fields.some((sf) => sf.required)
+    );
+    independent_views.forEach((view) => {
+      link_view_opts.push({
+        label: `${view.name} [${view.viewtemplate}]`,
+        name: `Independent:${view.name}`,
+      });
+    });
     return link_view_opts;
   }
 );

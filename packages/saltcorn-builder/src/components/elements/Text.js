@@ -13,13 +13,16 @@ import {
   OrFormula,
   ErrorBoundary,
   TextStyleRow,
+  DynamicFontAwesomeIcon,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
 import CKEditor from "ckeditor4-react";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import fas from "@fortawesome/free-solid-svg-icons";
+import far from "@fortawesome/free-regular-svg-icons";
 const ckConfig = {
   toolbarGroups: [
     { name: "document", groups: ["mode", "document", "doctools"] },
@@ -94,7 +97,7 @@ const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
       onClick={(e) => selected && setEditable(true)}
       style={font ? { fontFamily: font } : {}}
     >
-      {icon ? <i className={`${icon} mr-1`}></i> : ""}
+      <DynamicFontAwesomeIcon icon={icon} className="mr-1" />
       {isFormula.text ? (
         <Fragment>
           =

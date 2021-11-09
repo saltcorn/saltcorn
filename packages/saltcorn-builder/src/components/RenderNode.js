@@ -15,7 +15,9 @@ import {
   faRedo,
   faTrashAlt,
   faArrowUp,
+  faArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { recursivelyCloneToElems } from "./elements/utils";
 /* 
 Contains code copied from craft.js landing page example
 Copyright (c) 2020 Previnash Wong Sze Chuan
@@ -93,38 +95,26 @@ const RenderNode = ({ render }) => {
   }, [scroll]);
 
   /**
-   * @param {NodeId} nodeId 
-   * @param {*} ix 
-   * @returns {DetailedReactHTMLElement}
-   */
-  const recursivelyCloneToElems = (nodeId, ix) => {
-    const {
-      data: { type, props, nodes },
-    } = query.node(nodeId).get();
-    const children = (nodes || []).map(recursivelyCloneToElems);
-    return React.createElement(
-      type,
-      { ...props, ...(typeof ix !== "undefined" ? { key: ix } : {}) },
-      children
-    );
-  };
-
-  /**
    * @returns {void}
    */
   const duplicate = () => {
     const {
       data: { parent },
     } = query.node(id).get();
-    const elem = recursivelyCloneToElems(id);
+    const siblings = query.node(parent).childNodes();
+    const sibIx = siblings.findIndex((sib) => sib === id);
+    const elem = recursivelyCloneToElems(query)(id);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
-      parent || "ROOT"
+      parent || "ROOT",
+      sibIx + 1
     );
   };
   return (
     <>
-      {(isActive || isHover) && id !== "ROOT"
+      {(isActive || isHover) &&
+      id !== "ROOT" &&
+      !(name === "Column" && !isActive)
         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
@@ -137,7 +127,15 @@ const RenderNode = ({ render }) => {
                 zIndex: 9999,
               }}
             >
-              <div className="dispname mr-3">{name}</div>
+              <div className="dispname mr-3">{name}</div>{" "}
+              {moveable && isActive && (
+                <button
+                  className="btn btn-link btn-builder-move p-0"
+                  ref={drag}
+                >
+                  <FontAwesomeIcon icon={faArrowsAlt} className="mr-2" />
+                </button>
+              )}
               {isActive && parent && parent !== "ROOT" ? (
                 <FontAwesomeIcon
                   icon={faArrowUp}

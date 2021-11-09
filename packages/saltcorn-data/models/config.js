@@ -399,6 +399,18 @@ const configTypes = {
     label: "Localizer strings",
     default: {},
   },
+  cookie_duration: {
+    type: "Integer",
+    label: "Cookie duration (hours)",
+    sublabel: "Set to 0 for expration at the end of browser session",
+    default: 0,
+  },
+  cookie_duration_remember: {
+    type: "Integer",
+    label: "Cookie duration (hours) when remember ticked",
+    sublabel: "Set to 0 for expration at the end of browser session",
+    default: 30 * 24,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

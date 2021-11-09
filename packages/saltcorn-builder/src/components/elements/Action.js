@@ -15,6 +15,7 @@ import {
   ConfigForm,
   setInitialConfig,
   ButtonOrLinkSettingsRows,
+  DynamicFontAwesomeIcon,
 } from "./utils";
 
 export /**
@@ -69,7 +70,7 @@ const Action =
           : {}
       }
     >
-      {action_icon ? <i className={`${action_icon} mr-1`}></i> : ""}
+      <DynamicFontAwesomeIcon icon={action_icon} className="mr-1" />
       {action_label || name}
     </button>
   );

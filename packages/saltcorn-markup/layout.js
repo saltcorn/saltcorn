@@ -25,7 +25,7 @@ const {
   genericElement,
 } = require("./tags");
 const { alert, breadcrumbs } = require("./layout_utils");
-const { search_bar_form } = require("./helpers");
+const { search_bar_form, search_bar } = require("./helpers");
 
 /**
  * @param {object[]} [alerts]
@@ -197,12 +197,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
-        ? iconTag +
-            label(
-              { for: `input${text(segment.labelFor)}` },
-              applyTextStyle(segment, inner)
-            )
-        : iconTag + applyTextStyle(segment, inner);
+        ? label(
+            { for: `input${text(segment.labelFor)}` },
+            applyTextStyle(segment, iconTag + inner)
+          )
+        : applyTextStyle(segment, iconTag + inner);
   }
   function go(segment, isTop, ix) {
     if (!segment) return "";
@@ -477,8 +476,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
             } ${
               renderBg && bgType === "Image" && bgFileId && +bgFileId
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
-                    imageSize || "contain"
-                  }; background-repeat: no-repeat;`
+                    imageSize === "repeat" ? "auto" : imageSize || "contain"
+                  }; background-repeat: ${
+                    imageSize === "repeat" ? "repeat" : "no-repeat"
+                  };`
                 : ""
             } ${
               renderBg && bgType === "Color"
@@ -521,7 +522,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return "<br />";
     }
     if (segment.type === "search_bar") {
-      return search_bar_form();
+      return `<form action="/search" method="get">${search_bar("q", "", {
+        has_dropdown: segment.has_dropdown,
+        contents: go(segment.contents),
+      })}</form>`;
     }
     if (segment.above) {
       return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
@@ -538,7 +542,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         );
       else
         markup = div(
-          { class: "row" },
+          { class: "row w-100" },
           segment.besides.map((t, ixb) =>
             div(
               {

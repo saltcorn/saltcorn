@@ -13,14 +13,14 @@ import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 export /**
  * @param {object} props
  * @param {boolean} props.has_dropdown
- * @param {string} props.contents
+ * @param {string} props.children
  * @param {boolean} props.show_badges
  * @returns {div}
  * @namespace
  * @category saltcorn-builder
  * @subcategory components
  */
-const SearchBar = ({ has_dropdown, contents, show_badges }) => {
+const SearchBar = ({ has_dropdown, children, show_badges }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -32,7 +32,7 @@ const SearchBar = ({ has_dropdown, contents, show_badges }) => {
       className={`input-group  ${selected ? "selected-node" : ""}`}
       ref={(dom) => {
         if (dom && dom.getBoundingClientRect) {
-          console.log(dom.getBoundingClientRect());
+          //console.log(dom.getBoundingClientRect());
           const elwidth = dom.getBoundingClientRect().width;
           if (elwidth !== dropWidth) setDropWidth(elwidth);
         }
@@ -71,9 +71,7 @@ const SearchBar = ({ has_dropdown, contents, show_badges }) => {
               }`}
               style={{ width: dropWidth, left: 0 }}
             >
-              <Element canvas id={`search_drop`} is={Column}>
-                {contents}
-              </Element>
+              <div className="canvas">{children}</div>
             </div>
           </Fragment>
         )}
@@ -135,7 +133,7 @@ SearchBar.craft = {
   displayName: "SearchBar",
   props: {
     has_dropdown: false,
-    contents: [],
+    show_badges: false,
   },
   related: {
     settings: SearchBarSettings,

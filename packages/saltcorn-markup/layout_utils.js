@@ -58,9 +58,10 @@ const innerSections = (sections) => {
  * @param {string} opts.label
  * @param {object[]} opts.subitems
  * @param {string} [opts.icon]
+ * @param {boolean} opts.isUser
  * @returns {li}
  */
-const navSubitems = ({ label, subitems, icon }) =>
+const navSubitems = ({ label, subitems, icon, isUser }) =>
   li(
     { class: "nav-item dropdown" },
     a(
@@ -78,7 +79,7 @@ const navSubitems = ({ label, subitems, icon }) =>
     ),
     div(
       {
-        class: "dropdown-menu",
+        class: ["dropdown-menu", isUser && "dropdown-menu-right"],
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
       subitems.map((si) =>
@@ -221,7 +222,7 @@ const leftNavBar = ({ name, logo }) => [
 const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
-      class: `navbar navbar-expand-lg ${opts.class || ""} ${
+      class: `navbar navbar-expand-md ${opts.class || ""} ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav",

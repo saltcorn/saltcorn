@@ -55,8 +55,8 @@ const Card = ({
           )}
         </div>
       )}
-      <div className={`card-body canvas ${noPadding ? "p-0" : ""}`}>
-        {children}
+      <div className={`card-body ${noPadding ? "p-0" : ""}`}>
+        <div className="canvas">{children}</div>
       </div>
     </div>
   );

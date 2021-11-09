@@ -128,7 +128,7 @@ describe("Show view", () => {
           configuration: { code: 'console.log("1")' },
         },
       ],
-      response: `<div class="row"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:1});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
+      response: `<div class="row w-100"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:1});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
     });
     await test_show({
       layout: {
@@ -179,7 +179,7 @@ describe("Show view", () => {
           in_modal: true,
         },
       ],
-      response: `<div class="row"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-left" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
+      response: `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-left" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
@@ -287,13 +287,13 @@ describe("Edit view", () => {
     await test_edit({
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
     await test_edit({
       id: 1,
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
   });
 });
@@ -394,7 +394,7 @@ describe("Filter view", () => {
       ],
       viewname: "testfilter",
       response:
-        '<div class="row"><div class="col-6"><select name="ddfilterpatients.favbook.name" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'patients.favbook.name\'): set_state_field(\'patients.favbook.name\', this.value)"><option value="" class="text-muted"></option><option value="Kirk Douglas">Kirk Douglas</option><option value="Michael Douglas">Michael Douglas</option></select></div><div class="col-6"><button class="btn btn-outline-primary" onClick="set_state_field(\'pages\', \'13\')">thirteen</button></div></div><button class="btn btn-outline-primary" onClick="set_state_field(\'patients.favbook.name\', \'Jim\')">Jim</button><select name="ddfilterauthor" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'author\'): set_state_field(\'author\', this.value)"><option value="" class="text-muted"></option><option value="Herman Melville">Herman Melville</option><option value="Leo Tolstoy">Leo Tolstoy</option></select>',
+        '<div class="row w-100"><div class="col-6"><select name="ddfilterpatients.favbook.name" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'patients.favbook.name\'): set_state_field(\'patients.favbook.name\', this.value)"><option value="" class="text-muted"></option><option value="Kirk Douglas">Kirk Douglas</option><option value="Michael Douglas">Michael Douglas</option></select></div><div class="col-6"><button class="btn btn-outline-primary" onClick="set_state_field(\'pages\', \'13\')">thirteen</button></div></div><button class="btn btn-outline-primary" onClick="set_state_field(\'patients.favbook.name\', \'Jim\')">Jim</button><select name="ddfilterauthor" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'author\'): set_state_field(\'author\', this.value)"><option value="" class="text-muted"></option><option value="Herman Melville">Herman Melville</option><option value="Leo Tolstoy">Leo Tolstoy</option></select>',
     });
   });
 });

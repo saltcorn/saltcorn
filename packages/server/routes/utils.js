@@ -16,6 +16,8 @@ const { input } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
 const is = require("contractis/is");
+const { validateHeaderName, validateHeaderValue } = require("http");
+const Crash = require("@saltcorn/data/models/crash");
 
 /**
  * @param {object} req 
@@ -74,7 +76,16 @@ const set_custom_http_headers = (res, state) => {
   if (!hdrs) return;
   for (const ln of hdrs.split("\n")) {
     const [k, v] = ln.split(":");
-    if (v && k && v.trim) res.header(k, v.trim());
+    if (v && k && v.trim) {
+      try {
+        const val = v.trim();
+        validateHeaderName(k);
+        validateHeaderValue(k, val);
+        res.header(k, val);
+      } catch (e) {
+        Crash.create(e, { url: "/", headers: {} });
+      }
+    }
   }
 };
 

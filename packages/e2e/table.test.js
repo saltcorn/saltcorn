@@ -99,6 +99,7 @@ describe("Table create", () => {
     await browser.page.select("#inputviewtemplate", "Edit");
     await browser.page.select("#inputtable_name", "Persons");
     await browser.clickNav("button[type=submit]");
+    await browser.page.waitForTimeout(100);
     expect(await browser.content()).toContain("Action button");
     await browser.page.click("div.is-text");
     await browser.page.waitForSelector("div.cke_editable");
