@@ -33,7 +33,7 @@ describe("layout", () => {
       ],
     };
     expect(render({ blockDispatch, layout: markup })).toBe(
-      '<div class="row"><div class="col-6">hello</div><div class="col-6">world</div></div><div class="row"><div class="col-6">bar</div><div class="col-6">foo</div></div>'
+      '<div class="row w-100"><div class="col-6">hello</div><div class="col-6">world</div></div><div class="row w-100"><div class="col-6">bar</div><div class="col-6">foo</div></div>'
     );
   });
 });
