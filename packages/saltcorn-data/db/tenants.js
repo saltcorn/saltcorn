@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module db/tenant
+ * @subcategory db
+ */
 const { getConnectObject } = require("./connect");
 
 var connectObj = getConnectObject();

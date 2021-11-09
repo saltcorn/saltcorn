@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Action
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -11,7 +17,25 @@ import {
   ButtonOrLinkSettingsRows,
 } from "./utils";
 
-export const Action = ({
+export /**
+ * 
+ * @param {object} props 
+ * @param {string} props.name
+ * @param {string} props.block
+ * @param {string} props.action_label
+ * @param {string} props.action_style
+ * @param {string} props.action_icon
+ * @param {string} props.action_size
+ * @param {string} props.action_bgcol
+ * @param {string} props.action_bordercol
+ * @param {string} props.action_textcol
+ * @returns {span|btn}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const Action = 
+({
   name,
   block,
   action_label,
@@ -27,6 +51,9 @@ export const Action = ({
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
 
+  /**
+   * @type {object}
+   */
   const btn = (
     <button
       className={`btn ${action_style || "btn-primary"} ${action_size || ""}`}
@@ -49,7 +76,13 @@ export const Action = ({
   return selected ? <span className={"selected-node"}>{btn}</span> : btn;
 };
 
-export const ActionSettings = () => {
+export /** 
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ * @returns {div}
+ */
+ const ActionSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -161,6 +194,9 @@ export const ActionSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 Action.craft = {
   displayName: "Action",
   related: {

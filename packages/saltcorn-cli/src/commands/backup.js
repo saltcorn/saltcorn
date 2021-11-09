@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/backup
+ */
 const { Command, flags } = require("@oclif/command");
 const { execSync } = require("child_process");
 const dateFormat = require("dateformat");
@@ -11,7 +15,15 @@ const pgdb = connobj.database;
 
 var default_filenm = `${day}-${pgdb}-${os.hostname}.sqlc`;
 
+/**
+ * BackupCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class BackupCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(BackupCommand);
 
@@ -49,8 +61,14 @@ class BackupCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 BackupCommand.description = `Backup the PostgreSQL database to a file with pg_dump or zip`;
 
+/**
+ * @type {object}
+ */
 BackupCommand.flags = {
   output: flags.string({
     char: "o",

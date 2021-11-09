@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/show
+ * @subcategory base-plugin
+ */
 const Form = require("../../models/form");
 const User = require("../../models/user");
 const Field = require("../../models/field");
@@ -49,6 +54,10 @@ const { get_expression_function } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 
+/**
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -181,6 +190,10 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @returns {object[]}
+ */
 const get_state_fields = () => [
   {
     name: "id",
@@ -190,8 +203,21 @@ const get_state_fields = () => [
   },
 ];
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
+/**
+ * @param {string} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {string} [opts.page_title]
+ * @param {boolean} opts.page_title_formula
+ * @param {object} state 
+ * @param {object} extra 
+ * @returns {Promise<string>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -268,6 +294,12 @@ const run = async (
   return page_title_preamble + rendered;
 };
 
+/**
+ * @param {object} opts
+ * @param {object} opts.layout
+ * @param {object[]} opts.fields
+ * @returns {Promise<void>}
+ */
 const set_join_fieldviews = async ({ layout, fields }) => {
   await traverse(layout, {
     join_field: async (segment) => {
@@ -298,6 +330,16 @@ const set_join_fieldviews = async ({ layout, fields }) => {
   });
 };
 
+/**
+ * @param {object} table 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} extra 
+ * @param {object[]} rows 
+ * @returns {Promise<string>}
+ */
 const renderRows = async (
   table,
   viewname,
@@ -384,6 +426,16 @@ const renderRows = async (
   });
 };
 
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} state 
+ * @param {object} extra 
+ * @returns {Promise<object[]>}
+ */
 const runMany = async (
   table_id,
   viewname,
@@ -420,6 +472,18 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
+/**
+ * @param {object} row 
+ * @param {Field[]} fields 
+ * @param {Layout} layout0 
+ * @param {string} viewname 
+ * @param {Table} table 
+ * @param {Role} role 
+ * @param {object} req 
+ * @param {object} is_owner 
+ * @throws {Error}
+ * @returns {Layout}
+ */
 const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
@@ -557,6 +621,19 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     is_owner,
   });
 };
+
+/**
+ * @param {number} table_id 
+ * @param {*} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {*} opts.layout
+ * @param {*} body 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req 
+ * @param {*} optsTwo.res
+ * @returns {Promise<object>}
+ */
 const run_action = async (
   table_id,
   viewname,
@@ -584,7 +661,9 @@ const run_action = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "Show",
+  /** @type {string} */
   description: "Show a single row, with flexible layout",
   get_state_fields,
   configuration_workflow,
@@ -592,8 +671,14 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
   routes: { run_action },
+  /**
+   * @param {object} opts
+   * @param {object} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },

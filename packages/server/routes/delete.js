@@ -1,13 +1,32 @@
+/**
+ * @category server
+ * @module routes/delete
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const { setTenant, loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace deleteRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
 
+/**
+ * @name post/:name/:id
+ * @function
+ * @memberof module:routes/delete~deleteRouter
+ * @function
+ */
 router.post(
   "/:name/:id",
   setTenant,

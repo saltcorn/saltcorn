@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module auth/routes
+ * @subcategory auth
+ */
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
@@ -45,9 +50,22 @@ const { restore } = require("@saltcorn/data/models/backup");
 const load_plugins = require("../load_plugins");
 const fs = require("fs");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace routesRouter
+ * @category server
+ * @subcategory auth
+ */
+
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req 
+ * @param {boolean} isCreating 
+ * @returns {Form}
+ */
 const loginForm = (req, isCreating) => {
   const postAuthMethods = Object.entries(getState().auth_methods)
     // TBD unresolved parameter K
@@ -84,6 +102,11 @@ const loginForm = (req, isCreating) => {
     submitLabel: req.__("Login"),
   });
 };
+
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const forgotForm = (req) =>
   new Form({
     blurb: req.__(
@@ -104,6 +127,11 @@ const forgotForm = (req) =>
     submitLabel: req.__("Reset password"),
   });
 
+/**
+ * @param {object} body 
+ * @param {object} req 
+ * @returns {Form}
+ */
 const resetForm = (body, req) => {
   const form = new Form({
     blurb: req.__("Enter your new password below"),
@@ -129,6 +157,12 @@ const resetForm = (body, req) => {
   form.values.token = body && body.token;
   return form;
 };
+
+/**
+ * @param {string} current 
+ * @param {boolean} noMethods 
+ * @returns {object}
+ */
 const getAuthLinks = (current, noMethods) => {
   const links = { methods: [] };
   const state = getState();
@@ -152,6 +186,11 @@ const getAuthLinks = (current, noMethods) => {
   return links;
 };
 
+/**
+ * @name get/login
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/login",
   setTenant,
@@ -175,6 +214,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/logout
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get("/logout", setTenant, (req, res, next) => {
   req.logout();
   if (req.session.destroy)
@@ -190,6 +234,11 @@ router.get("/logout", setTenant, (req, res, next) => {
   }
 });
 
+/**
+ * @name get/forgot
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/forgot",
   setTenant,
@@ -210,6 +259,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/reset
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/reset",
   setTenant,
@@ -219,6 +273,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/verify
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/verify",
   setTenant,
@@ -238,6 +297,11 @@ router.get(
   })
 );
 
+/**
+ * @name post/reset
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/reset",
   setTenant,
@@ -258,6 +322,12 @@ router.post(
     res.redirect("/auth/login");
   })
 );
+
+/**
+ * @name post/forgot
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/forgot",
   setTenant,
@@ -286,6 +356,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/signup
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/signup",
   setTenant,
@@ -325,6 +401,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/create_first_user
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/create_first_user",
   setTenant,
@@ -350,6 +431,11 @@ router.get(
   })
 );
 
+/**
+ * @name post/create_from_restore
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/create_from_restore",
   setTenant,
@@ -373,6 +459,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/create_first_user
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/create_first_user",
   setTenant,
@@ -417,6 +509,13 @@ router.post(
   })
 );
 
+/**
+ * @param {string} new_user_view_name 
+ * @param {object} req 
+ * @param {boolean} askEmail 
+ * @returns {Promise<Form>}
+ * @throws {InvalidConfiguration}
+ */
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
@@ -488,6 +587,12 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   return form;
 };
 
+/**
+ * @param {object} u 
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {void}
+ */
 const signup_login_with_user = (u, req, res) =>
   req.login(
     {
@@ -508,6 +613,11 @@ const signup_login_with_user = (u, req, res) =>
     }
   );
 
+/**
+ * @name get/signup_final_ext
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/signup_final_ext",
   setTenant,
@@ -525,6 +635,11 @@ router.get(
   })
 );
 
+/**
+ * @name post/signup_final_ext
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup_final_ext",
   setTenant,
@@ -572,6 +687,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/signup_final
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup_final",
   setTenant,
@@ -629,6 +750,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/signup
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup",
   setTenant,
@@ -741,6 +867,11 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {void}
+ */
 function handler(req, res) {
   console.log(
     `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
@@ -754,7 +885,12 @@ function handler(req, res) {
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
 }
-// try to find a unique user id in login submit
+
+/**
+ * try to find a unique user id in login submit
+ * @param {object} body 
+ * @returns {string}
+ */
 const userIdKey = (body) => {
   if (body.email) return body.email;
   const { remember, password, _csrf, passwordRepeat, ...rest } = body;
@@ -777,6 +913,11 @@ const userLimiter = rateLimit({
   handler,
 });
 
+/**
+ * @name post/login
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/login",
   setTenant,
@@ -802,6 +943,12 @@ router.post(
     res.redirect("/");
   })
 );
+
+/**
+ * @name get/login-with/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/login-with/:method",
   setTenant,
@@ -819,6 +966,12 @@ router.get(
     }
   })
 );
+
+/**
+ * @name post/login-with/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/login-with/:method",
   setTenant,
@@ -842,6 +995,11 @@ router.post(
   })
 );
 
+/**
+ * @param {object}} req 
+ * @param {object} res 
+ * @returns {void}
+ */
 const loginCallback = (req, res) => () => {
   if (!req.user) return;
   if (!req.user.id) {
@@ -856,6 +1014,11 @@ const loginCallback = (req, res) => () => {
   }
 };
 
+/**
+ * @name get/callback/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/callback/:method",
   setTenant,
@@ -872,6 +1035,10 @@ router.get(
   })
 );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const changPwForm = (req) =>
   new Form({
     action: "/auth/settings",
@@ -892,6 +1059,12 @@ const changPwForm = (req) =>
       },
     ],
   });
+
+/**
+ * @param {object} req 
+ * @param {object} user 
+ * @returns {Form}
+ */
 const setLanguageForm = (req, user) =>
   form(
     {
@@ -913,6 +1086,14 @@ const setLanguageForm = (req, user) =>
     )
   );
 
+/**
+ * @param {object} opts
+ * @param {object} opts.req
+ * @param {object} opts.res
+ * @param {object} opts.pwform
+ * @param {object} opts.user
+ * @returns {Promise<object>}
+ */
 const userSettings = async ({ req, res, pwform, user }) => {
   let usersets;
   const user_settings_form = getState().getConfig("user_settings_form", "");
@@ -959,8 +1140,12 @@ const userSettings = async ({ req, res, pwform, user }) => {
     ],
   };
 };
+
 /**
  * Set language
+ * @name post/setlanguage
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/setlanguage",
@@ -995,6 +1180,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/settings",
   setTenant,
@@ -1007,9 +1198,10 @@ router.get(
     );
   })
 );
+
 /**
  * Define set email form for user
- * @param req
+ * @param {object} req
  * @returns {Form}
  */
 const setEmailForm = (req) =>
@@ -1028,8 +1220,12 @@ const setEmailForm = (req) =>
       },
     ],
   });
+
 /**
  * Render form for set email for user
+ * @name get/set-email
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.get(
   "/set-email",
@@ -1041,8 +1237,12 @@ router.get(
     );
   })
 );
+
 /**
  * Execute set email for user
+ * @name post/set-email
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/set-email",
@@ -1087,8 +1287,12 @@ router.post(
     );
   })
 );
+
 /**
  * Execute Change Password for User
+ * @name post/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/settings",
@@ -1136,6 +1340,11 @@ router.post(
   })
 );
 
+/**
+ * @name all/verification-flow
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.all(
   "/verification-flow",
   setTenant,

@@ -1,7 +1,10 @@
 /**
  * Embedded Types definition.
  *
- * More types can be added by plugin store mechanism https://store.saltcorn.com/
+ * More types can be added by plugin store mechanism https://store.saltcorn.com/ 
+ * @category saltcorn-data
+ * @module base-plugin/types 
+ * @subcategory base-plugin
  */
 
 const moment = require("moment");
@@ -28,6 +31,11 @@ const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const eqStr = (x, y) => `${x}` === `${y}`;
 
+/**
+ * @param {string} v 
+ * @param {string} optsStr 
+ * @returns {string[]}
+ */
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
@@ -54,13 +62,22 @@ const getStrOptions = (v, optsStr) =>
             )
           : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
+
 /**
- * String type
- * @type {{read: ((function(*=): (*))|*), presets: {IP: (function({req: *}): string), SessionID: (function({req: *}))}, fieldviews: {as_text: {isEdit: boolean, run: (function(*=): string|string)}, as_link: {isEdit: boolean, run: (function(*=): string)}, as_header: {isEdit: boolean, run: (function(*=): string)}, password: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, img_from_url: {isEdit: boolean, run: (function(*=, *, *): string)}, edit: {isEdit: boolean, run: (function(*=, *=, *, *, *=, *): string), configFields: (function(*): [...[{name: string, label: string, type: string}, {name: string, label: string, type: string, sublabel: string}]|*[], {name: string, label: string, type: string}])}, radio_group: {isEdit: boolean, run: (function(*=, *=, *, *=, *, *): *|string)}, textarea: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}}, contract: (function({options?: *}): (function(*=): *)|*), name: string, attributes: [{name: string, validator(*=): (string|undefined), type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}, {name: string, type: string, required: boolean, sublabel: string}], sql_name: string, validate_attributes: (function({min_length?: *, max_length?: *, regexp?: *})), validate: (function({min_length?: *, max_length?: *, regexp?: *, re_invalid_error?: *}): function(*=): (boolean|{error: string}))}}
- */
+  * string type
+  * @namespace
+  * @category saltcorn-data
+  * @subcategory types / string
+  */
 const string = {
+  /** @type {string} */
   name: "String",
+  /** @type {string} */
   sql_name: "text",
+  /**
+   * @param {object} param
+   * @returns {object}
+   */
   attributes: ({ table }) => {
     const strFields =
       table &&
@@ -131,23 +148,58 @@ const string = {
         : []),
     ];
   },
+  /**
+   * @param {object} opts
+   * @param {string|undefined} opts.options
+   * @returns {boolean}
+   */
   contract: ({ options }) =>
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
       ? is.str
       : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory types / string
+   */
   fieldviews: {
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     as_text: { isEdit: false, run: (s) => text_attr(s || "") },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     as_link: {
       isEdit: false,
       run: (s) => a({ href: text(s || "") }, text_attr(s || "")),
     },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     img_from_url: {
       isEdit: false,
       run: (s, req, attrs) => img({ src: text(s || ""), style: "width:100%" }),
     },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     as_header: { isEdit: false, run: (s) => h3(text_attr(s || "")) },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     edit: {
       isEdit: true,
       configFields: (field) => [
@@ -226,6 +278,11 @@ const string = {
               ...(isdef(v) && { value: text_attr(v) }),
             }),
     },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     textarea: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -241,6 +298,11 @@ const string = {
           text(v) || ""
         ),
     },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     radio_group: {
       isEdit: true,
       configFields: [
@@ -264,6 +326,11 @@ const string = {
             })
           : i("None available"),
     },
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / string
+     */
     password: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -279,6 +346,10 @@ const string = {
         }),
     },
   },
+  /**
+   * @param {*} v 
+   * @returns {string|undefined}
+   */
   read: (v) => {
     switch (typeof v) {
       case "string":
@@ -288,10 +359,29 @@ const string = {
         return undefined;
     }
   },
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory types / string
+   */
   presets: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.req
+     * @returns {object}
+     */
     IP: ({ req }) => req.ip,
+    /**
+     * @param {object} opts
+     * @param {object} opts.req
+     * @returns {object}
+     */
     SessionID: ({ req }) => req.sessionID || req.cookies["express:sess"],
   },
+  /**
+   * @param {object} param
+   * @returns {object|true}
+   */
   validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
     if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
     if (isdef(min_length) && x.length < min_length)
@@ -302,10 +392,20 @@ const string = {
       return { error: re_invalid_error || `Does not match regular expression` };
     return true;
   },
+
+  /**
+   * @param {object} param
+   * @returns {object}
+   */
   validate_attributes: ({ min_length, max_length, regexp }) =>
     (!isdef(min_length) || !isdef(max_length) || max_length >= min_length) &&
     (!isdef(regexp) || is_valid_regexp(regexp)),
 };
+
+/**
+ * @param {string} s 
+ * @returns {boolean}
+ */
 const is_valid_regexp = (s) => {
   try {
     new RegExp(s);
@@ -314,17 +414,43 @@ const is_valid_regexp = (s) => {
     return false;
   }
 };
+
 /**
  * Integer type
- * @type {{read: ((function(*=): (number))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*=): string|*)}}, contract: (function({min?: *, max?: *}): function(*=): *), name: string, attributes: [{name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}], sql_name: string, validate_attributes: (function({min?: *, max?: *})), primaryKey: {sql_type: string}, validate: (function({min?: *, max?: *}): function(*): ({error: string}|boolean))}}
+ * @namespace
+ * @category saltcorn-data
+ * @subcategory types / int
  */
 const int = {
+  /** @type {string} */
   name: "Integer",
+  /** @type {string} */
   sql_name: "int",
+  /**
+   * @param {object} opts
+   * @param {number} opts.min
+   * @param {number} opts.max
+   * @returns {boolean}
+   */
   contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
   primaryKey: { sql_type: "serial" },
+  /** 
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory types / int
+   */
   fieldviews: {
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / int
+     */
     show: { isEdit: false, run: (s) => text(s) },
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / int
+      */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -342,12 +468,21 @@ const int = {
         }),
     },
   },
+  /** @type {object[]}  */
   attributes: [
     { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false },
   ],
+  /**
+   * @param {object} param
+   * @returns {boolean}
+   */
   validate_attributes: ({ min, max }) =>
     !isdef(min) || !isdef(max) || max > min,
+  /**
+   * @param {object} v 
+   * @returns {object}
+   */
   read: (v) => {
     switch (typeof v) {
       case "number":
@@ -360,21 +495,43 @@ const int = {
         return undefined;
     }
   },
+  /**
+   * @param {object} param 
+   * @returns {boolean}
+   */
   validate: ({ min, max }) => (x) => {
     if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
     if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
     return true;
   },
 };
+
 /**
  * Color Type
- * @type {{read: ((function(*=): (string))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*): string|string)}}, contract: (function(): (function(*=): *)|*), name: string, attributes: *[], sql_name: string, validate: (function(): function(*): boolean)}}
+ * @namespace color
+ * @category saltcorn-data
+ * @subcategory types / color
  */
 const color = {
+  /** @type {string} */
   name: "Color",
+  /** @type {string} */
   sql_name: "text",
+  /**
+   * @returns {function}
+   */
   contract: () => is.str,
+  /** 
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory types / color
+   */
   fieldviews: {
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / color
+      */
     show: {
       isEdit: false,
       run: (s) =>
@@ -385,6 +542,11 @@ const color = {
             })
           : "",
     },
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / color
+      */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -399,7 +561,12 @@ const color = {
         }),
     },
   },
+  /** @type {object[]} */
   attributes: [],
+  /**
+   * @param {object} v 
+   * @returns {object}
+   */
   read: (v) => {
     switch (typeof v) {
       case "string":
@@ -408,20 +575,49 @@ const color = {
         return undefined;
     }
   },
+  /**
+   * @returns {boolean}
+   */
   validate: () => (x) => {
     return true;
   },
 };
+
 /**
  * Float type
- * @type {{read: ((function(*=): (number))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*=): string|*)}}, contract: (function({min?: *, max?: *}): function(*=): *), name: string, attributes: [{name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}, {name: string, type: string, required: boolean}], sql_name: string, validate: (function({min?: *, max?: *}): function(*): ({error: string}|boolean))}}
+ * @namespace 
+ * @category saltcorn-data
+ * @subcategory types / float
  */
 const float = {
+  /** @type {string} */
   name: "Float",
+  /** @type {string} */
   sql_name: "double precision",
+  /**
+   * @param {object} opts
+   * @param {number} opts.min
+   * @param {number} opts.max
+   * @returns {function}
+   */
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
+  /** 
+   * @namespace 
+   * @category saltcorn-data
+   * @subcategory types / float
+   */
   fieldviews: {
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / float
+      */
     show: { isEdit: false, run: (s) => text(s) },
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / float
+      */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -441,12 +637,17 @@ const float = {
         }),
     },
   },
+  /** @type {object[]} */
   attributes: [
     { name: "max", type: "Float", required: false },
     { name: "min", type: "Float", required: false },
     { name: "units", type: "String", required: false },
     { name: "decimal_places", type: "Integer", required: false },
   ],
+  /**
+   * @param {object} v 
+   * @returns {number|string|undefined}
+   */
   read: (v) => {
     switch (typeof v) {
       case "number":
@@ -458,31 +659,63 @@ const float = {
         return undefined;
     }
   },
+  /**
+   * @param {object} param
+   * @returns {object|boolean}
+   */
   validate: ({ min, max }) => (x) => {
     if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
     if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
     return true;
   },
 };
+
+/**
+ * @param {object} req 
+ * @returns {string|undefined}
+ */
 const locale = (req) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req && req.getLocale ? req.getLocale() : undefined;
 };
 
+/**
+ * @param {*} x 
+ * @returns {*}
+ */
 const logit = (x) => {
   console.log(x);
   return x;
 };
+
 /**
  * Date type
- * @type {{presets: {Now: (function(): Date)}, read: ((function(*=, *=): (Date|null|undefined))|*), fieldviews: {edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, editDay: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, yearsAgo: {isEdit: boolean, run: ((function(*=, *): (string|string|*))|*)}, show: {isEdit: boolean, run: (function(*=, *=): string|*)}, showDay: {isEdit: boolean, run: (function(*=, *=): string|*)}, format: {isEdit: boolean, run: ((function(*=, *, *=): (string|string|*))|*), configFields: [{name: string, label: string, type: string, sublabel: string}]}, relative: {isEdit: boolean, run: ((function(*=, *=): (string|string|*))|*)}}, contract: (function(): (function(*=): *)|*), name: string, attributes: *[], sql_name: string, validate: (function({}): function(*=): *)}}
+ * @namespace 
+ * @category saltcorn-data
+ * @subcategory types / date
  */
 const date = {
+  /** @type {string} */
   name: "Date",
+  /** @type {string} */
   sql_name: "timestamptz",
+  /**
+   * @returns {function}
+   */
   contract: () => is.date,
+  /** @type {object[]} */
   attributes: [],
+  /** 
+   * @namespace 
+   * @category saltcorn-data
+   * @subcategory types / date   
+   */
   fieldviews: {
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / date
+      */
     show: {
       isEdit: false,
       run: (d, req) =>
@@ -494,6 +727,11 @@ const date = {
             : ""
         ),
     },
+    /** 
+      * @namespace
+      * @category saltcorn-data
+      * @subcategory types / date
+      */
     showDay: {
       isEdit: false,
       run: (d, req) =>
@@ -505,6 +743,11 @@ const date = {
             : ""
         ),
     },
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     format: {
       isEdit: false,
       configFields: [
@@ -521,6 +764,11 @@ const date = {
         return text(moment(d).format(options.format));
       },
     },
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     relative: {
       isEdit: false,
       run: (d, req) => {
@@ -530,6 +778,11 @@ const date = {
         else return text(moment(d).fromNow());
       },
     },
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     yearsAgo: {
       isEdit: false,
       run: (d, req) => {
@@ -537,6 +790,11 @@ const date = {
         return text(moment.duration(new Date() - d).years());
       },
     },
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -554,6 +812,11 @@ const date = {
           }),
         }),
     },
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     editDay: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -572,9 +835,19 @@ const date = {
         }),
     },
   },
+  /** 
+   * @namespace 
+   * @category saltcorn-data
+   * @subcategory types / date   
+   */
   presets: {
     Now: () => new Date(),
   },
+  /**
+   * @param {object} v 
+   * @param {object} attrs 
+   * @returns {object}
+   */
   read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
     if (typeof v === "string") {
@@ -587,17 +860,39 @@ const date = {
       else return null;
     }
   },
+  /**
+   * @param {object} param
+   * @returns {boolean}
+   */
   validate: ({}) => (v) => v instanceof Date && !isNaN(v),
 };
+
 /**
  * Boolean Type
- * @type {{readFromFormRecord: ((function(*, *): (boolean|null|boolean))|*), read: ((function(*=): (boolean|null|boolean))|*), fieldviews: {TrueFalse: {isEdit: boolean, run: (function(*): string)}, tristate: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string|string)}, checkboxes: {isEdit: boolean, run: (function(*): string|string)}, edit: {isEdit: boolean, run: (function(*=, *=, *, *, *, *): string)}, show: {isEdit: boolean, run: (function(*): string|string)}}, contract: (function(): (function(*=): *)|*), name: string, listAs: (function(*=): string), attributes: *[], sql_name: string, readFromDB: (function(*=): boolean), validate: (function(): function(*): boolean)}}
+ * @namespace 
+ * @category saltcorn-data
+ * @subcategory types / bool
  */
 const bool = {
+  /** @type {string} */
   name: "Bool",
+  /** @type {string} */
   sql_name: "boolean",
+  /**
+   * @returns {function}
+   */
   contract: () => is.bool,
+  /** 
+   * @namespace 
+   * @category saltcorn-data
+   * @subcategory types / bool
+   */
   fieldviews: {
+    /** 
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / bool
+     */
     show: {
       isEdit: false,
       run: (v) =>
@@ -611,6 +906,11 @@ const bool = {
             })
           : "",
     },
+    /** 
+     * @namespace 
+     * @category saltcorn-data
+     * @subcategory types / bool
+     */
     checkboxes: {
       isEdit: false,
       run: (v) =>
@@ -620,10 +920,20 @@ const bool = {
           ? input({ type: "checkbox", disabled: true })
           : "",
     },
+    /** 
+     * @namespace 
+     * @category saltcorn-data
+     * @subcategory types / bool
+     */
     TrueFalse: {
       isEdit: false,
       run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },
+    /** 
+     * @namespace 
+     * @category saltcorn-data
+     * @subcategory types / bool
+     */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -637,6 +947,11 @@ const bool = {
           ...(attrs.disabled && { onclick: "return false;" }),
         }),
     },
+    /** 
+     * @namespace 
+     * @category saltcorn-data
+     * @subcategory types / bool
+     */
     tristate: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -663,13 +978,23 @@ const bool = {
             ),
     },
   },
+  /** @type {object[]} */
   attributes: [],
+  /**
+   * @param {*} rec 
+   * @param {string} name 
+   * @returns {boolean|null}
+   */
   readFromFormRecord: (rec, name) => {
     if (!rec[name]) return false;
     if (["undefined", "false", "off"].includes(rec[name])) return false;
     if (rec[name] === "?") return null;
     return rec[name] ? true : false;
   },
+  /**
+   * @param {object} v 
+   * @returns {boolean|null}
+   */
   read: (v) => {
     switch (typeof v) {
       case "string":
@@ -681,8 +1006,19 @@ const bool = {
         return v ? true : false;
     }
   },
+  /**
+   * @param {object} v 
+   * @returns {object}
+   */
   readFromDB: (v) => !!v,
+  /** 
+   * @param {object} v 
+   * @returns {object}
+   */
   listAs: (v) => JSON.stringify(v),
+  /**
+   * @returns {boolean}
+   */
   validate: () => (x) => true,
 };
 

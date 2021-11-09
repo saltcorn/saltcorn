@@ -1,4 +1,15 @@
+/**
+ * @category saltcorn-data
+ * @module db/reset_schema
+ * @subcategory db
+ */
+
 //https://stackoverflow.com/a/21247009
+/**
+ * @param {boolean} dontDrop 
+ * @param {string} schema0 
+ * @returns {Promise<void>}
+ */
 const reset = async (dontDrop = false, schema0) => {
   const db = require(".");
   const { migrate } = require("../migrate");

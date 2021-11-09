@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/packs
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
@@ -30,9 +36,22 @@ const Library = require("@saltcorn/data/models/library");
 const Trigger = require("@saltcorn/data/models/trigger");
 const Role = require("@saltcorn/data/models/role");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace packsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.get(
   "/create/",
   setTenant,
@@ -112,6 +131,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/create
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/create",
   setTenant,
@@ -185,6 +210,10 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const install_pack_form = (req) =>
   new Form({
     action: "/packs/install",
@@ -199,6 +228,12 @@ const install_pack_form = (req) =>
     ],
   });
 
+/**
+ * @name get/install
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.get(
   "/install",
   setTenant,
@@ -224,6 +259,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/install
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/install",
   setTenant,
@@ -277,6 +318,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/install-named/:name
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/install-named/:name",
   setTenant,
@@ -308,6 +355,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/uninstall/:name
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/uninstall/:name",
   setTenant,

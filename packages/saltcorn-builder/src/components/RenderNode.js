@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/RenderNode
+ * @subcategory components
+ */
+
 import { useNode, useEditor } from "@craftjs/core";
 //import { ROOT_NODE } from "@craftjs/utils";
 import React, { useEffect, useRef, useCallback, Fragment } from "react";
@@ -15,7 +21,14 @@ Contains code copied from craft.js landing page example
 Copyright (c) 2020 Previnash Wong Sze Chuan
 */
 
-export const RenderNode = ({ render }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.render
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const RenderNode = ({ render }) => {
   const { id } = useNode();
   const { actions, query, isActive } = useEditor((state) => ({
     isActive: state.nodes[id].events.selected,
@@ -78,6 +91,12 @@ export const RenderNode = ({ render }) => {
       document.removeEventListener("scroll", scroll);
     };
   }, [scroll]);
+
+  /**
+   * @param {NodeId} nodeId 
+   * @param {*} ix 
+   * @returns {DetailedReactHTMLElement}
+   */
   const recursivelyCloneToElems = (nodeId, ix) => {
     const {
       data: { type, props, nodes },
@@ -89,6 +108,10 @@ export const RenderNode = ({ render }) => {
       children
     );
   };
+
+  /**
+   * @returns {void}
+   */
   const duplicate = () => {
     const {
       data: { parent },

@@ -1,8 +1,21 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/LineBreak
+ * @subcategory components / elements
+ */
+
 import React, { Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import { SettingsFromFields } from "./utils";
 
-export const LineBreak = ({}) => {
+export /**
+ * @param {object} [props = {}]
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+ const LineBreak = ({}) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -20,6 +33,9 @@ export const LineBreak = ({}) => {
   );
 };
 
+/**
+ * @type {object}
+ */
 LineBreak.craft = {
   displayName: "LineBreak",
   related: {

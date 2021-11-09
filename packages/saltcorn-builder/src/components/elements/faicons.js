@@ -1,4 +1,14 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/faicons
+ */
+
+/** 
+ * @namespace faicons / all
+ * @category saltcorn-builder
+ */
 const all = {
+  /** @type {string[]} */
   regular: [
     "address-book",
     "address-card",
@@ -152,6 +162,7 @@ const all = {
     "window-minimize",
     "window-restore",
   ],
+    /** @type {string[]} */
   solid: [
     "ad",
     "address-book",

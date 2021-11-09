@@ -1,9 +1,21 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/install-plugin
+ */
 const { Command, flags } = require("@oclif/command");
 const { maybe_as_tenant } = require("../common");
 const fs = require("fs");
 const path = require("path");
 
+/**
+ * InstallPluginCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class InstallPluginCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(InstallPluginCommand);
     const {
@@ -59,8 +71,14 @@ class InstallPluginCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 InstallPluginCommand.description = `Install a plugin`;
 
+/**
+ * @type {object}
+ */
 InstallPluginCommand.flags = {
   tenant: flags.string({
     char: "t",

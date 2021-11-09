@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/tables
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
@@ -48,12 +54,19 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace tablesRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 /**
  * Show Table Form
- * @param table
- * @param req
+ * @param {object} table
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const tableForm = async (table, req) => {
@@ -148,8 +161,13 @@ const tableForm = async (table, req) => {
   }
   return form;
 };
+
 /**
  * New table (GET handler)
+ * @name get/new
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/new/",
@@ -190,8 +208,8 @@ router.get(
 );
 /**
  * Discover Database Tables Form
- * @param tables - list of tables
- * @param req - HTTP Request
+ * @param {object[]} tables list of tables
+ * @param {object} req HTTP Request
  * @returns {Form}
  */
 const discoverForm = (tables, req) => {
@@ -213,8 +231,13 @@ const discoverForm = (tables, req) => {
     })),
   });
 };
+
 /**
  * Table Discover (GET handler)
+ * @name get/discover
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/discover",
@@ -243,8 +266,13 @@ router.get(
     });
   })
 );
+
 /**
  * Table Discover (post)
+ * @name post/discover
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/discover",
@@ -266,8 +294,13 @@ router.post(
     res.redirect("/table");
   })
 );
+
 /**
  * Create Table from CSV file (get)
+ * @name get/create-from-csv
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/create-from-csv",
@@ -313,8 +346,13 @@ router.get(
     });
   })
 );
-/**
- * Create Table from CSV file (post)
+
+/** 
+* Create Table from CSV file (post)
+ * @name post/create-from-csv
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/create-from-csv",
@@ -357,8 +395,13 @@ router.post(
     }
   })
 );
-/**
+
+/** 
  * Show Relational Diagram (get)
+ * @name get/relationship-diagram
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/relationship-diagram",
@@ -445,8 +488,19 @@ router.get(
   })
 );
 
+/**
+ * @param {string} col 
+ * @param {string} lbl 
+ * @returns {string}
+ */
 const badge = (col, lbl) =>
   `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+
+/**
+ * @param {object} f 
+ * @param {object} req 
+ * @returns {string}
+ */
 const typeBadges = (f, req) => {
   let s = "";
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
@@ -456,6 +510,11 @@ const typeBadges = (f, req) => {
   if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
+
+/**
+ * @param {object} f 
+ * @returns {string}
+ */
 const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
@@ -466,8 +525,13 @@ const attribBadges = (f) => {
   }
   return s;
 };
-/**
+
+/** 
  * Table Constructor (GET Handler)
+ * @name get/:idorname
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/:idorname",
@@ -762,8 +826,12 @@ router.get(
     });
   })
 );
-/**
- *
+
+/** 
+ * @name post
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/",
@@ -831,9 +899,14 @@ router.post(
     }
   })
 );
-/**
+
+/** 
  * Delete Table Route Handler definition
  * /delete:/id, where id is table id in _sc_tables
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete/:id",
@@ -868,9 +941,9 @@ router.post(
  * - Owned - if ownership_field_id? What is it?
  * - History - if table has versioning
  * - External - if this is external table
- * @param t - table object
- * @param req - http request
- * @returns {string} - html string with list of badges
+ * @param {object} t table object
+ * @param {object} req http request
+ * @returns {string} html string with list of badges
  */
 const tableBadges = (t, req) => {
   let s = "";
@@ -879,9 +952,13 @@ const tableBadges = (t, req) => {
   if (t.external) s += badge("info", req.__("External"));
   return s;
 };
+
 /**
  * List Views of Tables (GET Handler)
- *
+ * @name get
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/",
@@ -970,8 +1047,13 @@ router.get(
     });
   })
 );
-/**
+
+/** 
  * Download CSV file
+ * @name get/download/:name
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/download/:name",
@@ -995,8 +1077,13 @@ router.get(
     }).pipe(res);
   })
 );
+
 /**
  * Show list of Constraints for Table (GET Handler)
+ * @name get/constraints/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/constraints/:id",
@@ -1051,8 +1138,8 @@ router.get(
 /**
  * Constraint Fields Edition Form
  * Choosing fields for adding to contrain
- * @param table_id
- * @param fields
+ * @param {string} table_id
+ * @param {object[]} fields
  * @returns {Form}
  */
 const constraintForm = (req, table_id, fields) =>
@@ -1067,9 +1154,14 @@ const constraintForm = (req, table_id, fields) =>
       type: "Bool",
     })),
   });
+ 
 /**
  * Add constraint GET handler
  * ${base_url}/table/add-constraint/:id
+ * @name get/add-constraint/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/add-constraint/:id",
@@ -1108,8 +1200,13 @@ router.get(
     });
   })
 );
+
 /**
  * Add constraint POST handler
+ * @name post/add-constraint/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/add-constraint/:id",
@@ -1142,8 +1239,8 @@ router.post(
 /**
  * Rename Table Form
  * Allows to set up new table name
- * @param table_id
- * @param req
+ * @param {string} table_id
+ * @param {object} req
  * @returns {Form}
  */
 const renameForm = (table_id, req) =>
@@ -1158,8 +1255,13 @@ const renameForm = (table_id, req) =>
       },
     ],
   });
+
 /**
  * Rename Table GET handler
+ * @name get/rename/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/rename/:id",
@@ -1191,8 +1293,13 @@ router.get(
     });
   })
 );
+
 /**
  * Rename Table POST Handler
+ * @name post/rename/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/rename/:id",
@@ -1211,8 +1318,13 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Delete constraint POST handler
+ * @name post/delete-constraint/:id",
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete-constraint/:id",
@@ -1225,8 +1337,13 @@ router.post(
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
+
 /**
  * Import Table Data from CSV POST handler
+ * @name post/upload_to_table/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/upload_to_table/:name",
@@ -1256,8 +1373,13 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Delete All rows from Table
+ * @name post/delete-all-rows/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete-all-rows/:name",
@@ -1277,8 +1399,13 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Call for Recalculate table columns that stored in db (POST Handler)
+ * @name post/recalc-stored/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/recalc-stored/:name",

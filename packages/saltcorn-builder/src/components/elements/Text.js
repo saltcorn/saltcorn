@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Text
+ * @subcategory components / elements
+ */
+
 import React, { useState, useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import {
@@ -42,10 +48,29 @@ const ckConfig = {
   removeButtons:
     "Source,Save,NewPage,ExportPdf,Print,Preview,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,CopyFormatting,CreateDiv,BidiLtr,BidiRtl,Language,Anchor,Flash,Iframe,PageBreak,Maximize,ShowBlocks,About,Undo,Redo,Image",
 };
+
+/**
+ * @param {string} str 
+ * @returns {string}
+ */
 function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-export const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
+
+export /**
+ * @param {object} props
+ * @param {string} props.text
+ * @param {boolean} props.block
+ * @param {object} props.isFormula
+ * @param {string} props.textStyle
+ * @param {string} [props.icon]
+ * @param {string} [props.font]
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -100,7 +125,13 @@ export const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
 };
 //<div dangerouslySetInnerHTML={{ __html: text }} />
 
-export const TextSettings = () => {
+export /**
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+*/
+const TextSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
     block: node.data.props.block,
@@ -217,6 +248,9 @@ export const TextSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 Text.craft = {
   defaultProps: {
     text: "Click here",

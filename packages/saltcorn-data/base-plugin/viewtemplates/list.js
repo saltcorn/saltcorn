@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/list
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
@@ -31,6 +36,10 @@ const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
 
+/**
+ * @param {object} context 
+ * @returns {Promise<void>}
+ */
 const create_db_view = async (context) => {
   const table = await Table.findOne({ id: context.table_id });
   const fields = await table.getFields();
@@ -54,6 +63,13 @@ const create_db_view = async (context) => {
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
 
+/**
+ * @param {*} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {*} opts.default_state
+ * @returns {Promise<void>}
+ */
 const on_delete = async (table_id, viewname, { default_state }) => {
   if (!db.isSQLite) {
     const sqlviews = (await get_existing_views()).map((v) => v.table_name);
@@ -66,6 +82,10 @@ const on_delete = async (table_id, viewname, { default_state }) => {
   }
 };
 
+/**
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     onDone: async (ctx) => {
@@ -261,6 +281,14 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @param {string} table_id 
+ * @param {*} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @returns {function}
+ */
 const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
@@ -281,8 +309,23 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
+/**
+ * @param {string|number} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {string} [opts.view_to_create]
+ * @param {string} opts.create_view_display
+ * @param {string} [opts.create_view_label]
+ * @param {object} [opts.default_state]
+ * @param {string} [opts.create_view_location]
+ * @param {object} [stateWithId]
+ * @param {object} extraOpts 
+ * @returns {Promise<*>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -429,6 +472,18 @@ const run = async (
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
 
+/**
+ * @param {number} table_id 
+ * @param {*} viewname 
+ * @param {object} optsOne
+ * @param {object[]} optsOne.columns
+ * @param {*} optsOne.layout
+ * @param {object} body 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {*} optsTwo.res
+ * @returns {Promise<object>}
+ */
 const run_action = async (
   table_id,
   viewname,
@@ -468,23 +523,40 @@ const run_action = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "List",
+  /** @type {string} */
   description:
-    "Display multiple rows from a table in a grid with columns you specify",
+    "Display multiple rows from a table in a grid with columns you specify", 
   configuration_workflow,
   run,
+  /** @type {string} */
   view_quantity: "Many",
   get_state_fields,
   initial_config,
   on_delete,
   routes: { run_action },
+  /**
+   * @param {object} opts 
+   * @returns {boolean}
+   */
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
+  /**
+   * @param {object} opts 
+   * @returns {boolean}
+   */
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
+  /**
+   * @param {object} opts 
+   * @param {*} opts.columns
+   * @param {*} opts.create_view_label
+   * @returns {string[]}
+   */
   getStringsForI18n({ columns, create_view_label }) {
     const strings = [];
     const maybeAdd = (s) => {

@@ -1,9 +1,18 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/plugins
+ */
 const { Command, flags } = require("@oclif/command");
 
 /**
  * Plugins list and update command
+ * @extends oclif.Command
+ * @category saltcorn-cli
  */
 class PluginsCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const db = require("@saltcorn/data/db");
     const { requirePlugin } = require("@saltcorn/server/load_plugins");
@@ -77,6 +86,9 @@ class PluginsCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 PluginsCommand.flags = {
   //list: flags.boolean({ char: "l", description: "List" }),
   upgrade: flags.boolean({ char: "u", description: "Upgrade" }),
@@ -91,17 +103,27 @@ PluginsCommand.flags = {
 };
 
 // TODO Extra documentation goes here
+/**
+ * @type {string}
+ */
 PluginsCommand.description = `List and upgrade plugins for tenants
 ...
 Extra documentation goes here
 `;
 
+/**
+ * @type {string}
+ */
 PluginsCommand.examples = [ //"plugins -l - outputs detailed information about plugins",
   "plugins -v - verbose output of commands",
   "plugins -u -d - dry-run for plugin update",
   "plugins -u -f - force plugin update"
 ];
+
 // TODO Extra help here
+/**
+ * @type {string}
+ */
 PluginsCommand.help= "Extra help here"
 
 // PluginsCommand.usage

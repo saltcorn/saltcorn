@@ -1,8 +1,10 @@
 /**
  * State of Saltcorn
  * Keeps cache for main objects
+ * @category saltcorn-data
+ * @module db/state
+ * @subcategory db
  */
-
 const { contract, is } = require("contractis");
 const {
   is_plugin_wrap,
@@ -32,14 +34,23 @@ const { I18n } = require("i18n");
 const path = require("path");
 const fs = require("fs");
 
+/**
+ * @param {object} v 
+ * @returns {void}
+ */
 const process_send = (v) => {
   if (process.send) process.send(v);
 };
 
 /**
- * State class
- */
+  * State Class
+  * @category saltcorn-data
+  */
 class State {
+  /**
+    * State constructor
+    * @param {string} tenant description
+    */
   constructor(tenant) {
     this.tenant = tenant;
     this.views = [];
@@ -78,8 +89,8 @@ class State {
   /**
    * Get Layout by user
    * Based on role of user
-   * @param user
-   * @returns {unknown}
+   * @param {object} user
+   * @returns {object}
    */
   getLayout(user) {
     const role_id = user ? +user.role_id : 10;
@@ -94,6 +105,7 @@ class State {
 
   /**
    * Refresh State cache for all Saltcorn main objects
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh(noSignal) {
@@ -104,8 +116,10 @@ class State {
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);
   }
+
   /**
    * Refresh config
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_config(noSignal) {
@@ -117,6 +131,10 @@ class State {
     if (!noSignal)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async refresh_i18n() {
     const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
     try {
@@ -144,6 +162,7 @@ class State {
 
   /**
    * Refresh views
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_views(noSignal) {
@@ -166,6 +185,7 @@ class State {
 
   /**
    * Refresh triggers
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_triggers(noSignal) {
@@ -176,6 +196,7 @@ class State {
 
   /**
    * Refresh pages
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_pages(noSignal) {
@@ -187,6 +208,7 @@ class State {
 
   /**
    * Refresh files
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
@@ -202,6 +224,7 @@ class State {
 
   /**
    * Refresh tables & fields
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_tables(noSignal) {
@@ -244,9 +267,9 @@ class State {
 
   /**
    * Get config parameter by key
-   * @param key - key of config paramter
-   * @param def - default value
-   * @returns {*}
+   * @param {string} key - key of config paramter
+   * @param {string} [def] - default value
+   * @returns {string}
    */
   getConfig(key, def) {
     const fixed = db.connectObj.fixed_configuration[key];
@@ -264,9 +287,9 @@ class State {
 
   /**
    * Get copy of config parameter
-   * @param key - key of parameter
-   * @param def - default value
-   * @returns {any}
+   * @param {sring} key - key of parameter
+   * @param {string} [def] - default value
+   * @returns {string}
    */
   getConfigCopy(key, def) {
     return structuredClone(this.getConfig(key, def));
@@ -275,8 +298,8 @@ class State {
   /**
    *
    * Set value of config parameter
-   * @param key - key of parameter
-   * @param value - value of parameter
+   * @param {string} key - key of parameter
+   * @param {string} value - value of parameter
    * @returns {Promise<void>}
    */
   async setConfig(key, value) {
@@ -294,7 +317,7 @@ class State {
 
   /**
    * Delete config parameter by key
-   * @param key - key of parameter
+   * @param {string} key - key of parameter
    * @returns {Promise<void>}
    */
   async deleteConfig(...keys) {
@@ -306,11 +329,13 @@ class State {
   }
 
   /**
-   * Registre plugin
-   * @param name
-   * @param plugin
-   * @param cfg
-   * @param location
+   * Register plugin
+   * @param {string} name
+   * @param {object} plugin
+   * @param {*} cfg
+   * @param {*} location
+   * @param {string} modname
+   * @returns {void}
    */
   registerPlugin(name, plugin, cfg, location, modname) {
     this.plugins[name] = plugin;
@@ -381,7 +406,7 @@ class State {
 
   /**
    * Get type names
-   * @returns {string[]}
+   * @type {string[]}
    */
   get type_names() {
     return Object.keys(this.types);
@@ -389,7 +414,7 @@ class State {
 
   /**
    * Add type
-   * @param t
+   * @param {object} t
    */
   addType(t) {
     this.types[t.name] = {
@@ -403,7 +428,8 @@ class State {
 
   /**
    * Remove plugin
-   * @param name
+   * @param {string} name
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async remove_plugin(name, noSignal) {
@@ -415,6 +441,7 @@ class State {
 
   /**
    * Reload plugins
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal) {
@@ -441,6 +468,9 @@ class State {
       process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
+  /**
+   * @returns {string[]}
+   */
   getStringsForI18n() {
     const strings = [];
     this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
@@ -452,10 +482,18 @@ class State {
     );
   }
 
+  /**
+   * 
+   * @param {function} f 
+   */
   setRoomEmitter(f) {
     this.roomEmitter = f;
   }
 
+  /**
+   * 
+   * @param {*} args 
+   */
   emitRoom(...args) {
     if (this.roomEmitter) this.roomEmitter(...args);
   }
@@ -483,6 +521,11 @@ State.contract = {
 const singleton = new State("public");
 
 // return current State object
+
+/**
+ * @function
+ * @returns {State}
+ */
 const getState = contract(
   is.fun([], is.or(is.class("State"), is.eq(undefined))),
   () => {
@@ -497,14 +540,17 @@ const getState = contract(
 var tenants = { public: singleton };
 // list of tenants with other domains
 const otherdomaintenants = {};
+
 /**
  * Get other domain tenant
- * @param hostname
+ * @param {string} hostname
+ * @returns {object}
  */
 const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
 /**
  * Get tenant
- * @param ten
+ * @param {string} ten
+ * @returns {object}
  */
 const getTenant = (ten) => {
   //console.log({ ten, tenants });
@@ -512,8 +558,8 @@ const getTenant = (ten) => {
 };
 /**
  * Remove protocol (http:// or https://) from domain url
- * @param url
- * @returns {*}
+ * @param {string} url
+ * @returns {string}
  */
 const get_domain = (url) => {
   const noproto = url.replace("https://", "").replace("http://", "");
@@ -522,8 +568,8 @@ const get_domain = (url) => {
 /**
  * Set tenant base url???
  * From my point of view it just add tenant to list of otherdomaintenant
- * @param tenant_subdomain
- * @param value - new
+ * @param {object} tenant_subdomain
+ * @param {string} [value] - new
  */
 const set_tenant_base_url = (tenant_subdomain, value) => {
   const root_domain = get_domain(singleton.configs.base_url.value);
@@ -535,8 +581,8 @@ const set_tenant_base_url = (tenant_subdomain, value) => {
 };
 /**
  * Switch to multi_tenant
- * @param plugin_loader
- * @param disableMigrate - if true then dont migrate db
+ * @param {object} plugin_loader
+ * @param {boolean} disableMigrate - if true then dont migrate db
  * @returns {Promise<void>}
  */
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
@@ -558,9 +604,10 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
 };
 /**
  * Create tenant
- * @param t
- * @param plugin_loader
- * @param newurl
+ * @param {string} t
+ * @param {object} plugin_loader
+ * @param {string} newurl
+ * @param {boolean} noSignalOrDB
  * @returns {Promise<void>}
  */
 const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
@@ -571,7 +618,7 @@ const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
 };
 /**
  * Restart tenant
- * @param plugin_loader
+ * @param {object} plugin_loader
  * @returns {Promise<void>}
  */
 const restart_tenant = async (plugin_loader) => {

@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module layout
+ */
+
 const { contract, is } = require("contractis");
 const {
   div,
@@ -22,8 +27,17 @@ const {
 const { alert, breadcrumbs } = require("./layout_utils");
 const { search_bar_form } = require("./helpers");
 
+/**
+ * @param {object[]} [alerts]
+ * @returns {boolean}
+ */
 const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
 
+/**
+ * @param {string|object} body 
+ * @param {object[]} [alerts]
+ * @returns {object}
+ */
 const makeSegments = (body, alerts) => {
   const alertsSegments = couldHaveAlerts(alerts)
     ? [
@@ -46,6 +60,13 @@ const makeSegments = (body, alerts) => {
     return body;
   } else return { above: [...alertsSegments, body] };
 };
+
+/**
+ * 
+ * @param {object} segment 
+ * @param {string} inner 
+ * @returns {div|span|string}
+ */
 const applyTextStyle = (segment, inner) => {
   let style = segment.font ? { fontFamily: segment.font } : {};
   switch (segment.textStyle) {
@@ -70,6 +91,15 @@ const applyTextStyle = (segment, inner) => {
   }
 };
 
+/**
+ * @param {object} opts
+ * @param {object[]} opts.contents
+ * @param {string[]} opts.titles
+ * @param {string} opts.tabsStyle
+ * @param {*} opts.ntabs
+ * @param {function} go 
+ * @returns {ul_div}
+ */
 const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -149,6 +179,16 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
       )
     );
 };
+
+/**
+ * @param {object} opts
+ * @param {object} opts.blockDispatch
+ * @param {object|string} opts.layout
+ * @param {object} [opts.role]
+ * @param {object[]} [opts.alerts]
+ * @param {boolean} opts.is_owner missing in contract
+ * @returns {string}
+ */
 const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment, isTop, ix, inner) {

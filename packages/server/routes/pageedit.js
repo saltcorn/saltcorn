@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module routes/pageedit
+ * @subcategory routes
+ */
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
@@ -30,9 +35,22 @@ const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { editRoleForm, wizardCardTitle } = require("../markup/forms.js");
 const Library = require("@saltcorn/data/models/library");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace pageeditRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} page 
+ * @param {*} roles 
+ * @param {object} req 
+ * @returns {Form}
+ */
 const editPageRoleForm = (page, roles, req) =>
   editRoleForm({
     url: `/pageedit/setrole/${page.id}`,
@@ -41,6 +59,11 @@ const editPageRoleForm = (page, roles, req) =>
     req,
   });
 
+/**
+ * @param {object} page 
+ * @param {object} req 
+ * @returns {string}
+ */
 const page_dropdown = (page, req) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     a(
@@ -77,6 +100,11 @@ const page_dropdown = (page, req) =>
     ),
   ]);
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {Promise<Form>}
+ */
 const pagePropertiesForm = async (req) => {
   const roles = await User.get_roles();
 
@@ -117,6 +145,12 @@ const pagePropertiesForm = async (req) => {
   return form;
 };
 
+/**
+ * 
+ * @param {object} req 
+ * @param {object} context 
+ * @returns {Promise<object>}
+ */
 const pageBuilderData = async (req, context) => {
   const views = await View.find();
   const pages = await Page.find();
@@ -190,6 +224,12 @@ const pageBuilderData = async (req, context) => {
   };
 };
 
+/**
+ * @param {*} rows 
+ * @param {*} roles 
+ * @param {object} req 
+ * @returns {div}
+ */
 const getPageList = (rows, roles, req) => {
   return div(
     mkTable(
@@ -223,12 +263,13 @@ const getPageList = (rows, roles, req) => {
     )
   );
 };
+
 /**
  * Root pages configuration Form
  * Allows to configure root page for each role
- * @param pages - list of pages
- * @param roles - list of roles
- * @param req - request
+ * @param {object[]} pages list of pages
+ * @param {object[]} roles - list of roles
+ * @param {object} req - request
  * @returns {Form} return Form
  */
 const getRootPageForm = (pages, roles, req) => {
@@ -258,6 +299,13 @@ const getRootPageForm = (pages, roles, req) => {
   }
   return form;
 };
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -289,6 +337,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @param {*} contents 
+ * @param {*} noCard 
+ * @param {object} req 
+ * @param {*} page 
+ * @returns {*}
+ */
 const wrap = (contents, noCard, req, page) => ({
   above: [
     {
@@ -308,6 +364,12 @@ const wrap = (contents, noCard, req, page) => ({
   ],
 });
 
+/**
+ * @name get/edit-properties/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/edit-properties/:pagename",
   setTenant,
@@ -330,6 +392,13 @@ router.get(
     }
   })
 );
+
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/new",
   setTenant,
@@ -343,6 +412,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/edit-properties
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/edit-properties",
   setTenant,
@@ -373,6 +448,12 @@ router.post(
   })
 );
 
+/**
+ * @name get/edit/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/edit/:pagename",
   setTenant,
@@ -408,6 +489,13 @@ router.get(
     }
   })
 );
+
+/**
+ * @name post/edit/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/edit/:pagename",
   setTenant,
@@ -433,6 +521,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/savebuilder/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/savebuilder/:id",
   setTenant,
@@ -449,6 +543,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
   setTenant,
@@ -462,6 +562,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/set_root_page
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/set_root_page",
   setTenant,
@@ -484,6 +590,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/add-to-menu/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/add-to-menu/:id",
   setTenant,
@@ -507,6 +619,13 @@ router.post(
     res.redirect(`/pageedit`);
   })
 );
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/clone/:id",
   setTenant,
@@ -522,6 +641,13 @@ router.post(
     res.redirect(`/pageedit`);
   })
 );
+
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
   setTenant,

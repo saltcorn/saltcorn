@@ -1,7 +1,21 @@
+/**
+ * FieldRepeat Database Access Layer
+ * @category saltcorn-data
+ * @module models/fieldrepeat
+ * @subcategory models
+ */
 const { contract, is } = require("contractis");
 const Field = require("./field");
 
+/**
+ * FieldRepeat Class
+ * @category saltcorn-data
+ */
 class FieldRepeat {
+  /**
+   * FieldRepeat constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.label = o.label || o.name;
     this.name = o.name;
@@ -11,6 +25,10 @@ class FieldRepeat {
     this.isRepeat = true;
     contract.class(this);
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async generate() {
     const nrepeats = Math.round(Math.random() * 5);
     var r = {};
@@ -22,9 +40,20 @@ class FieldRepeat {
       }
     }
   }
+
+  /**
+   * @param {*} whole_rec 
+   * @returns {object}
+   */
   validate(whole_rec) {
     return this.validate_from_ix(whole_rec, 0);
   }
+
+  /**
+   * @param {*} whole_rec 
+   * @param {*} ix 
+   * @returns {object}
+   */
   validate_from_ix(whole_rec, ix) {
     var has_any = false;
     var res = {};
@@ -41,6 +70,10 @@ class FieldRepeat {
       return { success: [res, ...rest.success] };
     } else return { success: [] };
   }
+
+  /**
+   * @type {string}
+   */
   get form_name() {
     return this.name;
   }

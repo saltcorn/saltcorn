@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/storage
+ * @subcategory components
+ */
+
 import React, { Fragment } from "react";
 import { Element } from "@craftjs/core";
 import { Text } from "./elements/Text";
@@ -20,6 +26,10 @@ import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 
+/**
+ * @param {object} segment 
+ * @returns {number}
+ */
 const getColWidths = (segment) => {
   if (!segment.widths)
     return ntimes(
@@ -31,6 +41,11 @@ const getColWidths = (segment) => {
   widths.pop();
   return widths;
 };
+
+/**
+ * @param {object} segment 
+ * @returns {object[]}
+ */
 const default_breakpoints = (segment) =>
   ntimes(segment.besides.length, () => segment.breakpoint || "");
 
@@ -56,8 +71,23 @@ const allElements = [
   ToggleFilter,
 ];
 
-export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
+export /**
+ * @param {object} layout 
+ * @param {object} query 
+ * @param {object} actions 
+ * @param {string} [parent = "ROOT"]
+ * @returns {Text|View|Action|Element|Tabs|Columns}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
   //console.log("layoutToNodes", JSON.stringify(layout));
+  /**
+   * @param {object} segment 
+   * @param {string} ix 
+   * @returns {Element|Text|View|Action|Tabs|Columns}
+   */
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
 
@@ -211,6 +241,12 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       return segment.above.map((e, ix) => toTag(e, ix));
     }
   }
+
+  /**
+   * @param {object} segment 
+   * @param {object} parent 
+   * @returns {void}
+   */
   function go(segment, parent) {
     if (!segment) return;
     if (segment.above) {
@@ -243,16 +279,37 @@ export const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
   go(layout, parent);
 };
 
+/**
+ * @returns {number}
+ */
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
-export const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
+export /**
+ * @param {object[]} nodes 
+ * @param {string} [startFrom = "ROOT" ]
+ * @returns {object}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
+  
+  /**
+   * @param {object} node 
+   * @returns {void|object}
+   */
   const get_nodes = (node) => {
     if (!node.nodes || node.nodes.length == 0) return;
     else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
     else return { above: node.nodes.map((nm) => go(nodes[nm])) };
   };
+
+  /**
+   * @param {object} node 
+   * @returns {object}
+   */
   const go = (node) => {
     const matchElement = allElements.find(
       (e) =>

@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/utils
+ * @subcategory routes
+ */
+
 const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
 const {
@@ -11,6 +17,12 @@ const session = require("express-session");
 const cookieSession = require("cookie-session");
 const is = require("contractis/is");
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @param {function} next 
+ * @returns {void}
+ */
 function loggedIn(req, res, next) {
   if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
     next();
@@ -20,6 +32,12 @@ function loggedIn(req, res, next) {
   }
 }
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @param {function} next 
+ * @returns {void}
+ */
 function isAdmin(req, res, next) {
   if (
     req.user &&
@@ -33,12 +51,24 @@ function isAdmin(req, res, next) {
   }
 }
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @param {string} state
+ * @returns {void}
+ */
 const setLanguage = (req, res, state) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
   }
   set_custom_http_headers(res, state);
 };
+
+/**
+ * @param {object} res 
+ * @param {string} state 
+ * @returns {void}
+ */
 const set_custom_http_headers = (res, state) => {
   const hdrs = (state || getState()).getConfig("custom_http_headers");
   if (!hdrs) return;
@@ -48,6 +78,10 @@ const set_custom_http_headers = (res, state) => {
   }
 };
 
+/**
+ * @param {object} req 
+ * @returns {string}
+ */
 const get_tenant_from_req = (req) => {
   if (req.subdomains && req.subdomains.length > 0) return req.subdomains[0];
 
@@ -60,6 +94,11 @@ const get_tenant_from_req = (req) => {
   }
 };
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @param {function} next 
+ */
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
     const other_domain = get_other_domain_tenant(req.hostname);
@@ -90,6 +129,10 @@ const setTenant = (req, res, next) => {
   }
 };
 
+/**
+ * @param {object} req 
+ * @returns {input}
+ */
 const csrfField = (req) =>
   input({
     type: "hidden",
@@ -97,9 +140,19 @@ const csrfField = (req) =>
     value: req.csrfToken ? req.csrfToken() : req,
   });
 
+/**
+ * @param {function} fn 
+ * @returns {function}
+ */
 const error_catcher = (fn) => (request, response, next) => {
   Promise.resolve(fn(request, response, next)).catch(next);
 };
+
+/**
+ * @param {string|object} contents 
+ * @param {string} viewname 
+ * @returns {string}
+ */
 const scan_for_page_title = (contents, viewname) => {
   let scanstr = "";
   try {
@@ -115,8 +168,14 @@ const scan_for_page_title = (contents, viewname) => {
   return viewname;
 };
 
+/**
+ * @returns {string}
+ */
 const getGitRevision = () => db.connectObj.git_commit;
 
+/**
+ * @returns {session|cookieSession}
+ */
 const getSessionStore = () => {
   if (getState().getConfig("cookie_sessions", false)) {
     return cookieSession({

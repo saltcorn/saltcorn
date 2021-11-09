@@ -1,5 +1,7 @@
 /**
  * Saltcorn App
+ * @category server
+ * @module app
  */
 
 const express = require("express");
@@ -43,6 +45,11 @@ const i18n = new I18n({
   directory: path.join(__dirname, "locales"),
 });
 // todo console.log app instance info when app starts - avoid to show secrets (password, etc)
+
+/**
+ * @param {object} [opts = {}]
+ * @returns {Promise<Express>}
+ */
 const getApp = async (opts = {}) => {
   const app = express();
   let sql_log = await getConfig("log_sql");

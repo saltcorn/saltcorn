@@ -1,10 +1,22 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/create-tenant
+ */
 const { Command, flags } = require("@oclif/command");
 
 //const {
 //  getConfig,
 //} = require("@saltcorn/data/models/config");
 
+/**
+ * CreateTenantCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class CreateTenantCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args } = this.parse(CreateTenantCommand);
     const { flags } = this.parse(CreateTenantCommand);
@@ -26,12 +38,21 @@ class CreateTenantCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 CreateTenantCommand.args = [
   { name: "tenant", required: true, description: "Tenant subdomain to create" },
 ];
 
+/**
+ * @type {string}
+ */
 CreateTenantCommand.description = `Create a tenant`;
 
+/**
+ * @type {object}
+ */
 CreateTenantCommand.flags = {
   email: flags.string({
     name: "url",

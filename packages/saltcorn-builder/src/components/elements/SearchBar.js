@@ -1,10 +1,26 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/SearchBar
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useState } from "react";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 
-export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
+export /**
+ * @param {object} props
+ * @param {boolean} props.has_dropdown
+ * @param {string} props.contents
+ * @param {boolean} props.show_badges
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const SearchBar = ({ has_dropdown, contents, show_badges }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -65,7 +81,14 @@ export const SearchBar = ({ has_dropdown, contents, show_badges }) => {
     </div>
   );
 };
-export const SearchBarSettings = () => {
+
+export /**
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const SearchBarSettings = () => {
   const {
     actions: { setProp },
     has_dropdown,
@@ -104,6 +127,10 @@ export const SearchBarSettings = () => {
     </div>
   );
 };
+
+/**
+ * @type {object}
+ */
 SearchBar.craft = {
   displayName: "SearchBar",
   props: {

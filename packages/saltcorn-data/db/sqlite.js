@@ -1,5 +1,8 @@
 /**
  * SQLite3 data access layer
+ * @category saltcorn-data
+ * @module db/sqlite
+ * @subcategory db
  */
 // TODO move all sqlite specific to this module
 const sqlite3 = require("sqlite3").verbose();
@@ -9,7 +12,7 @@ const fs = require("fs").promises;
 const connectObj = getConnectObject(); // was var
 /**
  * Get sqlite path
- * @returns {*}
+ * @returns {string}
  */
 const get_db_filepath = () => {
   if (connectObj.sqlite_path) return connectObj.sqlite_path;
@@ -22,7 +25,7 @@ let log_sql_enabled = false;
 
 /**
  * Control Logging sql statements to console
- * @param val - if true then log sql statements to console
+ * @param {boolean} [val = true] - if true then log sql statements to console
  */
 function set_sql_logging(val = true) {
   log_sql_enabled = val;
@@ -37,8 +40,8 @@ function get_sql_logging() {
 }
 /**
  * Log SQL statement to console
- * @param sql - SQL statement
- * @param vs - any additional parameter
+ * @param {string} sql - SQL statement
+ * @param {object} [vs] - any additional parameter
  */
 function sql_log(sql, vs) {
   if (log_sql_enabled)
@@ -46,6 +49,11 @@ function sql_log(sql, vs) {
     else console.log(sql, vs);
 }
 
+/**
+ * @param {string} sql 
+ * @param {object} params 
+ * @returns {Promise<Object[]>}
+ */
 function query(sql, params) {
   sql_log(sql, params);
   return new Promise((resolve, reject) => {
@@ -60,7 +68,7 @@ function query(sql, params) {
 }
 /**
  * Change connection (close connection and open new connection from connObj)
- * @param connObj - connection object
+ * @param {object} connObj - connection object
  * @returns {Promise<void>}
  */
 const changeConnection = async (connObj) => {
@@ -77,12 +85,11 @@ const close = async () => {
 };
 /**
  * Execute Select statement
- * @param tbl - table name
- * @param whereObj - where object
- * @param selectopts - select options
+ * @param {string} tbl - table name
+ * @param {object} whereObj - where object
+ * @param {object} [selectopts = {}] - select options
  * @returns {Promise<*>} return rows
  */
-
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
@@ -98,15 +105,25 @@ const select = async (tbl, whereObj, selectopts = {}) => {
  * @returns {boolean}
  */
 // TODO Utility function - needs ti be moved out this module
+/**
+ * @param {object} v 
+ * @returns {boolean}
+ */
 const reprAsJson = (v) =>
   typeof v === "object" && v !== null && !(v instanceof Date);
+/**
+ * @param {object[]} opts
+ * @param {*} opts.k
+ * @param {object} opts.v
+ * @returns {object}
+ */
 const mkVal = ([k, v]) => (reprAsJson(v) ? JSON.stringify(v) : v);
 
 /**
  * Drop unique constraint
- * @param tbl - table name
- * @param obj - list of column=value pairs
- * @param id - primary key column value
+ * @param {string} tbl - table name
+ * @param {object[]} obj - list of column=value pairs
+ * @param {number} id - primary key column value
  * @returns {Promise<void>} no results
  */
 const update = async (tbl, obj, id) => {
@@ -120,23 +137,22 @@ const update = async (tbl, obj, id) => {
 
 /**
  * Delete rows in table
- * @param tbl - table name
- * @param whereObj - where object
- * @returns {Promise<*>} result of delete execution
+ * @param {string} tbl - table name
+ * @param {object} whereObj - where object
+ * @returns {Promise<void>} result of delete execution
  */
 const deleteWhere = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
 
   const tq = await query(sql, values);
-
 };
 /**
  * Insert rows into table
- * @param tbl - table name
- * @param obj - columns names and data
- * @param opts - columns attributes
- * @returns {Promise<*>} returns id.
+ * @param {string} tbl - table name
+ * @param {object} obj - columns names and data
+ * @param {object} [opts = {}] - columns attributes
+ * @returns {Promise<string>} returns id.
  */
 const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
@@ -168,9 +184,10 @@ const insert = async (tbl, obj, opts = {}) => {
 
 /**
  * Select one record
- * @param tbl - table name
- * @param where - where object
- * @returns {Promise<*>} return first record from sql result
+ * @param {string} tbl - table name
+ * @param {object} where - where object
+ * @throws {Error}
+ * @returns {Promise<object>} return first record from sql result
  */
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -182,9 +199,9 @@ const selectOne = async (tbl, where) => {
 
 /**
  * Select one record or null if no records
- * @param tbl - table name
- * @param where - where object
- * @returns {Promise<null|*>} - null if no record or first record data
+ * @param {string} tbl - table name
+ * @param {object} where - where object
+ * @returns {Promise<object>} - null if no record or first record data
  */
 const selectMaybeOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -194,8 +211,8 @@ const selectMaybeOne = async (tbl, where) => {
 
 /**
  * Get count of rows in table
- * @param tbl - table name
- * @param whereObj - where object
+ * @param {string} tbl - table name
+ * @param {object} whereObj - where object
  * @returns {Promise<number>} count of tables
  */
 const count = async (tbl, whereObj) => {
@@ -206,7 +223,7 @@ const count = async (tbl, whereObj) => {
 };
 /**
  * Get version of PostgreSQL
- * @returns {Promise<*>} returns version
+ * @returns {Promise<string>} returns version
  */
 const getVersion = async () => {
   const sql = `SELECT sqlite_version();`;
@@ -228,8 +245,8 @@ const drop_reset_schema = async () => {
 
 /**
  * Add unique constraint
- * @param table_name - table name
- * @param field_names - list of columns (members of constraint)
+ * @param {string} table_name - table name
+ * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
 const add_unique_constraint = async (table_name, field_names) => {
@@ -246,8 +263,8 @@ const add_unique_constraint = async (table_name, field_names) => {
 
 /**
  * Drop unique constraint
- * @param table_name - table name
- * @param field_names - list of columns (members of constraint)
+ * @param {string} table_name - table name
+ * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no results
  */
 const drop_unique_constraint = async (table_name, field_names) => {

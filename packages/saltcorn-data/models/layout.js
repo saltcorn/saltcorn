@@ -1,5 +1,15 @@
+/**
+ * @category saltcorn-data
+ * @module models/layout
+ * @subcategory models
+ */
 const { getState } = require("../db/state");
 
+/**
+ * @param {object} layout 
+ * @param {object[]} visitors 
+ * @returns {void}
+ */
 const traverseSync = (layout, visitors) => {
   const go = (segment) => {
     if (!segment) return;
@@ -26,6 +36,11 @@ const traverseSync = (layout, visitors) => {
   go(layout);
 };
 
+/**
+ * @param {object} layout 
+ * @param {object[]} visitors 
+ * @returns {Promise<void>}
+ */
 const traverse = async (layout, visitors) => {
   const go = async (segment) => {
     if (!segment) return;
@@ -53,8 +68,17 @@ const traverse = async (layout, visitors) => {
   await go(layout);
 };
 
+/**
+ * @param {object} layout 
+ * @param {*} f 
+ * @returns {void}
+ */
 const eachView = (layout, f) => traverse(layout, { view: f });
 
+/**
+ * @param {object} layout 
+ * @returns {Promise<object[]>}
+ */
 const getViews = async (layout) => {
   const views = [];
   await eachView(layout, (segment) => {
@@ -62,6 +86,11 @@ const getViews = async (layout) => {
   });
   return views;
 };
+
+/**
+ * @param {object} layout 
+ * @returns {string[]}
+ */
 const getStringsForI18n = (layout) => {
   const strings = [];
   traverseSync(layout, {
@@ -82,6 +111,10 @@ const getStringsForI18n = (layout) => {
   return strings;
 };
 
+/**
+ * @param {object} layout 
+ * @param {object} locale 
+ */
 const translateLayout = (layout, locale) => {
   const appState = getState()
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;

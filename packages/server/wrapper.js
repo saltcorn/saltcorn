@@ -1,3 +1,7 @@
+/**
+ * @category server
+ * @module wrapper
+ */
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");

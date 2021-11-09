@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/Library
+ * @subcategory components
+ */
+
 import React, { useEffect, useContext, useState, Fragment } from "react";
 import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,13 +14,27 @@ import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 
+/**
+ * 
+ * @param {object[]} xs 
+ * @returns {object[]}
+ */
 const twoByTwos = (xs) => {
   if (xs.length <= 2) return [xs];
   const [x, y, ...rest] = xs;
   return [[x, y], ...twoByTwos(rest)];
 };
 
-export const LibraryElem = ({ name, layout }) => {
+export /**
+ * @param {object} props
+ * @param {*} props.name
+ * @param {*} props.layout
+ * @returns {Fraggment}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const LibraryElem = ({ name, layout }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -32,11 +52,22 @@ export const LibraryElem = ({ name, layout }) => {
   );
 };
 
+/**
+ * @type {object}
+ */
 LibraryElem.craft = {
   displayName: "LibraryElem",
 };
 
-export const InitNewElement = ({ nodekeys }) => {
+export /**
+ * @param {object} props
+ * @param {object} props.nodekeys
+ * @returns {object[]}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const InitNewElement = ({ nodekeys }) => {
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
@@ -86,7 +117,13 @@ export const InitNewElement = ({ nodekeys }) => {
   return [];
 };
 
-export const Library = () => {
+export /**
+ * @category saltcorn-builder
+ * @returns {div}
+ * @subcategory components
+ * @namespace
+ */
+const Library = () => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
     return {
       selected: state.events.selected,
@@ -98,6 +135,9 @@ export const Library = () => {
   const [icon, setIcon] = useState();
   const [recent, setRecent] = useState([]);
 
+  /**
+   * @returns {void}
+   */
   const addSelected = () => {
     const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
     const data = { layout, icon, name: newName };

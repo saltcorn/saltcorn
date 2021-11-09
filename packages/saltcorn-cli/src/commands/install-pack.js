@@ -1,8 +1,20 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/install-pack
+ */
 const { Command, flags } = require("@oclif/command");
 const { maybe_as_tenant } = require("../common");
 const fs = require("fs");
 
+/**
+ * InstallPackCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class InstallPackCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(InstallPackCommand);
     const {
@@ -49,8 +61,14 @@ class InstallPackCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 InstallPackCommand.description = `Install a pack`;
 
+/**
+ * @type {object}
+ */
 InstallPackCommand.flags = {
   tenant: flags.string({
     char: "t",

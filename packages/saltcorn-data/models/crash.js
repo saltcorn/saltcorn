@@ -1,8 +1,22 @@
+/**
+ * Crash Database Access Layer
+ * @category saltcorn-data
+ * @module models/crash
+ * @subcategory models
+ */
 const db = require("../db");
 const moment = require("moment");
 const { contract, is } = require("contractis");
 
+/**
+ * Crash Class
+ * @category saltcorn-data
+ */
 class Crash {
+  /**
+    * Crash constructor
+    * @param {object} o
+    */
   constructor(o) {
     this.id = o.id;
     this.stack = o.stack;
@@ -18,25 +32,55 @@ class Crash {
       typeof o.headers === "string" ? JSON.parse(o.headers) : o.headers;
     contract.class(this);
   }
+
+  /**
+   * @param {object} where 
+   * @param {object} selopts 
+   * @returns {Promise<Crash[]>}
+   */
   static async find(where, selopts) {
     const us = await db.select("_sc_errors", where, selopts);
     return us.map((u) => new Crash(u));
   }
+
+  /**
+   * @param {object} where 
+   * @returns {Promise<Crash>}
+   */
   static async findOne(where) {
     const u = await db.selectOne("_sc_errors", where);
     return new Crash(u);
   }
+
+  /**
+   * @type {string}
+   */
   get reltime() {
     return moment(this.occur_at).fromNow();
   }
+
+  /**
+   * @param {object} where 
+   * @returns {Promise<number>}
+   */
   static async count(where) {
     return await db.count("_sc_errors", where || {});
   }
+
+  /**
+   * @type {string}
+   */
   get msg_short() {
     return this.message.length > 90
       ? this.message.substring(0, 90)
       : this.message;
   }
+
+  /**
+   * @param {object} err 
+   * @param {object} [req = {}]
+   * @returns {Promise<void>}
+   */
   static async create(err, req = {}) {
     const schema = db.getTenantSchema();
     const payload = {

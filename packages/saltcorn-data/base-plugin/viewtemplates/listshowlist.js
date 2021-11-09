@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/listshowlist
+ * @subcategory base-plugin
+ */
 const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
@@ -12,6 +17,10 @@ const {
 const { splitUniques } = require("./viewable_fields");
 const { InvalidConfiguration } = require("../../utils");
 
+/**
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -106,6 +115,14 @@ const configuration_workflow = (req) =>
     ],
   });
 
+/**
+ * @param {*} table_id 
+ * @param {*} viewname 
+ * @param {object} opts
+ * @param {string} opts.list_view
+ * @param {*} opts.show_view
+ * @returns {Promise<object[]>}
+ */
 const get_state_fields = async (
   table_id,
   viewname,
@@ -125,6 +142,17 @@ const get_state_fields = async (
   } else return [id];
 };
 
+/**
+ * @param {string} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {string} opts.list_view
+ * @param {string} opts.show_view
+ * @param {object} opts.subtables
+ * @param {*} state 
+ * @param {*} extraArgs 
+ * @returns {Promise<div>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -230,12 +258,21 @@ const run = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "ListShowList",
+  /** @type {string} */
   description:
     "Combine an optional list view on the left with displays on the right of a single selected row, with views of related rows from different tables underneath",
   configuration_workflow,
   run,
   get_state_fields,
+  /**
+
+   * @param {object} opts
+   * @param {string} opts.list_view
+   * @param {boolean} opts._omit_state_form
+   * @returns {boolean}
+   */
   display_state_form: ({ list_view, _omit_state_form }) =>
     !!list_view && !_omit_state_form,
 };

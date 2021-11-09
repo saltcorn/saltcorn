@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/Builder
+ * @subcategory components
+ */
+
 import React, {
   useEffect,
   useContext,
@@ -48,6 +54,13 @@ import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
 
+/**
+ * 
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const SettingsPanel = () => {
   const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
@@ -76,14 +89,24 @@ const SettingsPanel = () => {
     };
   });
 
+  /** */
   const deleteThis = () => {
     actions.delete(selected.id);
   };
+
+  /**
+   * @param {number} offset 
+   * @returns {NodeId}
+   */
   const otherSibling = (offset) => {
     const siblings = query.node(selected.parent).childNodes();
     const sibIx = siblings.findIndex((sib) => sib === selected.id);
     return siblings[sibIx + offset];
   };
+
+  /**
+   * @param {object} event 
+   */
   const handleUserKeyPress = (event) => {
     const { keyCode, target } = event;
     if (target.tagName.toLowerCase() === "body" && selected) {
@@ -141,11 +164,21 @@ const SettingsPanel = () => {
   }, [handleUserKeyPress]);
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
+  
+  /** 
+   * @returns {void}
+   */
   const deleteChildren = () => {
     selected.children.forEach((child) => {
       actions.delete(child);
     });
   };
+
+  /**
+   * @param {NodeId} nodeId 
+   * @param {*} ix 
+   * @returns {DetailedReactHTMLElement}
+   */
   const recursivelyCloneToElems = (nodeId, ix) => {
     const {
       data: { type, props, nodes },
@@ -157,6 +190,10 @@ const SettingsPanel = () => {
       children
     );
   };
+
+  /** 
+   * @returns {void}
+   */
   const duplicate = () => {
     const {
       data: { parent },
@@ -215,10 +252,20 @@ const SettingsPanel = () => {
     </div>
   );
 };
+
+/**
+ * @returns {button}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const SaveButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
 
+  /**
+   * @returns {void} 
+   */
   const onClick = () => {
     const data = craftToSaltcorn(JSON.parse(query.serialize()));
     const urlroot = options.page_id ? "pageedit" : "viewedit";
@@ -242,6 +289,13 @@ const SaveButton = () => {
     ""
   );
 };
+
+/**
+ * @returns {a|""}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const ViewPageLink = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
@@ -253,6 +307,13 @@ const ViewPageLink = () => {
     ""
   );
 };
+
+/**
+ * @returns {Fragment}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const HistoryPanel = () => {
   const { canUndo, canRedo, actions } = useEditor((state, query) => ({
     canUndo: query.history.canUndo(),
@@ -283,6 +344,14 @@ const HistoryPanel = () => {
   );
 };
 
+/**
+ * @param {object} opts
+ * @param {object} opts.layout
+ * @returns {button}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const NextButton = ({ layout }) => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
@@ -290,6 +359,10 @@ const NextButton = ({ layout }) => {
   useEffect(() => {
     layoutToNodes(layout, query, actions);
   }, []);
+
+  /** 
+   * @returns {void}
+   */
   const onClick = () => {
     const { columns, layout } = craftToSaltcorn(JSON.parse(query.serialize()));
     document
@@ -307,6 +380,16 @@ const NextButton = ({ layout }) => {
   );
 };
 
+/**
+ * @param {object} props
+ * @param {object} props.options
+ * @param {object} props.layout
+ * @param {string} props.mode
+ * @returns {ErrorBoundary}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});

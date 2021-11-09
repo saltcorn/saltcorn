@@ -1,11 +1,40 @@
+/**
+ * @category saltcorn-markup
+ * @module saltcorn-markup/index
+ */
 const renderForm = require("./form");
 const renderBuilder = require("./builder");
 const mkTable = require("./table");
 const tabs = require("./tabs");
 const { a, text, div, button, time } = require("./tags");
 
+/**
+ * @param {string} href 
+ * @param {string} s 
+ * @returns {string}
+ */
 const link = (href, s) => a({ href: text(href) }, text(s));
 
+/**
+ * @param {string} href 
+ * @param {string} s 
+ * @param {string} csrfToken 
+ * @param {object} opts
+ * @param {string} [opts.btnClass = "btn-primary"]
+ * @param {string} [opts.onClick]
+ * @param {string} [opts.small]
+ * @param {string} [opts.style]
+ * @param {*} opts.ajax
+ * @param {string} opts.reload_on_done
+ * @param {string} opts.reload_delay
+ * @param {string} [opts.klass = "btn-primary"]
+ * @param {string} [opts.formClass]
+ * @param {string} opts.spinner
+ * @param {object} opts.req
+ * @param {boolean} opts.confirm
+ * @param {string} opts.icon
+ * @returns {string}
+ */
 const post_btn = (
   href,
   s,
@@ -47,11 +76,12 @@ const post_btn = (
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
   }>${icon ? `<i class="${icon}"></i>&nbsp;` : ""}${s}</button></form>`;
-/**
+
+  /**
  * UI Form for Delete Item confirmation
- * @param href - href
- * @param req - Request
- * @param what - Item
+ * @param {string} href - href
+ * @param {string} req - Request
+ * @param {string} what - Item
  * @returns {string} return html form
  */
 const post_delete_btn = (href, req, what) =>
@@ -67,6 +97,14 @@ const post_delete_btn = (href, req, what) =>
     </button>
   </form>`;
 
+/**
+ * @param {string} href 
+ * @param {string} s 
+ * @param {object} req 
+ * @param {boolean} confirm 
+ * @param {string} what 
+ * @returns {string}
+ */
 const post_dropdown_item = (href, s, req, confirm, what) => {
   const id = href.split("/").join("");
   return `<a class="dropdown-item" onclick="${
@@ -83,6 +121,11 @@ const post_dropdown_item = (href, s, req, confirm, what) => {
   </form>`;
 };
 
+/**
+ * @param {string} id 
+ * @param {*} elems 
+ * @returns {div}
+ */
 const settingsDropdown = (id, elems) =>
   div(
     { class: "dropdown" },
@@ -107,6 +150,13 @@ const settingsDropdown = (id, elems) =>
     )
   );
 
+/**
+ * @param {Date} date 
+ * @param {object} opts
+ * @param {string} [opts.hour = "2-digit"]
+ * @param {string} [opts.minute = "2-digit"]
+ * @returns {string}
+ */
 const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
   time(
     {
@@ -116,6 +166,11 @@ const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
     date.toLocaleTimeString("en", options)
   );
 
+/**
+ * @param {Date} date 
+ * @param {object} [options ={}]
+ * @returns {string}
+ */  
 const localeDateTime = (date, options = {}) =>
   time(
     {
@@ -125,6 +180,11 @@ const localeDateTime = (date, options = {}) =>
     date.toLocaleString("en", options)
   );
 
+/**
+ * @param {Date} date 
+ * @param {object} [options = {}]
+ * @returns {string}
+ */
 const localeDate = (date, options = {}) =>
   time(
     {

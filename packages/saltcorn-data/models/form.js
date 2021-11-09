@@ -1,8 +1,22 @@
+/**
+ * Role Database Access Layer
+ * @category saltcorn-data
+ * @module models/form
+ * @subcategory models
+ */
 const { contract, is } = require("contractis");
 const db = require("../db");
 const Field = require("./field");
 
+/**
+ * Form Class
+ * @category saltcorn-data
+ */
 class Form {
+  /**
+    * Constructor
+    * @param o
+    */
   constructor(o) {
     this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
@@ -32,6 +46,10 @@ class Form {
     if (o.validate) this.validate(o.validate);
     contract.class(this);
   }
+
+  /**
+   * @param {object} ks 
+   */
   hidden(...ks) {
     ks.forEach((k) => {
       !this.fields.map((f) => f.name).includes(k) &&
@@ -43,12 +61,19 @@ class Form {
         );
     });
   }
+
+  /**
+   * @param {boolean} [force_allow_none = false]
+   */
   async fill_fkey_options(force_allow_none = false) {
     for (const f of this.fields) {
       await f.fill_fkey_options(force_allow_none);
     }
   }
 
+  /**
+   * @returns {Promise<object>}
+   */
   async generate() {
     var r = {};
 
@@ -60,6 +85,10 @@ class Form {
     }
     return r;
   }
+
+  /**
+   * @type {string}
+   */
   get errorSummary() {
     let strs = [];
     Object.entries(this.errors).forEach(([k, v]) => {
@@ -67,6 +96,11 @@ class Form {
     });
     return strs.join("; ");
   }
+
+  /**
+   * @param {*} v 
+   * @returns {object}
+   */
   validate(v) {
     this.hasErrors = false;
     this.errors = {};

@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/utils
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext, useState } from "react";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,10 +15,23 @@ import { useNode } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 
-export const blockProps = (is_block) =>
+export /**
+ * @param {boolean} is_block 
+ * @returns {object}
+ */
+const blockProps = (is_block) =>
   is_block ? { style: { display: "block" } } : {};
 
-export const BlockSetting = ({ block, setProp }) => (
+export /**
+ * @param {object} props
+ * @param {boolean} props.block
+ * @param {function} props.setProp
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const BlockSetting = ({ block, setProp }) => (
   <div className="form-check">
     <input
       className="form-check-input"
@@ -30,8 +49,24 @@ export const BlockSetting = ({ block, setProp }) => (
   </div>
 );
 
-export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
+export /**
+ * @param {object} props
+ * @param {function} props.setProp
+ * @param {object} props.isFormula
+ * @param {object} props.node
+ * @param {string} props.nodekey
+ * @param {string} props.children
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
+const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = useContext(optionsCtx);
+
+  /**
+   * @returns {void}
+   */
   const switchIsFml = () => {
     const isFmlAfter = !isFormula[nodekey];
     setProp((prop) => {
@@ -89,7 +124,17 @@ export const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     </Fragment>
   );
 };
-export const MinRoleSetting = ({ minRole, setProp }) => {
+
+export /**
+ * @param {object} props
+ * @param {string} props.minRole
+ * @param {function} props.setProp
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
+const MinRoleSetting = ({ minRole, setProp }) => {
   const options = useContext(optionsCtx);
   return (
     <div>
@@ -112,7 +157,17 @@ export const MinRoleSetting = ({ minRole, setProp }) => {
     </div>
   );
 };
-export const MinRoleSettingRow = ({ minRole, setProp }) => {
+
+export /**
+ * @param {object} props
+ * @param {string} props.minRole
+ * @param {function} props.setProp
+ * @returns {tr}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
+const MinRoleSettingRow = ({ minRole, setProp }) => {
   const options = useContext(optionsCtx);
   return (
     <tr>
@@ -140,6 +195,16 @@ export const MinRoleSettingRow = ({ minRole, setProp }) => {
     </tr>
   );
 };
+
+/**
+ * @param {object} props
+ * @param {string} props.textStyle
+ * @param {function} props.setProp
+ * @returns {select}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
 const TextStyleSelect = ({ textStyle, setProp }) => {
   return (
     <select
@@ -168,7 +233,17 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
     </select>
   );
 };
-export const TextStyleSetting = ({ textStyle, setProp }) => {
+
+export /**
+ * @param {object} props
+ * @param {string} props.textStyle
+ * @param {function} props.setProp
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
+const TextStyleSetting = ({ textStyle, setProp }) => {
   return (
     <div>
       <label>Text Style</label>
@@ -176,7 +251,17 @@ export const TextStyleSetting = ({ textStyle, setProp }) => {
     </div>
   );
 };
-export const TextStyleRow = ({ textStyle, setProp }) => {
+
+export /**
+ * @param {object} props
+ * @param {string} props.textStyle
+ * @param {function} props.setProp
+ * @returns {tr}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ */
+const TextStyleRow = ({ textStyle, setProp }) => {
   return (
     <tr>
       <td>
@@ -189,7 +274,16 @@ export const TextStyleRow = ({ textStyle, setProp }) => {
   );
 };
 
-export const Accordion = ({ titles, children }) => {
+export /**
+ * @param {object} props
+ * @param {string[]} [props.titles]
+ * @param {object[]} props.children
+ * @returns {Fragment}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const Accordion = ({ titles, children }) => {
   const [currentTab, setCurrentTab] = useState(0);
   return (
     <Fragment>
@@ -219,6 +313,17 @@ export const Accordion = ({ titles, children }) => {
     </Fragment>
   );
 };
+
+/**
+ * @param {object} opts
+ * @param {string} opts.url
+ * @param {object} opts.body
+ * @param {object} opts.options
+ * @param {function} opts.setPreviews
+ * @param {*} opts.node_id
+ * @param {boolean} opts.isView
+ * @returns {void}
+ */
 const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
   fetch(url, {
     method: "POST",
@@ -249,6 +354,12 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
     });
 };
+
+/**
+ * @function
+ * @param {object} [args = {}]
+ * @return {function}
+ */
 export const fetchFieldPreview = (args = {}) => (changes = {}) => {
   const { node_id, options, name, fieldview, setPreviews } = {
     ...args,
@@ -267,6 +378,11 @@ export const fetchFieldPreview = (args = {}) => (changes = {}) => {
   });
 };
 
+/**
+ * @function
+ * @param {object} [args = {}]
+ * @return {function}
+ */
 export const fetchViewPreview = (args = {}) => (changes = {}) => {
   const { node_id, options, view, setPreviews } = {
     ...args,
@@ -292,7 +408,17 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
   });
 };
 
-export const SelectUnits = ({ vert, autoable, ...props }) => (
+export /**
+ * @param {object} props
+ * @param {boolean} props.vert
+ * @param {string} [props.autoable]
+ * @param {...*} props.props
+ * @returns {select}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const SelectUnits = ({ vert, autoable, ...props }) => (
   <select {...props}>
     <option>px</option>
     <option>%</option>
@@ -303,6 +429,11 @@ export const SelectUnits = ({ vert, autoable, ...props }) => (
   </select>
 );
 
+/**
+ * @function
+ * @param {string} [styles]
+ * @returns {string}
+ */
 export const parseStyles = (styles) =>
   (styles || "")
     .split("\n")
@@ -324,6 +455,11 @@ export const parseStyles = (styles) =>
       {}
     );
 
+/**
+ * @function
+ * @param {object} styles 
+ * @returns {object}
+ */    
 export const reactifyStyles = (styles) => {
   const toCamel = (s) => {
     return s.replace(/([-][a-z])/gi, ($1) => {
@@ -336,8 +472,21 @@ export const reactifyStyles = (styles) => {
   });
   return reactified;
 };
+
+/**
+ * @param {object} f 
+ * @returns {boolean}
+ */
 const isCheckbox = (f) =>
   f && f.type && (f.type === "Bool" || f.type.name === "Bool");
+
+/**
+ * @function
+ * @param {function} setProp 
+ * @param {*} fieldview 
+ * @param {object[]} [fields]
+ * @returns {void}
+ */
 export const setInitialConfig = (setProp, fieldview, fields) => {
   (fields || []).forEach((f, ix) => {
     if (f.input_type === "select")
@@ -348,6 +497,15 @@ export const setInitialConfig = (setProp, fieldview, fields) => {
   });
 };
 
+/**
+ * @param {object} props
+ * @param {string} props.value
+ * @param {function} props.onChange
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ * @returns {input|button}
+ */
 const ColorInput = ({ value, onChange }) =>
   value ? (
     <input
@@ -365,7 +523,19 @@ const ColorInput = ({ value, onChange }) =>
     </button>
   );
 
-export const ConfigForm = ({
+export /**
+ * @param {object} props
+ * @param {object[]} props.fields
+ * @param {object} props.configuration
+ * @param {function} props.setProp
+ * @param {object} props.node
+ * @param {function} props.onChange
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */  
+const ConfigForm = ({
   fields,
   configuration,
   setProp,
@@ -402,9 +572,28 @@ export const ConfigForm = ({
   </div>
 );
 
+/**
+ * @param {object|undefined} x 
+ * @param {object} y 
+ * @returns {object}
+ */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
-export const ConfigField = ({
+
+export /**
+ * @param {object} props
+ * @param {object} props.field
+ * @param {object} [props.configuration]
+ * @param {function} props.setProp
+ * @param {function} props.onChange
+ * @param {object} props.props
+ * @param {boolean} props.isStyle
+ * @returns {select|input}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */  
+const ConfigField = ({
   field,
   configuration,
   setProp,
@@ -412,6 +601,10 @@ export const ConfigField = ({
   props,
   isStyle,
 }) => {
+  /**
+   * @param {object} v 
+   * @returns {void}
+   */
   const myOnChange = (v) => {
     setProp((prop) => {
       if (configuration) {
@@ -621,7 +814,14 @@ export const ConfigField = ({
   return f ? f() : null;
 };
 
-export const SettingsFromFields = (fields) => () => {
+export /**
+ * @param {object[]} fields
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ * @returns {table}
+ */
+const SettingsFromFields = (fields) => () => {
   const node = useNode((node) => {
     const ps = {};
     fields.forEach((f) => {
@@ -646,13 +846,33 @@ export const SettingsFromFields = (fields) => () => {
   );
 };
 
-export const SettingsSectionHeaderRow = ({ title }) => (
+export /**
+ * @param {object} props
+ * @param {string} props.title
+ * @returns {tr}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const SettingsSectionHeaderRow = ({ title }) => (
   <tr>
     <th colSpan="2">{title}</th>
   </tr>
 );
 
-export const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.field
+ * @param {object} props.node
+ * @param {function} props.setProp
+ * @param {function} props.onChange
+ * @param {boolean} props.isStyle
+ * @returns {tr}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -695,15 +915,35 @@ export const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
     </tr>
   );
 };
+
+/**
+ * @category saltcorn-builder
+ * @extends React.Component
+ */
 export class ErrorBoundary extends React.Component {
+  /**
+   * ErrorBoundary constructor
+   * @param {object} props 
+   */
   constructor(props) {
     super(props);
     this.state = { hasError: false };
   }
+
+  /**
+   * @param {*} error 
+   * @returns {object}
+   */
   static getDerivedStateFromError(error) {
     // Update state so the next render will show the fallback UI.
     return { hasError: true };
   }
+
+  /**
+   * @param {object} error 
+   * @param {object} errorInfo 
+   * @returns {void}
+   */
   componentDidCatch(error, errorInfo) {
     // You can also log the error to an error reporting service
     //logErrorToMyService(error, errorInfo);
@@ -714,12 +954,27 @@ export class ErrorBoundary extends React.Component {
     );
   }
 
+  /**
+   * @returns {object}
+   */
   render() {
     return this.props.children;
   }
 }
 
-export const ButtonOrLinkSettingsRows = ({
+export /**
+ * @param {object} props
+ * @param {function} props.setProp
+ * @param {string} [props.btnClass = null]
+ * @param {string} [props.keyPrefix = ""]
+ * @param {object} props.values
+ * @param {boolean} [props.linkFirst = false]
+ * @returns {tr}
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ */
+const ButtonOrLinkSettingsRows = ({
   setProp,
   btnClass = null,
   keyPrefix = "",
@@ -844,6 +1099,12 @@ export const ButtonOrLinkSettingsRows = ({
       : []),
   ];
 };
+
+/**
+ * @function
+ * @param {string} style 
+ * @returns {object}
+ */
 export const bstyleopt = (style) => ({
   value: style,
   title: style,

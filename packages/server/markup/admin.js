@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module markup/admin
+ * @subcategory markup
+ */
+
 const {
   div,
   hr,
@@ -26,6 +32,12 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 
+/**
+ * @param {*} csrf 
+ * @param {*} inner 
+ * @param {string} action 
+ * @returns {*}
+ */
 const restore_backup = (csrf, inner, action = `/admin/restore`) =>
   form(
     {
@@ -45,6 +57,16 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
     })
   );
 
+/**
+ * @param {object} opts
+ * @param {*} opts.role
+ * @param {*} opts.title
+ * @param {*} opts.contents
+ * @param {*} opts.what
+ * @param {*} opts.url
+ * @param {*} opts.req
+ * @returns {object}
+ */
 const add_edit_bar = ({ role, title, contents, what, url, req }) => {
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
   if (role > 1) return contents;
@@ -61,6 +83,19 @@ const add_edit_bar = ({ role, title, contents, what, url, req }) => {
   } else return { above: [bar, contents] };
 };
 
+/**
+ * @param {object} opts
+ * @param {*} opts.req,
+ * @param {*} opts.res,
+ * @param {*} opts.main_section,
+ * @param {*} opts.main_section_href,
+ * @param {*} opts.sub_sections,
+ * @param {*} opts.active_sub,
+ * @param {*} opts.contents,
+ * @param {*} opts.headers,
+ * @param {*} opts.no_nav_pills,
+ * @param {*} opts.sub2_page,
+ */
 const send_settings_page = ({
   req,
   res,
@@ -132,6 +167,10 @@ const send_settings_page = ({
   });
 };
 
+/**
+ * @param {object} args 
+ * @returns {void}
+ */
 const send_infoarch_page = (args) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
@@ -155,6 +194,10 @@ const send_infoarch_page = (args) => {
   });
 };
 
+/**
+ * @param {object} args 
+ * @returns {void}
+ */
 const send_users_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
@@ -170,6 +213,10 @@ const send_users_page = (args) => {
   });
 };
 
+/**
+ * @param {object} args 
+ * @returns {void}
+ */
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
@@ -185,6 +232,11 @@ const send_events_page = (args) => {
     ...args,
   });
 };
+
+/**
+ * @param {object} args 
+ * @returns {void}
+ */
 const send_admin_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
@@ -199,6 +251,11 @@ const send_admin_page = (args) => {
     ...args,
   });
 };
+
+/** 
+ * @param {object} key 
+ * @returns {Promise<object>}
+ */
 const viewAttributes = async (key) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = await Table.findOne({ name: table_name });
@@ -211,6 +268,11 @@ const viewAttributes = async (key) => {
   };
 };
 
+/**
+ * @param {*} cfgForm 
+ * @param {*} req 
+ * @returns {void}
+ */
 const flash_restart_if_required = (cfgForm, req) => {
   let restart = false;
   cfgForm.fields.forEach((f) => {
@@ -222,6 +284,10 @@ const flash_restart_if_required = (cfgForm, req) => {
   if (restart) flash_restart(req);
 };
 
+/**
+ * @param {object} req 
+ * @returns {void}
+ */
 const flash_restart = (req) => {
   req.flash(
     "warning",
@@ -231,6 +297,13 @@ const flash_restart = (req) => {
   );
 };
 
+/**
+ * @param {object} opts
+ * @param {string[]} opts.field_names
+ * @param {object} opts.req
+ * @param {*} opts.formArgs
+ * @returns {Promise<Form>}
+ */
 const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const values = {};
   const state = getState();
@@ -282,6 +355,10 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   return form;
 };
 
+/**
+ * @param {*} form 
+ * @returns {Promise<void>}
+ */
 const save_config_from_form = async (form) => {
   const state = getState();
 
@@ -292,6 +369,9 @@ const save_config_from_form = async (form) => {
   }
 };
 
+/**
+ * @returns {string}
+ */
 const getBaseDomain = () => {
   const base_url = getState().getConfig("base_url");
   if (!base_url) return null;
@@ -303,8 +383,17 @@ const getBaseDomain = () => {
   return domain;
 };
 
+/**
+ * @param {object} req 
+ * @param {string} domain 
+ * @returns {boolean}
+ */
 const hostname_matches_baseurl = (req, domain) => domain === req.hostname;
 
+/**
+ * @param {string} domain 
+ * @returns {string[]}
+ */
 const is_hsts_tld = (domain) => {
   if (!domain) return false;
   const ds = domain.split(".");

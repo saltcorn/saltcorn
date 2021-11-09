@@ -1,10 +1,31 @@
+/**
+ * @category server
+ * @module routes/settings
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const { i, h3, p, a } = require("@saltcorn/markup/tags");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace settingsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {string} opts.icon
+ * @param {string} opts.blurb
+ * @param {string} opts.href
+ * @returns {object}
+ */
 const settingsCard = ({ title, icon, blurb, href }) => ({
   type: "card",
   url: href,
@@ -17,6 +38,12 @@ const settingsCard = ({ title, icon, blurb, href }) => ({
   },
 });
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/settings~settingsRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,

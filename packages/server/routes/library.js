@@ -1,12 +1,32 @@
+/**
+ * @category server
+ * @module routes/library
+ * @subcategory routes
+ */
+
 const Library = require("@saltcorn/data/models/library");
 const Router = require("express-promise-router");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const { send_infoarch_page } = require("../markup/admin.js");
 const { mkTable, post_delete_btn } = require("@saltcorn/markup");
 const { i } = require("@saltcorn/markup/tags");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace libraryRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name post/savefrombuilder
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ * @function
+ */
 router.post(
   "/savefrombuilder",
   setTenant,
@@ -17,6 +37,12 @@ router.post(
   })
 );
 
+/**
+ * @name get/list
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ * @function
+ */
 router.get(
   "/list",
   setTenant,
@@ -55,6 +81,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
   setTenant,

@@ -1,8 +1,12 @@
 /**
  * SC service API handler
  * Allows to list tables, views, etc
- * @type {module:express-promise-router}
+ * @category server
+ * @module routes/scapi
+ * @subcategory routes
  */
+
+/** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
 const { setTenant, error_catcher } = require("./utils.js");
@@ -21,15 +25,22 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace scapiRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
-
 
 /**
  * Check that user has right to read sc service api data.
  * Only admin currently can call this api.
- * @param req - httprequest
- * @param user - user based on access token
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
  * @returns {boolean}
  */
 function accessAllowedRead(req, user){
@@ -43,12 +54,17 @@ function accessAllowedRead(req, user){
     return false;
 }
 
-/**
- * List SC Tables using GET
- */
+
 // todo add paging
 // todo more granular access rights for api. Currently only admin can call this api.
 // todo add support of fields
+/**
+ * List SC Tables using GET
+ * @name get/sc_tables
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_tables/",
     setTenant,
@@ -70,11 +86,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Views using GET
- */
+
 // todo add paging
 // todo more granular access rights for api. Currently only admin can call this api.
+/**
+ * List SC Views using GET
+ * @name get/sc_views
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_views/",
     setTenant,
@@ -97,11 +118,16 @@ router.get(
     })
 );
 
-/**
- * List SC Pages using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Pages using GET
+ * @name get/sc_pages
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_pages/",
     setTenant,
@@ -123,11 +149,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Files using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Files using GET
+ * @name get/sc_files
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_files/",
     setTenant,
@@ -149,11 +180,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Triggers using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Triggers using GET
+ * @name get/sc_triggers
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_triggers/",
     setTenant,
@@ -175,11 +211,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Roles using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Roles using GET
+ * @name get/sc_roles
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_roles/",
     setTenant,
@@ -201,11 +242,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Tenants using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Tenants using GET
+ * @name get/sc_tenants
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_tenants/",
     setTenant,
@@ -227,11 +273,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Plugins using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Plugins using GET
+ * @name get/sc_plugins
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_plugins/",
     setTenant,
@@ -253,11 +304,16 @@ router.get(
         )(req, res, next);
     })
 );
-/**
- * List SC Config Items using GET
- */
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
+/**
+ * List SC Config Items using GET
+ * @name get/sc_config
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
     "/sc_config/",
     setTenant,

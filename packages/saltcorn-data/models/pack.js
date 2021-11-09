@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module models/pack
+ * @subcategory models
+ */
 const Table = require("./table");
 const db = require("../db");
 const View = require("./view");
@@ -16,6 +21,11 @@ const Library = require("./library");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const table_pack = contract(pack_fun, async (name) => {
   const table = await Table.findOne({ name });
   const fields = await table.getFields();
@@ -40,6 +50,11 @@ const table_pack = contract(pack_fun, async (name) => {
   };
 });
 
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const view_pack = contract(pack_fun, async (name) => {
   const view = await View.findOne({ name });
   const table = await Table.findOne({ id: view.table_id });
@@ -55,6 +70,11 @@ const view_pack = contract(pack_fun, async (name) => {
   };
 });
 
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const plugin_pack = contract(pack_fun, async (name) => {
   const Plugin = require("./plugin");
   const plugin = await Plugin.findOne({ name });
@@ -67,6 +87,12 @@ const plugin_pack = contract(pack_fun, async (name) => {
     deploy_private_key: plugin.deploy_private_key,
   };
 });
+
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const page_pack = contract(pack_fun, async (name) => {
   const page = await Page.findOne({ name });
   const root_page_for_roles = await page.is_root_page_for_roles();
@@ -81,17 +107,41 @@ const page_pack = contract(pack_fun, async (name) => {
     root_page_for_roles,
   };
 });
+
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const library_pack = contract(pack_fun, async (name) => {
   const lib = await Library.findOne({ name });
   return lib.toJson;
 });
+
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
 const trigger_pack = contract(pack_fun, async (name) => {
   const trig = await Trigger.findOne({ name });
   return trig.toJson;
 });
+
+/**
+ * @function
+ * @param {string} role
+ * @returns {Promise<object>}
+ */
 const role_pack = contract(pack_fun, async (role) => {
   return await Role.findOne({ role });
 });
+
+/**
+ * @function
+ * @param {string} pack
+ * @returns {Promise<boolean|object>}
+ */
 const can_install_pack = contract(
   is.fun(
     is_pack,
@@ -147,6 +197,12 @@ const can_install_pack = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} pack
+ * @param {string} name
+ * @returns {Promise<void>}
+ */
 const uninstall_pack = contract(
   is.fun([is_pack, is.str], is.promise(is.undefined)),
   async (pack, name) => {
@@ -188,6 +244,11 @@ const uninstall_pack = contract(
   }
 );
 
+/**
+ * @function
+ * @param {object} item
+ * @returns {Promise<void>}
+ */
 const add_to_menu = contract(
   is.fun(
     is.obj({ label: is.str, type: is.one_of(["View", "Page"]) }),
@@ -200,6 +261,14 @@ const add_to_menu = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} pack
+ * @param {string} [name]
+ * @param {function} loadAndSaveNewPlugin
+ * @param {boolean} [bare_tables = false]
+ * @returns {Promise<void>}
+ */
 const install_pack = contract(
   is.fun(
     [is_pack, is.maybe(is.str), is.fun(is_plugin, is.undefined)],
@@ -305,6 +374,12 @@ const install_pack = contract(
   }
 );
 
+/**
+ * @function
+ * @param {Date} date
+ * @param {string} [hours = 24]
+ * @returns {boolean}
+ */
 const is_stale = contract(
   is.fun([is.or(is.class("Date"), is.str), is.maybe(is.posint)], is.bool),
   (date, hours = 24) => {
@@ -314,6 +389,10 @@ const is_stale = contract(
   }
 );
 
+/**
+ * @function
+ * @returns {object[]}
+ */
 const fetch_available_packs = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
   async () => {
@@ -332,6 +411,10 @@ const fetch_available_packs = contract(
   }
 );
 
+/**
+ * @function
+ * @returns {Promise<object[]>}
+ */
 const fetch_available_packs_from_store = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
   async () => {
@@ -345,6 +428,11 @@ const fetch_available_packs_from_store = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} name
+ * @returns {Promise<object|null>}
+ */ 
 const fetch_pack_by_name = contract(
   is.fun(
     is.str,

@@ -3,6 +3,9 @@
  * Used in Admin
  * ${base_url}/list
  * Look to server/public/gridedit.js for main logic of grid editor
+ * @category server
+ * @module routes/list
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -15,12 +18,24 @@ const { setTenant, isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
 const { readState } = require("@saltcorn/data/plugin-helper");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace listRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 
 // export our router to be mounted by the parent application
 module.exports = router;
+
 /**
  * Show list of table data history (GET handler)
+ * @name get/_versions/:name/:id
+ * @function
+ * @memberof module:routes/list~listRouter
+ * @function
  */
 router.get(
   "/_versions/:name/:id",
@@ -63,8 +78,13 @@ router.get(
     );
   })
 );
+
 /**
  * Restore version of data in table (POST handler)
+ * @name post/_restore/:name/:id/:_version
+ * @function
+ * @memberof module:routes/list~listRouter
+ * @function
  */
 router.post(
   "/_restore/:name/:id/:_version",
@@ -129,8 +149,11 @@ const typeToJsGridType = (t, field) => {
   }
   return jsgField;
 };
+
 /**
  * Version Field
+ * @param {string} tname 
+ * @returns {string}
  */
 const versionsField = (tname) => `
 var VersionsField = function(config) {
@@ -150,9 +173,13 @@ VersionsField.prototype = new jsGrid.Field({
 jsGrid.fields.versions = VersionsField;
 `;
 // end of versionsField
+
 /**
  * Table Data List Viewer (GET handler))
- * /list/:table
+ * @name get/:tname
+ * @function
+ * @memberof module:routes/list~listRouter
+ * @function
  */
 router.get(
   "/:tname",

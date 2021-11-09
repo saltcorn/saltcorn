@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/ViewLink
+ * @subcategory components / elements
+ */
+
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -10,7 +16,26 @@ import {
   ButtonOrLinkSettingsRows,
 } from "./utils";
 
-export const ViewLink = ({
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {boolean} props.block
+ * @param {*} props.minRole
+ * @param {string} props.link_style
+ * @param {string} props.link_size
+ * @param {string} [props.link_icon]
+ * @param {boolean} props.inModal
+ * @param {string} [props.label]
+ * @param {string} props.textStyle
+ * @param {string} [props.link_bgcol]
+ * @param {string} [props.link_bordercol]
+ * @param {string} [props.link_textcol]
+ * @returns {tr}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace 
+ */
+const ViewLink = ({
   name,
   block,
   minRole,
@@ -53,7 +78,13 @@ export const ViewLink = ({
   );
 };
 
-export const ViewLinkSettings = () => {
+export /**
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const ViewLinkSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -147,6 +178,9 @@ export const ViewLinkSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 ViewLink.craft = {
   displayName: "ViewLink",
   defaultProps: {

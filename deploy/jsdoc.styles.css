@@ -1,0 +1,7 @@
+.content h1, .sidebar ul li {
+    line-break: anywhere;
+}
+
+.tag-source span a {
+    color: #3273dc;
+}

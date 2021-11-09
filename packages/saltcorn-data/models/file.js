@@ -1,6 +1,8 @@
 /**
- *
- * @type {{changeConnection?: ((function(*): Promise<void>)|(function(*=): Promise<void>)), select?: ((function(*=, *=, *=): Promise<*>)|(function(*=, *=, *=): Promise<*>)), runWithTenant: ((function(*=, *=): (*))|(function(*, *): *)), set_sql_logging?: (function(*=): void), insert?: ((function(*=, *=, *=): Promise<undefined|*>)|(function(*=, *=, *=): Promise<*>)), update?: ((function(*=, *=, *=): Promise<void>)|(function(*=, *=, *, *=): Promise<void>)), sql_log?: (function(*=, *=): void), deleteWhere?: ((function(*=, *=): Promise<void>)|(function(*=, *=): Promise<*>)), isSQLite: boolean, selectMaybeOne?: ((function(*=, *=): Promise<null|*>)|(function(*=, *=): Promise<null|*>)), close?: ((function(): Promise<void>)|(function(): Promise<void>)), drop_unique_constraint?: ((function(*=, *): Promise<void>)|(function(*=, *): Promise<void>)), enable_multi_tenant: (function()), getVersion?: ((function(): Promise<*>)|(function(*=): Promise<*>)), add_unique_constraint?: ((function(*=, *): Promise<void>)|(function(*=, *): Promise<void>)), getTenantSchema: ((function(): *)|(function(): *)), is_it_multi_tenant: ((function(): boolean)|(function(): boolean)), sqliteDatabase?: *, drop_reset_schema?: ((function(): Promise<void>)|(function(*): Promise<void>)), query?: ((function(*=, *=): Promise<unknown>)|(function(*=, *=): *)), count?: ((function(*=, *=): Promise<number>)|(function(*=, *=): Promise<number>)), pool?: *, connectObj: {sc_version: string, connectionString: *, git_commit: *, version_tag: (*|string)}|{sqlite_path}|boolean, sqlsanitize: *|(function(...[*]=): *), getClient?: (function(): Promise<*>), reset_sequence?: (function(*=): Promise<void>), copyFrom?: (function(*=, *=, *, *): Promise<void>), mkWhere: function(*=): {values: *, where: string|string}, selectOne?: ((function(*=, *=): Promise<*|undefined>)|(function(*=, *=): Promise<*>)), getTenantSchemaPrefix: function(): string|string}|{sqlsanitize?: *|(function(...[*]=): *), connectObj?: {sc_version: string, connectionString: *, git_commit: *, version_tag: (*|string)}|{sqlite_path}|boolean, isSQLite?: boolean, mkWhere?: function(*=): {values: *, where: string|string}, getTenantSchemaPrefix?: function(): string|string}}
+ * File Database Access Layer
+ * @category saltcorn-data
+ * @module models/file
+ * @subcategory models
  */
 
 const db = require("../db");
@@ -19,8 +21,13 @@ const fs = require("fs").promises;
  * 3. List of files stored in _sc_files table in Saltcorn database.
  * 4. Each tenant has own file list and file storage.
  * 5. This class provides file descriptor and basic functions to manipulate with files.
+ * @category saltcorn-data
  */
 class File {
+  /**
+   * Constructor
+   * @param o {object}
+   */
   constructor(o) {
     this.filename = o.filename;
     this.location = o.location;
@@ -106,7 +113,7 @@ class File {
    * @param file
    * @param user_id
    * @param min_role_read
-   * @returns {Promise<File|[]>}
+   * @returns {Promise<File>}
    */
   static async from_req_files(file, user_id, min_role_read = 1) {
     if (Array.isArray(file)) {
@@ -150,6 +157,11 @@ class File {
       return { error: e.message };
     }
   }
+  
+  /**
+   * MIME type of the file
+   * @type {string}
+   */
   get mimetype() {
     return `${this.mime_super}/${this.mime_sub}`;
   }

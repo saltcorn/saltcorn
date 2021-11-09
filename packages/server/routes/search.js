@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/search
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
@@ -10,9 +16,22 @@ const { renderForm } = require("@saltcorn/markup");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { send_infoarch_page } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace searchRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object[]} tables 
+ * @param {object[]} views 
+ * @param {object} req 
+ * @returns {Forms}
+ */
 const searchConfigForm = (tables, views, req) => {
   var fields = [];
   var tbls_noviews = [];
@@ -48,6 +67,12 @@ const searchConfigForm = (tables, views, req) => {
   });
 };
 
+/**
+ * @name get/config
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.get(
   "/config",
   setTenant,
@@ -70,6 +95,13 @@ router.get(
   })
 );
 
+
+/**
+ * @name post/config
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.post(
   "/config",
   setTenant,
@@ -98,6 +130,9 @@ router.post(
   })
 );
 
+/**
+ * @returns {Form}
+ */
 const searchForm = () =>
   new Form({
     action: "/search",
@@ -113,6 +148,16 @@ const searchForm = () =>
     ],
   });
 
+/**
+ * @param {object} opts
+ * @param {*} opts.q
+ * @param {*} opts._page
+ * @param {*} opts.table
+ * @param {object} opts
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {Promise<void>}
+ */
 const runSearch = async ({ q, _page, table }, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
@@ -200,6 +245,12 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   });
 };
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,

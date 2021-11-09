@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/menu
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
@@ -15,9 +21,21 @@ const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace menuRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {Promise<Form>}
+ */
 const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
@@ -138,6 +156,10 @@ const menuForm = async (req) => {
 
 //create -- new
 
+/**
+ * @param {object[]} menu_items 
+ * @returns {string}
+ */
 const menuEditorScript = (menu_items) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   let lastState;
@@ -178,6 +200,11 @@ const menuEditorScript = (menu_items) => `
   lastState=editor.getString()
   setInterval(ajax_save_menu, 500)
   `;
+
+/**
+ * @param {object[]} menu_items 
+ * @returns {object[]} 
+ */
 const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
     ...mi,
@@ -185,6 +212,11 @@ const menuTojQME = (menu_items) =>
     subitems: undefined,
     ...(mi.subitems ? { children: menuTojQME(mi.subitems) } : {}),
   }));
+
+/**
+ * @param {object[]} menu_items 
+ * @returns {object[]}
+ */
 const jQMEtoMenu = (menu_items) =>
   menu_items.map((mi) => ({
     ...mi,
@@ -192,6 +224,13 @@ const jQMEtoMenu = (menu_items) =>
     children: undefined,
     ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
   }));
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/menu~menuRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -240,6 +279,12 @@ router.get(
   })
 );
 
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/menu~menuRouter
+ * @function
+ */
 router.post(
   "/",
   setTenant,

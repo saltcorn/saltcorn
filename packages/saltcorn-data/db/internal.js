@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module db/internal
+ * @subcategory db
+ */
 const { footer } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { is_sqlite } = require("./connect");
@@ -6,7 +11,9 @@ const { is_sqlite } = require("./connect");
 /**
  * Transform value to correct sql name.
  * Note! Dont use other symbols than ^A-Za-z_0-9
- * @type {*|(function(...[*]=): *)}
+ * @function 
+ * @param {string} nm
+ * @returns {string}
  */
 const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
   const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
@@ -18,7 +25,9 @@ const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
  * Instead of sqlsanitize also allows .
  * For e.g. table name
  * Note! Dont use other symbols than ^A-Za-z_0-9.
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {string} nm
+ * @returns {string}
  */
 const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
   const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
@@ -27,10 +36,10 @@ const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
 });
 /**
  *
- * @param v
- * @param i
- * @param is_sqlite
- * @returns {`to_tsvector('english', ${*}) @@ plainto_tsquery('english', $${string})`|`${*} LIKE '%' || ? || '%'`}
+ * @param {object} v
+ * @param {string} i
+ * @param {boolean} is_sqlite
+ * @returns {string}
  */
 const whereFTS = (v, i, is_sqlite) => {
   const { fields, table } = v;
@@ -51,8 +60,16 @@ const whereFTS = (v, i, is_sqlite) => {
     return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i})`;
 };
 
+/**
+ * @param {boolean} is_sqlite 
+ * @param {string} i 
+ * @returns {string}
+ */
 const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i}`);
 
+/**
+ * @returns {number}
+ */
 const mkCounter = () => {
   let i = 0;
   return () => {
@@ -60,6 +77,12 @@ const mkCounter = () => {
     return i;
   };
 };
+/**
+ * 
+ * @param {boolean} is_sqlite 
+ * @param {string} i 
+ * @returns {function}
+ */
 const subSelectWhere = (is_sqlite, i) => (k, v) => {
   const whereObj = v.inSelect.where;
   const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -71,6 +94,10 @@ const subSelectWhere = (is_sqlite, i) => (k, v) => {
     v.inSelect.field
   } from ${v.inSelect.table} ${where})`;
 };
+/**
+ * @param {object} v 
+ * @returns {object[]}
+ */
 const subSelectVals = (v) => {
   const whereObj = v.inSelect.where;
   const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -80,8 +107,21 @@ const subSelectVals = (v) => {
     .filter((v) => v !== null);
   return xs;
 };
+/**
+ * @param {string} s 
+ * @returns {string}
+ */
 const wrapParens = (s) => (s ? `(${s})` : s);
+/**
+ * @param {string} s 
+ * @returns {string}
+ */
 const quote = (s) => (s.includes(".") || s.includes('"') ? s : `"${s}"`);
+/**
+ * @param {boolean} is_sqlite 
+ * @param {string} i 
+ * @returns {function}
+ */
 const whereOr = (is_sqlite, i) => (ors) =>
   wrapParens(
     ors
@@ -93,6 +133,11 @@ const whereOr = (is_sqlite, i) => (ors) =>
       .join(" or ")
   );
 
+/**
+ * @param {boolean} is_sqlite 
+ * @param {string} i 
+ * @returns {function}
+ */
 const whereClause = (is_sqlite, i) => ([k, v]) =>
   k === "_fts"
     ? whereFTS(v, i(), is_sqlite)
@@ -143,6 +188,12 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `${quote(sqlsanitizeAllowDots(k))} is null`
     : `${quote(sqlsanitizeAllowDots(k))}=${placeHolder(is_sqlite, i())}`;
 
+/**
+ * @param {object[]} opts 
+ * @param {object} opts.k
+ * @param {object} opts.v
+ * @returns {boolean|object}
+ */
 const getVal = ([k, v]) =>
   k === "_fts"
     ? v.searchTerm
@@ -170,8 +221,13 @@ const getVal = ([k, v]) =>
     ? v.json[1]
     : v;
 
+/**
+ * @param {object} whereObj 
+ * @param {boolean} is_sqlite 
+ * @returns {object}
+ */
 const mkWhere = (whereObj, is_sqlite) => {
-  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const wheres = whereObj ? object.entries(whereObj) : [];
   //console.log({ wheres });
   const where =
     whereObj && wheres.length > 0
@@ -184,6 +240,10 @@ const mkWhere = (whereObj, is_sqlite) => {
   return { where, values };
 };
 
+/**
+ * @param {number|string} x 
+ * @returns {number|null}
+ */
 const toInt = (x) =>
   typeof x === "number"
     ? Math.round(x)
@@ -191,6 +251,14 @@ const toInt = (x) =>
     ? parseInt(x)
     : null;
 
+/**
+ * @param {object} opts
+ * @param {string} opts.latField
+ * @param {string} opts.longField
+ * @param {number} opts.lat
+ * @param {number} opts.long
+ * @returns {string}
+ */
 const getDistanceOrder = ({ latField, longField, lat, long }) => {
   const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
   return `((${sqlsanitizeAllowDots(
@@ -201,6 +269,11 @@ const getDistanceOrder = ({ latField, longField, lat, long }) => {
     longField
   )} - ${+long})*(${sqlsanitizeAllowDots(longField)} - ${+long})*${cos_lat_2})`;
 };
+
+/**
+ * @param {object} selopts 
+ * @returns {string[]}
+ */
 const mkSelectOptions = (selopts) => {
   const orderby =
     selopts.orderBy === "RANDOM()"

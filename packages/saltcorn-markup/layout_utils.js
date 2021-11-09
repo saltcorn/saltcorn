@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module layout_utils
+ */
+
 const {
   ul,
   li,
@@ -18,13 +23,26 @@ const {
   br,
 } = require("./tags");
 
+/**
+ * @param {string} item 
+ * @returns {string}
+ */
 const labelToId = (item) => text(item.replace(" ", ""));
 
+/**
+ * @param {string} currentUrl 
+ * @param {object} item 
+ * @returns {boolean}
+ */
 const active = (currentUrl, item) =>
   (item.link && currentUrl.startsWith(item.link)) ||
   (item.subitems &&
     item.subitems.some((si) => si.link && currentUrl.startsWith(si.link)));
 
+/**
+ * @param {object[]} sections 
+ * @returns {object[]}
+ */
 const innerSections = (sections) => {
   var items = [];
   (sections || []).forEach((section) => {
@@ -35,6 +53,13 @@ const innerSections = (sections) => {
   return items;
 };
 
+/**
+ * @param {object} opts
+ * @param {string} opts.label
+ * @param {object[]} opts.subitems
+ * @param {string} [opts.icon]
+ * @returns {li}
+ */
 const navSubitems = ({ label, subitems, icon }) =>
   li(
     { class: "nav-item dropdown" },
@@ -65,6 +90,12 @@ const navSubitems = ({ label, subitems, icon }) =>
       )
     )
   );
+
+/**
+ * @param {string} currentUrl 
+ * @param {object[]} sections 
+ * @returns {div}
+ */
 const rightNavBar = (currentUrl, sections) =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
@@ -95,9 +126,20 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
+  /**
+   * @param {object[]} sections 
+   * @returns {boolean}
+   */
 const hasMobileItems = (sections) =>
   innerSections(sections).some((s) => s.location === "Mobile Bottom");
 
+/**
+ * @param {string} currentUrl 
+ * @param {object[]} sections 
+ * @param {string} [cls = ""]
+ * @param {string} [clsLink = ""]
+ * @returns {footer|string}
+ */
 const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
   hasMobileItems(sections)
     ? footer(
@@ -134,6 +176,12 @@ const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
       )
     : "";
 
+/**
+ * @param {object} opts
+ * @param {string} opts.name
+ * @param {string} opts.logo
+ * @returns {string[]}
+ */
 const leftNavBar = ({ name, logo }) => [
   a(
     { class: "navbar-brand js-scroll-trigger", href: "/" },
@@ -162,6 +210,14 @@ const leftNavBar = ({ name, logo }) => [
   ),
 ];
 
+/**
+ * @param {object} brand 
+ * @param {object[]} sections 
+ * @param {string} currentUrl 
+ * @param {object} opts
+ * @param {boolean} [opts.fixedTop = true]
+ * @returns {string}
+ */
 const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   nav(
     {
@@ -177,6 +233,11 @@ const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
     )
   );
 
+/**
+ * @param {string} type 
+ * @param {string} s 
+ * @returns {string}
+ */
 const alert = (type, s) => {
   //console.log("alert", type, s,s.length)
   const realtype = type === "error" ? "danger" : type;
@@ -189,6 +250,10 @@ const alert = (type, s) => {
       </div>`
     : "";
 };
+
+/**
+ * @returns {string}
+ */
 const navbarSolidOnScroll = script(
   domReady(`$(window).scroll(function () {
     if ($(window).scrollTop() >= 10) {
@@ -199,12 +264,21 @@ const navbarSolidOnScroll = script(
     });`)
 );
 
+/**
+ * @param {object} x 
+ * @param {object} s 
+ * @returns {object}
+ */
 const logit = (x, s) => {
   if (s) console.log(s, x);
   else console.log(x);
   return x;
 };
 
+/**
+ * @param {number} len 
+ * @returns {function}
+ */
 const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
   li(
     {
@@ -214,6 +288,12 @@ const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
     href ? a({ href }, text) : text
   );
 
+/**
+ * @param {object} opts
+ * @param {Workflow} opts.workflow
+ * @param {object} opts.step
+ * @returns {string}
+ */
 const workflowBreadcrumbItem = ({ workflow, step }) =>
   workflow.steps
     .map((wfstep, ix) =>
@@ -229,6 +309,10 @@ const workflowBreadcrumbItem = ({ workflow, step }) =>
     )
     .join("");
 
+/**
+ * @param {object[]} crumbs 
+ * @returns {string}
+ */
 const breadcrumbs = (crumbs) =>
   nav(
     { "aria-label": "breadcrumb" },
@@ -242,6 +326,10 @@ const breadcrumbs = (crumbs) =>
     )
   );
 
+/**
+ * @param {object[]} headers 
+ * @returns {string}
+ */
 const headersInHead = (headers) =>
   headers
     .filter((h) => h.css)
@@ -256,6 +344,10 @@ const headersInHead = (headers) =>
     .map((h) => h.headerTag)
     .join("");
 
+/**
+ * @param {object[]} headers 
+ * @returns {string}
+ */
 const headersInBody = (headers) =>
   headers
     .filter((h) => h.script)
@@ -273,6 +365,10 @@ const headersInBody = (headers) =>
     .map((h) => `<script>${h.scriptBody}</script>`)
     .join("");
 
+/**
+ * @param {object[]} tabList 
+ * @returns {ul}
+ */
 const cardHeaderTabs = (tabList) =>
   ul(
     { class: "nav nav-tabs card-header-tabs" },

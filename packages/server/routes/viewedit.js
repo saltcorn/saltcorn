@@ -1,6 +1,8 @@
 /**
  * View Edit Router
- *
+ * @category server
+ * @module routes/viewedit
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -40,9 +42,22 @@ const Page = require("@saltcorn/data/models/page");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 const { editRoleForm } = require("../markup/forms.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace vieweditRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} view 
+ * @param {object[]} roles 
+ * @param {object} req 
+ * @returns {Form}
+ */
 const editViewRoleForm = (view, roles, req) =>
   editRoleForm({
     url: `/viewedit/setrole/${view.id}`,
@@ -51,6 +66,11 @@ const editViewRoleForm = (view, roles, req) =>
     req,
   });
 
+/**
+ * @param {object} view 
+ * @param {object} req 
+ * @returns {div}
+ */
 const view_dropdown = (view, req) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
     a(
@@ -86,6 +106,13 @@ const view_dropdown = (view, req) =>
       view.name
     ),
   ]);
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -190,9 +217,22 @@ router.get(
   })
 );
 
+/**
+ * @param {object} o 
+ * @param {function} f 
+ * @returns {object}
+ */
 const mapObjectValues = (o, f) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
 
+/**
+ * @param {object} req 
+ * @param {object} tableOptions 
+ * @param {object[]} roles 
+ * @param {object[]} pages 
+ * @param {object} values 
+ * @returns {Form}
+ */
 const viewForm = (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
@@ -279,6 +319,13 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
     values,
   });
 };
+
+/**
+ * @name get/edit/:viewname
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/edit/:viewname",
   setTenant,
@@ -321,6 +368,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/new",
   setTenant,
@@ -353,6 +406,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/save
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/save",
   setTenant,
@@ -423,6 +482,15 @@ router.post(
     }
   })
 );
+
+/**
+ * @param {object} view 
+ * @param {Workflow} wf 
+ * @param {object} wfres 
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {void}
+ */
 const respondWorkflow = (view, wf, wfres, req, res) => {
   const wrap = (contents, noCard) => ({
     above: [
@@ -455,6 +523,13 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
     );
   } else res.redirect(wfres.redirect);
 };
+
+/**
+ * @name get/config/:name
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/config/:name",
   setTenant,
@@ -482,6 +557,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/config/:name
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/config/:name",
   setTenant,
@@ -495,6 +576,13 @@ router.post(
     respondWorkflow(view, configFlow, wfres, req, res);
   })
 );
+
+/**
+ * @name post/add-to-menu/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/add-to-menu/:id",
   setTenant,
@@ -519,6 +607,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/clone/:id",
   setTenant,
@@ -535,6 +629,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
   setTenant,
@@ -547,6 +647,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/savebuilder/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/savebuilder/:id",
   setTenant,
@@ -564,6 +670,13 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
   setTenant,
