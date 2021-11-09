@@ -503,7 +503,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         );
       else
         markup = div(
-          { class: "row" },
+          { class: "row w-100" },
           segment.besides.map((t, ixb) =>
             div(
               {
