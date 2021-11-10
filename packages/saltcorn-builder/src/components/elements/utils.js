@@ -481,7 +481,9 @@ export const ConfigField = ({
       <input
         type="number"
         className="form-control"
-        step={1}
+        step={field.step || 1}
+        min={field.min}
+        max={field.max}
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
