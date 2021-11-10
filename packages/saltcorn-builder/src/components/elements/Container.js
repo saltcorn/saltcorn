@@ -473,6 +473,50 @@ export const ContainerSettings = () => {
               </td>
             </tr>
           )}
+          <SettingsSectionHeaderRow title="Typography" />
+          <SettingsRow
+            field={{
+              name: "font-family",
+              label: "Font family",
+              type: "String",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-size",
+              label: "Font size",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-weight",
+              label: "Weight",
+              type: "Integer",
+              min: 100,
+              max: 900,
+              step: 100,
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "line-height",
+              label: "Line height",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
           <tr>
             <td colSpan="2">
               <label>
@@ -512,11 +556,13 @@ export const ContainerSettings = () => {
             field={{ name: "flex-grow", label: "Grow", type: "Float" }}
             node={node}
             setProp={setProp}
+            isStyle={true}
           />
           <SettingsRow
             field={{ name: "flex-shrink", label: "Shrink", type: "Float" }}
             node={node}
             setProp={setProp}
+            isStyle={true}
           />
           {display && display.includes("flex") && (
             <Fragment>
