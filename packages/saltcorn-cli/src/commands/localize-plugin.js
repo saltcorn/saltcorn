@@ -1,21 +1,24 @@
 const { Command, flags } = require("@oclif/command");
+const { maybe_as_tenant } = require("../common");
 
 class LocalizePluginCommand extends Command {
   async run() {
     const db = require("@saltcorn/data/db");
     const Plugin = require("@saltcorn/data/models/plugin");
-    const { args } = this.parse(LocalizePluginCommand);
-    const plugin = await Plugin.findOne({ name: args.plugin });
-    if (!plugin || plugin.source === "local") {
-      console.error("Localisable plugin not found");
-      this.exit(1);
-    }
+    const { args, flags } = this.parse(LocalizePluginCommand);
+    await maybe_as_tenant(flags.tenant, async () => {
+      const plugin = await Plugin.findOne({ name: args.plugin });
+      if (!plugin || plugin.source === "local") {
+        console.error("Localisable plugin not found");
+        this.exit(1);
+      }
 
-    plugin.name = plugin.source === "npm" ? plugin.location : args.plugin;
-    plugin.source = "local";
-    plugin.location = args.path;
-    await plugin.upsert();
-    console.log("Plugin saved", plugin);
+      plugin.name = plugin.source === "npm" ? plugin.location : args.plugin;
+      plugin.source = "local";
+      plugin.location = args.path;
+      await plugin.upsert();
+      console.log("Plugin saved", plugin);
+    });
     this.exit(0);
   }
 }
@@ -27,6 +30,11 @@ LocalizePluginCommand.args = [
 
 LocalizePluginCommand.description = `Convert plugin to local plugin`;
 
-LocalizePluginCommand.flags = {};
+LocalizePluginCommand.flags = {
+  tenant: flags.string({
+    char: "t",
+    description: "tenant",
+  }),
+};
 
 module.exports = LocalizePluginCommand;
