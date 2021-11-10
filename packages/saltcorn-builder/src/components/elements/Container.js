@@ -37,6 +37,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 import { BoxModelEditor } from "./BoxModelEditor";
+import previewCtx from "../preview_context";
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -206,6 +207,8 @@ export const ContainerSettings = () => {
     htmlElement,
   } = node;
   const options = useContext(optionsCtx);
+  const { uploadedFiles } = useContext(previewCtx);
+
   const ownership = !!options.ownership;
 
   const setAProp = (key) => (e) => {
@@ -361,7 +364,8 @@ export const ContainerSettings = () => {
               setProp((prop) => {
                 prop.bgFileId =
                   prop.bgFileId ||
-                  (options.images.length > 0 && options.images[0].id);
+                  (options.images.length + uploadedFiles.length > 0 &&
+                    options.images[0].id);
               })
             }
           />
@@ -436,6 +440,11 @@ export const ContainerSettings = () => {
                         {f.filename}
                       </option>
                     ))}
+                    {(uploadedFiles || []).map((uf, ix) => (
+                      <option key={ix} value={uf.id}>
+                        {uf.filename}
+                      </option>
+                    ))}{" "}
                   </select>
                 </td>
               </tr>
