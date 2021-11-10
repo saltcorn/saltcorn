@@ -38,7 +38,7 @@
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
-    "socket.io": "4.2.0",
+    "socket.io": "4.3.1",
     "tmp-promise": "^3.0.2"
   },
   "optionalDependencies": {
