@@ -1,0 +1,959 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Saltcorn server/routes/admin.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="jsdoc.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"></div><div class="category"><h2>saltcorn-base-plugin</h2><h3>Modules</h3><ul><li><a href="module-saltcorn-base-plugin_index.html">saltcorn-base-plugin/index</a></li></ul></div><div class="category"><h2>saltcorn-builder</h2><h3>Modules / components</h3><ul><li><a href="module-components%2520_%2520Toolbox.html">components / Toolbox</a></li><li><a href="module-components_Builder.html">components/Builder</a></li><li><a href="module-components_context.html">components/context</a></li><li><a href="module-components_Library.html">components/Library</a></li><li><a href="module-components_preview_context.html">components/preview_context</a></li><li><a href="module-components_RenderNode.html">components/RenderNode</a></li><li><a href="module-components_storage.html">components/storage</a></li></ul><h3>Modules / components / elements</h3><ul><li><a href="module-components_elements_Action.html">components/elements/Action</a></li><li><a href="module-components_elements_Aggregation.html">components/elements/Aggregation</a></li><li><a href="module-components_elements_BoxModelEditor.html">components/elements/BoxModelEditor</a></li><li><a href="module-components_elements_Card.html">components/elements/Card</a></li><li><a href="module-components_elements_Column.html">components/elements/Column</a></li><li><a href="module-components_elements_Columns.html">components/elements/Columns</a></li><li><a href="module-components_elements_Container.html">components/elements/Container</a></li><li><a href="module-components_elements_DropDownFilter.html">components/elements/DropDownFilter</a></li><li><a href="module-components_elements_Empty.html">components/elements/Empty</a></li><li><a href="module-components_elements_Field.html">components/elements/Field</a></li><li><a href="module-components_elements_HTMLCode.html">components/elements/HTMLCode</a></li><li><a href="module-components_elements_Image.html">components/elements/Image</a></li><li><a href="module-components_elements_JoinField.html">components/elements/JoinField</a></li><li><a href="module-components_elements_LineBreak.html">components/elements/LineBreak</a></li><li><a href="module-components_elements_Link.html">components/elements/Link</a></li><li><a href="module-components_elements_SearchBar.html">components/elements/SearchBar</a></li><li><a href="module-components_elements_Tabs.html">components/elements/Tabs</a></li><li><a href="module-components_elements_Text.html">components/elements/Text</a></li><li><a href="module-components_elements_ToggleFilter.html">components/elements/ToggleFilter</a></li><li><a href="module-components_elements_utils.html">components/elements/utils</a></li><li><a href="module-components_elements_View.html">components/elements/View</a></li><li><a href="module-components_elements_ViewLink.html">components/elements/ViewLink</a></li></ul><h3>Modules</h3><ul><li><a href="module-components_elements_faicons.html">components/elements/faicons</a></li><li><a href="module-saltcorn-builder_index.html">saltcorn-builder/index</a></li></ul><h3>Namespaces / components / Toolbox</h3><ul><li><a href="module-components%2520_%2520Toolbox-ActionElem.html">ActionElem</a></li><li><a href="module-components%2520_%2520Toolbox-AggregationElem.html">AggregationElem</a></li><li><a href="module-components%2520_%2520Toolbox-CardElem.html">CardElem</a></li><li><a href="module-components%2520_%2520Toolbox-ColumnsElem.html">ColumnsElem</a></li><li><a href="module-components%2520_%2520Toolbox-ContainerElem.html">ContainerElem</a></li><li><a href="module-components%2520_%2520Toolbox-DropDownFilterElem.html">DropDownFilterElem</a></li><li><a href="module-components%2520_%2520Toolbox-FieldElem.html">FieldElem</a></li><li><a href="module-components%2520_%2520Toolbox-HTMLElem.html">HTMLElem</a></li><li><a href="module-components%2520_%2520Toolbox-ImageElem.html">ImageElem</a></li><li><a href="module-components%2520_%2520Toolbox-JoinFieldElem.html">JoinFieldElem</a></li><li><a href="module-components%2520_%2520Toolbox-LineBreakElem.html">LineBreakElem</a></li><li><a href="module-components%2520_%2520Toolbox-LinkElem.html">LinkElem</a></li><li><a href="module-components%2520_%2520Toolbox-SearchElem.html">SearchElem</a></li><li><a href="module-components%2520_%2520Toolbox-TabsElem.html">TabsElem</a></li><li><a href="module-components%2520_%2520Toolbox-TextElem.html">TextElem</a></li><li><a href="module-components%2520_%2520Toolbox-ToggleFilterElem.html">ToggleFilterElem</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxEdit.html">ToolboxEdit</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxFilter.html">ToolboxFilter</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxPage.html">ToolboxPage</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxShow.html">ToolboxShow</a></li><li><a href="module-components%2520_%2520Toolbox-ViewElem.html">ViewElem</a></li><li><a href="module-components%2520_%2520Toolbox-ViewLinkElem.html">ViewLinkElem</a></li><li><a href="module-components%2520_%2520Toolbox-WrapElem.html">WrapElem</a></li></ul><h3>Namespaces / components</h3><ul><li><a href="module-components_Builder-Builder.html">Builder</a></li><li><a href="module-components_Builder-HistoryPanel.html">HistoryPanel</a></li><li><a href="module-components_Builder-NextButton.html">NextButton</a></li><li><a href="module-components_Builder-SaveButton.html">SaveButton</a></li><li><a href="module-components_Builder-SettingsPanel.html">SettingsPanel</a></li><li><a href="module-components_Builder-ViewPageLink.html">ViewPageLink</a></li><li><a href="module-components_elements_Action-Action.html">Action</a></li><li><a href="module-components_elements_Action-ActionSettings.html">ActionSettings</a></li><li><a href="module-components_elements_Aggregation-Aggregation.html">Aggregation</a></li><li><a href="module-components_elements_Aggregation-AggregationSettings.html">AggregationSettings</a></li><li><a href="module-components_elements_BoxModelEditor-BoxModelEditor.html">BoxModelEditor</a></li><li><a href="module-components_elements_Card-Card.html">Card</a></li><li><a href="module-components_elements_Card-CardSettings.html">CardSettings</a></li><li><a href="module-components_elements_Columns-Columns.html">Columns</a></li><li><a href="module-components_elements_Columns-ColumnsSettings.html">ColumnsSettings</a></li><li><a href="module-components_elements_Column-Column.html">Column</a></li><li><a href="module-components_elements_Column-ColumnSettings.html">ColumnSettings</a></li><li><a href="module-components_elements_Container-Container.html">Container</a></li><li><a href="module-components_elements_Container-ContainerSettings.html">ContainerSettings</a></li><li><a href="module-components_elements_DropDownFilter-DropDownFilter.html">DropDownFilter</a></li><li><a href="module-components_elements_DropDownFilter-DropDownFilterSettings.html">DropDownFilterSettings</a></li><li><a href="module-components_elements_Empty-Empty.html">Empty</a></li><li><a href="module-components_elements_Field-Field.html">Field</a></li><li><a href="module-components_elements_Field-FieldSettings.html">FieldSettings</a></li><li><a href="module-components_elements_HTMLCode-HTMLCode.html">HTMLCode</a></li><li><a href="module-components_elements_Image-Image.html">Image</a></li><li><a href="module-components_elements_Image-ImageSettings.html">ImageSettings</a></li><li><a href="module-components_elements_JoinField-JoinField.html">JoinField</a></li><li><a href="module-components_elements_JoinField-JoinFieldSettings.html">JoinFieldSettings</a></li><li><a href="module-components_elements_LineBreak-LineBreak.html">LineBreak</a></li><li><a href="module-components_elements_Link-Link.html">Link</a></li><li><a href="module-components_elements_Link-LinkSettings.html">LinkSettings</a></li><li><a href="module-components_elements_SearchBar-SearchBar.html">SearchBar</a></li><li><a href="module-components_elements_SearchBar-SearchBarSettings.html">SearchBarSettings</a></li><li><a href="module-components_elements_Tabs-Tabs.html">Tabs</a></li><li><a href="module-components_elements_Tabs-TabsSettings.html">TabsSettings</a></li><li><a href="module-components_elements_Text-Text.html">Text</a></li><li><a href="module-components_elements_Text-TextSettings.html">TextSettings</a></li><li><a href="module-components_elements_ToggleFilter-ToggleFilter.html">ToggleFilter</a></li><li><a href="module-components_elements_ToggleFilter-ToggleFilterSettings.html">ToggleFilterSettings</a></li><li><a href="module-components_elements_ViewLink-ViewLink.html">ViewLink</a></li><li><a href="module-components_elements_ViewLink-ViewLinkSettings.html">ViewLinkSettings</a></li><li><a href="module-components_elements_View-View.html">View</a></li><li><a href="module-components_elements_View-ViewSettings.html">ViewSettings</a></li><li><a href="module-components_Library-InitNewElement.html">InitNewElement</a></li><li><a href="module-components_Library-Library.html">Library</a></li><li><a href="module-components_Library-LibraryElem.html">LibraryElem</a></li><li><a href="module-components_RenderNode-RenderNode.html">RenderNode</a></li><li><a href="module-components_storage-craftToSaltcorn.html">craftToSaltcorn</a></li><li><a href="module-components_storage-layoutToNodes.html">layoutToNodes</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-components_elements_faicons-faicons%2520_%2520all.html">faicons / all</a></li></ul><h3>Namespaces / components / elements / utils</h3><ul><li><a href="module-components_elements_utils-Accordion.html">Accordion</a></li><li><a href="module-components_elements_utils-BlockSetting.html">BlockSetting</a></li><li><a href="module-components_elements_utils-ButtonOrLinkSettingsRows.html">ButtonOrLinkSettingsRows</a></li><li><a href="module-components_elements_utils-ColorInput.html">ColorInput</a></li><li><a href="module-components_elements_utils-ConfigField.html">ConfigField</a></li><li><a href="module-components_elements_utils-ConfigForm.html">ConfigForm</a></li><li><a href="module-components_elements_utils-MinRoleSetting.html">MinRoleSetting</a></li><li><a href="module-components_elements_utils-MinRoleSettingRow.html">MinRoleSettingRow</a></li><li><a href="module-components_elements_utils-OrFormula.html">OrFormula</a></li><li><a href="module-components_elements_utils-SelectUnits.html">SelectUnits</a></li><li><a href="module-components_elements_utils-SettingsFromFields.html">SettingsFromFields</a></li><li><a href="module-components_elements_utils-SettingsRow.html">SettingsRow</a></li><li><a href="module-components_elements_utils-SettingsSectionHeaderRow.html">SettingsSectionHeaderRow</a></li><li><a href="module-components_elements_utils-TextStyleRow.html">TextStyleRow</a></li><li><a href="module-components_elements_utils-TextStyleSelect.html">TextStyleSelect</a></li><li><a href="module-components_elements_utils-TextStyleSetting.html">TextStyleSetting</a></li></ul><h3>Classes</h3><ul><li><a href="module-components_elements_utils.ErrorBoundary.html">ErrorBoundary</a></li></ul></div><div class="category"><h2>saltcorn-cli</h2><h3>Modules</h3><ul><li><a href="module-commands_add-schema.html">commands/add-schema</a></li><li><a href="module-commands_backup.html">commands/backup</a></li><li><a href="module-commands_create-tenant.html">commands/create-tenant</a></li><li><a href="module-commands_create-user.html">commands/create-user</a></li><li><a href="module-commands_fixtures.html">commands/fixtures</a></li><li><a href="module-commands_info.html">commands/info</a></li><li><a href="module-commands_install-pack.html">commands/install-pack</a></li><li><a href="module-commands_install-plugin.html">commands/install-plugin</a></li><li><a href="module-commands_list-tenants.html">commands/list-tenants</a></li><li><a href="module-commands_localize-plugin.html">commands/localize-plugin</a></li><li><a href="module-commands_make-migration.html">commands/make-migration</a></li><li><a href="module-commands_migrate.html">commands/migrate</a></li><li><a href="module-commands_plugins.html">commands/plugins</a></li><li><a href="module-commands_release.html">commands/release</a></li><li><a href="module-commands_reset-schema.html">commands/reset-schema</a></li><li><a href="module-commands_restore.html">commands/restore</a></li><li><a href="module-commands_rm-tenant.html">commands/rm-tenant</a></li><li><a href="module-commands_run-nenchmark.html">commands/run-nenchmark</a></li><li><a href="module-commands_run-tests.html">commands/run-tests</a></li><li><a href="module-commands_scheduler.html">commands/scheduler</a></li><li><a href="module-commands_serve.html">commands/serve</a></li><li><a href="module-commands_set-cfg.html">commands/set-cfg</a></li><li><a href="module-commands_setup.html">commands/setup</a></li><li><a href="module-commands_setup-benchmark.html">commands/setup-benchmark</a></li><li><a href="module-commands_test-plugin.html">commands/test-plugin</a></li><li><a href="module-commands_transform-field.html">commands/transform-field</a></li><li><a href="module-common.html">common</a></li><li><a href="module-saltcorn-cli_common.html">saltcorn-cli/common</a></li></ul><h3>Classes</h3><ul><li><a href="module-commands_add-schema-AddSchemaCommand.html">AddSchemaCommand</a></li><li><a href="module-commands_backup-BackupCommand.html">BackupCommand</a></li><li><a href="module-commands_create-tenant-CreateTenantCommand.html">CreateTenantCommand</a></li><li><a href="module-commands_create-user-CreateUserCommand.html">CreateUserCommand</a></li><li><a href="module-commands_fixtures-FixturesCommand.html">FixturesCommand</a></li><li><a href="module-commands_info-InfoCommand.html">InfoCommand</a></li><li><a href="module-commands_install-pack-InstallPackCommand.html">InstallPackCommand</a></li><li><a href="module-commands_install-plugin-InstallPluginCommand.html">InstallPluginCommand</a></li><li><a href="module-commands_list-tenants-ListTenantsCommand.html">ListTenantsCommand</a></li><li><a href="module-commands_localize-plugin-LocalizePluginCommand.html">LocalizePluginCommand</a></li><li><a href="module-commands_make-migration-MigrationCommand.html">MigrationCommand</a></li><li><a href="module-commands_migrate-MigrateCommand.html">MigrateCommand</a></li><li><a href="module-commands_plugins-PluginsCommand.html">PluginsCommand</a></li><li><a href="module-commands_release-ReleaseCommand.html">ReleaseCommand</a></li><li><a href="module-commands_reset-schema-ResetCommand.html">ResetCommand</a></li><li><a href="module-commands_restore-RestoreCommand.html">RestoreCommand</a></li><li><a href="module-commands_rm-tenant-RmTenantCommand.html">RmTenantCommand</a></li><li><a href="module-commands_run-nenchmark-RunBenchmarkCommand.html">RunBenchmarkCommand</a></li><li><a href="module-commands_run-tests-RunTestsCommand.html">RunTestsCommand</a></li><li><a href="module-commands_scheduler-ScheduleCommand.html">ScheduleCommand</a></li><li><a href="module-commands_serve-ServeCommand.html">ServeCommand</a></li><li><a href="module-commands_set-cfg-SetCfgCommand.html">SetCfgCommand</a></li><li><a href="module-commands_setup-benchmark-SetupBenchmarkCommand.html">SetupBenchmarkCommand</a></li><li><a href="module-commands_setup-SetupCommand.html">SetupCommand</a></li><li><a href="module-commands_test-plugin-TestPluginCommand.html">TestPluginCommand</a></li><li><a href="module-commands_transform-field-TransformFieldCommand.html">TransformFieldCommand</a></li></ul></div><div class="category"><h2>saltcorn-data</h2><h3>Modules / base-plugin</h3><ul><li><a href="module-base-plugin_actions.html">base-plugin/actions</a></li><li><a href="module-base-plugin_fieldviews.html">base-plugin/fieldviews</a></li><li><a href="module-base-plugin_fileview.html">base-plugin/fileview</a></li><li><a href="module-base-plugin_index.html">base-plugin/index</a></li><li><a href="module-base-plugin_types.html">base-plugin/types</a></li><li><a href="module-base-plugin_viewtemplates_edit.html">base-plugin/viewtemplates/edit</a></li><li><a href="module-base-plugin_viewtemplates_feed.html">base-plugin/viewtemplates/feed</a></li><li><a href="module-base-plugin_viewtemplates_filter.html">base-plugin/viewtemplates/filter</a></li><li><a href="module-base-plugin_viewtemplates_list.html">base-plugin/viewtemplates/list</a></li><li><a href="module-base-plugin_viewtemplates_listshowlist.html">base-plugin/viewtemplates/listshowlist</a></li><li><a href="module-base-plugin_viewtemplates_room.html">base-plugin/viewtemplates/room</a></li><li><a href="module-base-plugin_viewtemplates_show.html">base-plugin/viewtemplates/show</a></li><li><a href="module-base-plugin_viewtemplates_viewable_fields.html">base-plugin/viewtemplates/viewable_fields</a></li></ul><h3>Modules</h3><ul><li><a href="module-contract.html">contract</a></li><li><a href="module-migrate.html">migrate</a></li><li><a href="module-plugin-helper.html">plugin-helper</a></li><li><a href="module-plugin-testing.html">plugin-testing</a></li><li><a href="module-saltcorn-data_index.html">saltcorn-data/index</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Modules / db</h3><ul><li><a href="module-db_connect.html">db/connect</a></li><li><a href="module-db_fixtures.html">db/fixtures</a></li><li><a href="module-db_index.html">db/index</a></li><li><a href="module-db_internal.html">db/internal</a></li><li><a href="module-db_multi-tenant.html">db/multi-tenant</a></li><li><a href="module-db_pg.html">db/pg</a></li><li><a href="module-db_reset_schema.html">db/reset_schema</a></li><li><a href="module-db_single-tenant.html">db/single-tenant</a></li><li><a href="module-db_sqlite.html">db/sqlite</a></li><li><a href="module-db_state.html">db/state</a></li><li><a href="module-db_tenants.html">db/tenants</a></li></ul><h3>Modules / models</h3><ul><li><a href="module-models_backup.html">models/backup</a></li><li><a href="module-models_config.html">models/config</a></li><li><a href="module-models_crash.html">models/crash</a></li><li><a href="module-models_discovery.html">models/discovery</a></li><li><a href="module-models_email.html">models/email</a></li><li><a href="module-models_eventlog.html">models/eventlog</a></li><li><a href="module-models_expression.html">models/expression</a></li><li><a href="module-models_field.html">models/field</a></li><li><a href="module-models_fieldrepeat.html">models/fieldrepeat</a></li><li><a href="module-models_file.html">models/file</a></li><li><a href="module-models_form.html">models/form</a></li><li><a href="module-models_index.html">models/index</a></li><li><a href="module-models_layout.html">models/layout</a></li><li><a href="module-models_library.html">models/library</a></li><li><a href="module-models_pack.html">models/pack</a></li><li><a href="module-models_page.html">models/page</a></li><li><a href="module-models_plugin.html">models/plugin</a></li><li><a href="module-models_random.html">models/random</a></li><li><a href="module-models_role.html">models/role</a></li><li><a href="module-models_scheduler.html">models/scheduler</a></li><li><a href="module-models_table.html">models/table</a></li><li><a href="module-models_table_constraints.html">models/table_constraints</a></li><li><a href="module-models_tenant.html">models/tenant</a></li><li><a href="module-models_trigger.html">models/trigger</a></li><li><a href="module-models_user.html">models/user</a></li><li><a href="module-models_view.html">models/view</a></li><li><a href="module-models_workflow.html">models/workflow</a></li></ul><h3>Namespaces / actions</h3><ul><li><a href="module-base-plugin_actions.blocks.html">blocks</a></li><li><a href="module-base-plugin_actions.duplicate_row.html">duplicate_row</a></li><li><a href="module-base-plugin_actions.emit_event.html">emit_event</a></li><li><a href="module-base-plugin_actions.find_or_create_dm_room.html">find_or_create_dm_room</a></li><li><a href="module-base-plugin_actions.insert_any_row.html">insert_any_row</a></li><li><a href="module-base-plugin_actions.insert_joined_row.html">insert_joined_row</a></li><li><a href="module-base-plugin_actions.recalculate_stored_fields.html">recalculate_stored_fields</a></li><li><a href="module-base-plugin_actions.run_js_code.html">run_js_code</a></li><li><a href="module-base-plugin_actions.send_email.html">send_email</a></li><li><a href="module-base-plugin_actions.webhook.html">webhook</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-base-plugin_fieldviews-radio_select.html">radio_select</a></li><li><a href="module-base-plugin_fieldviews-search_or_create.html">search_or_create</a></li><li><a href="module-base-plugin_fieldviews-select.html">select</a></li><li><a href="module-base-plugin_fileview._Download%2520link_.html">"Download link"</a></li><li><a href="module-base-plugin_fileview._Link%2520(new%2520tab)_.html">"Link (new tab)"</a></li><li><a href="module-base-plugin_fileview._Show%2520Image_.html">"Show Image"</a></li><li><a href="module-base-plugin_fileview.Link.html">Link</a></li><li><a href="module-models_config-configTypes.html">configTypes</a></li><li><a href="module-saltcorn-data_index-saltcorn-data_overview.html">saltcorn-data_overview</a></li></ul><h3>Namespaces / base-plugin</h3><ul><li><a href="module-base-plugin_index-base-plugin_overview.html">base-plugin_overview</a></li></ul><h3>Namespaces / types / bool</h3><ul><li><a href="module-base-plugin_types-bool.html">bool</a></li><li><a href="module-base-plugin_types-bool.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-bool.fieldviews.checkboxes.html">checkboxes</a></li><li><a href="module-base-plugin_types-bool.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-bool.fieldviews.show.html">show</a></li><li><a href="module-base-plugin_types-bool.fieldviews.tristate.html">tristate</a></li><li><a href="module-base-plugin_types-bool.fieldviews.TrueFalse.html">TrueFalse</a></li></ul><h3>Namespaces / types / color</h3><ul><li><a href="module-base-plugin_types-color.html">color</a></li><li><a href="module-base-plugin_types-color.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-color.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-color.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / date</h3><ul><li><a href="module-base-plugin_types-date.html">date</a></li><li><a href="module-base-plugin_types-date.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-date.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-date.fieldviews.editDay.html">editDay</a></li><li><a href="module-base-plugin_types-date.fieldviews.format.html">format</a></li><li><a href="module-base-plugin_types-date.fieldviews.relative.html">relative</a></li><li><a href="module-base-plugin_types-date.fieldviews.show.html">show</a></li><li><a href="module-base-plugin_types-date.fieldviews.showDay.html">showDay</a></li><li><a href="module-base-plugin_types-date.fieldviews.yearsAgo.html">yearsAgo</a></li><li><a href="module-base-plugin_types-date.presets.html">presets</a></li></ul><h3>Namespaces / types / float</h3><ul><li><a href="module-base-plugin_types-float.html">float</a></li><li><a href="module-base-plugin_types-float.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-float.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-float.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / int</h3><ul><li><a href="module-base-plugin_types-int.html">int</a></li><li><a href="module-base-plugin_types-int.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-int.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-int.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / string</h3><ul><li><a href="module-base-plugin_types-string.html">string</a></li><li><a href="module-base-plugin_types-string.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_header.html">as_header</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_link.html">as_link</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_text.html">as_text</a></li><li><a href="module-base-plugin_types-string.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-string.fieldviews.img_from_url.html">img_from_url</a></li><li><a href="module-base-plugin_types-string.fieldviews.password.html">password</a></li><li><a href="module-base-plugin_types-string.fieldviews.radio_group.html">radio_group</a></li><li><a href="module-base-plugin_types-string.fieldviews.textarea.html">textarea</a></li><li><a href="module-base-plugin_types-string.presets.html">presets</a></li></ul><h3>Namespaces / db</h3><ul><li><a href="module-db_index-db_overview.html">db_overview</a></li></ul><h3>Namespaces / models</h3><ul><li><a href="module-models_index-models_overview.html">models_overview</a></li></ul><h3>Classes</h3><ul><li><a href="module-db_state-State.html">State</a></li><li><a href="module-models_crash-Crash.html">Crash</a></li><li><a href="module-models_eventlog-EventLog.html">EventLog</a></li><li><a href="module-models_fieldrepeat-FieldRepeat.html">FieldRepeat</a></li><li><a href="module-models_field-Field.html">Field</a></li><li><a href="module-models_file-File.html">File</a></li><li><a href="module-models_form-Form.html">Form</a></li><li><a href="module-models_library-Library.html">Library</a></li><li><a href="module-models_page-Page.html">Page</a></li><li><a href="module-models_plugin-Plugin.html">Plugin</a></li><li><a href="module-models_role-Role.html">Role</a></li><li><a href="module-models_table_constraints-TableConstraint.html">TableConstraint</a></li><li><a href="module-models_table-Table.html">Table</a></li><li><a href="module-models_trigger-Trigger.html">Trigger</a></li><li><a href="module-models_user-User.html">User</a></li><li><a href="module-models_view-View.html">View</a></li><li><a href="module-models_workflow-Workflow.html">Workflow</a></li></ul></div><div class="category"><h2>saltcorn-markup</h2><h3>Modules</h3><ul><li><a href="module-builder.html">builder</a></li><li><a href="module-emergency_layout.html">emergency_layout</a></li><li><a href="module-form.html">form</a></li><li><a href="module-helpers.html">helpers</a></li><li><a href="module-layout.html">layout</a></li><li><a href="module-layout_utils.html">layout_utils</a></li><li><a href="module-mktag.html">mktag</a></li><li><a href="module-saltcorn-markup_index.html">saltcorn-markup/index</a></li><li><a href="module-table.html">table</a></li><li><a href="module-tabs.html">tabs</a></li><li><a href="module-tags.html">tags</a></li></ul></div><div class="category"><h2>saltcorn-sbadmin2</h2><h3>Modules</h3><ul><li><a href="module-saltcorn-sbadmin2_index.html">saltcorn-sbadmin2/index</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-saltcorn-sbadmin2_index-blockDispatch.html">blockDispatch</a></li></ul></div><div class="category"><h2>server</h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-errors.html">errors</a></li><li><a href="module-fixture_persons.html">fixture_persons</a></li><li><a href="module-load_plugins.html">load_plugins</a></li><li><a href="module-serve.html">serve</a></li><li><a href="module-server_index.html">server/index</a></li><li><a href="module-systemd.html">systemd</a></li><li><a href="module-wrapper.html">wrapper</a></li></ul><h3>Modules / auth</h3><ul><li><a href="module-auth_admin.html">auth/admin</a></li><li><a href="module-auth_inde.html">auth/inde</a></li><li><a href="module-auth_resetpw.html">auth/resetpw</a></li><li><a href="module-auth_roleadmin.html">auth/roleadmin</a></li><li><a href="module-auth_routes.html">auth/routes</a></li><li><a href="module-auth_testhelp.html">auth/testhelp</a></li></ul><h3>Modules / markup</h3><ul><li><a href="module-markup_admin.html">markup/admin</a></li><li><a href="module-markup_blockly.html">markup/blockly</a></li><li><a href="module-markup_expression_blurb.html">markup/expression_blurb</a></li><li><a href="module-markup_forms.html">markup/forms</a></li><li><a href="module-markup_index.html">markup/index</a></li><li><a href="module-markup_plugin-store.html">markup/plugin-store</a></li></ul><h3>Modules / routes</h3><ul><li><a href="module-routes_actions.html">routes/actions</a></li><li><a href="module-routes_admin.html">routes/admin</a></li><li><a href="module-routes_api.html">routes/api</a></li><li><a href="module-routes_config.html">routes/config</a></li><li><a href="module-routes_crashlog.html">routes/crashlog</a></li><li><a href="module-routes_delete.html">routes/delete</a></li><li><a href="module-routes_edit.html">routes/edit</a></li><li><a href="module-routes_eventlog.html">routes/eventlog</a></li><li><a href="module-routes_events.html">routes/events</a></li><li><a href="module-routes_fields.html">routes/fields</a></li><li><a href="module-routes_files.html">routes/files</a></li><li><a href="module-routes_homepage.html">routes/homepage</a></li><li><a href="module-routes_index.html">routes/index</a></li><li><a href="module-routes_infoarch.html">routes/infoarch</a></li><li><a href="module-routes_library.html">routes/library</a></li><li><a href="module-routes_list.html">routes/list</a></li><li><a href="module-routes_menu.html">routes/menu</a></li><li><a href="module-routes_packs.html">routes/packs</a></li><li><a href="module-routes_page.html">routes/page</a></li><li><a href="module-routes_pageedit.html">routes/pageedit</a></li><li><a href="module-routes_plugins.html">routes/plugins</a></li><li><a href="module-routes_scapi.html">routes/scapi</a></li><li><a href="module-routes_search.html">routes/search</a></li><li><a href="module-routes_settings.html">routes/settings</a></li><li><a href="module-routes_tables.html">routes/tables</a></li><li><a href="module-routes_tenant.html">routes/tenant</a></li><li><a href="module-routes_utils.html">routes/utils</a></li><li><a href="module-routes_view.html">routes/view</a></li><li><a href="module-routes_viewedit.html">routes/viewedit</a></li></ul><h3>Namespaces / auth</h3><ul><li><a href="module-auth_admin-auth_adminRouter.html">auth/adminRouter</a></li><li><a href="module-auth_roleadmin-roleadminRouter.html">roleadminRouter</a></li><li><a href="module-auth_routes-routesRouter.html">routesRouter</a></li></ul><h3>Namespaces / routes</h3><ul><li><a href="module-routes_actions-actionsRouter.html">actionsRouter</a></li><li><a href="module-routes_admin-routes_adminRouter.html">routes/adminRouter</a></li><li><a href="module-routes_api-apiRouter.html">apiRouter</a></li><li><a href="module-routes_config-configRouter.html">configRouter</a></li><li><a href="module-routes_crashlog-crashlogRouter.html">crashlogRouter</a></li><li><a href="module-routes_delete-deleteRouter.html">deleteRouter</a></li><li><a href="module-routes_edit-editRouter.html">editRouter</a></li><li><a href="module-routes_eventlog-eventlogRouter.html">eventlogRouter</a></li><li><a href="module-routes_events-eventsRouter.html">eventsRouter</a></li><li><a href="module-routes_fields-fieldsRouter.html">fieldsRouter</a></li><li><a href="module-routes_files-filesRouter.html">filesRouter</a></li><li><a href="module-routes_infoarch-infoarchRouter.html">infoarchRouter</a></li><li><a href="module-routes_library-libraryRouter.html">libraryRouter</a></li><li><a href="module-routes_list-listRouter.html">listRouter</a></li><li><a href="module-routes_menu-menuRouter.html">menuRouter</a></li><li><a href="module-routes_packs-packsRouter.html">packsRouter</a></li><li><a href="module-routes_pageedit-pageeditRouter.html">pageeditRouter</a></li><li><a href="module-routes_page-pageRouter.html">pageRouter</a></li><li><a href="module-routes_plugins-pluginsRouter.html">pluginsRouter</a></li><li><a href="module-routes_scapi-scapiRouter.html">scapiRouter</a></li><li><a href="module-routes_search-searchRouter.html">searchRouter</a></li><li><a href="module-routes_settings-settingsRouter.html">settingsRouter</a></li><li><a href="module-routes_tables-tablesRouter.html">tablesRouter</a></li><li><a href="module-routes_tenant-tenantRouter.html">tenantRouter</a></li><li><a href="module-routes_viewedit-vieweditRouter.html">vieweditRouter</a></li><li><a href="module-routes_view-viewRouter.html">viewRouter</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>server/routes/admin.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @category server
+ * @module routes/admin
+ * @subcategory routes
+ */
+const Router = require("express-promise-router");
+
+const {
+  setTenant,
+  isAdmin,
+  error_catcher,
+  getGitRevision,
+} = require("./utils.js");
+const Table = require("@saltcorn/data/models/table");
+const Plugin = require("@saltcorn/data/models/plugin");
+const File = require("@saltcorn/data/models/file");
+const { spawn } = require("child_process");
+const User = require("@saltcorn/data/models/user");
+const path = require("path");
+const { getAllTenants } = require("@saltcorn/data/models/tenant");
+const { post_btn, renderForm } = require("@saltcorn/markup");
+const {
+  div,
+  a,
+  hr,
+  form,
+  input,
+  label,
+  i,
+  h4,
+  table,
+  tbody,
+  td,
+  th,
+  tr,
+  button,
+  span,
+  p,
+} = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
+const {
+  getState,
+  restart_tenant,
+  getTenant,
+  get_other_domain_tenant,
+  get_process_init_time,
+} = require("@saltcorn/data/db/state");
+const { loadAllPlugins } = require("../load_plugins");
+const { create_backup, restore } = require("@saltcorn/data/models/backup");
+const fs = require("fs");
+const load_plugins = require("../load_plugins");
+const {
+  restore_backup,
+  send_admin_page,
+  config_fields_form,
+  save_config_from_form,
+  flash_restart_if_required,
+} = require("../markup/admin.js");
+const packagejson = require("../package.json");
+const Form = require("@saltcorn/data/models/form");
+const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+const { getMailTransport } = require("@saltcorn/data/models/email");
+const {
+  getBaseDomain,
+  hostname_matches_baseurl,
+  is_hsts_tld,
+} = require("../markup/admin");
+const moment = require("moment");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace routes/adminRouter
+ * @category server
+ * @subcategory routes
+ */
+const router = new Router();
+module.exports = router;
+
+/**
+ * @param {object} req 
+ * @returns {Promise&lt;Form>}
+ */
+const site_id_form = (req) =>
+  config_fields_form({
+    req,
+    field_names: [
+      "site_name",
+      "timezone",
+      "site_logo_id",
+      "favicon_id",
+      "base_url",
+      "page_custom_css",
+      "page_custom_html",
+      "development_mode",
+      "log_sql",
+      "multitenancy_enabled",
+    ],
+    action: "/admin",
+    submitLabel: req.__("Save"),
+  });
+/**
+ * Email settings form definition
+ * @param {object} req request
+ * @returns {Promise&lt;Form>} form
+ */
+const email_form = async (req) => {
+  const form = await config_fields_form({
+    req,
+    field_names: [
+      "smtp_host",
+      "smtp_username",
+      "smtp_password",
+      "smtp_port",
+      "smtp_secure",
+      "email_from",
+    ],
+    action: "/admin/email",
+  });
+  form.submitButtonClass = "btn-outline-primary";
+  form.submitLabel = req.__("Save");
+  form.onChange =
+    "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
+  return form;
+};
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const form = await site_id_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Site identity",
+      contents: {
+        type: "card",
+        title: req.__("Site identity settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await site_id_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Site identity",
+        contents: {
+          type: "card",
+          title: req.__("Site identity settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      flash_restart_if_required(form, req);
+      await save_config_from_form(form);
+
+      req.flash("success", req.__("Site identity settings updated"));
+      res.redirect("/admin");
+    }
+  })
+);
+
+/**
+ * @name get/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Email",
+      contents: {
+        type: "card",
+        title: req.__("Email settings"),
+        contents: [
+          renderForm(form, req.csrfToken()),
+          a(
+            {
+              id: "testemail",
+              href: "/admin/send-test-email",
+              class: "btn btn-primary",
+            },
+            req.__("Send test email")
+          ),
+        ],
+      },
+    });
+  })
+);
+
+/**
+ * @name get/send-test-email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/send-test-email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const from = getState().getConfig("email_from");
+    const email = {
+      from,
+      to: req.user.email,
+      subject: req.__("Saltcorn test email"),
+      html: req.__("Hello from Saltcorn"),
+    };
+    try {
+      await getMailTransport().sendMail(email);
+      req.flash(
+        "success",
+        req.__("Email sent to %s with no errors", req.user.email)
+      );
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+
+    res.redirect("/admin/email");
+  })
+);
+
+/**
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/email",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await email_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Email",
+        contents: {
+          type: "card",
+          title: req.__("Email settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Email settings updated"));
+      res.redirect("/admin/email");
+    }
+  })
+);
+
+/**
+ * @name get/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/backup",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        type: "card",
+        title: req.__("Backup"),
+        contents: table(
+          tbody(
+            tr(
+              td(
+                div(
+                  post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
+                )
+              ),
+              td(p({ class: "ml-4 pt-2" }, req.__("Download a backup")))
+            ),
+            tr(td(div({ class: "my-4" }))),
+            tr(
+              td(
+                restore_backup(req.csrfToken(), [
+                  i({ class: "fas fa-2x fa-upload" }),
+                  "&lt;br/>",
+                  req.__("Restore"),
+                ])
+              ),
+              td(p({ class: "ml-4" }, req.__("Restore a backup")))
+            )
+          )
+        ),
+      },
+    });
+  })
+);
+
+/**
+ * @name get/system
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/system",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const latest = isRoot &amp;&amp; (await get_latest_npm_version("@saltcorn/cli"));
+    const is_latest = packagejson.version === latest;
+    const git_commit = getGitRevision();
+    const can_update =
+      !is_latest &amp;&amp; !process.env.SALTCORN_DISABLE_UPGRADE &amp;&amp; !git_commit;
+    const dbversion = await db.getVersion(true);
+
+    send_admin_page({
+      res,
+      req,
+      active_sub: "System",
+      contents: {
+        breakpoint: "md",
+        besides: [
+          {
+            type: "card",
+            title: req.__("System operations"),
+            contents: div(
+              div(
+                post_btn(
+                  "/admin/restart",
+                  req.__("Restart server"),
+                  req.csrfToken(),
+                  {
+                    ajax: true,
+                    reload_delay: 4000,
+                    spinner: true,
+                  }
+                )
+              ),
+              hr(),
+
+              a(
+                { href: "/admin/clear-all", class: "btn btn-danger" },
+                i({ class: "fas fa-trash-alt" }),
+                " ",
+                req.__("Clear all"),
+                " &amp;raquo;"
+              )
+            ),
+          },
+          {
+            type: "card",
+            title: req.__("About the system"),
+            contents: div(
+              h4(req.__("About Saltcorn")),
+              table(
+                tbody(
+                  tr(
+                    th(req.__("Saltcorn version")),
+                    td(
+                      packagejson.version +
+                        (isRoot &amp;&amp; can_update
+                          ? post_btn(
+                              "/admin/upgrade",
+                              req.__("Upgrade"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : isRoot &amp;&amp; is_latest
+                          ? span(
+                              { class: "badge badge-primary ml-2" },
+                              req.__("Latest")
+                            )
+                          : "")
+                    )
+                  ),
+                  git_commit &amp;&amp;
+                    tr(
+                      th(req.__("git commit")),
+                      td(
+                        a(
+                          {
+                            href:
+                              "https://github.com/saltcorn/saltcorn/commit/" +
+                              git_commit,
+                          },
+                          git_commit.substring(0, 6)
+                        )
+                      )
+                    ),
+                  tr(th(req.__("Node.js version")), td(process.version)),
+                  tr(
+                    th(req.__("Database")),
+                    td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
+                  ),
+                  tr(
+                    th(req.__("Process uptime")),
+                    td(moment(get_process_init_time()).fromNow(true))
+                  )
+                )
+              ),
+              p(
+                { class: "mt-3" },
+                req.__(
+                  `Saltcorn is &lt;a href="https://www.gnu.org/philosophy/free-sw.en.html">Free&lt;/a> and &lt;a href="https://opensource.org/">Open Source&lt;/a> Software, &lt;a href="https://github.com/saltcorn/saltcorn/">released&lt;/a> under the &lt;a href="https://github.com/saltcorn/saltcorn/blob/master/LICENSE">MIT license&lt;/a>.`
+                )
+              )
+            ),
+          },
+        ],
+      },
+    });
+  })
+);
+
+/**
+ * @name post/restart
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/restart",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (db.getTenantSchema() === db.connectObj.default_schema) {
+      if (process.send) process.send("RestartServer");
+      else process.exit(0);
+    } else {
+      await restart_tenant(loadAllPlugins);
+      process.send &amp;&amp;
+        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      req.flash("success", req.__("Restart complete"));
+      res.redirect("/admin");
+    }
+  })
+);
+
+/**
+ * @name post/upgrade
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/upgrade",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (db.getTenantSchema() !== db.connectObj.default_schema) {
+      req.flash("error", req.__("Not possible for tenant"));
+      res.redirect("/admin");
+    } else {
+      res.write(req.__("Starting upgrade, please wait...\n"));
+      const child = spawn(
+        "npm",
+        ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
+        {
+          stdio: ["ignore", "pipe", process.stderr],
+        }
+      );
+      child.stdout.on("data", (data) => {
+        res.write(data);
+      });
+      child.on("exit", function (code, signal) {
+        res.end(
+          `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+        );
+        setTimeout(() => {
+          process.exit(0);
+        }, 100);
+      });
+    }
+  })
+);
+
+/**
+ * @name post/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/backup",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const fileName = await create_backup();
+    res.type("application/zip");
+    res.attachment(fileName);
+    var file = fs.createReadStream(fileName);
+    file.on("end", function () {
+      fs.unlink(fileName, function () {});
+    });
+    file.pipe(res);
+  })
+);
+
+/**
+ * @name post/restore
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/restore",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const newPath = File.get_new_path();
+    await req.files.file.mv(newPath);
+    const err = await restore(newPath, (p) =>
+      load_plugins.loadAndSaveNewPlugin(p)
+    );
+    if (err) req.flash("error", err);
+    else req.flash("success", req.__("Successfully restored backup"));
+    fs.unlink(newPath, function () {});
+    res.redirect(`/admin`);
+  })
+);
+
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
+const clearAllForm = (req) =>
+  new Form({
+    action: "/admin/clear-all",
+    submitLabel: "Delete",
+    blurb: req.__(
+      "This will delete &lt;strong>EVERYTHING&lt;/strong> in the selected categories"
+    ),
+    fields: [
+      {
+        type: "Bool",
+        label: req.__("Tables"),
+        name: "tables",
+        default: true,
+      },
+      {
+        type: "Bool",
+        label: req.__("Views"),
+        name: "views",
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "pages",
+        label: req.__("Pages"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "files",
+        label: req.__("Files"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "triggers",
+        label: req.__("Triggers"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "eventlog",
+        label: req.__("Event log"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "library",
+        label: req.__("Library"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "users",
+        label: req.__("Users"),
+        default: true,
+      },
+      {
+        name: "config",
+        type: "Bool",
+        label: req.__("Configuration"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "plugins",
+        label: req.__("Plugins"),
+        default: true,
+      },
+    ],
+  });
+
+/**
+ * @name post/enable-letsencrypt
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/enable-letsencrypt",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (db.getTenantSchema() === db.connectObj.default_schema) {
+      const domain = getBaseDomain();
+      if (!domain) {
+        req.flash("error", req.__("Set Base URL configuration first"));
+        res.redirect("/useradmin/ssl");
+        return;
+      }
+      if (!hostname_matches_baseurl(req, domain) &amp;&amp; !is_hsts_tld(domain)) {
+        req.flash(
+          "error",
+          req.__(
+            "Base URL domain %s does not match hostname %s",
+            domain,
+            req.hostname
+          )
+        );
+        res.redirect("/useradmin/ssl");
+        return;
+      }
+      let altnames = [domain];
+      const allTens = await getAllTenants();
+      for (const ten of allTens) {
+        const ten0 = getTenant(ten);
+        const ten_domain = (ten0.configs.base_url.value || "")
+          .replace("https://", "")
+          .replace("http://", "")
+          .replace("/", "");
+        if (ten_domain) altnames.push(ten_domain);
+      }
+      try {
+        const file_store = db.connectObj.file_store;
+        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        const Greenlock = require("greenlock");
+        const greenlock = Greenlock.create({
+          packageRoot: path.resolve(__dirname, ".."),
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+        });
+
+        await greenlock.manager.defaults({
+          subscriberEmail: admin_users[0].email,
+          agreeToTerms: true,
+        });
+        await greenlock.sites.add({
+          subject: domain,
+          altnames,
+        });
+        await getState().setConfig("letsencrypt", true);
+        req.flash(
+          "success",
+          req.__(
+            "LetsEncrypt SSL enabled. Restart for changes to take effect."
+          ) +
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
+        );
+        res.redirect("/useradmin/ssl");
+      } catch (e) {
+        req.flash("error", e.message);
+        res.redirect("/useradmin/ssl");
+      }
+    } else {
+      req.flash("error", req.__("Not possible for tenant"));
+      res.redirect("/useradmin/ssl");
+    }
+  })
+);
+
+/**
+ * @name get/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/clear-all",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.sendWrap(req.__(`Admin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Admin"), href: "/admin" },
+            { text: req.__("Clear all") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Clear all"),
+          contents: div(renderForm(clearAllForm(req), req.csrfToken())),
+        },
+      ],
+    });
+  })
+);
+
+/**
+ * @name post/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/clear-all",
+  setTenant,
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = clearAllForm(req);
+    form.validate(req.body);
+    //order: pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
+    if (form.values.pages) {
+      await db.deleteWhere("_sc_pages");
+    }
+    if (form.values.views) {
+      await db.deleteWhere("_sc_views");
+    }
+    //user fields
+    const users = await Table.findOne({ name: "users" });
+    const userfields = await users.getFields();
+    for (const f of userfields) {
+      if (f.is_fkey) {
+        if (f.reftable_name === "_sc_files" &amp;&amp; form.values.files) {
+          await f.delete();
+        } else if (f.reftable_name !== "users" &amp;&amp; form.values.tables) {
+          await f.delete();
+        }
+      }
+    }
+    if (form.values.tables) {
+      await db.deleteWhere("_sc_table_constraints");
+
+      const tables = await Table.find();
+
+      for (const table of tables) {
+        await db.deleteWhere("_sc_triggers", {
+          table_id: table.id,
+        });
+        await table.update({ ownership_field_id: null });
+        const fields = await table.getFields();
+        for (const f of fields) {
+          if (f.is_fkey) {
+            await f.delete();
+          }
+        }
+      }
+      for (const table of tables) {
+        if (table.name !== "users") await table.delete();
+      }
+    }
+    if (form.values.files) {
+      const files = await File.find();
+      for (const file of files) {
+        await file.delete();
+      }
+    }
+    if (form.values.plugins) {
+      const ps = await Plugin.find();
+      for (const p of ps) {
+        if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
+      }
+      await getState().refresh_plugins();
+    }
+    if (form.values.triggers) {
+      await db.deleteWhere("_sc_triggers");
+      await getState().refresh_triggers();
+    }
+    if (form.values.library) {
+      await db.deleteWhere("_sc_library");
+    }
+    if (form.values.eventlog) {
+      await db.deleteWhere("_sc_event_log");
+    }
+    if (form.values.config) {
+      //config+crashes
+      await db.deleteWhere("_sc_errors");
+      await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
+      await getState().refresh();
+    }
+    if (form.values.users) {
+      const users1 = await Table.findOne({ name: "users" });
+      const userfields1 = await users1.getFields();
+
+      for (const f of userfields1) {
+        if (f.name !== "email" &amp;&amp; f.name !== "id") await f.delete();
+      }
+      await db.deleteWhere("users");
+      await db.deleteWhere("_sc_roles", { not: { id: { in: [1, 4, 8, 10] } } });
+      if (db.reset_sequence) await db.reset_sequence("users");
+      req.logout();
+      if (req.session.destroy)
+        req.session.destroy((err) => {
+          req.logout();
+        });
+      else {
+        req.logout();
+        req.session = null;
+      }
+      res.redirect(`/auth/create_first_user`);
+    } else {
+      req.flash(
+        "success",
+        req.__(
+          "Deleted all %s",
+          Object.entries(form.values)
+            .filter(([k, v]) => v)
+            .map(([k, v]) => k)
+            .join(", ")
+        )
+      );
+      res.redirect(`/admin`);
+    }
+  })
+);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+</body>
+</html>

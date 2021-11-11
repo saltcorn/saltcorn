@@ -1,0 +1,786 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Saltcorn saltcorn-data/models/config.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="jsdoc.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"></div><div class="category"><h2>saltcorn-base-plugin</h2><h3>Modules</h3><ul><li><a href="module-saltcorn-base-plugin_index.html">saltcorn-base-plugin/index</a></li></ul></div><div class="category"><h2>saltcorn-builder</h2><h3>Modules / components</h3><ul><li><a href="module-components%2520_%2520Toolbox.html">components / Toolbox</a></li><li><a href="module-components_Builder.html">components/Builder</a></li><li><a href="module-components_context.html">components/context</a></li><li><a href="module-components_Library.html">components/Library</a></li><li><a href="module-components_preview_context.html">components/preview_context</a></li><li><a href="module-components_RenderNode.html">components/RenderNode</a></li><li><a href="module-components_storage.html">components/storage</a></li></ul><h3>Modules / components / elements</h3><ul><li><a href="module-components_elements_Action.html">components/elements/Action</a></li><li><a href="module-components_elements_Aggregation.html">components/elements/Aggregation</a></li><li><a href="module-components_elements_BoxModelEditor.html">components/elements/BoxModelEditor</a></li><li><a href="module-components_elements_Card.html">components/elements/Card</a></li><li><a href="module-components_elements_Column.html">components/elements/Column</a></li><li><a href="module-components_elements_Columns.html">components/elements/Columns</a></li><li><a href="module-components_elements_Container.html">components/elements/Container</a></li><li><a href="module-components_elements_DropDownFilter.html">components/elements/DropDownFilter</a></li><li><a href="module-components_elements_Empty.html">components/elements/Empty</a></li><li><a href="module-components_elements_Field.html">components/elements/Field</a></li><li><a href="module-components_elements_HTMLCode.html">components/elements/HTMLCode</a></li><li><a href="module-components_elements_Image.html">components/elements/Image</a></li><li><a href="module-components_elements_JoinField.html">components/elements/JoinField</a></li><li><a href="module-components_elements_LineBreak.html">components/elements/LineBreak</a></li><li><a href="module-components_elements_Link.html">components/elements/Link</a></li><li><a href="module-components_elements_SearchBar.html">components/elements/SearchBar</a></li><li><a href="module-components_elements_Tabs.html">components/elements/Tabs</a></li><li><a href="module-components_elements_Text.html">components/elements/Text</a></li><li><a href="module-components_elements_ToggleFilter.html">components/elements/ToggleFilter</a></li><li><a href="module-components_elements_utils.html">components/elements/utils</a></li><li><a href="module-components_elements_View.html">components/elements/View</a></li><li><a href="module-components_elements_ViewLink.html">components/elements/ViewLink</a></li></ul><h3>Modules</h3><ul><li><a href="module-components_elements_faicons.html">components/elements/faicons</a></li><li><a href="module-saltcorn-builder_index.html">saltcorn-builder/index</a></li></ul><h3>Namespaces / components / Toolbox</h3><ul><li><a href="module-components%2520_%2520Toolbox-ActionElem.html">ActionElem</a></li><li><a href="module-components%2520_%2520Toolbox-AggregationElem.html">AggregationElem</a></li><li><a href="module-components%2520_%2520Toolbox-CardElem.html">CardElem</a></li><li><a href="module-components%2520_%2520Toolbox-ColumnsElem.html">ColumnsElem</a></li><li><a href="module-components%2520_%2520Toolbox-ContainerElem.html">ContainerElem</a></li><li><a href="module-components%2520_%2520Toolbox-DropDownFilterElem.html">DropDownFilterElem</a></li><li><a href="module-components%2520_%2520Toolbox-FieldElem.html">FieldElem</a></li><li><a href="module-components%2520_%2520Toolbox-HTMLElem.html">HTMLElem</a></li><li><a href="module-components%2520_%2520Toolbox-ImageElem.html">ImageElem</a></li><li><a href="module-components%2520_%2520Toolbox-JoinFieldElem.html">JoinFieldElem</a></li><li><a href="module-components%2520_%2520Toolbox-LineBreakElem.html">LineBreakElem</a></li><li><a href="module-components%2520_%2520Toolbox-LinkElem.html">LinkElem</a></li><li><a href="module-components%2520_%2520Toolbox-SearchElem.html">SearchElem</a></li><li><a href="module-components%2520_%2520Toolbox-TabsElem.html">TabsElem</a></li><li><a href="module-components%2520_%2520Toolbox-TextElem.html">TextElem</a></li><li><a href="module-components%2520_%2520Toolbox-ToggleFilterElem.html">ToggleFilterElem</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxEdit.html">ToolboxEdit</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxFilter.html">ToolboxFilter</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxPage.html">ToolboxPage</a></li><li><a href="module-components%2520_%2520Toolbox-ToolboxShow.html">ToolboxShow</a></li><li><a href="module-components%2520_%2520Toolbox-ViewElem.html">ViewElem</a></li><li><a href="module-components%2520_%2520Toolbox-ViewLinkElem.html">ViewLinkElem</a></li><li><a href="module-components%2520_%2520Toolbox-WrapElem.html">WrapElem</a></li></ul><h3>Namespaces / components</h3><ul><li><a href="module-components_Builder-Builder.html">Builder</a></li><li><a href="module-components_Builder-HistoryPanel.html">HistoryPanel</a></li><li><a href="module-components_Builder-NextButton.html">NextButton</a></li><li><a href="module-components_Builder-SaveButton.html">SaveButton</a></li><li><a href="module-components_Builder-SettingsPanel.html">SettingsPanel</a></li><li><a href="module-components_Builder-ViewPageLink.html">ViewPageLink</a></li><li><a href="module-components_elements_Action-Action.html">Action</a></li><li><a href="module-components_elements_Action-ActionSettings.html">ActionSettings</a></li><li><a href="module-components_elements_Aggregation-Aggregation.html">Aggregation</a></li><li><a href="module-components_elements_Aggregation-AggregationSettings.html">AggregationSettings</a></li><li><a href="module-components_elements_BoxModelEditor-BoxModelEditor.html">BoxModelEditor</a></li><li><a href="module-components_elements_Card-Card.html">Card</a></li><li><a href="module-components_elements_Card-CardSettings.html">CardSettings</a></li><li><a href="module-components_elements_Columns-Columns.html">Columns</a></li><li><a href="module-components_elements_Columns-ColumnsSettings.html">ColumnsSettings</a></li><li><a href="module-components_elements_Column-Column.html">Column</a></li><li><a href="module-components_elements_Column-ColumnSettings.html">ColumnSettings</a></li><li><a href="module-components_elements_Container-Container.html">Container</a></li><li><a href="module-components_elements_Container-ContainerSettings.html">ContainerSettings</a></li><li><a href="module-components_elements_DropDownFilter-DropDownFilter.html">DropDownFilter</a></li><li><a href="module-components_elements_DropDownFilter-DropDownFilterSettings.html">DropDownFilterSettings</a></li><li><a href="module-components_elements_Empty-Empty.html">Empty</a></li><li><a href="module-components_elements_Field-Field.html">Field</a></li><li><a href="module-components_elements_Field-FieldSettings.html">FieldSettings</a></li><li><a href="module-components_elements_HTMLCode-HTMLCode.html">HTMLCode</a></li><li><a href="module-components_elements_Image-Image.html">Image</a></li><li><a href="module-components_elements_Image-ImageSettings.html">ImageSettings</a></li><li><a href="module-components_elements_JoinField-JoinField.html">JoinField</a></li><li><a href="module-components_elements_JoinField-JoinFieldSettings.html">JoinFieldSettings</a></li><li><a href="module-components_elements_LineBreak-LineBreak.html">LineBreak</a></li><li><a href="module-components_elements_Link-Link.html">Link</a></li><li><a href="module-components_elements_Link-LinkSettings.html">LinkSettings</a></li><li><a href="module-components_elements_SearchBar-SearchBar.html">SearchBar</a></li><li><a href="module-components_elements_SearchBar-SearchBarSettings.html">SearchBarSettings</a></li><li><a href="module-components_elements_Tabs-Tabs.html">Tabs</a></li><li><a href="module-components_elements_Tabs-TabsSettings.html">TabsSettings</a></li><li><a href="module-components_elements_Text-Text.html">Text</a></li><li><a href="module-components_elements_Text-TextSettings.html">TextSettings</a></li><li><a href="module-components_elements_ToggleFilter-ToggleFilter.html">ToggleFilter</a></li><li><a href="module-components_elements_ToggleFilter-ToggleFilterSettings.html">ToggleFilterSettings</a></li><li><a href="module-components_elements_ViewLink-ViewLink.html">ViewLink</a></li><li><a href="module-components_elements_ViewLink-ViewLinkSettings.html">ViewLinkSettings</a></li><li><a href="module-components_elements_View-View.html">View</a></li><li><a href="module-components_elements_View-ViewSettings.html">ViewSettings</a></li><li><a href="module-components_Library-InitNewElement.html">InitNewElement</a></li><li><a href="module-components_Library-Library.html">Library</a></li><li><a href="module-components_Library-LibraryElem.html">LibraryElem</a></li><li><a href="module-components_RenderNode-RenderNode.html">RenderNode</a></li><li><a href="module-components_storage-craftToSaltcorn.html">craftToSaltcorn</a></li><li><a href="module-components_storage-layoutToNodes.html">layoutToNodes</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-components_elements_faicons-faicons%2520_%2520all.html">faicons / all</a></li></ul><h3>Namespaces / components / elements / utils</h3><ul><li><a href="module-components_elements_utils-Accordion.html">Accordion</a></li><li><a href="module-components_elements_utils-BlockSetting.html">BlockSetting</a></li><li><a href="module-components_elements_utils-ButtonOrLinkSettingsRows.html">ButtonOrLinkSettingsRows</a></li><li><a href="module-components_elements_utils-ColorInput.html">ColorInput</a></li><li><a href="module-components_elements_utils-ConfigField.html">ConfigField</a></li><li><a href="module-components_elements_utils-ConfigForm.html">ConfigForm</a></li><li><a href="module-components_elements_utils-MinRoleSetting.html">MinRoleSetting</a></li><li><a href="module-components_elements_utils-MinRoleSettingRow.html">MinRoleSettingRow</a></li><li><a href="module-components_elements_utils-OrFormula.html">OrFormula</a></li><li><a href="module-components_elements_utils-SelectUnits.html">SelectUnits</a></li><li><a href="module-components_elements_utils-SettingsFromFields.html">SettingsFromFields</a></li><li><a href="module-components_elements_utils-SettingsRow.html">SettingsRow</a></li><li><a href="module-components_elements_utils-SettingsSectionHeaderRow.html">SettingsSectionHeaderRow</a></li><li><a href="module-components_elements_utils-TextStyleRow.html">TextStyleRow</a></li><li><a href="module-components_elements_utils-TextStyleSelect.html">TextStyleSelect</a></li><li><a href="module-components_elements_utils-TextStyleSetting.html">TextStyleSetting</a></li></ul><h3>Classes</h3><ul><li><a href="module-components_elements_utils.ErrorBoundary.html">ErrorBoundary</a></li></ul></div><div class="category"><h2>saltcorn-cli</h2><h3>Modules</h3><ul><li><a href="module-commands_add-schema.html">commands/add-schema</a></li><li><a href="module-commands_backup.html">commands/backup</a></li><li><a href="module-commands_create-tenant.html">commands/create-tenant</a></li><li><a href="module-commands_create-user.html">commands/create-user</a></li><li><a href="module-commands_fixtures.html">commands/fixtures</a></li><li><a href="module-commands_info.html">commands/info</a></li><li><a href="module-commands_install-pack.html">commands/install-pack</a></li><li><a href="module-commands_install-plugin.html">commands/install-plugin</a></li><li><a href="module-commands_list-tenants.html">commands/list-tenants</a></li><li><a href="module-commands_localize-plugin.html">commands/localize-plugin</a></li><li><a href="module-commands_make-migration.html">commands/make-migration</a></li><li><a href="module-commands_migrate.html">commands/migrate</a></li><li><a href="module-commands_plugins.html">commands/plugins</a></li><li><a href="module-commands_release.html">commands/release</a></li><li><a href="module-commands_reset-schema.html">commands/reset-schema</a></li><li><a href="module-commands_restore.html">commands/restore</a></li><li><a href="module-commands_rm-tenant.html">commands/rm-tenant</a></li><li><a href="module-commands_run-nenchmark.html">commands/run-nenchmark</a></li><li><a href="module-commands_run-tests.html">commands/run-tests</a></li><li><a href="module-commands_scheduler.html">commands/scheduler</a></li><li><a href="module-commands_serve.html">commands/serve</a></li><li><a href="module-commands_set-cfg.html">commands/set-cfg</a></li><li><a href="module-commands_setup.html">commands/setup</a></li><li><a href="module-commands_setup-benchmark.html">commands/setup-benchmark</a></li><li><a href="module-commands_test-plugin.html">commands/test-plugin</a></li><li><a href="module-commands_transform-field.html">commands/transform-field</a></li><li><a href="module-common.html">common</a></li><li><a href="module-saltcorn-cli_common.html">saltcorn-cli/common</a></li></ul><h3>Classes</h3><ul><li><a href="module-commands_add-schema-AddSchemaCommand.html">AddSchemaCommand</a></li><li><a href="module-commands_backup-BackupCommand.html">BackupCommand</a></li><li><a href="module-commands_create-tenant-CreateTenantCommand.html">CreateTenantCommand</a></li><li><a href="module-commands_create-user-CreateUserCommand.html">CreateUserCommand</a></li><li><a href="module-commands_fixtures-FixturesCommand.html">FixturesCommand</a></li><li><a href="module-commands_info-InfoCommand.html">InfoCommand</a></li><li><a href="module-commands_install-pack-InstallPackCommand.html">InstallPackCommand</a></li><li><a href="module-commands_install-plugin-InstallPluginCommand.html">InstallPluginCommand</a></li><li><a href="module-commands_list-tenants-ListTenantsCommand.html">ListTenantsCommand</a></li><li><a href="module-commands_localize-plugin-LocalizePluginCommand.html">LocalizePluginCommand</a></li><li><a href="module-commands_make-migration-MigrationCommand.html">MigrationCommand</a></li><li><a href="module-commands_migrate-MigrateCommand.html">MigrateCommand</a></li><li><a href="module-commands_plugins-PluginsCommand.html">PluginsCommand</a></li><li><a href="module-commands_release-ReleaseCommand.html">ReleaseCommand</a></li><li><a href="module-commands_reset-schema-ResetCommand.html">ResetCommand</a></li><li><a href="module-commands_restore-RestoreCommand.html">RestoreCommand</a></li><li><a href="module-commands_rm-tenant-RmTenantCommand.html">RmTenantCommand</a></li><li><a href="module-commands_run-nenchmark-RunBenchmarkCommand.html">RunBenchmarkCommand</a></li><li><a href="module-commands_run-tests-RunTestsCommand.html">RunTestsCommand</a></li><li><a href="module-commands_scheduler-ScheduleCommand.html">ScheduleCommand</a></li><li><a href="module-commands_serve-ServeCommand.html">ServeCommand</a></li><li><a href="module-commands_set-cfg-SetCfgCommand.html">SetCfgCommand</a></li><li><a href="module-commands_setup-benchmark-SetupBenchmarkCommand.html">SetupBenchmarkCommand</a></li><li><a href="module-commands_setup-SetupCommand.html">SetupCommand</a></li><li><a href="module-commands_test-plugin-TestPluginCommand.html">TestPluginCommand</a></li><li><a href="module-commands_transform-field-TransformFieldCommand.html">TransformFieldCommand</a></li></ul></div><div class="category"><h2>saltcorn-data</h2><h3>Modules / base-plugin</h3><ul><li><a href="module-base-plugin_actions.html">base-plugin/actions</a></li><li><a href="module-base-plugin_fieldviews.html">base-plugin/fieldviews</a></li><li><a href="module-base-plugin_fileview.html">base-plugin/fileview</a></li><li><a href="module-base-plugin_index.html">base-plugin/index</a></li><li><a href="module-base-plugin_types.html">base-plugin/types</a></li><li><a href="module-base-plugin_viewtemplates_edit.html">base-plugin/viewtemplates/edit</a></li><li><a href="module-base-plugin_viewtemplates_feed.html">base-plugin/viewtemplates/feed</a></li><li><a href="module-base-plugin_viewtemplates_filter.html">base-plugin/viewtemplates/filter</a></li><li><a href="module-base-plugin_viewtemplates_list.html">base-plugin/viewtemplates/list</a></li><li><a href="module-base-plugin_viewtemplates_listshowlist.html">base-plugin/viewtemplates/listshowlist</a></li><li><a href="module-base-plugin_viewtemplates_room.html">base-plugin/viewtemplates/room</a></li><li><a href="module-base-plugin_viewtemplates_show.html">base-plugin/viewtemplates/show</a></li><li><a href="module-base-plugin_viewtemplates_viewable_fields.html">base-plugin/viewtemplates/viewable_fields</a></li></ul><h3>Modules</h3><ul><li><a href="module-contract.html">contract</a></li><li><a href="module-migrate.html">migrate</a></li><li><a href="module-plugin-helper.html">plugin-helper</a></li><li><a href="module-plugin-testing.html">plugin-testing</a></li><li><a href="module-saltcorn-data_index.html">saltcorn-data/index</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Modules / db</h3><ul><li><a href="module-db_connect.html">db/connect</a></li><li><a href="module-db_fixtures.html">db/fixtures</a></li><li><a href="module-db_index.html">db/index</a></li><li><a href="module-db_internal.html">db/internal</a></li><li><a href="module-db_multi-tenant.html">db/multi-tenant</a></li><li><a href="module-db_pg.html">db/pg</a></li><li><a href="module-db_reset_schema.html">db/reset_schema</a></li><li><a href="module-db_single-tenant.html">db/single-tenant</a></li><li><a href="module-db_sqlite.html">db/sqlite</a></li><li><a href="module-db_state.html">db/state</a></li><li><a href="module-db_tenants.html">db/tenants</a></li></ul><h3>Modules / models</h3><ul><li><a href="module-models_backup.html">models/backup</a></li><li><a href="module-models_config.html">models/config</a></li><li><a href="module-models_crash.html">models/crash</a></li><li><a href="module-models_discovery.html">models/discovery</a></li><li><a href="module-models_email.html">models/email</a></li><li><a href="module-models_eventlog.html">models/eventlog</a></li><li><a href="module-models_expression.html">models/expression</a></li><li><a href="module-models_field.html">models/field</a></li><li><a href="module-models_fieldrepeat.html">models/fieldrepeat</a></li><li><a href="module-models_file.html">models/file</a></li><li><a href="module-models_form.html">models/form</a></li><li><a href="module-models_index.html">models/index</a></li><li><a href="module-models_layout.html">models/layout</a></li><li><a href="module-models_library.html">models/library</a></li><li><a href="module-models_pack.html">models/pack</a></li><li><a href="module-models_page.html">models/page</a></li><li><a href="module-models_plugin.html">models/plugin</a></li><li><a href="module-models_random.html">models/random</a></li><li><a href="module-models_role.html">models/role</a></li><li><a href="module-models_scheduler.html">models/scheduler</a></li><li><a href="module-models_table.html">models/table</a></li><li><a href="module-models_table_constraints.html">models/table_constraints</a></li><li><a href="module-models_tenant.html">models/tenant</a></li><li><a href="module-models_trigger.html">models/trigger</a></li><li><a href="module-models_user.html">models/user</a></li><li><a href="module-models_view.html">models/view</a></li><li><a href="module-models_workflow.html">models/workflow</a></li></ul><h3>Namespaces / actions</h3><ul><li><a href="module-base-plugin_actions.blocks.html">blocks</a></li><li><a href="module-base-plugin_actions.duplicate_row.html">duplicate_row</a></li><li><a href="module-base-plugin_actions.emit_event.html">emit_event</a></li><li><a href="module-base-plugin_actions.find_or_create_dm_room.html">find_or_create_dm_room</a></li><li><a href="module-base-plugin_actions.insert_any_row.html">insert_any_row</a></li><li><a href="module-base-plugin_actions.insert_joined_row.html">insert_joined_row</a></li><li><a href="module-base-plugin_actions.recalculate_stored_fields.html">recalculate_stored_fields</a></li><li><a href="module-base-plugin_actions.run_js_code.html">run_js_code</a></li><li><a href="module-base-plugin_actions.send_email.html">send_email</a></li><li><a href="module-base-plugin_actions.webhook.html">webhook</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-base-plugin_fieldviews-radio_select.html">radio_select</a></li><li><a href="module-base-plugin_fieldviews-search_or_create.html">search_or_create</a></li><li><a href="module-base-plugin_fieldviews-select.html">select</a></li><li><a href="module-base-plugin_fileview._Download%2520link_.html">"Download link"</a></li><li><a href="module-base-plugin_fileview._Link%2520(new%2520tab)_.html">"Link (new tab)"</a></li><li><a href="module-base-plugin_fileview._Show%2520Image_.html">"Show Image"</a></li><li><a href="module-base-plugin_fileview.Link.html">Link</a></li><li><a href="module-models_config-configTypes.html">configTypes</a></li><li><a href="module-saltcorn-data_index-saltcorn-data_overview.html">saltcorn-data_overview</a></li></ul><h3>Namespaces / base-plugin</h3><ul><li><a href="module-base-plugin_index-base-plugin_overview.html">base-plugin_overview</a></li></ul><h3>Namespaces / types / bool</h3><ul><li><a href="module-base-plugin_types-bool.html">bool</a></li><li><a href="module-base-plugin_types-bool.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-bool.fieldviews.checkboxes.html">checkboxes</a></li><li><a href="module-base-plugin_types-bool.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-bool.fieldviews.show.html">show</a></li><li><a href="module-base-plugin_types-bool.fieldviews.tristate.html">tristate</a></li><li><a href="module-base-plugin_types-bool.fieldviews.TrueFalse.html">TrueFalse</a></li></ul><h3>Namespaces / types / color</h3><ul><li><a href="module-base-plugin_types-color.html">color</a></li><li><a href="module-base-plugin_types-color.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-color.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-color.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / date</h3><ul><li><a href="module-base-plugin_types-date.html">date</a></li><li><a href="module-base-plugin_types-date.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-date.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-date.fieldviews.editDay.html">editDay</a></li><li><a href="module-base-plugin_types-date.fieldviews.format.html">format</a></li><li><a href="module-base-plugin_types-date.fieldviews.relative.html">relative</a></li><li><a href="module-base-plugin_types-date.fieldviews.show.html">show</a></li><li><a href="module-base-plugin_types-date.fieldviews.showDay.html">showDay</a></li><li><a href="module-base-plugin_types-date.fieldviews.yearsAgo.html">yearsAgo</a></li><li><a href="module-base-plugin_types-date.presets.html">presets</a></li></ul><h3>Namespaces / types / float</h3><ul><li><a href="module-base-plugin_types-float.html">float</a></li><li><a href="module-base-plugin_types-float.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-float.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-float.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / int</h3><ul><li><a href="module-base-plugin_types-int.html">int</a></li><li><a href="module-base-plugin_types-int.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-int.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-int.fieldviews.show.html">show</a></li></ul><h3>Namespaces / types / string</h3><ul><li><a href="module-base-plugin_types-string.html">string</a></li><li><a href="module-base-plugin_types-string.fieldviews.html">fieldviews</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_header.html">as_header</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_link.html">as_link</a></li><li><a href="module-base-plugin_types-string.fieldviews.as_text.html">as_text</a></li><li><a href="module-base-plugin_types-string.fieldviews.edit.html">edit</a></li><li><a href="module-base-plugin_types-string.fieldviews.img_from_url.html">img_from_url</a></li><li><a href="module-base-plugin_types-string.fieldviews.password.html">password</a></li><li><a href="module-base-plugin_types-string.fieldviews.radio_group.html">radio_group</a></li><li><a href="module-base-plugin_types-string.fieldviews.textarea.html">textarea</a></li><li><a href="module-base-plugin_types-string.presets.html">presets</a></li></ul><h3>Namespaces / db</h3><ul><li><a href="module-db_index-db_overview.html">db_overview</a></li></ul><h3>Namespaces / models</h3><ul><li><a href="module-models_index-models_overview.html">models_overview</a></li></ul><h3>Classes</h3><ul><li><a href="module-db_state-State.html">State</a></li><li><a href="module-models_crash-Crash.html">Crash</a></li><li><a href="module-models_eventlog-EventLog.html">EventLog</a></li><li><a href="module-models_fieldrepeat-FieldRepeat.html">FieldRepeat</a></li><li><a href="module-models_field-Field.html">Field</a></li><li><a href="module-models_file-File.html">File</a></li><li><a href="module-models_form-Form.html">Form</a></li><li><a href="module-models_library-Library.html">Library</a></li><li><a href="module-models_page-Page.html">Page</a></li><li><a href="module-models_plugin-Plugin.html">Plugin</a></li><li><a href="module-models_role-Role.html">Role</a></li><li><a href="module-models_table_constraints-TableConstraint.html">TableConstraint</a></li><li><a href="module-models_table-Table.html">Table</a></li><li><a href="module-models_trigger-Trigger.html">Trigger</a></li><li><a href="module-models_user-User.html">User</a></li><li><a href="module-models_view-View.html">View</a></li><li><a href="module-models_workflow-Workflow.html">Workflow</a></li></ul></div><div class="category"><h2>saltcorn-markup</h2><h3>Modules</h3><ul><li><a href="module-builder.html">builder</a></li><li><a href="module-emergency_layout.html">emergency_layout</a></li><li><a href="module-form.html">form</a></li><li><a href="module-helpers.html">helpers</a></li><li><a href="module-layout.html">layout</a></li><li><a href="module-layout_utils.html">layout_utils</a></li><li><a href="module-mktag.html">mktag</a></li><li><a href="module-saltcorn-markup_index.html">saltcorn-markup/index</a></li><li><a href="module-table.html">table</a></li><li><a href="module-tabs.html">tabs</a></li><li><a href="module-tags.html">tags</a></li></ul></div><div class="category"><h2>saltcorn-sbadmin2</h2><h3>Modules</h3><ul><li><a href="module-saltcorn-sbadmin2_index.html">saltcorn-sbadmin2/index</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-saltcorn-sbadmin2_index-blockDispatch.html">blockDispatch</a></li></ul></div><div class="category"><h2>server</h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-errors.html">errors</a></li><li><a href="module-fixture_persons.html">fixture_persons</a></li><li><a href="module-load_plugins.html">load_plugins</a></li><li><a href="module-serve.html">serve</a></li><li><a href="module-server_index.html">server/index</a></li><li><a href="module-systemd.html">systemd</a></li><li><a href="module-wrapper.html">wrapper</a></li></ul><h3>Modules / auth</h3><ul><li><a href="module-auth_admin.html">auth/admin</a></li><li><a href="module-auth_inde.html">auth/inde</a></li><li><a href="module-auth_resetpw.html">auth/resetpw</a></li><li><a href="module-auth_roleadmin.html">auth/roleadmin</a></li><li><a href="module-auth_routes.html">auth/routes</a></li><li><a href="module-auth_testhelp.html">auth/testhelp</a></li></ul><h3>Modules / markup</h3><ul><li><a href="module-markup_admin.html">markup/admin</a></li><li><a href="module-markup_blockly.html">markup/blockly</a></li><li><a href="module-markup_expression_blurb.html">markup/expression_blurb</a></li><li><a href="module-markup_forms.html">markup/forms</a></li><li><a href="module-markup_index.html">markup/index</a></li><li><a href="module-markup_plugin-store.html">markup/plugin-store</a></li></ul><h3>Modules / routes</h3><ul><li><a href="module-routes_actions.html">routes/actions</a></li><li><a href="module-routes_admin.html">routes/admin</a></li><li><a href="module-routes_api.html">routes/api</a></li><li><a href="module-routes_config.html">routes/config</a></li><li><a href="module-routes_crashlog.html">routes/crashlog</a></li><li><a href="module-routes_delete.html">routes/delete</a></li><li><a href="module-routes_edit.html">routes/edit</a></li><li><a href="module-routes_eventlog.html">routes/eventlog</a></li><li><a href="module-routes_events.html">routes/events</a></li><li><a href="module-routes_fields.html">routes/fields</a></li><li><a href="module-routes_files.html">routes/files</a></li><li><a href="module-routes_homepage.html">routes/homepage</a></li><li><a href="module-routes_index.html">routes/index</a></li><li><a href="module-routes_infoarch.html">routes/infoarch</a></li><li><a href="module-routes_library.html">routes/library</a></li><li><a href="module-routes_list.html">routes/list</a></li><li><a href="module-routes_menu.html">routes/menu</a></li><li><a href="module-routes_packs.html">routes/packs</a></li><li><a href="module-routes_page.html">routes/page</a></li><li><a href="module-routes_pageedit.html">routes/pageedit</a></li><li><a href="module-routes_plugins.html">routes/plugins</a></li><li><a href="module-routes_scapi.html">routes/scapi</a></li><li><a href="module-routes_search.html">routes/search</a></li><li><a href="module-routes_settings.html">routes/settings</a></li><li><a href="module-routes_tables.html">routes/tables</a></li><li><a href="module-routes_tenant.html">routes/tenant</a></li><li><a href="module-routes_utils.html">routes/utils</a></li><li><a href="module-routes_view.html">routes/view</a></li><li><a href="module-routes_viewedit.html">routes/viewedit</a></li></ul><h3>Namespaces / auth</h3><ul><li><a href="module-auth_admin-auth_adminRouter.html">auth/adminRouter</a></li><li><a href="module-auth_roleadmin-roleadminRouter.html">roleadminRouter</a></li><li><a href="module-auth_routes-routesRouter.html">routesRouter</a></li></ul><h3>Namespaces / routes</h3><ul><li><a href="module-routes_actions-actionsRouter.html">actionsRouter</a></li><li><a href="module-routes_admin-routes_adminRouter.html">routes/adminRouter</a></li><li><a href="module-routes_api-apiRouter.html">apiRouter</a></li><li><a href="module-routes_config-configRouter.html">configRouter</a></li><li><a href="module-routes_crashlog-crashlogRouter.html">crashlogRouter</a></li><li><a href="module-routes_delete-deleteRouter.html">deleteRouter</a></li><li><a href="module-routes_edit-editRouter.html">editRouter</a></li><li><a href="module-routes_eventlog-eventlogRouter.html">eventlogRouter</a></li><li><a href="module-routes_events-eventsRouter.html">eventsRouter</a></li><li><a href="module-routes_fields-fieldsRouter.html">fieldsRouter</a></li><li><a href="module-routes_files-filesRouter.html">filesRouter</a></li><li><a href="module-routes_infoarch-infoarchRouter.html">infoarchRouter</a></li><li><a href="module-routes_library-libraryRouter.html">libraryRouter</a></li><li><a href="module-routes_list-listRouter.html">listRouter</a></li><li><a href="module-routes_menu-menuRouter.html">menuRouter</a></li><li><a href="module-routes_packs-packsRouter.html">packsRouter</a></li><li><a href="module-routes_pageedit-pageeditRouter.html">pageeditRouter</a></li><li><a href="module-routes_page-pageRouter.html">pageRouter</a></li><li><a href="module-routes_plugins-pluginsRouter.html">pluginsRouter</a></li><li><a href="module-routes_scapi-scapiRouter.html">scapiRouter</a></li><li><a href="module-routes_search-searchRouter.html">searchRouter</a></li><li><a href="module-routes_settings-settingsRouter.html">settingsRouter</a></li><li><a href="module-routes_tables-tablesRouter.html">tablesRouter</a></li><li><a href="module-routes_tenant-tenantRouter.html">tenantRouter</a></li><li><a href="module-routes_viewedit-vieweditRouter.html">vieweditRouter</a></li><li><a href="module-routes_view-viewRouter.html">viewRouter</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>saltcorn-data/models/config.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Config Variables
+ * @category saltcorn-data
+ * @module models/config
+ * @subcategory models
+ */
+const db = require("../db");
+const { contract, is } = require("contractis");
+const latestVersion = require("latest-version");
+const { getConfigFile, configFilePath } = require("../db/connect");
+const fs = require("fs");
+const moment = require("moment-timezone");
+
+const allTimezones = moment.tz.names();
+const defaultTimezone = moment.tz.guess();
+
+/**
+ * Config variables types
+ * @namespace 
+ * @category saltcorn-data
+ */
+const configTypes = {
+  /** @type {object} */
+  site_name: {
+    type: "String",
+    label: "Site name",
+    default: "Saltcorn",
+    blurb: "A short string which is the name of your site",
+  },
+  /** @type {object} */
+  timezone: {
+    type: "String",
+    label: "Home Timezone",
+    default: defaultTimezone,
+    attributes: {
+      options: allTimezones,
+    },
+  },
+  /** @type {object} */
+  site_logo_id: {
+    type: "File",
+    label: "Site logo",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 10, mime_super: "image" },
+    },
+    blurb: "Select a publicly accessible image file for the menu logo",
+  },
+  /** @type {object} */
+  favicon_id: {
+    type: "File",
+    label: "Favicon",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 10, mime_super: "image" },
+    },
+    blurb: "Select a publicly accessible image file for the browser tab icon",
+  },
+  /** @type {object} */
+  base_url: {
+    type: "String",
+    label: "Base URL",
+    default: "",
+    onChange(val) {
+      const tenant = db.getTenantSchema();
+      const isRoot = tenant === db.connectObj.default_schema;
+      if (!isRoot &amp;&amp; val) {
+        const { set_tenant_base_url } = require("../db/state");
+        set_tenant_base_url(tenant, val);
+      }
+    },
+    blurb:
+      "The URL at which your site is available. For instance, https://example.com/",
+  },
+  /** @type {object} */
+  menu_items: { type: "hidden", label: "Menu items" },
+  /** @type {object} */
+  globalSearch: { type: "hidden", label: "Global search" },
+  /** @type {object} */
+  available_packs: { type: "hidden", label: "Available packs" },
+  /** @type {object} */
+  available_packs_fetched_at: {
+    type: "Date",
+    label: "Available packs fetched",
+  },
+  /** @type {object} */
+  available_plugins: { type: "hidden", label: "Available plugins" },
+  /** @type {object} */
+  available_plugins_fetched_at: {
+    type: "Date",
+    label: "Available plugins fetched",
+  },
+  /** @type {object} */
+  home_page_by_role: { type: "hidden", label: "Home Page by Role" },
+  /** @type {object} */
+  exttables_min_role_read: {
+    type: "hidden",
+    label: "Home Page by Role",
+    default: {},
+  },
+  /** @type {object} */
+  public_home: { type: "String", label: "Public home page", default: "" },
+  /** @type {object} */
+  user_home: { type: "String", label: "User home page", default: "" },
+  /** @type {object} */
+  staff_home: { type: "String", label: "Staff home page", default: "" },
+  /** @type {object} */
+  admin_home: { type: "String", label: "Admin home page", default: "" },
+  /** @type {object} */
+  layout_by_role: { type: "hidden", label: "Layout by role", default: {} },
+  /** @type {object} */
+  allow_signup: {
+    type: "Bool",
+    label: "Allow signups",
+    default: true,
+    blurb: "Allow users to sign up for a new user account",
+  },
+  /** @type {object} */
+  allow_forgot: {
+    type: "Bool",
+    label: "Allow password reset",
+    default: false,
+    blurb:
+      "Allow users to request a password reset email. Email must be configured.",
+  },
+  /** @type {object} */
+  login_menu: {
+    type: "Bool",
+    label: "Login in menu",
+    default: true,
+    blurb: "Show the login link in the menu",
+  },
+  /** @type {object} */
+  cookie_sessions: {
+    type: "Bool",
+    label: "Cookie sessions",
+    default: false,
+    root_only: true,
+    restart_required: true,
+    blurb: "Store sessions entirely in client cookies for higher performance",
+  },
+  /** @type {object} */
+  new_user_form: {
+    type: "View users",
+    label: "New user form",
+    default: "",
+    blurb: "A view to show to new users",
+  },
+  /** @type {object} */
+  user_settings_form: {
+    type: "View users",
+    label: "User settings form",
+    default: "",
+    blurb: "A view for users to change their custom user fields",
+  },
+  /** @type {object} */
+  login_form: {
+    type: "View users",
+    label: "Login view",
+    blurb: "A view with the login form",
+    default: "",
+  },
+  /** @type {object} */
+  signup_form: {
+    type: "View users",
+    label: "Signup view",
+    blurb: "A view with the signup form",
+    default: "",
+  },
+  /** @type {object} */
+  verification_view: {
+    type: "View users",
+    label: "Verification view",
+    blurb:
+      "A view with the view to be emailed to users for email address verification",
+    default: "",
+  },
+  /** @type {object} */
+  elevate_verified: {
+    type: "Role",
+    label: "Elevate verified to role",
+    blurb:
+      "Elevate users to a higher role when their email addresses have been verified",
+  },
+  /** @type {object} */
+  min_role_upload: {
+    type: "Role",
+    label: "Role to upload files",
+    default: "1",
+    required: true,
+    blurb:
+      "User should have this role or higher to upload files with API (uploads through forms are not affected)",
+  },
+  /** @type {object} */
+  email_mask: {
+    type: "String",
+    label: "Email mask",
+    default: "",
+    blurb: "Emails used for signup must end with this string",
+  },
+  /** @type {object} */
+  installed_packs: { type: "String[]", label: "Installed packs", default: [] },
+  /** @type {object} */
+  log_sql: {
+    type: "Bool",
+    label: "Log SQL to stdout",
+    default: false,
+    onChange(val) {
+      db.set_sql_logging(val);
+    },
+    blurb: "Print all SQL statements to the standard output",
+  },
+  /** @type {object} */
+  multitenancy_enabled: {
+    type: "Bool",
+    root_only: true,
+    restart_required: true,
+    label: "Multitenancy enabled",
+    default: db.is_it_multi_tenant(),
+    onChange(val) {
+      set_multitenancy_cfg(val);
+    },
+  },
+  /** @type {object} */
+  role_to_create_tenant: {
+    type: "Role",
+    label: "Role to create tenants",
+    blurb: "Minimum user role required to create a new tenant",
+    default: "10",
+  },
+  /** @type {object} */
+  create_tenant_warning: {
+    type: "Bool",
+    label: "Create tenant warning",
+    default: true,
+    blurb:
+      "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+  },
+  /** @type {object} */
+  development_mode: {
+    type: "Bool",
+    label: "Development mode",
+    default: false,
+    blurb:
+      "Disable JS/CSS asset caching, show full error to user on crash, enable editing field type",
+  },
+  /** @type {object} */
+  smtp_host: {
+    type: "String",
+    label: "SMTP host",
+    default: "",
+    blurb:
+      "The host address of your SMTP server. For instance, smtp.postmarkapp.com",
+  },
+  /** @type {object} */
+  smtp_username: {
+    type: "String",
+    label: "SMTP username",
+    default: "",
+    blurb: "The user name to access SMTP server for sending emails.",
+  },
+  /** @type {object} */
+  smtp_password: {
+    type: "String",
+    label: "SMTP password",
+    default: "",
+    input_type: "password",
+    blurb:
+      "The user password or app password to access SMTP server for sending emails. " +
+      "If your SMTP provider allows to create app password for using from application " +
+      "We recommends to use app password instead of user password.",
+  },
+  /** @type {object} */
+  smtp_port: {
+    type: "Integer",
+    label: "SMTP port",
+    default: "25",
+    blurb: "The port of your SMTP server",
+  },
+  /** @type {object} */
+  smtp_secure: {
+    type: "Bool",
+    label: "Force TLS",
+    default: false,
+    sublabel:
+      "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
+  },
+  /** @type {object} */
+  email_from: {
+    type: "String",
+    label: "Email from address",
+    default: "",
+    blurb:
+      "The email address from which emails are sent. For instance, hello@saltcorn.com",
+  },
+  /** @type {object} */
+  custom_ssl_certificate: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL certificate",
+    default: "",
+    hide_value: true,
+  },
+  /** @type {object} */
+  custom_ssl_private_key: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Custom SSL private key",
+    hide_value: true,
+    default: "",
+  },
+  /** @type {object} */
+  letsencrypt: {
+    label: "LetsEncrypt enabled",
+    default: false,
+    type: "hidden",
+    root_only: true,
+    blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
+  },
+  /** @type {object} */
+  timeout: {
+    type: "Integer",
+    label: "HTTP timeout (s)",
+    default: 120,
+    root_only: true,
+    restart_required: true,
+    sublabel: "Increase if you expect large uploads",
+  },
+  /** @type {object} */
+  latest_npm_version: {
+    type: "hidden",
+    label: "Latest npm version cache",
+    default: {},
+  },
+  /** @type {object} */
+  event_log_settings: {
+    type: "hidden",
+    label: "Event log settings",
+    default: {},
+  },
+  /** @type {object} */
+  custom_events: {
+    type: "hidden",
+    label: "Custom events",
+    default: [],
+  },
+  /** @type {object} */
+  page_custom_css: {
+    input_type: "code",
+    label: "Custom CSS",
+    default: "",
+    hide_value: true,
+    attributes: { mode: "text/css" },
+  },
+  /** @type {object} */
+  page_custom_html: {
+    input_type: "code",
+    label: "Custom HTML",
+    default: "",
+    hide_value: true,
+    attributes: { mode: "text/html" },
+  },
+  /** @type {object} */
+  custom_http_headers: {
+    input_type: "code",
+    label: "Custom HTTP headers",
+    blurb: "Format for each line: Header-Name: value",
+    default: "",
+    hide_value: true,
+    attributes: { mode: "message/http" },
+  },
+  /** @type {object} */
+  next_hourly_event: {
+    type: "Date",
+    label: "Next hourly event",
+    default: null,
+  },
+  /** @type {object} */
+  next_daily_event: {
+    type: "Date",
+    label: "Next daily event",
+    default: null,
+  },
+  /** @type {object} */
+  next_weekly_event: {
+    type: "Date",
+    label: "Next weekly event",
+    default: null,
+  },
+  /** @type {object} */
+  localizer_languages: {
+    type: "hidden",
+    label: "Localizer languages",
+    default: {},
+  },
+  /** @type {object} */
+  localizer_strings: {
+    type: "hidden",
+    label: "Localizer strings",
+    default: {},
+  },
+  cookie_duration: {
+    type: "Integer",
+    label: "Cookie duration (hours)",
+    sublabel: "Set to 0 for expration at the end of browser session",
+    default: 0,
+  },
+  cookie_duration_remember: {
+    type: "Integer",
+    label: "Cookie duration (hours) when remember ticked",
+    sublabel: "Set to 0 for expration at the end of browser session",
+    default: 30 * 24,
+  },
+};
+// TODO move list of languages from code to configuration
+const available_languages = {
+  en: "English",
+  fr: "français",
+  de: "Deutsch",
+  da: "dansk",
+  es: "Español",
+  no: "Norsk",
+  sv: "Svenska",
+  ru: "русский",
+  nl: "Nederlands",
+  pt: "Português",
+  ar: "العربية",
+  it: "Italiano",
+};
+/**
+ * Get Config variable value by key (contract)
+ * @function
+ * @param {string} key
+ * @param {object|undefined} def
+ * @returns {Promise&lt;object>}
+ */
+const getConfig = contract(
+  is.fun([is.str, is.maybe(is.any)], is.promise(is.any)),
+  async (key, def) => {
+    const cfg = await db.selectMaybeOne("_sc_config", { key });
+    if (cfg &amp;&amp; typeof cfg.value === "string") return JSON.parse(cfg.value).v;
+    else if (cfg) return cfg.value.v;
+    else if (def) return def;
+    else return configTypes[key] ? configTypes[key].default : undefined;
+  }
+);
+
+/**
+ * Returns true if key is defined in fixed_configration for tenant
+ * @param {string} key
+ * @returns {boolean}
+ */
+const isFixedConfig = (key) =>
+  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
+  (db.connectObj.inherit_configuration.includes(key) &amp;&amp;
+    db.getTenantSchema() !== db.connectObj.default_schema);
+
+/**
+ * Get all config variables list
+ * @function
+ * @returns {Promise&lt;object>}
+ */
+const getAllConfig = contract(
+  is.fun([], is.promise(is.objVals(is.any))),
+  async () => {
+    const cfgs = await db.select("_sc_config");
+    var cfg = {};
+    cfgs.forEach(({ key, value }) => {
+      if (key === "testMigration")
+        //legacy invalid cfg
+        return;
+
+      try {
+        cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
+      } catch (e) {
+        console.error(
+          "config parsing error",
+          e,
+          { key, value },
+          db.getTenantSchema()
+        );
+      }
+    });
+    return cfg;
+  }
+);
+
+/**
+ * Get all config variables list
+ * If variable is not defined that default value is used
+ * @function
+ * @returns {Promise&lt;object>}
+ */
+const getAllConfigOrDefaults = contract(
+  is.fun([], is.promise(is.objVals(is.any))),
+  async () => {
+    var cfgs = {};
+    const cfgInDB = await getAllConfig();
+
+    Object.entries(configTypes).forEach(([key, v]) => {
+      const value =
+        typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
+      if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
+    });
+    return cfgs;
+  }
+);
+
+/**
+ * Set config variable value by key
+ * @function
+ * @param {string} key
+ * @param {object} value
+ * @returns {Promise&lt;void>}
+ */
+// TODO move db specific to pg/sqlite
+const setConfig = contract(
+  is.fun([is.str, is.any], is.promise(is.undefined)),
+  async (key, value) => {
+    if (db.isSQLite)
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
+                    on conflict (key) do update set value = json($value)`,
+        { $key: key, $value: JSON.stringify({ v: value }) }
+      );
+    else
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
+                    on conflict (key) do update set value = $2`,
+        [key, { v: value }]
+      );
+    if (configTypes[key] &amp;&amp; configTypes[key].onChange)
+      configTypes[key].onChange(value);
+  }
+);
+/**
+ * Delete config variable
+ * @function
+ * @param {string} key
+ * @returns {Promise&lt;void>}
+ */
+const deleteConfig = contract(
+  is.fun(is.str, is.promise(is.undefined)),
+  async (key) => {
+    await db.deleteWhere("_sc_config", { key });
+  }
+);
+
+/**
+ * Remove from menu
+ * @function
+ * @param {object} item
+ * @returns {Promise&lt;void>}
+ */
+const remove_from_menu = contract(
+  is.fun(
+    is.obj({
+      name: is.str,
+      type: is.one_of(["View", "Page"]),
+    }),
+    is.promise(is.undefined)
+  ),
+  async (item) => {
+    const { getState } = require("../db/state");
+
+    const current_menu = getState().getConfigCopy("menu_items", []);
+    const new_menu = current_menu.filter(
+      (menuitem) =>
+        !(
+          item.type === menuitem.type &amp;&amp;
+          (item.type === "View"
+            ? menuitem.viewname === item.name
+            : menuitem.pagename === item.name)
+        )
+    );
+    await getState().setConfig("menu_items", new_menu);
+  }
+);
+
+/**
+ * Get latest npm version
+ * @param {string} pkg
+ * @returns {Promise&lt;string>}
+ */
+const get_latest_npm_version = async (pkg) => {
+  const { getState } = require("../db/state");
+  const { is_stale } = require("./pack");
+  const stored = getState().getConfig("latest_npm_version", {});
+
+  if (stored[pkg] &amp;&amp; !is_stale(stored[pkg].time, 6)) {
+    return stored[pkg].version;
+  }
+  try {
+    const latest = await latestVersion(pkg);
+    const stored1 = getState().getConfigCopy("latest_npm_version", {});
+    await getState().setConfig("latest_npm_version", {
+      ...stored1,
+      [pkg]: { time: new Date(), version: latest },
+    });
+    return latest;
+  } catch (e) {
+    if (stored[pkg]) return stored[pkg].version;
+    else return "";
+  }
+};
+
+/**
+ * Ensure that string is finished with /
+ * @param {string} s
+ * @returns {string}
+ */
+const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
+
+/**
+ * Get base url
+ * @param {object} req
+ * @returns {string}
+ */
+const get_base_url = (req) => {
+  const { getState } = require("../db/state");
+
+  const cfg = getState().getConfig("base_url", "");
+  if (cfg) return ensure_final_slash(cfg);
+  if (!req || !req.get) return "/";
+  var ports = "";
+  const host = req.get("host");
+  if (typeof host === "string") {
+    const hosts = host.split(":");
+    if (hosts.length > 1) ports = `:${hosts[1]}`;
+  }
+  return `${req.protocol}://${req.hostname}${ports}/`;
+};
+
+/**
+ * Check email mask
+ * @function
+ * @param {string} email
+ * @returns {boolean}
+ */
+const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
+  const { getState } = require("../db/state");
+
+  const cfg = getState().getConfig("email_mask", "");
+  if (cfg) {
+    return email.endsWith(cfg);
+  } else return true;
+});
+
+/**
+ * Set multitenancy cfg flag
+ * @function
+ * @param {boolean} val
+ * @returns {void}
+ */
+const set_multitenancy_cfg = contract(is.fun(is.bool, is.undefined), (val) => {
+  const cfg = getConfigFile();
+  cfg.multi_tenant = val;
+  fs.writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
+});
+
+module.exports = {
+  getConfig,
+  getAllConfig,
+  setConfig,
+  getAllConfigOrDefaults,
+  deleteConfig,
+  configTypes,
+  remove_from_menu,
+  available_languages,
+  isFixedConfig,
+  get_latest_npm_version,
+  get_base_url,
+  check_email_mask,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+</body>
+</html>
