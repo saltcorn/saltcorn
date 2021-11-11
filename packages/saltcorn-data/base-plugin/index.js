@@ -1,9 +1,30 @@
 /** 
-  * @category saltcorn-data
-  * @module base-plugin/index
-  * @subcategory base-plugin
-  */
+ * @category saltcorn-data
+ * @module base-plugin/index
+ * @subcategory base-plugin
+ */
 
+/**
+ * All files in the base-plugin module.
+ * @namespace base-plugin_overview
+ * @property {module:base-plugin/actions} actions
+ * @property {module:base-plugin/fieldviews} fieldviews
+ * @property {module:base-plugin/fileview} fileview
+ * @property {module:base-plugin/types} types
+ * 
+ * @property {module:base-plugin/viewtemplates/edit} edit
+ * @property {module:base-plugin/viewtemplates/feed} feed
+ * @property {module:base-plugin/viewtemplates/filter} filter
+ * @property {module:base-plugin/viewtemplates/list} list
+ * @property {module:base-plugin/viewtemplates/listshowlist} listshowlist
+ * @property {module:base-plugin/viewtemplates/room} room
+ * @property {module:base-plugin/viewtemplates/show} show
+ * @property {module:base-plugin/viewtemplates/viewable_fields} viewable_fields
+ * 
+ * 
+ * @category saltcorn-data
+ * @subcategory base-plugin
+ */
 const listshowlist = require("./viewtemplates/listshowlist");
 const list = require("./viewtemplates/list");
 const show = require("./viewtemplates/show");
@@ -37,3 +58,4 @@ module.exports = {
     blockly: require.resolve("blockly/package.json"),
   },
 };
+

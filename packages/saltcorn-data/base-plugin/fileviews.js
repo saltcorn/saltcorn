@@ -1,6 +1,6 @@
 /**
  * @category saltcorn-data
- * @module base-plugin/fileviews
+ * @module base-plugin/fileview
  * @subcategory base-plugin
  */
 const { text, a, img } = require("@saltcorn/markup/tags");
@@ -56,7 +56,7 @@ module.exports = {
   "Show Image": {
     /**
      * @param {string} file_id 
-     * @param {*} file_name 
+     * @param {string} file_name 
      * @returns {img}
      */
     run: (file_id, file_name) =>

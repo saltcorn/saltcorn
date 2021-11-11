@@ -1,9 +1,8 @@
 /**
  * @category saltcorn-data
- * @module db/single_tenant
+ * @module db/single-tenant
  * @subcategory db
  */
-
 
 module.exports = (connObj) => ({
   /**
@@ -24,3 +23,4 @@ module.exports = (connObj) => ({
     return f();
   },
 });
+
