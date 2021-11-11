@@ -1,5 +1,8 @@
 /**
  * Plugin Handler for Admin zone
+ * @category server 
+ * @module routes/plugins
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -49,12 +52,20 @@ const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace pluginsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
+
 /**
  * Plugin Form Creation
- * @param req
- * @param plugin
+ * @param {object} req
+ * @param {object} plugin
  * @returns {Form}
  */
 const pluginForm = (req, plugin) => {
@@ -119,18 +130,20 @@ const pluginForm = (req, plugin) => {
   }
   return form;
 };
+
 /**
  * Returns true if plugin has own theme
- * @param name -plugin name
+ * @param {string} name plugin name
  * @returns {*|boolean}
  */
 const local_has_theme = (name) => {
   const mod = getState().plugins[name];
   return mod ? mod.layout : false;
 };
+
 /**
  * Get Pluging store itmes
- * @returns {Promise<*[]>}
+ * @returns {Promise<Object[]>}
  */
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
@@ -175,6 +188,11 @@ const get_store_items = async () => {
   );
 };
 
+/**
+ * @param {object} req 
+ * @param {object} row 
+ * @returns {a|string}
+ */
 const cfg_link = (req, row) => {
   let plugin = getState().plugins[row.name];
   let linknm = row.name;
@@ -200,6 +218,11 @@ const cfg_link = (req, row) => {
   else return "";
 };
 
+/**
+ * @param {object} req 
+ * @param {object} row 
+ * @returns {a}
+ */
 const info_link = (req, row) =>
   a(
     {
@@ -211,9 +234,18 @@ const info_link = (req, row) =>
     '<i class="far fa-question-circle"></i>'
   );
 
-const badge = (title) =>
+/**
+ * @param {string} title 
+ * @returns {span}
+ */
+  const badge = (title) =>
   span({ class: "badge badge-secondary plugin-store" }, title);
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {function}
+ */
 const store_item_html = (req) => (item) => ({
   type: "card",
   title: item.name,
@@ -300,6 +332,11 @@ const store_item_html = (req) => (item) => ({
     )
   ),
 });
+
+/**
+ * @param {object} req 
+ * @returns {ul}
+ */
 const storeNavPills = (req) => {
   const link = (txt) =>
     li(
@@ -327,20 +364,41 @@ const storeNavPills = (req) => {
   );
 };
 
+/**
+ * @param {object[]} items 
+ * @param {object} query 
+ * @returns {object[]}
+ */
 const filter_items = (items, query) => {
   const in_set = filter_items_set(items, query);
   if (!query.q) return in_set;
   return in_set.filter((p) => satisfy_q(p, query.q.toLowerCase()));
 };
 
+/**
+ * @param {string} s 
+ * @param {string} q 
+ * @returns {boolean}
+ */
 const match_string = (s, q) => {
   if (!s || !q) return false;
   return s.toLowerCase().includes(q);
 };
 
+/**
+ * @param {string} p
+ * @param {string} q 
+ * @returns {boolean}
+ */
 const satisfy_q = (p, q) => {
   return match_string(p.name, q) || match_string(p.description, q);
 };
+
+/**
+ * @param {object[]} items 
+ * @param {object} query 
+ * @returns {object[]}
+ */
 const filter_items_set = (items, query) => {
   switch (query.set) {
     case "plugins":
@@ -355,6 +413,11 @@ const filter_items_set = (items, query) => {
       return items;
   }
 };
+
+/**
+ * @param {object} req 
+ * @returns {div}
+ */
 const store_actions_dropdown = (req) =>
   div(
     { class: "dropdown" },
@@ -418,6 +481,12 @@ const store_actions_dropdown = (req) =>
       //create pack
     )
   );
+
+/**
+ * @param {object[]} items 
+ * @param {object} req 
+ * @returns {object}
+ */
 const plugin_store_html = (items, req) => {
   return {
     above: [
@@ -448,6 +517,12 @@ const plugin_store_html = (items, req) => {
   };
 };
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -459,6 +534,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/configure/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/configure/:name",
   setTenant,
@@ -485,6 +566,13 @@ router.get(
     );
   })
 );
+
+/**
+ * @name post/configure/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/configure/:name",
   setTenant,
@@ -520,6 +608,13 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/new",
   setTenant,
@@ -544,6 +639,13 @@ router.get(
     });
   })
 );
+
+/**
+ * @name get/public/:plugin/*
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/public/:plugin/*",
   setTenant,
@@ -564,6 +666,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/pubdeps/:plugin/:dependency/:version/*
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/pubdeps/:plugin/:dependency/:version/*",
   setTenant,
@@ -591,6 +699,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/info/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/info/:name",
   setTenant,
@@ -694,6 +808,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/refresh
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/refresh",
   setTenant,
@@ -712,6 +832,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/upgrade
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/upgrade",
   setTenant,
@@ -727,6 +853,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/upgrade-plugin/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/upgrade-plugin/:name",
   setTenant,
@@ -741,6 +873,13 @@ router.get(
     res.redirect(`/plugins/info/${plugin.name}`);
   })
 );
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/",
   setTenant,
@@ -771,6 +910,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/delete/:name",
   setTenant,
@@ -801,6 +946,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/install/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/install/:name",
   setTenant,

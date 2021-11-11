@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module routes/config
+ * @subcategory routes
+ */
 const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
@@ -25,9 +30,22 @@ const {
 } = require("@saltcorn/data/models/config");
 const { table, tbody, tr, th, td, div } = require("@saltcorn/markup/tags");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace configRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name post/delete/:key
+ * @function
+ * @memberof module:routes/config~configRouter
+ * @function
+ */
 router.post(
   "/delete/:key",
   setTenant,

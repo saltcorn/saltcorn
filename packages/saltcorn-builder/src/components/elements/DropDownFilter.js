@@ -1,9 +1,25 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/DropDownFilter
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const DropDownFilter = ({ name, block, full_width }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {boolean} props.block
+ * @param {boolean} props.full_width
+ * @returns {span}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const DropDownFilter = ({ name, block, full_width }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -21,7 +37,13 @@ export const DropDownFilter = ({ name, block, full_width }) => {
   );
 };
 
-export const DropDownFilterSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const DropDownFilterSettings = () => {
   const {
     actions: { setProp },
     name,
@@ -112,6 +134,9 @@ export const DropDownFilterSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 DropDownFilter.craft = {
   displayName: "DropDownFilter",
   related: {

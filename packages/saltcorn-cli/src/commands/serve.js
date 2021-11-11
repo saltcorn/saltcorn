@@ -1,7 +1,19 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/serve
+ */
 const { Command, flags } = require("@oclif/command");
 const si = require("systeminformation");
 
+/**
+ * ServeCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ServeCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(ServeCommand);
     const cpu = await si.cpu();
@@ -37,8 +49,14 @@ class ServeCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 ServeCommand.description = `Start the Saltcorn server`;
 
+/**
+ * @type {object}
+ */
 ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
   port: flags.integer({ char: "p", description: "port", default: 3000 }),

@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/edit
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
@@ -9,9 +15,22 @@ const pluralize = require("pluralize");
 
 const { renderForm } = require("@saltcorn/markup");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace editRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name post/toggle/:name/:id/:field_name
+ * @function
+ * @memberof module:routes/edit~editRouter
+ * @function
+ */
 router.post(
   "/toggle/:name/:id/:field_name",
   setTenant,

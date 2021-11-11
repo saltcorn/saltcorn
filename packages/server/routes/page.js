@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/page
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
@@ -13,9 +19,22 @@ const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace pageRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get/:pagename
+ * @function
+ * @memberof module:routes/page~pageRouter
+ * @function
+ */
 router.get(
   "/:pagename",
   setTenant,
@@ -43,6 +62,13 @@ router.get(
         .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
   })
 );
+
+/**
+ * @name post/:pagename/action/:rndid
+ * @function
+ * @memberof module:routes/page~pageRouter
+ * @function
+ */
 router.post(
   "/:pagename/action/:rndid",
   setTenant,

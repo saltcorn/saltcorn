@@ -1,3 +1,9 @@
+/**
+ * Plugin Database Access Layer
+ * @category saltcorn-data
+ * @module models/plugin
+ * @subcategory models
+ */
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
@@ -7,11 +13,12 @@ const { stringToJSON } = require("../utils");
 
 /**
  * Plugin Class
+ * @category saltcorn-data
  */
 class Plugin {
   /**
    * Plugin constructor
-   * @param o
+   * @param {object} o
    */
   constructor(o) {
     this.id = o.id ? +o.id : o.id;
@@ -99,7 +106,7 @@ class Plugin {
 
   /**
    * List of views relay on this plugin
-   * @returns {Promise<*[]|*>}
+   * @returns {Promise<View[]>}
    */
   async dependant_views() {
     const views = await View.find({});

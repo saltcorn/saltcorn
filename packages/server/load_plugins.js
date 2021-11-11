@@ -2,6 +2,8 @@
  * Load plugins
  * File: load_plugins.js
  *
+ * @category server
+ * @module load_plugins
  */
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
@@ -42,12 +44,12 @@ const manager = new PluginManager({
     "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
   },
 });
+
 /**
  * Load one plugin
  * TODO correct names for functions loadPlugin, requirePlugin - currently uncler
  * @param plugin - plugin to load
  * @param force - force flag
- * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
  */
 const loadPlugin = async (plugin, force) => {
   // load pluging
@@ -69,13 +71,12 @@ const loadPlugin = async (plugin, force) => {
   }
   return res;
 };
+
 /**
  *
  * @param plugin
  * @param force
- * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: any, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
  */
-
 const gitPullOrClone = async (plugin) => {
   await fs.promises.mkdir("git_plugins", { recursive: true });
   let keyfnm,

@@ -1,8 +1,22 @@
+/**
+ * Library Database Access Layer
+ * @category saltcorn-data
+ * @module models/library
+ * @subcategory models
+ */
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { traverseSync } = require("./layout");
 
+/**
+ * Library Class
+ * @category saltcorn-data
+ */
 class Library {
+  /**
+   * Library constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.id = o.id;
     this.name = o.name;
@@ -10,6 +24,10 @@ class Library {
     this.layout =
       typeof o.layout === "string" ? JSON.parse(o.layout) : o.layout;
   }
+
+  /**
+   * @param {object} lib_in 
+   */
   static async create(lib_in) {
     const lib = new Library(lib_in);
     await db.insert("_sc_library", {
@@ -18,19 +36,38 @@ class Library {
       layout: lib.layout,
     });
   }
+
+  /**
+   * @type {...*}
+   */
   get toJson() {
     const { id, ...rest } = this;
     return rest;
   }
+
+  /**
+   * @param {*} where 
+   * @param {*} selectopts 
+   * @returns {Library[]}
+   */
   static async find(where, selectopts) {
     const us = await db.select("_sc_library", where, selectopts);
     return us.map((u) => new Library(u));
   }
+
+  /**
+   * @param {*} where 
+   * @returns {Library}
+   */
   static async findOne(where) {
     const u = await db.selectMaybeOne("_sc_library", where);
     return u ? new Library(u) : u;
   }
 
+  /**
+   * @param {*} what 
+   * @returns {object}
+   */
   suitableFor(what) {
     let notPage, notShow, notEdit, notFilter;
     if (!this.layout) return false;
@@ -78,11 +115,18 @@ class Library {
     }[what];
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async delete() {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}_sc_library WHERE id = $1`, [this.id]);
   }
 
+  /**
+   * @param {*} row
+   * @returns {Promise<void>}
+   */
   async update(row) {
     await db.update("_sc_library", row, this.id);
   }

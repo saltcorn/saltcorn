@@ -1,11 +1,29 @@
 {
   "opts": {
+    "template": "node_modules/better-docs",
     "recurse": true,
     "destination": "./docs/"
+  },
+
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+    "search": true,
+    "better-docs": {
+      "css": "jsdoc.styles.css",
+      "title": "Saltcorn",
+      "hideGenerator": true
+    }
   },
   "source": {
     "include": ["."],
     "includePattern": ".+\\.js(doc|x)?$",
-    "excludePattern": "node_modules|plugin_packages"
-  }
+    "excludePattern": "node_modules|plugin_packages|public"
+  },
+  "tags": {
+    "allowUnknownTags": ["category", "subcategory"]
+  },
+  "plugins": [
+    "node_modules/better-docs/category"
+  ]
 }

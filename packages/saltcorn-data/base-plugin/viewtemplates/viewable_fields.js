@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/viewable_fields
+ * @subcategory base-plugin
+ */
 const { post_btn, link } = require("@saltcorn/markup");
 const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
@@ -11,6 +16,16 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 
+/** 
+ * @function
+ * @param {string} viewname
+ * @param {Table|object} table
+ * @param {string} action_name
+ * @param {object} r
+ * @param {string} colId missing in contract
+ * @param {colIdNm} colIdNm missing in contract
+ * @returns {any}
+ */
 const action_url = contract(
   is.fun([is.str, is_tablely, is.str, is.obj()], is.any),
   (viewname, table, action_name, r, colId, colIdNm) => {
@@ -26,6 +41,23 @@ const action_url = contract(
   }
 );
 
+/**
+ * @param {string} url 
+ * @param {object} req 
+ * @param {object} opts
+ * @param {string} opts.action_name
+ * @param {string} opts.action_label
+ * @param {*} opts.confirm
+ * @param {*} opts.rndid
+ * @param {string} opts.action_style
+ * @param {number} opts.action_size
+ * @param {*} opts.action_icon
+ * @param {string} opts.action_bgcol
+ * @param {string} opts.action_bordercol
+ * @param {string} opts.action_textcol
+ * @param {*} __ 
+ * @returns {object}
+ */
 const action_link = (
   url,
   req,
@@ -72,6 +104,12 @@ const action_link = (
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
     });
 };
+
+/**
+ * @function
+ * @param {Field[]} fields
+ * @returns {function}
+ */
 const get_view_link_query = contract(
   is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
   (fields) => {
@@ -91,6 +129,17 @@ const get_view_link_query = contract(
   }
 );
 
+/**
+ * @function
+ * @param {object} opts
+ * @param {string} opts.link_text
+ * @param {boolean} opts.link_text_formula missing in contract
+ * @param {string} [opts.link_url]
+ * @param {boolean} opts.link_url_formula
+ * @param {boolean} opts.link_target_blank
+ * @param {Field[]} fields
+ * @returns {object}
+ */
 const make_link = contract(
   is.fun(
     [is.obj({ link_text: is.str }), is.array(is.class("Field"))],
@@ -123,6 +172,11 @@ const make_link = contract(
     };
   }
 );
+
+/**
+ * @param {string} s 
+ * @returns {object}
+ */
 const parse_view_select = (s) => {
   const colonSplit = s.split(":");
   if (colonSplit.length === 1) return { type: "Own", viewname: s };
@@ -143,6 +197,23 @@ const parse_view_select = (s) => {
 };
 
 //todo: use above to simplify code
+/** 
+ * @function
+ * @param {object} opts
+ * @param {string} opts.view,
+ * @param {object} opts.view_label missing in contract
+ * @param {object} opts.in_modal
+ * @param {object} opts.view_label_formula
+ * @param {string} [opts.link_style = ""]
+ * @param {string} [opts.link_size = ""]
+ * @param {string} [opts.link_icon = ""]
+ * @param {string} [opts.textStyle = ""]
+ * @param {string} [opts.link_bgcol]
+ * @param {string} [opts.link_bordercol]
+ * @param {string} [opts.link_textcol]
+ * @param {Field[]} fields
+ * @returns {object}
+ */
 const view_linker = contract(
   is.fun(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
@@ -266,12 +337,27 @@ const view_linker = contract(
   }
 );
 
+/**
+ * @param {string} nm 
+ * @returns {boolean}
+ */
 const action_requires_write = (nm) => {
   if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
 };
 
+/** 
+ * @function
+ * @param {string} viewname
+ * @param {Table|object} table
+ * @param {Fields[]} fields
+ * @param {object[]} columns
+ * @param {boolean} isShow
+ * @param {object} req
+ * @param {*} __
+ * @returns {object[]}
+ */
 const get_viewable_fields = contract(
   is.fun(
     [
@@ -439,6 +525,12 @@ const get_viewable_fields = contract(
       })
       .filter((v) => !!v)
 );
+
+/**
+ * @param {string} fname 
+ * @param {object} req 
+ * @returns {string}
+ */
 const sortlinkForName = (fname, req) => {
   const { _sortby, _sortdesc } = req.query || {};
   const desc =
@@ -449,6 +541,14 @@ const sortlinkForName = (fname, req) => {
       : "true";
   return `javascript:sortby('${text(fname)}', ${desc})`;
 };
+
+/**
+ * @param {object} column 
+ * @param {object} f 
+ * @param {object} req 
+ * @param {*} __ 
+ * @returns {string}
+ */
 const headerLabelForName = (column, f, req, __) => {
   const label = column.header_label
     ? text(__(column.header_label))
@@ -462,6 +562,14 @@ const headerLabelForName = (column, f, req, __) => {
       : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
+
+/** 
+ * @function
+ * @param {Field[]} fields
+ * @param {object} state
+ * @param {boolean} [fuzzyStrings]
+ * @returns {object}
+ */
 const splitUniques = contract(
   is.fun(
     [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
@@ -487,6 +595,16 @@ const splitUniques = contract(
     return { uniques, nonUniques };
   }
 );
+
+/**
+ * @param {object} table 
+ * @param {string} viewname 
+ * @param {object[]} [columns] 
+ * @param {object} layout0 
+ * @param {boolean} id 
+ * @param {object} req 
+ * @returns {Promise<Form>}
+ */
 const getForm = async (table, viewname, columns, layout0, id, req) => {
   const fields = await table.getFields();
 
@@ -556,6 +674,12 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
   return form;
 };
 
+/**
+ * @param {object} table 
+ * @param {object} req 
+ * @param {object} fixed 
+ * @returns {Promise<object>}
+ */
 const fill_presets = async (table, req, fixed) => {
   const fields = await table.getFields();
   Object.keys(fixed || {}).forEach((k) => {

@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module models/email
+ * @subcategory models
+ */
 const nodemailer = require("nodemailer");
 const { getState } = require("../db/state");
 const BootstrapEmail = require("bootstrap-email");
@@ -9,6 +14,9 @@ const { v4: uuidv4 } = require("uuid");
 const db = require("../db");
 const { mockReqRes } = require("../tests/mocks");
 
+/**
+ * @returns {Transporter}
+ */
 const getMailTransport = () => {
   const port = getState().getConfig("smtp_port");
   const secure = getState().getConfig("smtp_secure", port === 465);
@@ -23,6 +31,10 @@ const getMailTransport = () => {
   });
 };
 
+/**
+ * @param {object} bsHtml 
+ * @returns {object}
+ */
 const transformBootstrapEmail = async (bsHtml) => {
   const filename = await tmp.tmpName();
   await fs.writeFile(filename, div({ class: "container" }, bsHtml));
@@ -33,6 +45,11 @@ const transformBootstrapEmail = async (bsHtml) => {
   return email;
 };
 
+/**
+ * @param {object} user 
+ * @param {object} [req]
+ * @returns {Promise<object>}
+ */
 const send_verification_email = async (user, req) => {
   const verification_view_name = getState().getConfig("verification_view");
   if (verification_view_name) {

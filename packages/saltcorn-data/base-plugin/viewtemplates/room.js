@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/room
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
@@ -30,6 +35,11 @@ const { getState } = require("../../db/state");
 const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -160,6 +170,9 @@ const configuration_workflow = (req) =>
     ],
   });
 
+/**
+ * @returns {object[]}
+ */
 const get_state_fields = () => [
   {
     name: "id",
@@ -170,6 +183,23 @@ const get_state_fields = () => [
 ];
 const limit = 10;
 
+/**
+ * @param {string} table_id 
+ * @param {string} viewname 
+ * @param {object} optsOne
+ * @param {string} optsOne.participant_field,
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {string} optsOne.msgform
+ * @param {string} optsOne.participant_maxread_field
+ * @param {object} state 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<div>}
+ * @throws {InvalidConfiguration}
+ */
 const run = async (
   table_id,
   viewname,
@@ -274,6 +304,18 @@ const run = async (
   );
 };
 
+/**
+ * @param {*} table_id 
+ * @param {*} viewname 
+ * @param {object} optsOne 
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.participant_maxread_field
+ * @param {body} body 
+ * @param {object} optsTwo 
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<void>}
+ */
 const ack_read = async (
   table_id,
   viewname,
@@ -321,6 +363,23 @@ const ack_read = async (
     },
   };
 };
+
+/**
+ * @param {*} table_id 
+ * @param {*} viewname 
+ * @param {object} optsOne.
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {*} optsOne.msgform
+ * @param {*} optsOne.participant_maxread_field
+ * @param {object} body 
+ * @param {object} optsTwo 
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res 
+ * @returns {Promise<object>}
+ */
 const fetch_older_msg = async (
   table_id,
   viewname,
@@ -384,6 +443,23 @@ const fetch_older_msg = async (
     },
   };
 };
+
+/**
+ * @param {*} table_id 
+ * @param {string} viewname 
+ * @param {object} optsOne
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {string} optsOne.msgform
+ * @param {string} optsOne.participant_maxread_field
+ * @param {*} body 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<object>}
+ */
 const submit_msg_ajax = async (
   table_id,
   viewname,
@@ -472,6 +548,18 @@ const submit_msg_ajax = async (
   }
 };
 
+/**
+ * @param {*} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {*} opts.participant_field
+ * @param {string} opts.msg_relation,
+ * @param {string} opts.msgsender_field,
+ * @param {string} opts.msgview,
+ * @param {*} opts.msgform,
+ * @param {*} opts.participant_maxread_field,
+ * @returns {object[]}
+ */
 const virtual_triggers = (
   table_id,
   viewname,
@@ -514,14 +602,25 @@ const virtual_triggers = (
   ];
 };
 module.exports = {
+  /** @type {string} */
   name: "Room",
+  /** @type {string} */
   description: "Real-time space for chat",
   configuration_workflow,
   run,
   get_state_fields,
+  /** @type {boolean} */
   display_state_form: false,
   routes: { submit_msg_ajax, ack_read, fetch_older_msg },
+  /** @type {boolean} */
   noAutoTest: true,
+  /**
+   * @param {object} opts
+   * @param {object} opts.participant_field
+   * @param {string} room_id 
+   * @param {object} user 
+   * @returns {Promise<object>}
+   */
   authorize_join: async ({ participant_field }, room_id, user) => {
     if (!user) return false;
     const [
@@ -539,6 +638,7 @@ module.exports = {
     return !!partRow;
   },
   virtual_triggers,
+  /** @returns {object[]} */
   getStringsForI18n() {
     return [];
   },

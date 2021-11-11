@@ -1,6 +1,18 @@
-// https://stackoverflow.com/a/33794368
+/**
+ * @category saltcorn-builder
+ * @module components/elements/faicons
+ */
 
+/** 
+ * https://stackoverflow.com/a/33794368
+ * @namespace faicons / all
+ * @category saltcorn-builder
+ */
 const all = {
+  /** 
+   * @type {string[]}
+   * @memberof module:components/elements/faicons~faicons / all
+   */
   regular: [
     "address-book",
     "address-card",
@@ -154,6 +166,10 @@ const all = {
     "window-minimize",
     "window-restore",
   ],
+  /** 
+   * @type {string[]}
+   * @memberof module:components/elements/faicons~faicons / all
+   */
   solid: [
     "ad",
     "address-book",
@@ -1157,6 +1173,10 @@ const all = {
     "yen-sign",
     "yin-yang",
   ],
+  /** 
+   * @type {string[]}
+   * @memberof module:components/elements/faicons~faicons / all
+   */
   brands: [
     "500px",
     "accessible-icon",

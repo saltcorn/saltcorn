@@ -1,9 +1,27 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/run-tests
+ */
 const { Command, flags } = require("@oclif/command");
 
 const { spawnSync, spawn } = require("child_process");
 const { sleep } = require("../common");
 
+/**
+ * RunTestsCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class RunTestsCommand extends Command {
+  /**
+   * 
+   * @param {string} cmd 
+   * @param {string[]} args 
+   * @param {*} env 
+   * @param {*} cwd 
+   * @param {boolean} keepalive 
+   * @returns {object}
+   */
   async do_test(cmd, args, env, cwd, keepalive) {
     const res = spawnSync(cmd, args, {
       stdio: "inherit",
@@ -13,6 +31,12 @@ class RunTestsCommand extends Command {
     if (res.status !== 0 && !keepalive) this.exit(res.status);
     return res;
   }
+
+  /**
+   * 
+   * @param {*} env 
+   * @returns {Promise<void>}
+   */
   async e2etest(env) {
     spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
       stdio: "inherit",
@@ -38,6 +62,14 @@ class RunTestsCommand extends Command {
     server.kill();
     if (res.status !== 0) this.exit(res.status);
   }
+
+  /**
+   * 
+   * @param {object} args 
+   * @param {object} flags
+   * @throws {Error}
+   * @returns {void}
+   */
   validateCall(args, flags) {
     if (!args.package && flags.testFilter) {
       throw new Error(
@@ -50,6 +82,10 @@ class RunTestsCommand extends Command {
       );
     }
   }
+  
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     this.validateCall(args, flags);
@@ -111,12 +147,21 @@ class RunTestsCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 RunTestsCommand.args = [
   { name: "package", description: "which package to run tests for" },
 ];
 
+/**
+ * @type {string}
+ */
 RunTestsCommand.description = `Run test suites`;
 
+/**
+ * @type {object}
+ */
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
   testFilter: flags.string({

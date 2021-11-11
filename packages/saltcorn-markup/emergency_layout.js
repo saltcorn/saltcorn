@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module emergency_layout
+ */
+
 const {
   ul,
   li,
@@ -18,6 +23,12 @@ const renderLayout = require("./layout");
 const { renderForm, link } = require(".");
 const { navbar, alert } = require("./layout_utils");
 
+/**
+ * @param {string} title 
+ * @param {string|object} body 
+ * @param {object[]} alerts 
+ * @returns {string}
+ */
 const renderBody = (title, body, alerts) =>
   renderLayout({
     blockDispatch: {},
@@ -26,6 +37,17 @@ const renderBody = (title, body, alerts) =>
     alerts,
   });
 
+/**
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {object} opts.menu
+ * @param {object} opts.brand
+ * @param {object[]} opts.alerts
+ * @param {string} opts.currentUrl
+ * @param {string|object} opts.body
+ * @param {object[]} opts.headers
+ * @returns {string}
+ */
 const wrap = ({ title, menu, brand, alerts, currentUrl, body, headers }) =>
   navbar(brand, menu, currentUrl) + renderBody(title, body, alerts);
 

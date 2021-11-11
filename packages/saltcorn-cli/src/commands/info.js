@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/info
+ */
 const { Command, flags } = require("@oclif/command");
 const {
   configFilePath,
@@ -6,13 +10,31 @@ const {
 const { dump } = require("js-yaml");
 const packagejson = require("../../package.json");
 
+/**
+ * 
+ * @param {object[]} results 
+ * @param {boolean} json 
+ * @returns {void}
+ */
 const print_it = (results, json) => {
   if (json) console.log(JSON.stringify(results, null, 2));
   else console.log(dump(results, { lineWidth: process.stdout.columns }));
 };
 
+/**
+ * InfoCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class InfoCommand extends Command {
+  /**
+   * @type {string[]}
+   */
   static aliases = ["paths"];
+
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(InfoCommand);
     const db = require("@saltcorn/data/db");
@@ -45,12 +67,19 @@ class InfoCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 InfoCommand.description = `Show paths
 ...
 Show configuration and file store paths
 `;
 
+/**
+ * @type {object}
+ */
 InfoCommand.flags = {
   json: flags.boolean({ char: "j", description: "json format" }),
 };
+
 module.exports = InfoCommand;

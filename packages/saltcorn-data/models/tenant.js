@@ -1,15 +1,19 @@
 /**
  * Tenant Management Data Layer Access
- *
+ * @category saltcorn-data
+ * @module models/tenant
+ * @subcategory models
  */
 const db = require("../db");
 const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
 const { sqlsanitize } = require("../db/internal");
 const { setConfig } = require("./config");
+
 /**
  * List all Tenants
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @returns {Promise<string[]>}
  */
 const getAllTenants = contract(
   is.fun([], is.promise(is.array(is.str))),
@@ -24,13 +28,18 @@ const getAllTenants = contract(
  * - create db schema
  * - reset db schema (create required )
  * - change current base_url
- * @type {*|(function(...[*]=): *)}
  *
  * Arguments:
  * subdomain - tenant name (subdomain)
  * newurl - base url of tenant
  * email - email of creator
  * description - description of tenant
+ * @function
+ * @param {string} subdomain
+ * @param {string} [newurl]
+ * @param {string} [email]
+ * @param {string} [description]
+ * @returns {Promise<void>}
  */
 const createTenant = contract(
   is.fun([is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)], is.promise(is.undefined)),
@@ -64,7 +73,9 @@ const createTenant = contract(
 /**
  * Delete Tenant
  * Note! This is deleting all tenant data in database!
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {string} sub 
+ * @returns {Promise<void>}
  */
 const deleteTenant = contract(
   is.fun(is.str, is.promise(is.undefined)),
@@ -80,7 +91,9 @@ const deleteTenant = contract(
  * Sanitize Domain (Normalize domain name).
  * - force to lower case
  * - remove . in name
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {string} s
+ * @returns {string}
  */
 const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
   sqlsanitize(s.replace(".", "").toLowerCase())

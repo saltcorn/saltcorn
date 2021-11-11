@@ -1,7 +1,17 @@
+/**
+ * @category saltcorn-data
+ * @module models/expression
+ * @subcategory models
+ */
 const vm = require("vm");
 let acorn = require("acorn");
 const estraverse = require("estraverse");
 const astring = require("astring");
+
+/**
+ * @param {string} s 
+ * @returns {boolean|void}
+ */
 function expressionValidator(s) {
   if (!s || s.length == 0) return "Missing formula";
   try {
@@ -11,11 +21,21 @@ function expressionValidator(s) {
     return e.message;
   }
 }
+
+/**
+ * @param {string} expression 
+ * @returns {string}
+ */
 function jsexprToSQL(expression) {
   if (!expression) return expression;
   return expression.replace(/===/g, "=").replace(/==/g, "=").replace(/"/g, "'");
 }
 
+/**
+ * @param {string} expression 
+ * @throws {Error}
+ * @returns {object}
+ */
 function jsexprToWhere(expression) {
   if (!expression) return {};
   try {
@@ -77,6 +97,11 @@ function jsexprToWhere(expression) {
   }
 }
 
+/**
+ * @param {string} expression 
+ * @param {object[]} statefuns 
+ * @returns {object}
+ */
 function transform_for_async(expression, statefuns) {
   var isAsync = false;
   const ast = acorn.parseExpressionAt(expression, 0, {
@@ -99,6 +124,11 @@ function transform_for_async(expression, statefuns) {
   return { isAsync, expr_string: astring.generate(ast) };
 }
 
+/**
+ * @param {string} expression 
+ * @param {object[]} fields 
+ * @returns {any}
+ */
 function get_expression_function(expression, fields) {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
@@ -110,6 +140,13 @@ function get_expression_function(expression, fields) {
     getState().function_context
   );
 }
+
+/**
+ * @param {string} expression 
+ * @param {object[]} fields 
+ * @param {object} [extraContext = {}]
+ * @returns {any}
+ */
 function get_async_expression_function(expression, fields, extraContext = {}) {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
@@ -124,6 +161,11 @@ function get_async_expression_function(expression, fields, extraContext = {}) {
   });
 }
 
+/**
+ * @param {object[]} rows 
+ * @param {object[]} fields 
+ * @returns {object[]} 
+ */
 function apply_calculated_fields(rows, fields) {
   let hasExprs = false;
   let transform = (x) => x;
@@ -152,6 +194,12 @@ function apply_calculated_fields(rows, fields) {
     return rows.map(transform);
   } else return rows;
 }
+
+/**
+ * @param {*} row 
+ * @param {*} fields 
+ * @returns {Promise<any>}
+ */
 const apply_calculated_fields_stored = async (row, fields) => {
   let hasExprs = false;
   let transform = (x) => x;
@@ -182,7 +230,7 @@ const apply_calculated_fields_stored = async (row, fields) => {
 };
 /**
  * Recalculate calculated columns that are stored in db
- * @param table - table object
+ * @param {object} table - table object
  * @returns {Promise<void>}
  */
 const recalculate_for_stored = async (table) => {

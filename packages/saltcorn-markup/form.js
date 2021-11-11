@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module form
+ */
+
 const {
   p,
   div,
@@ -13,7 +18,17 @@ const {
 const { contract, is } = require("contractis");
 const renderLayout = require("./layout");
 const { isdef, select_options, search_bar } = require("./helpers");
+
+/**
+ * @param {string} s 
+ * @returns {string}
+ */
 const rmInitialDot = (s) => (s && s[0] === "." ? s.replace(".", "") : s);
+
+/**
+ * @param {object} sIf 
+ * @returns {string}
+ */
 const mkShowIf = (sIf) =>
   Object.entries(sIf)
     .map(([target, value]) =>
@@ -33,7 +48,20 @@ const mkShowIf = (sIf) =>
     )
     .join(" && ");
 
+/**
+ * @param {string} formStyle 
+ * @returns {boolean}
+ */
 const isHoriz = (formStyle) => formStyle === "horiz";
+
+/**
+ * @param {object} hdr 
+ * @param {object} inner 
+ * @param {string} [error = ""]
+ * @param {string} fStyle 
+ * @param {string} labelCols 
+ * @returns {div}
+ */
 const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
   div(
     {
@@ -67,6 +95,12 @@ const formRowWrap = (hdr, inner, error = "", fStyle, labelCols) =>
         ]
   );
 
+/**
+ * @param {object[]} v 
+ * @param {object[]} errors 
+ * @param {string} [nameAdd = ""]
+ * @returns {function}
+ */
 const innerField = (v, errors, nameAdd = "") => (hdr) => {
   const name = hdr.form_name + nameAdd;
   const validClass = errors[name] ? "is-invalid" : "";
@@ -163,11 +197,26 @@ const innerField = (v, errors, nameAdd = "") => (hdr) => {
   }
 };
 
+/**
+ * @param {object[]} v 
+ * @param {object[]} errors 
+ * @param {string} formStyle 
+ * @param {object[]} labelCols 
+ * @returns {function}
+ */
 const mkFormRow = (v, errors, formStyle, labelCols) => (hdr) =>
   hdr.isRepeat
     ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
     : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
+/**
+ * @param {object[]} v 
+ * @param {object[]} errors 
+ * @param {string} formStyle 
+ * @param {object[]} labelCols 
+ * @param {object} hdr 
+ * @returns {div}
+ */
 const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   const adder = a(
     {
@@ -228,6 +277,13 @@ const mkFormRowForRepeat = (v, errors, formStyle, labelCols, hdr) => {
   }
 };
 
+/** 
+ * @param {object} hdr 
+ * @param {string} name 
+ * @param {object} v 
+ * @param {string} extracls 
+ * @returns {*}
+ */
 const displayEdit = (hdr, name, v, extracls) => {
   var fieldview;
   var attributes = hdr.attributes;
@@ -259,6 +315,14 @@ const displayEdit = (hdr, name, v, extracls) => {
   else return fieldview.run(v, undefined, attributes);
 };
 
+/**
+ * @param {object[]} v 
+ * @param {object[]} errors 
+ * @param {string} formStyle 
+ * @param {string} labelCols 
+ * @param {string} [nameAdd = ""]
+ * @returns {function}
+ */
 const mkFormRowForField = (v, errors, formStyle, labelCols, nameAdd = "") => (
   hdr
 ) => {
@@ -278,6 +342,10 @@ const mkFormRowForField = (v, errors, formStyle, labelCols, nameAdd = "") => (
     );
 };
 
+/**
+ * @param {object} form 
+ * @returns {string}
+ */
 const renderFormLayout = (form) => {
   const blockDispatch = {
     field(segment) {
@@ -358,6 +426,11 @@ const renderFormLayout = (form) => {
   return renderLayout({ blockDispatch, layout: form.layout });
 };
 
+/**
+ * @param {string|object} form 
+ * @param {string|false} csrfToken0 
+ * @returns {string}
+ */
 const renderForm = (form, csrfToken0) => {
   const csrfToken =
     csrfToken0 === false || csrfToken0 === ""
@@ -401,6 +474,11 @@ const renderForm = (form, csrfToken0) => {
   else return mkForm(form, csrfToken, form.errors);
 };
 
+/**
+ * @param {object} form 
+ * @param {string} csrfToken 
+ * @returns {string}
+ */
 const mkFormWithLayout = (form, csrfToken) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
@@ -436,6 +514,11 @@ const mkFormWithLayout = (form, csrfToken) => {
     "</form>"
   );
 };
+
+/**
+ * @param {object[]} additionalButtons 
+ * @returns {string}
+ */
 const displayAdditionalButtons = (additionalButtons) =>
   additionalButtons
     .map(
@@ -445,6 +528,13 @@ const displayAdditionalButtons = (additionalButtons) =>
         }>${btn.label}</button>&nbsp;`
     )
     .join("");
+
+/**
+ * @param {object} form 
+ * @param {string} csrfToken 
+ * @param {object} [errors = {}]
+ * @returns {string}
+ */
 const mkForm = (form, csrfToken, errors = {}) => {
   const hasFile = form.fields.some((f) => f.input_type === "file");
   const csrfField =
@@ -503,7 +593,8 @@ const mkForm = (form, csrfToken, errors = {}) => {
   return blurbp + top + csrfField + flds + fullFormError + bot + "</form>";
 };
 
-module.exports = contract(
+module.exports = 
+contract(
   is.fun(
     [is.or(is.str, is.class("Form")), is.maybe(is.or(is.str, is.eq(false)))],
     is.str

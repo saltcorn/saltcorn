@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-data
+ * @module utils
+ */
 const v8 = require("v8");
 const fs = require("fs");
 

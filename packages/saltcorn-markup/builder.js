@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module builder
+ */
+
 const {
   p,
   div,
@@ -16,14 +21,36 @@ const {
 } = require("./tags");
 const { contract, is } = require("contractis");
 
+/**
+ * @param {object} rec 
+ * @param {object} csrf 
+ * @returns {object}
+ */
 const addCsrf = (rec, csrf) => {
   rec.csrfToken = csrf;
   return rec;
 };
 
+/**
+ * @param {object} x 
+ * @returns {string}
+ */
 const encode = (x) => encodeURIComponent(JSON.stringify(x));
 
-module.exports = (
+module.exports = 
+/**
+ * @param {object} opts
+ * @param {object} opts.options
+ * @param {object} opts.context
+ * @param {object} opts.action
+ * @param {string} opts.stepName
+ * @param {object} opts.layout
+ * @param {string} [opts.mode = "show"]
+ * @param {object} opts
+ * @param {object} csrfToken 
+ * @returns {div}
+ */
+(
   { options, context, action, stepName, layout, mode = "show", version_tag },
   csrfToken
 ) =>

@@ -1,7 +1,20 @@
+/**
+ * @category saltcorn-markup
+ * @module tabs
+ */
+
 const { a, text, div, ul, li } = require("./tags");
 
+/**
+ * @param {string} str 
+ * @returns {string}
+ */
 const mkId = (str) => text(str.split(" ").join("_"));
 
+/**
+ * @param {object} obj 
+ * @returns {object}
+ */
 const tabs = (obj) => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
   const lis = entries.map((e, ix) =>

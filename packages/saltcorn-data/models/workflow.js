@@ -1,10 +1,24 @@
+/**
+ * view description
+ * @category saltcorn-data
+ * @module models/workflow
+ * @subcategory models
+ */
 const db = require("../db");
 const { getState } = require("../db/state");
 const Field = require("./field");
 const { contract, is } = require("contractis");
 const { applyAsync, apply } = require("../utils");
 
+/**
+ * Workflow class
+ * @category saltcorn-data
+ */
 class Workflow {
+  /**
+   * Workflow constructor
+   * @param {*} o 
+   */
   constructor(o) {
     this.steps = o.steps || [];
     this.onDone = o.onDone || ((c) => c);
@@ -12,6 +26,12 @@ class Workflow {
     this.__ = (s) => s;
     contract.class(this);
   }
+
+  /**
+   * @param {object} body 
+   * @param {object} req 
+   * @returns {Promise<object>}
+   */
   async run(body, req) {
     if (req) this.__ = (s) => req.__(s);
     if (!body || !body.stepName) {
@@ -77,6 +97,12 @@ class Workflow {
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
   }
+  
+  /**
+   * @param {object} context 
+   * @param {number} stepIx 
+   * @returns {Promise<object>}
+   */
   async runStep(context, stepIx) {
     if (stepIx >= this.steps.length) {
       return await this.onDone(context);
@@ -149,6 +175,11 @@ class Workflow {
     }
   }
 
+  /**
+   * @param {object} step 
+   * @param {number} stepIx 
+   * @returns {string}
+   */
   title(step, stepIx) {
     return `${step.name} (${this.__("step")} ${stepIx + 1} / ${
       this.steps.length > stepIx + 1 ? this.__("max") + " " : ""

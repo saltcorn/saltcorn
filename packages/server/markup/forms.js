@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module markup/forms
+ * @subcategory markup
+ */
+
 const {
   form,
   select,
@@ -11,6 +17,14 @@ const {
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("../routes/utils");
 
+/**
+ * @param {object} opts
+ * @param {string} opts.url
+ * @param {Role} opts.current_role
+ * @param {Role[]} opts.roles
+ * @param {object} opts.req
+ * @returns {Form}
+ */
 const editRoleForm = ({ url, current_role, roles, req }) =>
   form(
     {
@@ -32,6 +46,10 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
     )
   );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const fileUploadForm = (req) =>
   form(
     {
@@ -50,6 +68,12 @@ const fileUploadForm = (req) =>
     })
   );
 
+/**
+ * @param {string} wizardTitle 
+ * @param {*} wf 
+ * @param {object} wfres 
+ * @returns {string}
+ */
 const wizardCardTitle = (wizardTitle, wf, wfres) =>
   `${wizardTitle}: ${wfres.stepName}`;
 

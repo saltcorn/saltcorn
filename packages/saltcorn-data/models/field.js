@@ -1,6 +1,8 @@
 /**
- *
  * Field Data Access Layer
+ * @category saltcorn-data
+ * @module models/field
+ * @subcategory models
  */
 
 const db = require("../db");
@@ -22,6 +24,7 @@ const readKey = (v, field) => {
 
 /**
  * Field Class
+ * @category saltcorn-data
  */
 class Field {
   /**
@@ -99,7 +102,7 @@ class Field {
 
   /**
    * To Json
-   * @returns {{expression, fieldview, is_unique: (boolean), label: *, table_id: *, type: (string|*), primary_key: (*|boolean), sublabel, required: (boolean), refname: (string|*), reftable_name: (string|*|Table), stored: (*|boolean), name: (*), attributes: any, id, calculated: (*|boolean), reftype: (string|*)}}
+   * @type {object}
    */
   get toJson() {
     return {
@@ -126,8 +129,8 @@ class Field {
 
   /**
    * Label 2 Name
-   * @param label
-   * @returns {*}
+   * @param {string} label
+   * @returns {string}
    */
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
@@ -137,7 +140,7 @@ class Field {
 
   /**
    * ???
-   * @returns {string|*}
+   * @returns {string}
    */
   get form_name() {
     if (this.parent_field) return `${this.parent_field}_${this.name}`;
@@ -146,7 +149,8 @@ class Field {
 
   /**
    * Fill fkey options???
-   * @param force_allow_none
+   * @param {boolean} [force_allow_none = false]
+   * @param {object} where
    * @returns {Promise<void>}
    */
   async fill_fkey_options(force_allow_none = false, where) {
@@ -177,8 +181,8 @@ class Field {
 
   /**
    * Distinct Values
-   * @param req
-   * @returns {Promise<[{label: string, value: string}, {jsvalue: boolean, label, value: string}, {jsvalue: boolean, label, value: string}]|[{label: string, value: string}, ...*]|*[]>}
+   * @param {object} [req]
+   * @returns {Promise<void>}
    */
   async distinct_values(req, where) {
     const __ = req && req.__ ? req.__ : (s) => s;
@@ -226,6 +230,9 @@ class Field {
     return [{ label: "", value: "" }, ...dbOpts];
   }
 
+  /**
+   * @type {string}
+   */
   get sql_type() {
     if (this.is_fkey) {
       const schema = db.getTenantSchemaPrefix();
@@ -241,12 +248,18 @@ class Field {
     }
   }
 
+  /**
+   * @type {string}
+   */
   get pretty_type() {
     if (this.reftable_name === "_sc_files") return "File";
     if (this.is_fkey) return `Key to ${this.reftable_name}`;
     else return this.type ? this.type.name : "?";
   }
 
+  /**
+   * @type {string}
+   */
   get sql_bare_type() {
     if (this.is_fkey) {
       const { getState } = require("../db/state");
@@ -257,6 +270,9 @@ class Field {
     }
   }
 
+  /**
+   * @returns {Promise<any>}
+   */
   async generate() {
     if (this.is_fkey) {
       const rows = await db.select(
@@ -271,6 +287,10 @@ class Field {
     }
   }
 
+  /**
+   * @param {object} whole_rec 
+   * @returns {object}
+   */
   validate(whole_rec) {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     const readval = this.is_fkey
@@ -295,26 +315,47 @@ class Field {
     else return { error: "Not accepted" };
   }
 
+  /**
+   * 
+   * @param {object} where 
+   * @param {object} [selectopts]
+   * @returns {Field[]}
+   */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map((dbf) => new Field(dbf));
   }
 
+  /**
+   * @param {object} where 
+   * @returns {Promise<Field>}
+   */
   static async findOne(where) {
     const db_fld = await db.selectOne("_sc_fields", where);
     return new Field(db_fld);
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async add_unique_constraint() {
     await this.fill_table();
     await db.add_unique_constraint(this.table.name, [this.name]);
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async remove_unique_constraint() {
     await this.fill_table();
     await db.drop_unique_constraint(this.table.name, [this.name]);
   }
 
+  /**
+   * 
+   * @param {boolean} not_null 
+   * @returns {Promise<void>}
+   */
   async toggle_not_null(not_null) {
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
@@ -328,6 +369,10 @@ class Field {
     await require("../db/state").getState().refresh_tables();
   }
 
+  /**
+   * @param {object} new_field 
+   * @returns {Promise<void>}
+   */
   async alter_sql_type(new_field) {
     let new_sql_type = new_field.sql_type;
     let def = "";
@@ -365,6 +410,9 @@ class Field {
     await require("../db/state").getState().refresh_tables();
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async fill_table() {
     if (!this.table) {
       const Table = require("./table");
@@ -372,6 +420,10 @@ class Field {
     }
   }
 
+  /**
+   * @param {object} v 
+   * @returns {Promise<void>}
+   */
   async update(v) {
     if (
       typeof v.is_unique !== "undefined" &&
@@ -405,6 +457,10 @@ class Field {
     });
     await require("../db/state").getState().refresh_tables();
   }
+
+  /**
+   * @type {string}
+   */
   get listKey() {
     return this.type.listAs
       ? (r) => this.type.listAs(r[this.name])
@@ -412,6 +468,10 @@ class Field {
       ? (r) => this.type.showAs(r[this.name])
       : this.name;
   }
+
+  /**
+   * @type {object}
+   */
   get presets() {
     if (this.type && this.type.presets) return this.type.presets;
 
@@ -420,6 +480,11 @@ class Field {
 
     return null;
   }
+
+  /**
+   * @throws {InvalidAdminAction}
+   * @returns {Promise<void>}
+   */
   async delete() {
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
@@ -457,6 +522,10 @@ class Field {
     await require("../db/state").getState().refresh_tables();
   }
 
+  /**
+   * @param {object} table 
+   * @returns {Promise<void>}
+   */
   async enable_fkey_constraint(table) {
     if (this.is_fkey && !db.isSQLite) {
       const schema = db.getTenantSchemaPrefix();
@@ -472,6 +541,11 @@ class Field {
     }
   }
 
+  /**
+   * @param {object} fld 
+   * @param {boolean} [bare = false]
+   * @returns {Promise<Field>}
+   */
   static async create(fld, bare = false) {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
@@ -568,6 +642,11 @@ class Field {
     return f;
   }
 
+  /**
+   * @param {function|object[]} [typeattribs]
+   * @param {number} [table_id]
+   * @returns {*}
+   */
   static getTypeAttributes(typeattribs, table_id) {
     const Table = require("./table");
 

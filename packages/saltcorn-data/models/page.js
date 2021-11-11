@@ -1,7 +1,9 @@
 /**
- * Page Data Access Layer
+ * Page Database Access Layer
+ * @category saltcorn-data
+ * @module models/page
+ * @subcategory models
  */
-
 const db = require("../db");
 const { contract, is } = require("contractis");
 const View = require("./view");
@@ -26,8 +28,12 @@ const {
 
 /**
  * Page Class
+ * @category saltcorn-data
  */
 class Page {
+  /**
+   * @param {object} o 
+   */
   constructor(o) {
     this.name = o.name;
     this.title = o.title;
@@ -136,7 +142,7 @@ class Page {
 
   /**
    * get menu label for page
-   * @returns {*|undefined}
+   * @type {string|undefined}
    */
   get menu_label() {
     const { getState } = require("../db/state");

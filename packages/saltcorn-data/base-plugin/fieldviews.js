@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/fieldviews
+ * @subcategory base-plugin
+ */
+
 const View = require("../models/view");
 const Table = require("../models/table");
 const {
@@ -12,9 +18,19 @@ const {
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 
+/** 
+ * select namespace
+ * @namespace 
+ * @category saltcorn-data
+ */
 const select = {
+  /** @type {string} */
   type: "Key",
+  /** @type {boolean} */
   isEdit: true,
+  /**
+   * @type {object[]} 
+   */
   configFields: () => [
     {
       name: "neutral_label",
@@ -29,6 +45,16 @@ const select = {
       type: "Bool",
     },
   ],
+  
+  /**
+   * @param {*} nm 
+   * @param {*} v 
+   * @param {*} attrs 
+   * @param {*} cls 
+   * @param {*} reqd 
+   * @param {*} field 
+   * @returns {object} 
+   */
   run: (nm, v, attrs, cls, reqd, field) => {
     if (attrs.disabled)
       return (
@@ -58,9 +84,25 @@ const select = {
   },
 };
 
+/** 
+ * radio_select namespace
+ * @namespace 
+ * @category saltcorn-data
+ */
 const radio_select = {
+  /** @type {string} */
   type: "Key",
+  /** @type {boolean} */
   isEdit: true,
+  /**
+   * @param {*} nm 
+   * @param {*} v 
+   * @param {*} attrs 
+   * @param {*} cls 
+   * @param {*} reqd 
+   * @param {*} field 
+   * @returns {object}
+   */
   run: (nm, v, attrs, cls, reqd, field) =>
     radio_group({
       class: `${cls} ${field.class || ""}`,
@@ -70,9 +112,20 @@ const radio_select = {
     }),
 };
 
+/** 
+ * select namespace
+ * @namespace 
+ * @category saltcorn-data
+ */
 const search_or_create = {
+  /** @type {string} */
   type: "Key",
+  /** @type {boolean} */
   isEdit: true,
+  /**
+   * @param {object} field 
+   * @returns {Promise<object[]>}
+   */
   configFields: async (field) => {
     const reftable = await Table.findOne({ name: field.reftable_name });
     const views = await View.find({ table_id: reftable.id });
@@ -91,6 +144,16 @@ const search_or_create = {
       },
     ];
   },
+
+  /**
+   * @param {*} nm 
+   * @param {*} v 
+   * @param {*} attrs 
+   * @param {*} cls 
+   * @param {*} reqd 
+   * @param {*} field 
+   * @returns {object}
+   */
   run: (nm, v, attrs, cls, reqd, field) => {
     return (
       tags.select(

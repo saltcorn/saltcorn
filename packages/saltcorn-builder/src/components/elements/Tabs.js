@@ -1,10 +1,27 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Tabs
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useState } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
+export /**
+ * @param {object} props
+ * @param {string[]} props.contents
+ * @param {string[]} props.titles
+ * @param {string} props.tabsStyle
+ * @param {number} props.ntabs
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -83,7 +100,13 @@ export const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
     );
 };
 
-export const TabsSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const TabsSettings = () => {
   const node = useNode((node) => ({
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
@@ -156,6 +179,10 @@ export const TabsSettings = () => {
     </table>
   );
 };
+
+/**
+ * @type {object}
+ */
 Tabs.craft = {
   props: {
     titles: ["Tab1", "Tab2"],

@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module helpers
+ */
+
 const {
   a,
   text,
@@ -10,8 +15,20 @@ const {
   label,
 } = require("./tags");
 
+/**
+ * checks if x is defined
+ * @param {*} x 
+ * @returns {boolean}
+ */
 const isdef = (x) => typeof x !== "undefined";
 
+/**
+ * @param {object|string} v 
+ * @param {object} hdr 
+ * @param {boolean} force_required 
+ * @param {string} neutral_label 
+ * @returns {string}
+ */
 const select_options = (v, hdr, force_required, neutral_label = "") => {
   const options0 = hdr.options || [];
   const options1 = force_required
@@ -38,6 +55,17 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
     .join("");
 };
 
+/**
+ * 
+ * @param {object} opts
+ * @param {string} opts.name
+ * @param {object} [opts.options]
+ * @param {string} opts.value
+ * @param {object} opts.inline
+ * @param {string} opts.form_name
+ * @param {...*} opts.rest
+ * @returns {string}
+ */
 const radio_group = ({ name, options, value, inline, form_name, ...rest }) =>
   div(
     (options || [])
@@ -65,6 +93,14 @@ const radio_group = ({ name, options, value, inline, form_name, ...rest }) =>
       .join("")
   );
 
+/**
+ * @param {object} opts
+ * @param {number} opts.current_page
+ * @param {number} opts.pages
+ * @param {function} opts.get_page_link
+ * @param {boolean} opts.trailing_ellipsis
+ * @returns {string}
+ */
 const pagination = ({
   current_page,
   pages,
@@ -106,6 +142,12 @@ const pagination = ({
   return ul({ class: "pagination" }, lis);
 };
 
+/**
+ * @param {string} name 
+ * @param {object} v 
+ * @param {object} param2 
+ * @returns {string}
+ */
 const search_bar = (
   name,
   v,

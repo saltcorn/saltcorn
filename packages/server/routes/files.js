@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/files
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
@@ -32,9 +38,22 @@ const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace filesRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {*} file 
+ * @param {*} roles 
+ * @param {*} req 
+ * @returns {Form}
+ */
 const editFileRoleForm = (file, roles, req) =>
   editRoleForm({
     url: `/files/setrole/${file.id}`,
@@ -43,6 +62,12 @@ const editFileRoleForm = (file, roles, req) =>
     req,
   });
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -104,6 +129,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/download/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/download/:id",
   setTenant,
@@ -122,6 +153,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/serve/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/serve/:id",
   setTenant,
@@ -152,6 +189,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
   setTenant,
@@ -173,6 +216,13 @@ router.post(
     res.redirect("/files");
   })
 );
+
+/**
+ * @name post/setname/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/setname/:id",
   setTenant,
@@ -186,6 +236,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/upload
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/upload",
   setTenant,
@@ -233,6 +289,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
   setTenant,

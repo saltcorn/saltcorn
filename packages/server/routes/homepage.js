@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/homepage
+ * @subcategory routes
+ */
+
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
@@ -14,6 +20,11 @@ const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
 
+/**
+ * @param {*} tables 
+ * @param {object} req 
+ * @returns {Table}
+ */
 const tableTable = (tables, req) =>
   mkTable(
     [
@@ -26,6 +37,11 @@ const tableTable = (tables, req) =>
     tables
   );
 
+/**
+ * @param {*} tables 
+ * @param {object} req 
+ * @returns {object}
+ */
 const tableCard = (tables, req) => ({
   type: "card",
   class: "welcome-page-entity-list",
@@ -50,6 +66,11 @@ const tableCard = (tables, req) => ({
   ),
 });
 
+/**
+ * @param {*} views 
+ * @param {object} req 
+ * @returns {Table}
+ */
 const viewTable = (views, req) =>
   mkTable(
     [
@@ -66,6 +87,11 @@ const viewTable = (views, req) =>
     views
   );
 
+/**
+ * @param {*} views 
+ * @param {object} req 
+ * @returns {object}
+ */
 const viewCard = (views, req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
@@ -91,6 +117,12 @@ const viewCard = (views, req) => ({
     )
   ),
 });
+
+/**
+ * @param {*} pages 
+ * @param {object} req 
+ * @returns {Table}
+ */
 const pageTable = (pages, req) =>
   mkTable(
     [
@@ -106,6 +138,12 @@ const pageTable = (pages, req) =>
     ],
     pages
   );
+
+/**
+ * @param {*} pages 
+ * @param {object} req 
+ * @returns {object}
+ */
 const pageCard = (pages, req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
@@ -133,6 +171,10 @@ const pageCard = (pages, req) => ({
   ),
 });
 
+/**
+ * @param {object} req 
+ * @returns {Promise<div>}
+ */
 const filesTab = async (req) => {
   const files = await File.find({}, { orderBy: "filename" });
   return div(
@@ -152,6 +194,11 @@ const filesTab = async (req) => {
     fileUploadForm(req)
   );
 };
+
+/**
+ * @param {object} req 
+ * @returns {Promise<div>}
+ */
 const usersTab = async (req) => {
   const users = await User.find({}, { orderBy: "id" });
   const roles = await User.get_roles();
@@ -177,6 +224,11 @@ const usersTab = async (req) => {
     )
   );
 };
+
+/**
+ * @param {object} req 
+ * @returns {Promise<div>}
+ */
 const actionsTab = async (req) => {
   const triggers = await Trigger.findAllWithTableName();
 
@@ -212,6 +264,11 @@ const actionsTab = async (req) => {
     )
   );
 };
+
+/**
+ * @param {object} req 
+ * @returns {Promise<object>}
+ */
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
@@ -312,6 +369,11 @@ const welcome_page = async (req) => {
   };
 };
 
+/**
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {Promise<void>}
+ */
 const no_views_logged_in = async (req, res) => {
   const role = req.isAuthenticated() ? req.user.role_id : 10;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
@@ -337,6 +399,12 @@ const no_views_logged_in = async (req, res) => {
   }
 };
 
+/**
+ * @param {number} role_id 
+ * @param {object} res 
+ * @param {object} req 
+ * @returns {Promise<boolean>}
+ */
 const get_config_response = async (role_id, res, req) => {
   const modernCfg = getState().getConfig("home_page_by_role", false);
   const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
@@ -360,6 +428,13 @@ const get_config_response = async (role_id, res, req) => {
     return true;
   }
 };
+
+/**
+ * Function assigned to 'module.exports'.
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {Promise<void>}
+ */
 module.exports = async (req, res) => {
   const isAuth = req.isAuthenticated();
   const role_id = req.user ? req.user.role_id : 10;

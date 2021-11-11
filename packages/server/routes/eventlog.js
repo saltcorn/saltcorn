@@ -1,6 +1,8 @@
 /**
  * Actions (Triggers) Handler
- *
+ * @category server
+ * @module routes/eventlog
+ * @subcategory routes
  */
 const Router = require("express-promise-router");
 const {
@@ -12,6 +14,13 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace eventlogRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 const {
@@ -42,6 +51,10 @@ const Table = require("@saltcorn/data/models/table");
 const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
 
+/**
+ * @param {object} req 
+ * @returns {Promise<Form>}
+ */
 const logSettingsForm = async (req) => {
   const fields = [];
   for (const w of Trigger.when_options) {
@@ -80,6 +93,12 @@ const logSettingsForm = async (req) => {
   });
 };
 
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.get(
   "/settings",
   setTenant,
@@ -101,6 +120,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/custom
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.get(
   "/custom",
   setTenant,
@@ -147,6 +172,9 @@ router.get(
   })
 );
 
+/**
+ * @returns {Form}
+ */
 const customEventForm = () =>
   new Form({
     action: "/eventlog/custom/new",
@@ -166,6 +194,12 @@ const customEventForm = () =>
     ],
   });
 
+/**
+ * @name get/custom/new
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.get(
   "/custom/new",
   setTenant,
@@ -186,6 +220,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/custom/new
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.post(
   "/custom/new",
   setTenant,
@@ -216,6 +256,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/custom/delete/:name
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.post(
   "/custom/delete/:name",
   setTenant,
@@ -234,6 +280,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/settings
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.post(
   "/settings",
   setTenant,
@@ -261,6 +313,12 @@ router.post(
   })
 );
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -311,6 +369,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:routes/eventlog~eventlogRouter
+ * @function
+ */
 router.get(
   "/:id",
   setTenant,

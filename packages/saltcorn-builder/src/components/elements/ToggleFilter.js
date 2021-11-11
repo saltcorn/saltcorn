@@ -1,9 +1,29 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/ToggleFilter
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({
+export /**
+ * @param {object} props
+ * @param {*} props.name
+ * @param {string} [props.value]
+ * @param {string} [props.preset_value]
+ * @param {boolean} props.block
+ * @param {string} [props.label]
+ * @param {string} props.size
+ * @param {string} props.style
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ToggleFilter = ({
   name,
   value,
   preset_value,
@@ -29,7 +49,13 @@ export const ToggleFilter = ({
   );
 };
 
-export const ToggleFilterSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ToggleFilterSettings = () => {
   const {
     actions: { setProp },
     name,
@@ -195,6 +221,9 @@ export const ToggleFilterSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 ToggleFilter.craft = {
   displayName: "ToggleFilter",
   related: {

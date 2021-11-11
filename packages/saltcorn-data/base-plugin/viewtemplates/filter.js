@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/filter
+ * @subcategory base-plugin
+ */
 const User = require("../../models/user");
 const View = require("../../models/view");
 const Table = require("../../models/table");
@@ -26,6 +31,9 @@ const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
 
+/**
+ * @returns {Workflow}
+ */
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -80,10 +88,26 @@ const configuration_workflow = () =>
       },
     ],
   });
+
+/** @returns {object[]} */
 const get_state_fields = () => [];
 
+/**
+ * 
+ * @returns {Promise<object>}
+ */
 const initial_config = async () => ({ layout: {}, columns: [] });
 
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} state 
+ * @param {object} extra 
+ * @returns {Promise<Layout>}
+ */
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
   //console.log(layout);
@@ -251,17 +275,36 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   return renderLayout({ blockDispatch, layout, role });
 };
 
+/**
+ * @param {object|undefined} x 
+ * @param {object|undefined} y 
+ * @returns {object}
+ */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
+
+/**
+ * @param {string} x 
+ * @param {string} y 
+ * @returns {boolean}
+ */
 const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
+  /** @type {string} */
   name: "Filter",
+  /** @type {string} */
   description:
     "Elements that limit the rows shown in other views on the same page. Filter views do not show any rows on their own.",
   get_state_fields,
   configuration_workflow,
   run,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
+  /**
+   * @param {object} opts
+   * @param {*} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },

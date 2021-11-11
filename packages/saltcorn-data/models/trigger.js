@@ -1,6 +1,8 @@
 /**
- *
  * Trigger Data Access Layer
+ * @category saltcorn-data
+ * @module models/trigger
+ * @subcategory models
  */
 
 const db = require("../db");
@@ -10,8 +12,13 @@ const EventLog = require("./eventlog");
 
 /**
  * Trigger class
+ * @category saltcorn-data
  */
 class Trigger {
+  /**
+   * Trigger constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.name = o.name;
     this.action = o.action;
@@ -36,7 +43,7 @@ class Trigger {
 
   /**
    * Get JSON from Trigger
-   * @returns {{when_trigger, configuration: any, name, description, action}}
+   * @type {{when_trigger, configuration: any, name, description, action}}
    */
   get toJson() {
     let table_name = this.table_name;
@@ -60,7 +67,7 @@ class Trigger {
   /**
    * Find triggers in State cache
    * @param where - condition
-   * @returns {T[]}
+   * @returns {Trigger[]}
    */
   static find(where) {
     const { getState } = require("../db/state");
@@ -71,7 +78,7 @@ class Trigger {
    * Find triggers in DB
    * @param where
    * @param selectopts
-   * @returns {Promise<*>}
+   * @returns {Promise<Trigger[]>}
    */
   static async findDB(where, selectopts) {
     const db_flds = await db.select("_sc_triggers", where, selectopts);
@@ -80,7 +87,7 @@ class Trigger {
 
   /**
    * Find all triggers
-   * @returns {Promise<*>}
+   * @returns {Promise<Trigger[]>}
    */
   static async findAllWithTableName() {
     const schema = db.getTenantSchemaPrefix();
@@ -94,7 +101,7 @@ class Trigger {
   /**
    * Find one trigger in State cache
    * @param where
-   * @returns {T}
+   * @returns {Trigger}
    */
   static findOne(where) {
     const { getState } = require("../db/state");
@@ -142,7 +149,13 @@ class Trigger {
     await require("../db/state").getState().refresh_triggers();
   }
 
-  // Emit an event: run associated triggers
+  /**
+   * Emit an event: run associated triggers
+   * @param {*} eventType 
+   * @param {*} channel 
+   * @param {object} [userPW = {}]
+   * @param {*} payload 
+   */
   static emitEvent(eventType, channel, userPW = {}, payload) {
     setTimeout(async () => {
       const { password, ...user } = userPW || {};
@@ -205,7 +218,7 @@ class Trigger {
   /**
    * Run trigger without row
    * @param runargs
-   * @returns {Promise<*>}
+   * @returns {Promise<boolean>}
    */
   async runWithoutRow(runargs = {}) {
     const { getState } = require("../db/state");
@@ -224,7 +237,7 @@ class Trigger {
    * get triggers
    * @param when_trigger
    * @param table
-   * @returns {Promise<*>}
+   * @returns {Promise<Trigger[]>}
    */
   static async getTableTriggers(when_trigger, table) {
     const { getState } = require("../db/state");
@@ -249,8 +262,8 @@ class Trigger {
   }
 
   /**
-   *  Trigger when options
-   * @returns {string[]}
+   * Trigger when options
+   * @type {string[]}
    */
   static get when_options() {
     const { getState } = require("../db/state");

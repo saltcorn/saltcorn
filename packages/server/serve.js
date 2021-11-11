@@ -1,8 +1,9 @@
 /**
  * Serve is Saltcorn server starter
  *
+ * @category server
+ * @module serve
  */
-
 const runScheduler = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -35,6 +36,12 @@ const View = require("@saltcorn/data/models/view");
 
 // helpful https://gist.github.com/jpoehls/2232358
 
+/**
+ * @param {object} opts
+ * @param {object} opts
+ * @param {boolean} opts.disableMigrate
+ * @param {boolean} [useClusterAdaptor = true]
+ */
 const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   let sql_log;
   try {
@@ -66,6 +73,12 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   if (useClusterAdaptor) setupPrimary();
 };
 
+/**
+ * @param {object} opts 
+ * @param {object} opts.tenant 
+ * @param {...*} opts.msg 
+ * @returns {void}
+ */
 const workerDispatchMsg = ({ tenant, ...msg }) => {
   if (tenant) {
     db.runWithTenant(tenant, () => workerDispatchMsg(msg));
@@ -85,6 +98,17 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   if (msg.restart_tenant) restart_tenant(loadAllPlugins);
   if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
 };
+
+/**
+ * 
+ * @param {*} masterState 
+ * @param {object} opts 
+ * @param {string} opts.port 
+ * @param {boolean} opts.watchReaper 
+ * @param {boolean} opts.disableScheduler
+ * @param {number} opts.pid
+ * @returns {function}
+ */
 const onMessageFromWorker = (
   masterState,
   { port, watchReaper, disableScheduler, pid }
@@ -109,7 +133,19 @@ const onMessageFromWorker = (
   }
 };
 
-module.exports = async ({
+module.exports = 
+/**
+ * @function
+ * @name "module.exports function"
+ * @param {object} [opts = {}]
+ * @param {number} [opts.port = 3000]
+ * @param {boolean} opts.watchReaper
+ * @param {boolean} opts.disableScheduler
+ * @param {number} opts.defaultNCPUs 
+ * @param {...*} opts.appargs 
+ * @returns {Promise<void>}
+ */
+async ({
   port = 3000,
   watchReaper,
   disableScheduler,
@@ -208,6 +244,11 @@ module.exports = async ({
   }
 };
 
+/**
+ * @param {*} appargs 
+ * @param {*} port 
+ * @returns {Promise<void>}
+ */
 const nonGreenlockWorkerSetup = async (appargs, port) => {
   process.send && process.on("message", workerDispatchMsg);
 
@@ -251,6 +292,11 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
   }
   process.send && process.send("Start");
 };
+
+/**
+ * 
+ * @param  {...*} servers 
+ */
 const setupSocket = (...servers) => {
   // https://socket.io/docs/v4/middlewares/
   const wrap = (middleware) => (socket, next) =>

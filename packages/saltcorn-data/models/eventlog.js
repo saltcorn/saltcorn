@@ -1,9 +1,23 @@
+/**
+ * EventLog Database Access Layer
+ * @category saltcorn-data
+ * @module models/eventlog
+ * @subcategory models
+ */
 const db = require("../db");
 const moment = require("moment");
 
 const { contract, is } = require("contractis");
 
+/**
+ * EventLog Class
+ * @category saltcorn-data
+ */
 class EventLog {
+  /**
+   * EventLog constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.id = o.id;
     this.event_type = o.event_type;
@@ -16,14 +30,30 @@ class EventLog {
       typeof o.payload === "string" ? JSON.parse(o.payload) : o.payload;
     contract.class(this);
   }
+
+  /**
+   * @param {object} where 
+   * @param {object} selopts 
+   * @returns {Promise<EventLog[]>}
+   */
   static async find(where, selopts) {
     const us = await db.select("_sc_event_log", where, selopts);
     return us.map((u) => new EventLog(u));
   }
+
+  /**
+   * @param {object} where 
+   * @returns {Promise<EventLog>}
+   */
   static async findOne(where) {
     const u = await db.selectOne("_sc_event_log", where);
     return new EventLog(u);
   }
+
+  /**
+   * @param {string} id 
+   * @returns {Promise<EventLog>}
+   */
   static async findOneWithUser(id) {
     const {
       rows,
@@ -37,12 +67,25 @@ class EventLog {
     return el;
   }
 
+  /**
+   * @param {object} where 
+   * @returns {Promise<number>}
+   */
   static async count(where) {
     return await db.count("_sc_event_log", where || {});
   }
+
+  /**
+    * @type {string}
+    */
   get reltime() {
     return moment(this.occur_at).fromNow();
   }
+
+  /**
+   * @param {object} o 
+   * @returns {Promise<EventLog>}
+   */
   static async create(o) {
     const { getState } = require("../db/state");
 
@@ -64,10 +107,18 @@ class EventLog {
     return ev;
   }
 
+  /**
+   * @param {string} evType 
+   * @returns {boolean}
+   */
   static hasTable(evType) {
     return ["Insert", "Update", "Delete"].includes(evType);
   }
 
+  /**
+   * @param {string} evType 
+   * @returns {boolean}
+   */
   static hasChannel(evType) {
     const { getState } = require("../db/state");
     const t = getState().eventTypes[evType];
