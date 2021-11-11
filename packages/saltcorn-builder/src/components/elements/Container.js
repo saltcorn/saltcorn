@@ -43,6 +43,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 import { BoxModelEditor } from "./BoxModelEditor";
+import previewCtx from "../preview_context";
 
 /**
  * 
@@ -259,6 +260,8 @@ const ContainerSettings = () => {
     htmlElement,
   } = node;
   const options = useContext(optionsCtx);
+  const { uploadedFiles } = useContext(previewCtx);
+
   const ownership = !!options.ownership;
 
   /**
@@ -418,7 +421,8 @@ const ContainerSettings = () => {
               setProp((prop) => {
                 prop.bgFileId =
                   prop.bgFileId ||
-                  (options.images.length > 0 && options.images[0].id);
+                  (options.images.length + uploadedFiles.length > 0 &&
+                    options.images[0].id);
               })
             }
           />
@@ -493,6 +497,11 @@ const ContainerSettings = () => {
                         {f.filename}
                       </option>
                     ))}
+                    {(uploadedFiles || []).map((uf, ix) => (
+                      <option key={ix} value={uf.id}>
+                        {uf.filename}
+                      </option>
+                    ))}{" "}
                   </select>
                 </td>
               </tr>
@@ -530,6 +539,50 @@ const ContainerSettings = () => {
               </td>
             </tr>
           )}
+          <SettingsSectionHeaderRow title="Typography" />
+          <SettingsRow
+            field={{
+              name: "font-family",
+              label: "Font family",
+              type: "String",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-size",
+              label: "Font size",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-weight",
+              label: "Weight",
+              type: "Integer",
+              min: 100,
+              max: 900,
+              step: 100,
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "line-height",
+              label: "Line height",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
           <tr>
             <td colSpan="2">
               <label>
@@ -569,11 +622,13 @@ const ContainerSettings = () => {
             field={{ name: "flex-grow", label: "Grow", type: "Float" }}
             node={node}
             setProp={setProp}
+            isStyle={true}
           />
           <SettingsRow
             field={{ name: "flex-shrink", label: "Shrink", type: "Float" }}
             node={node}
             setProp={setProp}
+            isStyle={true}
           />
           {display && display.includes("flex") && (
             <Fragment>

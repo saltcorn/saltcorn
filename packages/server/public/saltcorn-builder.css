@@ -1,5 +1,6 @@
 .canvas:empty {
   min-height: 20px;
+  min-width: 10px;
 }
 
 span.is-html-block {
