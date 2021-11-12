@@ -1,6 +1,8 @@
 /**
- *
  * View Data Access Layer
+ * @category saltcorn-data
+ * @module models/view
+ * @subcategory models
  */
 
 const db = require("../db");
@@ -21,8 +23,13 @@ const { renderForm } = require("@saltcorn/markup");
 
 /**
  * View Class
+ * @category saltcorn-data
  */
 class View {
+  /**
+   * View constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
@@ -46,6 +53,11 @@ class View {
     this.default_render_page = o.default_render_page;
     contract.class(this);
   }
+
+  /**
+   * @param {object} where 
+   * @returns {View}
+   */
   static findOne(where) {
     const { getState } = require("../db/state");
     const v = getState().views.find(
@@ -61,10 +73,9 @@ class View {
   }
 
   /**
-   *
    * @param where
    * @param selectopts
-   * @returns {Promise<*>}
+   * @returns {Promise<View[]>}
    */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const views = await db.select("_sc_views", where, selectopts);
@@ -73,8 +84,7 @@ class View {
   }
 
   /**
-   *
-   * @returns {Promise<*|*[]>}
+   * @returns {Promise<object[]>}
    */
   async get_state_fields() {
     if (this.viewtemplateObj && this.viewtemplateObj.get_state_fields) {
@@ -88,7 +98,7 @@ class View {
 
   /**
    * Get menu label
-   * @returns {*|undefined}
+   * @type {string|undefined}
    */
   get menu_label() {
     const { getState } = require("../db/state");
@@ -98,10 +108,9 @@ class View {
   }
 
   /**
-   *
    * @param table
    * @param pred
-   * @returns {Promise<*[]>}
+   * @returns {Promise<object[]>}
    */
   static async find_table_views_where(table, pred) {
     var link_view_opts = [];
@@ -133,6 +142,9 @@ class View {
     return link_view_opts;
   }
 
+  /**
+   * @type {object}
+   */
   get select_option() {
     return {
       name: this.name,
@@ -146,6 +158,10 @@ class View {
     };
   }
 
+  /**
+   * @param {function} pred 
+   * @returns {Promise<object>}
+   */
   static async find_all_views_where(pred) {
     var link_view_opts = [];
     const link_views = await View.find({}, { orderBy: "name", nocase: true });
@@ -165,6 +181,10 @@ class View {
     return link_view_opts;
   }
 
+  /**
+   * @param {Table|object} table 
+   * @returns {Promise<View[]>}
+   */
   static async find_possible_links_to_table(table) {
     return View.find_table_views_where(table, ({ state_fields }) =>
       state_fields.some((sf) => sf.name === "id" || sf.primary_key)
@@ -254,15 +274,27 @@ class View {
     await require("../db/state").getState().refresh_views();
   }
 
+  /**
+   * @param {*} arg 
+   * @returns {Promise<object>}
+   */
   async authorise_post(arg) {
     if (!this.viewtemplateObj.authorise_post) return false;
     return await this.viewtemplateObj.authorise_post(arg);
   }
+
+  /**
+   * @param {*} arg 
+   * @returns {Promise<object>}
+   */
   async authorise_get(arg) {
     if (!this.viewtemplateObj.authorise_get) return false;
     return await this.viewtemplateObj.authorise_get(arg);
   }
 
+  /**
+   * @returns {string}
+   */
   getStringsForI18n() {
     if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n)
       return [];
@@ -290,12 +322,23 @@ class View {
       throw error;
     }
   }
+
+  /**
+   * @throws {InvalidConfiguration}
+   */
   check_viewtemplate() {
     if (!this.viewtemplateObj)
       throw new InvalidConfiguration(
         `Cannot find viewtemplate ${this.viewtemplate} in view ${this.name}`
       );
   }
+
+  /**
+   * @param {*} query 
+   * @param {*} req 
+   * @param {*} res 
+   * @returns {Promise<object>}
+   */
   async run_possibly_on_page(query, req, res) {
     const view = this;
     this.check_viewtemplate();
@@ -317,6 +360,12 @@ class View {
     return contents;
   }
 
+  /**
+   * @param {*} query 
+   * @param {*} extraArgs 
+   * @throws {InvalidConfiguration}
+   * @returns {Promise<object>}
+   */
   async runMany(query, extraArgs) {
     this.check_viewtemplate();
     try {
@@ -354,6 +403,13 @@ class View {
       `runMany on view ${this.name}: viewtemplate ${this.viewtemplate} does not have renderRows or runMany methods`
     );
   }
+
+  /**
+   * @param {*} query 
+   * @param {*} body 
+   * @param {*} extraArgs 
+   * @returns {Promise<object>}
+   */
   async runPost(query, body, extraArgs) {
     this.check_viewtemplate();
     return await this.viewtemplateObj.runPost(
@@ -366,6 +422,13 @@ class View {
     );
   }
 
+  /**
+   * @param {*} route 
+   * @param {*} body 
+   * @param {*} res 
+   * @param {*} extraArgs 
+   * @returns {Promise<void>}
+   */
   async runRoute(route, body, res, extraArgs) {
     this.check_viewtemplate();
     const result = await this.viewtemplateObj.routes[route](
@@ -380,6 +443,10 @@ class View {
     else res.json({ success: "ok" });
   }
 
+  /**
+   * @param {object} req_query 
+   * @returns {object}
+   */
   combine_state_and_default_state(req_query) {
     var state = { ...req_query };
     this.check_viewtemplate();
@@ -394,6 +461,12 @@ class View {
     });
     return state;
   }
+
+  /**
+   * @param {object} query 
+   * @param {object} req 
+   * @returns {Promise<Form|null>}
+   */
   async get_state_form(query, req) {
     this.check_viewtemplate();
     const vt_display_state_form = this.viewtemplateObj.display_state_form;
@@ -427,6 +500,10 @@ class View {
     } else return null;
   }
 
+  /**
+   * @param {object} req 
+   * @returns {Promise<object>}
+   */
   async get_config_flow(req) {
     this.check_viewtemplate();
     const configFlow = this.viewtemplateObj.configuration_workflow(req);

@@ -1,8 +1,13 @@
 /**
  * Auth / Admin
- * @type {module:express-promise-router}
+ * @category server
+ * @module auth/admin
+ * @subcategory auth
  */
 // todo refactor to few modules + rename to be in sync with router url
+/**
+ * @type {module:express-promise-router}
+ */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -33,9 +38,22 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace auth/adminRouter
+ * @category server
+ * @subcategory auth
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {Promise<object>}
+ */
 const getUserFields = async (req) => {
   const userTable = await Table.findOne({ name: "users" });
   const userFields = (await userTable.getFields()).filter(
@@ -69,9 +87,13 @@ const getUserFields = async (req) => {
   }
   return userFields;
 };
+
 /**
  * User Form
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {object} req
+ * @param {User} user
+ * @returns {Promise<Form>}
  */
 const userForm = contract(
   is.fun(
@@ -132,11 +154,12 @@ const userForm = contract(
     return form;
   }
 );
+
 /**
  * Dropdown for User Info in left menu
- * @param user
- * @param req
- * @param can_reset
+ * @param {object} user
+ * @param {object} req
+ * @param {boolean} can_reset
  * @returns {string}
  */
 const user_dropdown = (user, req, can_reset) =>
@@ -191,6 +214,11 @@ const user_dropdown = (user, req, can_reset) =>
     ),
   ]);
 
+/**
+ * @name get
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/",
   setTenant,
@@ -249,8 +277,12 @@ router.get(
     });
   })
 );
+
 /**
  * Send User Form for create new User
+ * @name get/new
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.get(
   "/new",
@@ -272,6 +304,11 @@ router.get(
   })
 );
 
+/**
+ * 
+ * @param {object} req 
+ * @returns {Form}
+ */
 const user_settings_form = (req) =>
   config_fields_form({
     req,
@@ -296,6 +333,12 @@ const user_settings_form = (req) =>
     action: "/useradmin/settings",
     submitLabel: req.__("Save"),
   });
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/settings",
   setTenant,
@@ -314,6 +357,12 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/settings",
   setTenant,
@@ -340,6 +389,11 @@ router.post(
   })
 );
 
+/**
+ * @name get/ssl
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/ssl",
   setTenant,
@@ -456,12 +510,22 @@ router.get(
   })
 );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const ssl_form = (req) =>
   config_fields_form({
     req,
     field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
     action: "/useradmin/ssl/custom",
   });
+
+/**
+ * @name get/ssl/custom
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/ssl/custom",
   setTenant,
@@ -481,6 +545,12 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/ssl/custom
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/ssl/custom",
   setTenant,
@@ -512,6 +582,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/:id",
   setTenant,
@@ -574,8 +650,12 @@ router.get(
     });
   })
 );
+
 /**
  * Save user data
+ * @name post/save
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/save",
@@ -649,8 +729,12 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Reset password for yser
+ * @name post/reset-password/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/reset-password/:id",
@@ -665,8 +749,12 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Send verification email for user
+ * @name post/send-verification/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/send-verification/:id",
@@ -686,8 +774,12 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Get new api token
+ * @name post/gen-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/gen-api-token/:id",
@@ -702,8 +794,12 @@ router.post(
     res.redirect(`/useradmin/${u.id}`);
   })
 );
+
 /**
  * Remove api token
+ * @name post/remove-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/remove-api-token/:id",
@@ -718,8 +814,12 @@ router.post(
     res.redirect(`/useradmin/${u.id}`);
   })
 );
+
 /**
  * Set random password
+ * @name post/set-random-password/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/set-random-password/:id",
@@ -740,6 +840,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/disable/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/disable/:id",
   setTenant,
@@ -754,6 +859,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/enable/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/enable/:id",
   setTenant,
@@ -767,6 +877,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/delete/:id",
   setTenant,

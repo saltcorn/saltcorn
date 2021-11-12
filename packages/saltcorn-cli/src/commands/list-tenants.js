@@ -1,6 +1,19 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/list-tenants
+ */
 const { Command, flags } = require("@oclif/command");
 
+
+/**
+ * ListTenantsCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ListTenantsCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { getAllTenants } = require("@saltcorn/data/models/tenant");
     const db = require("@saltcorn/data/db");
@@ -21,9 +34,15 @@ class ListTenantsCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 ListTenantsCommand.description = `List tenants in CSV format`;
 
 // TODO Extra help here
+/**
+ * @type {string}
+ */
 ListTenantsCommand.help= "Extra help here"
 
 module.exports = ListTenantsCommand;

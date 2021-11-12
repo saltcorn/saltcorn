@@ -1,0 +1,40 @@
+.content h1, .sidebar ul li {
+    line-break: anywhere;
+}
+
+.tag-source span a {
+    color: #3273dc;
+}
+
+article h1 a, article h2 a, article h3 a, article h4 a {
+    color: #363636;
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+}
+
+/* global category
+.category:nth-of-type(1) {} */
+
+/* saltcorn-base-plugin */
+.category:nth-of-type(2) { display: none; }
+
+/* saltcorn-builder */
+.category:nth-of-type(3) { order: 5; }
+
+/* saltcorn-cli */
+.category:nth-of-type(4) { order: 4; }
+
+/* saltcorn-data */
+.category:nth-of-type(5) { order: 2 }
+
+/* saltcorn-markup */
+.category:nth-of-type(6) { order: 1; }
+
+/* saltcorn-sbadmin2 */
+.category:nth-of-type(7) { display: none; }
+
+/* saltcorn-server */
+.category:nth-of-type(8) { order: 3 }

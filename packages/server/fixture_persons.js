@@ -1,3 +1,7 @@
+/**
+ * @category server
+ * @module fixture_persons
+ */
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -8,8 +12,15 @@ const basePlugin = require("@saltcorn/base-plugin");
 
 getState().registerPlugin("base", basePlugin);
 
+/**
+ * @param {object[]} vs 
+ * @returns {object}
+ */
 const rndElem = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
+/**
+ * @returns {object}
+ */
 const randomPerson = () => {
   const gender = Math.random() > 0.5 ? "Female" : "Male";
   const last_name = rndElem(
@@ -27,6 +38,9 @@ const randomPerson = () => {
   return { gender, last_name, first_name, age };
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const fixturePersons = async () => {
   await db.query(`drop table if exists persons`);
   const table = await Table.create("persons");

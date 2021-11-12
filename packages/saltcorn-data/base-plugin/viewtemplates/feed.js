@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/feed
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
@@ -19,6 +24,10 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 
+/**
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -218,6 +227,13 @@ const configuration_workflow = (req) =>
     ],
   });
 
+/**
+ * @param {number} table_id 
+ * @param {*} viewname 
+ * @param {object} opts
+ * @param {*} opts.show_view 
+ * @returns {Promise<Field>}
+ */
 const get_state_fields = async (table_id, viewname, { show_view }) => {
   const table_fields = await Field.find({ table_id });
   return table_fields
@@ -228,6 +244,28 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
       return sf;
     });
 };
+
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {string} opts.show_view
+ * @param {name} opts.order_field
+ * @param {boolean} opts.descending
+ * @param {string} [opts.view_to_create]
+ * @param {string} opts.create_view_display
+ * @param {boolean} opts.in_card
+ * @param {string} opts.masonry_columns
+ * @param {number} [opts.rows_per_page = 20]
+ * @param {boolean} opts.hide_pagination
+ * @param {string} [opts.create_view_label]
+ * @param {string} [opts.create_view_location]
+ * @param {boolean} opts.always_create_view
+ * @param {*} opts.cols
+ * @param {object} state 
+ * @param {*} extraArgs 
+ * @returns {Promise<div>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -374,13 +412,21 @@ const run = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "Feed",
+  /** @type {string} */
   description:
     "Show multiple rows by displaying a chosen view for each row, stacked or in columns",
   configuration_workflow,
   run,
   get_state_fields,
+  /** @type {boolean} */
   display_state_form: false,
+  /**
+   * @param {object} opts 
+   * @param {*} opts.create_view_label
+   * @returns {string[]|Object[]}
+   */
   getStringsForI18n({ create_view_label }) {
     if (create_view_label) return [create_view_label];
     else return [];

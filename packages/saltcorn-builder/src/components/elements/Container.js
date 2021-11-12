@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Container
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
@@ -39,11 +45,50 @@ import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 import { BoxModelEditor } from "./BoxModelEditor";
 import previewCtx from "../preview_context";
 
+/**
+ * 
+ * @param {string} string 
+ * @returns {string}
+ */
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-export const Container = ({
+export /**
+ * @param {object} props 
+ * @param {*} props.children
+ * @param {*} props.minHeight
+ * @param {*} props.height
+ * @param {*} props.width
+ * @param {*} props.minHeightUnit
+ * @param {*} props.heightUnit
+ * @param {*} props.widthUnit
+ * @param {*} props.vAlign
+ * @param {*} props.hAlign
+ * @param {*} props.bgFileId
+ * @param {*} props.imageSize
+ * @param {*} props.bgType
+ * @param {*} props.display
+ * @param {*} props.bgColor
+ * @param {*} props.setTextColor
+ * @param {*} props.textColor
+ * @param {*} props.customClass
+ * @param {*} props.customCSS
+ * @param {*} props.margin
+ * @param {*} props.padding
+ * @param {*} props.minScreenWidth
+ * @param {*} props.gradStartColor
+ * @param {*} props.gradEndColor
+ * @param {*} props.gradDirection
+ * @param {*} props.rotate
+ * @param {*} props.style
+ * @param {*} props.htmlElement
+ * @returns {DetailedReactHTMLElement}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Container = ({
   children,
   minHeight,
   height,
@@ -140,7 +185,15 @@ export const Container = ({
   );
 };
 
-export const ContainerSettings = () => {
+
+export /**
+ * @returns {div}
+ * @returns {Accordion}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ContainerSettings = () => {
   const node = useNode((node) => ({
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
@@ -211,6 +264,10 @@ export const ContainerSettings = () => {
 
   const ownership = !!options.ownership;
 
+  /**
+   * @param {string} key 
+   * @returns {function}
+   */
   const setAProp = (key) => (e) => {
     if (e.target) {
       const target_value = e.target.value;
@@ -824,6 +881,10 @@ export const ContainerSettings = () => {
     </Accordion>
   );
 };
+
+/** 
+ * @type {object} 
+ */
 Container.craft = {
   displayName: "Container",
   props: {

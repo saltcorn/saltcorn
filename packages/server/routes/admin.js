@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module routes/admin
+ * @subcategory routes
+ */
 const Router = require("express-promise-router");
 
 const {
@@ -62,9 +67,20 @@ const {
 } = require("../markup/admin");
 const moment = require("moment");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace routes/adminRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req 
+ * @returns {Promise<Form>}
+ */
 const site_id_form = (req) =>
   config_fields_form({
     req,
@@ -85,7 +101,7 @@ const site_id_form = (req) =>
   });
 /**
  * Email settings form definition
- * @param req - request
+ * @param {object} req request
  * @returns {Promise<Form>} form
  */
 const email_form = async (req) => {
@@ -107,6 +123,12 @@ const email_form = async (req) => {
     "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
 };
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/",
   setTenant,
@@ -126,6 +148,12 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/",
   setTenant,
@@ -153,6 +181,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/email",
   setTenant,
@@ -182,6 +216,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/send-test-email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/send-test-email",
   setTenant,
@@ -207,6 +246,12 @@ router.get(
     res.redirect("/admin/email");
   })
 );
+
+/**
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/email",
   setTenant,
@@ -232,6 +277,12 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/backup",
   setTenant,
@@ -272,6 +323,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/system
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/system",
   setTenant,
@@ -387,6 +443,11 @@ router.get(
   })
 );
 
+/**
+ * @name post/restart
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/restart",
   setTenant,
@@ -405,6 +466,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/upgrade
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/upgrade",
   setTenant,
@@ -437,6 +503,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/backup",
   setTenant,
@@ -453,6 +524,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/restore
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/restore",
   setTenant,
@@ -470,6 +546,10 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const clearAllForm = (req) =>
   new Form({
     action: "/admin/clear-all",
@@ -541,6 +621,11 @@ const clearAllForm = (req) =>
     ],
   });
 
+/**
+ * @name post/enable-letsencrypt
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/enable-letsencrypt",
   setTenant,
@@ -614,6 +699,11 @@ router.post(
   })
 );
 
+/**
+ * @name get/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/clear-all",
   setTenant,
@@ -638,6 +728,12 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/clear-all",
   setTenant,

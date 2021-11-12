@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Card
+ * @subcategory components / elements
+ */
+
 import React, { Fragment } from "react";
 import { Text } from "./Text";
 import { OrFormula, SettingsRow, Accordion, reactifyStyles } from "./utils";
@@ -5,7 +11,21 @@ import { OrFormula, SettingsRow, Accordion, reactifyStyles } from "./utils";
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
 import { bstyleopt } from "./utils";
-export const Card = ({
+
+export /**
+ * @param {object} props
+ * @param {string} props.children
+ * @param {object} props.isFormula
+ * @param {string} [props.title]
+ * @param {string} props.shadow
+ * @param {boolean} props.noPadding
+ * @param {object} props.style 
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const Card = ({
   children,
   isFormula,
   title,
@@ -42,7 +62,13 @@ export const Card = ({
   );
 };
 
-export const CardSettings = () => {
+export /**
+ * @returns {Accordion}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const CardSettings = () => {
   const node = useNode((node) => {
     const ps = {};
     fields.forEach((f) => {
@@ -112,6 +138,9 @@ const fields = [
   { name: "style", default: {} },
 ];
 
+/** 
+ * @type {object} 
+ */
 Card.craft = {
   props: {
     title: "",

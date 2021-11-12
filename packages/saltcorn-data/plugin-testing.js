@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-data
+ * @module plugin-testing
+ */
 const { contract, is, auto_test } = require("contractis");
 const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");

@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/edit
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const File = require("../../models/file");
 const Table = require("../../models/table");
@@ -37,6 +42,10 @@ const {
 } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
+/**
+ * @param {object} req 
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -240,6 +249,14 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @param {*} table_id 
+ * @param {*} viewname 
+ * @param {object} opts
+ * @param {*} opts.columns
+ * @returns {Promise<object[]>}
+ */
 const get_state_fields = async (table_id, viewname, { columns }) => [
   {
     name: "id",
@@ -248,6 +265,10 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   },
 ];
 
+/**
+ * @param {Form} form 
+ * @param {string} locale 
+ */
 const setDateLocales = (form, locale) => {
   form.fields.forEach((f) => {
     if (f.type && f.type.name === "Date") {
@@ -256,8 +277,21 @@ const setDateLocales = (form, locale) => {
   });
 };
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(true);
 
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} optsOne
+ * @param {*} optsOne.columns
+ * @param {*} optsOne.layout
+ * @param {string} state 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<Form>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -284,6 +318,17 @@ const run = async (
     state,
   });
 };
+
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} opts
+ * @param {*} opts.columns
+ * @param {*} opts.layout
+ * @param {State} state 
+ * @param {object} extra 
+ * @returns {Promise<Form[]>}
+ */
 const runMany = async (
   table_id,
   viewname,
@@ -323,6 +368,16 @@ const runMany = async (
   });
 };
 
+/**
+ * @param {object} opts
+ * @param {Form} opts.form
+ * @param {Table} opts.table
+ * @param {object} opts.req
+ * @param {object} opts.row
+ * @param {object} opts.res
+ * @throws {InvalidConfiguration}
+ * @returns {Promise<void>}
+ */
 const transformForm = async ({ form, table, req, row, res }) => {
   await traverse(form.layout, {
     action(segment) {
@@ -371,6 +426,19 @@ const transformForm = async ({ form, table, req, row, res }) => {
   setDateLocales(form, req.getLocale());
 };
 
+/**
+ * @param {object} opts
+ * @param {Table} opts.table
+ * @param {Fields[]} opts.fields
+ * @param {string} opts.viewname
+ * @param {object[]} opts.columns
+ * @param {Layout} opts.layout
+ * @param {object} opts.row
+ * @param {object} opts.req
+ * @param {object} opts.state
+ * @param {object} opts.res
+ * @returns {Promise<Form>}
+ */
 const render = async ({
   table,
   fields,
@@ -413,6 +481,23 @@ const render = async ({
   return renderForm(form, req.csrfToken());
 };
 
+/**
+ * @param {number} table_id 
+ * @param {string} viewname 
+ * @param {object} optsOne
+ * @param {object[]} optsOne.columns
+ * @param {Layout} optsOne.layout
+ * @param {object} optsOne.fixed
+ * @param {boolean} optsOne.view_when_done
+ * @param {object[]} optsOne.formula_destinations
+ * @param {object} state 
+ * @param {*} body 
+ * @param {object} optsTwo
+ * @param {object} optsTwo.res
+ * @param {object} optsTwo.req
+ * @param {string} optsTwo.redirect
+ * @returns {Promise<void>}
+ */
 const runPost = async (
   table_id,
   viewname,
@@ -526,6 +611,14 @@ const runPost = async (
     }
   }
 };
+
+/**
+ * @param {object} opts
+ * @param {object} opts.body
+ * @param {string} opts.table_id
+ * @param {object} opts.req
+ * @returns {Promise<boolean>}
+ */
 const authorise_post = async ({ body, table_id, req }) => {
   const table = await Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
@@ -540,7 +633,9 @@ const authorise_post = async ({ body, table_id, req }) => {
   return false;
 };
 module.exports = {
+  /** @type {string} */
   name: "Edit",
+  /** @type {string} */
   description: "Form for creating a new row or editing existing rows",
   configuration_workflow,
   run,
@@ -548,10 +643,22 @@ module.exports = {
   runPost,
   get_state_fields,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
   authorise_post,
+  /**
+   * @param {object} opts
+   * @param {object} opts.query
+   * @param {...*} opts.rest
+   * @returns {Promise<boolean>}
+   */
   authorise_get: async ({ query, ...rest }) =>
     authorise_post({ body: query, ...rest }),
+  /**
+   * @param {object} opts
+   * @param {Layout} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },

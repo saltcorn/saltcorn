@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module auth/roleadmin
+ * @subcategory auth
+ */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -44,8 +49,24 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace roleadminRouter
+ * @category server
+ * @subcategory auth
+ */
 const router = new Router();
 module.exports = router;
+
+/**
+ * @param {Role} role 
+ * @param {Layout[]} layouts 
+ * @param {*} layout_by_role 
+ * @param {object} req 
+ * @returns {Form}
+ */
 const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   form(
     {
@@ -69,6 +90,10 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
     )
   );
 
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const roleForm = (req) =>
   new Form({
     action: "/roleadmin/edit",
@@ -87,6 +112,11 @@ const roleForm = (req) =>
     ],
   });
 
+/**
+ * @name get
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.get(
   "/",
   setTenant,
@@ -135,6 +165,11 @@ router.get(
   })
 );
 
+/**
+ * @name get/new
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.get(
   "/new",
   setTenant,
@@ -155,6 +190,12 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/edit
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/edit",
   setTenant,
@@ -188,6 +229,11 @@ router.post(
   })
 );
 
+/**
+ * @name post/setrolelayout/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/setrolelayout/:id",
   setTenant,
@@ -202,7 +248,13 @@ router.post(
     res.redirect(`/roleadmin`);
   })
 );
+
 const unDeletableRoles = [1, 8, 10];
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/delete/:id",
   setTenant,

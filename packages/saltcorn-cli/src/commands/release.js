@@ -1,8 +1,20 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/release
+ */
 const { Command, flags } = require("@oclif/command");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 
+/**
+ * ReleaseCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ReleaseCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const {
       args: { version },
@@ -95,8 +107,14 @@ class ReleaseCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 ReleaseCommand.description = `Release a new saltcorn version`;
 
+/**
+ * @type {object}
+ */
 ReleaseCommand.args = [
   { name: "version", required: true, description: "New version number" },
 ];

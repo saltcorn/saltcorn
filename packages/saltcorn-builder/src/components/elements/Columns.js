@@ -1,9 +1,21 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Columns
+ * @subcategory components / elements
+ */
+
 import React, { Fragment } from "react";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 
-export const ntimes = (n, f) => {
+export /**
+ * 
+ * @param {number} n 
+ * @param {function} f 
+ * @returns {object[]}
+ */
+const ntimes = (n, f) => {
   var res = [];
   for (let index = 0; index < n; index++) {
     res.push(f(index));
@@ -11,18 +23,42 @@ export const ntimes = (n, f) => {
   return res;
 };
 
-export const sum = (xs) => {
+export /**
+ * 
+ * @param {number[]} xs 
+ * @returns {number}
+ */
+const sum = (xs) => {
   var res = 0;
   for (const x of xs) res += x;
   return res;
 };
 
+/**
+ * @param {number} ncols 
+ * @returns {number}
+ */
 const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 
+/**
+ * @param {number[]} widths 
+ * @param {number} colix 
+ * @returns {number}
+ */
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
-export const Columns = ({ widths, contents, ncols }) => {
+export /**
+ * @param {object} opts
+ * @param {number[]} opts.widths
+ * @param {string[]} opts.contents
+ * @param {number} opts.ncols
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Columns = ({ widths, contents, ncols }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -43,7 +79,13 @@ export const Columns = ({ widths, contents, ncols }) => {
   );
 };
 
-export const ColumnsSettings = () => {
+export /**
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ColumnsSettings = () => {
   const {
     actions: { setProp },
     widths,
@@ -132,6 +174,10 @@ export const ColumnsSettings = () => {
     </div>
   );
 };
+
+/** 
+ * @type {object} 
+ */
 Columns.craft = {
   displayName: "Columns",
   defaultProps: {

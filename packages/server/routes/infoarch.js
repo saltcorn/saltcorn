@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/infoarch
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const {
@@ -10,9 +16,23 @@ const { getState } = require("@saltcorn/data/db/state");
 const { div, a, i, text } = require("@saltcorn/markup/tags");
 const { mkTable, renderForm } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace infoarchRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.get(
   "/",
   setTenant,
@@ -21,6 +41,11 @@ router.get(
     res.redirect(`/menu`);
   })
 );
+
+/**
+ * @param {object} req 
+ * @returns {Form}
+ */
 const languageForm = (req) =>
   new Form({
     action: "/site-structure/localizer/save-lang",
@@ -49,6 +74,13 @@ const languageForm = (req) =>
       },
     ],
   });
+
+/**
+ * @name get/localizer
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.get(
   "/localizer",
   setTenant,
@@ -103,6 +135,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/localizer/add-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.get(
   "/localizer/add-lang",
   setTenant,
@@ -121,6 +159,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/localizer/edit/:lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.get(
   "/localizer/edit/:lang",
   setTenant,
@@ -180,6 +224,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/localizer/save-string/:lang/:defstring
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.post(
   "/localizer/save-string/:lang/:defstring",
   setTenant,
@@ -196,6 +246,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/localizer/save-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
 router.post(
   "/localizer/save-lang",
   setTenant,

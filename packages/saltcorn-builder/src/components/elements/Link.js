@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Link
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import {
@@ -10,7 +16,24 @@ import {
 } from "./utils";
 import optionsCtx from "../context";
 
-export const Link = ({
+export /**
+ * @param {object} props
+ * @param {string} props.text
+ * @param {boolean} props.block
+ * @param {object} props.isFormula
+ * @param {string} props.textStyle
+ * @param {string} props.link_style
+ * @param {string} props.link_size
+ * @param {string} [props.link_icon]
+ * @param {string} [props.link_bgcol]
+ * @param {string} [props.link_bordercol]
+ * @param {string} [props.link_textcol]
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Link = ({
   text,
   block,
   isFormula,
@@ -49,7 +72,13 @@ export const Link = ({
   );
 };
 
-export const LinkSettings = () => {
+export /**
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const LinkSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
     url: node.data.props.url,
@@ -224,6 +253,9 @@ export const LinkSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 Link.craft = {
   defaultProps: {
     text: "Click here",

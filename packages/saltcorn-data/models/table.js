@@ -1,6 +1,8 @@
 /**
  * Table Database Access Layer
- *
+ * @category saltcorn-data
+ * @module models/table
+ * @subcategory models
  */
 const db = require("../db");
 const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
@@ -29,7 +31,7 @@ const {
  * TODO more detailed explanation
  * TODO refactor - move to object util module?
  * @param objs
- * @returns {{}}
+ * @returns {object}
  */
 const transposeObjects = (objs) => {
   const keys = new Set();
@@ -64,7 +66,7 @@ const isDate = function (date) {
 /**
  * Normalise specific error message according db specific
  * @param msg
- * @returns {*}
+ * @returns {string}
  */
 // todo refactor
 const normalise_error_message = (msg) =>
@@ -80,8 +82,13 @@ const normalise_error_message = (msg) =>
 
 /**
  * Table class
+ * @category saltcorn-data
  */
 class Table {
+  /**
+   * Table constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.name = o.name;
     this.id = o.id;
@@ -100,7 +107,7 @@ class Table {
    *
    * Find one Table
    * @param where - where condition
-   * @returns {Promise<*|Table|null>} table or null
+   * @returns {*|Table|null} table or null
    */
   static findOne(where) {
     if (
@@ -131,7 +138,7 @@ class Table {
    * Find Tables
    * @param where - where condition
    * @param selectopts - options
-   * @returns {Promise<*>} table list
+   * @returns {Promise<Table[]>} table list
    */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
     const tbls = await db.select("_sc_tables", where, selectopts);
@@ -143,7 +150,7 @@ class Table {
    * Find Tables including external tables
    * @param where0
    * @param selectopts
-   * @returns {Promise<*[]>}
+   * @returns {Promise<object[]>}
    */
   static async find_with_external(
     where0 = {},
@@ -284,7 +291,7 @@ class Table {
 
   /***
    * get Table SQL Name
-   * @returns {string}
+   * @type {string}
    */
   get sql_name() {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
@@ -339,7 +346,7 @@ class Table {
    * Get rows from Table in db
    * @param where
    * @param selopts
-   * @returns {Promise<*>}
+   * @returns {Promise<void>}
    */
   async getRows(where = {}, selopts) {
     await this.getFields();
@@ -363,9 +370,8 @@ class Table {
    * Return distinct Values for column in table
    * ????
    * @param fieldnm
-   * @returns {Promise<*>}
+   * @returns {Promise<Object[]>}
    */
-
   async distinctValues(fieldnm) {
     const res = await db.query(
       `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
@@ -457,7 +463,7 @@ class Table {
 
   /**
    * Get primary key field
-   * @returns {*}
+   * @type {string}
    */
   get pk_name() {
     return this.fields.find((f) => f.primary_key).name;
@@ -503,7 +509,7 @@ class Table {
 
   /**
    * Get Fields list for table
-   * @returns {Promise<*>}
+   * @returns {Promise<Field[]>}
    */
   async getFields() {
     if (!this.fields) {
@@ -903,7 +909,7 @@ class Table {
   /**
    * Get parent relations for table
    * @param allow_double
-   * @returns {Promise<{parent_relations: *[], parent_field_list: *[]}>}
+   * @returns {Promise<{parent_relations: object[], parent_field_list: object[]}>}
    */
   async get_parent_relations(allow_double) {
     const fields = await this.getFields();
@@ -936,7 +942,7 @@ class Table {
 
   /**
    * Get child relations for table
-   * @returns {Promise<{child_relations: *[], child_field_list: *[]}>}
+   * @returns {Promise<{child_relations: object[], child_field_list: object[]}>}
    */
   async get_child_relations() {
     const cfields = await Field.find({ reftable_name: this.name });
@@ -1083,6 +1089,11 @@ class Table {
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
     return { sql, values };
   }
+
+  /**
+   * @param {object} [opts = {}]
+   * @returns {Promise<object[]>}
+   */
   async getJoinedRows(opts = {}) {
     const fields = await this.getFields();
 

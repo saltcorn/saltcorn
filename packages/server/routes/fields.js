@@ -1,6 +1,9 @@
 /**
  *
  * Field Router
+ * @category server
+ * @module routes/fields
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -23,9 +26,25 @@ const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace fieldsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req 
+ * @param {*} fkey_opts 
+ * @param {*} existing_names 
+ * @param {*} id 
+ * @param {*} hasData 
+ * @returns {Promise<Form>}
+ */
 const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
   let isPrimary = false;
   let primaryTypes = Object.entries(getState().types)
@@ -116,22 +135,41 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
     ],
   });
 };
+
+/**
+ * @param {string} ctxType 
+ * @returns {object}
+ */
 const calcFieldType = (ctxType) =>
   ctxType.startsWith("Key to")
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
 
+/**
+ * @param {*} attrs 
+ * @param {object} req 
+ * @returns {*}
+ */
 const translateAttributes = (attrs, req) =>
   Array.isArray(attrs)
     ? attrs.map((attr) => translateAttribute(attr, req))
     : attrs;
 
+/**
+ * @param {*} attr 
+ * @param {*} req 
+ * @returns {object}
+ */
 const translateAttribute = (attr, req) => {
   const res = { ...attr };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
   return res;
 };
 
+/**
+ * @param {*} req 
+ * @returns {Workflow}
+ */
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -372,6 +410,13 @@ const fieldFlow = (req) =>
       },
     ],
   });
+
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.get(
   "/:id",
   setTenant,
@@ -419,6 +464,12 @@ router.get(
   })
 );
 
+/**
+ * @name get/new/:table_id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.get(
   "/new/:table_id",
   setTenant,
@@ -450,6 +501,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
   setTenant,
@@ -470,6 +527,12 @@ router.post(
   })
 );
 
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/",
   setTenant,
@@ -513,6 +576,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/test-formula
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/test-formula",
   setTenant,
@@ -544,6 +613,13 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/show-calculated/:tableName/:fieldName/:fieldview
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/show-calculated/:tableName/:fieldName/:fieldview",
   setTenant,
@@ -573,6 +649,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/preview/:tableName/:fieldName/:fieldview
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/preview/:tableName/:fieldName/:fieldview",
   setTenant,
@@ -632,6 +714,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/preview/:tableName/:fieldName/
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/preview/:tableName/:fieldName/",
   setTenant,

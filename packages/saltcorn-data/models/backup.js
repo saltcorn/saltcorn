@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module models/backup
+ * @subcategory models
+ */
 const { contract, is } = require("contractis");
 const { getState } = require("../db/state");
 const db = require("../db");
@@ -30,6 +35,11 @@ const { asyncMap } = require("../utils");
 const Trigger = require("./trigger");
 const Library = require("./library");
 
+/**
+ * @function
+ * @param {string} dirpath
+ * @returns {Promise<void>}
+ */
 const create_pack = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (dirpath) => {
@@ -58,6 +68,12 @@ const create_pack = contract(
   }
 );
 
+/**
+ * @function
+ * @param {object[]} rows
+ * @param {string} fnm
+ * @returns {Promise<void>}
+ */
 const create_csv_from_rows = contract(
   is.fun([is.array(is.obj()), is.str], is.promise(is.undefined)),
   async (rows, fnm) => {
@@ -74,6 +90,12 @@ const create_csv_from_rows = contract(
   }
 );
 
+/**
+ * @function
+ * @param {Table} table
+ * @param {string} dirpath
+ * @returns {Promise<void>} 
+ */
 const create_table_json = contract(
   is.fun([is.class("Table"), is.str], is.promise(is.undefined)),
   async (table, dirpath) => {
@@ -85,6 +107,11 @@ const create_table_json = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} root_dirpath
+ * @return {Promise<void>}
+ */
 const create_table_jsons = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
@@ -97,6 +124,11 @@ const create_table_jsons = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} root_dirpath
+ * @returns {Promise<void>}
+ */
 const backup_files = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
@@ -113,6 +145,11 @@ const backup_files = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} root_dirpath
+ * @returns {Promise<void>}
+ */
 const backup_config = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (root_dirpath) => {
@@ -129,6 +166,12 @@ const backup_config = contract(
     }
   }
 );
+
+/**
+ * @function
+ * @param {string} [fnm]
+ * @returns {Promise<string>}
+ */
 const create_backup = contract(
   is.fun([is.maybe(is.str)], is.promise(is.str)),
   async (fnm) => {
@@ -156,6 +199,12 @@ const create_backup = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} fnm
+ * @param {string} dir
+ * @returns {Promise<void>}
+ */
 const extract = contract(
   is.fun([is.str, is.str], is.promise(is.undefined)),
   async (fnm, dir) => {
@@ -168,6 +217,12 @@ const extract = contract(
     });
   }
 );
+
+/**
+ * @function
+ * @param {string} dirpath
+ * @returns {Promise<object>}
+ */
 const restore_files = contract(
   is.fun(is.str, is.promise(is.obj({}))),
   async (dirpath) => {
@@ -191,6 +246,11 @@ const restore_files = contract(
   }
 );
 
+/**
+ * @function
+ * @param {object} file_users
+ * @returns {Promise<void>}
+ */
 const restore_file_users = contract(
   is.fun(is.obj({}), is.promise(is.undefined)),
   async (file_users) => {
@@ -200,6 +260,12 @@ const restore_file_users = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} file_users
+ * @param {boolean} [restore_first_user]
+ * @returns {Promise<string|undefined>}
+ */
 const restore_tables = contract(
   is.fun([is.str, is.maybe(is.bool)], is.promise(is.maybe(is.str))),
   async (dirpath, restore_first_user) => {
@@ -237,6 +303,11 @@ const restore_tables = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} dirpath
+ * @returns {Promise<void>}
+ */
 const restore_config = contract(
   is.fun(is.str, is.promise(is.undefined)),
   async (dirpath) => {
@@ -250,6 +321,13 @@ const restore_config = contract(
   }
 );
 
+/**
+ * @function
+ * @param {string} fnm
+ * @param {function} loadAndSaveNewPlugin
+ * @param {boolean} [restore_first_user]
+ * @returns {Promise<void>}
+ */
 const restore = contract(
   is.fun(
     [is.str, is.fun(is_plugin, is.undefined), is.maybe(is.bool)],

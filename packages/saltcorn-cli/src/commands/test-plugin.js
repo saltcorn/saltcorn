@@ -1,9 +1,26 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/test-plugin
+ */
 const { Command, flags } = require("@oclif/command");
 
+/**
+ * 
+ * @param {object[]} ps 
+ * @returns {object}
+ */
 const lastPath = (ps) =>
   ps[ps.length - 1] === "" ? ps[ps.length - 2] : ps[ps.length - 1];
 
+/**
+ * TestPluginCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */    
 class TestPluginCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
@@ -32,10 +49,16 @@ class TestPluginCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 TestPluginCommand.args = [
   { name: "path", description: "path to plugin package", required: true },
 ];
 
+/**
+ * @type {string}
+ */
 TestPluginCommand.description = `Test a plugin
 ...
 Extra documentation goes here

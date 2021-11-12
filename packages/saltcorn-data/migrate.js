@@ -1,7 +1,10 @@
 /**
  * DB structure migration functionality
- * @type {module:fs}
+ * @category saltcorn-data
+ * @module migrate
  */
+
+/** @type {module:fs} */
 const fs = require("fs");
 const path = require("path");
 const db = require("./db");

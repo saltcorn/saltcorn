@@ -9,8 +9,11 @@
  * To solve this in future needs to publish sc_role table into user tables of saltcorn.
  *
  * Documentation: https://wiki.saltcorn.com/view/ShowPage?title=API
- * @type {module:express-promise-router}
+ * @category server
+ * @module routes/api
+ * @subcategory routes
  */
+/** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
 const { setTenant, error_catcher } = require("./utils.js");
@@ -26,9 +29,21 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace apiRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {*} fields 
+ * @returns {*}
+ */
 const limitFields = (fields) => (r) => {
   if (fields) {
     let res = {};
@@ -44,9 +59,9 @@ const limitFields = (fields) => (r) => {
 
 /**
  * Check that user has right to read table data (only read in terms of CRUD)
- * @param req - httprequest
- * @param user - user based on access token
- * @param table
+ * @param {object} req httprequest
+ * @param {object} user - user based on access token
+ * @param {Table} table
  * @returns {boolean}
  */
 function accessAllowedRead(req, user, table){
@@ -61,9 +76,9 @@ function accessAllowedRead(req, user, table){
 
 /**
  * Check that user has right to write table data (create, update, delete in terms of  CRUD)
- * @param req - httprequest
- * @param user - user based on access token
- * @param table
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
+ * @param {Table} table
  * @returns {boolean}
  */
 function accessAllowedWrite(req, user, table){
@@ -78,9 +93,9 @@ function accessAllowedWrite(req, user, table){
 }
 /**
  * Check that user has right to trigger call
- * @param req - httprequest
- * @param user - user based on access token
- * @param trigger
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
+ * @param {Trigger} trigger
  * @returns {boolean}
  */
 function accessAllowed(req, user, trigger){
@@ -92,8 +107,12 @@ function accessAllowed(req, user, trigger){
 
     return role <= trigger.min_role;
 }
+
 /**
  * Select Table rows using GET
+ * @name get/:tableName/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 // todo add paging
 router.get(
@@ -147,9 +166,13 @@ router.get(
     )(req, res, next);
   })
 );
+
 /**
  * Call Action (Trigger) using POST
  * Attention! if you have table with name "action" it can be problem in future
+ * @name post/action/:actionname/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/action/:actionname/",
@@ -193,8 +216,12 @@ router.post(
     )(req, res, next);
   })
 );
+
 /**
  * Insert into Table using POST
+ * @name post/:tableName/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/:tableName/",
@@ -257,9 +284,13 @@ router.post(
     )(req, res, next);
   })
 );
+
 /**
  * Update Table row directed by ID using POST
  * POST api/<table>/id
+ * @name post/:tableName/:id
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/:tableName/:id",
@@ -314,8 +345,12 @@ router.post(
     )(req, res, next);
   })
 );
+
 /**
  * Delete Table row by ID using DELETE
+ * @name delete/:tableName/:id
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.delete(
   "/:tableName/:id",

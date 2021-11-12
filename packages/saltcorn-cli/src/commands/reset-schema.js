@@ -1,8 +1,20 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/reset-schema
+ */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant } = require("../common");
 
+/**
+ * ResetCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ResetCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const reset = require("@saltcorn/data/db/reset_schema");
     const db = require("@saltcorn/data/db/");
@@ -24,11 +36,17 @@ class ResetCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 ResetCommand.description = `Reset the database
 ...
 This will delete all existing information
 `;
 
+/**
+ * @type {object}
+ */
 ResetCommand.flags = {
   force: flags.boolean({ char: "f", description: "force" }),
   tenant: flags.string({

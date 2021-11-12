@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module markup/blockly
+ * @subcategory markup
+ */
+
 const {
   div,
   code,
@@ -9,6 +15,11 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 
+/**
+ * @param {object} opts
+ * @param {string} opts.locale
+ * @returns {string}
+ */
 const blocklyImportScripts = ({ locale }) =>
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/blockly_compressed.js",
@@ -26,6 +37,10 @@ const blocklyImportScripts = ({ locale }) =>
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
   });
 
+/**
+ * @param {boolean} hasActions 
+ * @returns {string}
+ */
 const blocklyToolbox = (hasActions) => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="Control Flow"  categorystyle="loop_category">

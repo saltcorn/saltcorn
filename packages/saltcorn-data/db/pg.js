@@ -1,5 +1,8 @@
 /**
  * PostgreSQL data access layer
+ * @category saltcorn-data
+ * @module db/pg
+ * @subcategory db
  */
 // TODO move postgresql specific to this module
 const { Pool } = require("pg");
@@ -19,7 +22,7 @@ var log_sql_enabled = false;
 
 /**
  * Control Logging sql statements to console
- * @param val - if true then log sql statements to console
+ * @param {boolean} [val = true] - if true then log sql statements to console
  */
 function set_sql_logging(val = true) {
   log_sql_enabled = val;
@@ -35,8 +38,8 @@ function get_sql_logging() {
 
 /**
  * Log SQL statement to console
- * @param sql - SQL statement
- * @param vs - any additional parameter
+ * @param {string} sql - SQL statement
+ * @param {object} [vs] - any additional parameter
  */
 function sql_log(sql, vs) {
   if (log_sql_enabled)
@@ -54,7 +57,7 @@ const close = async () => {
 
 /**
  * Change connection (close connection and open new connection from connObj)
- * @param connObj - connection object
+ * @param {object} [connObj = {}] - connection object
  * @returns {Promise<void>}
  */
 const changeConnection = async (connObj = {}) => {
@@ -64,9 +67,9 @@ const changeConnection = async (connObj = {}) => {
 
 /**
  * Execute Select statement
- * @param tbl - table name
- * @param whereObj - where object
- * @param selectopts - select options
+ * @param {string} tbl - table name
+ * @param {object} whereObj - where object
+ * @param {object} [selectopts = {}] - select options
  * @returns {Promise<*>} return rows
  */
 const select = async (tbl, whereObj, selectopts = {}) => {
@@ -83,7 +86,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
 /**
  * Reset DB Schema using drop schema and recreate it
  * Atterntion! You will lost data after call this function!
- * @param schema - db schema name
+ * @param {string} schema - db schema name
  * @returns {Promise<void>} no result
  */
 const drop_reset_schema = async (schema) => {
@@ -99,8 +102,8 @@ const drop_reset_schema = async (schema) => {
 
 /**
  * Get count of rows in table
- * @param tbl - table name
- * @param whereObj - where object
+ * @param {string} - tbl - table name
+ * @param {object} - whereObj - where object
  * @returns {Promise<number>} count of tables
  */
 const count = async (tbl, whereObj) => {
@@ -116,8 +119,8 @@ const count = async (tbl, whereObj) => {
 
 /**
  * Get version of PostgreSQL
- * @param short - if true return short version info else full version info
- * @returns {Promise<*>} returns version
+ * @param {boolean} short - if true return short version info else full version info
+ * @returns {Promise<string>} returns version
  */
 const getVersion = async (short) => {
   const sql = `SELECT version();`;
@@ -133,9 +136,10 @@ const getVersion = async (short) => {
 
 /**
  * Delete rows in table
- * @param tbl - table name
- * @param whereObj - where object
- * @returns {Promise<*>} result of delete execution
+ * @param {string} tbl - table name
+ * @param {object} whereObj - where object
+ * @param {object} [opts = {}]
+ * @returns {Promise<object[]>} result of delete execution
  */
 const deleteWhere = async (tbl, whereObj, opts = {}) => {
   const { where, values } = mkWhere(whereObj);
@@ -151,10 +155,10 @@ const deleteWhere = async (tbl, whereObj, opts = {}) => {
 
 /**
  * Insert rows into table
- * @param tbl - table name
- * @param obj - columns names and data
- * @param opts - columns attributes
- * @returns {Promise<*>} returns primary key column or Id column value. If primary key column is not defined then return value of Id column.
+ * @param {string} tbl - table name
+ * @param {object} obj - columns names and data
+ * @param {object} [opts = {}] - columns attributes
+ * @returns {Promise<string>} returns primary key column or Id column value. If primary key column is not defined then return value of Id column.
  */
 const insert = async (tbl, obj, opts = {}) => {
   const kvs = Object.entries(obj);
@@ -192,10 +196,10 @@ const insert = async (tbl, obj, opts = {}) => {
 
 /**
  * Update table records
- * @param tbl - table name
- * @param obj - columns names and data
- * @param id - id of record (primary key column value)
- * @param opts - columns attributes
+ * @param {string} tbl - table name
+ * @param {object} obj - columns names and data
+ * @param {number|undefined} id - id of record (primary key column value)
+ * @param {object} [opts = {}] - columns attributes
  * @returns {Promise<void>} no result
  */
 const update = async (tbl, obj, id, opts = {}) => {
@@ -216,9 +220,10 @@ const update = async (tbl, obj, id, opts = {}) => {
 
 /**
  * Select one record
- * @param tbl - table name
- * @param where - where object
- * @returns {Promise<*>} return first record from sql result
+ * @param {srting} tbl - table name
+ * @param {object} where - where object
+ * @returns {Promise<object>} return first record from sql result
+ * @throws {Error}
  */
 const selectOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -230,9 +235,9 @@ const selectOne = async (tbl, where) => {
 
 /**
  * Select one record or null if no records
- * @param tbl - table name
- * @param where - where object
- * @returns {Promise<null|*>} - null if no record or first record data
+ * @param {string} tbl - table name
+ * @param {object} where - where object
+ * @returns {Promise<null|object>} - null if no record or first record data
  */
 const selectMaybeOne = async (tbl, where) => {
   const rows = await select(tbl, where);
@@ -251,7 +256,7 @@ const getClient = async () => await pool.connect();
 /**
  * Reset sequence
  * Only for PG
- * @param tblname - table name
+ * @param {string} tblname - table name
  * @returns {Promise<void>} no result
  */
 const reset_sequence = async (tblname) => {
@@ -265,8 +270,8 @@ const reset_sequence = async (tblname) => {
 
 /**
  * Add unique constraint
- * @param table_name - table name
- * @param field_names - list of columns (members of constraint)
+ * @param {string} table_name - table name
+ * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
 const add_unique_constraint = async (table_name, field_names) => {
@@ -284,8 +289,8 @@ const add_unique_constraint = async (table_name, field_names) => {
 
 /**
  * Drop unique constraint
- * @param table_name - table name
- * @param field_names - list of columns (members of constraint)
+ * @param {string} table_name - table name
+ * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no results
  */
 const drop_unique_constraint = async (table_name, field_names) => {
@@ -301,11 +306,11 @@ const drop_unique_constraint = async (table_name, field_names) => {
 /**
  * Copy data from CSV to table?
  * Only for PG
- * @param fileStream - file stream
- * @param tableName - table name
- * @param fieldNames - list of columns
- * @param client - db connection
- * @returns {Promise<unknown>} new Promise
+ * @param {object} fileStream - file stream
+ * @param {string} tableName - table name
+ * @param {string[]} fieldNames - list of columns
+ * @param {object} client - db connection
+ * @returns {Promise<function>} new Promise
  */
 const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
   // TBD describe difference between CopyFrom and CopyFrom1
@@ -327,10 +332,10 @@ const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
 /**
  * Copy data from CSV to table?
  * Only for PG
- * @param fileStream - file stream
- * @param tableName - table name
- * @param fieldNames - list of columns
- * @param client - db connection
+ * @param {object} fileStream - file stream
+ * @param {string} tableName - table name
+ * @param {string[]} fieldNames - list of columns
+ * @param {object} client - db connection
  * @returns {Promise<void>} no results
  */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
@@ -347,6 +352,11 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
 
 module.exports = {
   pool,
+  /**
+   * @param {string} text 
+   * @param {object} params 
+   * @returns {object}
+   */
   query: (text, params) => {
     sql_log(text, params);
     return pool.query(text, params);

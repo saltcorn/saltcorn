@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/view
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
@@ -14,9 +20,22 @@ const {
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace viewRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get/:viewname
+ * @function
+ * @memberof module:routes/view~viewRouter
+ * @function
+ */
 router.get(
   "/:viewname",
   setTenant,
@@ -55,6 +74,12 @@ router.get(
   })
 );
 
+/**
+ * @name post/:viewname/preview
+ * @function
+ * @memberof module:routes/view~viewRouter
+ * @function
+ */
 router.post(
   "/:viewname/preview",
   setTenant,
@@ -87,6 +112,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/:viewname/:route
+ * @function
+ * @memberof module:routes/view~viewRouter
+ * @function
+ */
 router.post(
   "/:viewname/:route",
   setTenant,
@@ -107,6 +138,12 @@ router.post(
   })
 );
 
+/**
+ * @name post/:viewname
+ * @function
+ * @memberof module:routes/view~viewRouter
+ * @function
+ */
 router.post(
   "/:viewname",
   setTenant,

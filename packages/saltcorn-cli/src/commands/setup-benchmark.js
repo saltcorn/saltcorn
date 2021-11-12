@@ -1,7 +1,19 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/setup-benchmark
+ */
 const { Command, flags } = require("@oclif/command");
 const { maybe_as_tenant } = require("../common");
 
+/**
+ * SetupBenchmarkCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class SetupBenchmarkCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async install_forum_pack() {
     const {
       fetch_pack_by_name,
@@ -17,6 +29,10 @@ class SetupBenchmarkCommand extends Command {
       load_plugins.loadAndSaveNewPlugin(p)
     );
   }
+  
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args, flags } = this.parse(SetupBenchmarkCommand);
     await maybe_as_tenant(flags.tenant, async () => {
@@ -62,10 +78,17 @@ class SetupBenchmarkCommand extends Command {
   }
 }
 
+/** @type {object[]} */
 SetupBenchmarkCommand.args = [];
 
+/**
+ * @type {string}
+ */
 SetupBenchmarkCommand.description = `Setup an instance for benchmarking`;
 
+/**
+ * @type {object}
+ */
 SetupBenchmarkCommand.flags = {
   tenant: flags.string({
     char: "t",

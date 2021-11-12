@@ -1,6 +1,8 @@
 /**
  * Index is Main Router of App
- * @type {module:express-promise-router}
+ * @category server
+ * @module routes/index
+ * @subcategory routes
  */
 const table = require("./tables");
 const field = require("./fields");
@@ -32,6 +34,10 @@ const useradmin = require("../auth/admin");
 const roleadmin = require("../auth/roleadmin");
 const scapi = require("./scapi");
 
+/**
+ * Function assigned to 'module.exports'
+ * @returns {void}
+ */
 module.exports = (app) => {
   app.use("/table", table);
   app.use("/field", field);

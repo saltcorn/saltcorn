@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/View
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -11,7 +17,17 @@ import {
   ConfigForm,
 } from "./utils";
 
-export const View = ({ name, view, state }) => {
+export /**
+ * @param {object} props
+ * @param {*} props.name
+ * @param {string} props.view
+ * @param {*} props.state
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const View = ({ name, view, state }) => {
   const {
     selected,
     node_id,
@@ -51,7 +67,13 @@ export const View = ({ name, view, state }) => {
   );
 };
 
-export const ViewSettings = () => {
+export /**
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const ViewSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
@@ -136,6 +158,9 @@ export const ViewSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 View.craft = {
   displayName: "View",
   related: {

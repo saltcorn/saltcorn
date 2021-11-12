@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module table
+ */
+
 const { contract, is } = require("contractis");
 
 const {
@@ -15,6 +20,11 @@ const {
   span,
 } = require("./tags");
 const { pagination } = require("./helpers");
+
+/**
+ * @param {object} hdr 
+ * @returns {th}
+ */
 const headerCell = (hdr) =>
   th(
     (hdr.align || hdr.width) && {
@@ -25,6 +35,13 @@ const headerCell = (hdr) =>
     hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
   );
 
+/**
+ * @function
+ * @param {object[]} hdrs
+ * @param {object[]} vs
+ * @param {object} [opts]
+ * @returns {string}
+ */
 const mkTable = contract(
   is.fun(
     [
@@ -79,6 +96,11 @@ const mkTable = contract(
     )
 );
 
+/**
+ * @param {object} opts 
+ * @param {object} v 
+ * @returns {object}
+ */
 const mkClickHandler = (opts, v) => {
   var attrs = {};
   if (opts.onRowSelect)

@@ -1,7 +1,10 @@
 /**
  * Controls Saltcorn configuration
- * @type {path.PlatformPath | path}
+ * @category saltcorn-data
+ * @module db/connect
+ * @subcategory db
  */
+
 const path = require("path");
 const fs = require("fs");
 const envPaths = require("env-paths");
@@ -13,13 +16,18 @@ const pathsWithApp = envPaths("saltcorn", { suffix: "" });
  * @type {string}
  */
 const defaultDataPath = pathsWithApp.data;
+
+/**
+ * @param {string|object} x 
+ * @returns {object}
+ */
 const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
 /**
  * Get Git revision of Saltcorn source.
  * Required to work:
  *  - Git client installed,
  *  - Local git with repo Saltcorn sources.
- * @returns {null} - Return current Git commit
+ * @returns {string} - Return current Git commit
  */
 const getGitRevision = () => {
   let revision = null;
@@ -41,8 +49,8 @@ const getGitRevision = () => {
  * - File store path
  * - Saltcorn confuration inheritance and fixed configuration
  * For all parameters and priority see the code of function.
- * @param connSpec
- * @returns {{sc_version: string, connectionString: *, git_commit: *, version_tag: (*|string)}|{sqlite_path}|boolean}
+ * @param {object} [connSpec = {}]
+ * @returns {object|boolean}
  */
 const getConnectObject = (connSpec = {}) => {
   const git_commit = getGitRevision();
@@ -123,7 +131,7 @@ const getConfigFile = () => {
 };
 /**
  * Check that Saltcorn configured to use SQLite as database
- * @param connObj - connectin object
+ * @param {object} connObj - connectin object
  * @returns {boolean} - Returns true if Saltcorn configured to use SQLite as database
  */
 const is_sqlite = (connObj) => {

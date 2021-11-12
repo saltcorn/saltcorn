@@ -1,7 +1,19 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/localize-plugin
+ */
 const { Command, flags } = require("@oclif/command");
 const { maybe_as_tenant } = require("../common");
 
+/**
+ * LocalizePluginCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class LocalizePluginCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const db = require("@saltcorn/data/db");
     const Plugin = require("@saltcorn/data/models/plugin");
@@ -28,8 +40,14 @@ LocalizePluginCommand.args = [
   { name: "path", required: true, description: "path to local plugin" },
 ];
 
+/**
+ * @type {string}
+ */
 LocalizePluginCommand.description = `Convert plugin to local plugin`;
 
+/**
+ * @type {object}
+ */
 LocalizePluginCommand.flags = {
   tenant: flags.string({
     char: "t",

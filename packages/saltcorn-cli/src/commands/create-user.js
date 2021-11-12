@@ -1,8 +1,20 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/create-user
+ */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant } = require("../common");
 
+/**
+ * CreateUserCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class CreateUserCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const User = require("@saltcorn/data/models/user");
     const { flags } = this.parse(CreateUserCommand);
@@ -31,8 +43,14 @@ class CreateUserCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 CreateUserCommand.description = `Create a new user`;
 
+/**
+ * @type {object}
+ */
 CreateUserCommand.flags = {
   admin: flags.boolean({ char: "a", description: "Admin user" }),
   tenant: flags.string({

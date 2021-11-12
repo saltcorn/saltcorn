@@ -1,3 +1,9 @@
+/**
+ * View Database Access Layer
+ * @category saltcorn-data
+ * @module models/random
+ * @subcategory models
+ */
 const View = require("./view");
 const Field = require("./field");
 const Table = require("./table");
@@ -7,6 +13,10 @@ const { initial_config_all_fields } = require("../plugin-helper");
 const { contract, is } = require("contractis");
 const db = require("../db");
 
+/**
+ * @param {object} [opts = {}]
+ * @returns {Promise<Table>}
+ */
 const random_table = async (opts = {}) => {
   const name = is
     .and(
@@ -41,6 +51,10 @@ const random_table = async (opts = {}) => {
   return table;
 };
 
+/**
+ * @param {Table} table 
+ * @returns {Promise<*>}
+ */
 const fill_table_row = async (table) => {
   const fields = await table.getFields();
   const row = {};
@@ -51,6 +65,13 @@ const fill_table_row = async (table) => {
   //console.log(fields, row);
   await table.tryInsertRow(row);
 };
+
+/**
+ * @param {string} type 
+ * @param {string[]} existing_fields 
+ * @throws {Error} 
+ * @returns {string}
+ */
 const random_expression = (type, existing_fields) => {
   const numField = existing_fields.find((f) =>
     ["Integer", "Float"].includes(f.type)
@@ -69,6 +90,12 @@ const random_expression = (type, existing_fields) => {
       throw new Error("random_expression: unknown type " + type);
   }
 };
+
+/**
+ * @param {string[]} existing_field_names 
+ * @param {Table} table 
+ * @returns {Promise<Field>}
+ */
 const random_field = async (existing_field_names, table) => {
   const tables = await Table.find({});
   const tables_with_data = [];
@@ -144,6 +171,11 @@ const random_field = async (existing_field_names, table) => {
   return f;
 };
 
+/**
+ * @param {Table} table 
+ * @param {string} viewtemplate 
+ * @returns {Promise<View>}
+ */
 const initial_view = async (table, viewtemplate) => {
   const configuration = await initial_config_all_fields(
     viewtemplate === "Edit"
@@ -160,6 +192,10 @@ const initial_view = async (table, viewtemplate) => {
   return view;
 };
 
+/**
+ * @param {Table} table 
+ * @returns {Promise<object[]>}
+ */
 const all_views = async (table) => {
   const list = await initial_view(table, "List");
   const edit = await initial_view(table, "Edit");

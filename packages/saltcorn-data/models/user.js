@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module models/user
+ * @subcategory models
+ */
 const db = require("../db");
 const bcrypt = require("bcryptjs");
 const { contract, is } = require("contractis");
@@ -5,6 +10,10 @@ const { v4: uuidv4 } = require("uuid");
 const dumbPasswords = require("dumb-passwords");
 const validator = require("email-validator");
 
+/**
+ * @param {object} o 
+ * @returns {*}
+ */
 const safeUserFields = (o) => {
   const {
     email,
@@ -25,8 +34,13 @@ const safeUserFields = (o) => {
 };
 /**
  * User
+ * @category saltcorn-data
  */
 class User {
+  /**
+   * User constructor
+   * @param {object} o 
+   */
   constructor(o) {
     this.email = o.email;
     this.password = o.password;
@@ -59,7 +73,7 @@ class User {
   /**
    * Get bcrypt hash for Password
    * @param pw - password string
-   * @returns {Promise<*>}
+   * @returns {Promise<string>}
    */
   static async hashPassword(pw) {
     return await bcrypt.hash(pw, 10);
@@ -68,7 +82,7 @@ class User {
   /**
    * Check password
    * @param pw - password string
-   * @returns {*}
+   * @returns {boolean}
    */
   checkPassword(pw) {
     return bcrypt.compareSync(pw, this.password);
@@ -92,7 +106,7 @@ class User {
    * Find or Create User
    * @param k
    * @param v
-   * @param uo
+   * @param {object} [uo = {}]
    * @returns {Promise<{session_object: {_attributes: {}}, _attributes: {}}|User|*|boolean|{error: string}|User>}
    */
   static async findOrCreateByAttribute(k, v, uo = {}) {
@@ -149,7 +163,7 @@ class User {
 
   /**
    * Create session object for user
-   * @returns {{role_id: number, language, id, email, tenant: *}}
+   * @type {{role_id: number, language, id, email, tenant: *}}
    */
   get session_object() {
     const so = {
@@ -183,7 +197,7 @@ class User {
    * Find users list
    * @param where - where object
    * @param selectopts - select options
-   * @returns {Promise<*>}
+   * @returns {Promise<User[]>}
    */
   static async find(where, selectopts) {
     const us = await db.select("users", where, selectopts);
@@ -260,7 +274,7 @@ class User {
 
   /**
    * Add new API token to user
-   * @returns {Promise<*|string>}
+   * @returns {Promise<string>}
    */
   async getNewAPIToken() {
     const api_token = uuidv4();
@@ -271,7 +285,7 @@ class User {
 
   /**
    * Remove API token for user
-   * @returns {Promise<null>}
+   * @returns {Promise<string>}
    */
   async removeAPIToken() {
     const api_token = null;
@@ -320,6 +334,9 @@ class User {
     return await u.set_to_verified();
   }
 
+  /**
+   * @returns {Promise<boolean>}
+   */
   async set_to_verified() {
     const upd = { verified_on: new Date() };
     const { getState } = require("../db/state");
@@ -397,7 +414,7 @@ class User {
 
   /**
    * Generate password
-   * @returns {*}
+   * @returns {string}
    */
   static generate_password() {
     const candidate = is.str.generate().split(" ").join("");
@@ -405,6 +422,10 @@ class User {
     if (candidate.length < 10) return User.generate_password();
     else return candidate;
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async destroy_sessions() {
     if (!db.isSQLite) {
       const schema = db.getTenantSchema();
@@ -417,6 +438,10 @@ class User {
       );
     }
   }
+
+  /**
+   * @param {object} req 
+   */
   relogin(req) {
     req.login(this.session_object, function (err) {
       if (err) req.flash("danger", err);

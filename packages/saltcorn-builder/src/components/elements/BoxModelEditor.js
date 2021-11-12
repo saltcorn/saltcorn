@@ -1,10 +1,27 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/BoxModelEditor
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment, useState } from "react";
 import { SettingsRow, SettingsSectionHeaderRow, bstyleopt } from "./utils";
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
 Copyright (c) 2017 Taha Paksu
 */
-export const BoxModelEditor = ({ setProp, node }) => {
+
+export /**
+ * 
+ * @param {object} props
+ * @param {function} props.setProp
+ * @param {object} props.node
+ * @returns {Fragment}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const BoxModelEditor = ({ setProp, node }) => {
   const [selectedCategory, setSelectedCategory] = useState(false);
   const [selectedDirection, setSelectedDirection] = useState(false);
   const selectedProperty = !selectedCategory

@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module models/scheduler
+ * @subcategory models
+ */
 const Crash = require("./crash");
 const { eachTenant } = require("./tenant");
 const Trigger = require("./trigger");
@@ -6,6 +11,11 @@ const { getState } = require("../db/state");
 const fetch = require("node-fetch");
 const EventLog = require("./eventlog");
 
+/**
+ * @param {Date} date 
+ * @param {number} plusSeconds 
+ * @returns {Promise<void>}
+ */
 const sleepUntil = (date, plusSeconds) => {
   const waitTill = new Date();
   waitTill.setTime(date.getTime() + 1000 * plusSeconds);
@@ -14,6 +24,11 @@ const sleepUntil = (date, plusSeconds) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+/**
+ * @param {string} name 
+ * @param {number} hours 
+ * @returns {Promise<Trigger[]>}
+ */
 const getIntervalTriggersDueNow = async (name, hours) => {
   const state = getState();
   const cfgField = `next_${name.toLowerCase()}_event`;
@@ -51,6 +66,10 @@ const getIntervalTriggersDueNow = async (name, hours) => {
 
 let availabilityPassed = false;
 
+/**
+ * @param {string} port 
+ * @returns {Promise<void>}
+ */
 const checkAvailability = async (port) => {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/auth/login`);
@@ -72,6 +91,15 @@ const checkAvailability = async (port) => {
   }
 };
 
+/**
+ * @param {object} opts
+ * @param {function} [opts.stop_when]
+ * @param {number} [opts.number]
+ * @param {boolean} opts.watchReaper
+ * @param {string} opts.port
+ * @param {boolean} opts.disableScheduler
+ * @returns {Promise<void>}
+ */
 const runScheduler = async ({
   stop_when = () => false,
   tickSeconds = 60 * 5,

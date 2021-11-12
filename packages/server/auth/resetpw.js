@@ -1,7 +1,18 @@
+/**
+ * @category server
+ * @module auth/resetpw
+ * @subcategory auth
+ */
 const { getState } = require("@saltcorn/data/db/state");
 const { getMailTransport } = require("@saltcorn/data/models/email");
 const { get_base_url } = require("../routes/utils");
 
+/**
+ * @param {string} link 
+ * @param {object} user 
+ * @param {object} req 
+ * @returns {void}
+ */
 const generate_email = (link, user, req) => ({
   from: getState().getConfig("email_from"),
   to: user.email,
@@ -35,12 +46,23 @@ ${req.__(
 )}<br />
 `,
 });
+
+/**
+ * @param {object} user 
+ * @param {object} req 
+ * @returns {Promise<void>}
+ */
 const send_reset_email = async (user, req) => {
   const link = await get_reset_link(user, req);
   const transporter = getMailTransport();
   await transporter.sendMail(generate_email(link, user, req));
 };
 
+/**
+ * @param {object} user 
+ * @param {object} req 
+ * @returns {Promise<string>}
+ */
 const get_reset_link = async (user, req) => {
   const token = await user.getNewResetToken();
   const base = get_base_url(req);

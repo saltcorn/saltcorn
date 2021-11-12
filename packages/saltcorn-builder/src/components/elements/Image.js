@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Image
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -5,7 +11,19 @@ import previewCtx from "../preview_context";
 
 import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
 
-export const Image = ({ fileid, block, srctype, url, alt }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.fileid
+ * @param {boolean} props.block
+ * @param {string} props.srctype
+ * @param {string} props.url
+ * @param {string} props.alt
+ * @returns {span}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Image = ({ fileid, block, srctype, url, alt }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -26,7 +44,13 @@ export const Image = ({ fileid, block, srctype, url, alt }) => {
   );
 };
 
-export const ImageSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ImageSettings = () => {
   const node = useNode((node) => ({
     fileid: node.data.props.fileid,
     field: node.data.props.field,
@@ -227,6 +251,9 @@ export const ImageSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 Image.craft = {
   displayName: "Image",
   defaultProps: {

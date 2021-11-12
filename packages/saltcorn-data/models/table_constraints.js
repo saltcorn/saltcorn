@@ -1,8 +1,21 @@
+/**
+ * TableConstraint Database Access Layer
+ * @category saltcorn-data
+ * @module models/table_constraints
+ * @subcategory models
+ */
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { stringToJSON } = require("../utils");
 
+/**
+ * TableConstraint class
+ * @category saltcorn-data
+ */
 class TableConstraint {
+  /**
+   * @param {object} o 
+   */
   constructor(o) {
     this.table_id = +o.table_id;
     if (o.table) {
@@ -14,22 +27,39 @@ class TableConstraint {
     contract.class(this);
   }
 
+  /**
+   * @type {object}
+   */
   get toJson() {
     return {
       type: this.type,
       configuration: this.configuration,
     };
   }
+
+  /**
+   * @param {*} where 
+   * @param {*} selectopts 
+   * @returns {Promise<TableConstraint[]>}
+   */
   static async find(where, selectopts) {
     const db_flds = await db.select("_sc_table_constraints", where, selectopts);
     return db_flds.map((dbf) => new TableConstraint(dbf));
   }
 
+  /**
+   * @param {*} where 
+   * @returns {Promise<TableConstraint>}
+   */
   static async findOne(where) {
     const p = await db.selectMaybeOne("_sc_table_constraints", where);
     return p ? new TableConstraint(p) : null;
   }
 
+  /**
+   * @param {*} f 
+   * @returns {Promise<TableConstraint>}
+   */
   static async create(f) {
     const con = new TableConstraint(f);
     const { id, ...rest } = con;
@@ -43,6 +73,10 @@ class TableConstraint {
 
     return con;
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async delete() {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
     if (this.type === "Unique" && this.configuration.fields) {
@@ -51,6 +85,12 @@ class TableConstraint {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     }
   }
+
+  /**
+   * @param {*} table 
+   * @param {*} field 
+   * @returns {Promise<void>}
+   */
   static async delete_field_constraints(table, field) {
     const tblcs = await TableConstraint.find({ table_id: table.id });
     for (const c of tblcs) {
@@ -58,6 +98,10 @@ class TableConstraint {
         await c.delete();
     }
   }
+
+  /**
+   * @type {string[]}
+   */
   static get type_options() {
     return ["Unique"];
   }

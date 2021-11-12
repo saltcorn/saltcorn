@@ -1,9 +1,27 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Aggregation
+ * @subcategory components / elements
+ */
+
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const Aggregation = ({
+export /**
+ * @param {object} props 
+ * @param {string} props.agg_relation
+ * @param {string} props.agg_field
+ * @param {string} props.stat
+ * @param {boolean} props.block
+ * @param {string} props.textStyle
+ * @returns {span}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const Aggregation = ({
   agg_relation,
   agg_field,
   stat,
@@ -25,7 +43,13 @@ export const Aggregation = ({
   );
 };
 
-export const AggregationSettings = () => {
+export /**
+ * @returns {table}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const AggregationSettings = () => {
   const {
     actions: { setProp },
     agg_relation,
@@ -139,6 +163,9 @@ export const AggregationSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 Aggregation.craft = {
   displayName: "Aggregation",
   related: {
