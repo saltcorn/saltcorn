@@ -1,4 +1,4 @@
-const { sqlsanitize, mkWhere, sqlsanitizeAllowDots } = require("./internal");
+const { sqlsanitize, mkWhere, sqlsanitizeAllowDots } = require("@saltcorn/db-common/internal");
 const db = require("./index.js");
 const Table = require("../models/table");
 

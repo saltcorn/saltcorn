@@ -7,7 +7,7 @@
 const db = require("../db");
 const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
-const { sqlsanitize } = require("../db/internal");
+const { sqlsanitize } = require("@saltcorn/db-common/internal");
 const { setConfig } = require("./config");
 
 /**

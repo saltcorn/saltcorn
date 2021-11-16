@@ -9,8 +9,13 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "main": "index.js",
+  "optionalDependencies": {
+    "@saltcorn/postgres":  "0.6.1-beta.0",
+    "@saltcorn/sqlite":  "0.6.1-beta.0"
+  },
   "dependencies": {
     "@saltcorn/markup": "0.6.1-beta.0",
+    "@saltcorn/db-common": "0.6.1-beta.0",
     "acorn": "^8.0.3",
     "adm-zip": "0.5.5",
     "astring": "^1.4.3",
@@ -32,10 +37,7 @@
     "moment-timezone": "^0.5.33",
     "node-fetch": "2.6.2",
     "nodemailer": "^6.4.17",
-    "pg": "^8.2.1",
-    "pg-copy-streams": "^5.1.1",
     "pluralize": "^8.0.0",
-    "sqlite3": "^5.0.2",
     "tmp-promise": "^3.0.2",
     "uuid": "^8.2.0"
   },

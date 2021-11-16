@@ -1,0 +1,20 @@
+{
+  "name": "@saltcorn/sqlite",
+  "version": "0.6.1-beta.0",
+  "description": "Sqlite structures for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "@saltcorn/db-common": "0.6.1-beta.0",
+    "sqlite3": "^5.0.2"
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  }
+}

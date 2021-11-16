@@ -8,7 +8,7 @@
 const db = require("../db");
 const { contract, is } = require("contractis");
 const { recalculate_for_stored } = require("./expression");
-const { sqlsanitize } = require("../db/internal.js");
+const { sqlsanitize } = require("@saltcorn/db-common/internal.js");
 const { InvalidAdminAction } = require("../utils");
 const { mkWhere } = require("../db");
 

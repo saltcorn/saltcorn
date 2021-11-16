@@ -1,11 +1,9 @@
 /**
- * @category saltcorn-data
- * @module db/internal
- * @subcategory db
+ * @category db-common
+ * @module internal
  */
 const { footer } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
-const { is_sqlite } = require("./connect");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 /**
