@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.6.1-beta.0",
+  "version": "0.6.1-beta.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -10,8 +10,8 @@
   "license": "MIT",
   "main": "index.js",
   "optionalDependencies": {
-    "@saltcorn/postgres":  "0.6.1-beta.0",
-    "@saltcorn/sqlite":  "0.6.1-beta.0"
+    "@saltcorn/postgres":  "0.6.1-beta.1",
+    "@saltcorn/sqlite":  "0.6.1-beta.1"
   },
   "dependencies": {
     "@saltcorn/markup": "0.6.1-beta.1",
