@@ -14,8 +14,8 @@
     "@saltcorn/sqlite":  "0.6.1-beta.0"
   },
   "dependencies": {
-    "@saltcorn/markup": "0.6.1-beta.0",
-    "@saltcorn/db-common": "0.6.1-beta.0",
+    "@saltcorn/markup": "0.6.1-beta.1",
+    "@saltcorn/db-common": "0.6.1-beta.1",
     "acorn": "^8.0.3",
     "adm-zip": "0.5.5",
     "astring": "^1.4.3",
