@@ -4,7 +4,7 @@
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "test": "jest --runInBand"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
@@ -12,6 +12,9 @@
   "dependencies": {
     "@saltcorn/markup": "0.6.1-beta.1",
     "contractis": "^0.1.0"
+  },
+  "devDependencies": {
+    "jest": "^25.1.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {
