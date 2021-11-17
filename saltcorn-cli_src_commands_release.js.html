@@ -113,6 +113,9 @@ class ReleaseCommand extends Command {
 
     const pkgs = {
       "@saltcorn/e2e": { dir: "e2e" },
+      "@saltcorn/db-common": { dir: "db-common", publish: true },
+      "@saltcorn/sqlite": { dir: "sqlite", publish: true },
+      "@saltcorn/postgres": { dir: "postgres", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
       "@saltcorn/random-tests": { dir: "saltcorn-random-tests" },
@@ -174,7 +177,7 @@ class ReleaseCommand extends Command {
     publish("saltcorn-cli");
 
     // update Dockerfile
-    const dockerfile = fs.readFileSync(`Dockerfile.release`, 'utf8');
+    const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
       dockerfile.replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
