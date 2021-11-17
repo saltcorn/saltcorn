@@ -1,7 +1,6 @@
 /**
- * @category saltcorn-data
- * @module db/multi-tenant
- * @subcategory db
+ * @category db-common
+ * @module multi-tenant
  */
 const { AsyncLocalStorage } = require("async_hooks");
 const { sqlsanitize } = require("./internal");
@@ -30,7 +29,12 @@ const runWithTenant = (tenant, f) => {
   else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 };
 
-module.exports = (connObj) => ({
+module.exports = /**
+ * @function
+ * @name "module.exports function"
+ * @returns {exports}
+ */
+(connObj) => ({
   /**
    * @returns {object}
    */

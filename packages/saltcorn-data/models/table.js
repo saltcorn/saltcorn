@@ -5,7 +5,7 @@
  * @subcategory models
  */
 const db = require("../db");
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("../db/internal.js");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal.js");
 const Field = require("./field");
 const Trigger = require("./trigger");
 const {

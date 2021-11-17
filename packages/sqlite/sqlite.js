@@ -1,15 +1,17 @@
 /**
  * SQLite3 data access layer
- * @category saltcorn-data
- * @module db/sqlite
- * @subcategory db
+ * @category sqlite
+ * @module sqlite
  */
 // TODO move all sqlite specific to this module
 const sqlite3 = require("sqlite3").verbose();
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
-const { getConnectObject } = require("./connect");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal");
 const fs = require("fs").promises;
-const connectObj = getConnectObject(); // was var
+
+let connectObj = null;
+let current_filepath = null;
+let sqliteDatabase = null;
+
 /**
  * Get sqlite path
  * @returns {string}
@@ -18,8 +20,6 @@ const get_db_filepath = () => {
   if (connectObj.sqlite_path) return connectObj.sqlite_path;
 };
 
-let current_filepath = get_db_filepath();
-let sqliteDatabase = new sqlite3.Database(current_filepath);
 
 let log_sql_enabled = false;
 
@@ -75,6 +75,7 @@ const changeConnection = async (connObj) => {
   await sqliteDatabase.close();
   current_filepath = connObj.sqlite_path;
   sqliteDatabase = new sqlite3.Database(current_filepath);
+  sqliteExports.sqliteDatabase = sqliteDatabase;
 };
 /**
  * Close database connection
@@ -82,6 +83,7 @@ const changeConnection = async (connObj) => {
  */
 const close = async () => {
   await sqliteDatabase.close();
+  sqliteDatabase = null;
 };
 /**
  * Execute Select statement
@@ -241,6 +243,7 @@ const drop_reset_schema = async () => {
   await sqliteDatabase.close();
   await fs.unlink(current_filepath);
   sqliteDatabase = new sqlite3.Database(current_filepath);
+  sqliteExports.sqliteDatabase = sqliteDatabase;
 };
 
 /**
@@ -275,7 +278,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
   await query(sql);
 };
 
-module.exports = {
+const sqliteExports = {
   sql_log,
   set_sql_logging,
   get_sql_logging,
@@ -295,3 +298,13 @@ module.exports = {
   drop_unique_constraint,
   getVersion,
 };
+
+module.exports = (getConnectObject) => {
+  if (!sqliteDatabase) {
+    connectObj = getConnectObject();
+    current_filepath = get_db_filepath();
+    sqliteDatabase = new sqlite3.Database(current_filepath);
+    sqliteExports.sqliteDatabase = sqliteDatabase;
+  }
+  return sqliteExports;
+}

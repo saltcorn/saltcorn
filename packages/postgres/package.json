@@ -1,0 +1,21 @@
+{
+  "name": "@saltcorn/postgres",
+  "version": "0.6.1-beta.1",
+  "description": "Postgres structures for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "@saltcorn/db-common": "0.6.1-beta.1",
+    "pg": "^8.2.1",
+    "pg-copy-streams": "^5.1.1"
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,24 +1,20 @@
 /**
  * PostgreSQL data access layer
- * @category saltcorn-data
- * @module db/pg
- * @subcategory db
+ * @category postgres
+ * @module postgres
  */
 // TODO move postgresql specific to this module
 const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
 const { pipeline } = require("stream");
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("./internal");
-const { getConnectObject } = require("./connect");
-const { getTenantSchema } = require("./tenants");
+const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal");
 
-var connectObj = getConnectObject();
+let getTenantSchema;
+let getConnectObject = null;
+let pool = null;
 
-var pool;
-if (connectObj) pool = new Pool(connectObj);
-
-var log_sql_enabled = false;
+let log_sql_enabled = false;
 
 /**
  * Control Logging sql statements to console
@@ -53,6 +49,7 @@ function sql_log(sql, vs) {
  */
 const close = async () => {
   if (pool) await pool.end();
+  pool = null;
 };
 
 /**
@@ -350,7 +347,7 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   return await promisify(pipeline)(fileStream, stream);
 };
 
-module.exports = {
+const postgresExports = {
   pool,
   /**
    * @param {string} text 
@@ -382,3 +379,20 @@ module.exports = {
   getVersion,
   copyFrom,
 };
+
+module.exports = (getConnectObjectPara) => {
+  if(!pool) {
+    getConnectObject = getConnectObjectPara;
+    const connectObj = getConnectObject();
+    if (connectObj) {
+      pool = new Pool(connectObj);
+      getTenantSchema = 
+        require("@saltcorn/db-common/tenants")(connectObj).getTenantSchema;
+      postgresExports.pool = pool;
+    }
+    else {
+      throw new Error("Unable to retrieve a database connection object.")
+    }
+  }
+  return postgresExports;
+}

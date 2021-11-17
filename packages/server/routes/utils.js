@@ -4,8 +4,8 @@
  * @subcategory routes
  */
 
-const { sqlsanitize } = require("@saltcorn/data/db/internal.js");
 const db = require("@saltcorn/data/db");
+const { sqlsanitize } = db;
 const {
   getState,
   getTenant,

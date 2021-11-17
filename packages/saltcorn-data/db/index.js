@@ -10,28 +10,30 @@
  * @namespace db_overview
  * @property {module:db/connect} connect
  * @property {module:db/fixtures} fixtures
- * @property {module:db/internal} internal
- * @property {module:db/multi-tenant} multi-tenant
- * @property {module:db/pg} pg
  * @property {module:db/reset_schema} reset_schema
- * @property {module:db/single-tenant} single-tenant
- * @property {module:db/sqlite} sqlite
  * @property {module:db/state} state
  * @property {module:db/connect} connect
- * @property {module:db/tenants} tenants
  * 
  * @category saltcorn-data
  * @subcategory db 
  */
 const { getConnectObject, is_sqlite } = require("./connect");
-const { sqlsanitize, mkWhere } = require("./internal");
+const { sqlsanitize, mkWhere } = require("@saltcorn/db-common/internal");
 var connectObj = getConnectObject();
 
-/** @type {db/sqlite|db/pg} */
-const dbmodule = is_sqlite(connectObj) ? require("./sqlite") : require("./pg");
+/** @type {db/sqlite|db/pg|null} */
+let dbmodule = null;
+try {
+  dbmodule = is_sqlite(connectObj) ? 
+    require("@saltcorn/sqlite/sqlite")(getConnectObject) :
+    require("@saltcorn/postgres/postgres")(getConnectObject);
+} catch(e) {
+  console.log("No database package found.")
+  throw e;
+}
 
 /** @type {db/tenant} */
-const tenant = require("./tenants");
+const tenant = require("@saltcorn/db-common/tenants")(getConnectObject());
 
 /** @type {boolean} */
 const isSQLite = is_sqlite(connectObj);

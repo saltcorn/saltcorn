@@ -1,10 +1,14 @@
 /**
- * @category saltcorn-data
- * @module db/single-tenant
- * @subcategory db
+ * @category db-common
+ * @module single-tenant
  */
 
-module.exports = (connObj) => ({
+module.exports = /**
+ * @function
+ * @name "module.exports function"
+ * @returns {exports}
+ */
+(connObj) => ({
   /**
    * @returns {string}
    */
