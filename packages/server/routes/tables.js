@@ -347,8 +347,8 @@ router.get(
   })
 );
 
-/** 
-* Create Table from CSV file (post)
+/**
+ * Create Table from CSV file (post)
  * @name post/create-from-csv
  * @function
  * @memberof module:routes/tables~tablesRouter
@@ -396,7 +396,7 @@ router.post(
   })
 );
 
-/** 
+/**
  * Show Relational Diagram (get)
  * @name get/relationship-diagram
  * @function
@@ -489,16 +489,16 @@ router.get(
 );
 
 /**
- * @param {string} col 
- * @param {string} lbl 
+ * @param {string} col
+ * @param {string} lbl
  * @returns {string}
  */
 const badge = (col, lbl) =>
   `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
 
 /**
- * @param {object} f 
- * @param {object} req 
+ * @param {object} f
+ * @param {object} req
  * @returns {string}
  */
 const typeBadges = (f, req) => {
@@ -512,7 +512,7 @@ const typeBadges = (f, req) => {
 };
 
 /**
- * @param {object} f 
+ * @param {object} f
  * @returns {string}
  */
 const attribBadges = (f) => {
@@ -526,7 +526,7 @@ const attribBadges = (f) => {
   return s;
 };
 
-/** 
+/**
  * Table Constructor (GET Handler)
  * @name get/:idorname
  * @function
@@ -762,6 +762,7 @@ router.get(
             ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
+              table.name !== "users" &&
               a(
                 {
                   class: "dropdown-item",
@@ -782,12 +783,13 @@ router.get(
               req,
               true
             ),
-            post_dropdown_item(
-              `/table/forget-table/${table.id}`,
-              '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
-              req,
-              true
-            ),
+            table.name !== "users" &&
+              post_dropdown_item(
+                `/table/forget-table/${table.id}`,
+                '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+                req,
+                true
+              ),
           ])
         )
     );
@@ -833,7 +835,7 @@ router.get(
   })
 );
 
-/** 
+/**
  * @name post
  * @function
  * @memberof module:routes/tables~tablesRouter
@@ -906,7 +908,7 @@ router.post(
   })
 );
 
-/** 
+/**
  * Delete Table Route Handler definition
  * /delete:/id, where id is table id in _sc_tables
  * @name post/delete/:id
@@ -1084,7 +1086,7 @@ router.get(
   })
 );
 
-/** 
+/**
  * Download CSV file
  * @name get/download/:name
  * @function
@@ -1190,7 +1192,7 @@ const constraintForm = (req, table_id, fields) =>
       type: "Bool",
     })),
   });
- 
+
 /**
  * Add constraint GET handler
  * ${base_url}/table/add-constraint/:id
