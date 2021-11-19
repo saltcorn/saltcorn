@@ -34,7 +34,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
-const { loadAllPlugins } = require("../load_plugins");
+const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
 const { setTenant, isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
@@ -251,7 +251,19 @@ router.post(
         );
       } else {
         const newurl = getNewURL(req, subdomain);
-        await create_tenant(subdomain, loadAllPlugins, newurl);
+        await create_tenant(
+          subdomain,
+          loadAllPlugins,
+          newurl,
+          false,
+          loadAndSaveNewPlugin
+        );
+        let new_url_create = newurl;
+        const hasTemplate = getState().getConfig("tenant_template");
+        if (hasTemplate) {
+          new_url_create += "auth/create_first_user";
+        }
+
         res.sendWrap(
           req.__("Create application"),
           div(
@@ -259,14 +271,25 @@ router.post(
 
             div(
               { class: "my-3", style: "font-size: 22px" },
-              a({ href: newurl, class: "new-tenant-link" }, newurl)
+              a(
+                { href: new_url_create, class: "new-tenant-link" },
+                new_url_create
+              )
             ),
             p(
               req.__(
                 "Please click the above link now to create the first user."
               ) +
                 " " +
-                req.__("Use this link to revisit your application at any time.")
+                hasTemplate
+                ? req.__(
+                    'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
+                    newurl,
+                    newurl
+                  )
+                : req.__(
+                    "Use this link to revisit your application at any time."
+                  )
             )
           )
         );
