@@ -18,7 +18,7 @@ const { splitUniques } = require("./viewable_fields");
 const { InvalidConfiguration } = require("../../utils");
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -65,6 +65,19 @@ const configuration_workflow = (req) =>
                 required: false,
                 attributes: {
                   options: show_view_opts,
+                },
+              },
+              {
+                name: "list_width",
+                label: req.__("List width"),
+                sublabel: req.__(
+                  "Number of columns (1-12) allocated to the list view"
+                ),
+                type: "Integer",
+                default: 6,
+                attributes: {
+                  min: 1,
+                  max: 12,
                 },
               },
               {
@@ -116,8 +129,8 @@ const configuration_workflow = (req) =>
   });
 
 /**
- * @param {*} table_id 
- * @param {*} viewname 
+ * @param {*} table_id
+ * @param {*} viewname
  * @param {object} opts
  * @param {string} opts.list_view
  * @param {*} opts.show_view
@@ -143,20 +156,20 @@ const get_state_fields = async (
 };
 
 /**
- * @param {string} table_id 
- * @param {string} viewname 
+ * @param {string} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {string} opts.list_view
  * @param {string} opts.show_view
  * @param {object} opts.subtables
- * @param {*} state 
- * @param {*} extraArgs 
+ * @param {*} state
+ * @param {*} extraArgs
  * @returns {Promise<div>}
  */
 const run = async (
   table_id,
   viewname,
-  { list_view, show_view, subtables },
+  { list_view, show_view, list_width, subtables },
   state,
   extraArgs
 ) => {
@@ -249,8 +262,8 @@ const run = async (
   if (lresp) {
     return div(
       { class: "row" },
-      div({ class: "col-sm-6" }, lresp),
-      div({ class: "col-sm-6" }, sresp, relTblResp)
+      div({ class: `col-sm-${list_width || 6}` }, lresp),
+      div({ class: `col-sm-${12 - (list_width || 6)}` }, sresp, relTblResp)
     );
   } else {
     return div(sresp, relTblResp);

@@ -809,5 +809,7 @@
 	"Cookie duration (hours) when remember ticked": "Cookie duration (hours) when remember ticked",
 	"Forget table": "Forget table",
 	"Table %s forgotten. You can now discover it.": "Table %s forgotten. You can now discover it.",
-	"No triggers": "No triggers"
+	"No triggers": "No triggers",
+	"List width": "List width",
+	"Number of columns (1-12) allocated to the list view": "Number of columns (1-12) allocated to the list view"
 }
