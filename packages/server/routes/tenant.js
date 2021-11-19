@@ -351,7 +351,11 @@ router.get(
 const tenant_settings_form = (req) =>
   config_fields_form({
     req,
-    field_names: ["role_to_create_tenant", "create_tenant_warning"],
+    field_names: [
+      "role_to_create_tenant",
+      "create_tenant_warning",
+      "tenant_template",
+    ],
     action: "/tenant/settings",
     submitLabel: req.__("Save"),
   });

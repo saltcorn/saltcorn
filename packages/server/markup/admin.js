@@ -33,9 +33,9 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 
 /**
- * @param {*} csrf 
- * @param {*} inner 
- * @param {string} action 
+ * @param {*} csrf
+ * @param {*} inner
+ * @param {string} action
  * @returns {*}
  */
 const restore_backup = (csrf, inner, action = `/admin/restore`) =>
@@ -168,7 +168,7 @@ const send_settings_page = ({
 };
 
 /**
- * @param {object} args 
+ * @param {object} args
  * @returns {void}
  */
 const send_infoarch_page = (args) => {
@@ -195,7 +195,7 @@ const send_infoarch_page = (args) => {
 };
 
 /**
- * @param {object} args 
+ * @param {object} args
  * @returns {void}
  */
 const send_users_page = (args) => {
@@ -214,7 +214,7 @@ const send_users_page = (args) => {
 };
 
 /**
- * @param {object} args 
+ * @param {object} args
  * @returns {void}
  */
 const send_events_page = (args) => {
@@ -234,7 +234,7 @@ const send_events_page = (args) => {
 };
 
 /**
- * @param {object} args 
+ * @param {object} args
  * @returns {void}
  */
 const send_admin_page = (args) => {
@@ -252,8 +252,8 @@ const send_admin_page = (args) => {
   });
 };
 
-/** 
- * @param {object} key 
+/**
+ * @param {object} key
  * @returns {Promise<object>}
  */
 const viewAttributes = async (key) => {
@@ -269,8 +269,8 @@ const viewAttributes = async (key) => {
 };
 
 /**
- * @param {*} cfgForm 
- * @param {*} req 
+ * @param {*} cfgForm
+ * @param {*} req
  * @returns {void}
  */
 const flash_restart_if_required = (cfgForm, req) => {
@@ -285,7 +285,7 @@ const flash_restart_if_required = (cfgForm, req) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {void}
  */
 const flash_restart = (req) => {
@@ -316,6 +316,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
       continue;
     const isView = (configTypes[name].type || "").startsWith("View ");
     const isRole = configTypes[name].type === "Role";
+    const isTenant = configTypes[name].type === "Tenant";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
     const roleAttribs = {
@@ -324,6 +325,10 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
         name: `${r.id}`,
       })),
     };
+    const getTenants = async () => {
+      const tens = await db.select("_sc_tenants");
+      return { options: tens.map((t) => t.subdomain) };
+    };
     fields.push({
       name,
       ...configTypes[name],
@@ -331,7 +336,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
       sublabel: sublabel ? req.__(sublabel) : undefined,
       disabled: isFixedConfig(name),
       type:
-        isView || isRole
+        isView || isRole || isTenant
           ? "String"
           : configTypes[name].input_type
           ? undefined
@@ -341,6 +346,8 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
         ? await viewAttributes(name)
         : isRole
         ? roleAttribs
+        : isTenant
+        ? await getTenants()
         : configTypes[name].attributes,
     });
   }
@@ -356,7 +363,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
 };
 
 /**
- * @param {*} form 
+ * @param {*} form
  * @returns {Promise<void>}
  */
 const save_config_from_form = async (form) => {
@@ -384,14 +391,14 @@ const getBaseDomain = () => {
 };
 
 /**
- * @param {object} req 
- * @param {string} domain 
+ * @param {object} req
+ * @param {string} domain
  * @returns {boolean}
  */
 const hostname_matches_baseurl = (req, domain) => domain === req.hostname;
 
 /**
- * @param {string} domain 
+ * @param {string} domain
  * @returns {string[]}
  */
 const is_hsts_tld = (domain) => {
