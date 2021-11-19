@@ -260,6 +260,7 @@ const run = async (
       ? [h6(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
       : tabs(reltbls);
   if (lresp) {
+    if (list_width === 12) return lresp;
     return div(
       { class: "row" },
       div({ class: `col-sm-${list_width || 6}` }, lresp),
