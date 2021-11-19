@@ -809,5 +809,10 @@
 	"Cookie duration (hours) when remember ticked": "Cookie duration (hours) when remember ticked",
 	"Forget table": "Forget table",
 	"Table %s forgotten. You can now discover it.": "Table %s forgotten. You can now discover it.",
-	"No triggers": "No triggers"
+	"No triggers": "No triggers",
+	"List width": "List width",
+	"Number of columns (1-12) allocated to the list view": "Number of columns (1-12) allocated to the list view",
+	"New tenant template": "New tenant template",
+	"Copy site structure for new tenants from this tenant": "Copy site structure for new tenants from this tenant",
+	"Use this link: <a href=\"%s\">%s</a> to revisit your application at any time.": "Use this link: <a href=\"%s\">%s</a> to revisit your application at any time."
 }

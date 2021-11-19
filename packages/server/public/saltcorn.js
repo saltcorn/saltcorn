@@ -341,7 +341,11 @@ function pjax_to(href) {
         setTimeout(() => {
           loadPage = true;
         }, 0);
-
+        if (res.includes("<!--SCPT:")) {
+          const start = res.indexOf("<!--SCPT:");
+          const end = res.indexOf("-->", start);
+          document.title = res.substring(start + 9, end);
+        }
         $("#page-inner-content").html(res);
         initialize_page();
       },

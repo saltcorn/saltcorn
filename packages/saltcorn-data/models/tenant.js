@@ -9,6 +9,7 @@ const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
 const { sqlsanitize } = require("@saltcorn/db-common/internal");
 const { setConfig } = require("./config");
+const fs = require("fs").promises;
 
 /**
  * List all Tenants
@@ -42,10 +43,13 @@ const getAllTenants = contract(
  * @returns {Promise<void>}
  */
 const createTenant = contract(
-  is.fun([is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)], is.promise(is.undefined)),
+  is.fun(
+    [is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)],
+    is.promise(is.undefined)
+  ),
   // TODO how to set names for arguments
-  async ( subdomain, newurl, email, description) => {
-      // normalize domain name
+  async (subdomain, newurl, email, description) => {
+    // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
 
     // add email
@@ -70,11 +74,30 @@ const createTenant = contract(
     });
   }
 );
+const copy_tenant_template = async ({
+  tenant_template,
+  target,
+  loadAndSaveNewPlugin,
+}) => {
+  const { create_backup, restore } = require("./backup");
+  // TODO use a hygenic name for backup file
+  const backupFile = await db.runWithTenant(tenant_template, create_backup);
+  await db.runWithTenant(target, async () => {
+    await restore(backupFile, loadAndSaveNewPlugin, true);
+
+    await db.updateWhere("_sc_files", { user_id: null }, {});
+    await db.deleteWhere("users", {});
+    await db.reset_sequence("users");
+    //
+  });
+  await fs.unlink(backupFile);
+};
+
 /**
  * Delete Tenant
  * Note! This is deleting all tenant data in database!
  * @function
- * @param {string} sub 
+ * @param {string} sub
  * @returns {Promise<void>}
  */
 const deleteTenant = contract(
@@ -117,4 +140,5 @@ module.exports = {
   domain_sanitize,
   deleteTenant,
   eachTenant,
+  copy_tenant_template,
 };

@@ -16,7 +16,7 @@ const defaultTimezone = moment.tz.guess();
 
 /**
  * Config variables types
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  */
 const configTypes = {
@@ -235,6 +235,12 @@ const configTypes = {
     default: true,
     blurb:
       "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+  },
+  /** @type {object} */
+  tenant_template: {
+    type: "Tenant",
+    label: "New tenant template",
+    blurb: "Copy site structure for new tenants from this tenant",
   },
   /** @type {object} */
   development_mode: {

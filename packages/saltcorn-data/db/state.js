@@ -21,7 +21,11 @@ const { migrate } = require("../migrate");
 const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
-const { getAllTenants, createTenant } = require("../models/tenant");
+const {
+  getAllTenants,
+  createTenant,
+  copy_tenant_template,
+} = require("../models/tenant");
 const {
   getAllConfigOrDefaults,
   setConfig,
@@ -35,7 +39,7 @@ const path = require("path");
 const fs = require("fs");
 
 /**
- * @param {object} v 
+ * @param {object} v
  * @returns {void}
  */
 const process_send = (v) => {
@@ -43,14 +47,14 @@ const process_send = (v) => {
 };
 
 /**
-  * State Class
-  * @category saltcorn-data
-  */
+ * State Class
+ * @category saltcorn-data
+ */
 class State {
   /**
-    * State constructor
-    * @param {string} tenant description
-    */
+   * State constructor
+   * @param {string} tenant description
+   */
   constructor(tenant) {
     this.tenant = tenant;
     this.views = [];
@@ -483,16 +487,16 @@ class State {
   }
 
   /**
-   * 
-   * @param {function} f 
+   *
+   * @param {function} f
    */
   setRoomEmitter(f) {
     this.roomEmitter = f;
   }
 
   /**
-   * 
-   * @param {*} args 
+   *
+   * @param {*} args
    */
   emitRoom(...args) {
     if (this.roomEmitter) this.roomEmitter(...args);
@@ -610,11 +614,29 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
  * @param {boolean} noSignalOrDB
  * @returns {Promise<void>}
  */
-const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
+const create_tenant = async (
+  t,
+  plugin_loader,
+  newurl,
+  noSignalOrDB,
+  loadAndSaveNewPlugin
+) => {
   if (!noSignalOrDB) await createTenant(t, newurl);
   tenants[t] = new State(t);
   await db.runWithTenant(t, plugin_loader);
-  if (!noSignalOrDB) process_send({ createTenant: t });
+  if (!noSignalOrDB) {
+    const tenant_template = singleton.getConfig("tenant_template");
+    if (tenant_template) {
+      //create backup
+      await copy_tenant_template({
+        tenant_template,
+        target: t,
+        state: tenants[t],
+        loadAndSaveNewPlugin,
+      });
+    }
+    process_send({ createTenant: t });
+  }
 };
 /**
  * Restart tenant
