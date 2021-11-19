@@ -165,9 +165,9 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
 };
 
 /**
- * @param {object} opts 
- * @param {object} opts.tenant 
- * @param {...*} opts.msg 
+ * @param {object} opts
+ * @param {object} opts.tenant
+ * @param {...*} opts.msg
  * @returns {void}
  */
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -181,8 +181,12 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     });
   }
   if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
-  if (msg.createTenant)
+  if (msg.createTenant) {
     create_tenant(msg.createTenant, loadAllPlugins, "", true);
+    db.runWithTenant(msg.createTenant, async () => {
+      getState().refresh(true);
+    });
+  }
   if (msg.installPlugin) {
     loadAndSaveNewPlugin(msg.installPlugin, msg.force, true);
   }
@@ -191,11 +195,11 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
 };
 
 /**
- * 
- * @param {*} masterState 
- * @param {object} opts 
- * @param {string} opts.port 
- * @param {boolean} opts.watchReaper 
+ *
+ * @param {*} masterState
+ * @param {object} opts
+ * @param {string} opts.port
+ * @param {boolean} opts.watchReaper
  * @param {boolean} opts.disableScheduler
  * @param {number} opts.pid
  * @returns {function}
@@ -224,120 +228,120 @@ const onMessageFromWorker = (
   }
 };
 
-module.exports = 
-/**
- * @function
- * @name "module.exports function"
- * @param {object} [opts = {}]
- * @param {number} [opts.port = 3000]
- * @param {boolean} opts.watchReaper
- * @param {boolean} opts.disableScheduler
- * @param {number} opts.defaultNCPUs 
- * @param {...*} opts.appargs 
- * @returns {Promise&lt;void>}
- */
-async ({
-  port = 3000,
-  watchReaper,
-  disableScheduler,
-  defaultNCPUs,
-  ...appargs
-} = {}) => {
-  const useNCpus = process.env.SALTCORN_NWORKERS
-    ? +process.env.SALTCORN_NWORKERS
-    : defaultNCPUs;
+module.exports =
+  /**
+   * @function
+   * @name "module.exports function"
+   * @param {object} [opts = {}]
+   * @param {number} [opts.port = 3000]
+   * @param {boolean} opts.watchReaper
+   * @param {boolean} opts.disableScheduler
+   * @param {number} opts.defaultNCPUs
+   * @param {...*} opts.appargs
+   * @returns {Promise&lt;void>}
+   */
+  async ({
+    port = 3000,
+    watchReaper,
+    disableScheduler,
+    defaultNCPUs,
+    ...appargs
+  } = {}) => {
+    const useNCpus = process.env.SALTCORN_NWORKERS
+      ? +process.env.SALTCORN_NWORKERS
+      : defaultNCPUs;
 
-  const letsEncrypt = await getConfig("letsencrypt", false);
-  const masterState = {
-    started: false,
-    listeningTo: new Set([]),
-  };
+    const letsEncrypt = await getConfig("letsencrypt", false);
+    const masterState = {
+      started: false,
+      listeningTo: new Set([]),
+    };
 
-  const addWorker = (worker) => {
-    worker.on(
-      "message",
-      onMessageFromWorker(masterState, {
-        port,
-        watchReaper,
-        disableScheduler,
-        pid: worker.process.pid,
-      })
-    );
-  };
-
-  if (port === 80 &amp;&amp; letsEncrypt) {
-    const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
-    const file_store = db.connectObj.file_store;
-    const Greenlock = require("greenlock");
-    const greenlock = Greenlock.create({
-      packageRoot: __dirname,
-      configDir: path.join(file_store, "greenlock.d"),
-      maintainerEmail: admin_users[0].email,
-    });
-    const certs = await greenlock._find({});
-    console.log("Certificates:", certs);
-
-    if (certs &amp;&amp; certs.length > 0) {
-      const app = await getApp(appargs);
-      const timeout = +getState().getConfig("timeout", 120);
-      const initMasterListeners = () => {
-        Object.entries(cluster.workers).forEach(([id, w]) => {
-          if (!masterState.listeningTo.has(id)) {
-            addWorker(w);
-            masterState.listeningTo.add(id);
-          }
-        });
-        if (masterState.listeningTo.size &lt; useNCpus)
-          setTimeout(initMasterListeners, 250);
-      };
-      require("greenlock-express")
-        .init({
-          packageRoot: __dirname,
-          configDir: path.join(file_store, "greenlock.d"),
-          maintainerEmail: admin_users[0].email,
-          cluster: true,
-          workers: useNCpus,
+    const addWorker = (worker) => {
+      worker.on(
+        "message",
+        onMessageFromWorker(masterState, {
+          port,
+          watchReaper,
+          disableScheduler,
+          pid: worker.process.pid,
         })
-        .ready((glx) => {
-          const httpsServer = glx.httpsServer();
-          setupSocket(httpsServer);
-          httpsServer.setTimeout(timeout * 1000);
-          process.on("message", workerDispatchMsg);
-          glx.serveApp(app);
-          process.send &amp;&amp; process.send("Start");
-        })
-        .master(() => {
-          initMaster(appargs).then(initMasterListeners);
-        });
+      );
+    };
 
-      return; // none of stuff below will execute
-    }
-  }
-  // No greenlock!
-
-  if (cluster.isMaster) {
-    const forkAnyWorkers = useNCpus > 1 &amp;&amp; process.platform !== "win32";
-    await initMaster(appargs, forkAnyWorkers);
-
-    if (forkAnyWorkers) {
-      for (let i = 0; i &lt; useNCpus; i++) addWorker(cluster.fork());
-
-      cluster.on("exit", (worker, code, signal) => {
-        console.log(`worker ${worker.process.pid} died`);
-        addWorker(cluster.fork());
+    if (port === 80 &amp;&amp; letsEncrypt) {
+      const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+      const file_store = db.connectObj.file_store;
+      const Greenlock = require("greenlock");
+      const greenlock = Greenlock.create({
+        packageRoot: __dirname,
+        configDir: path.join(file_store, "greenlock.d"),
+        maintainerEmail: admin_users[0].email,
       });
+      const certs = await greenlock._find({});
+      console.log("Certificates:", certs);
+
+      if (certs &amp;&amp; certs.length > 0) {
+        const app = await getApp(appargs);
+        const timeout = +getState().getConfig("timeout", 120);
+        const initMasterListeners = () => {
+          Object.entries(cluster.workers).forEach(([id, w]) => {
+            if (!masterState.listeningTo.has(id)) {
+              addWorker(w);
+              masterState.listeningTo.add(id);
+            }
+          });
+          if (masterState.listeningTo.size &lt; useNCpus)
+            setTimeout(initMasterListeners, 250);
+        };
+        require("greenlock-express")
+          .init({
+            packageRoot: __dirname,
+            configDir: path.join(file_store, "greenlock.d"),
+            maintainerEmail: admin_users[0].email,
+            cluster: true,
+            workers: useNCpus,
+          })
+          .ready((glx) => {
+            const httpsServer = glx.httpsServer();
+            setupSocket(httpsServer);
+            httpsServer.setTimeout(timeout * 1000);
+            process.on("message", workerDispatchMsg);
+            glx.serveApp(app);
+            process.send &amp;&amp; process.send("Start");
+          })
+          .master(() => {
+            initMaster(appargs).then(initMasterListeners);
+          });
+
+        return; // none of stuff below will execute
+      }
+    }
+    // No greenlock!
+
+    if (cluster.isMaster) {
+      const forkAnyWorkers = useNCpus > 1 &amp;&amp; process.platform !== "win32";
+      await initMaster(appargs, forkAnyWorkers);
+
+      if (forkAnyWorkers) {
+        for (let i = 0; i &lt; useNCpus; i++) addWorker(cluster.fork());
+
+        cluster.on("exit", (worker, code, signal) => {
+          console.log(`worker ${worker.process.pid} died`);
+          addWorker(cluster.fork());
+        });
+      } else {
+        await nonGreenlockWorkerSetup(appargs, port);
+      }
+      Trigger.emitEvent("Startup");
     } else {
       await nonGreenlockWorkerSetup(appargs, port);
     }
-    Trigger.emitEvent("Startup");
-  } else {
-    await nonGreenlockWorkerSetup(appargs, port);
-  }
-};
+  };
 
 /**
- * @param {*} appargs 
- * @param {*} port 
+ * @param {*} appargs
+ * @param {*} port
  * @returns {Promise&lt;void>}
  */
 const nonGreenlockWorkerSetup = async (appargs, port) => {
@@ -385,8 +389,8 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
 };
 
 /**
- * 
- * @param  {...*} servers 
+ *
+ * @param  {...*} servers
  */
 const setupSocket = (...servers) => {
   // https://socket.io/docs/v4/middlewares/

@@ -100,7 +100,7 @@ const { contract, is } = require("contractis");
 /**
  * Transform value to correct sql name.
  * Note! Dont use other symbols than ^A-Za-z_0-9
- * @function 
+ * @function
  * @param {string} nm
  * @returns {string}
  */
@@ -150,8 +150,8 @@ const whereFTS = (v, i, is_sqlite) => {
 };
 
 /**
- * @param {boolean} is_sqlite 
- * @param {string} i 
+ * @param {boolean} is_sqlite
+ * @param {string} i
  * @returns {string}
  */
 const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i}`);
@@ -159,17 +159,17 @@ const placeHolder = (is_sqlite, i) => (is_sqlite ? `?` : `$${i}`);
 /**
  * @returns {number}
  */
-const mkCounter = () => {
-  let i = 0;
+const mkCounter = (init = 0) => {
+  let i = init;
   return () => {
     i += 1;
     return i;
   };
 };
 /**
- * 
- * @param {boolean} is_sqlite 
- * @param {string} i 
+ *
+ * @param {boolean} is_sqlite
+ * @param {string} i
  * @returns {function}
  */
 const subSelectWhere = (is_sqlite, i) => (k, v) => {
@@ -184,7 +184,7 @@ const subSelectWhere = (is_sqlite, i) => (k, v) => {
   } from ${v.inSelect.table} ${where})`;
 };
 /**
- * @param {object} v 
+ * @param {object} v
  * @returns {object[]}
  */
 const subSelectVals = (v) => {
@@ -197,18 +197,18 @@ const subSelectVals = (v) => {
   return xs;
 };
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {string}
  */
 const wrapParens = (s) => (s ? `(${s})` : s);
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {string}
  */
 const quote = (s) => (s.includes(".") || s.includes('"') ? s : `"${s}"`);
 /**
- * @param {boolean} is_sqlite 
- * @param {string} i 
+ * @param {boolean} is_sqlite
+ * @param {string} i
  * @returns {function}
  */
 const whereOr = (is_sqlite, i) => (ors) =>
@@ -223,8 +223,8 @@ const whereOr = (is_sqlite, i) => (ors) =>
   );
 
 /**
- * @param {boolean} is_sqlite 
- * @param {string} i 
+ * @param {boolean} is_sqlite
+ * @param {string} i
  * @returns {function}
  */
 const whereClause = (is_sqlite, i) => ([k, v]) =>
@@ -278,7 +278,7 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     : `${quote(sqlsanitizeAllowDots(k))}=${placeHolder(is_sqlite, i())}`;
 
 /**
- * @param {object[]} opts 
+ * @param {object[]} opts
  * @param {object} opts.k
  * @param {object} opts.v
  * @returns {boolean|object}
@@ -311,16 +311,18 @@ const getVal = ([k, v]) =>
     : v;
 
 /**
- * @param {object} whereObj 
- * @param {boolean} is_sqlite 
+ * @param {object} whereObj
+ * @param {boolean} is_sqlite
+ * @param {number} initCount
  * @returns {object}
  */
-const mkWhere = (whereObj, is_sqlite) => {
+const mkWhere = (whereObj, is_sqlite, initCount = 0) => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
   //console.log({ wheres });
   const where =
     whereObj &amp;&amp; wheres.length > 0
-      ? "where " + wheres.map(whereClause(is_sqlite, mkCounter())).join(" and ")
+      ? "where " +
+        wheres.map(whereClause(is_sqlite, mkCounter(initCount))).join(" and ")
       : "";
   const values = wheres
     .map(getVal)
@@ -330,7 +332,7 @@ const mkWhere = (whereObj, is_sqlite) => {
 };
 
 /**
- * @param {number|string} x 
+ * @param {number|string} x
  * @returns {number|null}
  */
 const toInt = (x) =>
@@ -360,7 +362,7 @@ const getDistanceOrder = ({ latField, longField, lat, long }) => {
 };
 
 /**
- * @param {object} selopts 
+ * @param {object} selopts
  * @returns {string[]}
  */
 const mkSelectOptions = (selopts) => {

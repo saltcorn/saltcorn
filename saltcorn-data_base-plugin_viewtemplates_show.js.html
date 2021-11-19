@@ -333,6 +333,7 @@ const run = async (
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   readState(state, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
+  if (Object.keys(qstate).length === 0) return extra.req.__("No row selected");
   const rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
