@@ -139,31 +139,37 @@ router.get(
           "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
         )
       );
+    let create_tenant_warning = "";
     if (getState().getConfig("create_tenant_warning"))
-      req.flash(
-        "warning",
-        h4(req.__("Warning")) +
-          p(
+      create_tenant_warning = div(
+        {
+          class: "alert alert-warning alert-dismissible fade show mt-5",
+          role: "alert",
+        },
+        h4(req.__("Warning")),
+        p(
+          req.__(
+            "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+          ) +
+            " " +
             req.__(
-              "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+              "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
             ) +
-              " " +
-              req.__(
-                "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-              ) +
-              " " +
-              req.__(
-                "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-              ) +
-              " " +
-              req.__(
-                'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-              )
-          )
+            " " +
+            req.__(
+              "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+            ) +
+            " " +
+            req.__(
+              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+            )
+        )
       );
+
     res.sendWrap(
       req.__("Create application"),
-      renderForm(tenant_form(req), req.csrfToken()) +
+      create_tenant_warning +
+        renderForm(tenant_form(req), req.csrfToken()) +
         p(
           { class: "mt-2" },
           req.__("To login to a previously created application, go to: "),
@@ -339,7 +345,7 @@ router.get(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const tenant_settings_form = (req) =>
