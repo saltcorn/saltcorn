@@ -8,7 +8,11 @@ const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
 const { pipeline } = require("stream");
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal");
+const {
+  sqlsanitize,
+  mkWhere,
+  mkSelectOptions,
+} = require("@saltcorn/db-common/internal");
 
 let getTenantSchema;
 let getConnectObject = null;
@@ -204,13 +208,35 @@ const update = async (tbl, obj, id, opts = {}) => {
   const assigns = kvs
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
     .join();
-  var valList = kvs.map(([k, v]) => v);
+  let valList = kvs.map(([k, v]) => v);
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
+  sql_log(q, valList);
+  await pool.query(q, valList);
+};
+
+/**
+ * Update table records
+ * @param {string} tbl - table name
+ * @param {object} obj - columns names and data
+ * @param {object} whereObj - where object
+ * @returns {Promise<void>} no result
+ */
+const updateWhere = async (tbl, obj, whereObj) => {
+  const kvs = Object.entries(obj);
+  const { where, values } = mkWhere(whereObj, false, kvs.length);
+  const assigns = kvs
+    .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
+    .join();
+  let valList = [...kvs.map(([k, v]) => v), ...values];
+
+  const q = `update "${getTenantSchema()}"."${sqlsanitize(
+    tbl
+  )}" set ${assigns} ${where}`;
   sql_log(q, valList);
   await pool.query(q, valList);
 };
@@ -350,8 +376,8 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
 const postgresExports = {
   pool,
   /**
-   * @param {string} text 
-   * @param {object} params 
+   * @param {string} text
+   * @param {object} params
    * @returns {object}
    */
   query: (text, params) => {
@@ -364,6 +390,7 @@ const postgresExports = {
   count,
   insert,
   update,
+  updateWhere,
   deleteWhere,
   close,
   sql_log,
@@ -381,18 +408,17 @@ const postgresExports = {
 };
 
 module.exports = (getConnectObjectPara) => {
-  if(!pool) {
+  if (!pool) {
     getConnectObject = getConnectObjectPara;
     const connectObj = getConnectObject();
     if (connectObj) {
       pool = new Pool(connectObj);
-      getTenantSchema = 
-        require("@saltcorn/db-common/tenants")(connectObj).getTenantSchema;
+      getTenantSchema = require("@saltcorn/db-common/tenants")(connectObj)
+        .getTenantSchema;
       postgresExports.pool = pool;
-    }
-    else {
-      throw new Error("Unable to retrieve a database connection object.")
+    } else {
+      throw new Error("Unable to retrieve a database connection object.");
     }
   }
   return postgresExports;
-}
+};
