@@ -44,6 +44,8 @@ class ReleaseCommand extends Command {
             json.dependencies[dpkgnm] = version;
           if (json.devDependencies && json.devDependencies[dpkgnm])
             json.devDependencies[dpkgnm] = version;
+          if (json.optionalDependencies && json.optionalDependencies[dpkgnm])
+            json.optionalDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
         `packages/${dir}/package.json`,
