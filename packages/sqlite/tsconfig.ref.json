@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true /* set to true by "composite" */
+  },
+}

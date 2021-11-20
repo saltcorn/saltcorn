@@ -5,7 +5,9 @@
   "main": "index.js",
   "repository": "github:saltcorn/saltcorn",
   "scripts": {
-    "test": "echo No tests"
+    "test": "echo No tests",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
     "@saltcorn/data": "0.6.1-beta.3"

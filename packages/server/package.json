@@ -51,7 +51,9 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "jest": {
     "testEnvironment": "node",
@@ -62,7 +64,10 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/plugin_packages/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1"
+    }
   },
   "publishConfig": {
     "access": "public"

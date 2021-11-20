@@ -7,7 +7,9 @@
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
   "author": "Tom Nielsen",

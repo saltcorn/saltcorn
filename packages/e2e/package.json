@@ -11,7 +11,9 @@
   },
   "scripts": {
     "test": "echo run gotest instead",
-    "gotest": "jest --runInBand"
+    "gotest": "jest --runInBand",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {

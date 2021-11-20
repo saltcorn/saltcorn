@@ -5,7 +5,9 @@
   "homepage": "https://saltcorn.com",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "author": "Tom Nielsen",
   "license": "MIT",

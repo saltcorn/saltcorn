@@ -55,7 +55,9 @@
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "echo NO TESTS",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "publishConfig": {
     "access": "public"

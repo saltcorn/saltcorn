@@ -24,9 +24,12 @@ var connectObj = getConnectObject();
 /** @type {db/sqlite|db/pg|null} */
 let dbmodule = null;
 try {
-  dbmodule = is_sqlite(connectObj) ? 
-    require("@saltcorn/sqlite/sqlite")(getConnectObject) :
-    require("@saltcorn/postgres/postgres")(getConnectObject);
+  if(is_sqlite(connectObj)) {
+    dbmodule = require("@saltcorn/sqlite/sqlite");
+    dbmodule.init(getConnectObject);
+  }
+  else
+    dbmodule = require("@saltcorn/postgres/postgres")(getConnectObject);
 } catch(e) {
   console.log("No database package found.")
   throw e;

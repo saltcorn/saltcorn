@@ -4,7 +4,9 @@
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
     "@saltcorn/data": "0.6.1-beta.3",
