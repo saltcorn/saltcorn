@@ -17,13 +17,14 @@
   },
   "source": {
     "include": ["."],
-    "includePattern": ".+\\.js(doc|x)?$",
-    "excludePattern": "node_modules|plugin_packages|public"
+    "includePattern": "\\.(js|ts)$",
+    "excludePattern": "node_modules|plugin_packages|public|dist"
   },
   "tags": {
-    "allowUnknownTags": ["category", "subcategory"]
+    "allowUnknownTags": ["category", "subcategory", "optional"]
   },
   "plugins": [
-    "node_modules/better-docs/category"
+    "node_modules/better-docs/category",
+    "node_modules/better-docs/typescript"
   ]
 }

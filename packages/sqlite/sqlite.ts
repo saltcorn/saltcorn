@@ -18,6 +18,7 @@ let current_filepath:string;
 /**
  * Initializes internals of the the sqlite module.
  * It must be called after importing the module.
+ * @function
  * @param {any} getConnectObject 
  */
 export const init = (getConnectObject: () => Database): void => {
@@ -30,6 +31,7 @@ export const init = (getConnectObject: () => Database): void => {
 
 /**
  * Get sqlite path
+ * @function
  * @returns {string|void}
  */
 export const get_db_filepath = (): string => {
@@ -75,7 +77,8 @@ export function query(sql:string, params?:any): Promise<any> {
   sql_log(sql, params);
   return new Promise((resolve, reject) => {
     if(!sqliteDatabase) {
-      throw new Error("The database connection is closed.");
+      reject(new Error("The database connection is closed."));
+      return;
     }
     sqliteDatabase.all(sql, params, function (err:any, rows:any) {
       if (err) {
@@ -91,6 +94,7 @@ export function query(sql:string, params?:any): Promise<any> {
  * Change connection (close connection and open new connection from connObj)
  * @param {any} connObj - connection object
  * @returns {Promise<void>}
+ * @function
  */
 export const changeConnection = async (connObj:any): Promise<void> => {
   if(!sqliteDatabase) {
@@ -104,6 +108,7 @@ export const changeConnection = async (connObj:any): Promise<void> => {
 /**
  * Close database connection
  * @returns {Promise<void>}
+ * @function
  */
 export const close = async (): Promise<void> => {
   if(!sqliteDatabase) {
@@ -119,6 +124,7 @@ export const close = async (): Promise<void> => {
  * @param {any} whereObj - where object
  * @param {any} [selectopts = {}] - select options
  * @returns {Promise<*>} return rows
+ * @function
  */
 export const select = async (tbl:string, whereObj:any, selectopts:any = {})
 : Promise<any> => {
@@ -136,6 +142,7 @@ export const select = async (tbl:string, whereObj:any, selectopts:any = {})
 /**
  * @param {any} v 
  * @returns {boolean}
+ * @function
  */
 export const reprAsJson = (v:any): boolean =>
   typeof v === "object" && v !== null && !(v instanceof Date);
@@ -145,6 +152,7 @@ export const reprAsJson = (v:any): boolean =>
  * @param {*} opts.k
  * @param {any} opts.v
  * @returns {string|any}
+ * @function
  */
 export const mkVal = ([k, v]:[any, any]): string => (reprAsJson(v) ? JSON.stringify(v) : v);
 
@@ -154,6 +162,7 @@ export const mkVal = ([k, v]:[any, any]): string => (reprAsJson(v) ? JSON.string
  * @param {any} obj - list of column=value pairs
  * @param {string} id - primary key column value
  * @returns {Promise<void>} no results
+ * @function
  */
 export const update = async (tbl:string, obj:any, id:string): Promise<void>  => {
   const kvs = Object.entries(obj);
@@ -169,6 +178,7 @@ export const update = async (tbl:string, obj:any, id:string): Promise<void>  => 
  * @param {string} tbl - table name
  * @param {any} whereObj - where object
  * @returns {Promise<void>} result of delete execution
+ * @function
  */
 export const deleteWhere = async (tbl:string, whereObj:any): Promise<void> => {
   const { where, values } = mkWhere(whereObj, true);
@@ -183,6 +193,7 @@ export const deleteWhere = async (tbl:string, whereObj:any): Promise<void> => {
  * @param {any} obj - columns names and data
  * @param {any} [opts = {}] - columns attributes
  * @returns {Promise<string|void>} returns id.
+ * @function
  */
 export const insert = async (tbl:string, obj:any, opts:any = {}): Promise<string|void> => {
   const kvs:any = Object.entries(obj);
@@ -218,6 +229,7 @@ export const insert = async (tbl:string, obj:any, opts:any = {}): Promise<string
  * @param {any} where - where object
  * @throws {Error}
  * @returns {Promise<any>} return first record from sql result
+ * @function
  */
 export const selectOne = async (tbl:string, where:any): Promise<any> => {
   const rows = await select(tbl, where);
@@ -232,6 +244,7 @@ export const selectOne = async (tbl:string, where:any): Promise<any> => {
  * @param {string} tbl - table name
  * @param {any} where - where object
  * @returns {Promise<any>} - null if no record or first record data
+ * @function
  */
 export const selectMaybeOne = async (tbl:string, where:any): Promise<any> => {
   const rows = await select(tbl, where);
@@ -244,6 +257,7 @@ export const selectMaybeOne = async (tbl:string, where:any): Promise<any> => {
  * @param {string} tbl - table name
  * @param {any} whereObj - where object
  * @returns {Promise<number>} count of tables
+ * @function
  */
 export const count = async (tbl:string, whereObj:any) => {
   const { where, values } = mkWhere(whereObj, true);
@@ -255,6 +269,7 @@ export const count = async (tbl:string, whereObj:any) => {
 /**
  * Get version of PostgreSQL
  * @returns {Promise<string>} returns version
+ * @function
  */
 export const getVersion = async (): Promise<string> => {
   const sql = `SELECT sqlite_version();`;
@@ -267,6 +282,7 @@ export const getVersion = async (): Promise<string> => {
  * Reset DB Schema using drop schema and recreate it.
  * Attention! You will lost data after call this function!
  * @returns {Promise<void>} no result
+ * @function
  */
 export const drop_reset_schema = async (): Promise<void> => {
   if(!sqliteDatabase) {
@@ -282,6 +298,7 @@ export const drop_reset_schema = async (): Promise<void> => {
  * @param {string} table_name - table name
  * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no result
+ * @function
  */
 export const add_unique_constraint = async (table_name:string, field_names:string[])
 : Promise<void> => {
@@ -301,6 +318,7 @@ export const add_unique_constraint = async (table_name:string, field_names:strin
  * @param {string} table_name - table name
  * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no results
+ * @function
  */
 export const drop_unique_constraint = async (table_name:string, field_names:string[])
 : Promise<void> => {
