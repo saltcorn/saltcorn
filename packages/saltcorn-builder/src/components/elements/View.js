@@ -27,7 +27,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const View = ({ name, view, state }) => {
+const View = ({ name, view, configuration, state }) => {
   const {
     selected,
     node_id,
@@ -45,9 +45,10 @@ const View = ({ name, view, state }) => {
       options,
       view,
       setPreviews,
+      configuration,
       node_id,
     })();
-  }, []);
+  }, [view, configuration, state]);
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -95,12 +96,7 @@ const ViewSettings = () => {
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = useContext(previewCtx);
-  const refetchPreview = fetchViewPreview({
-    options,
-    view,
-    setPreviews,
-    node_id,
-  });
+
   const setAProp = (key) => (e) => {
     if (e.target) {
       const target_value = e.target.value;
@@ -116,7 +112,6 @@ const ViewSettings = () => {
           className="form-control"
           onChange={(e) => {
             setProp((prop) => (prop.view = e.target.value));
-            refetchPreview({ view: e.target.value });
           }}
         >
           {views.map((f, ix) => (
