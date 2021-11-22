@@ -52,12 +52,23 @@ class ReleaseCommand extends Command {
         JSON.stringify(json, null, 2)
       );
     };
+    const compileTsFiles = () => {
+      spawnSync("npm", ["install"], {
+        stdio: "inherit",
+        cwd: ".",
+      });
+      spawnSync("npm", ["run", "tsc"], {
+        stdio: "inherit",
+        cwd: ".",
+      });
+    }
     const publish = (dir) =>
       spawnSync("npm", ["publish"], {
         stdio: "inherit",
         cwd: `packages/${dir}/`,
       });
 
+    compileTsFiles();
     //for each package:
     // 1. update version
     // 2. update dependencies for other packages
@@ -108,6 +119,7 @@ class ReleaseCommand extends Command {
     });
     console.log("Now run:\n");
     console.log("  rm -rf packages/saltcorn-cli/node_modules\n");
+    console.log("  rm -rf node_modules\n");
     this.exit(0);
   }
 }

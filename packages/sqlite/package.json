@@ -21,6 +21,7 @@
       ]
     }
   },
+  "files": ["dist/**/*"],
   "dependencies": {
     "@saltcorn/db-common": "0.6.1-beta.3",
     "sqlite3": "^5.0.2"
