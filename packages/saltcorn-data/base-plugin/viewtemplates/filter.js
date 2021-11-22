@@ -209,7 +209,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         field.type.fieldviews[fieldview]
       ) {
         const fv = field.type.fieldviews[fieldview];
-        if (fv.isEdit)
+        if (fv.isEdit || fv.isFilter)
           return fv.run(
             field_name,
             state[field_name],
