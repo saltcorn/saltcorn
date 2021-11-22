@@ -21,7 +21,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
+const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -31,7 +31,7 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
     return (
       <div className="accordion">
         {ntimes(ntabs, (ix) => (
-          <div className="card">
+          <div key={ix} className="card">
             <div className="card-header">
               <h2 className="mb-0">
                 <button
@@ -110,12 +110,14 @@ const TabsSettings = () => {
   const node = useNode((node) => ({
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
+    independent: node.data.props.independent,
     titles: node.data.props.titles,
   }));
   const {
     actions: { setProp },
     titles,
     tabsStyle,
+    independent,
     ntabs,
   } = node;
   return (
@@ -175,6 +177,26 @@ const TabsSettings = () => {
             </td>
           </tr>
         ))}
+        {tabsStyle === "Accordion" && (
+          <tr>
+            <td colSpan="2">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={independent}
+                  onChange={(e) => {
+                    if (e.target) {
+                      setProp((prop) => (prop.independent = e.target.checked));
+                    }
+                  }}
+                />
+                <label className="form-check-label">Open independently</label>
+              </div>
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );
@@ -188,6 +210,7 @@ Tabs.craft = {
     titles: ["Tab1", "Tab2"],
     ntabs: 2,
     tabsStyle: "Tabs",
+    independent: false,
   },
   displayName: "Tabs",
   related: {

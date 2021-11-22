@@ -27,7 +27,7 @@ import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 
 /**
- * @param {object} segment 
+ * @param {object} segment
  * @returns {number}
  */
 const getColWidths = (segment) => {
@@ -43,7 +43,7 @@ const getColWidths = (segment) => {
 };
 
 /**
- * @param {object} segment 
+ * @param {object} segment
  * @returns {object[]}
  */
 const default_breakpoints = (segment) =>
@@ -72,9 +72,9 @@ const allElements = [
 ];
 
 export /**
- * @param {object} layout 
- * @param {object} query 
- * @param {object} actions 
+ * @param {object} layout
+ * @param {object} query
+ * @param {object} actions
  * @param {string} [parent = "ROOT"]
  * @returns {Text|View|Action|Element|Tabs|Columns}
  * @category saltcorn-builder
@@ -84,8 +84,8 @@ export /**
 const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   /**
-   * @param {object} segment 
-   * @param {string} ix 
+   * @param {object} segment
+   * @param {string} ix
    * @returns {Element|Text|View|Action|Tabs|Columns}
    */
   function toTag(segment, ix) {
@@ -223,6 +223,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           key={ix}
           titles={segment.titles}
           ntabs={segment.ntabs}
+          independent={segment.independent}
           tabsStyle={segment.tabsStyle}
           contents={segment.contents.map(toTag)}
         />
@@ -243,8 +244,8 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
   }
 
   /**
-   * @param {object} segment 
-   * @param {object} parent 
+   * @param {object} segment
+   * @param {object} parent
    * @returns {void}
    */
   function go(segment, parent) {
@@ -285,7 +286,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
 const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export /**
- * @param {object[]} nodes 
+ * @param {object[]} nodes
  * @param {string} [startFrom = "ROOT" ]
  * @returns {object}
  * @category saltcorn-builder
@@ -295,9 +296,9 @@ export /**
 const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
-  
+
   /**
-   * @param {object} node 
+   * @param {object} node
    * @returns {void|object}
    */
   const get_nodes = (node) => {
@@ -307,7 +308,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   };
 
   /**
-   * @param {object} node 
+   * @param {object} node
    * @returns {object}
    */
   const go = (node) => {
@@ -410,6 +411,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         ),
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
+        independent: node.props.independent,
         ntabs: node.props.ntabs,
       };
     }
