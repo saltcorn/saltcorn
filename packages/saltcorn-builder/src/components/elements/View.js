@@ -154,6 +154,15 @@ const ViewSettings = () => {
             )}
         </Fragment>
       )}
+      {view ? (
+        <a
+          className="d-block mt-2"
+          target="_blank"
+          href={`/viewedit/config/${view}`}
+        >
+          Configure this view
+        </a>
+      ) : null}
     </div>
   );
 };
