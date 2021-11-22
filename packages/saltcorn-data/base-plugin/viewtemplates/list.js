@@ -385,7 +385,6 @@ const run = async (
   const { id, ...state } = stateWithId || {};
 
   const where = await stateFieldsToWhere({ fields, state });
-  console.log(where);
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   if (!q.limit) q.limit = rows_per_page;
