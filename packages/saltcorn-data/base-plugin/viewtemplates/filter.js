@@ -215,6 +215,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             state[field_name],
             {
               onChange: `set_state_field('${field_name}', this.value)`,
+              ...field.attributes,
               ...configuration,
             },
             "",
