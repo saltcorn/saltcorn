@@ -21,8 +21,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
 
 /**
- * @param {*} tables 
- * @param {object} req 
+ * @param {*} tables
+ * @param {object} req
  * @returns {Table}
  */
 const tableTable = (tables, req) =>
@@ -38,8 +38,8 @@ const tableTable = (tables, req) =>
   );
 
 /**
- * @param {*} tables 
- * @param {object} req 
+ * @param {*} tables
+ * @param {object} req
  * @returns {object}
  */
 const tableCard = (tables, req) => ({
@@ -67,8 +67,8 @@ const tableCard = (tables, req) => ({
 });
 
 /**
- * @param {*} views 
- * @param {object} req 
+ * @param {*} views
+ * @param {object} req
  * @returns {Table}
  */
 const viewTable = (views, req) =>
@@ -88,8 +88,8 @@ const viewTable = (views, req) =>
   );
 
 /**
- * @param {*} views 
- * @param {object} req 
+ * @param {*} views
+ * @param {object} req
  * @returns {object}
  */
 const viewCard = (views, req) => ({
@@ -119,8 +119,8 @@ const viewCard = (views, req) => ({
 });
 
 /**
- * @param {*} pages 
- * @param {object} req 
+ * @param {*} pages
+ * @param {object} req
  * @returns {Table}
  */
 const pageTable = (pages, req) =>
@@ -140,8 +140,8 @@ const pageTable = (pages, req) =>
   );
 
 /**
- * @param {*} pages 
- * @param {object} req 
+ * @param {*} pages
+ * @param {object} req
  * @returns {object}
  */
 const pageCard = (pages, req) => ({
@@ -172,7 +172,7 @@ const pageCard = (pages, req) => ({
 });
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
 const filesTab = async (req) => {
@@ -196,7 +196,7 @@ const filesTab = async (req) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
 const usersTab = async (req) => {
@@ -226,12 +226,10 @@ const usersTab = async (req) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
-const actionsTab = async (req) => {
-  const triggers = await Trigger.findAllWithTableName();
-
+const actionsTab = async (req, triggers) => {
   return div(
     triggers.length <= 1 &&
       p(
@@ -264,9 +262,33 @@ const actionsTab = async (req) => {
     )
   );
 };
-
+const packTab = (req, packlist) =>
+  div(
+    p(req.__("Instead of building, get up and running in no time with packs")),
+    p(
+      { class: "font-italic" },
+      req.__(
+        "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+      )
+    ),
+    mkTable(
+      [
+        { label: req.__("Name"), key: "name" },
+        {
+          label: req.__("Description"),
+          key: "description",
+        },
+      ],
+      packlist,
+      { noHeader: true }
+    ),
+    a(
+      { href: `/plugins?set=packs`, class: "btn btn-primary" },
+      req.__("Go to pack store »")
+    )
+  );
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<object>}
  */
 const welcome_page = async (req) => {
@@ -278,6 +300,7 @@ const welcome_page = async (req) => {
   const tables = await Table.find({}, { orderBy: "name" });
   const views = await View.find({});
   const pages = await Page.find({});
+  const triggers = await Trigger.findAllWithTableName();
 
   return {
     above: [
@@ -293,38 +316,18 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Install pack"),
-            tabContents: {
-              Packs: div(
-                p(
-                  req.__(
-                    "Instead of building, get up and running in no time with packs"
-                  )
-                ),
-                p(
-                  { class: "font-italic" },
-                  req.__(
-                    "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-                  )
-                ),
-                mkTable(
-                  [
-                    { label: req.__("Name"), key: "name" },
-                    {
-                      label: req.__("Description"),
-                      key: "description",
-                    },
-                  ],
-                  packlist,
-                  { noHeader: true }
-                ),
-                a(
-                  { href: `/plugins?set=packs`, class: "btn btn-primary" },
-                  req.__("Go to pack store »")
-                )
-              ),
-              Triggers: await actionsTab(req),
-              Files: await filesTab(req),
-            },
+            tabContents:
+              triggers.length > 0
+                ? {
+                    Triggers: await actionsTab(req, triggers),
+                    Files: await filesTab(req),
+                    Packs: packTab(req, packlist),
+                  }
+                : {
+                    Packs: packTab(req, packlist),
+                    Triggers: await actionsTab(req, triggers),
+                    Files: await filesTab(req),
+                  },
           },
           {
             type: "card",
@@ -370,8 +373,8 @@ const welcome_page = async (req) => {
 };
 
 /**
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {Promise<void>}
  */
 const no_views_logged_in = async (req, res) => {
@@ -400,9 +403,9 @@ const no_views_logged_in = async (req, res) => {
 };
 
 /**
- * @param {number} role_id 
- * @param {object} res 
- * @param {object} req 
+ * @param {number} role_id
+ * @param {object} res
+ * @param {object} req
  * @returns {Promise<boolean>}
  */
 const get_config_response = async (role_id, res, req) => {
@@ -431,8 +434,8 @@ const get_config_response = async (role_id, res, req) => {
 
 /**
  * Function assigned to 'module.exports'.
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {Promise<void>}
  */
 module.exports = async (req, res) => {
