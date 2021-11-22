@@ -90,7 +90,6 @@ const configuration_workflow = () =>
             fields,
             "filter"
           );
-          console.log(field_view_options);
           return {
             fields,
             roles,

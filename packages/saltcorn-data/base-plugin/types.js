@@ -295,6 +295,7 @@ const string = {
             name: text_attr(nm),
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
+            onChange: attrs.onChange,
             id: `input${text_attr(nm)}`,
             rows: 5,
           },
@@ -322,6 +323,7 @@ const string = {
               name: text_attr(nm),
               disabled: attrs.disabled,
               inline: attrs.inline,
+              onChange: attrs.onChange,
               options: Array.isArray(attrs.options)
                 ? attrs.options
                 : attrs.options.split(",").map((o) => o.trim()),
@@ -342,7 +344,7 @@ const string = {
           disabled: attrs.disabled,
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
-
+          onChange: attrs.onChange,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
@@ -463,6 +465,7 @@ const int = {
           disabled: attrs.disabled,
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
+          onChange: attrs.onChange,
           id: `input${text_attr(nm)}`,
           step: "1",
           ...(attrs.max && { max: attrs.max }),
@@ -557,6 +560,7 @@ const color = {
           type: "color",
           class: ["form-control", cls],
           disabled: attrs.disabled,
+          onChange: attrs.onChange,
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
@@ -630,6 +634,7 @@ const float = {
           name: text_attr(nm),
           "data-fieldname": text_attr(field.name),
           disabled: attrs.disabled,
+          onChange: attrs.onChange,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
             : "0.01",
@@ -806,6 +811,7 @@ const date = {
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
+          onChange: attrs.onChange,
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
@@ -828,6 +834,7 @@ const date = {
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
+          onChange: attrs.onChange,
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
@@ -944,6 +951,7 @@ const bool = {
           class: ["mr-2 mt-1", cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
+          onChange: attrs.onChange,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
