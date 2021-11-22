@@ -27,6 +27,8 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
+  const [showTabs, setShowTabs] = useState([true]);
+
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
@@ -37,7 +39,18 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
                 <button
                   className="btn btn-link btn-block text-left"
                   type="button"
-                  onClick={() => setShowTab(ix)}
+                  onClick={() => {
+                    setShowTab(ix);
+                    if (!independent) {
+                      let newArr = [];
+                      newArr[ix] = true;
+                      setShowTabs(newArr);
+                    } else {
+                      let newArr = [...showTabs];
+                      newArr[ix] = !newArr[ix];
+                      setShowTabs(newArr);
+                    }
+                  }}
                 >
                   {titles[ix]}
                 </button>
@@ -46,7 +59,11 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
 
             <div
               id={`collapse${ix}`}
-              className={`collapse ${ix === showTab ? "show" : ""}`}
+              className={`collapse ${
+                (independent && showTabs[ix]) || (!independent && showTab == ix)
+                  ? "show"
+                  : ""
+              }`}
               aria-labelledby="headingOne"
               data-parent="#accordionExample"
             >
