@@ -123,7 +123,8 @@ const calcfldViewOptions = contract(
     fields.forEach((f) => {
       handlesTextStyle[f.name] = [];
       if (f.type === "File") {
-        if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
+        if (!isEdit && !isFilter)
+          fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
@@ -144,15 +145,20 @@ const calcfldViewOptions = contract(
         });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit
+          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter
         );
         let tfvs_ordered = [];
         if (isEdit) {
           tfvs_ordered = [
             ...tfvs.filter(([k, fv]) => fv.isEdit),
-            ...tfvs.filter(([k, fv]) => !fv.isEdit),
+            ...tfvs.filter(([k, fv]) => !fv.isEdit && !fv.isFilter),
           ];
-        } else tfvs_ordered = tfvs;
+        } else if (isFilter) {
+          tfvs_ordered = [
+            ...tfvs.filter(([k, fv]) => fv.isFilter),
+            ...tfvs.filter(([k, fv]) => fv.isEdit),
+          ];
+        } else tfvs_ordered = tfvs.filter(([k, fv]) => !fv.isFilter);
         fvs[f.name] = tfvs_ordered.map(([k, fv]) => {
           if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
           return k;

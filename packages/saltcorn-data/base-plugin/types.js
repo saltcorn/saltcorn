@@ -1,9 +1,9 @@
 /**
  * Embedded Types definition.
  *
- * More types can be added by plugin store mechanism https://store.saltcorn.com/ 
+ * More types can be added by plugin store mechanism https://store.saltcorn.com/
  * @category saltcorn-data
- * @module base-plugin/types 
+ * @module base-plugin/types
  * @subcategory base-plugin
  */
 
@@ -32,8 +32,8 @@ const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 const eqStr = (x, y) => `${x}` === `${y}`;
 
 /**
- * @param {string} v 
- * @param {string} optsStr 
+ * @param {string} v
+ * @param {string} optsStr
  * @returns {string[]}
  */
 const getStrOptions = (v, optsStr) =>
@@ -64,11 +64,11 @@ const getStrOptions = (v, optsStr) =>
       );
 
 /**
-  * string type
-  * @namespace
-  * @category saltcorn-data
-  * @subcategory types / string
-  */
+ * string type
+ * @namespace
+ * @category saltcorn-data
+ * @subcategory types / string
+ */
 const string = {
   /** @type {string} */
   name: "String",
@@ -242,6 +242,7 @@ const string = {
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 disabled: attrs.disabled,
+                onChange: attrs.onChange,
               },
               required || attrs.force_required
                 ? getStrOptions(v, attrs.options)
@@ -260,6 +261,7 @@ const string = {
                 disabled: attrs.disabled,
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
+                onChange: attrs.onChange,
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
                   JSON.stringify(attrs.calcOptions)
@@ -272,6 +274,7 @@ const string = {
               disabled: attrs.disabled,
               class: ["form-control", cls],
               placeholder: attrs.placeholder,
+              onChange: attrs.onChange,
               "data-fieldname": text_attr(field.name),
               name: text_attr(nm),
               id: `input${text_attr(nm)}`,
@@ -347,7 +350,7 @@ const string = {
     },
   },
   /**
-   * @param {*} v 
+   * @param {*} v
    * @returns {string|undefined}
    */
   read: (v) => {
@@ -403,7 +406,7 @@ const string = {
 };
 
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {boolean}
  */
 const is_valid_regexp = (s) => {
@@ -434,23 +437,23 @@ const int = {
    */
   contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
   primaryKey: { sql_type: "serial" },
-  /** 
+  /**
    * @namespace
    * @category saltcorn-data
    * @subcategory types / int
    */
   fieldviews: {
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / int
      */
     show: { isEdit: false, run: (s) => text(s) },
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / int
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / int
+     */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -480,7 +483,7 @@ const int = {
   validate_attributes: ({ min, max }) =>
     !isdef(min) || !isdef(max) || max > min,
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {object}
    */
   read: (v) => {
@@ -496,7 +499,7 @@ const int = {
     }
   },
   /**
-   * @param {object} param 
+   * @param {object} param
    * @returns {boolean}
    */
   validate: ({ min, max }) => (x) => {
@@ -521,17 +524,17 @@ const color = {
    * @returns {function}
    */
   contract: () => is.str,
-  /** 
+  /**
    * @namespace
    * @category saltcorn-data
    * @subcategory types / color
    */
   fieldviews: {
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / color
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / color
+     */
     show: {
       isEdit: false,
       run: (s) =>
@@ -542,11 +545,11 @@ const color = {
             })
           : "",
     },
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / color
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / color
+     */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -564,7 +567,7 @@ const color = {
   /** @type {object[]} */
   attributes: [],
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {object}
    */
   read: (v) => {
@@ -585,7 +588,7 @@ const color = {
 
 /**
  * Float type
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  * @subcategory types / float
  */
@@ -601,23 +604,23 @@ const float = {
    * @returns {function}
    */
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
-  /** 
-   * @namespace 
+  /**
+   * @namespace
    * @category saltcorn-data
    * @subcategory types / float
    */
   fieldviews: {
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / float
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / float
+     */
     show: { isEdit: false, run: (s) => text(s) },
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / float
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / float
+     */
     edit: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
@@ -645,7 +648,7 @@ const float = {
     { name: "decimal_places", type: "Integer", required: false },
   ],
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {number|string|undefined}
    */
   read: (v) => {
@@ -671,7 +674,7 @@ const float = {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {string|undefined}
  */
 const locale = (req) => {
@@ -680,7 +683,7 @@ const locale = (req) => {
 };
 
 /**
- * @param {*} x 
+ * @param {*} x
  * @returns {*}
  */
 const logit = (x) => {
@@ -690,7 +693,7 @@ const logit = (x) => {
 
 /**
  * Date type
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  * @subcategory types / date
  */
@@ -705,17 +708,17 @@ const date = {
   contract: () => is.date,
   /** @type {object[]} */
   attributes: [],
-  /** 
-   * @namespace 
+  /**
+   * @namespace
    * @category saltcorn-data
-   * @subcategory types / date   
+   * @subcategory types / date
    */
   fieldviews: {
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / date
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     show: {
       isEdit: false,
       run: (d, req) =>
@@ -727,11 +730,11 @@ const date = {
             : ""
         ),
     },
-    /** 
-      * @namespace
-      * @category saltcorn-data
-      * @subcategory types / date
-      */
+    /**
+     * @namespace
+     * @category saltcorn-data
+     * @subcategory types / date
+     */
     showDay: {
       isEdit: false,
       run: (d, req) =>
@@ -743,7 +746,7 @@ const date = {
             : ""
         ),
     },
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / date
@@ -764,7 +767,7 @@ const date = {
         return text(moment(d).format(options.format));
       },
     },
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / date
@@ -778,7 +781,7 @@ const date = {
         else return text(moment(d).fromNow());
       },
     },
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / date
@@ -790,7 +793,7 @@ const date = {
         return text(moment.duration(new Date() - d).years());
       },
     },
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / date
@@ -812,7 +815,7 @@ const date = {
           }),
         }),
     },
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / date
@@ -835,17 +838,17 @@ const date = {
         }),
     },
   },
-  /** 
-   * @namespace 
+  /**
+   * @namespace
    * @category saltcorn-data
-   * @subcategory types / date   
+   * @subcategory types / date
    */
   presets: {
     Now: () => new Date(),
   },
   /**
-   * @param {object} v 
-   * @param {object} attrs 
+   * @param {object} v
+   * @param {object} attrs
    * @returns {object}
    */
   read: (v, attrs) => {
@@ -869,7 +872,7 @@ const date = {
 
 /**
  * Boolean Type
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  * @subcategory types / bool
  */
@@ -882,13 +885,13 @@ const bool = {
    * @returns {function}
    */
   contract: () => is.bool,
-  /** 
-   * @namespace 
+  /**
+   * @namespace
    * @category saltcorn-data
    * @subcategory types / bool
    */
   fieldviews: {
-    /** 
+    /**
      * @namespace
      * @category saltcorn-data
      * @subcategory types / bool
@@ -906,8 +909,8 @@ const bool = {
             })
           : "",
     },
-    /** 
-     * @namespace 
+    /**
+     * @namespace
      * @category saltcorn-data
      * @subcategory types / bool
      */
@@ -920,8 +923,8 @@ const bool = {
           ? input({ type: "checkbox", disabled: true })
           : "",
     },
-    /** 
-     * @namespace 
+    /**
+     * @namespace
      * @category saltcorn-data
      * @subcategory types / bool
      */
@@ -929,8 +932,8 @@ const bool = {
       isEdit: false,
       run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },
-    /** 
-     * @namespace 
+    /**
+     * @namespace
      * @category saltcorn-data
      * @subcategory types / bool
      */
@@ -947,8 +950,8 @@ const bool = {
           ...(attrs.disabled && { onclick: "return false;" }),
         }),
     },
-    /** 
-     * @namespace 
+    /**
+     * @namespace
      * @category saltcorn-data
      * @subcategory types / bool
      */
@@ -981,8 +984,8 @@ const bool = {
   /** @type {object[]} */
   attributes: [],
   /**
-   * @param {*} rec 
-   * @param {string} name 
+   * @param {*} rec
+   * @param {string} name
    * @returns {boolean|null}
    */
   readFromFormRecord: (rec, name) => {
@@ -992,7 +995,7 @@ const bool = {
     return rec[name] ? true : false;
   },
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {boolean|null}
    */
   read: (v) => {
@@ -1007,12 +1010,12 @@ const bool = {
     }
   },
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {object}
    */
   readFromDB: (v) => !!v,
-  /** 
-   * @param {object} v 
+  /**
+   * @param {object} v
    * @returns {object}
    */
   listAs: (v) => JSON.stringify(v),

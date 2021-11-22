@@ -18,6 +18,7 @@ const {
   select,
   button,
   text_attr,
+  script,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -89,6 +90,7 @@ const configuration_workflow = () =>
             fields,
             "filter"
           );
+          console.log(field_view_options);
           return {
             fields,
             roles,
@@ -196,6 +198,33 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
+    field(segment) {
+      const { field_name, fieldview, configuration } = segment;
+      let field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
+
+      if (
+        fieldview &&
+        field.type &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      ) {
+        const fv = field.type.fieldviews[fieldview];
+        if (fv.isEdit)
+          return fv.run(
+            field_name,
+            state[field_name],
+            {
+              onChange: `set_state_field('${field_name}', this.value)`,
+              ...configuration,
+            },
+            "",
+            false,
+            segment
+          );
+      }
+      return "";
+    },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
