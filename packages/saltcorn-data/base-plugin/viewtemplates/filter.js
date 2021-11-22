@@ -92,6 +92,7 @@ const configuration_workflow = () =>
           );
           return {
             fields,
+            tableName: table.name,
             roles,
             actions,
             views,
