@@ -176,7 +176,7 @@ const pageCard = (pages, req) => ({
  * @returns {Promise<div>}
  */
 const filesTab = async (req) => {
-  const files = await File.find({}, { orderBy: "filename" });
+  const files = await File.find({}, { orderBy: "filename", cached: true });
   return div(
     files.length == 0
       ? p(req.__("No files"))

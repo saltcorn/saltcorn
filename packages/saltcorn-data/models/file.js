@@ -50,7 +50,14 @@ class File {
    * @param selectopts
    * @returns {Promise<*>}
    */
-  static async find(where, selectopts) {
+  static async find(where, selectopts = {}) {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      const files = Object.values(getState().files).sort((a, b) =>
+        a.filename > b.filename ? 1 : -1
+      );
+      return files.map((t) => new File(t));
+    }
     const db_flds = await db.select("_sc_files", where, selectopts);
     return db_flds.map((dbf) => new File(dbf));
   }
