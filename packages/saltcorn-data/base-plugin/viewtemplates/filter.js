@@ -87,7 +87,7 @@ const configuration_workflow = () =>
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            false
+            "filter"
           );
           return {
             fields,

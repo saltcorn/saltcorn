@@ -112,11 +112,13 @@ const stateToQueryString = contract(
  */
 const calcfldViewOptions = contract(
   is.fun(
-    [is.array(is.class("Field")), is.bool],
+    [is.array(is.class("Field")), is.str],
     is.obj({ field_view_options: is.objVals(is.array(is.str)) })
   ),
-  (fields, isEdit) => {
-    var fvs = {};
+  (fields, mode) => {
+    const isEdit = mode === "edit";
+    const isFilter = mode === "filter";
+    let fvs = {};
     const handlesTextStyle = {};
     fields.forEach((f) => {
       handlesTextStyle[f.name] = [];
@@ -129,7 +131,7 @@ const calcfldViewOptions = contract(
           if (f.reftable && f.reftable.fields) {
             const { field_view_options } = calcfldViewOptions(
               f.reftable.fields,
-              isEdit
+              mode
             );
             for (const jf of f.reftable.fields) {
               fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
@@ -323,7 +325,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const { field_view_options } = calcfldViewOptions(fields, false);
+    const { field_view_options } = calcfldViewOptions(fields, "show");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(

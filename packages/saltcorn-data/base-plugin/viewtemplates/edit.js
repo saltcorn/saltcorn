@@ -43,7 +43,7 @@ const {
 const { asyncMap } = require("../../utils");
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -59,7 +59,7 @@ const configuration_workflow = (req) =>
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            true
+            "edit"
           );
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
@@ -251,8 +251,8 @@ const configuration_workflow = (req) =>
   });
 
 /**
- * @param {*} table_id 
- * @param {*} viewname 
+ * @param {*} table_id
+ * @param {*} viewname
  * @param {object} opts
  * @param {*} opts.columns
  * @returns {Promise<object[]>}
@@ -266,8 +266,8 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
 ];
 
 /**
- * @param {Form} form 
- * @param {string} locale 
+ * @param {Form} form
+ * @param {string} locale
  */
 const setDateLocales = (form, locale) => {
   form.fields.forEach((f) => {
@@ -281,12 +281,12 @@ const setDateLocales = (form, locale) => {
 const initial_config = initial_config_all_fields(true);
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} optsOne
  * @param {*} optsOne.columns
  * @param {*} optsOne.layout
- * @param {string} state 
+ * @param {string} state
  * @param {object} optsTwo
  * @param {object} optsTwo.req
  * @param {object} optsTwo.res
@@ -320,13 +320,13 @@ const run = async (
 };
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {*} opts.columns
  * @param {*} opts.layout
- * @param {State} state 
- * @param {object} extra 
+ * @param {State} state
+ * @param {object} extra
  * @returns {Promise<Form[]>}
  */
 const runMany = async (
@@ -482,16 +482,16 @@ const render = async ({
 };
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} optsOne
  * @param {object[]} optsOne.columns
  * @param {Layout} optsOne.layout
  * @param {object} optsOne.fixed
  * @param {boolean} optsOne.view_when_done
  * @param {object[]} optsOne.formula_destinations
- * @param {object} state 
- * @param {*} body 
+ * @param {object} state
+ * @param {*} body
  * @param {object} optsTwo
  * @param {object} optsTwo.res
  * @param {object} optsTwo.req
