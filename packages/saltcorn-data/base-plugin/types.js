@@ -24,7 +24,7 @@ const {
   text_attr,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
-const { radio_group } = require("@saltcorn/markup/helpers");
+const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
 const { getState } = require("../db/state");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
@@ -324,6 +324,30 @@ const string = {
               disabled: attrs.disabled,
               inline: attrs.inline,
               onChange: attrs.onChange,
+              options: Array.isArray(attrs.options)
+                ? attrs.options
+                : attrs.options.split(",").map((o) => o.trim()),
+              value: v,
+            })
+          : i("None available"),
+    },
+    checkbox_group: {
+      isEdit: false,
+      isFilter: true,
+      configFields: [
+        {
+          type: "Bool",
+          name: "inline",
+          label: "Inline",
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        attrs.options
+          ? checkbox_group({
+              class: cls,
+              name: text_attr(nm),
+              disabled: attrs.disabled,
+              inline: attrs.inline,
               options: Array.isArray(attrs.options)
                 ? attrs.options
                 : attrs.options.split(",").map((o) => o.trim()),

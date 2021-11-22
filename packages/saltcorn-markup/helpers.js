@@ -102,6 +102,42 @@ const radio_group = ({
       .join("")
   );
 
+const checkbox_group = ({
+  name,
+  options,
+  value,
+  inline,
+  form_name,
+  onChange,
+  ...rest
+}) =>
+  div(
+    (options || [])
+      .filter((o) => (typeof o === "string" ? o : o.value))
+      .map((o, ix) => {
+        const myvalue = typeof o === "string" ? o : o.value;
+        const id = `input${text_attr(name)}${ix}`;
+        return div(
+          { class: ["form-check", inline && "form-check-inline"] },
+          input({
+            class: ["form-check-input", rest.class],
+            type: "checkbox",
+            name,
+            onChange: `check_state_field(this)`,
+            "data-fieldname": form_name,
+            id,
+            value: text_attr(myvalue),
+            checked: myvalue === value,
+          }),
+          label(
+            { class: "form-check-label", for: id },
+            typeof o === "string" ? o : o.label
+          )
+        );
+      })
+      .join("")
+  );
+
 /**
  * @param {object} opts
  * @param {number} opts.current_page
@@ -226,4 +262,5 @@ module.exports = {
   search_bar,
   pagination,
   radio_group,
+  checkbox_group,
 };

@@ -306,6 +306,18 @@ function select_id(id) {
 function set_state_field(key, value) {
   pjax_to(updateQueryStringParameter(window.location.href, key, value));
 }
+
+function check_state_field(that) {
+  const checked = that.checked;
+  const name = that.name;
+  const value = that.value;
+  var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
+  let dest;
+  if (checked) dest = window.location.href + `${separator}${name}=${value}`;
+  else dest = window.location.href.replace(`${name}=${value}`, "");
+  pjax_to(dest.replace("&&", "&").replace("?&", "?"));
+}
+
 function set_state_fields(kvs) {
   var newhref = window.location.href;
   Object.entries(kvs).forEach((kv) => {
