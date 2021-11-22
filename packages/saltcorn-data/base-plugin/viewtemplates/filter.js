@@ -131,6 +131,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   const table = await Table.findOne(table_id);
   const fields = await table.getFields();
   readState(state, fields);
+  console.log({ state });
+
   const role = extra.req.user ? extra.req.user.role_id : 10;
   const distinct_values = {};
   for (const col of columns) {

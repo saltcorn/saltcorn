@@ -127,7 +127,9 @@ const checkbox_group = ({
             "data-fieldname": form_name,
             id,
             value: text_attr(myvalue),
-            checked: myvalue === value,
+            checked: Array.isArray(value)
+              ? value.includes(myvalue)
+              : myvalue === value,
           }),
           label(
             { class: "form-check-label", for: id },

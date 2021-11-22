@@ -1132,7 +1132,9 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (f.type.read) state[f.name] = f.type.read(current);
+      if (Array.isArray(current) && f.type.read) {
+        state[f.name] = current.map(f.type.read);
+      } else if (f.type.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);
