@@ -28,7 +28,7 @@ const { renderForm } = require("@saltcorn/markup");
 class View {
   /**
    * View constructor
-   * @param {object} o 
+   * @param {object} o
    */
   constructor(o) {
     this.name = o.name;
@@ -55,7 +55,7 @@ class View {
   }
 
   /**
-   * @param {object} where 
+   * @param {object} where
    * @returns {View}
    */
   static findOne(where) {
@@ -78,6 +78,10 @@ class View {
    * @returns {Promise<View[]>}
    */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      return getState().views.map((t) => new View(t));
+    }
     const views = await db.select("_sc_views", where, selectopts);
 
     return views.map((v) => new View(v));
@@ -159,7 +163,7 @@ class View {
   }
 
   /**
-   * @param {function} pred 
+   * @param {function} pred
    * @returns {Promise<object>}
    */
   static async find_all_views_where(pred) {
@@ -182,7 +186,7 @@ class View {
   }
 
   /**
-   * @param {Table|object} table 
+   * @param {Table|object} table
    * @returns {Promise<View[]>}
    */
   static async find_possible_links_to_table(table) {
@@ -275,7 +279,7 @@ class View {
   }
 
   /**
-   * @param {*} arg 
+   * @param {*} arg
    * @returns {Promise<object>}
    */
   async authorise_post(arg) {
@@ -284,7 +288,7 @@ class View {
   }
 
   /**
-   * @param {*} arg 
+   * @param {*} arg
    * @returns {Promise<object>}
    */
   async authorise_get(arg) {
@@ -334,9 +338,9 @@ class View {
   }
 
   /**
-   * @param {*} query 
-   * @param {*} req 
-   * @param {*} res 
+   * @param {*} query
+   * @param {*} req
+   * @param {*} res
    * @returns {Promise<object>}
    */
   async run_possibly_on_page(query, req, res) {
@@ -361,8 +365,8 @@ class View {
   }
 
   /**
-   * @param {*} query 
-   * @param {*} extraArgs 
+   * @param {*} query
+   * @param {*} extraArgs
    * @throws {InvalidConfiguration}
    * @returns {Promise<object>}
    */
@@ -405,9 +409,9 @@ class View {
   }
 
   /**
-   * @param {*} query 
-   * @param {*} body 
-   * @param {*} extraArgs 
+   * @param {*} query
+   * @param {*} body
+   * @param {*} extraArgs
    * @returns {Promise<object>}
    */
   async runPost(query, body, extraArgs) {
@@ -423,10 +427,10 @@ class View {
   }
 
   /**
-   * @param {*} route 
-   * @param {*} body 
-   * @param {*} res 
-   * @param {*} extraArgs 
+   * @param {*} route
+   * @param {*} body
+   * @param {*} res
+   * @param {*} extraArgs
    * @returns {Promise<void>}
    */
   async runRoute(route, body, res, extraArgs) {
@@ -444,7 +448,7 @@ class View {
   }
 
   /**
-   * @param {object} req_query 
+   * @param {object} req_query
    * @returns {object}
    */
   combine_state_and_default_state(req_query) {
@@ -463,8 +467,8 @@ class View {
   }
 
   /**
-   * @param {object} query 
-   * @param {object} req 
+   * @param {object} query
+   * @param {object} req
    * @returns {Promise<Form|null>}
    */
   async get_state_form(query, req) {
@@ -501,7 +505,7 @@ class View {
   }
 
   /**
-   * @param {object} req 
+   * @param {object} req
    * @returns {Promise<object>}
    */
   async get_config_flow(req) {

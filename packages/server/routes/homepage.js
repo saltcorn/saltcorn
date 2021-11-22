@@ -21,8 +21,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
 
 /**
- * @param {*} tables 
- * @param {object} req 
+ * @param {*} tables
+ * @param {object} req
  * @returns {Table}
  */
 const tableTable = (tables, req) =>
@@ -38,8 +38,8 @@ const tableTable = (tables, req) =>
   );
 
 /**
- * @param {*} tables 
- * @param {object} req 
+ * @param {*} tables
+ * @param {object} req
  * @returns {object}
  */
 const tableCard = (tables, req) => ({
@@ -67,8 +67,8 @@ const tableCard = (tables, req) => ({
 });
 
 /**
- * @param {*} views 
- * @param {object} req 
+ * @param {*} views
+ * @param {object} req
  * @returns {Table}
  */
 const viewTable = (views, req) =>
@@ -88,8 +88,8 @@ const viewTable = (views, req) =>
   );
 
 /**
- * @param {*} views 
- * @param {object} req 
+ * @param {*} views
+ * @param {object} req
  * @returns {object}
  */
 const viewCard = (views, req) => ({
@@ -119,8 +119,8 @@ const viewCard = (views, req) => ({
 });
 
 /**
- * @param {*} pages 
- * @param {object} req 
+ * @param {*} pages
+ * @param {object} req
  * @returns {Table}
  */
 const pageTable = (pages, req) =>
@@ -140,8 +140,8 @@ const pageTable = (pages, req) =>
   );
 
 /**
- * @param {*} pages 
- * @param {object} req 
+ * @param {*} pages
+ * @param {object} req
  * @returns {object}
  */
 const pageCard = (pages, req) => ({
@@ -172,11 +172,11 @@ const pageCard = (pages, req) => ({
 });
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
 const filesTab = async (req) => {
-  const files = await File.find({}, { orderBy: "filename" });
+  const files = await File.find({}, { orderBy: "filename", cached: true });
   return div(
     files.length == 0
       ? p(req.__("No files"))
@@ -196,16 +196,10 @@ const filesTab = async (req) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
-const usersTab = async (req) => {
-  const users = await User.find({}, { orderBy: "id" });
-  const roles = await User.get_roles();
-  var roleMap = {};
-  roles.forEach((r) => {
-    roleMap[r.id] = r.role;
-  });
+const usersTab = async (req, users, roleMap) => {
   return div(
     mkTable(
       [
@@ -219,20 +213,19 @@ const usersTab = async (req) => {
       users
     ),
     a(
-      { href: `/useradmin/new`, class: "btn btn-secondary" },
+      { href: `/useradmin/new`, class: "btn btn-secondary my-3" },
       req.__("Create user")
     )
   );
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<div>}
  */
-const actionsTab = async (req) => {
-  const triggers = await Trigger.findAllWithTableName();
-
+const actionsTab = async (req, triggers) => {
   return div(
+    { class: "pb-3" },
     triggers.length <= 1 &&
       p(
         { class: "mt-2 pr-2" },
@@ -259,14 +252,73 @@ const actionsTab = async (req) => {
           triggers
         ),
     a(
-      { href: "/actions/new", class: "btn btn-secondary btn-smj" },
+      { href: "/actions/new", class: "btn btn-secondary my-3" },
       req.__("Add trigger")
     )
   );
 };
+const packTab = (req, packlist) =>
+  div(
+    { class: "pb-3 pt-2 pr-4" },
+    p(req.__("Instead of building, get up and running in no time with packs")),
+    p(
+      { class: "font-italic" },
+      req.__(
+        "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
+      )
+    ),
+    mkTable(
+      [
+        { label: req.__("Name"), key: "name" },
+        {
+          label: req.__("Description"),
+          key: "description",
+        },
+      ],
+      packlist,
+      { noHeader: true }
+    ),
+    a(
+      { href: `/plugins?set=packs`, class: "btn btn-primary" },
+      req.__("Go to pack store »")
+    )
+  );
+
+const helpCard = (req) =>
+  div(
+    { class: "pb-3 pt-2 pr-4" },
+    p(req.__("Confused?")),
+    p(
+      req.__(
+        "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+      )
+    ),
+    a(
+      {
+        href: `https://wiki.saltcorn.com/`,
+        class: "btn btn-primary",
+      },
+      req.__("Go to Wiki »")
+    ),
+    p(req.__("The YouTube channel has some video tutorials")),
+    a(
+      {
+        href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+        class: "btn btn-secondary",
+      },
+      req.__("Go to YouTube »")
+    ),
+    div(
+      { class: "mt-3" },
+      a(
+        { href: `https://blog.saltcorn.com/` },
+        req.__("What's new? Read the blog »")
+      )
+    )
+  );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<object>}
  */
 const welcome_page = async (req) => {
@@ -275,10 +327,16 @@ const welcome_page = async (req) => {
     ...packs_available.slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
-  const tables = await Table.find({}, { orderBy: "name" });
-  const views = await View.find({});
-  const pages = await Page.find({});
-
+  const tables = await Table.find({}, { cached: true });
+  const views = await View.find({}, { cached: true });
+  const pages = await Page.find({}, { cached: true });
+  const triggers = await Trigger.findAllWithTableName();
+  const users = await User.find({}, { orderBy: "id" });
+  const roles = await User.get_roles();
+  let roleMap = {};
+  roles.forEach((r) => {
+    roleMap[r.id] = r.role;
+  });
   return {
     above: [
       {
@@ -293,75 +351,37 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Install pack"),
-            tabContents: {
-              Packs: div(
-                p(
-                  req.__(
-                    "Instead of building, get up and running in no time with packs"
-                  )
-                ),
-                p(
-                  { class: "font-italic" },
-                  req.__(
-                    "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
-                  )
-                ),
-                mkTable(
-                  [
-                    { label: req.__("Name"), key: "name" },
-                    {
-                      label: req.__("Description"),
-                      key: "description",
-                    },
-                  ],
-                  packlist,
-                  { noHeader: true }
-                ),
-                a(
-                  { href: `/plugins?set=packs`, class: "btn btn-primary" },
-                  req.__("Go to pack store »")
-                )
-              ),
-              Triggers: await actionsTab(req),
-              Files: await filesTab(req),
-            },
+            bodyClass: "py-0 pr-0",
+            class: "welcome-page-entity-list",
+
+            tabContents:
+              triggers.length > 0
+                ? {
+                    Triggers: await actionsTab(req, triggers),
+                    Files: await filesTab(req),
+                    Packs: packTab(req, packlist),
+                  }
+                : {
+                    Packs: packTab(req, packlist),
+                    Triggers: await actionsTab(req, triggers),
+                    Files: await filesTab(req),
+                  },
           },
           {
             type: "card",
             //title: req.__("Learn"),
-            tabContents: {
-              Help: div(
-                p(req.__("Confused?")),
-                p(
-                  req.__(
-                    "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
-                  )
-                ),
-                a(
-                  {
-                    href: `https://wiki.saltcorn.com/`,
-                    class: "btn btn-primary",
+            bodyClass: "py-0 pr-0",
+            class: "welcome-page-entity-list",
+            tabContents:
+              users.length > 4
+                ? {
+                    Users: await usersTab(req, users, roleMap),
+                    Help: helpCard(req),
+                  }
+                : {
+                    Help: helpCard(req),
+                    Users: await usersTab(req, users, roleMap),
                   },
-                  req.__("Go to Wiki »")
-                ),
-                p(req.__("The YouTube channel has some video tutorials")),
-                a(
-                  {
-                    href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
-                    class: "btn btn-secondary",
-                  },
-                  req.__("Go to YouTube »")
-                ),
-                div(
-                  { class: "mt-3" },
-                  a(
-                    { href: `https://blog.saltcorn.com/` },
-                    req.__("What's new? Read the blog »")
-                  )
-                )
-              ),
-              Users: await usersTab(req),
-            },
           },
         ],
       },
@@ -370,8 +390,8 @@ const welcome_page = async (req) => {
 };
 
 /**
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {Promise<void>}
  */
 const no_views_logged_in = async (req, res) => {
@@ -400,9 +420,9 @@ const no_views_logged_in = async (req, res) => {
 };
 
 /**
- * @param {number} role_id 
- * @param {object} res 
- * @param {object} req 
+ * @param {number} role_id
+ * @param {object} res
+ * @param {object} req
  * @returns {Promise<boolean>}
  */
 const get_config_response = async (role_id, res, req) => {
@@ -431,8 +451,8 @@ const get_config_response = async (role_id, res, req) => {
 
 /**
  * Function assigned to 'module.exports'.
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {Promise<void>}
  */
 module.exports = async (req, res) => {
