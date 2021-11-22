@@ -45,7 +45,7 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
             </div>
 
             <div
-              id="collapseOne"
+              id={`collapse${ix}`}
               className={`collapse ${ix === showTab ? "show" : ""}`}
               aria-labelledby="headingOne"
               data-parent="#accordionExample"
