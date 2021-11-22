@@ -213,7 +213,7 @@ const usersTab = async (req, users, roleMap) => {
       users
     ),
     a(
-      { href: `/useradmin/new`, class: "btn btn-secondary" },
+      { href: `/useradmin/new`, class: "btn btn-secondary my-3" },
       req.__("Create user")
     )
   );
@@ -252,7 +252,7 @@ const actionsTab = async (req, triggers) => {
           triggers
         ),
     a(
-      { href: "/actions/new", class: "btn btn-secondary btn-smj" },
+      { href: "/actions/new", class: "btn btn-secondary my-3" },
       req.__("Add trigger")
     )
   );
@@ -352,6 +352,8 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Install pack"),
             bodyClass: "py-0 pr-0",
+            class: "welcome-page-entity-list",
+
             tabContents:
               triggers.length > 0
                 ? {
@@ -369,6 +371,7 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Learn"),
             bodyClass: "py-0 pr-0",
+            class: "welcome-page-entity-list",
             tabContents:
               users.length > 4
                 ? {
