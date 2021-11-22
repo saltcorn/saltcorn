@@ -199,13 +199,7 @@ const filesTab = async (req) => {
  * @param {object} req
  * @returns {Promise<div>}
  */
-const usersTab = async (req) => {
-  const users = await User.find({}, { orderBy: "id" });
-  const roles = await User.get_roles();
-  var roleMap = {};
-  roles.forEach((r) => {
-    roleMap[r.id] = r.role;
-  });
+const usersTab = async (req, users, roleMap) => {
   return div(
     mkTable(
       [
@@ -231,6 +225,7 @@ const usersTab = async (req) => {
  */
 const actionsTab = async (req, triggers) => {
   return div(
+    { class: "pb-3" },
     triggers.length <= 1 &&
       p(
         { class: "mt-2 pr-2" },
@@ -264,6 +259,7 @@ const actionsTab = async (req, triggers) => {
 };
 const packTab = (req, packlist) =>
   div(
+    { class: "pb-3 pt-2 pr-4" },
     p(req.__("Instead of building, get up and running in no time with packs")),
     p(
       { class: "font-italic" },
@@ -287,6 +283,40 @@ const packTab = (req, packlist) =>
       req.__("Go to pack store »")
     )
   );
+
+const helpCard = (req) =>
+  div(
+    { class: "pb-3 pt-2 pr-4" },
+    p(req.__("Confused?")),
+    p(
+      req.__(
+        "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
+      )
+    ),
+    a(
+      {
+        href: `https://wiki.saltcorn.com/`,
+        class: "btn btn-primary",
+      },
+      req.__("Go to Wiki »")
+    ),
+    p(req.__("The YouTube channel has some video tutorials")),
+    a(
+      {
+        href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
+        class: "btn btn-secondary",
+      },
+      req.__("Go to YouTube »")
+    ),
+    div(
+      { class: "mt-3" },
+      a(
+        { href: `https://blog.saltcorn.com/` },
+        req.__("What's new? Read the blog »")
+      )
+    )
+  );
+
 /**
  * @param {object} req
  * @returns {Promise<object>}
@@ -301,7 +331,12 @@ const welcome_page = async (req) => {
   const views = await View.find({});
   const pages = await Page.find({});
   const triggers = await Trigger.findAllWithTableName();
-
+  const users = await User.find({}, { orderBy: "id" });
+  const roles = await User.get_roles();
+  let roleMap = {};
+  roles.forEach((r) => {
+    roleMap[r.id] = r.role;
+  });
   return {
     above: [
       {
@@ -316,6 +351,7 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Install pack"),
+            bodyClass: "py-0 pr-0",
             tabContents:
               triggers.length > 0
                 ? {
@@ -332,39 +368,17 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Learn"),
-            tabContents: {
-              Help: div(
-                p(req.__("Confused?")),
-                p(
-                  req.__(
-                    "The Wiki contains the documentation and tutorials on installing and using Saltcorn"
-                  )
-                ),
-                a(
-                  {
-                    href: `https://wiki.saltcorn.com/`,
-                    class: "btn btn-primary",
+            bodyClass: "py-0 pr-0",
+            tabContents:
+              users.length > 4
+                ? {
+                    Users: await usersTab(req, users, roleMap),
+                    Help: helpCard(req),
+                  }
+                : {
+                    Help: helpCard(req),
+                    Users: await usersTab(req, users, roleMap),
                   },
-                  req.__("Go to Wiki »")
-                ),
-                p(req.__("The YouTube channel has some video tutorials")),
-                a(
-                  {
-                    href: `https://www.youtube.com/channel/UCBOpAcH8ep7ESbuocxcq0KQ`,
-                    class: "btn btn-secondary",
-                  },
-                  req.__("Go to YouTube »")
-                ),
-                div(
-                  { class: "mt-3" },
-                  a(
-                    { href: `https://blog.saltcorn.com/` },
-                    req.__("What's new? Read the blog »")
-                  )
-                )
-              ),
-              Users: await usersTab(req),
-            },
           },
         ],
       },
