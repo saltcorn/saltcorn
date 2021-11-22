@@ -6,6 +6,7 @@
 const User = require("../../models/user");
 const View = require("../../models/view");
 const Table = require("../../models/table");
+const Field = require("../../models/field");
 const Workflow = require("../../models/workflow");
 
 const {
@@ -20,7 +21,11 @@ const {
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
-const { readState } = require("../../plugin-helper");
+const {
+  readState,
+  calcfldViewOptions,
+  calcfldViewConfig,
+} = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,
@@ -53,11 +58,13 @@ const configuration_workflow = () =>
             const cfields = await cr.table.getFields();
             cfields.forEach((cf) => {
               if (cf.name !== cr.key_field.name)
-                fields.push({
-                  ...cf,
-                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
-                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
-                });
+                fields.push(
+                  new Field({
+                    ...cf,
+                    label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                    name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                  })
+                );
             });
           }
           const actions = ["Clear"];
@@ -76,12 +83,20 @@ const configuration_workflow = () =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("filter")
           );
+          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            false
+          );
           return {
             fields,
             roles,
             actions,
             views,
             library,
+            field_view_options,
+            fieldViewConfigForms,
             mode: "filter",
           };
         },
@@ -93,19 +108,19 @@ const configuration_workflow = () =>
 const get_state_fields = () => [];
 
 /**
- * 
+ *
  * @returns {Promise<object>}
  */
 const initial_config = async () => ({ layout: {}, columns: [] });
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {object} opts.layout
- * @param {object} state 
- * @param {object} extra 
+ * @param {object} state
+ * @param {object} extra
  * @returns {Promise<Layout>}
  */
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
@@ -276,15 +291,15 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
 };
 
 /**
- * @param {object|undefined} x 
- * @param {object|undefined} y 
+ * @param {object|undefined} x
+ * @param {object|undefined} y
  * @returns {object}
  */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
 /**
- * @param {string} x 
- * @param {string} y 
+ * @param {string} x
+ * @param {string} y
  * @returns {boolean}
  */
 const eq_string = (x, y) => `${x}` === `${y}`;
