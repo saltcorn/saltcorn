@@ -972,7 +972,9 @@ const stateFieldsToWhere = contract(
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
       } else if (field && field.type && field.type.read)
-        qstate[k] = field.type.read(v);
+        qstate[k] = Array.isArray(v)
+          ? { or: v.map(field.type.read) }
+          : field.type.read(v);
       else if (field) qstate[k] = v;
       else if (k.includes(".")) {
         const kpath = k.split(".");

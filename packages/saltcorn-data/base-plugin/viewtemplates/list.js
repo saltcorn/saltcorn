@@ -37,7 +37,7 @@ const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
 
 /**
- * @param {object} context 
+ * @param {object} context
  * @returns {Promise<void>}
  */
 const create_db_view = async (context) => {
@@ -64,8 +64,8 @@ const create_db_view = async (context) => {
 };
 
 /**
- * @param {*} table_id 
- * @param {string} viewname 
+ * @param {*} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {*} opts.default_state
  * @returns {Promise<void>}
@@ -83,7 +83,7 @@ const on_delete = async (table_id, viewname, { default_state }) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -283,8 +283,8 @@ const configuration_workflow = (req) =>
   });
 
 /**
- * @param {string} table_id 
- * @param {*} viewname 
+ * @param {string} table_id
+ * @param {*} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @returns {function}
@@ -313,8 +313,8 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
 const initial_config = initial_config_all_fields(false);
 
 /**
- * @param {string|number} table_id 
- * @param {string} viewname 
+ * @param {string|number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {string} [opts.view_to_create]
@@ -323,7 +323,7 @@ const initial_config = initial_config_all_fields(false);
  * @param {object} [opts.default_state]
  * @param {string} [opts.create_view_location]
  * @param {object} [stateWithId]
- * @param {object} extraOpts 
+ * @param {object} extraOpts
  * @returns {Promise<*>}
  */
 const run = async (
@@ -385,6 +385,7 @@ const run = async (
   const { id, ...state } = stateWithId || {};
 
   const where = await stateFieldsToWhere({ fields, state });
+  console.log(where);
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   if (!q.limit) q.limit = rows_per_page;
@@ -473,12 +474,12 @@ const run = async (
 };
 
 /**
- * @param {number} table_id 
- * @param {*} viewname 
+ * @param {number} table_id
+ * @param {*} viewname
  * @param {object} optsOne
  * @param {object[]} optsOne.columns
  * @param {*} optsOne.layout
- * @param {object} body 
+ * @param {object} body
  * @param {object} optsTwo
  * @param {object} optsTwo.req
  * @param {*} optsTwo.res
@@ -527,7 +528,7 @@ module.exports = {
   name: "List",
   /** @type {string} */
   description:
-    "Display multiple rows from a table in a grid with columns you specify", 
+    "Display multiple rows from a table in a grid with columns you specify",
   configuration_workflow,
   run,
   /** @type {string} */
@@ -537,13 +538,13 @@ module.exports = {
   on_delete,
   routes: { run_action },
   /**
-   * @param {object} opts 
+   * @param {object} opts
    * @returns {boolean}
    */
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
   /**
-   * @param {object} opts 
+   * @param {object} opts
    * @returns {boolean}
    */
   default_state_form: ({ default_state }) => {
@@ -552,7 +553,7 @@ module.exports = {
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
   /**
-   * @param {object} opts 
+   * @param {object} opts
    * @param {*} opts.columns
    * @param {*} opts.create_view_label
    * @returns {string[]}
