@@ -157,7 +157,7 @@ class File {
       return { error: e.message };
     }
   }
-  
+
   /**
    * MIME type of the file
    * @type {string}

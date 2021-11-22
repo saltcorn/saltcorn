@@ -327,9 +327,9 @@ const welcome_page = async (req) => {
     ...packs_available.slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
-  const tables = await Table.find({}, { orderBy: "name" });
-  const views = await View.find({});
-  const pages = await Page.find({});
+  const tables = await Table.find({}, { cached: true });
+  const views = await View.find({}, { cached: true });
+  const pages = await Page.find({}, { cached: true });
   const triggers = await Trigger.findAllWithTableName();
   const users = await User.find({}, { orderBy: "id" });
   const roles = await User.get_roles();

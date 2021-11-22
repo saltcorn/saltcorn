@@ -32,7 +32,7 @@ const {
  */
 class Page {
   /**
-   * @param {object} o 
+   * @param {object} o
    */
   constructor(o) {
     this.name = o.name;
@@ -56,6 +56,10 @@ class Page {
    * @returns {Promise<*>}
    */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      return getState().pages.map((t) => new Page(t));
+    }
     const db_flds = await db.select("_sc_pages", where, selectopts);
     return db_flds.map((dbf) => new Page(dbf));
   }

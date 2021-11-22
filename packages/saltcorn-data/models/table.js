@@ -5,7 +5,11 @@
  * @subcategory models
  */
 const db = require("../db");
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal.js");
+const {
+  sqlsanitize,
+  mkWhere,
+  mkSelectOptions,
+} = require("@saltcorn/db-common/internal.js");
 const Field = require("./field");
 const Trigger = require("./trigger");
 const {
@@ -87,7 +91,7 @@ const normalise_error_message = (msg) =>
 class Table {
   /**
    * Table constructor
-   * @param {object} o 
+   * @param {object} o
    */
   constructor(o) {
     this.name = o.name;
@@ -141,6 +145,10 @@ class Table {
    * @returns {Promise<Table[]>} table list
    */
   static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      return getState().tables.map((t) => new Table(t));
+    }
     const tbls = await db.select("_sc_tables", where, selectopts);
 
     return tbls.map((t) => new Table(t));
