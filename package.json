@@ -5,11 +5,14 @@
     "better-docs": "^2.3.2",
     "jest": "^25.1.0",
     "lerna": "^3.20.2",
-    "supertest": "^4.0.2"
+    "supertest": "^4.0.2",
+    "typescript": "^4.4.4"
   },
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
-    "test": "jest"
+    "test": "jest",
+    "tsc": "tsc --build",
+    "clean": "tsc --build --clean"
   },
   "jest": {
     "testEnvironment": "node",

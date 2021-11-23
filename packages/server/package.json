@@ -33,6 +33,7 @@
     "live-plugin-manager": "^0.16.0",
     "moment": "^2.27.0",
     "node-fetch": "2.6.2",
+    "node-watch": "^0.7.2",
     "passport": "^0.4.1",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
@@ -51,7 +52,9 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "jest": {
     "testEnvironment": "node",
@@ -62,7 +65,10 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/plugin_packages/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1"
+    }
   },
   "publishConfig": {
     "access": "public"
