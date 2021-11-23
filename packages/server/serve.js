@@ -33,7 +33,11 @@ const { setTenant, getSessionStore } = require("./routes/utils");
 const passport = require("passport");
 const { authenticate } = require("passport");
 const View = require("@saltcorn/data/models/view");
-const { listenForChanges, getRelevantPackages, getPluginDirectories } = require('./restart_watcher');
+const {
+  listenForChanges,
+  getRelevantPackages,
+  getPluginDirectories,
+} = require("./restart_watcher");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -158,8 +162,7 @@ module.exports =
     ...appargs
   } = {}) => {
     if (dev && cluster.isMaster) {
-      listenForChanges(
-        getRelevantPackages(), getPluginDirectories());
+      listenForChanges(getRelevantPackages(), await getPluginDirectories());
     }
     const useNCpus = process.env.SALTCORN_NWORKERS
       ? +process.env.SALTCORN_NWORKERS
