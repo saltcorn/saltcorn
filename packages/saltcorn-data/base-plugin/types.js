@@ -39,7 +39,7 @@ const number_slider = (type) => ({
           { name: "max", type, required: false },
         ]
       : []),
-    { name: "show_number", type: "Bool", label: "Show number" },
+    //{ name: "also_entry", type: "Bool", label: "Also entry" },
   ],
   isEdit: true,
   run: (nm, v, attrs, cls, required, field) =>
@@ -62,7 +62,38 @@ const number_slider = (type) => ({
       ...(isdef(v) && { value: text_attr(v) }),
     }),
 });
-//const progress_bar = {};
+const progress_bar = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.min)
+      ? [{ name: "min", type, required: true }]
+      : []),
+    ...(!isdef(field.attributes.max)
+      ? [{ name: "max", type, required: true }]
+      : []),
+    { name: "bar_color", type: "Color", label: "Bar color" },
+    { name: "bg_color", type: "Color", label: "Background color" },
+    { name: "px_height", type: "Integer", label: "Height in px" },
+  ],
+  isEdit: false,
+  run: (v, req, attrs) =>
+    div(
+      {
+        style: {
+          width: "100%",
+          height: `${attrs.px_height || 8}px`,
+          backgroundColor: attrs.bg_color,
+        },
+      },
+      div({
+        style: {
+          width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
+          height: `${attrs.px_height || 8}px`,
+          backgroundColor: attrs.bar_color,
+        },
+      })
+    ),
+});
+
 //const between = {};
 
 /**
@@ -532,6 +563,7 @@ const int = {
         }),
     },
     number_slider: number_slider("Integer"),
+    progress_bar: progress_bar("Integer"),
   },
   /** @type {object[]}  */
   attributes: [
@@ -704,6 +736,7 @@ const float = {
         }),
     },
     number_slider: number_slider("Float"),
+    progress_bar: progress_bar("Float"),
   },
   /** @type {object[]} */
   attributes: [
