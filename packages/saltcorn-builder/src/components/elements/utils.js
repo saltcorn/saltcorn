@@ -22,7 +22,7 @@ export const DynamicFontAwesomeIcon = ({ icon, className }) => {
 };
 
 export /**
- * @param {boolean} is_block 
+ * @param {boolean} is_block
  * @returns {object}
  */
 const blockProps = (is_block) =>
@@ -390,12 +390,12 @@ export const fetchFieldPreview = (args = {}) => (changes = {}) => {
  * @return {function}
  */
 export const fetchViewPreview = (args = {}) => (changes = {}) => {
-  const { node_id, options, view, setPreviews } = {
+  const { node_id, options, view, setPreviews, configuration } = {
     ...args,
     ...changes,
   };
   let viewname,
-    body = {};
+    body = configuration || {};
   if (view.includes(":")) {
     const [reltype, rest] = view.split(":");
     const [vnm] = rest.split(".");
@@ -463,9 +463,9 @@ export const parseStyles = (styles) =>
 
 /**
  * @function
- * @param {object} styles 
+ * @param {object} styles
  * @returns {object}
- */    
+ */
 export const reactifyStyles = (styles) => {
   const toCamel = (s) => {
     return s.replace(/([-][a-z])/gi, ($1) => {
@@ -480,7 +480,7 @@ export const reactifyStyles = (styles) => {
 };
 
 /**
- * @param {object} f 
+ * @param {object} f
  * @returns {boolean}
  */
 const isCheckbox = (f) =>
@@ -488,8 +488,8 @@ const isCheckbox = (f) =>
 
 /**
  * @function
- * @param {function} setProp 
- * @param {*} fieldview 
+ * @param {function} setProp
+ * @param {*} fieldview
  * @param {object[]} [fields]
  * @returns {void}
  */
@@ -540,14 +540,8 @@ export /**
  * @category saltcorn-builder
  * @subcategory components / elements / utils
  * @namespace
- */  
-const ConfigForm = ({
-  fields,
-  configuration,
-  setProp,
-  node,
-  onChange,
-}) => (
+ */
+const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
   <div>
     {fields.map((f, ix) => {
       if (f.showIf && node && node.configuration) {
@@ -579,12 +573,11 @@ const ConfigForm = ({
 );
 
 /**
- * @param {object|undefined} x 
- * @param {object} y 
+ * @param {object|undefined} x
+ * @param {object} y
  * @returns {object}
  */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
-
 
 export /**
  * @param {object} props
@@ -598,7 +591,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components / elements / utils
  * @namespace
- */  
+ */
 const ConfigField = ({
   field,
   configuration,
@@ -608,7 +601,7 @@ const ConfigField = ({
   isStyle,
 }) => {
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {void}
    */
   const myOnChange = (v) => {
@@ -928,7 +921,7 @@ const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
 export class ErrorBoundary extends React.Component {
   /**
    * ErrorBoundary constructor
-   * @param {object} props 
+   * @param {object} props
    */
   constructor(props) {
     super(props);
@@ -936,7 +929,7 @@ export class ErrorBoundary extends React.Component {
   }
 
   /**
-   * @param {*} error 
+   * @param {*} error
    * @returns {object}
    */
   static getDerivedStateFromError(error) {
@@ -945,8 +938,8 @@ export class ErrorBoundary extends React.Component {
   }
 
   /**
-   * @param {object} error 
-   * @param {object} errorInfo 
+   * @param {object} error
+   * @param {object} errorInfo
    * @returns {void}
    */
   componentDidCatch(error, errorInfo) {
@@ -1107,7 +1100,7 @@ const ButtonOrLinkSettingsRows = ({
 
 /**
  * @function
- * @param {string} style 
+ * @param {string} style
  * @returns {object}
  */
 export const bstyleopt = (style) => ({

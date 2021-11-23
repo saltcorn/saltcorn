@@ -34,7 +34,7 @@ const { search_bar_form, search_bar } = require("./helpers");
 const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
 
 /**
- * @param {string|object} body 
+ * @param {string|object} body
  * @param {object[]} [alerts]
  * @returns {object}
  */
@@ -62,9 +62,9 @@ const makeSegments = (body, alerts) => {
 };
 
 /**
- * 
- * @param {object} segment 
- * @param {string} inner 
+ *
+ * @param {object} segment
+ * @param {string} inner
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment, inner) => {
@@ -97,10 +97,13 @@ const applyTextStyle = (segment, inner) => {
  * @param {string[]} opts.titles
  * @param {string} opts.tabsStyle
  * @param {*} opts.ntabs
- * @param {function} go 
+ * @param {function} go
  * @returns {ul_div}
  */
-const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
+const renderTabs = (
+  { contents, titles, tabsStyle, ntabs, independent },
+  go
+) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
     return div(
@@ -130,7 +133,7 @@ const renderTabs = ({ contents, titles, tabsStyle, ntabs }, go) => {
               class: ["collapse", ix === 0 && "show"],
               id: `${rndid}tab${ix}`,
               "aria-labelledby": `${rndid}head${ix}`,
-              "data-parent": `#${rndid}top`,
+              "data-parent": independent ? undefined : `#${rndid}top`,
             },
             div({ class: "card-body" }, go(t, false, ix))
           )

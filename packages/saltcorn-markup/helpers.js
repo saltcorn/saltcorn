@@ -17,16 +17,16 @@ const {
 
 /**
  * checks if x is defined
- * @param {*} x 
+ * @param {*} x
  * @returns {boolean}
  */
 const isdef = (x) => typeof x !== "undefined";
 
 /**
- * @param {object|string} v 
- * @param {object} hdr 
- * @param {boolean} force_required 
- * @param {string} neutral_label 
+ * @param {object|string} v
+ * @param {object} hdr
+ * @param {boolean} force_required
+ * @param {string} neutral_label
  * @returns {string}
  */
 const select_options = (v, hdr, force_required, neutral_label = "") => {
@@ -56,7 +56,7 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
 };
 
 /**
- * 
+ *
  * @param {object} opts
  * @param {string} opts.name
  * @param {object} [opts.options]
@@ -66,7 +66,15 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
  * @param {...*} opts.rest
  * @returns {string}
  */
-const radio_group = ({ name, options, value, inline, form_name, ...rest }) =>
+const radio_group = ({
+  name,
+  options,
+  value,
+  inline,
+  form_name,
+  onChange,
+  ...rest
+}) =>
   div(
     (options || [])
       .filter((o) => (typeof o === "string" ? o : o.value))
@@ -79,10 +87,49 @@ const radio_group = ({ name, options, value, inline, form_name, ...rest }) =>
             class: ["form-check-input", rest.class],
             type: "radio",
             name,
+            onChange,
             "data-fieldname": form_name,
             id,
             value: text_attr(myvalue),
             checked: myvalue === value,
+          }),
+          label(
+            { class: "form-check-label", for: id },
+            typeof o === "string" ? o : o.label
+          )
+        );
+      })
+      .join("")
+  );
+
+const checkbox_group = ({
+  name,
+  options,
+  value,
+  inline,
+  form_name,
+  onChange,
+  ...rest
+}) =>
+  div(
+    (options || [])
+      .filter((o) => (typeof o === "string" ? o : o.value))
+      .map((o, ix) => {
+        const myvalue = typeof o === "string" ? o : o.value;
+        const id = `input${text_attr(name)}${ix}`;
+        return div(
+          { class: ["form-check", inline && "form-check-inline"] },
+          input({
+            class: ["form-check-input", rest.class],
+            type: "checkbox",
+            name,
+            onChange: `check_state_field(this)`,
+            "data-fieldname": form_name,
+            id,
+            value: text_attr(myvalue),
+            checked: Array.isArray(value)
+              ? value.includes(myvalue)
+              : myvalue === value,
           }),
           label(
             { class: "form-check-label", for: id },
@@ -143,9 +190,9 @@ const pagination = ({
 };
 
 /**
- * @param {string} name 
- * @param {object} v 
- * @param {object} param2 
+ * @param {string} name
+ * @param {object} v
+ * @param {object} param2
  * @returns {string}
  */
 const search_bar = (
@@ -217,4 +264,5 @@ module.exports = {
   search_bar,
   pagination,
   radio_group,
+  checkbox_group,
 };

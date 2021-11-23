@@ -34,9 +34,9 @@ import {
 } from "react-bootstrap-icons";
 
 /**
- * 
- * @param {object[]} xs 
- * @param {object} def 
+ *
+ * @param {object[]} xs
+ * @param {object} def
  * @returns {object}
  */
 const headOr = (xs, def) => (xs && xs.length > 0 ? xs[0] : def);
@@ -349,7 +349,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
 /**
  * @param {object} props
  * @param {object} props.connectors
- * @returns {WrapElem} 
+ * @returns {WrapElem}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
  * @namespace
@@ -448,7 +448,7 @@ const ActionElem = ({ connectors, options }) => (
  * @returns {WrapElem}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
- * @namespace 
+ * @namespace
  */
 const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
   <WrapElem
@@ -533,9 +533,7 @@ const ToolboxShow = () => {
   );
 };
 
-
-
-export /** 
+export /**
  * @returns {Fragment}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
@@ -544,7 +542,7 @@ export /**
 const ToolboxFilter = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, views } = options;
+  const { fields, views, field_view_options } = options;
   return (
     <Fragment>
       <div className="toolbar-row">
@@ -552,23 +550,31 @@ const ToolboxFilter = () => {
         <ColumnsElem connectors={connectors} />
       </div>
       <div className="toolbar-row">
+        <FieldElem
+          connectors={connectors}
+          fields={fields}
+          field_view_options={field_view_options}
+        />
         <LineBreakElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
         <DropDownFilterElem connectors={connectors} fields={fields} />
-      </div>
-      <div className="toolbar-row">
         <ToggleFilterElem connectors={connectors} fields={fields} />
+      </div>
+      <div className="toolbar-row">
         <SearchElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
         <ActionElem connectors={connectors} options={options} />
+      </div>
+      <div className="toolbar-row">
         <ContainerElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
+
         <CardElem connectors={connectors} />
-        <TabsElem connectors={connectors} />
       </div>
       <div className="toolbar-row">
+        <TabsElem connectors={connectors} />
         <ViewElem connectors={connectors} views={views} />
+      </div>
+      <div className="toolbar-row">
         <HTMLElem connectors={connectors} />
       </div>
     </Fragment>

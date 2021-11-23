@@ -112,16 +112,19 @@ const stateToQueryString = contract(
  */
 const calcfldViewOptions = contract(
   is.fun(
-    [is.array(is.class("Field")), is.bool],
+    [is.array(is.class("Field")), is.str],
     is.obj({ field_view_options: is.objVals(is.array(is.str)) })
   ),
-  (fields, isEdit) => {
-    var fvs = {};
+  (fields, mode) => {
+    const isEdit = mode === "edit";
+    const isFilter = mode === "filter";
+    let fvs = {};
     const handlesTextStyle = {};
     fields.forEach((f) => {
       handlesTextStyle[f.name] = [];
       if (f.type === "File") {
-        if (!isEdit) fvs[f.name] = Object.keys(getState().fileviews);
+        if (!isEdit && !isFilter)
+          fvs[f.name] = Object.keys(getState().fileviews);
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
@@ -129,7 +132,7 @@ const calcfldViewOptions = contract(
           if (f.reftable && f.reftable.fields) {
             const { field_view_options } = calcfldViewOptions(
               f.reftable.fields,
-              isEdit
+              mode
             );
             for (const jf of f.reftable.fields) {
               fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
@@ -142,15 +145,20 @@ const calcfldViewOptions = contract(
         });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit
+          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter
         );
         let tfvs_ordered = [];
         if (isEdit) {
           tfvs_ordered = [
             ...tfvs.filter(([k, fv]) => fv.isEdit),
-            ...tfvs.filter(([k, fv]) => !fv.isEdit),
+            ...tfvs.filter(([k, fv]) => !fv.isEdit && !fv.isFilter),
           ];
-        } else tfvs_ordered = tfvs;
+        } else if (isFilter) {
+          tfvs_ordered = [
+            ...tfvs.filter(([k, fv]) => fv.isFilter),
+            ...tfvs.filter(([k, fv]) => fv.isEdit),
+          ];
+        } else tfvs_ordered = tfvs.filter(([k, fv]) => !fv.isFilter);
         fvs[f.name] = tfvs_ordered.map(([k, fv]) => {
           if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
           return k;
@@ -323,7 +331,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const { field_view_options } = calcfldViewOptions(fields, false);
+    const { field_view_options } = calcfldViewOptions(fields, "show");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(
@@ -964,7 +972,9 @@ const stateFieldsToWhere = contract(
       } else if (field && field.type.name === "Bool" && state[k] === "?") {
         // omit
       } else if (field && field.type && field.type.read)
-        qstate[k] = field.type.read(v);
+        qstate[k] = Array.isArray(v)
+          ? { or: v.map(field.type.read) }
+          : field.type.read(v);
       else if (field) qstate[k] = v;
       else if (k.includes(".")) {
         const kpath = k.split(".");
@@ -1124,7 +1134,9 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (f.type.read) state[f.name] = f.type.read(current);
+      if (Array.isArray(current) && f.type.read) {
+        state[f.name] = current.map(f.type.read);
+      } else if (f.type.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);

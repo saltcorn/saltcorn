@@ -38,11 +38,11 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} req 
- * @param {*} fkey_opts 
- * @param {*} existing_names 
- * @param {*} id 
- * @param {*} hasData 
+ * @param {object} req
+ * @param {*} fkey_opts
+ * @param {*} existing_names
+ * @param {*} id
+ * @param {*} hasData
  * @returns {Promise<Form>}
  */
 const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
@@ -137,7 +137,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
 };
 
 /**
- * @param {string} ctxType 
+ * @param {string} ctxType
  * @returns {object}
  */
 const calcFieldType = (ctxType) =>
@@ -146,8 +146,8 @@ const calcFieldType = (ctxType) =>
     : { type: ctxType };
 
 /**
- * @param {*} attrs 
- * @param {object} req 
+ * @param {*} attrs
+ * @param {object} req
  * @returns {*}
  */
 const translateAttributes = (attrs, req) =>
@@ -156,8 +156,8 @@ const translateAttributes = (attrs, req) =>
     : attrs;
 
 /**
- * @param {*} attr 
- * @param {*} req 
+ * @param {*} attr
+ * @param {*} req
  * @returns {object}
  */
 const translateAttribute = (attr, req) => {
@@ -167,7 +167,7 @@ const translateAttribute = (attr, req) => {
 };
 
 /**
- * @param {*} req 
+ * @param {*} req
  * @returns {Workflow}
  */
 const fieldFlow = (req) =>
@@ -697,12 +697,12 @@ router.post(
     if (!fv && field.type === "Key" && fieldview === "select")
       res.send("<select disabled></select>");
     else if (!fv) res.send("");
-    else if (fv.isEdit)
+    else if (fv.isEdit || fv.isFilter)
       res.send(
         fv.run(
           field.name,
           undefined,
-          { disabled: true, ...configuration },
+          { disabled: true, ...configuration, ...(field.attributes || {}) },
           "",
           false,
           field

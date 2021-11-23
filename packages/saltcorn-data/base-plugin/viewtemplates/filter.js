@@ -6,6 +6,7 @@
 const User = require("../../models/user");
 const View = require("../../models/view");
 const Table = require("../../models/table");
+const Field = require("../../models/field");
 const Workflow = require("../../models/workflow");
 
 const {
@@ -17,10 +18,15 @@ const {
   select,
   button,
   text_attr,
+  script,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
-const { readState } = require("../../plugin-helper");
+const {
+  readState,
+  calcfldViewOptions,
+  calcfldViewConfig,
+} = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,
@@ -53,11 +59,13 @@ const configuration_workflow = () =>
             const cfields = await cr.table.getFields();
             cfields.forEach((cf) => {
               if (cf.name !== cr.key_field.name)
-                fields.push({
-                  ...cf,
-                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
-                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
-                });
+                fields.push(
+                  new Field({
+                    ...cf,
+                    label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                    name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                  })
+                );
             });
           }
           const actions = ["Clear"];
@@ -76,12 +84,21 @@ const configuration_workflow = () =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("filter")
           );
+          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            "filter"
+          );
           return {
             fields,
+            tableName: table.name,
             roles,
             actions,
             views,
             library,
+            field_view_options,
+            fieldViewConfigForms,
             mode: "filter",
           };
         },
@@ -93,19 +110,19 @@ const configuration_workflow = () =>
 const get_state_fields = () => [];
 
 /**
- * 
+ *
  * @returns {Promise<object>}
  */
 const initial_config = async () => ({ layout: {}, columns: [] });
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {object} opts.layout
- * @param {object} state 
- * @param {object} extra 
+ * @param {object} state
+ * @param {object} extra
  * @returns {Promise<Layout>}
  */
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
@@ -115,6 +132,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   const table = await Table.findOne(table_id);
   const fields = await table.getFields();
   readState(state, fields);
+
   const role = extra.req.user ? extra.req.user.role_id : 10;
   const distinct_values = {};
   for (const col of columns) {
@@ -181,6 +199,34 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
+    field(segment) {
+      const { field_name, fieldview, configuration } = segment;
+      let field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
+
+      if (
+        fieldview &&
+        field.type &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      ) {
+        const fv = field.type.fieldviews[fieldview];
+        if (fv.isEdit || fv.isFilter)
+          return fv.run(
+            field_name,
+            state[field_name],
+            {
+              onChange: `set_state_field('${field_name}', this.value)`,
+              ...field.attributes,
+              ...configuration,
+            },
+            "",
+            false,
+            segment
+          );
+      }
+      return "";
+    },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
@@ -276,15 +322,15 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
 };
 
 /**
- * @param {object|undefined} x 
- * @param {object|undefined} y 
+ * @param {object|undefined} x
+ * @param {object|undefined} y
  * @returns {object}
  */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
 
 /**
- * @param {string} x 
- * @param {string} y 
+ * @param {string} x
+ * @param {string} y
  * @returns {boolean}
  */
 const eq_string = (x, y) => `${x}` === `${y}`;
