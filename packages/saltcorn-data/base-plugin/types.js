@@ -31,6 +31,92 @@ const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const eqStr = (x, y) => `${x}` === `${y}`;
 
+const number_slider = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.max) && !isdef(field.attributes.min)
+      ? [
+          { name: "min", type, required: false },
+          { name: "max", type, required: false },
+        ]
+      : []),
+    //{ name: "also_entry", type: "Bool", label: "Also entry" },
+  ],
+  isEdit: true,
+  run: (nm, v, attrs = {}, cls, required, field) =>
+    input({
+      type: "range",
+      class: ["form-control", cls],
+      name: text_attr(nm),
+      "data-fieldname": text_attr(field.name),
+      disabled: attrs.disabled,
+      onChange: attrs.onChange,
+      step:
+        type === "Integer"
+          ? 1
+          : attrs.decimal_places
+          ? Math.pow(10, -attrs.decimal_places)
+          : "0.01",
+      id: `input${text_attr(nm)}`,
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(v) && { value: text_attr(v) }),
+    }),
+});
+const progress_bar = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.min)
+      ? [{ name: "min", type, required: true }]
+      : []),
+    ...(!isdef(field.attributes.max)
+      ? [{ name: "max", type, required: true }]
+      : []),
+    { name: "bar_color", type: "Color", label: "Bar color" },
+    { name: "bg_color", type: "Color", label: "Background color" },
+    { name: "px_height", type: "Integer", label: "Height in px" },
+  ],
+  isEdit: false,
+  run: (v, req, attrs = {}) =>
+    div(
+      {
+        style: {
+          width: "100%",
+          height: `${attrs.px_height || 8}px`,
+          backgroundColor: attrs.bg_color,
+        },
+      },
+      div({
+        style: {
+          width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
+          height: `${attrs.px_height || 8}px`,
+          backgroundColor: attrs.bar_color,
+        },
+      })
+    ),
+});
+
+const number_limit = (type, direction) => ({
+  isEdit: false,
+  isFilter: true,
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
+    input({
+      type: "number",
+      class: ["form-control", cls],
+      disabled: attrs.disabled,
+      onChange: `set_state_field('_${direction}_${nm}', this.value)`,
+      step:
+        type === "Integer"
+          ? "1"
+          : attrs.decimal_places
+          ? Math.pow(10, -attrs.decimal_places)
+          : "0.01",
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(state[`_${direction}_${nm}`]) && {
+        value: text_attr(state[`_${direction}_${nm}`]),
+      }),
+    }),
+});
+
 /**
  * @param {string} v
  * @param {string} optsStr
@@ -497,11 +583,15 @@ const int = {
           ...(isdef(v) && { value: text_attr(v) }),
         }),
     },
+    number_slider: number_slider("Integer"),
+    progress_bar: progress_bar("Integer"),
+    above_input: number_limit("Integer", "gte"),
+    below_input: number_limit("Integer", "lte"),
   },
   /** @type {object[]}  */
   attributes: [
-    { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false },
+    { name: "max", type: "Integer", required: false },
   ],
   /**
    * @param {object} param
@@ -668,11 +758,15 @@ const float = {
           ...(isdef(v) && { value: text_attr(v) }),
         }),
     },
+    number_slider: number_slider("Float"),
+    progress_bar: progress_bar("Float"),
+    above_input: number_limit("Float", "gte"),
+    below_input: number_limit("Float", "lte"),
   },
   /** @type {object[]} */
   attributes: [
-    { name: "max", type: "Float", required: false },
     { name: "min", type: "Float", required: false },
+    { name: "max", type: "Float", required: false },
     { name: "units", type: "String", required: false },
     { name: "decimal_places", type: "Integer", required: false },
   ],

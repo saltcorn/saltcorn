@@ -222,7 +222,8 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
             },
             "",
             false,
-            segment
+            segment,
+            state
           );
       }
       return "";

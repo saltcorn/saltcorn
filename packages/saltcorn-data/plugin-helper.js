@@ -962,6 +962,14 @@ const stateFieldsToWhere = contract(
         const dfield = fields.find((fld) => fld.name == datefield);
         if (dfield)
           addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
+      } else if (k.startsWith("_gte_")) {
+        const datefield = db.sqlsanitize(k.replace("_gte_", ""));
+        const dfield = fields.find((fld) => fld.name == datefield);
+        if (dfield) addOrCreateList(qstate, datefield, { gt: v, equal: true });
+      } else if (k.startsWith("_lte_")) {
+        const datefield = db.sqlsanitize(k.replace("_lte_", ""));
+        const dfield = fields.find((fld) => fld.name == datefield);
+        if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
       } else if (
         field &&
         field.type.name === "String" &&
