@@ -31,6 +31,40 @@ const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const eqStr = (x, y) => `${x}` === `${y}`;
 
+const number_slider = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.max) && !isdef(field.attributes.min)
+      ? [
+          { name: "min", type, required: false },
+          { name: "max", type, required: false },
+        ]
+      : []),
+    { name: "show_number", type: "Bool", label: "Show number" },
+  ],
+  isEdit: true,
+  run: (nm, v, attrs, cls, required, field) =>
+    input({
+      type: "range",
+      class: ["form-control", cls],
+      name: text_attr(nm),
+      "data-fieldname": text_attr(field.name),
+      disabled: attrs.disabled,
+      onChange: attrs.onChange,
+      step:
+        type === "Integer"
+          ? 1
+          : attrs.decimal_places
+          ? Math.pow(10, -attrs.decimal_places)
+          : "0.01",
+      id: `input${text_attr(nm)}`,
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(v) && { value: text_attr(v) }),
+    }),
+});
+//const progress_bar = {};
+//const between = {};
+
 /**
  * @param {string} v
  * @param {string} optsStr
@@ -497,11 +531,12 @@ const int = {
           ...(isdef(v) && { value: text_attr(v) }),
         }),
     },
+    number_slider: number_slider("Integer"),
   },
   /** @type {object[]}  */
   attributes: [
-    { name: "max", type: "Integer", required: false },
     { name: "min", type: "Integer", required: false },
+    { name: "max", type: "Integer", required: false },
   ],
   /**
    * @param {object} param
@@ -668,11 +703,12 @@ const float = {
           ...(isdef(v) && { value: text_attr(v) }),
         }),
     },
+    number_slider: number_slider("Float"),
   },
   /** @type {object[]} */
   attributes: [
-    { name: "max", type: "Float", required: false },
     { name: "min", type: "Float", required: false },
+    { name: "max", type: "Float", required: false },
     { name: "units", type: "String", required: false },
     { name: "decimal_places", type: "Integer", required: false },
   ],
