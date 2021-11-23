@@ -46,8 +46,8 @@ import { BoxModelEditor } from "./BoxModelEditor";
 import previewCtx from "../preview_context";
 
 /**
- * 
- * @param {string} string 
+ *
+ * @param {string} string
  * @returns {string}
  */
 function capitalizeFirstLetter(string) {
@@ -55,7 +55,7 @@ function capitalizeFirstLetter(string) {
 }
 
 export /**
- * @param {object} props 
+ * @param {object} props
  * @param {*} props.children
  * @param {*} props.minHeight
  * @param {*} props.height
@@ -185,7 +185,6 @@ const Container = ({
   );
 };
 
-
 export /**
  * @returns {div}
  * @returns {Accordion}
@@ -265,7 +264,7 @@ const ContainerSettings = () => {
   const ownership = !!options.ownership;
 
   /**
-   * @param {string} key 
+   * @param {string} key
    * @returns {function}
    */
   const setAProp = (key) => (e) => {
@@ -763,9 +762,13 @@ const ContainerSettings = () => {
                         : showForRole[id]
                     }
                     onChange={(e) =>
-                      setProp(
-                        (prop) => (prop.showForRole[id] = e.target.checked)
-                      )
+                      setProp((prop) => {
+                        if (!prop.showForRole || prop.showForRole.length === 0)
+                          options.roles.forEach(
+                            (r) => (prop.showForRole[r.id] = true)
+                          );
+                        prop.showForRole[id] = e.target.checked;
+                      })
                     }
                   />
                   <label className="form-check-label">{role}</label>
@@ -882,8 +885,8 @@ const ContainerSettings = () => {
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Container.craft = {
   displayName: "Container",
