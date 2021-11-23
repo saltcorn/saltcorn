@@ -69,6 +69,30 @@ const getPluginDirectories = () => {
 
 const projectRoot = getProjectRoot();
 
+const watchCfg = {
+  recursive: true,
+  filter(file, skip) {
+    for (const excludePattern of excludePatterns) {
+      if (excludePattern.test(file)) 
+        return skip;
+    }
+    return /(\.js|\.ts)$/.test(file);
+  }
+}
+
+let activeWatchers = [];
+
+/**
+ * close all open file watchers
+ */
+ const closeWatchers = () => {
+  for (const activeWatcher of activeWatchers) {
+    if(!activeWatcher.isClosed()) {
+      activeWatcher.close();
+    }
+  }
+}
+
 /**
  * register many file change listener and do re-starts on changes
  * The listener calls process.exit() and assumes 
@@ -77,26 +101,29 @@ const projectRoot = getProjectRoot();
  * @param {string[]} pluginDirs plugin paths that should trigger re-starts. 
  */
 const listenForChanges = (projectDirs, pluginDirs) => {
+  // watch project dirs
   for(const projectDir of projectDirs) {
-    watch(projectDir, {
-      recursive: true,
-      filter(file, skip) {
-        for (const excludePattern of excludePatterns) {
-          if (excludePattern.test(file)) 
-            return skip;
-        }
-        return /(\.js|\.ts)$/.test(file);
-      }
-    }, 
-    // event is either 'update' or 'remove'
-    (event, file) => { 
-      console.log("'%s' changed \n re-starting now", file);
-      spawnSync("npm", ["run", "tsc"], {
-        stdio: "inherit",
-        cwd: projectRoot,
-      });
-      process.exit();
-    });
+    activeWatchers.push(watch(projectDir, watchCfg, 
+      // event is either 'update' or 'remove'
+      (event, file) => { 
+        console.log("'%s' changed \n re-starting now", file);
+        closeWatchers();
+        spawnSync("npm", ["run", "tsc"], {
+          stdio: "inherit",
+          cwd: projectRoot,
+        });
+        process.exit();
+    }));
+  }
+  // watch plugin dirs
+  for(const pluginDir of pluginDirs) {
+    activeWatchers.push(watch(pluginDir, watchCfg, 
+      // event is either 'update' or 'remove'
+      (event, file) => { 
+        console.log("'%s' changed \n re-starting now", file);
+        closeWatchers();
+        process.exit();
+    }));
   }
 }
 
@@ -106,4 +133,5 @@ module.exports = {
   getPackagesDirectory,
   getRelevantPackages,
   getPluginDirectories,
+  closeWatchers,
 };
