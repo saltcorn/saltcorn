@@ -342,7 +342,7 @@ const string = {
         },
       ],
       run: (nm, v, attrs, cls, required, field) =>
-        attrs.options
+        attrs && attrs.options
           ? checkbox_group({
               class: cls,
               name: text_attr(nm),
