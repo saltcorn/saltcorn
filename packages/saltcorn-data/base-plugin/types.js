@@ -97,7 +97,7 @@ const progress_bar = (type) => ({
 const number_limit = (type, direction) => ({
   isEdit: false,
   isFilter: true,
-  run: (nm, v, attrs = {}, cls, required, field, state) =>
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
     input({
       type: "number",
       class: ["form-control", cls],
