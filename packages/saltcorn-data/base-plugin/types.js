@@ -97,7 +97,7 @@ const progress_bar = (type) => ({
 const number_limit = (type, direction) => ({
   isEdit: false,
   isFilter: true,
-  run: (nm, v, attrs, cls, required, field) =>
+  run: (nm, v, attrs, cls, required, field, state) =>
     input({
       type: "number",
       class: ["form-control", cls],
@@ -111,7 +111,9 @@ const number_limit = (type, direction) => ({
           : "0.01",
       ...(attrs.max && { max: attrs.max }),
       ...(attrs.min && { min: attrs.min }),
-      ...(isdef(v) && { value: text_attr(v) }),
+      ...(isdef(state[`_${direction}_${nm}`]) && {
+        value: text_attr(state[`_${direction}_${nm}`]),
+      }),
     }),
 });
 
