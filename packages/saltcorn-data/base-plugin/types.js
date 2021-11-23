@@ -94,7 +94,26 @@ const progress_bar = (type) => ({
     ),
 });
 
-//const between = {};
+const number_limit = (type, direction) => ({
+  isEdit: false,
+  isFilter: true,
+  run: (nm, v, attrs, cls, required, field) =>
+    input({
+      type: "number",
+      class: ["form-control", cls],
+      disabled: attrs.disabled,
+      onChange: `set_state_field('_${direction}_${nm}', this.value)`,
+      step:
+        type === "Integer"
+          ? "1"
+          : attrs.decimal_places
+          ? Math.pow(10, -attrs.decimal_places)
+          : "0.01",
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(v) && { value: text_attr(v) }),
+    }),
+});
 
 /**
  * @param {string} v
@@ -564,6 +583,8 @@ const int = {
     },
     number_slider: number_slider("Integer"),
     progress_bar: progress_bar("Integer"),
+    above_input: number_limit("Integer", "gte"),
+    below_input: number_limit("Integer", "lte"),
   },
   /** @type {object[]}  */
   attributes: [
@@ -737,6 +758,8 @@ const float = {
     },
     number_slider: number_slider("Float"),
     progress_bar: progress_bar("Float"),
+    above_input: number_limit("Float", "gte"),
+    below_input: number_limit("Float", "lte"),
   },
   /** @type {object[]} */
   attributes: [
