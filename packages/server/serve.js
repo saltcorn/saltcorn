@@ -33,11 +33,10 @@ const { setTenant, getSessionStore } = require("./routes/utils");
 const passport = require("passport");
 const { authenticate } = require("passport");
 const View = require("@saltcorn/data/models/view");
+const { listenForChanges, getRelevantPackages, getPluginDirectories } = require('./restart_watcher');
 
 // helpful https://gist.github.com/jpoehls/2232358
-
 /**
- * @param {object} opts
  * @param {object} opts
  * @param {boolean} opts.disableMigrate
  * @param {boolean} [useClusterAdaptor = true]
@@ -146,6 +145,7 @@ module.exports =
    * @param {boolean} opts.watchReaper
    * @param {boolean} opts.disableScheduler
    * @param {number} opts.defaultNCPUs
+   * @param {boolean} opts.dev
    * @param {...*} opts.appargs
    * @returns {Promise<void>}
    */
@@ -154,8 +154,13 @@ module.exports =
     watchReaper,
     disableScheduler,
     defaultNCPUs,
+    dev,
     ...appargs
   } = {}) => {
+    if (dev && cluster.isMaster) {
+      listenForChanges(
+        getRelevantPackages(), getPluginDirectories());
+    }
     const useNCpus = process.env.SALTCORN_NWORKERS
       ? +process.env.SALTCORN_NWORKERS
       : defaultNCPUs;
