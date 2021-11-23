@@ -42,7 +42,7 @@ const number_slider = (type) => ({
     //{ name: "also_entry", type: "Bool", label: "Also entry" },
   ],
   isEdit: true,
-  run: (nm, v, attrs, cls, required, field) =>
+  run: (nm, v, attrs = {}, cls, required, field) =>
     input({
       type: "range",
       class: ["form-control", cls],
@@ -75,7 +75,7 @@ const progress_bar = (type) => ({
     { name: "px_height", type: "Integer", label: "Height in px" },
   ],
   isEdit: false,
-  run: (v, req, attrs) =>
+  run: (v, req, attrs = {}) =>
     div(
       {
         style: {
@@ -97,7 +97,7 @@ const progress_bar = (type) => ({
 const number_limit = (type, direction) => ({
   isEdit: false,
   isFilter: true,
-  run: (nm, v, attrs, cls, required, field, state) =>
+  run: (nm, v, attrs = {}, cls, required, field, state) =>
     input({
       type: "number",
       class: ["form-control", cls],
