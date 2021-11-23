@@ -159,7 +159,7 @@ router.get(
         what: req.__("View"),
         url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
         contents,
-        req
+        req,
       })
     );
   })
@@ -183,18 +183,18 @@ router.post(
       res.send("");
       return;
     }
-    let query = {};
+    let query = req.body || {};
     let row;
     let table;
     const sfs = await view.get_state_fields();
     for (const sf of sfs) {
-      if (sf.required) {
+      if (sf.required &amp;&amp; !query[sf.name]) {
         if (!row) {
           if (!table)
             table = await Table.findOne(view.table_id || view.exttable_name);
           row = await table.getRow({});
         }
-        if(row) query[sf.name] = row[sf.name];
+        if (row) query[sf.name] = row[sf.name];
       }
     }
     const contents = await view.run(query, { req, res });

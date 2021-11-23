@@ -146,7 +146,7 @@ const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -197,7 +197,7 @@ const configuration_workflow = (req) =>
           const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            false
+            "show"
           );
           if (table.name === "users") {
             fields.push(
@@ -298,15 +298,15 @@ const get_state_fields = () => [
 const initial_config = initial_config_all_fields(false);
 
 /**
- * @param {string} table_id 
- * @param {string} viewname 
+ * @param {string} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {object} opts.layout
  * @param {string} [opts.page_title]
  * @param {boolean} opts.page_title_formula
- * @param {object} state 
- * @param {object} extra 
+ * @param {object} state
+ * @param {object} extra
  * @returns {Promise&lt;string>}
  */
 const run = async (
@@ -423,13 +423,13 @@ const set_join_fieldviews = async ({ layout, fields }) => {
 };
 
 /**
- * @param {object} table 
- * @param {string} viewname 
+ * @param {object} table
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {object} opts.layout
- * @param {object} extra 
- * @param {object[]} rows 
+ * @param {object} extra
+ * @param {object[]} rows
  * @returns {Promise&lt;string>}
  */
 const renderRows = async (
@@ -522,13 +522,13 @@ const renderRows = async (
 };
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {object} opts.layout
- * @param {object} state 
- * @param {object} extra 
+ * @param {object} state
+ * @param {object} extra
  * @returns {Promise&lt;object[]>}
  */
 const runMany = async (
@@ -568,14 +568,14 @@ const runMany = async (
 };
 
 /**
- * @param {object} row 
- * @param {Field[]} fields 
- * @param {Layout} layout0 
- * @param {string} viewname 
- * @param {Table} table 
- * @param {Role} role 
- * @param {object} req 
- * @param {object} is_owner 
+ * @param {object} row
+ * @param {Field[]} fields
+ * @param {Layout} layout0
+ * @param {string} viewname
+ * @param {Table} table
+ * @param {Role} role
+ * @param {object} req
+ * @param {object} is_owner
  * @throws {Error}
  * @returns {Layout}
  */
@@ -718,14 +718,14 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
 };
 
 /**
- * @param {number} table_id 
- * @param {*} viewname 
+ * @param {number} table_id
+ * @param {*} viewname
  * @param {object} opts
  * @param {object[]} opts.columns
  * @param {*} opts.layout
- * @param {*} body 
+ * @param {*} body
  * @param {object} optsTwo
- * @param {object} optsTwo.req 
+ * @param {object} optsTwo.req
  * @param {*} optsTwo.res
  * @returns {Promise&lt;object>}
  */

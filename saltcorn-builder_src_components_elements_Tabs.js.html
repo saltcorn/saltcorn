@@ -112,23 +112,36 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
+const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
+  const [showTabs, setShowTabs] = useState([true]);
+
   if (tabsStyle === "Accordion")
     return (
       &lt;div className="accordion">
         {ntimes(ntabs, (ix) => (
-          &lt;div className="card">
+          &lt;div key={ix} className="card">
             &lt;div className="card-header">
               &lt;h2 className="mb-0">
                 &lt;button
                   className="btn btn-link btn-block text-left"
                   type="button"
-                  onClick={() => setShowTab(ix)}
+                  onClick={() => {
+                    setShowTab(ix);
+                    if (!independent) {
+                      let newArr = [];
+                      newArr[ix] = true;
+                      setShowTabs(newArr);
+                    } else {
+                      let newArr = [...showTabs];
+                      newArr[ix] = !newArr[ix];
+                      setShowTabs(newArr);
+                    }
+                  }}
                 >
                   {titles[ix]}
                 &lt;/button>
@@ -136,8 +149,12 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs }) => {
             &lt;/div>
 
             &lt;div
-              id="collapseOne"
-              className={`collapse ${ix === showTab ? "show" : ""}`}
+              id={`collapse${ix}`}
+              className={`collapse ${
+                (independent &amp;&amp; showTabs[ix]) || (!independent &amp;&amp; showTab == ix)
+                  ? "show"
+                  : ""
+              }`}
               aria-labelledby="headingOne"
               data-parent="#accordionExample"
             >
@@ -201,12 +218,14 @@ const TabsSettings = () => {
   const node = useNode((node) => ({
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
+    independent: node.data.props.independent,
     titles: node.data.props.titles,
   }));
   const {
     actions: { setProp },
     titles,
     tabsStyle,
+    independent,
     ntabs,
   } = node;
   return (
@@ -266,6 +285,26 @@ const TabsSettings = () => {
             &lt;/td>
           &lt;/tr>
         ))}
+        {tabsStyle === "Accordion" &amp;&amp; (
+          &lt;tr>
+            &lt;td colSpan="2">
+              &lt;div className="form-check">
+                &lt;input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={independent}
+                  onChange={(e) => {
+                    if (e.target) {
+                      setProp((prop) => (prop.independent = e.target.checked));
+                    }
+                  }}
+                />
+                &lt;label className="form-check-label">Open independently&lt;/label>
+              &lt;/div>
+            &lt;/td>
+          &lt;/tr>
+        )}
       &lt;/tbody>
     &lt;/table>
   );
@@ -279,6 +318,7 @@ Tabs.craft = {
     titles: ["Tab1", "Tab2"],
     ntabs: 2,
     tabsStyle: "Tabs",
+    independent: false,
   },
   displayName: "Tabs",
   related: {

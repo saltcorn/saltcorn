@@ -125,9 +125,9 @@ import {
 } from "react-bootstrap-icons";
 
 /**
- * 
- * @param {object[]} xs 
- * @param {object} def 
+ *
+ * @param {object[]} xs
+ * @param {object} def
  * @returns {object}
  */
 const headOr = (xs, def) => (xs &amp;&amp; xs.length > 0 ? xs[0] : def);
@@ -440,7 +440,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
 /**
  * @param {object} props
  * @param {object} props.connectors
- * @returns {WrapElem} 
+ * @returns {WrapElem}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
  * @namespace
@@ -539,7 +539,7 @@ const ActionElem = ({ connectors, options }) => (
  * @returns {WrapElem}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
- * @namespace 
+ * @namespace
  */
 const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
   &lt;WrapElem
@@ -624,9 +624,7 @@ const ToolboxShow = () => {
   );
 };
 
-
-
-export /** 
+export /**
  * @returns {Fragment}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
@@ -635,7 +633,7 @@ export /**
 const ToolboxFilter = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, views } = options;
+  const { fields, views, field_view_options } = options;
   return (
     &lt;Fragment>
       &lt;div className="toolbar-row">
@@ -643,23 +641,31 @@ const ToolboxFilter = () => {
         &lt;ColumnsElem connectors={connectors} />
       &lt;/div>
       &lt;div className="toolbar-row">
+        &lt;FieldElem
+          connectors={connectors}
+          fields={fields}
+          field_view_options={field_view_options}
+        />
         &lt;LineBreakElem connectors={connectors} />
+      &lt;/div>
+      &lt;div className="toolbar-row">
         &lt;DropDownFilterElem connectors={connectors} fields={fields} />
-      &lt;/div>
-      &lt;div className="toolbar-row">
         &lt;ToggleFilterElem connectors={connectors} fields={fields} />
+      &lt;/div>
+      &lt;div className="toolbar-row">
         &lt;SearchElem connectors={connectors} />
-      &lt;/div>
-      &lt;div className="toolbar-row">
         &lt;ActionElem connectors={connectors} options={options} />
+      &lt;/div>
+      &lt;div className="toolbar-row">
         &lt;ContainerElem connectors={connectors} />
-      &lt;/div>
-      &lt;div className="toolbar-row">
+
         &lt;CardElem connectors={connectors} />
-        &lt;TabsElem connectors={connectors} />
       &lt;/div>
       &lt;div className="toolbar-row">
+        &lt;TabsElem connectors={connectors} />
         &lt;ViewElem connectors={connectors} views={views} />
+      &lt;/div>
+      &lt;div className="toolbar-row">
         &lt;HTMLElem connectors={connectors} />
       &lt;/div>
     &lt;/Fragment>
