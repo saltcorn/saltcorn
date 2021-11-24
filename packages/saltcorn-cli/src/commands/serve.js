@@ -60,10 +60,13 @@ ServeCommand.description = `Start the Saltcorn server`;
  */
 ServeCommand.flags = {
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
-  port: flags.integer({ char: "p", description: "port", default: 3000 }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
   watchReaper: flags.boolean({ char: "r", description: "Watch reaper" }),
-  dev: flags.boolean({string: "dev", description: "Run in dev mode and re-start on file changes"} ),
+  dev: flags.boolean({
+    string: "dev",
+    char: "d",
+    description: "Run in dev mode and re-start on file changes",
+  }),
   addschema: flags.boolean({ char: "a", description: "Add schema if missing" }),
   nomigrate: flags.boolean({ char: "n", description: "No migrations" }),
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),
