@@ -669,7 +669,6 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
     fields: tfields,
     layout,
   });
-  await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
 };

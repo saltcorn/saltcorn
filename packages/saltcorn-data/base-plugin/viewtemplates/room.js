@@ -36,8 +36,8 @@ const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -184,8 +184,8 @@ const get_state_fields = () => [
 const limit = 10;
 
 /**
- * @param {string} table_id 
- * @param {string} viewname 
+ * @param {string} table_id
+ * @param {string} viewname
  * @param {object} optsOne
  * @param {string} optsOne.participant_field,
  * @param {string} optsOne.msg_relation
@@ -193,7 +193,7 @@ const limit = 10;
  * @param {string} optsOne.msgview
  * @param {string} optsOne.msgform
  * @param {string} optsOne.participant_maxread_field
- * @param {object} state 
+ * @param {object} state
  * @param {object} optsTwo
  * @param {object} optsTwo.req
  * @param {object} optsTwo.res
@@ -286,6 +286,8 @@ const run = async (
   form.class = `room-${state.id}`;
   form.hidden("room_id");
   form.values = { room_id: state.id };
+  await form.fill_fkey_options();
+
   return div(
     n_retrieved === limit &&
       button(
@@ -305,13 +307,13 @@ const run = async (
 };
 
 /**
- * @param {*} table_id 
- * @param {*} viewname 
- * @param {object} optsOne 
+ * @param {*} table_id
+ * @param {*} viewname
+ * @param {object} optsOne
  * @param {string} optsOne.participant_field
  * @param {string} optsOne.participant_maxread_field
- * @param {body} body 
- * @param {object} optsTwo 
+ * @param {body} body
+ * @param {object} optsTwo
  * @param {object} optsTwo.req
  * @param {object} optsTwo.res
  * @returns {Promise<void>}
@@ -365,8 +367,8 @@ const ack_read = async (
 };
 
 /**
- * @param {*} table_id 
- * @param {*} viewname 
+ * @param {*} table_id
+ * @param {*} viewname
  * @param {object} optsOne.
  * @param {string} optsOne.participant_field
  * @param {string} optsOne.msg_relation
@@ -374,10 +376,10 @@ const ack_read = async (
  * @param {string} optsOne.msgview
  * @param {*} optsOne.msgform
  * @param {*} optsOne.participant_maxread_field
- * @param {object} body 
- * @param {object} optsTwo 
+ * @param {object} body
+ * @param {object} optsTwo
  * @param {object} optsTwo.req
- * @param {object} optsTwo.res 
+ * @param {object} optsTwo.res
  * @returns {Promise<object>}
  */
 const fetch_older_msg = async (
@@ -445,8 +447,8 @@ const fetch_older_msg = async (
 };
 
 /**
- * @param {*} table_id 
- * @param {string} viewname 
+ * @param {*} table_id
+ * @param {string} viewname
  * @param {object} optsOne
  * @param {string} optsOne.participant_field
  * @param {string} optsOne.msg_relation
@@ -454,7 +456,7 @@ const fetch_older_msg = async (
  * @param {string} optsOne.msgview
  * @param {string} optsOne.msgform
  * @param {string} optsOne.participant_maxread_field
- * @param {*} body 
+ * @param {*} body
  * @param {object} optsTwo
  * @param {object} optsTwo.req
  * @param {object} optsTwo.res
@@ -549,8 +551,8 @@ const submit_msg_ajax = async (
 };
 
 /**
- * @param {*} table_id 
- * @param {string} viewname 
+ * @param {*} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {*} opts.participant_field
  * @param {string} opts.msg_relation,
@@ -617,8 +619,8 @@ module.exports = {
   /**
    * @param {object} opts
    * @param {object} opts.participant_field
-   * @param {string} room_id 
-   * @param {object} user 
+   * @param {string} room_id
+   * @param {object} user
    * @returns {Promise<object>}
    */
   authorize_join: async ({ participant_field }, room_id, user) => {
