@@ -9,7 +9,7 @@ const estraverse = require("estraverse");
 const astring = require("astring");
 
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {boolean|void}
  */
 function expressionValidator(s) {
@@ -23,7 +23,7 @@ function expressionValidator(s) {
 }
 
 /**
- * @param {string} expression 
+ * @param {string} expression
  * @returns {string}
  */
 function jsexprToSQL(expression) {
@@ -32,18 +32,18 @@ function jsexprToSQL(expression) {
 }
 
 /**
- * @param {string} expression 
+ * @param {string} expression
  * @throws {Error}
  * @returns {object}
  */
-function jsexprToWhere(expression) {
+function jsexprToWhere(expression, extraCtx = {}) {
   if (!expression) return {};
   try {
     const ast = acorn.parseExpressionAt(expression, 0, {
       ecmaVersion: 2020,
       locations: false,
     });
-    //console.log(ast);
+    console.log(ast);
     const compile = (node) =>
       ({
         BinaryExpression() {
@@ -83,6 +83,9 @@ function jsexprToWhere(expression) {
           }[node.operator](node);
         },
         Identifier({ name }) {
+          if (name[0] === "$") {
+            return extraCtx[name.substring(1)] || null;
+          }
           return name;
         },
         Literal({ value }) {
@@ -98,8 +101,8 @@ function jsexprToWhere(expression) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} statefuns 
+ * @param {string} expression
+ * @param {object[]} statefuns
  * @returns {object}
  */
 function transform_for_async(expression, statefuns) {
@@ -125,8 +128,8 @@ function transform_for_async(expression, statefuns) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} fields 
+ * @param {string} expression
+ * @param {object[]} fields
  * @returns {any}
  */
 function get_expression_function(expression, fields) {
@@ -142,8 +145,8 @@ function get_expression_function(expression, fields) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} fields 
+ * @param {string} expression
+ * @param {object[]} fields
  * @param {object} [extraContext = {}]
  * @returns {any}
  */
@@ -162,9 +165,9 @@ function get_async_expression_function(expression, fields, extraContext = {}) {
 }
 
 /**
- * @param {object[]} rows 
- * @param {object[]} fields 
- * @returns {object[]} 
+ * @param {object[]} rows
+ * @param {object[]} fields
+ * @returns {object[]}
  */
 function apply_calculated_fields(rows, fields) {
   let hasExprs = false;
@@ -196,8 +199,8 @@ function apply_calculated_fields(rows, fields) {
 }
 
 /**
- * @param {*} row 
- * @param {*} fields 
+ * @param {*} row
+ * @param {*} fields
  * @returns {Promise<any>}
  */
 const apply_calculated_fields_stored = async (row, fields) => {

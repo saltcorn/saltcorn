@@ -153,12 +153,13 @@ class Field {
    * @param {object} where
    * @returns {Promise<void>}
    */
-  async fill_fkey_options(force_allow_none = false, where0) {
+  async fill_fkey_options(force_allow_none = false, where0, extraCtx) {
     const where =
       where0 ||
       (this.attributes.where
-        ? jsexprToWhere(this.attributes.where)
+        ? jsexprToWhere(this.attributes.where, extraCtx)
         : undefined);
+    //console.log(where);
     if (
       this.is_fkey &&
       (this.type !== "File" ||
