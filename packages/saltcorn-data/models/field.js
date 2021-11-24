@@ -7,7 +7,7 @@
 
 const db = require("../db");
 const { contract, is } = require("contractis");
-const { recalculate_for_stored } = require("./expression");
+const { recalculate_for_stored, jsexprToWhere } = require("./expression");
 const { sqlsanitize } = require("@saltcorn/db-common/internal.js");
 const { InvalidAdminAction } = require("../utils");
 const { mkWhere } = require("../db");
@@ -153,7 +153,12 @@ class Field {
    * @param {object} where
    * @returns {Promise<void>}
    */
-  async fill_fkey_options(force_allow_none = false, where) {
+  async fill_fkey_options(force_allow_none = false, where0) {
+    const where =
+      where0 ||
+      (this.attributes.where
+        ? jsexprToWhere(this.attributes.where)
+        : undefined);
     if (
       this.is_fkey &&
       (this.type !== "File" ||
@@ -288,7 +293,7 @@ class Field {
   }
 
   /**
-   * @param {object} whole_rec 
+   * @param {object} whole_rec
    * @returns {object}
    */
   validate(whole_rec) {
@@ -316,8 +321,8 @@ class Field {
   }
 
   /**
-   * 
-   * @param {object} where 
+   *
+   * @param {object} where
    * @param {object} [selectopts]
    * @returns {Field[]}
    */
@@ -327,7 +332,7 @@ class Field {
   }
 
   /**
-   * @param {object} where 
+   * @param {object} where
    * @returns {Promise<Field>}
    */
   static async findOne(where) {
@@ -352,8 +357,8 @@ class Field {
   }
 
   /**
-   * 
-   * @param {boolean} not_null 
+   *
+   * @param {boolean} not_null
    * @returns {Promise<void>}
    */
   async toggle_not_null(not_null) {
@@ -370,7 +375,7 @@ class Field {
   }
 
   /**
-   * @param {object} new_field 
+   * @param {object} new_field
    * @returns {Promise<void>}
    */
   async alter_sql_type(new_field) {
@@ -421,7 +426,7 @@ class Field {
   }
 
   /**
-   * @param {object} v 
+   * @param {object} v
    * @returns {Promise<void>}
    */
   async update(v) {
@@ -523,7 +528,7 @@ class Field {
   }
 
   /**
-   * @param {object} table 
+   * @param {object} table
    * @returns {Promise<void>}
    */
   async enable_fkey_constraint(table) {
@@ -542,7 +547,7 @@ class Field {
   }
 
   /**
-   * @param {object} fld 
+   * @param {object} fld
    * @param {boolean} [bare = false]
    * @returns {Promise<Field>}
    */

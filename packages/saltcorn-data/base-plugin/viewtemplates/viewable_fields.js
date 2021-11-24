@@ -16,7 +16,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 
-/** 
+/**
  * @function
  * @param {string} viewname
  * @param {Table|object} table
@@ -42,8 +42,8 @@ const action_url = contract(
 );
 
 /**
- * @param {string} url 
- * @param {object} req 
+ * @param {string} url
+ * @param {object} req
  * @param {object} opts
  * @param {string} opts.action_name
  * @param {string} opts.action_label
@@ -55,7 +55,7 @@ const action_url = contract(
  * @param {string} opts.action_bgcol
  * @param {string} opts.action_bordercol
  * @param {string} opts.action_textcol
- * @param {*} __ 
+ * @param {*} __
  * @returns {object}
  */
 const action_link = (
@@ -174,7 +174,7 @@ const make_link = contract(
 );
 
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {object}
  */
 const parse_view_select = (s) => {
@@ -197,7 +197,7 @@ const parse_view_select = (s) => {
 };
 
 //todo: use above to simplify code
-/** 
+/**
  * @function
  * @param {object} opts
  * @param {string} opts.view,
@@ -338,7 +338,7 @@ const view_linker = contract(
 );
 
 /**
- * @param {string} nm 
+ * @param {string} nm
  * @returns {boolean}
  */
 const action_requires_write = (nm) => {
@@ -347,7 +347,7 @@ const action_requires_write = (nm) => {
   if (nm.startsWith("Toggle")) return true;
 };
 
-/** 
+/**
  * @function
  * @param {string} viewname
  * @param {Table|object} table
@@ -527,8 +527,8 @@ const get_viewable_fields = contract(
 );
 
 /**
- * @param {string} fname 
- * @param {object} req 
+ * @param {string} fname
+ * @param {object} req
  * @returns {string}
  */
 const sortlinkForName = (fname, req) => {
@@ -543,10 +543,10 @@ const sortlinkForName = (fname, req) => {
 };
 
 /**
- * @param {object} column 
- * @param {object} f 
- * @param {object} req 
- * @param {*} __ 
+ * @param {object} column
+ * @param {object} f
+ * @param {object} req
+ * @param {*} __
  * @returns {string}
  */
 const headerLabelForName = (column, f, req, __) => {
@@ -563,7 +563,7 @@ const headerLabelForName = (column, f, req, __) => {
   return label + arrow;
 };
 
-/** 
+/**
  * @function
  * @param {Field[]} fields
  * @param {object} state
@@ -597,12 +597,12 @@ const splitUniques = contract(
 );
 
 /**
- * @param {object} table 
- * @param {string} viewname 
- * @param {object[]} [columns] 
- * @param {object} layout0 
- * @param {boolean} id 
- * @param {object} req 
+ * @param {object} table
+ * @param {string} viewname
+ * @param {object[]} [columns]
+ * @param {object} layout0
+ * @param {boolean} id
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const getForm = async (table, viewname, columns, layout0, id, req) => {
@@ -626,7 +626,7 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
           }
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
-
+          f.attributes = { ...column.configuration, ...f.attributes };
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({
@@ -675,9 +675,9 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
 };
 
 /**
- * @param {object} table 
- * @param {object} req 
- * @param {object} fixed 
+ * @param {object} table
+ * @param {object} req
+ * @param {object} fixed
  * @returns {Promise<object>}
  */
 const fill_presets = async (table, req, fixed) => {
