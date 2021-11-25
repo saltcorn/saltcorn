@@ -1,6 +1,6 @@
 /**
  * @category saltcorn-cli
- * @module commands/run-nenchmark
+ * @module commands/run-benchmark
  */
 const { Command, flags } = require("@oclif/command");
 const si = require("systeminformation");

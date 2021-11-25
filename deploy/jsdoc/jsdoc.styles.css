@@ -1,3 +1,7 @@
+div.category h2 {
+    cursor: pointer;
+}
+
 .content h1, .sidebar ul li {
     line-break: anywhere;
 }
