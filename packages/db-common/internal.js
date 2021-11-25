@@ -136,7 +136,24 @@ const whereOr = (is_sqlite, i) => (ors) =>
       )
       .join(" or ")
   );
+const equals = ([v1, v2], is_sqlite, i) => {
+  const pVal = (v) =>
+    typeof v === "symbol"
+      ? quote(sqlsanitizeAllowDots(v.description))
+      : placeHolder(is_sqlite, i());
+  const isNull = (v) => `${pVal(v)} is null`;
+  if (v1 === null) return isNull(v2);
+  if (v2 === null) return isNull(v1);
+  return `${pVal(v1)}=${pVal(v2)}`;
+};
+const equalsVals = (vs) => {
+  let vals = [];
 
+  vs.forEach((v) => {
+    if (v !== null && typeof v !== "symbol") vals.push(v);
+  });
+  return vals;
+};
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -155,6 +172,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `not (${Object.entries(v)
         .map((kv) => whereClause(is_sqlite, i)(kv))
         .join(" and ")})`
+    : k === "eq" && Array.isArray(v)
+    ? equals(v, is_sqlite, i)
     : v && v.or && Array.isArray(v.or)
     ? wrapParens(
         v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
@@ -211,6 +230,8 @@ const getVal = ([k, v]) =>
     ? [v.in]
     : k === "not" && typeof v === "object"
     ? Object.entries(v).map(getVal).flat(1)
+    : k === "eq" && Array.isArray(v)
+    ? equalsVals(v)
     : k === "or" && Array.isArray(v)
     ? v.map((vi) => Object.entries(vi).map(getVal)).flat(1)
     : v && v.or && Array.isArray(v.or)

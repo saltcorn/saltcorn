@@ -57,6 +57,28 @@ describe("mkWhere", () => {
       where: 'where "id"=$1 and "hello"=$2',
     });
   });
+  it("should read eq", () => {
+    expect(mkWhere({ eq: [Symbol("id"), 5] })).toStrictEqual({
+      values: [5],
+      where: 'where "id"=$1',
+    });
+    expect(mkWhere({ eq: [Symbol("id"), null] })).toStrictEqual({
+      values: [],
+      where: 'where "id" is null',
+    });
+    expect(mkWhere({ eq: [4, 5] })).toStrictEqual({
+      values: [4, 5],
+      where: "where $1=$2",
+    });
+    expect(mkWhere({ eq: [null, 5] })).toStrictEqual({
+      values: [5],
+      where: "where $1 is null",
+    });
+    expect(mkWhere({ not: { eq: [Symbol("id"), 5] } })).toStrictEqual({
+      values: [5],
+      where: 'where not ("id"=$1)',
+    });
+  });
   it("should query null", () => {
     expect(mkWhere({ id: null })).toStrictEqual({
       values: [],
