@@ -4,6 +4,43 @@
  * @module routes/index
  * @subcategory routes
  */
+
+/**
+ * All files in the routes module.
+ * @namespace routes_overview
+ * @property {module:routes/actions} actions
+ * @property {module:routes/admin} admin
+ * @property {module:routes/api} api
+ * @property {module:routes/config} config
+ * @property {module:routes/crashlog} crashlog
+ * @property {module:routes/delete} delete
+ * @property {module:routes/edit} edit
+ * @property {module:routes/eventlog} eventlog
+ * @property {module:routes/events} events
+ * @property {module:routes/fields} fields
+ * @property {module:routes/files} files
+ * @property {module:routes/homepage} homepage
+ * @property {module:routes/infoarch} infoarch
+ * @property {module:routes/library} library
+ * @property {module:routes/list} list
+ * @property {module:routes/menu} menu
+ * @property {module:routes/packs} packs
+ * @property {module:routes/page} page
+ * @property {module:routes/pageedit} pageedit
+ * @property {module:routes/plugins} plugins
+ * @property {module:routes/scapi} scapi
+ * @property {module:routes/search} search
+ * @property {module:routes/settings} settings
+ * @property {module:routes/tables} tables
+ * @property {module:routes/tenant} tenant
+ * @property {module:routes/utils} utils
+ * @property {module:routes/view} view
+ * @property {module:routes/viewedit} viewedit
+ * 
+ * @category server
+ * @subcategory routes
+ */
+
 const table = require("./tables");
 const field = require("./fields");
 const list = require("./list");

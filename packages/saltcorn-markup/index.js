@@ -2,6 +2,22 @@
  * @category saltcorn-markup
  * @module saltcorn-markup/index
  */
+
+/**
+ * All files in the saltcorn-markup package.
+ * @namespace saltcorn-markup_overview
+ * @property {module:builder} builder
+ * @property {module:emergency_layout} emergency_layout
+ * @property {module:form} from
+ * @property {module:helpers} helpers
+ * @property {module:layout_utils} layout_utils
+ * @property {module:layout} layout
+ * @property {module:mktag} mktag
+ * @property {module:table} table
+ * @property {module:tabs} tabs
+ * @category saltcorn-markup
+ */
+
 const renderForm = require("./form");
 const renderBuilder = require("./builder");
 const mkTable = require("./table");

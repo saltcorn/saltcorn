@@ -1,6 +1,6 @@
 /**
  * @category saltcorn-builder
- * @module components / Toolbox
+ * @module components/Toolbox
  * @subcategory components
  */
 

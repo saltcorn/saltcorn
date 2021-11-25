@@ -16,8 +16,9 @@ jobs:
           node-version: "14.x"
       - run: npm install -g jsdoc 
       - run: npm install
-      - run: jsdoc -c deploy/jsdoc.conf.json -R deploy/documentation_main.md
-      - run: cp deploy/jsdoc.styles.css docs/jsdoc.styles.css
+      - run: jsdoc -c deploy/jsdoc/jsdoc.conf.json -R deploy/jsdoc/documentation_main.md
+      - run: cp deploy/jsdoc/jsdoc.styles.css docs/jsdoc.styles.css
+      - run: mkdir docs/build && cp deploy/jsdoc/entry.js docs/build/entry.js
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
