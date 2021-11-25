@@ -13,7 +13,9 @@ const { contract, is } = require("contractis");
  * @param {string} nm
  * @returns {string}
  */
-const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
+const sqlsanitize = contract(is.fun(is.or(is.str, is.any), is.str), (nm) => {
+  if (typeof nm === "symbol") return sqlsanitize(nm.description);
+
   const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
@@ -27,11 +29,15 @@ const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
  * @param {string} nm
  * @returns {string}
  */
-const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
-  const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
-  if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
-  else return s;
-});
+const sqlsanitizeAllowDots = contract(
+  is.fun(is.or(is.str, is.any), is.str),
+  (nm) => {
+    if (typeof nm === "symbol") return sqlsanitizeAllowDots(s.description);
+    const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
+    if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
+    else return s;
+  }
+);
 /**
  *
  * @param {object} v
@@ -184,7 +190,13 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         )}'=${placeHolder(is_sqlite, i())}`
     : v === null
     ? `${quote(sqlsanitizeAllowDots(k))} is null`
-    : `${quote(sqlsanitizeAllowDots(k))}=${placeHolder(is_sqlite, i())}`;
+    : k === "not"
+    ? `not (${
+        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
+      })`
+    : `${quote(sqlsanitizeAllowDots(k))}=${
+        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
+      }`;
 
 /**
  * @param {object[]} opts
@@ -217,6 +229,8 @@ const getVal = ([k, v]) =>
     ? null
     : typeof (v || {}).json !== "undefined"
     ? v.json[1]
+    : typeof v === "symbol"
+    ? null
     : v;
 
 /**

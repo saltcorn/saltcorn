@@ -43,22 +43,26 @@ function jsexprToWhere(expression, extraCtx = {}) {
       ecmaVersion: 2020,
       locations: false,
     });
-    console.log(ast);
+    //console.log(ast);
     const compile = (node) =>
       ({
         BinaryExpression() {
+          const cleft0 = compile(node.left);
+          const cleft =
+            typeof cleft0 === "symbol" ? cleft0.description : cleft0;
+          const cright = compile(node.right);
           return {
-            "=="({ left, right }) {
-              return { [compile(left)]: compile(right) };
+            "=="() {
+              return { [cleft]: cright };
             },
-            "==="({ left, right }) {
-              return { [compile(left)]: compile(right) };
+            "==="() {
+              return { [cleft]: cright };
             },
-            "!="({ left, right }) {
-              return { not: { [compile(left)]: compile(right) } };
+            "!="() {
+              return { not: { [cleft]: cright } };
             },
-            "!=="({ left, right }) {
-              return { not: { [compile(left)]: compile(right) } };
+            "!=="() {
+              return { not: { [cleft]: cright } };
             },
           }[node.operator](node);
         },
@@ -86,14 +90,15 @@ function jsexprToWhere(expression, extraCtx = {}) {
           if (name[0] === "$") {
             return extraCtx[name.substring(1)] || null;
           }
-          return name;
+          return Symbol(name);
         },
         Literal({ value }) {
           return value;
         },
       }[node.type](node));
     return compile(ast);
-  } catch {
+  } catch (e) {
+    console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );

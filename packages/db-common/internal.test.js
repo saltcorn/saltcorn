@@ -4,11 +4,17 @@ describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
     expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
   });
+  it("should not alter valid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo_oo"))).toBe("ffoo_oo");
+  });
   it("should remove spaces", () => {
     expect(sqlsanitize(" ")).toBe("");
   });
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+  });
+  it("should remove chars from invalid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");
   });
   it("should not allow dots", () => {
     expect(sqlsanitize("ffoo.oo")).toBe("ffoooo");
