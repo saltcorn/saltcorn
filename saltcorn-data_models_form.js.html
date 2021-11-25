@@ -105,9 +105,9 @@ const Field = require("./field");
  */
 class Form {
   /**
-    * Constructor
-    * @param o
-    */
+   * Constructor
+   * @param o
+   */
   constructor(o) {
     this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
@@ -139,7 +139,7 @@ class Form {
   }
 
   /**
-   * @param {object} ks 
+   * @param {object} ks
    */
   hidden(...ks) {
     ks.forEach((k) => {
@@ -157,8 +157,9 @@ class Form {
    * @param {boolean} [force_allow_none = false]
    */
   async fill_fkey_options(force_allow_none = false) {
+    //console.log(this.values);
     for (const f of this.fields) {
-      await f.fill_fkey_options(force_allow_none);
+      await f.fill_fkey_options(force_allow_none, undefined, this.values);
     }
   }
 
@@ -189,7 +190,7 @@ class Form {
   }
 
   /**
-   * @param {*} v 
+   * @param {*} v
    * @returns {object}
    */
   validate(v) {
