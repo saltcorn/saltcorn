@@ -13,7 +13,9 @@ const { contract, is } = require("contractis");
  * @param {string} nm
  * @returns {string}
  */
-const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
+const sqlsanitize = contract(is.fun(is.or(is.str, is.any), is.str), (nm) => {
+  if (typeof nm === "symbol") return sqlsanitize(nm.description);
+
   const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
@@ -27,11 +29,15 @@ const sqlsanitize = contract(is.fun(is.str, is.str), (nm) => {
  * @param {string} nm
  * @returns {string}
  */
-const sqlsanitizeAllowDots = contract(is.fun(is.str, is.str), (nm) => {
-  const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
-  if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
-  else return s;
-});
+const sqlsanitizeAllowDots = contract(
+  is.fun(is.or(is.str, is.any), is.str),
+  (nm) => {
+    if (typeof nm === "symbol") return sqlsanitizeAllowDots(s.description);
+    const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
+    if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
+    else return s;
+  }
+);
 /**
  *
  * @param {object} v
@@ -130,7 +136,26 @@ const whereOr = (is_sqlite, i) => (ors) =>
       )
       .join(" or ")
   );
+const equals = ([v1, v2], is_sqlite, i) => {
+  const pVal = (v) =>
+    typeof v === "symbol"
+      ? quote(sqlsanitizeAllowDots(v.description))
+      : placeHolder(is_sqlite, i()) + (typeof v === "string" ? "::text" : "");
+  const isNull = (v) => `${pVal(v)} is null`;
+  if (v1 === null && v2 === null) return "null is null";
+  if (v1 === null) return isNull(v2);
+  if (v2 === null) return isNull(v1);
+  return `${pVal(v1)}=${pVal(v2)}`;
+};
+const equalsVals = (vs) => {
+  let vals = [];
 
+  vs.forEach((v) => {
+    if (v !== null && typeof v !== "symbol") vals.push(v);
+  });
+  //console.log({ vals });
+  return vals;
+};
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -149,6 +174,8 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
     ? `not (${Object.entries(v)
         .map((kv) => whereClause(is_sqlite, i)(kv))
         .join(" and ")})`
+    : k === "eq" && Array.isArray(v)
+    ? equals(v, is_sqlite, i)
     : v && v.or && Array.isArray(v.or)
     ? wrapParens(
         v.or.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
@@ -184,7 +211,13 @@ const whereClause = (is_sqlite, i) => ([k, v]) =>
         )}'=${placeHolder(is_sqlite, i())}`
     : v === null
     ? `${quote(sqlsanitizeAllowDots(k))} is null`
-    : `${quote(sqlsanitizeAllowDots(k))}=${placeHolder(is_sqlite, i())}`;
+    : k === "not"
+    ? `not (${
+        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
+      })`
+    : `${quote(sqlsanitizeAllowDots(k))}=${
+        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
+      }`;
 
 /**
  * @param {object[]} opts
@@ -199,8 +232,13 @@ const getVal = ([k, v]) =>
     ? [v.in]
     : k === "not" && typeof v === "object"
     ? Object.entries(v).map(getVal).flat(1)
+    : k === "eq" && Array.isArray(v)
+    ? equalsVals(v).flat(1)
     : k === "or" && Array.isArray(v)
-    ? v.map((vi) => Object.entries(vi).map(getVal)).flat(1)
+    ? v
+        .map((vi) => Object.entries(vi).map(getVal))
+        .flat(1)
+        .flat(1)
     : v && v.or && Array.isArray(v.or)
     ? v.or.map((vi) => getVal([k, vi])).flat(1)
     : Array.isArray(v)
@@ -217,6 +255,8 @@ const getVal = ([k, v]) =>
     ? null
     : typeof (v || {}).json !== "undefined"
     ? v.json[1]
+    : typeof v === "symbol"
+    ? null
     : v;
 
 /**

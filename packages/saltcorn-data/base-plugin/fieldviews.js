@@ -18,9 +18,9 @@ const {
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 
-/** 
+/**
  * select namespace
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  */
 const select = {
@@ -29,12 +29,17 @@ const select = {
   /** @type {boolean} */
   isEdit: true,
   /**
-   * @type {object[]} 
+   * @type {object[]}
    */
   configFields: () => [
     {
       name: "neutral_label",
       label: "Neutral label",
+      type: "String",
+    },
+    {
+      name: "where",
+      label: "Where",
       type: "String",
     },
     {
@@ -45,15 +50,15 @@ const select = {
       type: "Bool",
     },
   ],
-  
+
   /**
-   * @param {*} nm 
-   * @param {*} v 
-   * @param {*} attrs 
-   * @param {*} cls 
-   * @param {*} reqd 
-   * @param {*} field 
-   * @returns {object} 
+   * @param {*} nm
+   * @param {*} v
+   * @param {*} attrs
+   * @param {*} cls
+   * @param {*} reqd
+   * @param {*} field
+   * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {
     if (attrs.disabled)
@@ -84,9 +89,9 @@ const select = {
   },
 };
 
-/** 
+/**
  * radio_select namespace
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  */
 const radio_select = {
@@ -95,12 +100,12 @@ const radio_select = {
   /** @type {boolean} */
   isEdit: true,
   /**
-   * @param {*} nm 
-   * @param {*} v 
-   * @param {*} attrs 
-   * @param {*} cls 
-   * @param {*} reqd 
-   * @param {*} field 
+   * @param {*} nm
+   * @param {*} v
+   * @param {*} attrs
+   * @param {*} cls
+   * @param {*} reqd
+   * @param {*} field
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) =>
@@ -112,9 +117,9 @@ const radio_select = {
     }),
 };
 
-/** 
+/**
  * select namespace
- * @namespace 
+ * @namespace
  * @category saltcorn-data
  */
 const search_or_create = {
@@ -123,7 +128,7 @@ const search_or_create = {
   /** @type {boolean} */
   isEdit: true,
   /**
-   * @param {object} field 
+   * @param {object} field
    * @returns {Promise<object[]>}
    */
   configFields: async (field) => {
@@ -146,12 +151,12 @@ const search_or_create = {
   },
 
   /**
-   * @param {*} nm 
-   * @param {*} v 
-   * @param {*} attrs 
-   * @param {*} cls 
-   * @param {*} reqd 
-   * @param {*} field 
+   * @param {*} nm
+   * @param {*} v
+   * @param {*} attrs
+   * @param {*} cls
+   * @param {*} reqd
+   * @param {*} field
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {

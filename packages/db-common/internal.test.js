@@ -4,11 +4,17 @@ describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
     expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
   });
+  it("should not alter valid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo_oo"))).toBe("ffoo_oo");
+  });
   it("should remove spaces", () => {
     expect(sqlsanitize(" ")).toBe("");
   });
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+  });
+  it("should remove chars from invalid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");
   });
   it("should not allow dots", () => {
     expect(sqlsanitize("ffoo.oo")).toBe("ffoooo");
@@ -49,6 +55,32 @@ describe("mkWhere", () => {
     expect(mkWhere({ id: 5, hello: "world" })).toStrictEqual({
       values: [5, "world"],
       where: 'where "id"=$1 and "hello"=$2',
+    });
+  });
+  it("should read eq", () => {
+    expect(mkWhere({ eq: [Symbol("id"), 5] })).toStrictEqual({
+      values: [5],
+      where: 'where "id"=$1',
+    });
+    expect(mkWhere({ eq: [Symbol("id"), null] })).toStrictEqual({
+      values: [],
+      where: 'where "id" is null',
+    });
+    expect(mkWhere({ eq: ["id", null] })).toStrictEqual({
+      values: ["id"],
+      where: "where $1::text is null",
+    });
+    expect(mkWhere({ eq: [4, 5] })).toStrictEqual({
+      values: [4, 5],
+      where: "where $1=$2",
+    });
+    expect(mkWhere({ eq: [null, 5] })).toStrictEqual({
+      values: [5],
+      where: "where $1 is null",
+    });
+    expect(mkWhere({ not: { eq: [Symbol("id"), 5] } })).toStrictEqual({
+      values: [5],
+      where: 'where not ("id"=$1)',
     });
   });
   it("should query null", () => {
@@ -140,8 +172,20 @@ describe("mkWhere", () => {
       values: [[1, 2, 3]],
       where: 'where "y" = ANY ($1)',
     });
+    expect(
+      mkWhere({
+        or: [
+          { not: { eq: ["1", null] } },
+          { not: { eq: [null, null] }, married_to: null },
+        ],
+      })
+    ).toStrictEqual({
+      values: ["1"],
+      where:
+        'where (not ($1::text is null) or not (null is null) and "married_to" is null)',
+    });
     /*
-    TODO
+
     expect(mkWhere([{ id: 5 }, { x: 7 }])).toStrictEqual({
       values: [5, 7],
       where: 'where "id"=$1 and "x"=$2',

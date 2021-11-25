@@ -7,6 +7,7 @@ const {
   get_expression_function,
   transform_for_async,
   expressionValidator,
+  jsexprToWhere,
 } = require("../models/expression");
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -217,5 +218,26 @@ describe("expressions", () => {
   });
   it("invalidates incorrect", () => {
     expect(expressionValidator("2+")).toBe("Unexpected end of input");
+  });
+});
+describe("jsexprToWhere", () => {
+  it("translates equality", () => {
+    expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
+  });
+  it("translates equal to col", () => {
+    expect(jsexprToWhere("foo==bar").foo.description).toBe("bar");
+  });
+  it("translates context", () => {
+    expect(jsexprToWhere("foo==$bar", { bar: 5 })).toEqual({ foo: 5 });
+  });
+  it("translates context", () => {
+    const w = jsexprToWhere("$father !== null && married_to === $father", {
+      father: "1",
+    });
+    expect(w).toEqual({ married_to: "1", not: { eq: ["1", null] } });
+  });
+  it("translates context", () => {
+    const w = jsexprToWhere("$father !== null && married_to === $father", {});
+    expect(w).toEqual({ married_to: null, not: { eq: [null, null] } });
   });
 });

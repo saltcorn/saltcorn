@@ -9,7 +9,7 @@ const estraverse = require("estraverse");
 const astring = require("astring");
 
 /**
- * @param {string} s 
+ * @param {string} s
  * @returns {boolean|void}
  */
 function expressionValidator(s) {
@@ -23,7 +23,7 @@ function expressionValidator(s) {
 }
 
 /**
- * @param {string} expression 
+ * @param {string} expression
  * @returns {string}
  */
 function jsexprToSQL(expression) {
@@ -32,11 +32,11 @@ function jsexprToSQL(expression) {
 }
 
 /**
- * @param {string} expression 
+ * @param {string} expression
  * @throws {Error}
  * @returns {object}
  */
-function jsexprToWhere(expression) {
+function jsexprToWhere(expression, extraCtx = {}) {
   if (!expression) return {};
   try {
     const ast = acorn.parseExpressionAt(expression, 0, {
@@ -47,18 +47,26 @@ function jsexprToWhere(expression) {
     const compile = (node) =>
       ({
         BinaryExpression() {
+          const cleft = compile(node.left);
+          const cright = compile(node.right);
+          const cmp =
+            typeof cleft === "string" || cleft === null
+              ? { eq: [cleft, cright] }
+              : typeof cleft === "symbol"
+              ? { [cleft.description]: cright }
+              : { [cleft]: cright };
           return {
-            "=="({ left, right }) {
-              return { [compile(left)]: compile(right) };
+            "=="() {
+              return cmp;
             },
-            "==="({ left, right }) {
-              return { [compile(left)]: compile(right) };
+            "==="() {
+              return cmp;
             },
-            "!="({ left, right }) {
-              return { not: { [compile(left)]: compile(right) } };
+            "!="() {
+              return { not: cmp };
             },
-            "!=="({ left, right }) {
-              return { not: { [compile(left)]: compile(right) } };
+            "!=="() {
+              return { not: cmp };
             },
           }[node.operator](node);
         },
@@ -83,14 +91,18 @@ function jsexprToWhere(expression) {
           }[node.operator](node);
         },
         Identifier({ name }) {
-          return name;
+          if (name[0] === "$") {
+            return extraCtx[name.substring(1)] || null;
+          }
+          return Symbol(name);
         },
         Literal({ value }) {
           return value;
         },
       }[node.type](node));
     return compile(ast);
-  } catch {
+  } catch (e) {
+    console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
@@ -98,8 +110,8 @@ function jsexprToWhere(expression) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} statefuns 
+ * @param {string} expression
+ * @param {object[]} statefuns
  * @returns {object}
  */
 function transform_for_async(expression, statefuns) {
@@ -125,8 +137,8 @@ function transform_for_async(expression, statefuns) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} fields 
+ * @param {string} expression
+ * @param {object[]} fields
  * @returns {any}
  */
 function get_expression_function(expression, fields) {
@@ -142,8 +154,8 @@ function get_expression_function(expression, fields) {
 }
 
 /**
- * @param {string} expression 
- * @param {object[]} fields 
+ * @param {string} expression
+ * @param {object[]} fields
  * @param {object} [extraContext = {}]
  * @returns {any}
  */
@@ -162,9 +174,9 @@ function get_async_expression_function(expression, fields, extraContext = {}) {
 }
 
 /**
- * @param {object[]} rows 
- * @param {object[]} fields 
- * @returns {object[]} 
+ * @param {object[]} rows
+ * @param {object[]} fields
+ * @returns {object[]}
  */
 function apply_calculated_fields(rows, fields) {
   let hasExprs = false;
@@ -196,8 +208,8 @@ function apply_calculated_fields(rows, fields) {
 }
 
 /**
- * @param {*} row 
- * @param {*} fields 
+ * @param {*} row
+ * @param {*} fields
  * @returns {Promise<any>}
  */
 const apply_calculated_fields_stored = async (row, fields) => {

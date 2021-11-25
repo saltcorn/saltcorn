@@ -477,7 +477,10 @@ const render = async ({
       }
     }
   });
+  await form.fill_fkey_options();
+
   await transformForm({ form, table, req, row, res });
+
   return renderForm(form, req.csrfToken());
 };
 
@@ -520,6 +523,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
+    await form.fill_fkey_options();
     await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
