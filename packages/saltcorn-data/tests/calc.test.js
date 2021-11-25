@@ -230,4 +230,14 @@ describe("jsexprToWhere", () => {
   it("translates context", () => {
     expect(jsexprToWhere("foo==$bar", { bar: 5 })).toEqual({ foo: 5 });
   });
+  it("translates context", () => {
+    const w = jsexprToWhere("$father !== null && married_to === $father", {
+      father: "1",
+    });
+    expect(w).toEqual({ married_to: "1", not: { eq: ["1", null] } });
+  });
+  it("translates context", () => {
+    const w = jsexprToWhere("$father !== null && married_to === $father", {});
+    expect(w).toEqual({ married_to: null, not: { eq: [null, null] } });
+  });
 });

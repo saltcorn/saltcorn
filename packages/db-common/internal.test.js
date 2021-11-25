@@ -172,8 +172,20 @@ describe("mkWhere", () => {
       values: [[1, 2, 3]],
       where: 'where "y" = ANY ($1)',
     });
+    expect(
+      mkWhere({
+        or: [
+          { not: { eq: ["1", null] } },
+          { not: { eq: [null, null] }, married_to: null },
+        ],
+      })
+    ).toStrictEqual({
+      values: ["1"],
+      where:
+        'where (not ($1::text is null) or not (null is null) and "married_to" is null)',
+    });
     /*
-    TODO
+
     expect(mkWhere([{ id: 5 }, { x: 7 }])).toStrictEqual({
       values: [5, 7],
       where: 'where "id"=$1 and "x"=$2',

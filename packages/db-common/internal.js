@@ -142,6 +142,7 @@ const equals = ([v1, v2], is_sqlite, i) => {
       ? quote(sqlsanitizeAllowDots(v.description))
       : placeHolder(is_sqlite, i()) + (typeof v === "string" ? "::text" : "");
   const isNull = (v) => `${pVal(v)} is null`;
+  if (v1 === null && v2 === null) return "null is null";
   if (v1 === null) return isNull(v2);
   if (v2 === null) return isNull(v1);
   return `${pVal(v1)}=${pVal(v2)}`;
@@ -152,6 +153,7 @@ const equalsVals = (vs) => {
   vs.forEach((v) => {
     if (v !== null && typeof v !== "symbol") vals.push(v);
   });
+  //console.log({ vals });
   return vals;
 };
 /**
@@ -231,9 +233,12 @@ const getVal = ([k, v]) =>
     : k === "not" && typeof v === "object"
     ? Object.entries(v).map(getVal).flat(1)
     : k === "eq" && Array.isArray(v)
-    ? equalsVals(v)
+    ? equalsVals(v).flat(1)
     : k === "or" && Array.isArray(v)
-    ? v.map((vi) => Object.entries(vi).map(getVal)).flat(1)
+    ? v
+        .map((vi) => Object.entries(vi).map(getVal))
+        .flat(1)
+        .flat(1)
     : v && v.or && Array.isArray(v.or)
     ? v.or.map((vi) => getVal([k, vi])).flat(1)
     : Array.isArray(v)
