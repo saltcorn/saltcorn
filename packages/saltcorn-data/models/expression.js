@@ -47,22 +47,26 @@ function jsexprToWhere(expression, extraCtx = {}) {
     const compile = (node) =>
       ({
         BinaryExpression() {
-          const cleft0 = compile(node.left);
-          const cleft =
-            typeof cleft0 === "symbol" ? cleft0.description : cleft0;
+          const cleft = compile(node.left);
           const cright = compile(node.right);
+          const cmp =
+            typeof cleft === "string" || cleft === null
+              ? { eq: [cleft, cright] }
+              : typeof cleft === "symbol"
+              ? { [cleft.description]: cright }
+              : { [cleft]: cright };
           return {
             "=="() {
-              return { [cleft]: cright };
+              return cmp;
             },
             "==="() {
-              return { [cleft]: cright };
+              return cmp;
             },
             "!="() {
-              return { not: { [cleft]: cright } };
+              return { not: cmp };
             },
             "!=="() {
-              return { not: { [cleft]: cright } };
+              return { not: cmp };
             },
           }[node.operator](node);
         },

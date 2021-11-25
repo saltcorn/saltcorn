@@ -140,7 +140,7 @@ const equals = ([v1, v2], is_sqlite, i) => {
   const pVal = (v) =>
     typeof v === "symbol"
       ? quote(sqlsanitizeAllowDots(v.description))
-      : placeHolder(is_sqlite, i());
+      : placeHolder(is_sqlite, i()) + (typeof v === "string" ? "::text" : "");
   const isNull = (v) => `${pVal(v)} is null`;
   if (v1 === null) return isNull(v2);
   if (v2 === null) return isNull(v1);

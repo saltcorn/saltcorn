@@ -66,6 +66,10 @@ describe("mkWhere", () => {
       values: [],
       where: 'where "id" is null',
     });
+    expect(mkWhere({ eq: ["id", null] })).toStrictEqual({
+      values: ["id"],
+      where: "where $1::text is null",
+    });
     expect(mkWhere({ eq: [4, 5] })).toStrictEqual({
       values: [4, 5],
       where: "where $1=$2",
