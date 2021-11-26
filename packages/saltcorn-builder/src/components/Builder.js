@@ -59,7 +59,7 @@ import { RenderNode } from "./RenderNode";
 const { Provider } = optionsCtx;
 
 /**
- * 
+ *
  * @returns {div}
  * @category saltcorn-builder
  * @subcategory components
@@ -99,7 +99,7 @@ const SettingsPanel = () => {
   };
 
   /**
-   * @param {number} offset 
+   * @param {number} offset
    * @returns {NodeId}
    */
   const otherSibling = (offset) => {
@@ -109,7 +109,7 @@ const SettingsPanel = () => {
   };
 
   /**
-   * @param {object} event 
+   * @param {object} event
    */
   const handleUserKeyPress = (event) => {
     const { keyCode, target } = event;
@@ -168,8 +168,8 @@ const SettingsPanel = () => {
   }, [handleUserKeyPress]);
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
-  
-  /** 
+
+  /**
    * @returns {void}
    */
   const deleteChildren = () => {
@@ -178,7 +178,7 @@ const SettingsPanel = () => {
     });
   };
 
-  /** 
+  /**
    * @returns {void}
    */
   const duplicate = () => {
@@ -255,7 +255,7 @@ const SaveButton = () => {
   const options = useContext(optionsCtx);
 
   /**
-   * @returns {void} 
+   * @returns {void}
    */
   const onClick = () => {
     const data = craftToSaltcorn(JSON.parse(query.serialize()));
@@ -351,7 +351,7 @@ const NextButton = ({ layout }) => {
     layoutToNodes(layout, query, actions);
   }, []);
 
-  /** 
+  /**
    * @returns {void}
    */
   const onClick = () => {

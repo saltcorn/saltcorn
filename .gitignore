@@ -120,3 +120,4 @@ infosec_scan_tmp/
 docs/
 package-lock.json
 .vagrant/
+!packages/saltcorn-builder/dist/builder_bundle.js

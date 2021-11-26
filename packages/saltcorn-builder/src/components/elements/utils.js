@@ -395,7 +395,7 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     ...changes,
   };
   let viewname,
-    body = configuration || {};
+    body = configuration ? { ...configuration } : {};
   if (view.includes(":")) {
     const [reltype, rest] = view.split(":");
     const [vnm] = rest.split(".");
@@ -925,7 +925,7 @@ export class ErrorBoundary extends React.Component {
    */
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, reported: false };
   }
 
   /**
@@ -950,6 +950,23 @@ export class ErrorBoundary extends React.Component {
       JSON.stringify(error),
       JSON.stringify(errorInfo)
     );
+
+    if (!this.state.reported) {
+      const data = {
+        message: error.message,
+        stack: (error && error.stack) || "",
+      };
+
+      fetch("/crashlog/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": _sc_globalCsrf,
+        },
+        body: JSON.stringify(data),
+      });
+      this.setState({ reported: true });
+    }
   }
 
   /**
