@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/db-common",
-  "version": "0.6.2-beta.0",
+  "version": "0.6.2-beta.1",
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -12,7 +12,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "@saltcorn/markup": "0.6.2-beta.0",
+    "@saltcorn/markup": "0.6.2-beta.1",
     "contractis": "^0.1.0"
   },
   "devDependencies": {
