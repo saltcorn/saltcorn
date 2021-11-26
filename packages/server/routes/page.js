@@ -18,6 +18,7 @@ const {
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
+const db = require("@saltcorn/data/db");
 
 /**
  * @type {object}
@@ -47,7 +48,11 @@ router.get(
       const contents = await db_page.run(req.query, { res, req });
       const title = scan_for_page_title(contents, db_page.title);
       res.sendWrap(
-        { title, description: db_page.description } || `${pagename} page`,
+        {
+          title,
+          description: db_page.description,
+          bodyClass: "page_" + db.sqlsanitize(pagename),
+        } || `${pagename} page`,
         add_edit_bar({
           role,
           title: db_page.name,

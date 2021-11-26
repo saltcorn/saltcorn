@@ -30,7 +30,7 @@ const {
 const db = require("@saltcorn/data/db");
 
 /**
- * @param {string} currentUrl 
+ * @param {string} currentUrl
  * @returns {function}
  */
 const subItem = (currentUrl) => (item) =>
@@ -46,14 +46,14 @@ const subItem = (currentUrl) => (item) =>
     : h6({ class: "collapse-header" }, item.label);
 
 /**
- * @param {object} item 
+ * @param {object} item
  * @returns {string}
  */
 const labelToId = (item) => text(item.label.replace(" ", ""));
 
 /**
- * @param {object} x 
- * @param {object} s 
+ * @param {object} x
+ * @param {object} s
  * @returns {object}
  */
 const logit = (x, s) => {
@@ -63,8 +63,8 @@ const logit = (x, s) => {
 };
 
 /**
- * @param {string} currentUrl 
- * @param {object} item 
+ * @param {string} currentUrl
+ * @param {object} item
  * @returns {boolean}
  */
 const active = (currentUrl, item) =>
@@ -78,7 +78,7 @@ const active = (currentUrl, item) =>
     ));
 
 /**
- * @param {string} currentUrl 
+ * @param {string} currentUrl
  * @returns {function}
  */
 const sideBarItem = (currentUrl) => (item) => {
@@ -122,7 +122,7 @@ const sideBarItem = (currentUrl) => (item) => {
 };
 
 /**
- * @param {string} currentUrl 
+ * @param {string} currentUrl
  * @returns {function}
  */
 const sideBarSection = (currentUrl) => (section) => [
@@ -133,9 +133,9 @@ const sideBarSection = (currentUrl) => (section) => [
 ];
 
 /**
- * @param {object} brand 
- * @param {string[]} sections 
- * @param {string} currentUrl 
+ * @param {object} brand
+ * @param {string[]} sections
+ * @param {string} currentUrl
  * @returns {ul}
  */
 const sidebar = (brand, sections, currentUrl) =>
@@ -171,7 +171,7 @@ const sidebar = (brand, sections, currentUrl) =>
  */
 const blockDispatch = {
   /**
-   * 
+   *
    * @param {object} opts
    * @param {string} opts.title
    * @param {string} opts.blurb
@@ -183,7 +183,7 @@ const blockDispatch = {
       blurb && p({ class: "mb-0 text-gray-800" }, blurb)
     ),
   /**
-   * @param {object} opts 
+   * @param {object} opts
    * @param {string} opts.contents
    * @returns {div}
    */
@@ -233,9 +233,9 @@ const blockDispatch = {
 };
 
 /**
- * @param {string} title 
- * @param {string|object} body 
- * @param {*} role 
+ * @param {string} title
+ * @param {string|object} body
+ * @param {*} role
  * @returns {string}
  */
 const renderBody = (title, body, role) =>
@@ -246,10 +246,10 @@ const renderBody = (title, body, role) =>
       typeof body === "string" ? { type: "card", title, contents: body } : body,
   });
 
-  /**
-   * @param {object} authLinks 
-   * @returns {hr|a}
-   */
+/**
+ * @param {object} authLinks
+ * @returns {hr|a}
+ */
 const renderAuthLinks = (authLinks) => {
   var links = [];
   if (authLinks.login)
@@ -276,7 +276,7 @@ const renderAuthLinks = (authLinks) => {
 };
 
 /**
- * @param {Form} form 
+ * @param {Form} form
  * @returns {Form}
  */
 const formModify = (form) => {
@@ -286,10 +286,10 @@ const formModify = (form) => {
 };
 
 /**
- * @param {*} headers 
- * @param {string} title 
- * @param {string} bodyAttr 
- * @param {string} rest 
+ * @param {*} headers
+ * @param {string} title
+ * @param {string} bodyAttr
+ * @param {string} rest
  * @returns {string}
  */
 const wrapIt = (headers, title, bodyAttr, rest) =>
@@ -321,7 +321,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   </html>`;
 
 /**
- * @param {object} opts 
+ * @param {object} opts
  * @param {string} opts.title
  * @param {object[]} opts.alerts
  * @param {object} opts.form
@@ -339,11 +339,12 @@ const authWrap = ({
   headers,
   csrfToken,
   authLinks,
+  bodyClass,
 }) =>
   wrapIt(
     headers,
     title,
-    'class="bg-gradient-primary"',
+    `class="bg-gradient-primary ${bodyClass || ""}"`,
     `<div class="container">
       <div class="row justify-content-center">
         <div class="col-xl-10 col-lg-12 col-md-9">
@@ -390,11 +391,12 @@ const wrap = ({
   body,
   headers,
   role,
+  bodyClass,
 }) =>
   wrapIt(
     headers,
     title,
-    'id="page-top"',
+    `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
       ${sidebar(brand, menu, currentUrl)}
 

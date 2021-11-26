@@ -240,12 +240,14 @@ module.exports = (version_tag) =>
             headers: get_headers(req, version_tag),
             role,
             req,
+            bodyClass: "auth",
           })
         );
       }
     };
     res.sendWrap = function (opts, ...html) {
       const title = typeof opts === "string" ? opts : opts.title;
+      const bodyClass = opts.bodyClass || "";
       const alerts = getFlashes(req);
       const state = getState();
       const layout = state.getLayout(req.user);
@@ -282,6 +284,7 @@ module.exports = (version_tag) =>
           headers: get_headers(req, version_tag, opts.description, pageHeaders),
           role,
           req,
+          bodyClass,
         })
       );
     };
