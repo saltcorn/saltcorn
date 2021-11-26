@@ -555,8 +555,10 @@ const runPost = async (
         row,
         req.user ? +req.user.id : undefined
       );
-      if (ins_res.success) id = ins_res.success;
-      else {
+      if (ins_res.success) {
+        id = ins_res.success;
+        row[pk.name] = id;
+      } else {
         req.flash("error", text_attr(ins_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
