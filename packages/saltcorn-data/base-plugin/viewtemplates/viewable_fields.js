@@ -710,4 +710,5 @@ module.exports = {
   splitUniques,
   getForm,
   fill_presets,
+  get_view_link_query,
 };

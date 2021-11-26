@@ -34,6 +34,7 @@ const {
   getForm,
   fill_presets,
   parse_view_select,
+  get_view_link_query,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -554,8 +555,10 @@ const runPost = async (
         row,
         req.user ? +req.user.id : undefined
       );
-      if (ins_res.success) id = ins_res.success;
-      else {
+      if (ins_res.success) {
+        id = ins_res.success;
+        row[pk.name] = id;
+      } else {
         req.flash("error", text_attr(ins_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
@@ -605,13 +608,13 @@ const runPost = async (
       if (
         (nxview.table_id === table_id || relation) &&
         state_fields.some((sf) => sf.name === pk.name)
-      )
-        res.redirect(
-          `/view/${text(viewname_when_done)}?${pk.name}=${text(
-            relation ? row[relation] : id
-          )}`
-        );
-      else res.redirect(`/view/${text(viewname_when_done)}`);
+      ) {
+        const get_query = get_view_link_query(fields);
+        const query = relation
+          ? `?${pk.name}=${text(row[relation])}`
+          : get_query(row);
+        res.redirect(`/view/${text(viewname_when_done)}${query}`);
+      } else res.redirect(`/view/${text(viewname_when_done)}`);
     }
   }
 };
