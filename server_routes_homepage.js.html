@@ -531,8 +531,11 @@ const get_config_response = async (role_id, res, req) => {
       const contents = await db_page.run(req.query, { res, req });
 
       res.sendWrap(
-        { title: db_page.title, description: db_page.description } ||
-          `${pagename} page`,
+        {
+          title: db_page.title,
+          description: db_page.description,
+          bodyClass: "page_" + db.sqlsanitize(homeCfg),
+        } || `${pagename} page`,
         contents
       );
     } else res.redirect(homeCfg);
