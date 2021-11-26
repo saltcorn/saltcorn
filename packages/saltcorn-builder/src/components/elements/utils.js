@@ -395,7 +395,7 @@ export const fetchViewPreview = (args = {}) => (changes = {}) => {
     ...changes,
   };
   let viewname,
-    body = configuration || {};
+    body = configuration ? { ...configuration } : {};
   if (view.includes(":")) {
     const [reltype, rest] = view.split(":");
     const [vnm] = rest.split(".");
