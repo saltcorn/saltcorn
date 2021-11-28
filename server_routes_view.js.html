@@ -110,6 +110,7 @@ const {
   scan_for_page_title,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -252,6 +253,12 @@ router.post(
     ) {
       req.flash("danger", req.__("Not authorized"));
       res.redirect("/");
+    } else if (!view.runPost) {
+      throw new InvalidConfiguration(
+        `View ${text(viewname)} with template ${
+          view.viewtemplate
+        } does not supply a POST handler`
+      );
     } else {
       await view.runPost(req.query, req.body, { res, req });
     }
