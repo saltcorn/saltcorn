@@ -159,12 +159,23 @@ const make_link = contract(
     return {
       label: "",
       key: (r) => {
-        const txt = link_text_formula
-          ? get_expression_function(link_text, fields)(r)
-          : link_text;
-        const href = link_url_formula
-          ? get_expression_function(link_url, fields)(r)
-          : link_url;
+        let txt, href;
+        try {
+          txt = link_text_formula
+            ? get_expression_function(link_text, fields)(r)
+            : link_text;
+        } catch (error) {
+          error.message = `Error in formula ${link_text} for link text:\n${error.message}`;
+          throw error;
+        }
+        try {
+          href = link_url_formula
+            ? get_expression_function(link_url, fields)(r)
+            : link_url;
+        } catch (error) {
+          error.message = `Error in formula ${link_url} for link URL:\n${error.message}`;
+          throw error;
+        }
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
         return a(attrs, txt);
