@@ -8,6 +8,7 @@ const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
+const s3storage = require("../s3storage");
 
 const {
   mkTable,
@@ -49,9 +50,9 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {*} file 
- * @param {*} roles 
- * @param {*} req 
+ * @param {*} file
+ * @param {*} roles
+ * @param {*} req
  * @returns {Form}
  */
 const editFileRoleForm = (file, roles, req) =>
@@ -145,7 +146,8 @@ router.get(
     const file = await File.findOne({ id });
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
-      res.download(file.location, file.filename);
+      s3storage.serveObject(file, res, true);
+      //res.download(file.location, file.filename);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -181,7 +183,8 @@ router.get(
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      res.sendFile(file.location);
+      //res.sendFile(file.location);
+      s3storage.serveObject(file, res, false);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -302,7 +305,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const f = await File.findOne({ id });
-    const result = await f.delete();
+    const result = await f.delete(s3storage.unlinkObject);
     if (result && result.error) {
       req.flash("error", result.error);
     } else {

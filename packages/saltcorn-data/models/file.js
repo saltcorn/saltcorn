@@ -40,6 +40,7 @@ class File {
     this.mime_super = o.mime_super;
     this.mime_sub = o.mime_sub;
     this.min_role_read = o.min_role_read;
+    this.s3_store = !!o.s3_store;
     // TBD add checksum this.checksum = o.checksum;
     contract.class(this);
   }
@@ -97,7 +98,9 @@ class File {
    * @returns {string} - path to file
    */
   static get_new_path(suggest) {
-    const file_store = db.connectObj.file_store;
+    // Check if it uses S3, then use a default "saltcorn" folder
+    const useS3 = db.connectObj.storage_s3_enabled;
+    const file_store = useS3 ? db.connectObj.file_store : "saltcorn/";
 
     const newFnm = suggest || uuidv4();
     return path.join(file_store, newFnm);
@@ -144,6 +147,7 @@ class File {
         mime_super,
         mime_sub,
         min_role_read,
+        s3_store: !!file.s3object,
       });
     }
   }
@@ -152,12 +156,12 @@ class File {
    * Delete file
    * @returns {Promise<{error}>}
    */
-  async delete() {
+  async delete(unlinker) {
     try {
       // delete file from database
       await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
-      await fs.unlink(this.location);
+      await unlinker(this);
       // reload file list cache
       await require("../db/state").getState().refresh_files();
     } catch (e) {
@@ -201,6 +205,7 @@ File.contract = {
     id: is.maybe(is.posint),
     user_id: is.maybe(is.posint),
     min_role_read: is.posint,
+    s3_store: is.bool,
     // tdb add checksum
   },
   methods: {

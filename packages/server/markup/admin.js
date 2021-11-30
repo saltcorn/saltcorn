@@ -246,6 +246,7 @@ const send_admin_page = (args) => {
       { text: "Site identity", href: "/admin" },
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
+      { text: "Storage", href: "/admin/storage" },
       { text: "System", href: "/admin/system" },
     ],
     ...args,

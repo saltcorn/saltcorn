@@ -37,6 +37,7 @@ const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
 const Trigger = require("@saltcorn/data/models/trigger");
+const s3storage = require("./s3storage");
 
 const locales = Object.keys(available_languages);
 // i18n configuration
@@ -77,15 +78,11 @@ const getApp = async (opts = {}) => {
   // extenetede url encoding in use
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
-  // add fileupload feature
-  // todo ability to configure filetmp dir - add new config / env parameter
-  app.use(
-    fileUpload({
-      useTempFiles: true,
-      createParentPath: true,
-      tempFileDir: "/tmp/",
-    })
-  );
+  // Change into s3storage compatible selector
+  // existing fileupload middleware is moved into s3storage.js
+  app.use(s3storage.middlewareSelect);
+  app.use(s3storage.middlewareTransform);
+
   // cookies
   app.use(require("cookie-parser")());
   // i18n support
