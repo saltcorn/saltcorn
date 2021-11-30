@@ -66,6 +66,7 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
 
 /**
  * @type {object}
@@ -78,7 +79,7 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const site_id_form = (req) =>
@@ -547,7 +548,7 @@ router.post(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const clearAllForm = (req) =>
@@ -746,7 +747,7 @@ router.post(
       await db.deleteWhere("_sc_pages");
     }
     if (form.values.views) {
-      await db.deleteWhere("_sc_views");
+      await View.delete({});
     }
     //user fields
     const users = await Table.findOne({ name: "users" });
