@@ -49,10 +49,10 @@
   "devDependencies": {
     "jest": "^25.1.0",
     "supertest": "^4.0.2"
-  }, 
+  },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest tests/view.test.js  --runInBand ",
+    "test": "jest --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
