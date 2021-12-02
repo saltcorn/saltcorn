@@ -8,7 +8,7 @@ import { Database, verbose } from "sqlite3";
 verbose();
 import { unlink } from "fs/promises"
 
-const { sqlsanitize, mkWhere, mkSelectOptions } = require("@saltcorn/db-common/internal");
+import { sqlsanitize, mkWhere, mkSelectOptions } from "@saltcorn/db-common/internal";
 
 
 let sqliteDatabase:Database|null = null;
@@ -45,7 +45,7 @@ let log_sql_enabled = false;
  * Control Logging sql statements to console
  * @param {boolean} [val = true] - if true then log sql statements to console
  */
-export function set_sql_logging(val:boolean = true): void {
+export function set_sql_logging(val: boolean = true): void {
   log_sql_enabled = val;
 }
 
@@ -62,7 +62,7 @@ export function get_sql_logging(): boolean {
  * @param {string} sql - SQL statement
  * @param {any} [vs] - any additional parameter
  */
-export function sql_log(sql:string, vs?:any) {
+export function sql_log(sql: string, vs?: any) {
   if (log_sql_enabled)
     if (typeof vs === "undefined") console.log(sql);
     else console.log(sql, vs);
@@ -73,7 +73,7 @@ export function sql_log(sql:string, vs?:any) {
  * @param {any} params 
  * @returns {Promise<object>}
  */
-export function query(sql:string, params?:any): Promise<any> {
+export function query(sql: string, params?: any): Promise<any> {
   sql_log(sql, params);
   return new Promise((resolve, reject) => {
     if(!sqliteDatabase) {
@@ -96,7 +96,7 @@ export function query(sql:string, params?:any): Promise<any> {
  * @returns {Promise<void>}
  * @function
  */
-export const changeConnection = async (connObj:any): Promise<void> => {
+export const changeConnection = async (connObj: any): Promise<void> => {
   if(!sqliteDatabase) {
     throw new Error("The database connection is closed.");
   }
@@ -144,7 +144,7 @@ export const select = async (tbl:string, whereObj:any, selectopts:any = {})
  * @returns {boolean}
  * @function
  */
-export const reprAsJson = (v:any): boolean =>
+export const reprAsJson = (v: any): boolean =>
   typeof v === "object" && v !== null && !(v instanceof Date);
 
 /**
@@ -164,7 +164,7 @@ export const mkVal = ([k, v]:[any, any]): string => (reprAsJson(v) ? JSON.string
  * @returns {Promise<void>} no results
  * @function
  */
-export const update = async (tbl:string, obj:any, id:string): Promise<void>  => {
+export const update = async (tbl: string, obj: any, id: string): Promise<void> => {
   const kvs = Object.entries(obj);
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
   let valList = kvs.map(mkVal);
@@ -180,7 +180,7 @@ export const update = async (tbl:string, obj:any, id:string): Promise<void>  => 
  * @returns {Promise<void>} result of delete execution
  * @function
  */
-export const deleteWhere = async (tbl:string, whereObj:any): Promise<void> => {
+export const deleteWhere = async (tbl: string, whereObj: any): Promise<void> => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
 
@@ -195,7 +195,7 @@ export const deleteWhere = async (tbl:string, whereObj:any): Promise<void> => {
  * @returns {Promise<string|void>} returns id.
  * @function
  */
-export const insert = async (tbl:string, obj:any, opts:any = {}): Promise<string|void> => {
+export const insert = async (tbl: string, obj: any, opts: any = {}): Promise<string | void> => {
   const kvs:any = Object.entries(obj);
   const fnameList = kvs.map(([k, v]:[any, any]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
@@ -231,7 +231,7 @@ export const insert = async (tbl:string, obj:any, opts:any = {}): Promise<string
  * @returns {Promise<any>} return first record from sql result
  * @function
  */
-export const selectOne = async (tbl:string, where:any): Promise<any> => {
+export const selectOne = async (tbl: string, where: any): Promise<any> => {
   const rows = await select(tbl, where);
   if (rows.length === 0) {
     const w = mkWhere(where, true);
@@ -246,7 +246,7 @@ export const selectOne = async (tbl:string, where:any): Promise<any> => {
  * @returns {Promise<any>} - null if no record or first record data
  * @function
  */
-export const selectMaybeOne = async (tbl:string, where:any): Promise<any> => {
+export const selectMaybeOne = async (tbl: string, where: any): Promise<any> => {
   const rows = await select(tbl, where);
   if (rows.length === 0) return null;
   else return rows[0];
@@ -259,7 +259,7 @@ export const selectMaybeOne = async (tbl:string, where:any): Promise<any> => {
  * @returns {Promise<number>} count of tables
  * @function
  */
-export const count = async (tbl:string, whereObj:any) => {
+export const count = async (tbl: string, whereObj: any) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
   const tq = await query(sql, values);
@@ -300,7 +300,7 @@ export const drop_reset_schema = async (): Promise<void> => {
  * @returns {Promise<void>} no result
  * @function
  */
-export const add_unique_constraint = async (table_name:string, field_names:string[])
+export const add_unique_constraint = async (table_name: string, field_names: string[])
 : Promise<void> => {
   const sql = `create unique index ${sqlsanitize(
     table_name
@@ -320,7 +320,7 @@ export const add_unique_constraint = async (table_name:string, field_names:strin
  * @returns {Promise<void>} no results
  * @function
  */
-export const drop_unique_constraint = async (table_name:string, field_names:string[])
+export const drop_unique_constraint = async (table_name: string, field_names: string[])
 : Promise<void> => {
   const sql = `drop index ${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))

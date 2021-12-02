@@ -49,10 +49,10 @@
   "devDependencies": {
     "jest": "^25.1.0",
     "supertest": "^4.0.2"
-  },
+  }, 
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest --runInBand",
+    "test": "jest tests/view.test.js  --runInBand ",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
@@ -67,7 +67,11 @@
       "/plugin_packages/"
     ],
     "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1"
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/postgres/(.*)": "@saltcorn/postgres/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1" 
     }
   },
   "publishConfig": {

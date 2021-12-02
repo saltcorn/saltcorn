@@ -27,7 +27,16 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/plugin_packages/"
-    ]
+    ],
+
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/postgres/(.*)": "@saltcorn/postgres/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1" 
+    }
+
   },
   "publishConfig": {
     "access": "public"

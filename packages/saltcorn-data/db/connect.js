@@ -54,7 +54,7 @@ const getGitRevision = () => {
  */
 const getConnectObject = (connSpec = {}) => {
   const git_commit = getGitRevision();
-  const sc_version = require("../package.json").version;
+  const sc_version = require("../../package.json").version;
   const version_tag = git_commit || sc_version;
   var connObj = { version_tag, git_commit, sc_version };
   const fileCfg = getConfigFile() || {};

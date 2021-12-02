@@ -8,7 +8,7 @@ const { contract, is } = require("contractis");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
-const Role = require("@saltcorn/data/models/role");
+const Role = require("@saltcorn/data/models/role").default;
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
