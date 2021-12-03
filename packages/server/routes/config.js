@@ -48,7 +48,6 @@ module.exports = router;
  */
 router.post(
   "/delete/:key",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { key } = req.params;

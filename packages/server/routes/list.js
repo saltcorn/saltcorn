@@ -14,7 +14,7 @@ const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
 const { a, script, domReady, div, text } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { setTenant, isAdmin, error_catcher } = require("./utils");
+const { isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
 const { readState } = require("@saltcorn/data/plugin-helper");
 
@@ -39,7 +39,6 @@ module.exports = router;
  */
 router.get(
   "/_versions/:name/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name, id } = req.params;
@@ -88,7 +87,6 @@ router.get(
  */
 router.post(
   "/_restore/:name/:id/:_version",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name, id, _version } = req.params;
@@ -152,7 +150,7 @@ const typeToJsGridType = (t, field) => {
 
 /**
  * Version Field
- * @param {string} tname 
+ * @param {string} tname
  * @returns {string}
  */
 const versionsField = (tname) => `
@@ -183,7 +181,6 @@ jsGrid.fields.versions = VersionsField;
  */
 router.get(
   "/:tname",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { tname } = req.params;

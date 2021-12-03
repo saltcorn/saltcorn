@@ -1,12 +1,12 @@
 /**
  * Plugin Handler for Admin zone
- * @category server 
+ * @category server
  * @module routes/plugins
  * @subcategory routes
  */
 
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -189,8 +189,8 @@ const get_store_items = async () => {
 };
 
 /**
- * @param {object} req 
- * @param {object} row 
+ * @param {object} req
+ * @param {object} row
  * @returns {a|string}
  */
 const cfg_link = (req, row) => {
@@ -219,8 +219,8 @@ const cfg_link = (req, row) => {
 };
 
 /**
- * @param {object} req 
- * @param {object} row 
+ * @param {object} req
+ * @param {object} row
  * @returns {a}
  */
 const info_link = (req, row) =>
@@ -235,15 +235,15 @@ const info_link = (req, row) =>
   );
 
 /**
- * @param {string} title 
+ * @param {string} title
  * @returns {span}
  */
-  const badge = (title) =>
+const badge = (title) =>
   span({ class: "badge badge-secondary plugin-store" }, title);
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {function}
  */
 const store_item_html = (req) => (item) => ({
@@ -334,7 +334,7 @@ const store_item_html = (req) => (item) => ({
 });
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {ul}
  */
 const storeNavPills = (req) => {
@@ -365,8 +365,8 @@ const storeNavPills = (req) => {
 };
 
 /**
- * @param {object[]} items 
- * @param {object} query 
+ * @param {object[]} items
+ * @param {object} query
  * @returns {object[]}
  */
 const filter_items = (items, query) => {
@@ -376,8 +376,8 @@ const filter_items = (items, query) => {
 };
 
 /**
- * @param {string} s 
- * @param {string} q 
+ * @param {string} s
+ * @param {string} q
  * @returns {boolean}
  */
 const match_string = (s, q) => {
@@ -387,7 +387,7 @@ const match_string = (s, q) => {
 
 /**
  * @param {string} p
- * @param {string} q 
+ * @param {string} q
  * @returns {boolean}
  */
 const satisfy_q = (p, q) => {
@@ -395,8 +395,8 @@ const satisfy_q = (p, q) => {
 };
 
 /**
- * @param {object[]} items 
- * @param {object} query 
+ * @param {object[]} items
+ * @param {object} query
  * @returns {object[]}
  */
 const filter_items_set = (items, query) => {
@@ -415,7 +415,7 @@ const filter_items_set = (items, query) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {div}
  */
 const store_actions_dropdown = (req) =>
@@ -483,8 +483,8 @@ const store_actions_dropdown = (req) =>
   );
 
 /**
- * @param {object[]} items 
- * @param {object} req 
+ * @param {object[]} items
+ * @param {object} req
  * @returns {object}
  */
 const plugin_store_html = (items, req) => {
@@ -525,7 +525,6 @@ const plugin_store_html = (items, req) => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const items = await get_store_items();
@@ -542,7 +541,6 @@ router.get(
  */
 router.get(
   "/configure/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -575,7 +573,6 @@ router.get(
  */
 router.post(
   "/configure/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -617,7 +614,6 @@ router.post(
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New Plugin`), {
@@ -648,7 +644,6 @@ router.get(
  */
 router.get(
   "/public/:plugin/*",
-  setTenant,
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
@@ -674,7 +669,6 @@ router.get(
  */
 router.get(
   "/pubdeps/:plugin/:dependency/:version/*",
-  setTenant,
   error_catcher(async (req, res) => {
     const { plugin, dependency } = req.params;
     const filepath = req.params[0];
@@ -707,7 +701,6 @@ router.get(
  */
 router.get(
   "/info/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -816,7 +809,6 @@ router.get(
  */
 router.get(
   "/refresh",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     await getState().deleteConfig(
@@ -840,7 +832,6 @@ router.get(
  */
 router.get(
   "/upgrade",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const installed_plugins = await Plugin.find({});
@@ -861,7 +852,6 @@ router.get(
  */
 router.get(
   "/upgrade-plugin/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -882,7 +872,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const plugin = new Plugin(req.body);
@@ -918,7 +907,6 @@ router.post(
  */
 router.post(
   "/delete/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -954,7 +942,6 @@ router.post(
  */
 router.post(
   "/install/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;

@@ -35,7 +35,6 @@ module.exports = router;
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.redirect(`/menu`);
@@ -43,7 +42,7 @@ router.get(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const languageForm = (req) =>
@@ -83,7 +82,6 @@ const languageForm = (req) =>
  */
 router.get(
   "/localizer",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const cfgLangs = getState().getConfig("localizer_languages");
@@ -111,13 +109,13 @@ router.get(
               },
               {
                 label: req.__("Default"),
-                key: r=>!!r.is_default
-                ? i({
-                    class: "fas fa-check-circle text-success",
-                  })
-                : "",
+                key: (r) =>
+                  !!r.is_default
+                    ? i({
+                        class: "fas fa-check-circle text-success",
+                      })
+                    : "",
               },
-            
             ],
             Object.values(cfgLangs)
           ),
@@ -143,7 +141,6 @@ router.get(
  */
 router.get(
   "/localizer/add-lang",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     send_infoarch_page({
@@ -167,7 +164,6 @@ router.get(
  */
 router.get(
   "/localizer/edit/:lang",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { lang } = req.params;
@@ -175,8 +171,8 @@ router.get(
     const form = languageForm(req);
     form.values = cfgLangs[lang];
     const { is_default } = form.values;
-    const cfgStrings = getState().getConfig("localizer_strings",{});
-    const translation = cfgStrings[lang] || {}
+    const cfgStrings = getState().getConfig("localizer_strings", {});
+    const translation = cfgStrings[lang] || {};
     const strings = getState()
       .getStringsForI18n()
       .map((s) => ({ in_default: s, translated: translation[s] || s }));
@@ -232,16 +228,14 @@ router.get(
  */
 router.post(
   "/localizer/save-string/:lang/:defstring",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { lang, defstring } = req.params;
 
     const cfgStrings = getState().getConfigCopy("localizer_strings");
-    if(cfgStrings[lang])
-    cfgStrings[lang][defstring] = text(req.body.value)
-    else cfgStrings[lang]={[defstring]: text(req.body.value)}
-    await getState().setConfig("localizer_strings", cfgStrings)
+    if (cfgStrings[lang]) cfgStrings[lang][defstring] = text(req.body.value);
+    else cfgStrings[lang] = { [defstring]: text(req.body.value) };
+    await getState().setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
@@ -254,7 +248,6 @@ router.post(
  */
 router.post(
   "/localizer/save-lang",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = languageForm(req);

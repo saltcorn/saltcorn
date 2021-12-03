@@ -6,7 +6,7 @@
 
 const Library = require("@saltcorn/data/models/library");
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { send_infoarch_page } = require("../markup/admin.js");
 const { mkTable, post_delete_btn } = require("@saltcorn/markup");
 const { i } = require("@saltcorn/markup/tags");
@@ -29,7 +29,6 @@ module.exports = router;
  */
 router.post(
   "/savefrombuilder",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     await Library.create(req.body);
@@ -45,7 +44,6 @@ router.post(
  */
 router.get(
   "/list",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const libs = await Library.find({});
@@ -89,7 +87,6 @@ router.get(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

@@ -20,12 +20,7 @@ const {
   post_dropdown_item,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-  csrfField,
-} = require("../routes/utils");
+const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -61,10 +56,10 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {Role} role 
- * @param {Layout[]} layouts 
- * @param {*} layout_by_role 
- * @param {object} req 
+ * @param {Role} role
+ * @param {Layout[]} layouts
+ * @param {*} layout_by_role
+ * @param {object} req
  * @returns {Form}
  */
 const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
@@ -91,7 +86,7 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const roleForm = (req) =>
@@ -119,7 +114,6 @@ const roleForm = (req) =>
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const roles = await User.get_roles();
@@ -172,7 +166,6 @@ router.get(
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
@@ -198,7 +191,6 @@ router.get(
  */
 router.post(
   "/edit",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
@@ -236,7 +228,6 @@ router.post(
  */
 router.post(
   "/setrolelayout/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -257,7 +248,6 @@ const unDeletableRoles = [1, 8, 10];
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

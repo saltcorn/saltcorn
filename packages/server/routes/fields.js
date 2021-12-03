@@ -22,7 +22,7 @@ const {
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
@@ -419,7 +419,6 @@ const fieldFlow = (req) =>
  */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -472,7 +471,6 @@ router.get(
  */
 router.get(
   "/new/:table_id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
@@ -509,7 +507,6 @@ router.get(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -535,7 +532,6 @@ router.post(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const wf = fieldFlow(req);
@@ -584,7 +580,6 @@ router.post(
  */
 router.post(
   "/test-formula",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { formula, tablename, stored } = req.body;
@@ -622,7 +617,6 @@ router.post(
  */
 router.post(
   "/show-calculated/:tableName/:fieldName/:fieldview",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
@@ -657,7 +651,6 @@ router.post(
  */
 router.post(
   "/preview/:tableName/:fieldName/:fieldview",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
@@ -722,7 +715,6 @@ router.post(
  */
 router.post(
   "/preview/:tableName/:fieldName/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.send("");
