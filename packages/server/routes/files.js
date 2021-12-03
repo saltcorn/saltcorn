@@ -38,7 +38,11 @@ const {
 const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
-const { send_files_page } = require("../markup/admin");
+const {
+  send_files_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 
 /**
  * @type {object}
@@ -306,5 +310,84 @@ router.post(
       req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files`);
+  })
+);
+
+/**
+ * Storage settings form definition
+ * @param {object} req request
+ * @returns {Promise<Form>} form
+ */
+const storage_form = async (req) => {
+  const form = await config_fields_form({
+    req,
+    field_names: [
+      "storage_s3_enabled",
+      "storage_s3_bucket",
+      "storage_s3_path_prefix",
+      "storage_s3_endpoint",
+      "storage_s3_region",
+      "storage_s3_access_key",
+      "storage_s3_access_secret",
+      "storage_s3_secure",
+    ],
+    action: "/files/storage",
+  });
+  form.submitButtonClass = "btn-outline-primary";
+  form.submitLabel = req.__("Save");
+  form.onChange = "remove_outline(this)";
+  return form;
+};
+
+/**
+ * @name get/storage
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/storage",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await storage_form(req);
+    send_files_page({
+      res,
+      req,
+      active_sub: "Storage",
+      contents: {
+        type: "card",
+        title: req.__("Storage settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+
+/**
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/storage",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await storage_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Storage",
+        contents: {
+          type: "card",
+          title: req.__("Storage settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Storage settings updated"));
+      res.redirect("/files/storage");
+    }
   })
 );

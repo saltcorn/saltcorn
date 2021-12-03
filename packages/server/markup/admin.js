@@ -223,7 +223,7 @@ const send_files_page = (args) => {
     main_section_href: "/files",
     sub_sections: [
       { text: "Files", href: "/files" },
-      { text: "Storage", href: "/admin/storage" },
+      { text: "Storage", href: "/files/storage" },
     ],
     ...args,
   });
