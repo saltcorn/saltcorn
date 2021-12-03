@@ -423,7 +423,7 @@ const configTypes = {
     label: "Use Amazon S3",
     default: false,
     sublabel:
-      "Use Amazon S3 (or compatible) service to store files. If disabled, Cornsalt uses local disk. WARNING: Changing this may break your uploaded files!",
+      "Use Amazon S3 (or compatible) service to store files. If disabled, Saltcorn uses local disk. WARNING: Changing this may break your uploaded files!",
   },
   storage_s3_secure: {
     type: "Bool",
