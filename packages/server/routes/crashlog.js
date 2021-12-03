@@ -20,7 +20,7 @@ const {
   p,
 } = require("@saltcorn/markup/tags");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { send_events_page } = require("../markup/admin.js");
 
 /**

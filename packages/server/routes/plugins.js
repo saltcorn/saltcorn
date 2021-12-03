@@ -6,7 +6,7 @@
  */
 
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,

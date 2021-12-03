@@ -14,7 +14,7 @@ const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
 const { a, script, domReady, div, text } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { setTenant, isAdmin, error_catcher } = require("./utils");
+const { isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
 const { readState } = require("@saltcorn/data/plugin-helper");
 

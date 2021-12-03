@@ -22,7 +22,7 @@ const {
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");

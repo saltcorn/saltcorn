@@ -26,6 +26,7 @@ const {
   get_base_url,
   error_catcher,
   getSessionStore,
+  setTenant,
 } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -216,7 +217,7 @@ const getApp = async (opts = {}) => {
 
   mountRoutes(app);
   // set tenant homepage as / root
-  app.get("/", setTenant, error_catcher(homepage));
+  app.get("/", error_catcher(homepage));
   // /robots.txt
   app.get(
     "/robots.txt",

@@ -17,7 +17,7 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   span,
   h5,

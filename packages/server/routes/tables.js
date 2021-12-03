@@ -22,7 +22,7 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,

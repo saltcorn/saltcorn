@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 
-const { setTenant, loggedIn, error_catcher } = require("./utils.js");
+const { loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**

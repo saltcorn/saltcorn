@@ -5,7 +5,7 @@
  */
 
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");

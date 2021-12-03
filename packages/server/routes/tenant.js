@@ -35,7 +35,7 @@ const {
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {

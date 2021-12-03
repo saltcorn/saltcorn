@@ -9,7 +9,7 @@ const Router = require("express-promise-router");
 const Field = require("@saltcorn/data/models/field");
 const File = require("@saltcorn/data/models/file");
 const Form = require("@saltcorn/data/models/form");
-const { setTenant, loggedIn, error_catcher } = require("./utils.js");
+const { loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const pluralize = require("pluralize");
 

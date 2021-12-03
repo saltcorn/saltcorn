@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 const { i, h3, p, a } = require("@saltcorn/markup/tags");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 
 /**
  * @type {object}

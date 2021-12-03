@@ -229,4 +229,5 @@ module.exports = {
   scan_for_page_title,
   getGitRevision,
   getSessionStore,
+  setTenant,
 };

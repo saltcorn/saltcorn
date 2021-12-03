@@ -8,7 +8,7 @@ const Router = require("express-promise-router");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");

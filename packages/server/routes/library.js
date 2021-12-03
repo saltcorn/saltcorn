@@ -6,7 +6,7 @@
 
 const Library = require("@saltcorn/data/models/library");
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { send_infoarch_page } = require("../markup/admin.js");
 const { mkTable, post_delete_btn } = require("@saltcorn/markup");
 const { i } = require("@saltcorn/markup/tags");

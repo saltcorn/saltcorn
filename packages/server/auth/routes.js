@@ -213,7 +213,7 @@ router.get(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
-router.get("/logout", setTenant, (req, res, next) => {
+router.get("/logout", (req, res, next) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {

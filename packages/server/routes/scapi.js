@@ -9,7 +9,7 @@
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { setTenant, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");

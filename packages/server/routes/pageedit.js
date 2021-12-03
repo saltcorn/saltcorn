@@ -20,7 +20,7 @@ const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
