@@ -38,6 +38,7 @@ const {
 const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
+const { send_files_page } = require("../markup/admin");
 
 /**
  * @type {object}
@@ -75,56 +76,49 @@ router.get(
   error_catcher(async (req, res) => {
     const rows = await File.find({}, { orderBy: "filename" });
     const roles = await User.get_roles();
-    res.sendWrap("Files", {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings"), href: "/settings" },
-            { text: req.__("Files") },
-          ],
-        },
-        {
-          type: "card",
-          contents: [
-            mkTable(
-              [
-                {
-                  label: req.__("Filename"),
-                  key: (r) =>
-                    div(
-                      { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
-                      r.filename
-                    ),
-                },
-                { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-                { label: req.__("Media type"), key: (r) => r.mimetype },
-                {
-                  label: req.__("Role to access"),
-                  key: (r) => editFileRoleForm(r, roles, req),
-                },
-                {
-                  label: req.__("Link"),
-                  key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
-                },
-                {
-                  label: req.__("Download"),
-                  key: (r) =>
-                    link(`/files/download/${r.id}`, req.__("Download")),
-                },
-                {
-                  label: req.__("Delete"),
-                  key: (r) =>
-                    post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
-                },
-              ],
-              rows,
-              { hover: true }
-            ),
-            fileUploadForm(req),
-          ],
-        },
-      ],
+    send_files_page({
+      res,
+      req,
+      active_sub: "Files",
+      contents: {
+        type: "card",
+        contents: [
+          mkTable(
+            [
+              {
+                label: req.__("Filename"),
+                key: (r) =>
+                  div(
+                    { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                    r.filename
+                  ),
+              },
+              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+              { label: req.__("Media type"), key: (r) => r.mimetype },
+              {
+                label: req.__("Role to access"),
+                key: (r) => editFileRoleForm(r, roles, req),
+              },
+              {
+                label: req.__("Link"),
+                key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
+              },
+              {
+                label: req.__("Download"),
+                key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) =>
+                  post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
+              },
+            ],
+            rows,
+            { hover: true }
+          ),
+          fileUploadForm(req),
+        ],
+      },
     });
   })
 );

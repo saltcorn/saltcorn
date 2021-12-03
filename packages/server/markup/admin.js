@@ -217,6 +217,22 @@ const send_users_page = (args) => {
  * @param {object} args
  * @returns {void}
  */
+const send_files_page = (args) => {
+  return send_settings_page({
+    main_section: "Files",
+    main_section_href: "/files",
+    sub_sections: [
+      { text: "Files", href: "/files" },
+      { text: "Storage", href: "/admin/storage" },
+    ],
+    ...args,
+  });
+};
+
+/**
+ * @param {object} args
+ * @returns {void}
+ */
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
@@ -246,7 +262,6 @@ const send_admin_page = (args) => {
       { text: "Site identity", href: "/admin" },
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
-      { text: "Storage", href: "/admin/storage" },
       { text: "System", href: "/admin/system" },
     ],
     ...args,
@@ -465,6 +480,7 @@ module.exports = {
   send_users_page,
   send_events_page,
   send_admin_page,
+  send_files_page,
   save_config_from_form,
   flash_restart_if_required,
   flash_restart,

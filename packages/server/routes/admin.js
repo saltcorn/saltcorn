@@ -47,6 +47,7 @@ const load_plugins = require("../load_plugins");
 const {
   restore_backup,
   send_admin_page,
+  send_files_page,
   config_fields_form,
   save_config_from_form,
   flash_restart_if_required,
@@ -245,7 +246,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
-    send_admin_page({
+    send_files_page({
       res,
       req,
       active_sub: "Storage",
