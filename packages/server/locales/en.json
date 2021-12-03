@@ -832,5 +832,6 @@
 	"Use Amazon S3 Secure Connection.": "Use Amazon S3 Secure Connection.",
 	"Connect to Amazon S3 (or compatible) securely.": "Connect to Amazon S3 (or compatible) securely.",
 	"Storage settings": "Storage settings",
-	"Storage": "Storage"
+	"Storage": "Storage",
+	"Storage settings updated": "Storage settings updated"
 }

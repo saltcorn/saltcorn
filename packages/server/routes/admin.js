@@ -261,17 +261,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Storage settings"),
-        contents: [
-          renderForm(form, req.csrfToken()),
-          a(
-            {
-              id: "testemail",
-              href: "/admin/send-test-email",
-              class: "btn btn-primary",
-            },
-            req.__("Send test email")
-          ),
-        ],
+        contents: [renderForm(form, req.csrfToken())],
       },
     });
   })
