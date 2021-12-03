@@ -4,19 +4,34 @@
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "jest dist --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "author": "Tom Nielsen",
   "license": "MIT",
-  "main": "index.js",
+  "exports": {
+    "./*": "./dist/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
   "dependencies": {
     "@saltcorn/markup": "0.6.2-beta.1",
     "contractis": "^0.1.0"
   },
   "devDependencies": {
     "jest": "^25.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

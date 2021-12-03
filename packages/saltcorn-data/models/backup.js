@@ -11,7 +11,7 @@ const View = require("./view");
 const File = require("./file");
 const Plugin = require("./plugin");
 const User = require("./user");
-const Role = require("./role");
+const Role = require("./role").default;
 const Page = require("./page");
 const Zip = require("adm-zip");
 const tmp = require("tmp-promise");
@@ -94,7 +94,7 @@ const create_csv_from_rows = contract(
  * @function
  * @param {Table} table
  * @param {string} dirpath
- * @returns {Promise<void>} 
+ * @returns {Promise<void>}
  */
 const create_table_json = contract(
   is.fun([is.class("Table"), is.str], is.promise(is.undefined)),

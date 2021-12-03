@@ -8,7 +8,7 @@ const { contract, is } = require("contractis");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
-const Role = require("@saltcorn/data/models/role");
+const Role = require("@saltcorn/data/models/role").default;
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -61,10 +61,10 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {Role} role 
- * @param {Layout[]} layouts 
- * @param {*} layout_by_role 
- * @param {object} req 
+ * @param {Role} role
+ * @param {Layout[]} layouts
+ * @param {*} layout_by_role
+ * @param {object} req
  * @returns {Form}
  */
 const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
@@ -91,7 +91,7 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const roleForm = (req) =>

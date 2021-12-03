@@ -20,7 +20,12 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1"
+    }
   },
   "publishConfig": {
     "access": "public"
