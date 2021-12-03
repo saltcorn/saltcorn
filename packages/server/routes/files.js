@@ -71,7 +71,6 @@ const editFileRoleForm = (file, roles, req) =>
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await File.find({}, { orderBy: "filename" });
@@ -138,7 +137,6 @@ router.get(
  */
 router.get(
   "/download/:id",
-  setTenant,
   error_catcher(async (req, res) => {
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
@@ -163,7 +161,6 @@ router.get(
  */
 router.get(
   "/serve/:id",
-  setTenant,
   error_catcher(async (req, res) => {
     const role = req.isAuthenticated() ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
@@ -200,7 +197,6 @@ router.get(
  */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -228,7 +224,6 @@ router.post(
  */
 router.post(
   "/setname/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -247,7 +242,6 @@ router.post(
  */
 router.post(
   "/upload",
-  setTenant,
   error_catcher(async (req, res) => {
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
@@ -300,7 +294,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

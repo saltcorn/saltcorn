@@ -53,9 +53,9 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} view 
- * @param {object[]} roles 
- * @param {object} req 
+ * @param {object} view
+ * @param {object[]} roles
+ * @param {object} req
  * @returns {Form}
  */
 const editViewRoleForm = (view, roles, req) =>
@@ -67,8 +67,8 @@ const editViewRoleForm = (view, roles, req) =>
   });
 
 /**
- * @param {object} view 
- * @param {object} req 
+ * @param {object} view
+ * @param {object} req
  * @returns {div}
  */
 const view_dropdown = (view, req) =>
@@ -115,7 +115,6 @@ const view_dropdown = (view, req) =>
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var orderBy = "name";
@@ -218,19 +217,19 @@ router.get(
 );
 
 /**
- * @param {object} o 
- * @param {function} f 
+ * @param {object} o
+ * @param {function} f
  * @returns {object}
  */
 const mapObjectValues = (o, f) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
 
 /**
- * @param {object} req 
- * @param {object} tableOptions 
- * @param {object[]} roles 
- * @param {object[]} pages 
- * @param {object} values 
+ * @param {object} req
+ * @param {object} tableOptions
+ * @param {object[]} roles
+ * @param {object[]} pages
+ * @param {object} values
  * @returns {Form}
  */
 const viewForm = (req, tableOptions, roles, pages, values) => {
@@ -328,7 +327,6 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
  */
 router.get(
   "/edit/:viewname",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
@@ -376,7 +374,6 @@ router.get(
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
@@ -414,7 +411,6 @@ router.get(
  */
 router.post(
   "/save",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
@@ -484,11 +480,11 @@ router.post(
 );
 
 /**
- * @param {object} view 
- * @param {Workflow} wf 
- * @param {object} wfres 
- * @param {object} req 
- * @param {object} res 
+ * @param {object} view
+ * @param {Workflow} wf
+ * @param {object} wfres
+ * @param {object} req
+ * @param {object} res
  * @returns {void}
  */
 const respondWorkflow = (view, wf, wfres, req, res) => {
@@ -532,7 +528,6 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
  */
 router.get(
   "/config/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -565,7 +560,6 @@ router.get(
  */
 router.post(
   "/config/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -585,7 +579,6 @@ router.post(
  */
 router.post(
   "/add-to-menu/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -615,7 +608,6 @@ router.post(
  */
 router.post(
   "/clone/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -637,7 +629,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -655,7 +646,6 @@ router.post(
  */
 router.post(
   "/savebuilder/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -679,7 +669,6 @@ router.post(
  */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

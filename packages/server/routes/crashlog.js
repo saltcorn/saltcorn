@@ -41,7 +41,6 @@ module.exports = router;
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const state = req.query,
@@ -103,7 +102,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const err = {
@@ -123,7 +121,6 @@ router.post(
  */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

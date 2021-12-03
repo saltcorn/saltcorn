@@ -27,9 +27,9 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object[]} tables 
- * @param {object[]} views 
- * @param {object} req 
+ * @param {object[]} tables
+ * @param {object[]} views
+ * @param {object} req
  * @returns {Forms}
  */
 const searchConfigForm = (tables, views, req) => {
@@ -75,7 +75,6 @@ const searchConfigForm = (tables, views, req) => {
  */
 router.get(
   "/config",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
@@ -95,7 +94,6 @@ router.get(
   })
 );
 
-
 /**
  * @name post/config
  * @function
@@ -104,7 +102,6 @@ router.get(
  */
 router.post(
   "/config",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
@@ -154,8 +151,8 @@ const searchForm = () =>
  * @param {*} opts._page
  * @param {*} opts.table
  * @param {object} opts
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {Promise<void>}
  */
 const runSearch = async ({ q, _page, table }, req, res) => {
@@ -253,7 +250,6 @@ const runSearch = async ({ q, _page, table }, req, res) => {
  */
 router.get(
   "/",
-  setTenant,
   error_catcher(async (req, res) => {
     if (req.query && req.query.q) {
       await runSearch(req.query, req, res);

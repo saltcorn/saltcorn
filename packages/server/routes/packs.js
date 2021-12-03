@@ -54,7 +54,6 @@ module.exports = router;
  */
 router.get(
   "/create/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find({});
@@ -139,7 +138,6 @@ router.get(
  */
 router.post(
   "/create",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var pack = {
@@ -211,7 +209,7 @@ router.post(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const install_pack_form = (req) =>
@@ -236,7 +234,6 @@ const install_pack_form = (req) =>
  */
 router.get(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Install Pack`), {
@@ -267,7 +264,6 @@ router.get(
  */
 router.post(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
@@ -326,7 +322,6 @@ router.post(
  */
 router.post(
   "/install-named/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -363,7 +358,6 @@ router.post(
  */
 router.post(
   "/uninstall/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;

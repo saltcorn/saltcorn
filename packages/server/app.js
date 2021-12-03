@@ -23,7 +23,6 @@ const {
   available_languages,
 } = require("@saltcorn/data/models/config");
 const {
-  setTenant,
   get_base_url,
   error_catcher,
   getSessionStore,
@@ -77,6 +76,8 @@ const getApp = async (opts = {}) => {
   );
   // extenetede url encoding in use
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
+
+  app.use(setTenant);
 
   // Change into s3storage compatible selector
   // existing fileupload middleware is moved into s3storage.js
@@ -219,7 +220,6 @@ const getApp = async (opts = {}) => {
   // /robots.txt
   app.get(
     "/robots.txt",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/plain");
@@ -232,7 +232,6 @@ Sitemap: ${base}sitemap.xml
   // /sitemap.xml
   app.get(
     "/sitemap.xml",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/xml");

@@ -5,12 +5,7 @@
  */
 const Router = require("express-promise-router");
 
-const {
-  setTenant,
-  isAdmin,
-  error_catcher,
-  getGitRevision,
-} = require("./utils.js");
+const { isAdmin, error_catcher, getGitRevision } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
@@ -158,7 +153,6 @@ const storage_form = async (req) => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -183,7 +177,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await site_id_form(req);
@@ -216,7 +209,6 @@ router.post(
  */
 router.get(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -250,7 +242,6 @@ router.get(
  */
 router.get(
   "/storage",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
@@ -274,7 +265,6 @@ router.get(
  */
 router.get(
   "/send-test-email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const from = getState().getConfig("email_from");
@@ -305,7 +295,6 @@ router.get(
  */
 router.post(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -336,7 +325,6 @@ router.post(
  */
 router.post(
   "/storage",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
@@ -367,7 +355,6 @@ router.post(
  */
 router.get(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     send_admin_page({
@@ -412,7 +399,6 @@ router.get(
  */
 router.get(
   "/system",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -532,7 +518,6 @@ router.get(
  */
 router.post(
   "/restart",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
@@ -555,7 +540,6 @@ router.post(
  */
 router.post(
   "/upgrade",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() !== db.connectObj.default_schema) {
@@ -592,7 +576,6 @@ router.post(
  */
 router.post(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const fileName = await create_backup();
@@ -613,7 +596,6 @@ router.post(
  */
 router.post(
   "/restore",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
@@ -710,7 +692,6 @@ const clearAllForm = (req) =>
  */
 router.post(
   "/enable-letsencrypt",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
@@ -788,7 +769,6 @@ router.post(
  */
 router.get(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Admin`), {
@@ -818,7 +798,6 @@ router.get(
  */
 router.post(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);

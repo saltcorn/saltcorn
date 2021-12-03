@@ -29,7 +29,6 @@ module.exports = router;
  */
 router.post(
   "/savefrombuilder",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     await Library.create(req.body);
@@ -45,7 +44,6 @@ router.post(
  */
 router.get(
   "/list",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const libs = await Library.find({});
@@ -89,7 +87,6 @@ router.get(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

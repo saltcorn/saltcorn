@@ -20,9 +20,9 @@ const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
 
 /**
- * @param {object} req 
- * @param {object} res 
- * @param {function} next 
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
  * @returns {void}
  */
 function loggedIn(req, res, next) {
@@ -35,9 +35,9 @@ function loggedIn(req, res, next) {
 }
 
 /**
- * @param {object} req 
- * @param {object} res 
- * @param {function} next 
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
  * @returns {void}
  */
 function isAdmin(req, res, next) {
@@ -54,8 +54,8 @@ function isAdmin(req, res, next) {
 }
 
 /**
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @param {string} state
  * @returns {void}
  */
@@ -67,8 +67,8 @@ const setLanguage = (req, res, state) => {
 };
 
 /**
- * @param {object} res 
- * @param {string} state 
+ * @param {object} res
+ * @param {string} state
  * @returns {void}
  */
 const set_custom_http_headers = (res, state) => {
@@ -90,7 +90,7 @@ const set_custom_http_headers = (res, state) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {string}
  */
 const get_tenant_from_req = (req) => {
@@ -106,9 +106,9 @@ const get_tenant_from_req = (req) => {
 };
 
 /**
- * @param {object} req 
- * @param {object} res 
- * @param {function} next 
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
  */
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
@@ -141,7 +141,7 @@ const setTenant = (req, res, next) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {input}
  */
 const csrfField = (req) =>
@@ -152,7 +152,7 @@ const csrfField = (req) =>
   });
 
 /**
- * @param {function} fn 
+ * @param {function} fn
  * @returns {function}
  */
 const error_catcher = (fn) => (request, response, next) => {
@@ -160,8 +160,8 @@ const error_catcher = (fn) => (request, response, next) => {
 };
 
 /**
- * @param {string|object} contents 
- * @param {string} viewname 
+ * @param {string|object} contents
+ * @param {string} viewname
  * @returns {string}
  */
 const scan_for_page_title = (contents, viewname) => {
@@ -224,7 +224,6 @@ module.exports = {
   csrfField,
   loggedIn,
   isAdmin,
-  setTenant,
   get_base_url,
   error_catcher,
   scan_for_page_title,

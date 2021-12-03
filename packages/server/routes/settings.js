@@ -46,7 +46,6 @@ const settingsCard = ({ title, icon, blurb, href }) => ({
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__("Settings"), {

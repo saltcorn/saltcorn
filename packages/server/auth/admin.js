@@ -50,8 +50,8 @@ const router = new Router();
 module.exports = router;
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {Promise<object>}
  */
 const getUserFields = async (req) => {
@@ -221,7 +221,6 @@ const user_dropdown = (user, req, can_reset) =>
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const users = await User.find({}, { orderBy: "id" });
@@ -286,7 +285,6 @@ router.get(
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm(req);
@@ -305,8 +303,8 @@ router.get(
 );
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {Form}
  */
 const user_settings_form = (req) =>
@@ -341,7 +339,6 @@ const user_settings_form = (req) =>
  */
 router.get(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await user_settings_form(req);
@@ -365,7 +362,6 @@ router.get(
  */
 router.post(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await user_settings_form(req);
@@ -396,7 +392,6 @@ router.post(
  */
 router.get(
   "/ssl",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -511,7 +506,7 @@ router.get(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const ssl_form = (req) =>
@@ -528,7 +523,6 @@ const ssl_form = (req) =>
  */
 router.get(
   "/ssl/custom",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
@@ -553,7 +547,6 @@ router.get(
  */
 router.post(
   "/ssl/custom",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
@@ -590,7 +583,6 @@ router.post(
  */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -659,7 +651,6 @@ router.get(
  */
 router.post(
   "/save",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     let form, sub2;
@@ -738,7 +729,6 @@ router.post(
  */
 router.post(
   "/reset-password/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -758,7 +748,6 @@ router.post(
  */
 router.post(
   "/send-verification/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -783,7 +772,6 @@ router.post(
  */
 router.post(
   "/gen-api-token/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -803,7 +791,6 @@ router.post(
  */
 router.post(
   "/remove-api-token/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -823,7 +810,6 @@ router.post(
  */
 router.post(
   "/set-random-password/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -847,7 +833,6 @@ router.post(
  */
 router.post(
   "/disable/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -866,7 +851,6 @@ router.post(
  */
 router.post(
   "/enable/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -884,7 +868,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

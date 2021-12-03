@@ -29,7 +29,6 @@ module.exports = router;
  */
 router.post(
   "/:name/:id",
-  setTenant,
   error_catcher(async (req, res) => {
     const { name, id } = req.params;
     const { redirect } = req.query;

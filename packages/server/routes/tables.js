@@ -171,7 +171,6 @@ const tableForm = async (table, req) => {
  */
 router.get(
   "/new/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New table`), {
@@ -241,7 +240,6 @@ const discoverForm = (tables, req) => {
  */
 router.get(
   "/discover",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     // get list of discoverable tables
@@ -276,7 +274,6 @@ router.get(
  */
 router.post(
   "/discover",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
@@ -304,7 +301,6 @@ router.post(
  */
 router.get(
   "/create-from-csv",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Create table from CSV file`), {
@@ -356,7 +352,6 @@ router.get(
  */
 router.post(
   "/create-from-csv",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
@@ -405,7 +400,6 @@ router.post(
  */
 router.get(
   "/relationship-diagram",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
@@ -535,7 +529,6 @@ const attribBadges = (f) => {
  */
 router.get(
   "/:idorname",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { idorname } = req.params;
@@ -843,7 +836,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const v = req.body;
@@ -918,7 +910,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -945,7 +936,6 @@ router.post(
 );
 router.post(
   "/forget-table/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1000,7 +990,6 @@ const tableBadges = (t, req) => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await Table.find_with_external({}, { orderBy: "name" });
@@ -1095,7 +1084,6 @@ router.get(
  */
 router.get(
   "/download/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -1125,7 +1113,6 @@ router.get(
  */
 router.get(
   "/constraints/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1203,7 +1190,6 @@ const constraintForm = (req, table_id, fields) =>
  */
 router.get(
   "/add-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1248,7 +1234,6 @@ router.get(
  */
 router.post(
   "/add-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1303,7 +1288,6 @@ const renameForm = (table_id, req) =>
  */
 router.get(
   "/rename/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1341,7 +1325,6 @@ router.get(
  */
 router.post(
   "/rename/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1366,7 +1349,6 @@ router.post(
  */
 router.post(
   "/delete-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1385,7 +1367,6 @@ router.post(
  */
 router.post(
   "/upload_to_table/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -1421,7 +1402,6 @@ router.post(
  */
 router.post(
   "/delete-all-rows/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -1447,7 +1427,6 @@ router.post(
  */
 router.post(
   "/recalc-stored/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;

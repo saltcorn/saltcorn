@@ -5,12 +5,7 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-  get_base_url,
-} = require("./utils.js");
+const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
@@ -87,7 +82,6 @@ const getActions = async () => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
@@ -288,7 +282,6 @@ const triggerForm = async (req, trigger) => {
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
@@ -314,7 +307,6 @@ router.get(
  */
 router.get(
   "/edit/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -344,7 +336,6 @@ router.get(
  */
 router.post(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
@@ -384,7 +375,6 @@ router.post(
  */
 router.post(
   "/edit/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -427,7 +417,6 @@ router.post(
  */
 router.get(
   "/configure/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -543,7 +532,6 @@ router.get(
  */
 router.post(
   "/configure/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -585,7 +573,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -602,7 +589,6 @@ router.post(
  */
 router.get(
   "/testrun/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

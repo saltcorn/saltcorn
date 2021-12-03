@@ -33,7 +33,6 @@ module.exports = router;
  */
 router.post(
   "/toggle/:name/:id/:field_name",
-  setTenant,
   error_catcher(async (req, res) => {
     const { name, id, field_name } = req.params;
     const { redirect } = req.query;
