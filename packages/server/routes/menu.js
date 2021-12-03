@@ -32,8 +32,8 @@ const router = new Router();
 module.exports = router;
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const menuForm = async (req) => {
@@ -157,7 +157,7 @@ const menuForm = async (req) => {
 //create -- new
 
 /**
- * @param {object[]} menu_items 
+ * @param {object[]} menu_items
  * @returns {string}
  */
 const menuEditorScript = (menu_items) => `
@@ -202,8 +202,8 @@ const menuEditorScript = (menu_items) => `
   `;
 
 /**
- * @param {object[]} menu_items 
- * @returns {object[]} 
+ * @param {object[]} menu_items
+ * @returns {object[]}
  */
 const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
@@ -214,7 +214,7 @@ const menuTojQME = (menu_items) =>
   }));
 
 /**
- * @param {object[]} menu_items 
+ * @param {object[]} menu_items
  * @returns {object[]}
  */
 const jQMEtoMenu = (menu_items) =>
@@ -233,7 +233,6 @@ const jQMEtoMenu = (menu_items) =>
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
@@ -287,7 +286,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.xhr) {

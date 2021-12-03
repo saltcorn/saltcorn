@@ -12,12 +12,7 @@ const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 
 const { send_verification_email } = require("@saltcorn/data/models/email");
-const {
-  setTenant,
-  error_catcher,
-  loggedIn,
-  csrfField,
-} = require("../routes/utils.js");
+const { error_catcher, loggedIn, csrfField } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
 const { renderForm } = require("@saltcorn/markup");
@@ -62,8 +57,8 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} req 
- * @param {boolean} isCreating 
+ * @param {object} req
+ * @param {boolean} isCreating
  * @returns {Form}
  */
 const loginForm = (req, isCreating) => {
@@ -104,7 +99,7 @@ const loginForm = (req, isCreating) => {
 };
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const forgotForm = (req) =>
@@ -128,8 +123,8 @@ const forgotForm = (req) =>
   });
 
 /**
- * @param {object} body 
- * @param {object} req 
+ * @param {object} body
+ * @param {object} req
  * @returns {Form}
  */
 const resetForm = (body, req) => {
@@ -159,8 +154,8 @@ const resetForm = (body, req) => {
 };
 
 /**
- * @param {string} current 
- * @param {boolean} noMethods 
+ * @param {string} current
+ * @param {boolean} noMethods
  * @returns {object}
  */
 const getAuthLinks = (current, noMethods) => {
@@ -193,7 +188,6 @@ const getAuthLinks = (current, noMethods) => {
  */
 router.get(
   "/login",
-  setTenant,
   error_catcher(async (req, res) => {
     const login_form_name = getState().getConfig("login_form", "");
     if (login_form_name) {
@@ -219,7 +213,7 @@ router.get(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
-router.get("/logout", setTenant, (req, res, next) => {
+router.get("/logout", (req, res, next) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {
@@ -241,7 +235,6 @@ router.get("/logout", setTenant, (req, res, next) => {
  */
 router.get(
   "/forgot",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot", false)) {
       res.sendAuthWrap(
@@ -266,7 +259,6 @@ router.get(
  */
 router.get(
   "/reset",
-  setTenant,
   error_catcher(async (req, res) => {
     const form = resetForm(req.query, req);
     res.sendAuthWrap(req.__(`Reset password`), form, {});
@@ -280,7 +272,6 @@ router.get(
  */
 router.get(
   "/verify",
-  setTenant,
   error_catcher(async (req, res) => {
     const { token, email } = req.query;
     const result = await User.verifyWithToken({
@@ -304,7 +295,6 @@ router.get(
  */
 router.post(
   "/reset",
-  setTenant,
   error_catcher(async (req, res) => {
     const result = await User.resetPasswordWithToken({
       email: req.body.email,
@@ -330,7 +320,6 @@ router.post(
  */
 router.post(
   "/forgot",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
       const { email } = req.body;
@@ -364,7 +353,6 @@ router.post(
  */
 router.get(
   "/signup",
-  setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
@@ -408,7 +396,6 @@ router.get(
  */
 router.get(
   "/create_first_user",
-  setTenant,
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
@@ -438,7 +425,6 @@ router.get(
  */
 router.post(
   "/create_from_restore",
-  setTenant,
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
@@ -467,7 +453,6 @@ router.post(
  */
 router.post(
   "/create_first_user",
-  setTenant,
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
@@ -510,9 +495,9 @@ router.post(
 );
 
 /**
- * @param {string} new_user_view_name 
- * @param {object} req 
- * @param {boolean} askEmail 
+ * @param {string} new_user_view_name
+ * @param {object} req
+ * @param {boolean} askEmail
  * @returns {Promise<Form>}
  * @throws {InvalidConfiguration}
  */
@@ -588,9 +573,9 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
 };
 
 /**
- * @param {object} u 
- * @param {object} req 
- * @param {object} res 
+ * @param {object} u
+ * @param {object} req
+ * @param {object} res
  * @returns {void}
  */
 const signup_login_with_user = (u, req, res) =>
@@ -620,7 +605,6 @@ const signup_login_with_user = (u, req, res) =>
  */
 router.get(
   "/signup_final_ext",
-  setTenant,
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
@@ -642,7 +626,6 @@ router.get(
  */
 router.post(
   "/signup_final_ext",
-  setTenant,
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
@@ -695,7 +678,6 @@ router.post(
  */
 router.post(
   "/signup_final",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
       const new_user_form = getState().getConfig("new_user_form");
@@ -757,7 +739,6 @@ router.post(
  */
 router.post(
   "/signup",
-  setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
@@ -868,8 +849,8 @@ router.post(
 );
 
 /**
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns {void}
  */
 function handler(req, res) {
@@ -888,7 +869,7 @@ function handler(req, res) {
 
 /**
  * try to find a unique user id in login submit
- * @param {object} body 
+ * @param {object} body
  * @returns {string}
  */
 const userIdKey = (body) => {
@@ -920,7 +901,6 @@ const userLimiter = rateLimit({
  */
 router.post(
   "/login",
-  setTenant,
   ipLimiter,
   userLimiter,
   passport.authenticate("local", {
@@ -954,7 +934,6 @@ router.post(
  */
 router.get(
   "/login-with/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -977,7 +956,6 @@ router.get(
  */
 router.post(
   "/login-with/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -999,8 +977,8 @@ router.post(
 );
 
 /**
- * @param {object}} req 
- * @param {object} res 
+ * @param {object}} req
+ * @param {object} res
  * @returns {void}
  */
 const loginCallback = (req, res) => () => {
@@ -1024,7 +1002,6 @@ const loginCallback = (req, res) => () => {
  */
 router.get(
   "/callback/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -1039,7 +1016,7 @@ router.get(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const changPwForm = (req) =>
@@ -1064,8 +1041,8 @@ const changPwForm = (req) =>
   });
 
 /**
- * @param {object} req 
- * @param {object} user 
+ * @param {object} req
+ * @param {object} user
  * @returns {Form}
  */
 const setLanguageForm = (req, user) =>
@@ -1152,7 +1129,6 @@ const userSettings = async ({ req, res, pwform, user }) => {
  */
 router.post(
   "/setlanguage",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const u = await User.findOne({ id: req.user.id });
@@ -1191,7 +1167,6 @@ router.post(
  */
 router.get(
   "/settings",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
@@ -1232,7 +1207,6 @@ const setEmailForm = (req) =>
  */
 router.get(
   "/set-email",
-  setTenant,
   error_catcher(async (req, res) => {
     res.sendWrap(
       req.__("Set Email"),
@@ -1249,7 +1223,6 @@ router.get(
  */
 router.post(
   "/set-email",
-  setTenant,
   error_catcher(async (req, res) => {
     const form = setEmailForm(req);
     form.validate(req.body);
@@ -1299,7 +1272,6 @@ router.post(
  */
 router.post(
   "/settings",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
@@ -1350,7 +1322,6 @@ router.post(
  */
 router.all(
   "/verification-flow",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const verifier = await (getState().verifier || (() => null))(req.user);

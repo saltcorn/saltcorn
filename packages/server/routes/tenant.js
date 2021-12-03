@@ -35,7 +35,7 @@ const {
 const db = require("@saltcorn/data/db");
 const url = require("url");
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
@@ -115,7 +115,6 @@ const is_ip_address = (hostname) => {
  */
 router.get(
   "/create",
-  setTenant,
   error_catcher(async (req, res) => {
     if (
       !db.is_it_multi_tenant() ||
@@ -207,7 +206,6 @@ const getNewURL = (req, subdomain) => {
  */
 router.post(
   "/create",
-  setTenant,
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
     if (
@@ -306,7 +304,6 @@ router.post(
  */
 router.get(
   "/list",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -390,7 +387,6 @@ const tenant_settings_form = (req) =>
  */
 router.get(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -425,7 +421,6 @@ router.get(
  */
 router.post(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await tenant_settings_form(req);
@@ -502,7 +497,6 @@ const get_tenant_info = async (subdomain) => {
  */
 router.get(
   "/info/:subdomain",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -648,7 +642,6 @@ router.get(
  */
 router.post(
   "/info/:subdomain",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -680,7 +673,6 @@ router.post(
  */
 router.post(
   "/delete/:sub",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (

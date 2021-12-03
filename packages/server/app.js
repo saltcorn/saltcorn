@@ -23,10 +23,10 @@ const {
   available_languages,
 } = require("@saltcorn/data/models/config");
 const {
-  setTenant,
   get_base_url,
   error_catcher,
   getSessionStore,
+  setTenant,
 } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -37,6 +37,7 @@ const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
 const Trigger = require("@saltcorn/data/models/trigger");
+const s3storage = require("./s3storage");
 
 const locales = Object.keys(available_languages);
 // i18n configuration
@@ -77,15 +78,6 @@ const getApp = async (opts = {}) => {
   // extenetede url encoding in use
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
-  // add fileupload feature
-  // todo ability to configure filetmp dir - add new config / env parameter
-  app.use(
-    fileUpload({
-      useTempFiles: true,
-      createParentPath: true,
-      tempFileDir: "/tmp/",
-    })
-  );
   // cookies
   app.use(require("cookie-parser")());
   // i18n support
@@ -202,6 +194,12 @@ const getApp = async (opts = {}) => {
   passport.deserializeUser(function (user, done) {
     done(null, user);
   });
+  app.use(setTenant);
+
+  // Change into s3storage compatible selector
+  // existing fileupload middleware is moved into s3storage.js
+  app.use(s3storage.middlewareSelect);
+  app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
   const csurf = csrf();
@@ -218,11 +216,10 @@ const getApp = async (opts = {}) => {
 
   mountRoutes(app);
   // set tenant homepage as / root
-  app.get("/", setTenant, error_catcher(homepage));
+  app.get("/", error_catcher(homepage));
   // /robots.txt
   app.get(
     "/robots.txt",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/plain");
@@ -235,7 +232,6 @@ Sitemap: ${base}sitemap.xml
   // /sitemap.xml
   app.get(
     "/sitemap.xml",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/xml");

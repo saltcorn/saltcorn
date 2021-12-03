@@ -7,6 +7,8 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 const watch = require("node-watch");
 const Plugin = require("@saltcorn/data/models/plugin");
+const db = require("@saltcorn/data/db");
+const { eachTenant } = require("@saltcorn/data/models/tenant");
 
 /**
  * packages that should trigger a server re-start
@@ -63,8 +65,15 @@ const getRelevantPackages = () => {
  * @returns {string[]} list of paths to relevant directories
  */
 const getPluginDirectories = async () => {
-  const local_plugins = await Plugin.find({ source: "local" });
-  return local_plugins.map((p) => p.location);
+  const getDirs = async () => {
+    const local_plugins = await Plugin.find({ source: "local" });
+    return local_plugins.map((p) => p.location);
+  };
+  const listOfDirs = [];
+  await eachTenant(async () => {
+    listOfDirs.push(await getDirs());
+  });
+  return [...new Set(listOfDirs.flat(1))];
 };
 
 const projectRoot = getProjectRoot();
