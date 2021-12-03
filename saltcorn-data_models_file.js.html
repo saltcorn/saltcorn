@@ -131,6 +131,7 @@ class File {
     this.mime_super = o.mime_super;
     this.mime_sub = o.mime_sub;
     this.min_role_read = o.min_role_read;
+    this.s3_store = !!o.s3_store;
     // TBD add checksum this.checksum = o.checksum;
     contract.class(this);
   }
@@ -188,10 +189,15 @@ class File {
    * @returns {string} - path to file
    */
   static get_new_path(suggest) {
-    const file_store = db.connectObj.file_store;
+    const { getState } = require("../db/state");
+
+    // Check if it uses S3, then use a default "saltcorn" folder
+    const useS3 = getState().getConfig("storage_s3_enabled");
+    const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
 
     const newFnm = suggest || uuidv4();
-    return path.join(file_store, newFnm);
+    const newPath = path.join(file_store, newFnm);
+    return newPath;
   }
 
   /**
@@ -202,8 +208,12 @@ class File {
    */
   // TBD fs errors handling
   static async ensure_file_store() {
-    const file_store = db.connectObj.file_store;
-    await fs.mkdir(file_store, { recursive: true });
+    const { getState } = require("../db/state");
+
+    if (!getState().getConfig("storage_s3_enabled")) {
+      const file_store = db.connectObj.file_store;
+      await fs.mkdir(file_store, { recursive: true });
+    }
   }
 
   /**
@@ -235,6 +245,7 @@ class File {
         mime_super,
         mime_sub,
         min_role_read,
+        s3_store: !!file.s3object,
       });
     }
   }
@@ -243,12 +254,14 @@ class File {
    * Delete file
    * @returns {Promise&lt;{error}>}
    */
-  async delete() {
+  async delete(unlinker) {
     try {
       // delete file from database
       await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
-      await fs.unlink(this.location);
+      if (unlinker) await unlinker(this);
+      else await fs.unlink(this.location);
+
       // reload file list cache
       await require("../db/state").getState().refresh_files();
     } catch (e) {
@@ -292,6 +305,7 @@ File.contract = {
     id: is.maybe(is.posint),
     user_id: is.maybe(is.posint),
     min_role_read: is.posint,
+    s3_store: is.bool,
     // tdb add checksum
   },
   methods: {

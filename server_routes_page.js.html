@@ -101,11 +101,7 @@ const Page = require("@saltcorn/data/models/page");
 const { div, a, i } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const {
-  setTenant,
-  error_catcher,
-  scan_for_page_title,
-} = require("../routes/utils.js");
+const { error_catcher, scan_for_page_title } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -129,7 +125,6 @@ module.exports = router;
  */
 router.get(
   "/:pagename",
-  setTenant,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
@@ -167,7 +162,6 @@ router.get(
  */
 router.post(
   "/:pagename/action/:rndid",
-  setTenant,
   error_catcher(async (req, res) => {
     const { pagename, rndid } = req.params;
     const role = req.isAuthenticated() ? req.user.role_id : 10;

@@ -97,7 +97,7 @@
 
 const Router = require("express-promise-router");
 
-const { setTenant, loggedIn, error_catcher } = require("./utils.js");
+const { loggedIn, error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**
@@ -120,7 +120,6 @@ module.exports = router;
  */
 router.post(
   "/:name/:id",
-  setTenant,
   error_catcher(async (req, res) => {
     const { name, id } = req.params;
     const { redirect } = req.query;

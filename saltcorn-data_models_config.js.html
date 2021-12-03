@@ -508,6 +508,67 @@ const configTypes = {
     sublabel: "Set to 0 for expration at the end of browser session",
     default: 30 * 24,
   },
+  /** @type {object} */
+  storage_s3_enabled: {
+    type: "Bool",
+    label: "Use Amazon S3",
+    default: false,
+    sublabel:
+      "Use Amazon S3 (or compatible) service to store files. If disabled, Saltcorn uses local disk. WARNING: Changing this may break your uploaded files!",
+  },
+  storage_s3_secure: {
+    type: "Bool",
+    label: "Use Amazon S3 Secure Connection.",
+    default: true,
+    sublabel: "Connect to Amazon S3 (or compatible) securely.",
+  },
+  /** @type {object} */
+  storage_s3_bucket: {
+    type: "String",
+    label: "Amazon S3 Bucket",
+    default: "",
+    blurb: "Name you selected for your S3 bucket in AWS.",
+  },
+  /** @type {object} */
+  storage_s3_path_prefix: {
+    type: "String",
+    label: "Amazon S3 Path Prefix",
+    default: "",
+    blurb: "Prefix you selected for your S3 bucket in AWS.",
+  },
+  /** @type {object} */
+  storage_s3_endpoint: {
+    type: "String",
+    label: "Amazon S3 Endpoint",
+    default: "s3.amazonaws.com",
+    blurb:
+      "Hostname of your S3 Compatible Storage provider. Defaults to 's3.amazonaws.com'.",
+  },
+  /** @type {object} */
+  storage_s3_region: {
+    type: "String",
+    label: "Amazon S3 Region",
+    default: "us-east-1",
+    blurb:
+      "AWS region you selected when creating your S3 bucket. Default ti 'us-east-1'.",
+  },
+  /** @type {object} */
+  storage_s3_access_key: {
+    type: "String",
+    label: "Amazon S3 Access Key ID",
+    default: "",
+    blurb:
+      "Only required if you do not want to authenticate to S3 using an IAM role. Enter the Access Key ID provided by your Amazon EC2 administrator.",
+  },
+  /** @type {object} */
+  storage_s3_access_secret: {
+    type: "String",
+    input_type: "password",
+    label: "Amazon S3 Secret Access Key",
+    default: "",
+    blurb:
+      "The secret access key associated with your Amazon S3 Access Key ID.",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

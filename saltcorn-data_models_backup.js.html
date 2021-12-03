@@ -329,6 +329,7 @@ const restore_files = contract(
         file.location = newPath;
         //insert in db
         const { user_id, ...file_row } = file;
+        file_row.s3_store = !!file_row.s3_store;
         const id = await db.insert("_sc_files", file_row);
         file_users[id] = user_id;
       }
