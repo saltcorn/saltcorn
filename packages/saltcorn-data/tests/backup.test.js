@@ -10,7 +10,7 @@ const User = require("../models/user");
 const { setConfig, getConfig } = require("../models/config");
 const Trigger = require("../models/trigger");
 const Library = require("../models/library");
-const Role = require("../models/role").default;
+const Role = require("../models/role");
 afterAll(db.close);
 
 beforeAll(async () => {

@@ -16,7 +16,7 @@ const Page = require("./page");
 const { is_pack, is_plugin } = require("../contracts");
 const TableConstraint = require("./table_constraints");
 const { tr } = require("@saltcorn/markup/tags");
-const Role = require("./role").default;
+const Role = require("./role");
 const Library = require("./library");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));

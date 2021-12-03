@@ -9,7 +9,7 @@ type ConstructorParams = {
  * Role class
  * @category saltcorn-data
  */
-export default class Role {
+class Role {
   id: number;
   role: Role;
 
@@ -73,3 +73,5 @@ export default class Role {
     await db.update("_sc_roles", row, this.id);
   }
 }
+
+export = Role;

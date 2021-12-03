@@ -34,7 +34,7 @@ const {
 const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
 const Library = require("@saltcorn/data/models/library");
 const Trigger = require("@saltcorn/data/models/trigger");
-const Role = require("@saltcorn/data/models/role").default;
+const Role = require("@saltcorn/data/models/role");
 
 /**
  * @type {object}
@@ -211,7 +211,7 @@ router.post(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const install_pack_form = (req) =>
