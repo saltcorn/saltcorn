@@ -194,6 +194,12 @@ const getApp = async (opts = {}) => {
   passport.deserializeUser(function (user, done) {
     done(null, user);
   });
+  app.use(setTenant);
+
+  // Change into s3storage compatible selector
+  // existing fileupload middleware is moved into s3storage.js
+  app.use(s3storage.middlewareSelect);
+  app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
   const csurf = csrf();
@@ -207,13 +213,6 @@ const getApp = async (opts = {}) => {
       req.csrfToken = () => "";
       next();
     });
-
-  app.use(setTenant);
-
-  // Change into s3storage compatible selector
-  // existing fileupload middleware is moved into s3storage.js
-  app.use(s3storage.middlewareSelect);
-  app.use(s3storage.middlewareTransform);
 
   mountRoutes(app);
   // set tenant homepage as / root
