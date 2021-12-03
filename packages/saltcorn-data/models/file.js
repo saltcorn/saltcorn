@@ -168,7 +168,9 @@ class File {
       // delete file from database
       await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
-      await unlinker(this);
+      if (unlinker) await unlinker(this);
+      else await fs.unlink(this.location);
+
       // reload file list cache
       await require("../db/state").getState().refresh_files();
     } catch (e) {
